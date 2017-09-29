@@ -620,3 +620,26 @@ bool ReductionNode::implemented(int opc, uint vlen, BasicType bt) {
   }
   return false;
 }
+
+Node* VectorUnboxNode::Identity(PhaseGVN *phase) {
+  if (obj()->uncast()->is_VectorBox()) {
+    return obj()->uncast()->as_VectorBox()->vector_val();
+  }
+  return this;
+}
+
+const TypeFunc* VectorBoxNode::vec_box_type(const TypeInstPtr* box_type, const TypeVect* vt) {
+  const Type** fields = TypeTuple::fields(5);
+  fields[VecBox] = TypeInstPtr::NOTNULL;
+  fields[VecVal] = vt;
+  fields[ArrayAlloc] = TypeInstPtr::NOTNULL;
+  fields[FieldStore] = Type::MEMORY;
+  fields[VectorStore] = Type::MEMORY;
+  const TypeTuple *domain = TypeTuple::make(ParmLimit, fields);
+
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms+0] = box_type;
+  const TypeTuple *range = TypeTuple::make(TypeFunc::Parms+1, fields);
+
+  return TypeFunc::make(domain, range);
+}

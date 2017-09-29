@@ -2203,6 +2203,15 @@ void Compile::Optimize() {
     igvn.optimize();
   }
 
+  {
+    // Expand VBoxes before EA.
+    PhaseMacroExpand mexp(igvn);
+    print_method(PHASE_ITER_GVN_BEFORE_EA, 2);
+    mexp.expand_vbox_nodes();
+    print_method(PHASE_ITER_GVN_BEFORE_EA, 2);
+    if (failing())  return;
+  }
+
   // Perform escape analysis
   if (_do_escape_analysis && ConnectionGraph::has_candidates(this)) {
     if (has_loops()) {

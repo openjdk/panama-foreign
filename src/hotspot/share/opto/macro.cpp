@@ -2660,12 +2660,15 @@ void PhaseMacroExpand::eliminate_macro_nodes() {
         break;
       case Node::Class_ArrayCopy:
         break;
+      case Node::Class_VectorBox:
+        break;
       default:
         assert(n->Opcode() == Op_LoopLimit ||
                n->Opcode() == Op_Opaque1   ||
                n->Opcode() == Op_Opaque2   ||
                n->Opcode() == Op_Opaque3   ||
-               n->Opcode() == Op_Opaque4, "unknown node type in macro list");
+               n->Opcode() == Op_Opaque4   ||
+               n->Opcode() == Op_VectorUnbox, "unknown node type in macro list");
       }
       assert(success == (C->macro_count() < old_macro_count), "elimination reduces macro count");
       progress = progress || success;
@@ -2793,4 +2796,210 @@ bool PhaseMacroExpand::expand_macro_nodes() {
   _igvn.optimize();
   if (C->failing())  return true;
   return false;
+}
+
+//------------------------------expand_macro_nodes----------------------
+//  Returns true if a failure occurred.
+void PhaseMacroExpand::expand_vbox_nodes() {
+  // Run a first phase that solely looks at Vector Unbox nodes. We need all those to
+  // be expanded before deciding whether on what to do with the boxing nodes.
+  int macro_idx = C->macro_count() - 1;
+  while(macro_idx >= 0) {
+    Node * n = C->macro_node(macro_idx);
+    assert(n->is_macro(), "only macro nodes expected here");
+    if (n->Opcode() == Op_VectorUnbox) {
+      VectorUnboxNode* vunbox = static_cast<VectorUnboxNode*>(n);
+      expand_vectorunbox_node(vunbox);
+    }
+    if (C->failing())  return;
+    macro_idx = MIN2(macro_idx - 1, C->macro_count() - 1);
+  }
+
+  macro_idx = C->macro_count() - 1;
+  while (macro_idx >= 0) {
+    Node * n = C->macro_node(macro_idx);
+    assert(n->is_macro(), "only macro nodes expected here");
+    if (n->Opcode() == Op_Opaque1 || n->Opcode() == Op_Opaque2 ||
+           n->Opcode() == Op_Opaque3 || n->Opcode() == Op_Opaque4 ||
+           n->Opcode() == Op_VectorUnbox) {
+      // skip
+    } else if (n->is_VectorBox()) {
+      expand_vectorbox_node(n->as_VectorBox());
+    }
+    if (C->failing())  return;
+    macro_idx--;
+  }
+  _igvn.set_delay_transform(false);
+  _igvn.optimize();
+}
+
+void PhaseMacroExpand::expand_vectorbox_node(VectorBoxNode *vec_box) {
+  if ( _igvn.type(vec_box) != Type::TOP ) {
+    Node* ctrl = vec_box->in(TypeFunc::Control);
+    Node* mem  = vec_box->in(TypeFunc::Memory);
+    Node* box  = vec_box->in(VectorBoxNode::VecBox);
+
+    Node* ctrlproj = vec_box->proj_out(TypeFunc::Control);
+    Node* memproj  = vec_box->proj_out(TypeFunc::Memory);
+    Node* outproj = vec_box->proj_out(VectorBoxNode::VecBox);
+
+    if (outproj  != NULL) _igvn.replace_node(outproj, box);
+    if (ctrlproj != NULL)  _igvn.replace_node(ctrlproj, ctrl);
+    if (memproj  != NULL)  _igvn.replace_node(memproj,  mem);
+    _igvn.remove_dead_node(vec_box);
+
+    C->remove_macro_node(vec_box);
+  }
+}
+
+static const char* array_type_string(BasicType type) {
+  switch (type) {
+    case T_BOOLEAN: return "[Z";
+    case T_CHAR:    return "[C";
+    case T_FLOAT:   return "[F";
+    case T_DOUBLE:  return "[D";
+    case T_BYTE:    return "[B";
+    case T_SHORT:   return "[S";
+    case T_INT:     return "[I";
+    case T_LONG:    return "[J";
+    default: ShouldNotReachHere();
+  }
+  return NULL;
+}
+
+void PhaseMacroExpand::expand_vectorunbox_node(VectorUnboxNode* vunbox) {
+  // If the Vector Unbox input is a phi, determine if a vector phi can be created.
+  if (vunbox->obj()->uncast()->is_Phi()) {
+    PhiNode* phi = vunbox->obj()->uncast()->as_Phi();
+
+    // Check that there is a single VectorUnbox using this.
+    Unique_Node_List vunbox_list;
+    for (DUIterator_Fast jmax, j = phi->fast_outs(jmax); j < jmax; j++) {
+      Node* user = phi->fast_out(j);
+      if (user->Opcode() == Op_VectorUnbox) {
+        // This phi is being used by multiple vector unboxes. Two possible solutions:
+        // 1) Allow Vector UnBox to be GVNed
+        // 2) Handle all Vector Unbox operations below.
+        // Number 2 is implemented.
+        vunbox_list.push(user);
+      }
+    }
+
+    bool all_inputs_vector_box = true;
+    for ( uint i = PhiNode::Input; i < phi->req(); i++ ) {
+      Node* in = phi->in(i);
+      if ( !in->uncast()->is_VectorBox() ) {
+          all_inputs_vector_box = false;
+          break;
+      } else {
+          // TODO Add logic that will double check the vector type.
+      }
+    }
+
+    if ( all_inputs_vector_box ) {
+      // Create a duplicate phi that handles the vectors.
+      assert(phi->req() >= 2, "phis must have at least 2 inputs");
+      VectorBoxNode* vbox = phi->in(1)->uncast()->as_VectorBox();
+      PhiNode* new_phi = PhiNode::make(phi->region(), vbox->vector_val());
+      for (uint i = 2; i < phi->region()->req(); i++) {
+        vbox = phi->in(i)->uncast()->as_VectorBox();
+        new_phi->set_req(i, vbox->vector_val());
+      }
+      assert(new_phi->bottom_type()->is_vect(), "New phi must be vectors");
+      transform_later(new_phi);
+
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("=== Replacing VectorUnbox with Vector Phi ===");
+      for (uint next = 0; next < vunbox_list.size(); ++next) {
+        vunbox_list.at(next)->dump();
+      }
+      vunbox->dump();
+      tty->print_cr("New phi + 1 level of inputs");
+      new_phi->dump(1);
+      tty->print_cr("=============================================");
+    }
+#endif
+
+      for ( uint next = 0; next < vunbox_list.size(); ++next ) {
+        Node* unbox = vunbox_list.at(next);
+        _igvn.replace_node(unbox, new_phi);
+        _igvn.remove_dead_node(unbox);
+        C->remove_macro_node(unbox);
+      }
+
+      return;
+    }
+  }
+
+  Node* obj = vunbox->obj();
+  const TypeInstPtr* tinst = _igvn.type(obj)->isa_instptr();
+  assert(tinst != NULL, "obj is null");
+  assert(tinst->klass()->is_loaded(), "obj is not loaded");
+  ciInstanceKlass* from_kls = tinst->klass()->as_instance_klass();
+  assert(from_kls->is_vectorapi_vector(), "expecting it to be Vector API class");
+  BasicType bt = from_kls->vectorapi_vector_bt();
+
+  const char* field_name = "vec";
+  if (from_kls->is_vectormask()) {
+    from_kls = from_kls->find_klass(ciSymbol::make("jdk/incubator/vector/GenericMask"))->as_instance_klass();
+    field_name = "bits";
+    bt = T_BOOLEAN;
+  }
+
+  ciField* field = from_kls->get_field_by_name(ciSymbol::make(field_name),
+    ciSymbol::make(array_type_string(bt)), false);
+
+  assert(field != NULL, "undefined field");
+  assert(!field->is_volatile(), "not defined for volatile fields");
+
+  int offset = field->offset_in_bytes();
+  Node* vec_adr = basic_plus_adr(obj, offset);
+
+  Node* mem = vunbox->mem();
+  Node* ctrl = vunbox->in(0);
+  Node* vec_field_ld = transform_later(LoadNode::make(_igvn,
+                                                      ctrl,
+                                                      mem,
+                                                      vec_adr,
+                                                      vec_adr->bottom_type()->is_ptr(),
+                                                      TypeAryPtr::get_array_body_type(bt),
+                                                      T_OBJECT,
+                                                      MemNode::unordered));
+
+  Node* adr = array_element_address(vec_field_ld, intcon(0), bt);
+  const TypePtr* adr_type = adr->bottom_type()->is_ptr();
+  Node* vec_val_load =
+      transform_later(LoadVectorNode::make(-1 /* not used */,
+                                           ctrl,
+                                           mem,
+                                           adr,
+                                           adr_type,
+                                           vunbox->bottom_type()->is_vect()->length(),
+                                           bt));
+
+  if (bt == T_BOOLEAN) {
+    const TypeVect* from = vec_val_load->as_LoadVector()->vect_type();
+    vec_val_load = transform_later(new VectorZeroExtendNode(vec_val_load, from, TypeVect::make(T_INT, from->length())));
+  }
+
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("=== Replacing VectorUnbox with Vector Load ===");
+      vunbox->dump();
+      tty->print_cr("New load (for vec field) + 2 levels of inputs");
+      vec_adr->bottom_type()->dump();
+      tty->print_cr("");
+      vec_field_ld->dump(2);
+      tty->print_cr("New vector load + 2 levels of inputs");
+      adr_type->dump();
+      tty->print_cr("");
+      vec_val_load->dump(2);
+      tty->print_cr("=============================================");
+    }
+#endif
+
+  _igvn.replace_node(vunbox, vec_val_load);
+  _igvn.remove_dead_node(vunbox);
+  C->remove_macro_node(vunbox);
 }

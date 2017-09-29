@@ -829,28 +829,70 @@ class ConvertVF2VDNode : public VectorNode {
   virtual int Opcode() const;
 };
 
-class VectorBoxNode : public TypeNode {
-public:
-  VectorBoxNode(const TypeInstPtr* box_type, Node* vector)
-    : TypeNode(box_type, 2)
-  {
-    init_class_id(Class_VectorBox);
-    init_req(1, vector);
-    assert(vector->is_Vector() || vector->is_LoadVector(), "VectorBox construction needs a vector value");
+class VectorBoxNode : public CallNode {
+ private:
+  const TypeInstPtr* const _box_type;
+ public:
+  enum {
+    // Output:
+    RawAddress  = TypeFunc::Parms,    // the newly-allocated raw address
+    // Inputs:
+    VecBox      = TypeFunc::Parms,      // vector class for boxing value
+    VecVal      = TypeFunc::Parms + 1,  // Vector Value
+    ArrayAlloc  = TypeFunc::Parms + 2,  // Allocator for Array
+    FieldStore  = TypeFunc::Parms + 3,  // The store done to object field
+    VectorStore = TypeFunc::Parms + 4,  // The store done to array via vector store
+    ParmLimit
+  };
+
+  VectorBoxNode(Compile* C, const TypeInstPtr* box_type, const TypeVect* vt, Node* vector, Node* box)
+    : CallNode(vec_box_type(box_type, vt), NULL, TypeRawPtr::BOTTOM), _box_type(box_type)
+   {
+     init_class_id(Class_VectorBox);
+     init_req(VecVal, vector);
+     init_req(VecBox, box);
+     assert(vector->is_Vector() || vector->is_LoadVector(), "VectorBox construction needs a vector value");
+     init_flags(Flag_is_macro);
+    C->add_macro_node(this);
+   }
+
+  virtual int Opcode() const;
+  Node* vector_val() const { return in(VecVal); }
+  Node* box_obj() const { return in(VecBox); }
+
+  const  TypeInstPtr* box_type() const { assert(_box_type != NULL, "sanity"); return _box_type; };
+  virtual       uint  ideal_reg() const { return box_type()->ideal_reg(); }
+  virtual       uint  size_of() const { return sizeof(*this); }
+  virtual       bool  is_CFG() const { return false; }
+  virtual       bool  guaranteed_safepoint()  { return false; }
+
+  static const TypeFunc* vec_box_type(const TypeInstPtr* box_type, const TypeVect* vt);
+};
+
+class VectorUnboxNode : public VectorNode {
+ public:
+  VectorUnboxNode(Compile* C, const TypeVect* vec_type, Node* obj, Node* mem)
+    : VectorNode(mem, obj, vec_type) {
+    init_flags(Flag_is_macro);
+    C->add_macro_node(this);
   }
 
   virtual int Opcode() const;
-  Node* vector_val() const { return in(1); }
+  Node* obj() const { return in(2); }
+  Node* mem() const { return in(1); }
+  virtual Node *Identity(PhaseGVN *phase);
 };
 
 class VectorMaskCmpNode : public VectorNode {
- public:
-  enum ComparisonPredicate {
-    EQ = 0, NE = 1, LT = 2, LTE = 3, GT = 4, GTE = 5
-  };
+ private:
+  BoolTest::mask _predicate;
 
-  VectorMaskCmpNode(ComparisonPredicate predicate, Node* in1, Node* in2) :
-      VectorNode(in1, in2, TypeVect::make(T_BOOLEAN, in1->bottom_type()->is_vect()->length())), comparison(predicate) {
+ protected:
+  uint size_of() const { return sizeof(*this); }
+
+ public:
+  VectorMaskCmpNode(BoolTest::mask predicate, Node* in1, Node* in2) :
+      VectorNode(in1, in2, TypeVect::make(T_INT, in1->bottom_type()->is_vect()->length())), _predicate(predicate) {
     assert(in1->bottom_type()->is_vect()->element_basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),
            "VectorMaskCmp inputs must have same type for elements");
     assert(in1->bottom_type()->is_vect()->length() == in2->bottom_type()->is_vect()->length(),
@@ -859,12 +901,7 @@ class VectorMaskCmpNode : public VectorNode {
   }
 
   virtual int Opcode() const;
-  ComparisonPredicate get_predicate() { return comparison; }
-
- private:
-  ComparisonPredicate comparison;
- protected:
-  uint size_of() const { return sizeof(*this); }
+  BoolTest::mask get_predicate() { return _predicate; }
 };
 
 // Used to wrap other vector nodes in order to add masking functionality.
@@ -880,6 +917,29 @@ public:
   Node* vector_mask() const { return in(2); }
 };
 
+class VectorTestNode : public Node {
+ private:
+  Assembler::Condition _predicate;
+
+ protected:
+  uint size_of() const { return sizeof(*this); }
+
+ public:
+  VectorTestNode( Node *in1, Node *in2, Assembler::Condition predicate) : Node(NULL, in1, in2), _predicate(predicate) {
+    assert(in1->is_Vector() || in1->is_LoadVector(), "must be vector");
+    assert(in2->is_Vector() || in2->is_LoadVector(), "must be vector");
+    assert(in1->bottom_type()->is_vect()->element_basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),
+           "same type elements are needed");
+    assert(in1->bottom_type()->is_vect()->length() == in2->bottom_type()->is_vect()->length(),
+           "same number of elements is needed");
+  }
+  virtual int Opcode() const;
+  virtual const Type *bottom_type() const { return TypeInt::BOOL; }
+  virtual uint ideal_reg() const { return Op_RegI; }  // TODO Should be RegFlags but due to missing comparison flags for BoolTest
+                                                      // in middle-end, we make it boolean result directly.
+  Assembler::Condition get_predicate() const { return _predicate; }
+};
+
 class VectorBlendNode : public VectorNode {
 public:
   VectorBlendNode(Node* vec1, Node* vec2, Node* mask)
@@ -891,6 +951,19 @@ public:
   Node* vec1() const { return in(1); }
   Node* vec2() const { return in(2); }
   Node* vec_mask() const { return in(3); }
+};
+
+class VectorZeroExtendNode : public VectorNode {
+ public:
+  VectorZeroExtendNode(Node* vec1, const TypeVect* from_type, const TypeVect* cast_type)
+    : VectorNode(vec1, cast_type) {
+    BasicType fromBt = from_type->element_basic_type();
+    BasicType toBt = cast_type->element_basic_type();
+    assert(toBt == T_INT, "expecting cast to int");
+    assert(is_subword_type(fromBt) && !is_signed_subword_type(fromBt), "zero cast only applies to unsigned");
+  }
+
+  virtual int Opcode() const;
 };
 
 #endif // SHARE_VM_OPTO_VECTORNODE_HPP

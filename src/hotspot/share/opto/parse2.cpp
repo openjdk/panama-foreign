@@ -1182,6 +1182,12 @@ bool Parse::path_is_suitable_for_uncommon_trap(float prob) const {
   if (!UseInterpreter) {
     return false;
   }
+
+  // Check if optimization is disabled.
+  if (DisableUnstableIfOpt) {
+    return false;
+  }
+
   return (seems_never_taken(prob) && seems_stable_comparison());
 }
 

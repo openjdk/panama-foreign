@@ -1237,6 +1237,7 @@ public:
   void vpsllw(XMMRegister dst, XMMRegister nds, int shift, int vector_len);
 
   void vptest(XMMRegister dst, XMMRegister src);
+  void vptest(XMMRegister dst, XMMRegister src, int vector_len) { Assembler::vptest(dst, src, vector_len); }
 
   void punpcklbw(XMMRegister dst, XMMRegister src);
   void punpcklbw(XMMRegister dst, Address src) { Assembler::punpcklbw(dst, src); }

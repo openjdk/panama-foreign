@@ -10542,6 +10542,17 @@ instruct vcvt4Fto4D_reg(vecY dst, vecX src) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct vcvt8Fto4D_reg(vecY dst, vecY src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length_in_bytes() == 32);
+  match(Set dst (ConvertVF2VD src));
+  format %{ "vcvtps2pd   $dst,$src\t! convert 8F to 4D vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vcvtps2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct vcvt8Fto8D_reg(vecZ dst, vecY src) %{
   predicate(UseAVX > 2 && n->as_Vector()->length_in_bytes() == 64);
   match(Set dst (ConvertVF2VD src));
@@ -10554,7 +10565,7 @@ instruct vcvt8Fto8D_reg(vecZ dst, vecY src) %{
 %}
 
 instruct vcmpeq4F(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == 0);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpeqps  $dst,$src1,$src2\t! packed4F" %}
   ins_encode %{
@@ -10566,7 +10577,7 @@ instruct vcmpeq4F(vecX dst, vecX src1, vecX src2) %{
 %}
 
 instruct vcmpeq8F(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == 0);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpeqps  $dst,$src1,$src2\t! packed8F" %}
   ins_encode %{
@@ -10578,7 +10589,7 @@ instruct vcmpeq8F(vecY dst, vecY src1, vecY src2) %{
 %}
 
 instruct vcmplt4F(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == 2);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpltps  $dst,$src1,$src2\t! packed4F" %}
   ins_encode %{
@@ -10590,7 +10601,7 @@ instruct vcmplt4F(vecX dst, vecX src1, vecX src2) %{
 %}
 
 instruct vcmplt8F(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == 2);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpltps  $dst,$src1,$src2\t! packed8F" %}
   ins_encode %{
@@ -10602,7 +10613,7 @@ instruct vcmplt8F(vecY dst, vecY src1, vecY src2) %{
 %}
 
 instruct vcmpeq4I(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == 0 && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpeqd  $dst,$src1,$src2\n\t! cmpeq packed4I" %}
   ins_encode %{
@@ -10614,7 +10625,7 @@ instruct vcmpeq4I(vecX dst, vecX src1, vecX src2) %{
 %}
 
 instruct vcmpeq8I(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == 0 && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpeqd  $dst,$src1,$src2\n\t! cmpeq packed8I" %}
   ins_encode %{
@@ -10626,7 +10637,7 @@ instruct vcmpeq8I(vecY dst, vecY src1, vecY src2) %{
 %}
 
 instruct vcmplt4I(vecX dst, vecX src1, vecX src2, vecZ tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == 2 && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP tmp, TEMP dst);
   format %{ "vcmpgtd  $dst,$src1,$src2\n\t"
@@ -10643,7 +10654,7 @@ instruct vcmplt4I(vecX dst, vecX src1, vecX src2, vecZ tmp) %{
 %}
 
 instruct vcmplt8I(vecY dst, vecY src1, vecY src2, vecY tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == 2 && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP tmp, TEMP dst);
   format %{ "vcmpgtd  $dst,$src1,$src2\n\t"
@@ -10682,7 +10693,7 @@ instruct vblendvps8F(vecY dst, vecY src1, vecY src2, vecY mask) %{
 %}
 
 instruct vpblendvb4I(vecX dst, vecX src1, vecX src2, vecZ mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->in(2)->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4);
   match(Set dst (VectorBlend (Binary src2 src1) mask));
   format %{ "vblendvb  $dst,$src1,$src2,$mask\t! blend packed4I" %}
   ins_encode %{
@@ -10693,12 +10704,75 @@ instruct vpblendvb4I(vecX dst, vecX src1, vecX src2, vecZ mask) %{
 %}
 
 instruct vpblendvb8I(vecY dst, vecY src1, vecY src2, vecY mask) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->in(2)->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8);
   match(Set dst (VectorBlend (Binary src2 src1) mask));
   format %{ "vblendvb  $dst,$src1,$src2,$mask\t! blend packed8I" %}
   ins_encode %{
     int vector_len = 1;
     __ vblendvb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $mask$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vptest4inae(rRegI dst, vecX src1, vecX src2) %{
+  predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::carrySet);
+  match(Set dst (VectorTest src1 src2 ));
+  format %{ "vptest  $src1,$src2\n\t" 
+            "setb  $dst\t!" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vptest($src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ setb(Assembler::carrySet, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vptest4ieq(rRegI dst, vecX src1, vecX src2) %{
+  predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::zero);
+  match(Set dst (VectorTest src1 src2 ));
+  format %{ "vptest  $src1,$src2\n\t" 
+            "setb  $dst\t!" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vptest($src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ setb(Assembler::zero, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vptest8inae(rRegI dst, vecY src1, vecY src2) %{
+  predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::carrySet);
+  match(Set dst (VectorTest src1 src2 ));
+  format %{ "vptest  $src1,$src2\n\t" 
+            "setb  $dst\t!" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vptest($src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ setb(Assembler::carrySet, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vptest8ieq(rRegI dst, vecY src1, vecY src2) %{
+  predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::zero);
+  match(Set dst (VectorTest src1 src2 ));
+  format %{ "vptest  $src1,$src2\n\t" 
+            "setb  $dst\t!" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vptest($src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ setb(Assembler::zero, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vpzeroextend(vecY dst, vecD src) %{
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8);
+  match(Set dst (VectorZeroExtend src));
+  format %{ "vpmovzxbd  $dst,$src\n\t!" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovzxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}

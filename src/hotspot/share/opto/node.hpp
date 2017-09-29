@@ -620,7 +620,6 @@ public:
             DEFINE_CLASS_ID(Lock,             AbstractLock, 0)
             DEFINE_CLASS_ID(Unlock,           AbstractLock, 1)
           DEFINE_CLASS_ID(ArrayCopy,        Call, 4)
-          DEFINE_CLASS_ID(VectorBox,        Call, 5)
       DEFINE_CLASS_ID(MultiBranch, Multi, 1)
         DEFINE_CLASS_ID(PCTable,     MultiBranch, 0)
           DEFINE_CLASS_ID(Catch,       PCTable, 0)
@@ -666,6 +665,7 @@ public:
       DEFINE_CLASS_ID(EncodeNarrowPtr, Type, 6)
         DEFINE_CLASS_ID(EncodeP, EncodeNarrowPtr, 0)
         DEFINE_CLASS_ID(EncodePKlass, EncodeNarrowPtr, 1)
+      DEFINE_CLASS_ID(VectorBox, Type, 7)
 
     DEFINE_CLASS_ID(Proj,  Node, 3)
       DEFINE_CLASS_ID(CatchProj, Proj, 0)

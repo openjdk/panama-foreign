@@ -492,10 +492,16 @@ void Parse::do_call() {
   if (is_virtual_or_interface) {
     Node* receiver_node             = stack(sp() - nargs);
 
-    // If we see a VectorBox, do not specialize receiver type since we need the base class for intrinsics dispatch.
-    if (!(receiver_node->is_VectorBox() ||
-          callee->intrinsic_id() == vmIntrinsics::_VectorZeroFloat ||
-          callee->intrinsic_id() == vmIntrinsics::_VectorZeroInt)) {
+    bool should_specialize = true;
+
+    if (UseVectorApiIntrinsics) {
+      // For Vector API, we do not specialize in order to keep intrinsics dispatch logic simple.
+      if (receiver_node->is_VectorBox()) {
+        should_specialize = false;
+      }
+    }
+
+    if (should_specialize) {
       const TypeOopPtr* receiver_type = _gvn.type(receiver_node)->isa_oopptr();
       // call_does_dispatch and vtable_index are out-parameters.  They might be changed.
       // For arrays, klass below is Object. When vtable calls are used,

@@ -167,54 +167,9 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   }
 
   // For Vector API, we skip the virtual check because implementation includes verifying proper intrinsification.
-  switch(id) {
-    case vmIntrinsics::_VectorLength:
-    case vmIntrinsics::_VectorZeroFloat:
-    case vmIntrinsics::_VectorZeroDouble:
-    case vmIntrinsics::_VectorZeroInt:
-    case vmIntrinsics::_VectorBroadcastFloat:
-    case vmIntrinsics::_VectorBroadcastDouble:
-    case vmIntrinsics::_VectorBroadcastInt:
-    case vmIntrinsics::_VectorLoadFloat:
-    case vmIntrinsics::_VectorStoreFloat:
-    case vmIntrinsics::_VectorLoadDouble:
-    case vmIntrinsics::_VectorStoreDouble:
-    case vmIntrinsics::_VectorLoadInt:
-    case vmIntrinsics::_VectorStoreInt:
-    case vmIntrinsics::_VectorLoadLong:
-    case vmIntrinsics::_VectorStoreLong:
-    case vmIntrinsics::_VectorLoadShort:
-    case vmIntrinsics::_VectorStoreShort:
-    case vmIntrinsics::_VectorLoadByte:
-    case vmIntrinsics::_VectorStoreByte:
-    case vmIntrinsics::_VectorBlendFloat:
-    case vmIntrinsics::_VectorSumAllFloat:
-    case vmIntrinsics::_VectorEqualFloat:
-    case vmIntrinsics::_VectorLessThanFloat:
-    case vmIntrinsics::_VectorAddFloat:
-    case vmIntrinsics::_VectorSubFloat:
-    case vmIntrinsics::_VectorMulFloat:
-    case vmIntrinsics::_VectorDivFloat:
-    case vmIntrinsics::_VectorBlendDouble:
-    case vmIntrinsics::_VectorSumAllDouble:
-    case vmIntrinsics::_VectorEqualDouble:
-    case vmIntrinsics::_VectorLessThanDouble:
-    case vmIntrinsics::_VectorAddDouble:
-    case vmIntrinsics::_VectorSubDouble:
-    case vmIntrinsics::_VectorMulDouble:
-    case vmIntrinsics::_VectorDivDouble:
-    case vmIntrinsics::_VectorBlendInt:
-    case vmIntrinsics::_VectorSumAllInt:
-    case vmIntrinsics::_VectorEqualInt:
-    case vmIntrinsics::_VectorLessThanInt:
-    case vmIntrinsics::_VectorAddInt:
-    case vmIntrinsics::_VectorSubInt:
-    case vmIntrinsics::_VectorMulInt:
-    case vmIntrinsics::_VectorDivInt:
+  if (id >= vmIntrinsics::FIRST_VECTOR_API && id <= vmIntrinsics::LAST_VECTOR_API) {
       // Assume true if enabled and allow implementation which will determine typing to figure out if supported.
       return UseVectorApiIntrinsics;
-    default:
-      break;
   }
 
   // Only Object.hashCode and Object.clone intrinsics implement also a virtual

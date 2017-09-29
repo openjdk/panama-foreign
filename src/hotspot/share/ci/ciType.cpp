@@ -130,14 +130,24 @@ ciType* ciType::make(BasicType t) {
   return _basic_types[t];
 }
 
+bool ciType::is_float128vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Species));
+}
+
 bool ciType::is_float256vector() {
   return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector) ||
   as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Species));
 }
 
-bool ciType::is_double256vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Species));
+bool ciType::is_float512vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Species));
+}
+
+bool ciType::is_int128vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Species));
 }
 
 bool ciType::is_int256vector() {
@@ -145,14 +155,51 @@ bool ciType::is_int256vector() {
   as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Species));
 }
 
+bool ciType::is_int512vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Species));
+}
+
+bool ciType::is_double128vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Species));
+}
+
+bool ciType::is_double256vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Species));
+}
+
+bool ciType::is_double512vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Species));
+}
+
+bool ciType::is_vectormask() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_VectorMask) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_VectorGenericMask));
+}
+
 bool ciType::is_vectorapi_vector() {
-  return is_float256vector() || is_double256vector() || is_int256vector();
+  return is_float128vector() || is_float256vector() || is_float512vector() ||
+      is_double128vector() || is_double256vector() || is_double512vector() ||
+      is_int128vector() || is_int256vector() || is_int512vector() ||
+      is_vectormask();
 }
 
 int ciType::vectorapi_vector_size() {
-  if (is_float256vector() || is_int256vector()) return 8;
-  else if (is_double256vector()) return 4;
+  if ( is_double128vector() ) return 2;
+  if ( is_float128vector() || is_int128vector() || is_double256vector() ) return 4;
+  if ( is_float256vector() || is_int256vector() || is_double512vector() ) return 8;
+  if ( is_float512vector() || is_int512vector()) return 16;
   return -1;
+}
+
+BasicType ciType::vectorapi_vector_bt() {
+  if ( is_float128vector() || is_float256vector() || is_float512vector() ) return T_FLOAT;
+  if ( is_double128vector() || is_double256vector() || is_double512vector() ) return T_DOUBLE;
+  if ( is_int128vector() || is_int256vector() || is_int512vector() || is_vectormask() ) return T_INT;
+  return T_VOID;
 }
 
 // ciReturnAddress
