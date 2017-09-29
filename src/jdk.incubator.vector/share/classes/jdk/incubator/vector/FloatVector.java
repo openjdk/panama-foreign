@@ -575,6 +575,13 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
     }
 
 
+    // Type conversions
+
+    @HotSpotIntrinsicCandidate
+    @Override
+    public <F> Vector<F,S> cast(Class<F> type) {
+        return cast(type, shape());
+    }
 
     // Type specific accessors
 
@@ -611,7 +618,9 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
 
         @HotSpotIntrinsicCandidate
         @Override
-        public abstract FloatVector<S> zero();
+        public FloatVector<S> zero() {
+            return op(i -> 0);
+        }
 
         @HotSpotIntrinsicCandidate
         public FloatVector<S> broadcast(float e) {

@@ -33,6 +33,9 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     static final $vectortype$ ZERO = new $vectortype$();
 
+    static final Mask<$Boxtype$, Shapes.$shape$> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<$Boxtype$, Shapes.$shape$> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     $type$[] vec;
 
     $vectortype$() {
@@ -384,6 +387,16 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @Override
         public $vectortype$ zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<$Boxtype$, Shapes.$shape$> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<$Boxtype$, Shapes.$shape$> falseMask() {
+            return FALSEMASK;
         }
     }
 }

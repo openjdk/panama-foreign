@@ -33,6 +33,9 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     static final Int128Vector ZERO = new Int128Vector();
 
+    static final Mask<Integer, Shapes.S128Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Integer, Shapes.S128Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     int[] vec;
 
     Int128Vector() {
@@ -373,6 +376,16 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         @Override
         public Int128Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Integer, Shapes.S128Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Integer, Shapes.S128Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

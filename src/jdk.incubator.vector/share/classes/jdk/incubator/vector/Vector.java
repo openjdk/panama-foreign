@@ -185,8 +185,19 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
         Vector<E, S> fromByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
 
         //Mask and shuffle constructions
+        @HotSpotIntrinsicCandidate
         default Mask<E, S> constantMask(boolean... bits) {
             return new GenericMask<>(this, bits);
+        }
+
+        @HotSpotIntrinsicCandidate
+        default Mask<E, S> trueMask() {
+            return new GenericMask<>(this, true);
+        }
+
+        @HotSpotIntrinsicCandidate
+        default Mask<E, S> falseMask() {
+            return new GenericMask<>(this, false);
         }
 
         default Shuffle<E, S> constantShuffle(int... ixs) {
@@ -207,8 +218,10 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
 
         boolean[] toArray();
 
+        @HotSpotIntrinsicCandidate
         boolean anyTrue();
 
+        @HotSpotIntrinsicCandidate
         boolean allTrue();
 
         //TODO: counting trues? LZ count
@@ -221,6 +234,7 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
         <F, Z extends Vector.Shape<Vector<?, ?>>>
         Mask<F, Z> reshape(Class<F> type, Z shape);
 
+        @HotSpotIntrinsicCandidate
         default <Z>
         Mask<Z, S> rebracket(Class<Z> e) {
             return reshape(e, species().shape());

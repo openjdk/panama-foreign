@@ -33,6 +33,9 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
 
     static final Int512Vector ZERO = new Int512Vector();
 
+    static final Mask<Integer, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Integer, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     int[] vec;
 
     Int512Vector() {
@@ -373,6 +376,16 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         @Override
         public Int512Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Integer, Shapes.S512Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Integer, Shapes.S512Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

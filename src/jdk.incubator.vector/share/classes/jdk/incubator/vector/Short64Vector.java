@@ -33,6 +33,9 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     static final Short64Vector ZERO = new Short64Vector();
 
+    static final Mask<Short, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Short, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     short[] vec;
 
     Short64Vector() {
@@ -366,6 +369,16 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         @Override
         public Short64Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Short, Shapes.S64Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Short, Shapes.S64Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

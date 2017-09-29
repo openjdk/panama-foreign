@@ -33,6 +33,9 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     static final Double512Vector ZERO = new Double512Vector();
 
+    static final Mask<Double, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Double, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     double[] vec;
 
     Double512Vector() {
@@ -373,6 +376,16 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         @Override
         public Double512Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Double, Shapes.S512Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Double, Shapes.S512Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

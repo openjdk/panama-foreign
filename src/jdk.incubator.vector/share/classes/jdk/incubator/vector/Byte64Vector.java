@@ -33,6 +33,9 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     static final Byte64Vector ZERO = new Byte64Vector();
 
+    static final Mask<Byte, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Byte, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     byte[] vec;
 
     Byte64Vector() {
@@ -366,6 +369,16 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         @Override
         public Byte64Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Byte, Shapes.S64Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Byte, Shapes.S64Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

@@ -33,6 +33,9 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     static final Int256Vector ZERO = new Int256Vector();
 
+    static final Mask<Integer, Shapes.S256Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Integer, Shapes.S256Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     int[] vec;
 
     Int256Vector() {
@@ -373,6 +376,16 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         @Override
         public Int256Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Integer, Shapes.S256Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Integer, Shapes.S256Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

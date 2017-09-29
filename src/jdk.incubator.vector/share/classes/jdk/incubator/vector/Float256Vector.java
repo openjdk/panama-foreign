@@ -33,6 +33,9 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
     static final Float256Vector ZERO = new Float256Vector();
 
+    static final Mask<Float, Shapes.S256Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Float, Shapes.S256Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     float[] vec;
 
     Float256Vector() {
@@ -373,6 +376,16 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         @Override
         public Float256Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Float, Shapes.S256Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Float, Shapes.S256Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

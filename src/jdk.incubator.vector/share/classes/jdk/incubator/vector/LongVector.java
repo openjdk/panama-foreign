@@ -438,6 +438,12 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
         return rOp((long) 0, (i, a, b) -> (long) (a ^ b));
     }
 
+    // Type conversions
+
+    @Override
+    public <F> Vector<F,S> cast(Class<F> type) {
+        return cast(type, shape());
+    }
 
     // Type specific accessors
 
@@ -473,7 +479,9 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
         // Factories
 
         @Override
-        public abstract LongVector<S> zero();
+        public LongVector<S> zero() {
+            return op(i -> 0);
+        }
 
         public LongVector<S> broadcast(long e) {
             return op(i -> e);

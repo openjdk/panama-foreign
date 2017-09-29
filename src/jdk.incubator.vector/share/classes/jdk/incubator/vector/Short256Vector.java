@@ -33,6 +33,9 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
 
     static final Short256Vector ZERO = new Short256Vector();
 
+    static final Mask<Short, Shapes.S256Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Short, Shapes.S256Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     short[] vec;
 
     Short256Vector() {
@@ -366,6 +369,16 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
         @Override
         public Short256Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Short, Shapes.S256Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Short, Shapes.S256Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

@@ -33,6 +33,9 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
     static final Double64Vector ZERO = new Double64Vector();
 
+    static final Mask<Double, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Double, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     double[] vec;
 
     Double64Vector() {
@@ -373,6 +376,16 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         @Override
         public Double64Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Double, Shapes.S64Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Double, Shapes.S64Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

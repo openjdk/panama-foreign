@@ -40,6 +40,14 @@ final class GenericMask<E, S extends Vector.Shape<Vector<?, ?>>> implements Vect
         this.bits = bits.clone();
     }
 
+    public GenericMask(Vector.Species<E, S> s, boolean val) {
+        this.s = s;
+        this.bits = new boolean[species().length()];
+        for (int i = 0; i < this.bits.length; i++) {
+            this.bits[i] = val;
+        }
+    }
+
     @Override
     public long toLong() {
         long res = 0;

@@ -575,6 +575,12 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
     }
 
 
+    // Type conversions
+
+    @Override
+    public <F> Vector<F,S> cast(Class<F> type) {
+        return cast(type, shape());
+    }
 
     // Type specific accessors
 
@@ -611,7 +617,9 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
 
         @HotSpotIntrinsicCandidate
         @Override
-        public abstract DoubleVector<S> zero();
+        public DoubleVector<S> zero() {
+            return op(i -> 0);
+        }
 
         @HotSpotIntrinsicCandidate
         public DoubleVector<S> broadcast(double e) {

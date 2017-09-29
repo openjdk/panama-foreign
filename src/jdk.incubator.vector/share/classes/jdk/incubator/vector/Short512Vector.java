@@ -33,6 +33,9 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
     static final Short512Vector ZERO = new Short512Vector();
 
+    static final Mask<Short, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Short, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     short[] vec;
 
     Short512Vector() {
@@ -366,6 +369,16 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         @Override
         public Short512Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Short, Shapes.S512Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Short, Shapes.S512Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

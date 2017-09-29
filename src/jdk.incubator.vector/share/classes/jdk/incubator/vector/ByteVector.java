@@ -359,6 +359,12 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
         return rOp((byte) 0, (i, a, b) -> (byte) (a ^ b));
     }
 
+    // Type conversions
+
+    @Override
+    public <F> Vector<F,S> cast(Class<F> type) {
+        return cast(type, shape());
+    }
 
     // Type specific accessors
 
@@ -394,7 +400,9 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
         // Factories
 
         @Override
-        public abstract ByteVector<S> zero();
+        public ByteVector<S> zero() {
+            return op(i -> 0);
+        }
 
         public ByteVector<S> broadcast(byte e) {
             return op(i -> e);

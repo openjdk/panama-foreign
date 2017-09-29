@@ -360,6 +360,12 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
         return rOp((short) 0, (i, a, b) -> (short) (a ^ b));
     }
 
+    // Type conversions
+
+    @Override
+    public <F> Vector<F,S> cast(Class<F> type) {
+        return cast(type, shape());
+    }
 
     // Type specific accessors
 
@@ -395,7 +401,9 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
         // Factories
 
         @Override
-        public abstract ShortVector<S> zero();
+        public ShortVector<S> zero() {
+            return op(i -> 0);
+        }
 
         public ShortVector<S> broadcast(short e) {
             return op(i -> e);

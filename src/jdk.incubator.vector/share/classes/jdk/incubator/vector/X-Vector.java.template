@@ -799,6 +799,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
     }
 #end[BITWISE]
 
+    // Type conversions
+
+#if[float]
+    @HotSpotIntrinsicCandidate
+#end[float]
+    @Override
+    public <F> Vector<F,S> cast(Class<F> type) {
+        return cast(type, shape());
+    }
 
     // Type specific accessors
 
@@ -840,7 +849,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         @HotSpotIntrinsicCandidate
 #end[int]
         @Override
-        public abstract $abstractvectortype$<S> zero();
+        public $abstractvectortype$<S> zero() {
+            return op(i -> 0);
+        }
 
 #if[FP]
         @HotSpotIntrinsicCandidate

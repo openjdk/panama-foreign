@@ -33,6 +33,9 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     static final Long128Vector ZERO = new Long128Vector();
 
+    static final Mask<Long, Shapes.S128Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Long, Shapes.S128Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     long[] vec;
 
     Long128Vector() {
@@ -373,6 +376,16 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         @Override
         public Long128Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Long, Shapes.S128Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Long, Shapes.S128Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

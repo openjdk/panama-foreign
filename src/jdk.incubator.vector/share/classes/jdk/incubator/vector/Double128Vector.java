@@ -33,6 +33,9 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     static final Double128Vector ZERO = new Double128Vector();
 
+    static final Mask<Double, Shapes.S128Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Double, Shapes.S128Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     double[] vec;
 
     Double128Vector() {
@@ -373,6 +376,16 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         @Override
         public Double128Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Double, Shapes.S128Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Double, Shapes.S128Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

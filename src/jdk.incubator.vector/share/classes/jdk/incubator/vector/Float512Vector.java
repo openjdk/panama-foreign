@@ -33,6 +33,9 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     static final Float512Vector ZERO = new Float512Vector();
 
+    static final Mask<Float, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Float, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     float[] vec;
 
     Float512Vector() {
@@ -373,6 +376,16 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         public Float512Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Float, Shapes.S512Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Float, Shapes.S512Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

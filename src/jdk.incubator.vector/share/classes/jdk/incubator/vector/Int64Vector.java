@@ -33,6 +33,9 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
 
     static final Int64Vector ZERO = new Int64Vector();
 
+    static final Mask<Integer, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Integer, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     int[] vec;
 
     Int64Vector() {
@@ -373,6 +376,16 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         @Override
         public Int64Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Integer, Shapes.S64Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Integer, Shapes.S64Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

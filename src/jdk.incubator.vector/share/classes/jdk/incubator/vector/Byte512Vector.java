@@ -33,6 +33,9 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
 
     static final Byte512Vector ZERO = new Byte512Vector();
 
+    static final Mask<Byte, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Byte, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     byte[] vec;
 
     Byte512Vector() {
@@ -366,6 +369,16 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         @Override
         public Byte512Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Byte, Shapes.S512Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Byte, Shapes.S512Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

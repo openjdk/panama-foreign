@@ -427,6 +427,12 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return rOp((int) 0, (i, a, b) -> (int) (a ^ b));
     }
 
+    // Type conversions
+
+    @Override
+    public <F> Vector<F,S> cast(Class<F> type) {
+        return cast(type, shape());
+    }
 
     // Type specific accessors
 
@@ -463,7 +469,9 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
 
         @HotSpotIntrinsicCandidate
         @Override
-        public abstract IntVector<S> zero();
+        public IntVector<S> zero() {
+            return op(i -> 0);
+        }
 
         @HotSpotIntrinsicCandidate
         public IntVector<S> broadcast(int e) {

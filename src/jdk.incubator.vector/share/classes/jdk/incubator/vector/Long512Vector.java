@@ -33,6 +33,9 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     static final Long512Vector ZERO = new Long512Vector();
 
+    static final Mask<Long, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Long, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     long[] vec;
 
     Long512Vector() {
@@ -373,6 +376,16 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         @Override
         public Long512Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Long, Shapes.S512Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Long, Shapes.S512Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }

@@ -33,6 +33,9 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     static final Long64Vector ZERO = new Long64Vector();
 
+    static final Mask<Long, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
+    static final Mask<Long, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
+
     long[] vec;
 
     Long64Vector() {
@@ -373,6 +376,16 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         @Override
         public Long64Vector zero() {
             return ZERO;
+        }
+
+        @Override
+        public Mask<Long, Shapes.S64Bit> trueMask() {
+            return TRUEMASK;
+        }
+
+        @Override
+        public Mask<Long, Shapes.S64Bit> falseMask() {
+            return FALSEMASK;
         }
     }
 }
