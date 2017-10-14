@@ -92,7 +92,6 @@ int find_hihghest_bit( uint32_t mask ) {
 
 //------------------------------dump-------------------------------------------
 
-#ifndef PRODUCT
 void OptoReg::dump(int r, outputStream *st) {
   switch (r) {
   case Special: st->print("r---"); break;
@@ -103,8 +102,6 @@ void OptoReg::dump(int r, outputStream *st) {
     break;
   }
 }
-#endif
-
 
 //=============================================================================
 const RegMask RegMask::Empty(
@@ -400,7 +397,6 @@ uint RegMask::Size() const {
   return sum;
 }
 
-#ifndef PRODUCT
 //------------------------------print------------------------------------------
 void RegMask::dump(outputStream *st) const {
   st->print("[");
@@ -451,4 +447,3 @@ void RegMask::dump(outputStream *st) const {
   }
   st->print("]");
 }
-#endif

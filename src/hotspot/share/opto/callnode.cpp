@@ -39,6 +39,8 @@
 #include "opto/regmask.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/runtime.hpp"
+#include "ci/ciMethodType.hpp"
+#include "runtime/sharedRuntime.hpp"
 
 // Portions of code courtesy of Clifford Click
 
@@ -543,6 +545,13 @@ void JVMState::dump_spec(outputStream *st) const {
   if (caller() != NULL)  caller()->dump_spec(st);
 }
 
+static void print_cat(outputStream* st, Node* map, const char* name, int start, int end) {
+  st->print("%10s(%d):", name, end - start);
+  for (int i = start; i < end; i++) {
+    st->print(" %d", map->in(i)->_idx);
+  }
+  st->cr();
+}
 
 void JVMState::dump_on(outputStream* st) const {
   bool print_map = _map && !((uintptr_t)_map & 1) &&
@@ -572,6 +581,11 @@ void JVMState::dump_on(outputStream* st) const {
       st->print("    bc: ");
       _method->print_codes_on(bci(), bci()+1, st);
     }
+    print_cat(st, this->_map,   "locals", locoff(), stkoff());
+    print_cat(st, this->_map,    "stack", stkoff(), argoff());
+    print_cat(st, this->_map,     "args", argoff(), monoff());
+    print_cat(st, this->_map, "monitors", monoff(), scloff());
+    print_cat(st, this->_map,  "scalars", scloff(), endoff());
   }
 }
 
@@ -681,6 +695,7 @@ void CallNode::dump_spec(outputStream *st) const {
   st->print(" ");
   if (tf() != NULL)  tf()->dump_on(st);
   if (_cnt != COUNT_UNKNOWN)  st->print(" C=%f",_cnt);
+  if (_entry_point != NULL) st->print(" entry=" INTPTR_FORMAT, p2i(_entry_point));
   if (jvms() != NULL)  jvms()->dump_spec(st);
 }
 #endif
@@ -696,7 +711,6 @@ void CallNode::calling_convention( BasicType* sig_bt, VMRegPair *parm_regs, uint
   // Use the standard compiler calling convention
   Matcher::calling_convention( sig_bt, parm_regs, argcnt, true );
 }
-
 
 //------------------------------match------------------------------------------
 // Construct projections for control, I/O, memory-fields, ..., and
@@ -715,10 +729,11 @@ Node *CallNode::match( const ProjNode *proj, const Matcher *match ) {
 
   case TypeFunc::Parms: {       // Normal returns
     uint ideal_reg = tf()->range()->field_at(TypeFunc::Parms)->ideal_reg();
+    RegMask rm;
     OptoRegPair regs = is_CallRuntime()
       ? match->c_return_value(ideal_reg,true)  // Calls into C runtime
       : match->  return_value(ideal_reg,true); // Calls into compiled Java code
-    RegMask rm = RegMask(regs.first());
+    rm = RegMask(regs.first());
     if( OptoReg::is_valid(regs.second()) )
       rm.Insert( regs.second() );
     return new MachProjNode(this,proj->_con,rm,ideal_reg);
@@ -938,7 +953,7 @@ Node *CallNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         phase->C->prepend_late_inline(cg);
         set_generator(NULL);
       }
-    } else {
+    } else if (iid != vmIntrinsics::_linkToNative) {
       assert(callee->has_member_arg(), "wrong type of call?");
       if (in(TypeFunc::Parms + callee->arg_size() - 1)->Opcode() == Op_ConP) {
         phase->C->prepend_late_inline(cg);
@@ -1067,6 +1082,73 @@ void CallRuntimeNode::calling_convention( BasicType* sig_bt, VMRegPair *parm_reg
   Matcher::c_calling_convention( sig_bt, parm_regs, argcnt );
 }
 
+uint CallSnippetNode::cmp( const Node &n ) const {
+  return false; // no way to compare snippets
+}
+
+void CallSnippetNode::compute_arg_regmask(RegMask* rm, uint i) const {
+  assert(!_reg_masks->is_null_object(), "sanity");
+  ciTypeArray* reg_mask_array = _reg_masks->as_obj_array()->obj_at(i+1)->as_type_array();
+  compute_regmask(rm, reg_mask_array);
+}
+
+void CallSnippetNode::compute_return_regmask(RegMask* rm) const {
+  assert(!_reg_masks->is_null_object(), "sanity");
+  ciTypeArray* reg_mask_array = _reg_masks->as_obj_array()->obj_at(0)->as_type_array();
+  compute_regmask(rm, reg_mask_array);
+}
+
+void CallSnippetNode::compute_kill_regmask(RegMask* rm) const {
+  assert(!_killed_reg_mask->is_null_object(), "sanity");
+  ciTypeArray* reg_mask_array = _killed_reg_mask->as_type_array();
+  compute_regmask(rm, reg_mask_array);
+}
+
+void CallSnippetNode::compute_regmask(RegMask* rm, ciTypeArray* reg_mask_array) const {
+  assert(reg_mask_array->length() % 2 == 0, "%d", reg_mask_array->length());
+  for (int i = 0; i < reg_mask_array->length(); i += 2) {
+    jint base = reg_mask_array->element_value(i).as_int();
+    jint size = reg_mask_array->element_value(i+1).as_int();
+    OptoReg::Name first_reg = OptoReg::Name(base);
+    OptoReg::Name second_reg = OptoReg::add(first_reg, size - 1);
+    for (OptoReg::Name r = first_reg; r <= second_reg; r = OptoReg::add(r, 1)) {
+      rm->Insert(r);
+    }
+  }
+}
+
+const Type* CallSnippetNode::Value(PhaseGVN* phase) const {
+  if (is_CFG() && phase->type(in(0)) == Type::TOP)  return Type::TOP;
+  return tf()->range();
+}
+
+Node *CallSnippetNode::match( const ProjNode *proj, const Matcher *match ) {
+  switch (proj->_con) {
+  case TypeFunc::Control:
+  case TypeFunc::I_O:
+  case TypeFunc::Memory:
+    return new MachProjNode(this,proj->_con,RegMask::Empty,MachProjNode::unmatched_proj);
+
+  case TypeFunc::Parms+1:       // For LONG & DOUBLE returns
+    assert(tf()->range()->field_at(TypeFunc::Parms+1) == Type::HALF, "");
+    // 2nd half of doubles and longs
+    return new MachProjNode(this,proj->_con, RegMask::Empty, (uint)OptoReg::Bad);
+
+  case TypeFunc::Parms: {       // Normal returns
+    uint ideal_reg = tf()->range()->field_at(TypeFunc::Parms)->ideal_reg();
+    RegMask rm;
+    as_CallSnippet()->compute_return_regmask(&rm);
+    return new MachProjNode(this,proj->_con,rm,ideal_reg);
+  }
+
+  case TypeFunc::ReturnAdr:
+  case TypeFunc::FramePtr:
+  default:
+    ShouldNotReachHere();
+  }
+  return NULL;
+}
+
 //=============================================================================
 //------------------------------calling_convention-----------------------------
 
@@ -1074,9 +1156,12 @@ void CallRuntimeNode::calling_convention( BasicType* sig_bt, VMRegPair *parm_reg
 //=============================================================================
 #ifndef PRODUCT
 void CallLeafNode::dump_spec(outputStream *st) const {
-  st->print("# ");
-  st->print("%s", _name);
-  CallNode::dump_spec(st);
+  CallRuntimeNode::dump_spec(st);
+}
+
+void CallSnippetNode::dump_spec(outputStream *st) const {
+  // TODO: dump _reg_masks & _generator
+  CallRuntimeNode::dump_spec(st);
 }
 #endif
 
@@ -2039,3 +2124,70 @@ bool CallNode::may_modify_arraycopy_helper(const TypeOopPtr* dest_t, const TypeO
   return true;
 }
 
+//=============================================================================
+
+uint VBoxNode::size_of() const { return sizeof(*this); }
+
+VBoxNode* VBoxNode::make(GraphKit* kit, const TypeVect* t, Node* box, Node* val) {
+  VBoxNode* vbox = new VBoxNode(kit->C, t);
+  Node* prev_mem = kit->set_predefined_input_for_runtime_call(vbox);
+
+  vbox->init_req(VBoxNode::Box, box);
+  vbox->init_req(VBoxNode::Value, val);
+
+  //if (may_throw) {
+//    vbox->set_req(TypeFunc::I_O , kit->i_o());
+//    kit->add_safepoint_edges(vbox, false);
+  //}
+
+  return vbox;
+}
+
+void VBoxNode::connect_outputs(GraphKit* kit) {
+  kit->set_all_memory_call(this, true);
+  kit->set_control(kit->gvn().transform(new ProjNode(this,TypeFunc::Control)));
+//  kit->set_i_o(kit->gvn().transform(new ProjNode(this, TypeFunc::I_O)));
+//  kit->make_slow_call_ex(this, kit->env()->Throwable_klass(), true);
+//  kit->set_all_memory_call(this);
+}
+
+const TypeFunc* VBoxNode::vbox_type(const TypeVect* t) {
+  const Type** fields = TypeTuple::fields(2);
+  fields[Box]       = TypeInstPtr::NOTNULL;
+  fields[Value]     = t;
+  const TypeTuple *domain = TypeTuple::make(ParmLimit, fields);
+
+  fields = TypeTuple::fields(1);
+
+  const TypeInstPtr* rt = TypeInstPtr::NOTNULL; // Returned oop
+  switch (t->base()) {
+    case Type::VectorX:
+      rt = TypeInstPtr::make(TypePtr::NotNull, CURRENT_ENV->Long2_klass());
+      break;
+    case Type::VectorY:
+      rt = TypeInstPtr::make(TypePtr::NotNull, CURRENT_ENV->Long4_klass());
+      break;
+    case Type::VectorZ:
+      rt = TypeInstPtr::make(TypePtr::NotNull, CURRENT_ENV->Long8_klass());
+      break;
+    default: {
+      NOT_PRODUCT(t->dump();)
+      fatal("Unexpected type");
+    }
+  }
+  fields[TypeFunc::Parms+0] = rt;
+  const TypeTuple *range = TypeTuple::make(TypeFunc::Parms+1, fields);
+
+  return TypeFunc::make(domain, range);
+}
+
+int VBoxNode::base_offset_in_bytes() {
+  switch (_t->base()) {
+    case Type::VectorX: return java_lang_Long2::base_offset_in_bytes();
+    case Type::VectorY: return java_lang_Long4::base_offset_in_bytes();
+    case Type::VectorZ: return java_lang_Long8::base_offset_in_bytes();
+  }
+  NOT_PRODUCT(_t->dump();)
+  fatal("Unexpected type");
+  return 0;
+}

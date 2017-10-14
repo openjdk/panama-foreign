@@ -491,18 +491,24 @@ void Parse::do_call() {
   ciKlass* speculative_receiver_type = NULL;
   if (is_virtual_or_interface) {
     Node* receiver_node             = stack(sp() - nargs);
-    const TypeOopPtr* receiver_type = _gvn.type(receiver_node)->isa_oopptr();
-    // call_does_dispatch and vtable_index are out-parameters.  They might be changed.
-    // For arrays, klass below is Object. When vtable calls are used,
-    // resolving the call with Object would allow an illegal call to
-    // finalize() on an array. We use holder instead: illegal calls to
-    // finalize() won't be compiled as vtable calls (IC call
-    // resolution will catch the illegal call) and the few legal calls
-    // on array types won't be either.
-    callee = C->optimize_virtual_call(method(), bci(), klass, holder, orig_callee,
-                                      receiver_type, is_virtual,
-                                      call_does_dispatch, vtable_index);  // out-parameters
-    speculative_receiver_type = receiver_type != NULL ? receiver_type->speculative_type() : NULL;
+
+    // If we see a VectorBox, do not specialize receiver type since we need the base class for intrinsics dispatch.
+    if (!(receiver_node->is_VectorBox() ||
+          callee->intrinsic_id() == vmIntrinsics::_VectorZeroFloat ||
+          callee->intrinsic_id() == vmIntrinsics::_VectorZeroInt)) {
+      const TypeOopPtr* receiver_type = _gvn.type(receiver_node)->isa_oopptr();
+      // call_does_dispatch and vtable_index are out-parameters.  They might be changed.
+      // For arrays, klass below is Object. When vtable calls are used,
+      // resolving the call with Object would allow an illegal call to
+      // finalize() on an array. We use holder instead: illegal calls to
+      // finalize() won't be compiled as vtable calls (IC call
+      // resolution will catch the illegal call) and the few legal calls
+      // on array types won't be either.
+      callee = C->optimize_virtual_call(method(), bci(), klass, holder, orig_callee,
+                                        receiver_type, is_virtual,
+                                        call_does_dispatch, vtable_index);  // out-parameters
+      speculative_receiver_type = receiver_type != NULL ? receiver_type->speculative_type() : NULL;
+    }
   }
 
   // invoke-super-special

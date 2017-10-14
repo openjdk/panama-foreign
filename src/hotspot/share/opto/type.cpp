@@ -825,6 +825,7 @@ const Type *Type::meet_helper(const Type *t, bool include_speculative) const {
   const Type *mt = this_t->xmeet(t);
   if (isa_narrowoop() || t->isa_narrowoop()) return mt;
   if (isa_narrowklass() || t->isa_narrowklass()) return mt;
+  if (isa_vect() || t->isa_vect()) return mt;
 #ifdef ASSERT
   assert(mt == t->xmeet(this_t), "meet not commutative");
   const Type* dual_join = mt->_dual;
@@ -1942,6 +1943,19 @@ const TypeTuple *TypeTuple::make( uint cnt, const Type **fields ) {
   return (TypeTuple*)(new TypeTuple(cnt,fields))->hashcons();
 }
 
+const TypeTuple *TypeTuple::make(const TypeTuple* t, uint drop_arg) {
+  assert(drop_arg >= TypeFunc::Parms && drop_arg < t->cnt(), "sanity");
+  uint arg_cnt = t->cnt() - TypeFunc::Parms - 1;
+
+  uint pos = TypeFunc::Parms;
+  const Type **field_array = fields(arg_cnt);
+  for (uint i = TypeFunc::Parms; i < t->cnt(); i++) {
+    if (drop_arg == i)  continue;
+    field_array[i] = t->field_at(i);
+  }
+  return TypeTuple::make(TypeFunc::Parms + arg_cnt, field_array);
+}
+
 //------------------------------fields-----------------------------------------
 // Subroutine call type with space allocated for argument types
 // Memory for Control, I_O, Memory, FramePtr, and ReturnAdr is allocated implicitly
@@ -2270,6 +2284,13 @@ const Type *TypeVect::xmeet( const Type *t ) const {
   case Bottom:                  // Ye Olde Default
     return t;
 
+  case OopPtr:
+    if (t->is_oopptr()->speculative_type() != NULL) {
+      if (t->is_oopptr()->speculative_type()->is_vectorapi_vector()) {
+        tty->print_cr("Meeting vector with object override");
+        return this;
+      }
+    }  // Fallthrough
   default:                      // All else is a mistake
     typerr(t);
 
@@ -3090,6 +3111,17 @@ const Type *TypeOopPtr::xmeet_helper(const Type *t) const {
   case Top:
     return this;
 
+  case VectorS:
+  case VectorD:
+  case VectorX:
+  case VectorY:
+  case VectorZ:
+    if (speculative_type() != NULL) {
+      if (speculative_type()->is_vectorapi_vector()) {
+        return t;
+      }
+    }  // Fallthrough
+
   default:                      // All else is a mistake
     typerr(t);
 
@@ -3620,6 +3652,17 @@ const Type *TypeInstPtr::xmeet_helper(const Type *t) const {
     return Type::BOTTOM;
   case Top:
     return this;
+
+  case VectorS:
+  case VectorD:
+  case VectorX:
+  case VectorY:
+  case VectorZ:
+    if (speculative_type() != NULL) {
+      if (speculative_type()->is_vectorapi_vector()) {
+        return t;
+      }
+    }  // Fallthrough
 
   default:                      // All else is a mistake
     typerr(t);
@@ -5251,6 +5294,12 @@ const TypeFunc *TypeFunc::make(ciMethod* method) {
   tf = TypeFunc::make(domain, range);
   C->set_last_tf(method, tf);  // fill cache
   return tf;
+}
+
+//------------------------------make-------------------------------------------
+const TypeFunc *TypeFunc::make(const TypeFunc* t, uint drop_arg) {
+  const TypeTuple *domain = TypeTuple::make(t->domain(), drop_arg);
+  return TypeFunc::make(domain, t->range());
 }
 
 //------------------------------meet-------------------------------------------

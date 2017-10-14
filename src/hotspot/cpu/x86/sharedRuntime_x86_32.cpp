@@ -1019,6 +1019,10 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
   return stack;
 }
 
+void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name) {
+  fatal("NYI");
+}
+
 // A simple move of integer like type
 static void simple_move32(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
   if (src.first()->is_stack()) {
@@ -1434,6 +1438,12 @@ static void gen_special_dispatch(MacroAssembler* masm,
                                  const VMRegPair* regs) {
   verify_oop_args(masm, method, sig_bt, regs);
   vmIntrinsics::ID iid = method->intrinsic_id();
+
+  if (iid == vmIntrinsics::_linkToNative) {
+//    generate_native_call(masm, method->size_of_parameters(), sig_bt, regs, ret_type,
+//                         /*for_compiler_entry=*/true);
+    return;
+  }
 
   // Now write the args into the outgoing interpreter space
   bool     has_receiver   = false;

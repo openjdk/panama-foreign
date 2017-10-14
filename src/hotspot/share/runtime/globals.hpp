@@ -1079,6 +1079,12 @@ public:
   diagnostic(bool, PrintStubCode, false,                                    \
           "Print generated stub code")                                      \
                                                                             \
+  diagnostic(bool, PrintCodeSnippets, false,                                \
+          "Print generated code for machine code snippets")                 \
+                                                                            \
+  diagnostic(bool, CheckCodeSnippets, trueInDebug,                          \
+          "Verify machine code snippets")                                   \
+                                                                            \
   product(bool, StackTraceInThrowable, true,                                \
           "Collect backtrace in throwable when exception happens")          \
                                                                             \

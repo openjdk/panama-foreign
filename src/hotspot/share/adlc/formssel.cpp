@@ -419,6 +419,8 @@ Form::CallType InstructForm::is_ideal_call() const {
   idx = 0;
   if(_matrule->find_type("CallLeafNoFP",idx))     return Form::JAVA_LEAF;
   idx = 0;
+  if(_matrule->find_type("CallSnippet",idx))      return Form::JAVA_SNIPPET;
+  idx = 0;
 
   return Form::invalid_type;
 }
@@ -1149,6 +1151,9 @@ const char *InstructForm::mach_base_class(FormDict &globals)  const {
   }
   else if( is_ideal_call() == Form::JAVA_LEAF ) {
     return "MachCallLeafNode";
+  }
+  else if( is_ideal_call() == Form::JAVA_SNIPPET ) {
+    return "MachCallSnippetNode";
   }
   else if (is_ideal_return()) {
     return "MachReturnNode";

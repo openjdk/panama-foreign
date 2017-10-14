@@ -40,6 +40,8 @@
 #include "opto/runtime.hpp"
 #include "opto/subnode.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "ci/ciNativeEntryPoint.hpp"
+#include "ci/ciMachineCodeSnippet.hpp"
 
 // Utility function.
 const TypeFunc* CallGenerator::tf() const {
@@ -809,6 +811,41 @@ CallGenerator* CallGenerator::for_method_handle_call(JVMState* jvms, ciMethod* c
   }
 }
 
+class NativeCallGenerator : public CallGenerator {
+private:
+  //address _address;
+  ciNativeEntryPoint* _nep;
+public:
+  NativeCallGenerator(ciMethod* m, ciNativeEntryPoint* nep) : CallGenerator(m), _nep(nep) {}
+
+  virtual JVMState* generate(JVMState* jvms);
+};
+
+JVMState* NativeCallGenerator::generate(JVMState* jvms) {
+  GraphKit kit(jvms);
+  kit.C->print_inlining_update(this);
+
+  const TypeFunc *t = TypeFunc::make(tf(), tf()->domain()->cnt()-1);
+  Node* call = NULL;
+  if (_nep->is_machine_code_snippet()) {
+    address addr = _nep->get_entry_point();
+    if (kit.C->log() != NULL) {
+      kit.C->log()->elem("native_snippet bci='%d' entry_point='" INTPTR_FORMAT,
+          jvms->bci(), p2i(addr));
+    }
+    call = kit.make_snippet_call(t, method()->arg_size()-1, (ciMachineCodeSnippet*)_nep);
+  } else {
+    assert(_nep->is_native_entry_point(), "sanity");
+    address addr = _nep->get_entry_point();
+    if (kit.C->log() != NULL) {
+      kit.C->log()->elem("native_call bci='%d' entry_point='" INTPTR_FORMAT "'", jvms->bci(), p2i(addr));
+    }
+    call = kit.make_native_call(t, method()->arg_size()-1, addr);
+  }
+
+  return kit.transfer_exceptions_into_jvms();
+}
+
 CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod* caller, ciMethod* callee, bool& input_not_const) {
   GraphKit kit(jvms);
   PhaseGVN& gvn = kit.gvn();
@@ -928,7 +965,22 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
       }
     }
     break;
-
+  case vmIntrinsics::_linkToNative:
+    {
+      Node* member_name = kit.argument(callee->arg_size() - 1);
+      if (member_name->Opcode() == Op_ConP) {
+        const TypeOopPtr* oop_ptr = member_name->bottom_type()->is_oopptr();
+        ciNativeEntryPoint* nep = oop_ptr->const_oop()->as_native_entry_point();
+        address addr = nep->get_entry_point();
+        if (PrintInlining)  C->print_inlining(callee, jvms->depth() - 1, jvms->bci(), "direct native call");
+        return new NativeCallGenerator(callee, nep);
+      } else {
+        const char* msg = "member_name not constant";
+        if (PrintInlining)  C->print_inlining(callee, jvms->depth() - 1, jvms->bci(), msg);
+        C->log_inline_failure(msg);
+      }
+    }
+    break;
   default:
     fatal("unexpected intrinsic %d: %s", iid, vmIntrinsics::name_at(iid));
     break;
@@ -1323,7 +1375,6 @@ WarmCallInfo* WarmCallInfo::always_cold() {
   assert(_always_cold.is_cold(), "must always be cold");
   return &_always_cold;
 }
-
 
 #ifndef PRODUCT
 

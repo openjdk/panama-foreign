@@ -214,6 +214,13 @@ int PhaseChaitin::use_prior_register( Node *n, uint idx, Node *def, Block *curre
 //------------------------------skip_copies------------------------------------
 // Skip through any number of copies (that don't mod oop-i-ness)
 Node *PhaseChaitin::skip_copies( Node *c ) {
+  // FIXME: is it safe w.r.t. caller-save registers before a call? If deoptimization
+  // happens during the call (e.g., _new_instance_Java), the value in the register
+  // is likely to be killed. But JVM state at safepoint refers to the register
+  // instead of the spilled copy.
+  if (RegMask::is_vector(c->ideal_reg())) {
+    return c; // Vector values should be spilled to stack.
+  }
   int idx = c->is_Copy();
   uint is_oop = lrgs(_lrg_map.live_range_id(c))._is_oop;
   while (idx != 0) {
@@ -263,7 +270,7 @@ int PhaseChaitin::elide_copy( Node *n, int k, Block *current_block, Node_List &v
   // int to pointer.  This attempts to jump through a chain of copies, where
   // intermediate copies might be illegal, i.e., value is stored down to stack
   // then reloaded BUT survives in a register the whole way.
-  Node *val = skip_copies(n->in(k));
+  Node *val = skip_copies(x);
   if (val == x) return blk_adjust; // No progress?
 
   int n_regs = RegMask::num_registers(val->ideal_reg());

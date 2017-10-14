@@ -595,7 +595,7 @@ class MacroAssembler: public Assembler {
 
   // only if +VerifyOops
   // TODO: Make these macros with file and line like sparc version!
-  void verify_oop(Register reg, const char* s = "broken oop");
+  void verify_oop(Register reg, const char* s = "broken oop", bool force_check = false);
   void verify_oop_addr(Address addr, const char * s = "broken oop addr");
 
   // TODO: verify method and klass metadata (compare against vptr?)
@@ -854,6 +854,7 @@ class MacroAssembler: public Assembler {
 
   void call(Label& L, relocInfo::relocType rtype);
   void call(Register entry);
+  void call(Address addr) { Assembler::call(addr); }
 
   // NOTE: this call transfers to the effective address of entry NOT
   // the address contained by entry. This is because this is more natural

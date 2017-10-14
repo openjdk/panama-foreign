@@ -166,6 +166,55 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
     return false;
   }
 
+  // For Vector API, we skip the virtual check because implementation includes verifying proper intrinsification.
+  switch(id) {
+    case vmIntrinsics::_VectorLength:
+    case vmIntrinsics::_VectorZeroFloat:
+    case vmIntrinsics::_VectorZeroDouble:
+    case vmIntrinsics::_VectorZeroInt:
+    case vmIntrinsics::_VectorBroadcastFloat:
+    case vmIntrinsics::_VectorBroadcastDouble:
+    case vmIntrinsics::_VectorBroadcastInt:
+    case vmIntrinsics::_VectorLoadFloat:
+    case vmIntrinsics::_VectorStoreFloat:
+    case vmIntrinsics::_VectorLoadDouble:
+    case vmIntrinsics::_VectorStoreDouble:
+    case vmIntrinsics::_VectorLoadInt:
+    case vmIntrinsics::_VectorStoreInt:
+    case vmIntrinsics::_VectorLoadLong:
+    case vmIntrinsics::_VectorStoreLong:
+    case vmIntrinsics::_VectorLoadShort:
+    case vmIntrinsics::_VectorStoreShort:
+    case vmIntrinsics::_VectorLoadByte:
+    case vmIntrinsics::_VectorStoreByte:
+    case vmIntrinsics::_VectorBlendFloat:
+    case vmIntrinsics::_VectorSumAllFloat:
+    case vmIntrinsics::_VectorEqualFloat:
+    case vmIntrinsics::_VectorLessThanFloat:
+    case vmIntrinsics::_VectorAddFloat:
+    case vmIntrinsics::_VectorSubFloat:
+    case vmIntrinsics::_VectorMulFloat:
+    case vmIntrinsics::_VectorDivFloat:
+    case vmIntrinsics::_VectorBlendDouble:
+    case vmIntrinsics::_VectorSumAllDouble:
+    case vmIntrinsics::_VectorEqualDouble:
+    case vmIntrinsics::_VectorLessThanDouble:
+    case vmIntrinsics::_VectorAddDouble:
+    case vmIntrinsics::_VectorSubDouble:
+    case vmIntrinsics::_VectorMulDouble:
+    case vmIntrinsics::_VectorDivDouble:
+    case vmIntrinsics::_VectorBlendInt:
+    case vmIntrinsics::_VectorSumAllInt:
+    case vmIntrinsics::_VectorEqualInt:
+    case vmIntrinsics::_VectorLessThanInt:
+    case vmIntrinsics::_VectorAddInt:
+    case vmIntrinsics::_VectorSubInt:
+    case vmIntrinsics::_VectorMulInt:
+    case vmIntrinsics::_VectorDivInt:
+      // Assume true if enabled and allow implementation which will determine typing to figure out if supported.
+      return UseVectorApiIntrinsics;
+  }
+
   // Only Object.hashCode and Object.clone intrinsics implement also a virtual
   // dispatch because calling both methods is expensive but both methods are
   // frequently overridden. All other intrinsics implement only a non-virtual
@@ -593,6 +642,28 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_profileBoolean:
   case vmIntrinsics::_isCompileConstant:
   case vmIntrinsics::_Preconditions_checkIndex:
+    break;
+  case vmIntrinsics::_getLong2:
+  case vmIntrinsics::_Long2_make: // FIXME: check capabilities
+  case vmIntrinsics::_Long2_make_zero:
+  case vmIntrinsics::_Long2_extract:
+  case vmIntrinsics::_Long2_equals:
+    if (!Matcher::match_rule_supported(Op_PackL)) return false;
+    break;
+  case vmIntrinsics::_getLong4:
+  case vmIntrinsics::_Long4_make:
+  case vmIntrinsics::_Long4_make_zero:
+  case vmIntrinsics::_Long4_extract:
+  case vmIntrinsics::_Long4_equals:
+    if (!Matcher::match_rule_supported(Op_Pack2L)) return false;
+    break;
+  case vmIntrinsics::_getLong8:
+  case vmIntrinsics::_Long8_make:
+  case vmIntrinsics::_Long8_make_zero:
+  case vmIntrinsics::_Long8_extract:
+  case vmIntrinsics::_Long8_equals:
+    //if (!Matcher::match_rule_supported(Op_Pack4L)) return false;
+    return false; // FIXME: not supported yet
     break;
   default:
     return false;

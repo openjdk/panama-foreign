@@ -560,3 +560,18 @@ void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adapt
   BLOCK_COMMENT("} trace_method_handle");
 }
 #endif // PRODUCT
+
+
+address SharedRuntime::generate_upcall_stub(int id) {
+  // PANAMA: CMH
+  fatal("NYI");
+  return NULL;
+}
+
+void MethodHandles::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, arrayHandle rets_arr, address code, JavaThread* thread) {
+  fatal("NIY");
+}
+
+void MethodHandles::generate_invoke_native(MacroAssembler* _masm) {
+  //fatal("NIY");
+}

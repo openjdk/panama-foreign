@@ -56,6 +56,9 @@ class MethodHandles: AllStatic {
   // Adapters.
   static MethodHandlesAdapterBlob* _adapter_code;
 
+  // Native invoker code
+  static BufferBlob* _invoke_native_blob;
+
   // utility functions for reifying names and types
   static oop field_name_or_null(Symbol* s);
   static oop field_signature_type_or_null(Symbol* s);
@@ -83,6 +86,9 @@ class MethodHandles: AllStatic {
   // Generate MethodHandles adapters.
   static void generate_adapters();
 
+  static address generate_upcall_stub(int id);
+  static void invoke_native(arrayHandle recipe, arrayHandle args, arrayHandle rets, address code, JavaThread* thread);
+
   // Called from MethodHandlesAdapterGenerator.
   static address generate_method_handle_interpreter_entry(MacroAssembler* _masm, vmIntrinsics::ID iid);
   static void generate_method_handle_dispatch(MacroAssembler* _masm,
@@ -90,6 +96,12 @@ class MethodHandles: AllStatic {
                                               Register receiver_reg,
                                               Register member_reg,
                                               bool for_compiler_entry);
+
+  // Generate invoke native stub
+  static void generate_invoke_native(MacroAssembler* masm);
+  static address invoke_native_address() {
+    return _invoke_native_blob->code_begin();
+  }
 
   // Queries
   static bool is_signature_polymorphic(vmIntrinsics::ID iid) {
@@ -117,7 +129,7 @@ class MethodHandles: AllStatic {
   static bool has_member_arg(vmIntrinsics::ID iid) {
     assert(is_signature_polymorphic(iid), "");
     return (iid >= vmIntrinsics::_linkToVirtual &&
-            iid <= vmIntrinsics::_linkToInterface);
+            iid <= vmIntrinsics::_linkToNative);
   }
   static bool has_member_arg(Symbol* klass, Symbol* name) {
     if ((klass == vmSymbols::java_lang_invoke_MethodHandle() ||

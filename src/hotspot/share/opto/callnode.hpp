@@ -38,6 +38,7 @@
 // Optimization - Graph Style
 
 class Chaitin;
+class GraphKit;
 class NamedCounter;
 class MultiNode;
 class  SafePointNode;
@@ -48,6 +49,7 @@ class       CallDynamicJavaNode;
 class     CallRuntimeNode;
 class       CallLeafNode;
 class         CallLeafNoFPNode;
+class         CallSnippetNode;
 class     AllocateNode;
 class       AllocateArrayNode;
 class     BoxLockNode;
@@ -763,7 +765,6 @@ public:
 //------------------------------CallRuntimeNode--------------------------------
 // Make a direct subroutine call node into compiled C++ code.
 class CallRuntimeNode : public CallNode {
-  virtual uint cmp( const Node &n ) const;
   virtual uint size_of() const; // Size is bigger
 public:
   CallRuntimeNode(const TypeFunc* tf, address addr, const char* name,
@@ -776,6 +777,7 @@ public:
 
   virtual int   Opcode() const;
   virtual void  calling_convention( BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt ) const;
+  virtual uint cmp( const Node &n ) const;
 
 #ifndef PRODUCT
   virtual void  dump_spec(outputStream *st) const;
@@ -795,6 +797,48 @@ public:
   }
   virtual int   Opcode() const;
   virtual bool        guaranteed_safepoint()  { return false; }
+#ifndef PRODUCT
+  virtual void  dump_spec(outputStream *st) const;
+#endif
+};
+
+class CallSnippetNode : public CallLeafNode {
+  virtual uint cmp( const Node &n ) const;
+//private:
+public:
+  bool _is_cfg;
+  ciMethodType* _mt;
+  ciObject* _reg_masks;
+  ciObject* _killed_reg_mask;
+  ciObject* _generator;
+
+  CallSnippetNode(const TypeFunc* tf,
+                  ciMethodType* mt, ciObject* reg_masks, ciObject* generator, bool is_cfg,
+                  ciObject* killed_reg_mask, const char* name, const TypePtr* adr_type)
+    : CallLeafNode(tf, (address)-1, name, adr_type),
+        _mt(mt), _reg_masks(reg_masks), _generator(generator), _is_cfg(is_cfg),
+        _killed_reg_mask(killed_reg_mask)
+  {
+    init_class_id(Class_CallSnippet);
+  }
+
+  virtual uint size_of() const { return sizeof(*this); }
+
+
+  virtual int  Opcode() const;
+  virtual const Type* Value(PhaseGVN* phase) const;
+  virtual bool guaranteed_safepoint()  { return false; }
+  virtual bool pinned() const { return false; }
+  virtual bool is_CFG() const { return _is_cfg; }
+
+  virtual Node* match(const ProjNode *proj, const Matcher *m);
+
+  void compute_kill_regmask(RegMask* rm) const;
+  void compute_arg_regmask(RegMask* rm, uint i) const;
+  void compute_return_regmask(RegMask* rm) const;
+
+  void compute_regmask(RegMask* rm, ciTypeArray* reg_mask_array) const;
+
 #ifndef PRODUCT
   virtual void  dump_spec(outputStream *st) const;
 #endif
@@ -1123,5 +1167,42 @@ public:
 #else
   JVMState* dbg_jvms() const { return NULL; }
 #endif
+};
+
+class VBoxNode : public CallNode {
+private:
+  const TypeVect* _t;
+public:
+  enum {
+    // Output:
+    RawAddress  = TypeFunc::Parms,    // the newly-allocated raw address
+    // Inputs:
+    Box         = TypeFunc::Parms,      // box
+    Value       = TypeFunc::Parms+1,    // vector value
+    ParmLimit
+  };
+
+  static const TypeFunc* vbox_type(const TypeVect* t);
+
+  VBoxNode(Compile* C, const TypeVect* t)
+    : CallNode(vbox_type(t), NULL, TypeRawPtr::BOTTOM), _t(t)
+  {
+    init_class_id(Class_VBox);
+    init_flags(Flag_is_macro);
+    C->add_macro_node(this);
+  }
+
+  virtual uint ideal_reg() const { return _t->ideal_reg(); }
+  virtual bool guaranteed_safepoint()  { return false; }
+
+  virtual int Opcode() const;
+  virtual uint size_of() const; // Size is bigger
+
+  void connect_outputs(GraphKit* kit);
+
+  const TypeVect* type() { return _t; }
+  int base_offset_in_bytes();
+
+  static VBoxNode* make(GraphKit* kit, const TypeVect* t, Node* box, Node* val);
 };
 #endif // SHARE_VM_OPTO_CALLNODE_HPP

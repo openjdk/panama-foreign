@@ -79,7 +79,29 @@
   template(java_lang_Integer,                         "java/lang/Integer")                        \
   template(java_lang_Integer_IntegerCache,            "java/lang/Integer$IntegerCache")           \
   template(java_lang_Long,                            "java/lang/Long")                           \
+  template(java_lang_Long2,                           "java/lang/Long2")                          \
+  template(java_lang_Long4,                           "java/lang/Long4")                          \
+  template(java_lang_Long8,                           "java/lang/Long8")                          \
   template(java_lang_Long_LongCache,                  "java/lang/Long$LongCache")                 \
+  template(jdk_incubator_vector_Vector,                  "jdk/incubator/vector/Vector")                 \
+  template(jdk_incubator_vector_FloatVector,             "jdk/incubator/vector/FloatVector")            \
+  template(jdk_incubator_vector_FloatVector_FloatSpecies,"jdk/incubator/vector/FloatVector$FloatSpecies") \
+  template(jdk_incubator_vector_Float256Vector,          "jdk/incubator/vector/Float256Vector")         \
+  template(jdk_incubator_vector_Float256Vector_Float256Species,"jdk/incubator/vector/Float256Vector$Float256Species") \
+  template(jdk_incubator_vector_DoubleVector,             "jdk/incubator/vector/DoubleVector")          \
+  template(jdk_incubator_vector_DoubleVector_DoubleSpecies,"jdk/incubator/vector/DoubleVector$DoubleSpecies") \
+  template(jdk_incubator_vector_Double256Vector,          "jdk/incubator/vector/Double256Vector")         \
+  template(jdk_incubator_vector_Double256Vector_Double256Species,"jdk/incubator/vector/Double256Vector$Double256Species") \
+  template(jdk_incubator_vector_LongVector,              "jdk/incubator/vector/LongVector")             \
+  template(jdk_incubator_vector_LongVector_LongSpecies,  "jdk/incubator/vector/LongVector$LongSpecies") \
+  template(jdk_incubator_vector_IntVector,               "jdk/incubator/vector/IntVector")              \
+  template(jdk_incubator_vector_IntVector_IntSpecies,    "jdk/incubator/vector/IntVector$IntSpecies")   \
+  template(jdk_incubator_vector_Int256Vector,            "jdk/incubator/vector/Int256Vector")           \
+  template(jdk_incubator_vector_Int256Vector_Int256Species,"jdk/incubator/vector/Int256Vector$Int256Species") \
+  template(jdk_incubator_vector_ShortVector,             "jdk/incubator/vector/ShortVector")            \
+  template(jdk_incubator_vector_ShortVector_ShortSpecies,"jdk/incubator/vector/ShortVector$ShortSpecies") \
+  template(jdk_incubator_vector_ByteVector,              "jdk/incubator/vector/ByteVector")             \
+  template(jdk_incubator_vector_ByteVector_ByteSpecies,  "jdk/incubator/vector/ByteVector$ByteSpecies") \
   template(java_lang_Shutdown,                        "java/lang/Shutdown")                       \
   template(java_lang_ref_Reference,                   "java/lang/ref/Reference")                  \
   template(java_lang_ref_SoftReference,               "java/lang/ref/SoftReference")              \
@@ -249,6 +271,7 @@
   template(linkToStatic_name,                         "linkToStatic")                             \
   template(linkToSpecial_name,                        "linkToSpecial")                            \
   template(linkToInterface_name,                      "linkToInterface")                          \
+  template(linkToNative_name,                         "linkToNative")                             \
   template(compiledLambdaForm_name,                   "<compiledLambdaForm>")  /*fake name*/      \
   template(star_name,                                 "*") /*not really a name*/                  \
   template(invoke_name,                               "invoke")                                   \
@@ -290,11 +313,15 @@
   template(java_lang_invoke_MethodType_signature,     "Ljava/lang/invoke/MethodType;")            \
   template(java_lang_invoke_ResolvedMethodName_signature, "Ljava/lang/invoke/ResolvedMethodName;")\
   template(java_lang_invoke_MemberName_signature,     "Ljava/lang/invoke/MemberName;")            \
+  template(java_lang_invoke_NativeEntryPoint_signature, "Ljava/lang/invoke/NativeEntryPoint;")    \
+  template(java_lang_invoke_MachineCodeSnippet_signature, "Ljava/lang/invoke/MachineCodeSnippet;") \
   template(java_lang_invoke_LambdaForm_signature,     "Ljava/lang/invoke/LambdaForm;")            \
   template(java_lang_invoke_MethodHandle_signature,   "Ljava/lang/invoke/MethodHandle;")          \
   /* internal classes known only to the JVM: */                                                   \
   template(java_lang_invoke_MemberName,               "java/lang/invoke/MemberName")              \
   template(java_lang_invoke_ResolvedMethodName,       "java/lang/invoke/ResolvedMethodName")      \
+  template(java_lang_invoke_NativeEntryPoint,         "java/lang/invoke/NativeEntryPoint")        \
+  template(java_lang_invoke_MachineCodeSnippet,       "java/lang/invoke/MachineCodeSnippet")      \
   template(java_lang_invoke_MethodHandleNatives,      "java/lang/invoke/MethodHandleNatives")     \
   template(java_lang_invoke_MethodHandleNatives_CallSiteContext, "java/lang/invoke/MethodHandleNatives$CallSiteContext") \
   template(java_lang_invoke_LambdaForm,               "java/lang/invoke/LambdaForm")              \
@@ -368,6 +395,9 @@
   template(put_name,                                  "put")                                      \
   template(type_name,                                 "type")                                     \
   template(findNative_name,                           "findNative")                               \
+  template(codeGenerator_name,                        "codeGenerator")                            \
+  template(registerMasks_name,                        "registerMasks")                            \
+  template(killedRegisterMask_name,                   "killedRegisterMask")                       \
   template(deadChild_name,                            "deadChild")                                \
   template(getFromClass_name,                         "getFromClass")                             \
   template(dispatch_name,                             "dispatch")                                 \
@@ -421,6 +451,8 @@
   template(vmindex_name,                              "vmindex")                                  \
   template(vmcount_name,                              "vmcount")                                  \
   template(vmentry_name,                              "vmentry")                                  \
+  template(addr_name,                                 "addr")                                     \
+  template(snippet_name,                              "snippet")                                  \
   template(flags_name,                                "flags")                                    \
   template(rtype_name,                                "rtype")                                    \
   template(ptypes_name,                               "ptypes")                                   \
@@ -464,6 +496,7 @@
   template(module_entry_name,                         "module_entry")                             \
   template(resolved_references_name,                  "<resolved_references>")                    \
   template(init_lock_name,                            "<init_lock>")                              \
+  template(l1_name,                                   "l1")                                       \
                                                                                                   \
   /* name symbols needed by intrinsics */                                                         \
   VM_INTRINSICS_DO(VM_INTRINSIC_IGNORE, VM_SYMBOL_IGNORE, template, VM_SYMBOL_IGNORE, VM_ALIAS_IGNORE) \
@@ -481,6 +514,7 @@
   template(bool_void_signature,                       "(Z)V")                                     \
   template(int_void_signature,                        "(I)V")                                     \
   template(int_int_signature,                         "(I)I")                                     \
+  template(int_long_signature,                        "(I)J")                                     \
   template(char_char_signature,                       "(C)C")                                     \
   template(short_short_signature,                     "(S)S")                                     \
   template(int_bool_signature,                        "(I)Z")                                     \
@@ -503,6 +537,7 @@
   template(byte_array_signature,                      "[B")                                       \
   template(char_array_signature,                      "[C")                                       \
   template(int_array_signature,                       "[I")                                       \
+  template(int_int_array_signature,                   "[[I")                                       \
   template(object_void_signature,                     "(Ljava/lang/Object;)V")                    \
   template(object_int_signature,                      "(Ljava/lang/Object;)I")                    \
   template(object_boolean_signature,                  "(Ljava/lang/Object;)Z")                    \
@@ -1013,8 +1048,8 @@
   do_class(com_sun_crypto_provider_cipherBlockChaining,            "com/sun/crypto/provider/CipherBlockChaining")       \
    do_intrinsic(_cipherBlockChaining_encryptAESCrypt, com_sun_crypto_provider_cipherBlockChaining, encrypt_name, byteArray_int_int_byteArray_int_signature, F_R)   \
    do_intrinsic(_cipherBlockChaining_decryptAESCrypt, com_sun_crypto_provider_cipherBlockChaining, decrypt_name, byteArray_int_int_byteArray_int_signature, F_R)   \
-   do_name(     encrypt_name,                                      "implEncrypt")                                       \
-   do_name(     decrypt_name,                                      "implDecrypt")                                       \
+   do_name(     encrypt_name,                                      "implEncrypt")                                           \
+   do_name(     decrypt_name,                                      "implDecrypt")                                           \
    do_signature(byteArray_int_int_byteArray_int_signature,         "([BII[BI)I")                                        \
                                                                                                                         \
   do_class(com_sun_crypto_provider_counterMode,      "com/sun/crypto/provider/CounterMode")                             \
@@ -1149,6 +1184,46 @@
   do_intrinsic(_putLong,            jdk_internal_misc_Unsafe,     putLong_name, putLong_signature,               F_RN)  \
   do_intrinsic(_putFloat,           jdk_internal_misc_Unsafe,     putFloat_name, putFloat_signature,             F_RN)  \
   do_intrinsic(_putDouble,          jdk_internal_misc_Unsafe,     putDouble_name, putDouble_signature,           F_RN)  \
+                                                                                                                        \
+  do_intrinsic(_getLong2,           jdk_internal_misc_Unsafe,     getLong2_name, getLong2_signature,             F_RN)  \
+   do_name(     getLong2_name,                                   "getLong2")                                            \
+   do_signature(getLong2_signature,                              "(Ljava/lang/Long2;Ljava/lang/Object;J)Ljava/lang/Long2;") \
+                                                                                                                        \
+  do_intrinsic(_getLong4,           jdk_internal_misc_Unsafe,     getLong4_name, getLong4_signature,             F_RN)  \
+   do_name(     getLong4_name,                                   "getLong4")                                            \
+   do_signature(getLong4_signature,                              "(Ljava/lang/Long4;Ljava/lang/Object;J)Ljava/lang/Long4;") \
+                                                                                                                        \
+  do_intrinsic(_getLong8,           jdk_internal_misc_Unsafe,     getLong8_name, getLong8_signature,             F_RN)  \
+   do_name(     getLong8_name,                                   "getLong8")                                            \
+   do_signature(getLong8_signature,                              "(Ljava/lang/Long8;Ljava/lang/Object;J)Ljava/lang/Long8;") \
+                                                                                                                        \
+  /* Long2, Long4, Long8 */                                                                                             \
+   do_name(make_name,                     "make")                                                                       \
+  do_intrinsic(_Long2_make,               java_lang_Long2,        make_name, Long2_make_signature, F_SN)                \
+   do_signature(Long2_make_signature,                            "(JJ)Ljava/lang/Long2;")                               \
+  do_intrinsic(_Long4_make,               java_lang_Long4,        make_name, Long4_make_signature, F_SN)                \
+   do_signature(Long4_make_signature,                            "(JJJJ)Ljava/lang/Long4;")                             \
+  do_intrinsic(_Long8_make,               java_lang_Long8,        make_name, Long8_make_signature, F_SN)                \
+   do_signature(Long8_make_signature,                            "(JJJJJJJJ)Ljava/lang/Long8;")                         \
+                                                                                                                        \
+  do_intrinsic(_Long2_make_zero,          java_lang_Long2,        make_name, Long2_make_zero_signature, F_S)            \
+   do_signature(Long2_make_zero_signature,                       "()Ljava/lang/Long2;")                                 \
+  do_intrinsic(_Long4_make_zero,          java_lang_Long4,        make_name, Long4_make_zero_signature, F_S)            \
+   do_signature(Long4_make_zero_signature,                       "()Ljava/lang/Long4;")                                 \
+  do_intrinsic(_Long8_make_zero,          java_lang_Long8,        make_name, Long8_make_zero_signature, F_S)            \
+   do_signature(Long8_make_zero_signature,                       "()Ljava/lang/Long8;")                                 \
+                                                                                                                        \
+   do_name(extract_name,                  "extract")                                                                    \
+  do_intrinsic(_Long2_extract,            java_lang_Long2,        extract_name, int_long_signature, F_RN)               \
+  do_intrinsic(_Long4_extract,            java_lang_Long4,        extract_name, int_long_signature, F_RN)               \
+  do_intrinsic(_Long8_extract,            java_lang_Long8,        extract_name, int_long_signature, F_RN)               \
+                                                                                                                        \
+  do_intrinsic(_Long2_equals,             java_lang_Long2,        equals_name, Long2_equals_signature, F_R)             \
+   do_signature(Long2_equals_signature,                           "(Ljava/lang/Long2;)Z")                               \
+  do_intrinsic(_Long4_equals,             java_lang_Long4,        equals_name, Long4_equals_signature, F_R)             \
+   do_signature(Long4_equals_signature,                           "(Ljava/lang/Long4;)Z")                               \
+  do_intrinsic(_Long8_equals,             java_lang_Long8,        equals_name, Long8_equals_signature, F_R)             \
+   do_signature(Long8_equals_signature,                           "(Ljava/lang/Long8;)Z")                               \
                                                                                                                         \
   do_name(getObjectVolatile_name,"getObjectVolatile")   do_name(putObjectVolatile_name,"putObjectVolatile")             \
   do_name(getBooleanVolatile_name,"getBooleanVolatile") do_name(putBooleanVolatile_name,"putBooleanVolatile")           \
@@ -1374,6 +1449,87 @@
    do_name(     getAndSetObject_name,                                   "getAndSetObject")                                    \
    do_signature(getAndSetObject_signature,                              "(Ljava/lang/Object;JLjava/lang/Object;)Ljava/lang/Object;" ) \
                                                                                                                                \
+   /* Vector API intrinsification support */                                                                                   \
+   do_signature(vector_cmp_sig, "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/Vector$Mask;")                                 \
+   do_signature(vector_float_blend_sig, "(Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/FloatVector;") \
+   do_signature(vector_float_bin_op_sig, "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/FloatVector;")                        \
+   do_signature(vector_float_zero_sig, "()Ljdk/incubator/vector/FloatVector;")                                                    \
+   do_signature(vector_float_broadcast_sig, "(F)Ljdk/incubator/vector/FloatVector;")                                              \
+   do_signature(vector_float_load_sig, "([FI)Ljdk/incubator/vector/FloatVector;")                                                 \
+   do_signature(vector_float_store_sig, "([FI)V")                                                                              \
+   do_signature(vector_double_blend_sig, "(Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/DoubleVector;") \
+   do_signature(vector_double_bin_op_sig, "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/DoubleVector;")                            \
+   do_signature(vector_double_zero_sig, "()Ljdk/incubator/vector/DoubleVector;")                                                        \
+   do_signature(vector_double_broadcast_sig, "(D)Ljdk/incubator/vector/DoubleVector;")                                                  \
+   do_signature(vector_double_load_sig, "([DI)Ljdk/incubator/vector/DoubleVector;")                                               \
+   do_signature(vector_double_store_sig, "([DI)V")                                                                             \
+   do_signature(vector_int_blend_sig, "(Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/IntVector;") \
+   do_signature(vector_int_bin_op_sig, "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/IntVector;")                            \
+   do_signature(vector_int_zero_sig, "()Ljdk/incubator/vector/IntVector;")                                                        \
+   do_signature(vector_int_broadcast_sig, "(I)Ljdk/incubator/vector/IntVector;")                                                  \
+   do_signature(vector_int_load_sig, "([II)Ljdk/incubator/vector/IntVector;")                                                     \
+   do_signature(vector_int_store_sig, "([II)V")                                                                                \
+   do_signature(vector_long_load_sig, "([JI)Ljdk/incubator/vector/LongVector;")                                                   \
+   do_signature(vector_long_store_sig, "([JI)V")                                                                               \
+   do_signature(vector_short_load_sig, "([SI)Ljdk/incubator/vector/ShortVector;")                                                 \
+   do_signature(vector_short_store_sig, "([SI)V")                                                                              \
+   do_signature(vector_byte_load_sig, "([BI)Ljdk/incubator/vector/ByteVector;")                                                   \
+   do_name(zero_vector_name, "zero")                                                                                           \
+   do_name(broadcast_vector_name, "broadcast")                                                                                 \
+   do_name(load_vector_name, "fromArray")                                                                                      \
+   do_name(store_vector_name, "intoArray")                                                                                     \
+   do_name(sub_method_name, "sub")                                                                                             \
+   do_name(mul_method_name, "mul")                                                                                             \
+   do_name(div_method_name, "div")                                                                                             \
+   do_name(equal_method_name, "equal")                                                                                         \
+   do_name(lessthan_method_name, "lessThan")                                                                                   \
+   do_name(blend_method_name, "blend")                                                                                         \
+   do_name(sumall_method_name, "sumAll")                                                                                       \
+   do_intrinsic(_VectorLength, jdk_incubator_vector_Vector, length_name, void_int_signature, F_R)                                 \
+   do_intrinsic(_VectorZeroFloat, jdk_incubator_vector_FloatVector_FloatSpecies, zero_vector_name, vector_float_zero_sig, F_R)    \
+   do_intrinsic(_VectorBroadcastFloat, jdk_incubator_vector_FloatVector_FloatSpecies, broadcast_vector_name, vector_float_broadcast_sig, F_R)    \
+   do_intrinsic(_VectorZeroInt, jdk_incubator_vector_IntVector_IntSpecies, zero_vector_name, vector_int_zero_sig, F_R)            \
+   do_intrinsic(_VectorBroadcastInt, jdk_incubator_vector_IntVector_IntSpecies, broadcast_vector_name, vector_int_broadcast_sig, F_R)    \
+   do_intrinsic(_VectorZeroDouble, jdk_incubator_vector_DoubleVector_DoubleSpecies, zero_vector_name, vector_double_zero_sig, F_R)            \
+   do_intrinsic(_VectorBroadcastDouble, jdk_incubator_vector_DoubleVector_DoubleSpecies, broadcast_vector_name, vector_double_broadcast_sig, F_R)    \
+   do_intrinsic(_VectorLoadFloat, jdk_incubator_vector_FloatVector_FloatSpecies, load_vector_name, vector_float_load_sig, F_R)    \
+   do_intrinsic(_VectorStoreFloat, jdk_incubator_vector_FloatVector, store_vector_name, vector_float_store_sig, F_R)              \
+   do_intrinsic(_VectorLoadDouble, jdk_incubator_vector_DoubleVector_DoubleSpecies, load_vector_name, vector_double_load_sig, F_R)\
+   do_intrinsic(_VectorStoreDouble, jdk_incubator_vector_DoubleVector, store_vector_name, vector_double_store_sig, F_R)           \
+   do_intrinsic(_VectorLoadInt, jdk_incubator_vector_IntVector_IntSpecies, load_vector_name, vector_int_load_sig, F_R)            \
+   do_intrinsic(_VectorStoreInt, jdk_incubator_vector_IntVector, store_vector_name, vector_int_store_sig, F_R)                    \
+   do_intrinsic(_VectorLoadLong, jdk_incubator_vector_LongVector_LongSpecies, load_vector_name, vector_long_load_sig, F_R)        \
+   do_intrinsic(_VectorStoreLong, jdk_incubator_vector_LongVector, store_vector_name, vector_long_store_sig, F_R)                 \
+   do_intrinsic(_VectorLoadShort, jdk_incubator_vector_ShortVector_ShortSpecies, load_vector_name, vector_short_load_sig, F_R)    \
+   do_intrinsic(_VectorStoreShort, jdk_incubator_vector_ShortVector, store_vector_name, vector_short_store_sig, F_R)              \
+   do_intrinsic(_VectorLoadByte, jdk_incubator_vector_ByteVector_ByteSpecies, load_vector_name, vector_byte_load_sig, F_R)        \
+   do_intrinsic(_VectorStoreByte, jdk_incubator_vector_ByteVector, store_vector_name, implCompress_signature, F_R)                \
+   do_intrinsic(_VectorEqualDouble, jdk_incubator_vector_DoubleVector, equal_method_name, vector_cmp_sig, F_R)                    \
+   do_intrinsic(_VectorLessThanDouble, jdk_incubator_vector_DoubleVector, lessthan_method_name, vector_cmp_sig, F_R)              \
+   do_intrinsic(_VectorBlendDouble, jdk_incubator_vector_DoubleVector, blend_method_name, vector_double_blend_sig, F_R)           \
+   do_intrinsic(_VectorSumAllDouble, jdk_incubator_vector_DoubleVector, sumall_method_name, void_double_signature, F_R)           \
+   do_intrinsic(_VectorSubDouble, jdk_incubator_vector_DoubleVector, sub_method_name, vector_double_bin_op_sig, F_R)              \
+   do_intrinsic(_VectorMulDouble, jdk_incubator_vector_DoubleVector, mul_method_name, vector_double_bin_op_sig, F_R)              \
+   do_intrinsic(_VectorDivDouble, jdk_incubator_vector_DoubleVector, div_method_name, vector_double_bin_op_sig, F_R)              \
+   do_intrinsic(_VectorAddDouble, jdk_incubator_vector_DoubleVector, add_method_name, vector_double_bin_op_sig, F_R)              \
+   do_intrinsic(_VectorEqualInt, jdk_incubator_vector_IntVector, equal_method_name, vector_cmp_sig, F_R)                          \
+   do_intrinsic(_VectorLessThanInt, jdk_incubator_vector_IntVector, lessthan_method_name, vector_cmp_sig, F_R)                    \
+   do_intrinsic(_VectorBlendInt, jdk_incubator_vector_IntVector, blend_method_name, vector_int_blend_sig, F_R)                    \
+   do_intrinsic(_VectorSumAllInt, jdk_incubator_vector_IntVector, sumall_method_name, void_int_signature, F_R)                    \
+   do_intrinsic(_VectorSubInt, jdk_incubator_vector_IntVector, sub_method_name, vector_int_bin_op_sig, F_R)                       \
+   do_intrinsic(_VectorMulInt, jdk_incubator_vector_IntVector, mul_method_name, vector_int_bin_op_sig, F_R)                       \
+   do_intrinsic(_VectorDivInt, jdk_incubator_vector_IntVector, div_method_name, vector_int_bin_op_sig, F_R)                       \
+   do_intrinsic(_VectorAddInt, jdk_incubator_vector_IntVector, add_method_name, vector_int_bin_op_sig, F_R)                       \
+   do_intrinsic(_VectorEqualFloat, jdk_incubator_vector_FloatVector, equal_method_name, vector_cmp_sig, F_R)                      \
+   do_intrinsic(_VectorLessThanFloat, jdk_incubator_vector_FloatVector, lessthan_method_name, vector_cmp_sig, F_R)                \
+   do_intrinsic(_VectorBlendFloat, jdk_incubator_vector_FloatVector, blend_method_name, vector_float_blend_sig, F_R)              \
+   do_intrinsic(_VectorSumAllFloat, jdk_incubator_vector_FloatVector, sumall_method_name, void_float_signature, F_R)              \
+   do_intrinsic(_VectorSubFloat, jdk_incubator_vector_FloatVector, sub_method_name, vector_float_bin_op_sig, F_R)                 \
+   do_intrinsic(_VectorMulFloat, jdk_incubator_vector_FloatVector, mul_method_name, vector_float_bin_op_sig, F_R)                 \
+   do_intrinsic(_VectorDivFloat, jdk_incubator_vector_FloatVector, div_method_name, vector_float_bin_op_sig, F_R)                 \
+   do_intrinsic(_VectorAddFloat, jdk_incubator_vector_FloatVector, add_method_name, vector_float_bin_op_sig, F_R)                 \
+   /* _VectorAddFloat should be kept as the last one here because it is tagged as ending the list of intrinsics */             \
+                                                                                                                               \
    /* (2) Bytecode intrinsics                                                                        */                        \
                                                                                                                                \
   do_intrinsic(_park,                     jdk_internal_misc_Unsafe,     park_name, park_signature,                     F_R)    \
@@ -1412,13 +1568,14 @@
                                                                                                                           \
   do_intrinsic(_invoke,                   java_lang_reflect_Method, invoke_name, object_object_array_object_signature, F_R) \
   /*   (symbols invoke_name and invoke_signature defined above) */                                                      \
-  /* the polymorphic MH intrinsics must be in compact order, with _invokeGeneric first and _linkToInterface last */     \
+  /* the polymorphic MH intrinsics must be in compact order, with _invokeGeneric first and _linkToNative last */        \
   do_intrinsic(_invokeGeneric,            java_lang_invoke_MethodHandle, invoke_name,           star_name, F_RN)        \
   do_intrinsic(_invokeBasic,              java_lang_invoke_MethodHandle, invokeBasic_name,      star_name, F_RN)        \
   do_intrinsic(_linkToVirtual,            java_lang_invoke_MethodHandle, linkToVirtual_name,    star_name, F_SN)        \
   do_intrinsic(_linkToStatic,             java_lang_invoke_MethodHandle, linkToStatic_name,     star_name, F_SN)        \
   do_intrinsic(_linkToSpecial,            java_lang_invoke_MethodHandle, linkToSpecial_name,    star_name, F_SN)        \
   do_intrinsic(_linkToInterface,          java_lang_invoke_MethodHandle, linkToInterface_name,  star_name, F_SN)        \
+  do_intrinsic(_linkToNative,             java_lang_invoke_MethodHandle, linkToNative_name,     star_name, F_SN)        \
   /* special marker for bytecode generated for the JVM from a LambdaForm: */                                            \
   do_intrinsic(_compiledLambdaForm,       java_lang_invoke_MethodHandle, compiledLambdaForm_name, star_name, F_RN)      \
                                                                                                                         \
@@ -1493,7 +1650,7 @@ class vmSymbols: AllStatic {
     FIRST_SID = NO_SID + 1
   };
   enum {
-    log2_SID_LIMIT = 10         // checked by an assert at start-up
+    log2_SID_LIMIT = 12         // checked by an assert at start-up
   };
 
  private:
@@ -1559,10 +1716,10 @@ class vmIntrinsics: AllStatic {
     #undef VM_INTRINSIC_ENUM
 
     ID_LIMIT,
-    LAST_COMPILER_INLINE = _getAndSetObject,
+    LAST_COMPILER_INLINE = _VectorAddFloat,
     FIRST_MH_SIG_POLY    = _invokeGeneric,
     FIRST_MH_STATIC      = _linkToVirtual,
-    LAST_MH_SIG_POLY     = _linkToInterface,
+    LAST_MH_SIG_POLY     = _linkToNative,
 
     FIRST_ID = _none + 1
   };

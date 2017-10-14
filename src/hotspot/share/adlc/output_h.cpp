@@ -693,6 +693,12 @@ void gen_inst_format(FILE *fp, FormDict &globals, InstructForm &inst, bool for_c
     case Form::JAVA_NATIVE:
       fprintf(fp,"  st->print(\" %%s\", _name);");
       break;
+    case Form::JAVA_SNIPPET:
+      fprintf(fp,"  st->print(\" %%s\", _name);");
+      fprintf(fp,"  if (_size > 0) { st->print(\" ! code: 0x\"); }");
+      fprintf(fp,"  for (jint i = 0; i < _size; i++) { st->print(\"%%02x\", _code[i]); }");
+      fprintf(fp,"  st->print(\" (%%d bytes)\", _size);");
+      break;
     default:
       assert(0,"ShouldNotReachHere");
     }
@@ -1666,7 +1672,8 @@ void ArchDesc::declareClasses(FILE *fp) {
         !instr->is_mach_constant()) {  // These inherit the funcion from MachConstantNode.
       fprintf(fp,"  virtual uint           mach_constant_base_node_input() const { ");
       if (instr->is_ideal_call() != Form::invalid_type &&
-          instr->is_ideal_call() != Form::JAVA_LEAF) {
+          instr->is_ideal_call() != Form::JAVA_LEAF &&
+          instr->is_ideal_call() != Form::JAVA_SNIPPET) {
         // MachConstantBase goes behind arguments, but before jvms.
         fprintf(fp,"assert(tf() && tf()->domain(), \"\"); return tf()->domain()->cnt();");
       } else {

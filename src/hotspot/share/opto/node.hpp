@@ -51,6 +51,7 @@ class CallLeafNode;
 class CallNode;
 class CallRuntimeNode;
 class CallStaticJavaNode;
+class CallSnippetNode;
 class CastIINode;
 class CatchNode;
 class CatchProjNode;
@@ -89,6 +90,7 @@ class MachCallJavaNode;
 class MachCallLeafNode;
 class MachCallNode;
 class MachCallRuntimeNode;
+class MachCallSnippetNode;
 class MachCallStaticJavaNode;
 class MachConstantBaseNode;
 class MachConstantNode;
@@ -141,10 +143,14 @@ class SubNode;
 class Type;
 class TypeNode;
 class UnlockNode;
+class VBoxNode;
 class VectorNode;
 class LoadVectorNode;
 class StoreVectorNode;
+class VectorBoxNode;
+class VectorMaskCmpNode;
 class VectorSet;
+
 typedef void (*NFunc)(Node&,void*);
 extern "C" {
   typedef int (*C_sort_func_t)(const void *, const void *);
@@ -612,12 +618,15 @@ public:
             DEFINE_CLASS_ID(CallDynamicJava,  CallJava, 1)
           DEFINE_CLASS_ID(CallRuntime,      Call, 1)
             DEFINE_CLASS_ID(CallLeaf,         CallRuntime, 0)
+              DEFINE_CLASS_ID(CallSnippet,      CallLeaf, 0)
           DEFINE_CLASS_ID(Allocate,         Call, 2)
             DEFINE_CLASS_ID(AllocateArray,    Allocate, 0)
           DEFINE_CLASS_ID(AbstractLock,     Call, 3)
             DEFINE_CLASS_ID(Lock,             AbstractLock, 0)
             DEFINE_CLASS_ID(Unlock,           AbstractLock, 1)
           DEFINE_CLASS_ID(ArrayCopy,        Call, 4)
+          DEFINE_CLASS_ID(VBox,             Call, 5)
+          DEFINE_CLASS_ID(VectorBox,        Call, 6)
       DEFINE_CLASS_ID(MultiBranch, Multi, 1)
         DEFINE_CLASS_ID(PCTable,     MultiBranch, 0)
           DEFINE_CLASS_ID(Catch,       PCTable, 0)
@@ -640,6 +649,7 @@ public:
               DEFINE_CLASS_ID(MachCallDynamicJava,  MachCallJava, 1)
             DEFINE_CLASS_ID(MachCallRuntime,      MachCall, 1)
               DEFINE_CLASS_ID(MachCallLeaf,         MachCallRuntime, 0)
+                DEFINE_CLASS_ID(MachCallSnippet,      MachCallLeaf, 0)
       DEFINE_CLASS_ID(MachBranch, Mach, 1)
         DEFINE_CLASS_ID(MachIf,         MachBranch, 0)
         DEFINE_CLASS_ID(MachGoto,       MachBranch, 1)
@@ -699,7 +709,9 @@ public:
     DEFINE_CLASS_ID(Add,      Node, 11)
     DEFINE_CLASS_ID(Mul,      Node, 12)
     DEFINE_CLASS_ID(Vector,   Node, 13)
+      DEFINE_CLASS_ID(VectorMaskCmp, Vector, 0)
     DEFINE_CLASS_ID(ClearArray, Node, 14)
+
 
     _max_classes  = ClassMask_ClearArray
   };
@@ -786,6 +798,7 @@ public:
   DEFINE_CLASS_QUERY(CallLeaf)
   DEFINE_CLASS_QUERY(CallRuntime)
   DEFINE_CLASS_QUERY(CallStaticJava)
+  DEFINE_CLASS_QUERY(CallSnippet)
   DEFINE_CLASS_QUERY(Catch)
   DEFINE_CLASS_QUERY(CatchProj)
   DEFINE_CLASS_QUERY(CheckCastPP)
@@ -821,6 +834,7 @@ public:
   DEFINE_CLASS_QUERY(MachCallDynamicJava)
   DEFINE_CLASS_QUERY(MachCallJava)
   DEFINE_CLASS_QUERY(MachCallLeaf)
+  DEFINE_CLASS_QUERY(MachCallSnippet)
   DEFINE_CLASS_QUERY(MachCallRuntime)
   DEFINE_CLASS_QUERY(MachCallStaticJava)
   DEFINE_CLASS_QUERY(MachConstantBase)
@@ -853,9 +867,12 @@ public:
   DEFINE_CLASS_QUERY(Store)
   DEFINE_CLASS_QUERY(Sub)
   DEFINE_CLASS_QUERY(Type)
+  DEFINE_CLASS_QUERY(VBox)
   DEFINE_CLASS_QUERY(Vector)
   DEFINE_CLASS_QUERY(LoadVector)
   DEFINE_CLASS_QUERY(StoreVector)
+  DEFINE_CLASS_QUERY(VectorBox)
+  DEFINE_CLASS_QUERY(VectorMaskCmp)
   DEFINE_CLASS_QUERY(Unlock)
 
   #undef DEFINE_CLASS_QUERY

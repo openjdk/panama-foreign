@@ -211,6 +211,8 @@ public:
   // Always Save   = 'A' (same as SOE + SOC)
   const char *_register_save_policy;
   const char *_c_reg_save_policy;
+  const char *_no_reg_save_policy;
+
   // Convert a machine register to a machine register type, so-as to
   // properly match spill code.
   const int *_register_save_type;
@@ -426,6 +428,7 @@ public:
   // Array mapping arguments to registers.  Argument 0 is usually the 'this'
   // pointer.  Registers can include stack-slots and regular registers.
   static void c_calling_convention( BasicType*, VMRegPair *, uint );
+
   // Frame pointer. The frame pointer is kept at the base of the stack
   // and so is probably the stack pointer for most machines.  On Intel
   // it is ESP.  On the PowerPC it is R1.  On Sparc it is SP.

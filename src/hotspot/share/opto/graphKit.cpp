@@ -31,6 +31,7 @@
 #include "gc/shared/collectedHeap.hpp"
 #include "memory/resourceArea.hpp"
 #include "opto/addnode.hpp"
+#include "opto/callnode.hpp"
 #include "opto/castnode.hpp"
 #include "opto/convertnode.hpp"
 #include "opto/graphKit.hpp"
@@ -42,8 +43,11 @@
 #include "opto/parse.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/runtime.hpp"
+#include "opto/vectornode.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "ci/ciNativeEntryPoint.hpp"
+#include "ci/ciMethodType.hpp"
 
 //----------------------------GraphKit-----------------------------------------
 // Main utility constructor.
@@ -2505,6 +2509,165 @@ Node* GraphKit::make_runtime_call(int flags,
 
 }
 
+//-----------------------------make_runtime_call-------------------------------
+Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, address call_addr) {
+  CallNode* call = new CallLeafNode(call_type, call_addr, "native_call", TypePtr::BOTTOM);
+  set_predefined_input_for_runtime_call(call);
+
+  for (uint i = 0; i < nargs; i++) {
+    Node* arg = argument(i);
+    call->init_req(i + TypeFunc::Parms, arg);
+  }
+
+  Node* c = _gvn.transform(call);
+  assert(c == call, "cannot disappear");
+
+  set_predefined_output_for_runtime_call(call);
+
+  Node* ret;
+  if (method() == NULL || method()->return_type()->basic_type() == T_VOID) {
+    ret = top();
+  } else {
+    ret = gvn().transform(new ProjNode(call, TypeFunc::Parms));
+  }
+
+  push_node(method()->return_type()->basic_type(), ret);
+
+  return call;
+}
+
+static const TypeTuple* prepare_tuple(const TypeTuple* tp, ciMethodType* mt, bool is_ret) {
+  int field_cnt = tp->cnt() - (!is_ret && mt->rtype()->is_vector() ? 1 : 0);
+  const Type **fields = TypeTuple::fields(field_cnt);
+
+  uint halves = 0;
+  for (uint i = TypeFunc::Parms, j = TypeFunc::Parms; i < tp->cnt(); i++) {
+    if (!is_ret &&
+        i == TypeFunc::Parms &&
+        mt->rtype()->is_vector()) {
+      assert(tp->field_at(TypeFunc::Parms)->basic_type() == T_OBJECT, "");
+      // skip preallocated box (first argument) when vector value is returned.
+      // Value boxing is implemented explicitly in IR (see GraphKit::make_snippet_call).
+      continue;
+    }
+    const Type* t = tp->field_at(i);
+    if (t == Type::HALF) {
+      halves++;
+    } else if (t->isa_instptr()) {
+      ciType* pt = (is_ret ? mt->rtype() : mt->ptype_at(i-halves-TypeFunc::Parms));
+      if (pt->is_vector()) {
+        fields[j++] = TypeVect::make(T_LONG, pt->vector_size());
+        continue;
+      }
+    }
+    // Default
+    fields[j++] = t;
+  }
+  return TypeTuple::make(field_cnt, fields);
+}
+
+static const TypeFunc* prepare_call_type(const TypeFunc* call_type, ciMethodType* mt) {
+  const TypeTuple* new_range  = prepare_tuple(call_type->range(), mt, true);
+  const TypeTuple* new_domain = prepare_tuple(call_type->domain(), mt, false);
+
+  return TypeFunc::make(new_domain, new_range);
+}
+
+// FIXME: check consistency with jdk.vm.ci.panama.MachineCodeSnippet.Effect
+juint MCS_READS_MEM     = 0x00000001;
+juint MCS_WRITES_MEM    = 0x00000002;
+juint MCS_NEEDS_CONTROL = 0x00000004;
+
+Node* GraphKit::make_snippet_call(const TypeFunc* call_type, uint nargs, ciMachineCodeSnippet* nep) {
+  ciMethodType* mt = nep->method_type();
+
+  juint flags = nep->flags();
+
+  bool reads_mem     = (flags & MCS_READS_MEM) != 0;
+  bool writes_mem    = (flags & MCS_WRITES_MEM) != 0;
+  bool needs_control = (flags & MCS_NEEDS_CONTROL) != 0;
+
+  const TypeFunc* new_call_type = prepare_call_type(call_type, mt);
+
+  CallNode* call = new CallSnippetNode(new_call_type, mt, nep->reg_masks(), nep->generator(),
+                                       needs_control, nep->killed_reg_mask(), nep->name(), TypePtr::BOTTOM);
+
+  bool ret_vector = mt->rtype()->is_vector();
+  int dbl_slot_cnt = 0;
+  int adjust = (ret_vector ? 1 : 0);
+  for (uint i = adjust; i < nargs; i++) {
+    Node* arg = argument(i);
+    if (call_type->domain()->field_at(TypeFunc::Parms+i) == Type::HALF) {
+      dbl_slot_cnt++;
+    } else {
+      ciType* ptype = mt->ptype_at(i - dbl_slot_cnt);
+      if (ptype->is_vector()) {
+        int vec_size = ptype->vector_size();
+        Node* adr = basic_plus_adr(arg, 0x10);
+        const TypePtr* adr_type = adr->bottom_type()->is_ptr();
+        Node* mem = memory(adr_type);
+        arg = gvn().transform(LoadVectorNode::make(0, NULL, mem, adr, adr_type, vec_size, T_LONG));
+
+        int max_vlen = MAX2(C->max_vector_size(), vec_size * 8); // FIXME
+        C->set_max_vector_size(max_vlen);
+      }
+    }
+    call->init_req(i + TypeFunc::Parms - adjust, arg);
+  }
+
+  Node* mem = NULL;
+  if (reads_mem) {
+    mem = reset_memory();
+    call->init_req(TypeFunc::Memory, mem);
+  } else {
+    call->init_req(TypeFunc::Memory, top());
+  }
+  if (needs_control) {
+    call->init_req(TypeFunc::Control, control());
+  }
+  call->init_req(TypeFunc::I_O,       top()); // does no i/o
+  call->init_req(TypeFunc::FramePtr,  top());
+  call->init_req(TypeFunc::ReturnAdr, top());
+
+  assert ((uint)mt->ptype_count() + dbl_slot_cnt == nargs, "");
+
+  Node* c = _gvn.transform(call);
+  assert(c == call, "cannot disappear");
+
+  if (needs_control) {
+    set_control(_gvn.transform(new ProjNode(call,TypeFunc::Control)));
+  }
+  if (writes_mem) {
+    // This is not a "slow path" call; all memory comes from the call.
+    set_all_memory_call(call);
+  } else if (reads_mem) {
+    // No memory effects
+    assert(mem != NULL, "sanity");
+    set_all_memory(mem);
+  }
+
+  Node* ret;
+  if (method() == NULL || method()->return_type()->basic_type() == T_VOID) {
+    ret = top();
+  } else {
+    ret = gvn().transform(new ProjNode(call, TypeFunc::Parms));
+    if (mt->rtype()->is_vector()) {
+      int vec_size = mt->rtype()->vector_size();
+      VBoxNode* vbox = VBoxNode::make(this, TypeVect::make(T_LONG, vec_size), argument(0), ret);
+      Node *n = gvn().transform(vbox);
+      set_predefined_output_for_runtime_call(vbox);
+      ret = gvn().transform(new ProjNode(n, TypeFunc::Parms));
+
+      int max_vlen = MAX2(C->max_vector_size(), vec_size * 8); // FIXME
+      C->set_max_vector_size(max_vlen);
+    }
+  }
+
+  push_node(method()->return_type()->basic_type(), ret);
+
+  return call;
+}
+
 //------------------------------merge_memory-----------------------------------
 // Merge memory from one path into the current memory state.
 void GraphKit::merge_memory(Node* new_mem, Node* region, int new_path) {
@@ -3346,7 +3509,6 @@ static void hook_memory_on_init(GraphKit& kit, int alias_idx,
                                 MergeMemNode* init_in_merge,
                                 Node* init_out_raw) {
   DEBUG_ONLY(Node* init_in_raw = init_in_merge->base_memory());
-  assert(init_in_merge->memory_at(alias_idx) == init_in_raw, "");
 
   Node* prevmem = kit.memory(alias_idx);
   init_in_merge->set_memory_at(alias_idx, prevmem);

@@ -174,6 +174,12 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
     __ hlt(0);           // empty stubs make SG sick
     return NULL;
   }
+  // No need in interpreter entry for linkToNative for now.
+  // Interpreter calls compiled entry through i2c.
+  if (iid == vmIntrinsics::_linkToNative) {
+    __ hlt();
+    return NULL;
+  }
 
   // r13: sender SP (must preserve; see prepare_to_jump_from_interpreted)
   // rmethod: Method*
@@ -225,13 +231,11 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
     __ ldr(mh, r3_first_arg_addr);
     DEBUG_ONLY(argp = noreg);
   }
-
   // r3_first_arg_addr is live!
 
   trace_method_handle_interpreter_entry(_masm, iid);
   if (iid == vmIntrinsics::_invokeBasic) {
     generate_method_handle_dispatch(_masm, iid, mh, noreg, not_for_compiler_entry);
-
   } else {
     // Adjust argument list by popping the trailing MemberName argument.
     Register recv = noreg;
@@ -247,7 +251,6 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
 
   return entry_point;
 }
-
 
 void MethodHandles::generate_method_handle_dispatch(MacroAssembler* _masm,
                                                     vmIntrinsics::ID iid,
@@ -448,3 +451,18 @@ void trace_method_handle_stub_wrapper(MethodHandleStubArguments* args) {  }
 
 void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adaptername) {  }
 #endif //PRODUCT
+
+
+
+address MethodHandles::generate_upcall_stub(int id) {
+  fatal("NYI");
+  return NULL;
+}
+
+void MethodHandles::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, arrayHandle rets_arr, address code, JavaThread* thread) {
+  fatal("NIY");
+}
+
+void MethodHandles::generate_invoke_native(MacroAssembler* _masm) {
+  //fatal("NIY");
+}

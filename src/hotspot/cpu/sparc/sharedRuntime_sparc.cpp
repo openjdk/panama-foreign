@@ -362,6 +362,10 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
   return slot;
 }
 
+void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name) {
+  fatal("NYI");
+}
+
 // Helper class mostly to avoid passing masm everywhere, and handle
 // store displacement overflow logic.
 class AdapterGenerator {
@@ -1658,6 +1662,12 @@ static void gen_special_dispatch(MacroAssembler* masm,
                                  const VMRegPair* regs) {
   verify_oop_args(masm, method, sig_bt, regs);
   vmIntrinsics::ID iid = method->intrinsic_id();
+
+  if (iid == vmIntrinsics::_linkToNative) {
+//    generate_native_call(masm, method->size_of_parameters(), sig_bt, regs, ret_type,
+//                         /*for_compiler_entry=*/true);
+    return;
+  }
 
   // Now write the args into the outgoing interpreter space
   bool     has_receiver   = false;
@@ -3273,3 +3283,4 @@ RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const cha
   // frame_size_words or bytes??
   return RuntimeStub::new_runtime_stub(name, &buffer, frame_complete, frame_size_words, oop_maps, true);
 }
+

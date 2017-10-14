@@ -29,6 +29,8 @@
 
 class  AllocateNode;
 class  AllocateArrayNode;
+class  VBoxNode;
+//class  VUnboxNode;
 class  CallNode;
 class  Node;
 class  PhaseIterGVN;
@@ -87,6 +89,8 @@ private:
                               address slow_call_address);
   Node *value_from_mem(Node *mem, Node *ctl, BasicType ft, const Type *ftype, const TypeOopPtr *adr_t, AllocateNode *alloc);
   Node *value_from_mem_phi(Node *mem, BasicType ft, const Type *ftype, const TypeOopPtr *adr_t, AllocateNode *alloc, Node_Stack *value_phis, int level);
+
+  void expand_vbox_node(VBoxNode* vbox);
 
   bool eliminate_boxing_node(CallStaticJavaNode *boxing);
   bool eliminate_allocate_node(AllocateNode *alloc);
@@ -208,7 +212,7 @@ public:
   }
   void eliminate_macro_nodes();
   bool expand_macro_nodes();
-
+  void expand_vbox_nodes();
 };
 
 #endif // SHARE_VM_OPTO_MACRO_HPP

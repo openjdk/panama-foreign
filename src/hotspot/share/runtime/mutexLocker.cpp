@@ -97,6 +97,8 @@ Mutex*   ProfilePrint_lock            = NULL;
 Mutex*   ExceptionCache_lock          = NULL;
 Mutex*   OsrList_lock                 = NULL;
 
+Monitor* CodeSnippet_lock             = NULL;
+
 #ifndef PRODUCT
 Mutex*   FullGCALot_lock              = NULL;
 #endif
@@ -278,6 +280,8 @@ void mutex_init() {
   if (WhiteBoxAPI) {
     def(Compilation_lock           , PaddedMonitor, leaf,        false, Monitor::_safepoint_check_never);
   }
+
+  def(CodeSnippet_lock             , Monitor, leaf,        false, Monitor::_safepoint_check_always);
 
 #if INCLUDE_TRACE
   def(JfrMsg_lock                  , PaddedMonitor, leaf,        true,  Monitor::_safepoint_check_always);

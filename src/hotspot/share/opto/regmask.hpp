@@ -290,10 +290,8 @@ public:
   // Compute size of register mask: number of bits
   uint Size() const;
 
-#ifndef PRODUCT
   void print() const { dump(); }
   void dump(outputStream *st = tty) const; // Print a mask
-#endif
 
   static const RegMask Empty;   // Common empty mask
 

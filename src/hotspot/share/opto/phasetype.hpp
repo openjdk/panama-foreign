@@ -32,6 +32,7 @@ enum CompilerPhaseType {
   PHASE_AFTER_PARSING,
   PHASE_ITER_GVN1,
   PHASE_PHASEIDEAL_BEFORE_EA,
+  PHASE_ITER_GVN_BEFORE_EA,
   PHASE_ITER_GVN_AFTER_EA,
   PHASE_ITER_GVN_AFTER_ELIMINATION,
   PHASE_PHASEIDEALLOOP1,
@@ -40,6 +41,8 @@ enum CompilerPhaseType {
   PHASE_CPP1,
   PHASE_ITER_GVN2,
   PHASE_PHASEIDEALLOOP_ITERATIONS,
+  PHASE_MACRO_STEP,
+  PHASE_MACRO_AFTER,
   PHASE_OPTIMIZE_FINISHED,
   PHASE_GLOBAL_CODE_MOTION,
   PHASE_FINAL_CODE,
@@ -67,6 +70,7 @@ class CompilerPhaseTypeHelper {
       case PHASE_AFTER_PARSING:              return "After Parsing";
       case PHASE_ITER_GVN1:                  return "Iter GVN 1";
       case PHASE_PHASEIDEAL_BEFORE_EA:       return "PhaseIdealLoop before EA";
+      case PHASE_ITER_GVN_BEFORE_EA:         return "Iter GVN before EA";
       case PHASE_ITER_GVN_AFTER_EA:          return "Iter GVN after EA";
       case PHASE_ITER_GVN_AFTER_ELIMINATION: return "Iter GVN after eliminating allocations and locks";
       case PHASE_PHASEIDEALLOOP1:            return "PhaseIdealLoop 1";
@@ -75,6 +79,8 @@ class CompilerPhaseTypeHelper {
       case PHASE_CPP1:                       return "PhaseCPP 1";
       case PHASE_ITER_GVN2:                  return "Iter GVN 2";
       case PHASE_PHASEIDEALLOOP_ITERATIONS:  return "PhaseIdealLoop iterations";
+      case PHASE_MACRO_STEP:                 return "Macro expansion step";
+      case PHASE_MACRO_AFTER:                return "After macro expansion";
       case PHASE_OPTIMIZE_FINISHED:          return "Optimize finished";
       case PHASE_GLOBAL_CODE_MOTION:         return "Global code motion";
       case PHASE_FINAL_CODE:                 return "Final Code";

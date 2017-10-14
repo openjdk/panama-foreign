@@ -719,6 +719,12 @@
   diagnostic(bool, UseMontgomerySquareIntrinsic, false,                     \
           "Enables intrinsification of BigInteger.montgomerySquare()")      \
                                                                             \
+  product(bool, UseVectorApiIntrinsics, true,                               \
+          "Enables intrinsification of Vector API")                         \
+                                                                            \
+  notproduct(bool, DebugVectorApi, false,                                   \
+          "Enables printing of debug messages for Vector API")              \
+                                                                            \
   product(bool, UseTypeSpeculation, true,                                   \
           "Speculatively propagate types from profiles")                    \
                                                                             \

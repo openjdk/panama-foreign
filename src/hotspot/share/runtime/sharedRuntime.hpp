@@ -37,6 +37,7 @@ class AdapterHandlerEntry;
 class AdapterHandlerTable;
 class AdapterFingerPrint;
 class vframeStream;
+class ciMethodType;
 
 // Runtime is the base class for various runtime interfaces
 // (InterpreterRuntime, CompilerRuntime, etc.). It provides
@@ -388,6 +389,8 @@ class SharedRuntime: AllStatic {
   // passed in a register OR in a stack slot.
   static int c_calling_convention(const BasicType *sig_bt, VMRegPair *regs, VMRegPair *regs2,
                                   int total_args_passed);
+
+  static void generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name);
 
   static size_t trampoline_size();
 

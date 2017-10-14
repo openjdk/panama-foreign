@@ -218,6 +218,12 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
     __ should_not_reach_here();           // empty stubs make SG sick
     return NULL;
   }
+  // No need in interpreter entry for linkToNative for now.
+  // Interpreter calls compiled entry through i2c.
+  if (iid == vmIntrinsics::_linkToNative) {
+    __ should_not_reach_here();
+    return NULL;
+  }
 
   // I5_savedSP/O5_savedSP: sender SP (must preserve; see prepare_to_jump_from_interpreted)
   // G5_method:  Method*
@@ -279,7 +285,6 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
 
   if (iid == vmIntrinsics::_invokeBasic) {
     generate_method_handle_dispatch(_masm, iid, O0_mh, noreg, not_for_compiler_entry);
-
   } else {
     // Adjust argument list by popping the trailing MemberName argument.
     Register O0_recv = noreg;
@@ -611,3 +616,18 @@ void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adapt
   BLOCK_COMMENT("} trace_method_handle");
 }
 #endif // PRODUCT
+
+
+address MethodHandles::generate_upcall_stub(int id) {
+  // PANAMA: CMH
+  fatal("NYI");
+  return NULL;
+}
+
+void MethodHandles::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, arrayHandle rets_arr, address code, JavaThread* thread) {
+  fatal("NIY");
+}
+
+void MethodHandles::generate_invoke_native(MacroAssembler* _masm) {
+  //fatal("NIY");
+}

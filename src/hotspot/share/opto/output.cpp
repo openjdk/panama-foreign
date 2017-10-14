@@ -617,6 +617,8 @@ void Compile::FillLocArray( int idx, MachSafePointNode* sfpt, Node *local,
                                    ? Location::int_in_long : Location::normal ));
     } else if( t->base() == Type::NarrowOop ) {
       array->append(new_loc_value( _regalloc, regnum, Location::narrowoop ));
+    } else if ( t->base() == Type::VectorX || t->base() == Type::VectorY || t->base() == Type::VectorZ) {
+      array->append(new_loc_value( _regalloc, regnum, Location::vector ));
     } else {
       array->append(new_loc_value( _regalloc, regnum, _regalloc->is_oop(local) ? Location::oop : Location::normal ));
     }
@@ -1025,6 +1027,8 @@ CodeBuffer* Compile::init_buffer(uint* blk_starts) {
   // Pre-compute the length of blocks and replace
   // long branches with short if machine supports it.
   shorten_branches(blk_starts, code_req, locs_req, stub_req);
+
+  if (failing())  return NULL;
 
   // nmethod and CodeBuffer count stubs & constants as part of method's code.
   // class HandlerImpl is platform-specific and defined in the *.ad files.

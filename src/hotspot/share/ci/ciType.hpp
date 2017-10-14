@@ -73,6 +73,24 @@ public:
   bool is_one_word() const                  { return size() == 1; }
   bool is_two_word() const                  { return size() == 2; }
 
+  bool is_long2() /*const*/;
+  bool is_long4() /*const*/;
+  bool is_long8() /*const*/;
+
+  bool is_vector() { return is_long2() || is_long4() || is_long8(); }
+  int  vector_size() {
+    if (is_long2())  return 2;
+    if (is_long4())  return 4;
+    if (is_long8())  return 8;
+    return -1;
+  }
+
+  bool is_float256vector();
+  bool is_double256vector();
+  bool is_int256vector();
+  bool is_vectorapi_vector();
+  int vectorapi_vector_size();
+
   // What kind of ciObject is this?
   bool is_type() const                      { return true; }
   bool is_classless() const                 { return is_primitive_type(); }

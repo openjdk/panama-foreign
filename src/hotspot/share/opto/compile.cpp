@@ -595,7 +595,10 @@ uint Compile::scratch_emit_size(const Node* n) {
   n->emit(buf, this->regalloc());
 
   // Emitting into the scratch buffer should not fail
-  assert (!failing(), "Must not have pending failure. Reason is: %s", failure_reason());
+  //assert (!failing(), "Must not have pending failure. Reason is: %s", failure_reason());
+  if (failing()) {
+    return 0;
+  }
 
   if (is_branch) // Restore label.
     n->as_MachBranch()->label_set(saveL, save_bnum);
@@ -2203,6 +2206,15 @@ void Compile::Optimize() {
     igvn.optimize();
   }
 
+  {
+    // Expand VBoxes before EA.
+    PhaseMacroExpand mexp(igvn);
+    print_method(PHASE_ITER_GVN_BEFORE_EA, 2);
+    mexp.expand_vbox_nodes();
+    print_method(PHASE_ITER_GVN_BEFORE_EA, 2);
+    if (failing())  return;
+  }
+
   // Perform escape analysis
   if (_do_escape_analysis && ConnectionGraph::has_candidates(this)) {
     if (has_loops()) {
@@ -2330,6 +2342,8 @@ void Compile::Optimize() {
       return;
     }
   }
+
+  print_method(PHASE_MACRO_AFTER, 2);
 
   DEBUG_ONLY( _modified_nodes = NULL; )
  } // (End scope of igvn; run destructor if necessary for asserts.)
@@ -2742,6 +2756,7 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
   case Op_Opaque1:              // Remove Opaque Nodes before matching
   case Op_Opaque2:              // Remove Opaque Nodes before matching
   case Op_Opaque3:
+  case Op_OpaqueVBox:
     n->subsume_by(n->in(1), this);
     break;
   case Op_CallStaticJava:
@@ -2751,6 +2766,7 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
   case Op_CallRuntime:
   case Op_CallLeaf:
   case Op_CallLeafNoFP: {
+  case Op_CallSnippet:
     assert( n->is_Call(), "" );
     CallNode *call = n->as_Call();
     // Count call sites where the FP mode bit would have to be flipped.

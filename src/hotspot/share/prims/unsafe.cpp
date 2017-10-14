@@ -32,6 +32,7 @@
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jvm.h"
+#include "prims/methodHandles.hpp"
 #include "prims/unsafe.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/globals.hpp"
@@ -687,6 +688,31 @@ UNSAFE_ENTRY(jboolean, Unsafe_ShouldBeInitialized0(JNIEnv *env, jobject unsafe, 
 
   return false;
 }
+
+UNSAFE_END
+
+UNSAFE_ENTRY(jlong, Unsafe_FindNativeAddress(JNIEnv *env, jobject unsafe, jstring name)) {
+  ThreadToNativeFromVM ttnfv(thread);
+  if (name != NULL) {
+    char utfName[128];
+    uint len = env->GetStringUTFLength(name);
+    int unicode_len = env->GetStringLength(name);
+    if (len >= sizeof (utfName)) {
+      // FIXME: don't bother with memory allocation for now.
+      THROW_(vmSymbols::java_lang_NullPointerException(), 0);
+    }
+    env->GetStringUTFRegion(name, 0, unicode_len, utfName);
+
+#ifndef _WINDOWS
+    void* handle = RTLD_DEFAULT;
+#else
+    void* handle = 0; // FIXME
+#endif // _WINDOWS
+    return (jlong)os::dll_lookup(handle, utfName);
+  } else {
+    THROW_(vmSymbols::java_lang_NullPointerException(), 0);
+  }
+}
 UNSAFE_END
 
 static void getBaseAndScale(int& base, int& scale, jclass clazz, TRAPS) {
@@ -1160,6 +1186,56 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
   return ret;
 } UNSAFE_END
 
+void copy_jlong(oop src, jlong off1, oop dst, jlong off2) {
+  jlong v = *(jlong*)index_oop_from_field_offset_long(src, off1);
+  *(jlong*)index_oop_from_field_offset_long(dst, off2) = v;
+}
+
+UNSAFE_ENTRY(jobject, Unsafe_GetLong2(JNIEnv *env, jobject unsafe, jobject box, jobject obj, jlong offset))
+  oop p = JNIHandles::resolve(obj);
+  oop b = JNIHandles::resolve(box);
+  static jlong l2_base = java_lang_Long2::base_offset_in_bytes();
+  copy_jlong(p, offset,   b, l2_base);
+  copy_jlong(p, offset+8, b, l2_base+8);
+  OrderAccess::fence();
+  return box;
+UNSAFE_END
+
+UNSAFE_ENTRY(jobject, Unsafe_GetLong4(JNIEnv *env, jobject unsafe, jobject box, jobject obj, jlong offset))
+  oop p = JNIHandles::resolve(obj);
+  oop b = JNIHandles::resolve(box);
+  static jlong l4_base = java_lang_Long4::base_offset_in_bytes();
+  copy_jlong(p, offset,    b, l4_base);
+  copy_jlong(p, offset+8,  b, l4_base+8);
+  copy_jlong(p, offset+16, b, l4_base+16);
+  copy_jlong(p, offset+24, b, l4_base+24);
+  OrderAccess::fence();
+  return box;
+UNSAFE_END
+
+UNSAFE_ENTRY(jobject, Unsafe_GetLong8(JNIEnv *env, jobject unsafe, jobject box, jobject obj, jlong offset))
+  oop p = JNIHandles::resolve(obj);
+  oop b = JNIHandles::resolve(box);
+  static jlong l8_base = java_lang_Long8::base_offset_in_bytes();
+  copy_jlong(p, offset,    b, l8_base);
+  copy_jlong(p, offset+8,  b, l8_base+8);
+  copy_jlong(p, offset+16, b, l8_base+16);
+  copy_jlong(p, offset+24, b, l8_base+24);
+  copy_jlong(p, offset+32, b, l8_base+32);
+  copy_jlong(p, offset+40, b, l8_base+40);
+  copy_jlong(p, offset+48, b, l8_base+48);
+  copy_jlong(p, offset+56, b, l8_base+56);
+  OrderAccess::fence();
+  return box;
+UNSAFE_END
+
+UNSAFE_ENTRY(jlong, Unsafe_AllocateUpcallStub(JNIEnv *env, jobject unsafe, jint id))
+  return (jlong)MethodHandles::generate_upcall_stub(id);
+UNSAFE_END
+
+UNSAFE_ENTRY(void, Unsafe_FreeUpcallStub(JNIEnv *env, jobject unsafe, jlong id, jlong addr))
+  ::fprintf(stderr, "WARNING: Leaking upcall stub\n");
+UNSAFE_END
 
 /// JVM_RegisterUnsafeMethods
 
@@ -1171,6 +1247,10 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
 #define CLS LANG "Class;"
 #define FLD LANG "reflect/Field;"
 #define THR LANG "Throwable;"
+
+#define LNG2 LANG "Long2;"
+#define LNG4 LANG "Long4;"
+#define LNG8 LANG "Long8;"
 
 #define DC_Args  LANG "String;[BII" LANG "ClassLoader;" "Ljava/security/ProtectionDomain;"
 #define DAC_Args CLS "[B[" OBJ
@@ -1184,6 +1264,9 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
     {CC "get" #Type "Volatile",      CC "(" OBJ "J)" #Desc,       FN_PTR(Unsafe_Get##Type##Volatile)}, \
     {CC "put" #Type "Volatile",      CC "(" OBJ "J" #Desc ")V",   FN_PTR(Unsafe_Put##Type##Volatile)}
 
+#define DECLARE_GETPUTNATIVE(Byte, B) \
+    {CC "get" #Byte,         CC "(" ADR ")" #B,       FN_PTR(Unsafe_GetNative##Byte)}, \
+    {CC "put" #Byte,         CC "(" ADR#B ")V",       FN_PTR(Unsafe_SetNative##Byte)}
 
 static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
     {CC "getObject",        CC "(" OBJ "J)" OBJ "",   FN_PTR(Unsafe_GetObject)},
@@ -1231,6 +1314,9 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
 
     {CC "getLoadAverage0",    CC "([DI)I",               FN_PTR(Unsafe_GetLoadAverage0)},
 
+    {CC "allocateUpcallStub", CC "(I)J",                 FN_PTR(Unsafe_AllocateUpcallStub)},
+    {CC "freeUpcallStub",     CC "(IJ)V",                FN_PTR(Unsafe_FreeUpcallStub)},
+
     {CC "copyMemory0",        CC "(" OBJ "J" OBJ "JJ)V", FN_PTR(Unsafe_CopyMemory0)},
     {CC "copySwapMemory0",    CC "(" OBJ "J" OBJ "JJJ)V", FN_PTR(Unsafe_CopySwapMemory0)},
     {CC "setMemory0",         CC "(" OBJ "JJB)V",        FN_PTR(Unsafe_SetMemory0)},
@@ -1238,13 +1324,18 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
     {CC "defineAnonymousClass0", CC "(" DAC_Args ")" CLS, FN_PTR(Unsafe_DefineAnonymousClass0)},
 
     {CC "shouldBeInitialized0", CC "(" CLS ")Z",         FN_PTR(Unsafe_ShouldBeInitialized0)},
+    {CC "findNativeAddress",  CC "(" LANG "String;)J",   FN_PTR(Unsafe_FindNativeAddress)},
 
     {CC "loadFence",          CC "()V",                  FN_PTR(Unsafe_LoadFence)},
     {CC "storeFence",         CC "()V",                  FN_PTR(Unsafe_StoreFence)},
     {CC "fullFence",          CC "()V",                  FN_PTR(Unsafe_FullFence)},
 
     {CC "isBigEndian0",       CC "()Z",                  FN_PTR(Unsafe_isBigEndian0)},
-    {CC "unalignedAccess0",   CC "()Z",                  FN_PTR(Unsafe_unalignedAccess0)}
+    {CC "unalignedAccess0",   CC "()Z",                  FN_PTR(Unsafe_unalignedAccess0)},
+
+    {CC "getLong2",   CC "(" LNG2 OBJ "J)" LNG2,            FN_PTR(Unsafe_GetLong2)},
+    {CC "getLong4",   CC "(" LNG4 OBJ "J)" LNG4,            FN_PTR(Unsafe_GetLong4)},
+    {CC "getLong8",   CC "(" LNG8 OBJ "J)" LNG8,            FN_PTR(Unsafe_GetLong8)},
 };
 
 #undef CC
@@ -1258,6 +1349,10 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
 #undef THR
 #undef DC_Args
 #undef DAC_Args
+
+#undef LNG2
+#undef LNG4
+#undef LNG8
 
 #undef DECLARE_GETPUTOOP
 

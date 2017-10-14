@@ -25,8 +25,26 @@
 #include "memory/allocation.inline.hpp"
 #include "opto/connode.hpp"
 #include "opto/vectornode.hpp"
+#include "opto/callnode.hpp"
 
 //------------------------------VectorNode--------------------------------------
+
+Node* LoadVectorNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+  //dump(3);
+  //if ()
+  return NULL;
+}
+
+Node* LoadVectorNode::Identity(PhaseGVN *phase ) {
+  if (in(2)->is_AddP()) {
+    Node* proj = in(2)->in(2)->uncast();
+    if (proj->is_Proj() &&
+        proj->in(0)->is_VBox()) {
+      return proj->in(0)->in(VBoxNode::Value);
+    }
+  }
+  return this;
+}
 
 // Return the vector operator for the specified scalar operation
 // and vector length.
@@ -184,6 +202,48 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_StoreD:
     return Op_StoreVector;
 
+  case Op_AddVB:
+  case Op_AddVS:
+  case Op_AddVI:
+  case Op_AddVL:
+  case Op_AddVF:
+  case Op_AddVD:
+  case Op_SubVB:
+  case Op_SubVS:
+  case Op_SubVI:
+  case Op_SubVL:
+  case Op_SubVF:
+  case Op_SubVD:
+  case Op_MulVS:
+  case Op_MulVI:
+  case Op_MulVL:
+  case Op_MulVF:
+  case Op_MulVD:
+  case Op_DivVF:
+  case Op_DivVD:
+  case Op_AbsVF:
+  case Op_AbsVD:
+  case Op_NegVF:
+  case Op_NegVD:
+  case Op_SqrtVD:
+  case Op_LShiftVB:
+  case Op_LShiftVS:
+  case Op_LShiftVI:
+  case Op_LShiftVL:
+  case Op_RShiftVB:
+  case Op_RShiftVS:
+  case Op_RShiftVI:
+  case Op_RShiftVL:
+  case Op_URShiftVB:
+  case Op_URShiftVS:
+  case Op_URShiftVI:
+  case Op_URShiftVL:
+  case Op_AndV:
+  case Op_OrV:
+  case Op_XorV:
+    // When op is already vectorized, return that directly.
+    return sopc;
+
   default:
     return 0; // Unimplemented
   }
@@ -200,7 +260,6 @@ bool VectorNode::implemented(int opc, uint vlen, BasicType bt) {
   }
   return false;
 }
-
 bool VectorNode::is_shift(Node* n) {
   switch (n->Opcode()) {
   case Op_LShiftI:
@@ -451,11 +510,11 @@ PackNode* PackNode::binary_tree_pack(int lo, int hi) {
     case T_INT:
       return new PackLNode(n1, n2, TypeVect::make(T_LONG, 2));
     case T_LONG:
-      return new Pack2LNode(n1, n2, TypeVect::make(T_LONG, 2));
+      return new Pack2LNode(n1, n2, TypeVect::make(T_LONG, 4));
     case T_FLOAT:
       return new PackDNode(n1, n2, TypeVect::make(T_DOUBLE, 2));
     case T_DOUBLE:
-      return new Pack2DNode(n1, n2, TypeVect::make(T_DOUBLE, 2));
+      return new Pack2DNode(n1, n2, TypeVect::make(T_DOUBLE, 4));
     default:
       fatal("Type '%s' is not supported for vectors", type2name(bt));
       return NULL;

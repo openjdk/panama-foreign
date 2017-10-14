@@ -1022,8 +1022,15 @@ static int reassign_fields_by_klass(InstanceKlass* klass, frame* fr, RegisterMap
         /* no break */
 
       case T_LONG: case T_DOUBLE: {
-        assert(value->type() == T_INT, "Agreement.");
-        StackValue* low = StackValue::create_stack_value(fr, reg_map, sv->field_at(++svIndex));
+//        assert(value->type() == T_INT, "Agreement.");
+        StackValue* low;
+        if (value->type() == T_INT) {
+            low = StackValue::create_stack_value(fr, reg_map, sv->field_at(++svIndex));
+        } else {
+          // FIXME: T_ILLEGAL means vector for now
+          assert(value->type() == T_ILLEGAL, "Agreement.");
+          low = new StackValue(0); // delayed initialization
+        }
 #ifdef _LP64
         jlong res = (jlong)low->get_int();
 #else
@@ -1087,6 +1094,25 @@ void Deoptimization::reassign_fields(frame* fr, RegisterMap* reg_map, GrowableAr
     if (k->is_instance_klass()) {
       InstanceKlass* ik = InstanceKlass::cast(k);
       reassign_fields_by_klass(ik, fr, reg_map, sv, 0, obj(), skip_internal);
+      // FIXME
+      if (k() == SystemDictionary::Long2_klass() ||
+          k() == SystemDictionary::Long4_klass() ||
+          k() == SystemDictionary::Long8_klass()) {
+        StackValue* value = StackValue::create_stack_value(fr, reg_map, sv->field_at(0));
+        assert(value->type() == T_ILLEGAL, "");
+        address value_addr = (address)value->get_addr();
+        int vec_len = (k() == SystemDictionary::Long2_klass()) ? 2 :
+                       (k() == SystemDictionary::Long4_klass() ? 4 : 8);
+        int offset = (k() == SystemDictionary::Long2_klass()) ? java_lang_Long2::base_offset_in_bytes() :
+                      (k() == SystemDictionary::Long4_klass() ? java_lang_Long4::base_offset_in_bytes() :
+                                                                java_lang_Long8::base_offset_in_bytes());
+        for (int i = 0; i < vec_len; i++) {
+          obj->long_field_put(offset + 8*i, *(jlong*) (value_addr + 8*i));
+        }
+        if (PrintDeoptimizationDetails) {
+          tty->print("reassign a vector value: "); obj->print(); tty->cr();
+        }
+      }
     } else if (k->is_typeArray_klass()) {
       TypeArrayKlass* ak = TypeArrayKlass::cast(k);
       reassign_type_array_elements(fr, reg_map, sv, (typeArrayOop) obj(), ak->element_type());

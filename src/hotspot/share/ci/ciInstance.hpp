@@ -27,7 +27,7 @@
 
 #include "ci/ciObject.hpp"
 #include "oops/instanceOop.hpp"
-#include "oops/oop.hpp"
+#include "oops/oop.inline.hpp"
 
 // ciInstance
 //

@@ -659,6 +659,7 @@ public:
   }
 
   static const TypeTuple *make( uint cnt, const Type **fields );
+  static const TypeTuple *make(const TypeTuple* t, uint drop_arg);
   static const TypeTuple *make_range(ciSignature *sig);
   static const TypeTuple *make_domain(ciInstanceKlass* recv, ciSignature *sig);
 
@@ -1506,6 +1507,7 @@ public:
   static const TypeFunc *make(ciMethod* method);
   static const TypeFunc *make(ciSignature signature, const Type* extra);
   static const TypeFunc *make(const TypeTuple* domain, const TypeTuple* range);
+  static const TypeFunc *make(const TypeFunc* t, uint drop_arg);
 
   virtual const Type *xmeet( const Type *t ) const;
   virtual const Type *xdual() const;    // Compute dual right now.

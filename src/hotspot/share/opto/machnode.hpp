@@ -963,13 +963,13 @@ public:
 //------------------------------MachCallRuntimeNode----------------------------
 // Machine-specific versions of subroutine calls
 class MachCallRuntimeNode : public MachCallNode {
-  virtual uint cmp( const Node &n ) const;
   virtual uint size_of() const; // Size is bigger
 public:
   const char *_name;            // Printable name, if _method is NULL
   MachCallRuntimeNode() : MachCallNode() {
     init_class_id(Class_MachCallRuntime);
   }
+  virtual uint cmp( const Node &n ) const;
   virtual int ret_addr_offset();
 #ifndef PRODUCT
   virtual void dump_spec(outputStream *st) const;
@@ -982,6 +982,29 @@ public:
     init_class_id(Class_MachCallLeaf);
   }
 };
+
+class MachCallSnippetNode : public MachCallLeafNode {
+  virtual uint cmp( const Node &n ) const;
+  virtual uint size_of() const; // Size is bigger
+public:
+  jint _size;
+  uint8_t* _code;
+  ciObject* _generator;
+  ciObject* _mt;  // ciMethodType*
+  RegMask _killed_reg_mask;
+  MachCallSnippetNode() : MachCallLeafNode(), _size(-1), _code(NULL), _generator(NULL), _mt(NULL), _killed_reg_mask() {
+    init_class_id(Class_MachCallSnippet);
+  }
+  virtual bool pinned() const { return false; }
+
+  void specialize(PhaseRegAlloc* ra);
+  void begin_comment(MacroAssembler& m) const;
+  void end_comment(MacroAssembler& m)   const;
+#ifndef PRODUCT
+  virtual void dump_spec(outputStream *st) const;
+#endif
+};
+
 
 //------------------------------MachHaltNode-----------------------------------
 // Machine-specific versions of halt nodes

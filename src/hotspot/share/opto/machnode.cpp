@@ -23,9 +23,11 @@
  */
 
 #include "precompiled.hpp"
+#include "compiler/disassembler.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "opto/machnode.hpp"
 #include "opto/regalloc.hpp"
+#include "runtime/codeSnippet.hpp"
 #include "utilities/vmError.hpp"
 
 //=============================================================================
@@ -601,9 +603,10 @@ const TypePtr *MachProjNode::adr_type() const {
 void MachProjNode::dump_spec(outputStream *st) const {
   ProjNode::dump_spec(st);
   switch (_ideal_reg) {
-  case unmatched_proj:  st->print("/unmatched");                           break;
-  case fat_proj:        st->print("/fat"); if (WizardMode) _rout.dump(st); break;
+  case unmatched_proj:  st->print("/unmatched "); break;
+  case fat_proj:        st->print("/fat ");       break;
   }
+  _rout.dump();
 }
 #endif
 
@@ -660,6 +663,11 @@ const Type* MachCallNode::Value(PhaseGVN* phase) const { return tf()->range(); }
 void MachCallNode::dump_spec(outputStream *st) const {
   st->print("# ");
   if (tf() != NULL)  tf()->dump_on(st);
+  tty->print(" (");
+  for (uint i = TypeFunc::Parms; i < tf()->domain()->cnt(); i++) {
+    in_RegMask(i).dump(tty); tty->print(" ");
+  }
+  tty->print(")");
   if (_cnt != COUNT_UNKNOWN)  st->print(" C=%f",_cnt);
   if (jvms() != NULL)  jvms()->dump_spec(st);
 }
@@ -801,6 +809,112 @@ void MachCallRuntimeNode::dump_spec(outputStream *st) const {
   MachCallNode::dump_spec(st);
 }
 #endif
+
+//=============================================================================
+
+uint MachCallSnippetNode::size_of() const { return sizeof(*this); }
+uint MachCallSnippetNode::cmp( const Node &n ) const {
+  MachCallSnippetNode &call = (MachCallSnippetNode&)n;
+  return MachCallRuntimeNode::cmp(call) &&
+      (_size == call._size) && (_generator == call._generator) &&
+      !memcmp((const void*)_code, (const void*)call._code, _size);
+}
+
+void MachCallSnippetNode::specialize(PhaseRegAlloc* ra) {
+  VM_QUICK_ENTRY_MARK
+  if (_size >= 0) {
+    return; // specialization has been done
+  }
+  MonitorLockerEx ml(CodeSnippet_lock);
+//  tty->print_cr("MCS::specialize: BEGIN: " INTPTR_FORMAT, p2i(this)); NOT_PRODUCT( dump(); )
+  while (CodeSnippetSlot != NULL) {
+    ml.wait();
+  }
+
+  CodeSnippetRequest csr(this, ra);
+//  tty->print_cr("MCS::specialize: PUT: "  INTPTR_FORMAT, p2i(this));
+  CodeSnippetSlot = &csr; // put the task
+  while (CodeSnippetSlot == &csr) {
+    ml.wait();
+  }
+//  tty->print_cr("MCS::specialize: PROCESS: "  INTPTR_FORMAT, p2i(this));
+  if (_size > 0) {
+    assert(_code != NULL, "");
+    uint8_t* code = NEW_ARENA_ARRAY(CURRENT_ENV->arena(), uint8_t, _size);
+    for (int i = 0; i < _size; i++) {
+      code[i] = _code[i];
+    }
+    FREE_C_HEAP_ARRAY(int8_t, _code);
+    _code = code; // FIXME
+
+    if (PrintCodeSnippets) {
+      ResourceMark rm;
+      ttyLocker ttyl;
+      tty->print_cr("Decoding specialized code snippet \"%s\":", _name);
+      tty->print("  Context: "); CURRENT_ENV->task()->print(tty, "", /*short_form=*/true, /*cr=*/true);
+      //tty->print_cr("  Context: %s", CURRENT_ENV->task()->method()->name_and_sig_as_C_string());
+      { // Print registers
+        stringStream ss;
+        ss.print("(%s", (csr._size > 1 ? OptoReg::regname(csr._regs[1]) : ""));
+        for (uint i = 2; i < csr._size; i++) {
+          ss.print(",%s", OptoReg::regname(csr._regs[i]));
+        }
+        ss.print(")");
+        ss.print("%s", (csr._size > 0 ? OptoReg::regname(csr._regs[0]) : ""));
+        tty->print_cr("  Registers: %s", ss.as_string());
+#ifndef PRODUCT
+        tty->print("  Killed registers: "); 
+        _killed_reg_mask.dump();
+        tty->cr();
+#endif // PRODUCT
+      }
+      { // Print raw machine code
+        stringStream ss;
+        for (int i = 0; i < _size; i++) {
+          ss.print(" %02x", code[i]);
+        }
+        tty->print_cr("  Code:%s", ss.as_string());
+      }
+      // Print disassembly
+      Disassembler::decode(address(_code), address(_code+_size));
+      tty->cr();
+    }
+  } else if (_size < 0) {
+//    ResourceMark rm;
+//    stringStream ss;
+//    ss.print("snippet \"%s\" specialization failure", _name);
+//    const char* msg = ss.as_string();
+//    size_t msg_len = strlen(msg);
+//    char* failure_msg = NEW_ARENA_ARRAY(CURRENT_ENV->arena(), char, msg_len);
+//    strncpy(failure_msg, msg, msg_len);
+//    ra->C->record_failure(failure_msg);
+    ra->C->record_failure("snippet specialization failure");
+    return;
+  }
+//  tty->print_cr("MCS::specialize: DONE " INTPTR_FORMAT, p2i(this)); NOT_PRODUCT( dump(); )
+}
+
+void MachCallSnippetNode::begin_comment(MacroAssembler& masm) const {
+  ResourceMark rm;
+  stringStream ss;
+  ss.print("snippet \"%s\" {", _name);
+  masm.block_comment(ss.as_string());
+}
+
+void MachCallSnippetNode::end_comment(MacroAssembler& masm) const {
+  ResourceMark rm;
+  stringStream ss;
+  ss.print("} snippet \"%s\"", _name);
+  masm.block_comment(ss.as_string());
+}
+
+#ifndef PRODUCT
+void MachCallSnippetNode::dump_spec(outputStream *st) const {
+  st->print("%s ",_name);
+  MachCallNode::dump_spec(st);
+}
+#endif
+
 //=============================================================================
 // A shared JVMState for all HaltNodes.  Indicates the start of debug info
 // is at TypeFunc::Parms.  Only required for SOE register spill handling -

@@ -850,6 +850,10 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
 }
 #endif // COMPILER2
 
+void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name) {
+  fatal("NYI");
+}
+
 static address gen_c2i_adapter(MacroAssembler *masm,
                             int total_args_passed,
                             int comp_args_on_stack,
@@ -3222,7 +3226,6 @@ RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const cha
   return RuntimeStub::new_runtime_stub(name, &buffer, frame_complete, frame_size_in_bytes/wordSize,
                                        oop_maps, true);
 }
-
 
 //------------------------------Montgomery multiplication------------------------
 //
