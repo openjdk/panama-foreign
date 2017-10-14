@@ -267,6 +267,11 @@ $(eval $(call SetupBuildDemo, TransparentRuler, \
     MAIN_CLASS := transparentruler.Ruler, \
 ))
 
+$(eval $(call SetupBuildDemo, Panama, \
+    DEMO_SUBDIR := panama, \
+    MAIN_CLASS := NONE, \
+))
+
 ################################################################################
 # Copy html and README files.
 

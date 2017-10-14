@@ -1,0 +1,9 @@
+<project default="compile">
+    <target name="compile">
+       <mkdir dir="target/classes"/>
+       <javac srcdir="src" destdir="target/classes/">
+           <compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
+           <compilerarg line="--add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED" />
+        </javac>
+    </target>
+</project>

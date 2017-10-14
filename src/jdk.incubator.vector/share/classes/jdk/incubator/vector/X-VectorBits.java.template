@@ -1,0 +1,389 @@
+/*
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have
+ * questions.
+ */
+package jdk.incubator.vector;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
+@SuppressWarnings("cast")
+final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
+    static final $Type$$bits$Species SPECIES = new $Type$$bits$Species();
+
+    static final $vectortype$ ZERO = new $vectortype$();
+
+    $type$[] vec;
+
+    $vectortype$() {
+        vec = new $type$[SPECIES.length()];
+    }
+
+    $vectortype$($type$[] v) {
+        vec = v;
+    }
+
+
+    // Unary operator
+
+    @Override
+    $vectortype$ uOp(FUnOp f) {
+        $type$[] res = new $type$[length()];
+        for (int i = 0; i < length(); i++) {
+            res[i] = f.apply(i, vec[i]);
+        }
+        return new $vectortype$(res);
+    }
+
+    @Override
+    $vectortype$ uOp(Mask<$Boxtype$, Shapes.$shape$> m, FUnOp f) {
+        $type$[] res = new $type$[length()];
+        for (int i = 0; i < length(); i++) {
+            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+        }
+        return new $vectortype$(res);
+    }
+
+    // Binary operator
+
+    @Override
+    $vectortype$ bOp(Vector<$Boxtype$, Shapes.$shape$> o, FBinOp f) {
+        $type$[] res = new $type$[length()];
+        $vectortype$ v = ($vectortype$) o;
+        for (int i = 0; i < length(); i++) {
+            res[i] = f.apply(i, vec[i], v.vec[i]);
+        }
+        return new $vectortype$(res);
+    }
+
+    @Override
+    $vectortype$ bOp(Vector<$Boxtype$, Shapes.$shape$> o, Mask<$Boxtype$, Shapes.$shape$> m, FBinOp f) {
+        $type$[] res = new $type$[length()];
+        $vectortype$ v = ($vectortype$) o;
+        for (int i = 0; i < length(); i++) {
+            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+        }
+        return new $vectortype$(res);
+    }
+
+    // Trinary operator
+
+    @Override
+    $vectortype$ tOp(Vector<$Boxtype$, Shapes.$shape$> o1, Vector<$Boxtype$, Shapes.$shape$> o2, FTriOp f) {
+        $type$[] res = new $type$[length()];
+        $vectortype$ v1 = ($vectortype$) o1;
+        $vectortype$ v2 = ($vectortype$) o2;
+        for (int i = 0; i < length(); i++) {
+            res[i] = f.apply(i, vec[i], v1.vec[i], v2.vec[i]);
+        }
+        return new $vectortype$(res);
+    }
+
+    @Override
+    $vectortype$ tOp(Vector<$Boxtype$, Shapes.$shape$> o1, Vector<$Boxtype$, Shapes.$shape$> o2, Mask<$Boxtype$, Shapes.$shape$> m, FTriOp f) {
+        $type$[] res = new $type$[length()];
+        $vectortype$ v1 = ($vectortype$) o1;
+        $vectortype$ v2 = ($vectortype$) o2;
+        for (int i = 0; i < length(); i++) {
+            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+        }
+        return new $vectortype$(res);
+    }
+
+    @Override
+    $type$ rOp($type$ v, FBinOp f) {
+        for (int i = 0; i < length(); i++) {
+            v = f.apply(i, v, vec[i]);
+        }
+        return v;
+    }
+
+    //
+
+    @Override
+    public String toString() {
+        return Arrays.toString(vec);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || this.getClass() != o.getClass()) return false;
+
+        $vectortype$ that = ($vectortype$) o;
+        return Arrays.equals(vec, that.vec);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(vec);
+    }
+
+    // Binary test
+
+    @Override
+    Mask<$Boxtype$, Shapes.$shape$> bTest(Vector<$Boxtype$, Shapes.$shape$> o, FBinTest f) {
+        $vectortype$ v = ($vectortype$) o;
+        boolean[] bits = new boolean[length()];
+        for (int i = 0; i < length(); i++){
+            bits[i] = f.apply(i, vec[i], v.vec[i]);
+        }
+        return new GenericMask<>(this.species(), bits);
+    }
+
+    // Foreach
+
+    @Override
+    void forEach(FUnCon f) {
+        for (int i = 0; i < length(); i++) {
+            f.apply(i, vec[i]);
+        }
+    }
+
+    @Override
+    void forEach(Mask<$Boxtype$, Shapes.$shape$> m, FUnCon f) {
+        forEach((i, a) -> {
+            if (m.getElement(i)) { f.apply(i, a); }
+        });
+    }
+
+#if[FP]
+    $bitsvectortype$ toBits() {
+        $bitstype$[] res = new $bitstype$[this.species().length()];
+        for(int i = 0; i < this.species().length(); i++){
+            res[i] = $Type$.$type$To$Bitstype$Bits(vec[i]);
+        }
+        return new $bitsvectortype$(res);
+    }
+#end[FP]
+
+#if[intOrlong]
+    $fpvectortype$ toFP() {
+        $fptype$[] res = new $fptype$[this.species().length()];
+        for(int i = 0; i < this.species().length(); i++){
+            res[i] = $Boxfptype$.$bitstype$BitsTo$Fptype$(vec[i]);
+        }
+        return new $fpvectortype$(res);
+    }
+#end[intOrlong]
+
+    @Override
+    public $vectortype$ rotateEL(int j) {
+        $type$[] res = new $type$[length()];
+        for (int i = 0; i < length(); i++){
+            res[j + i % length()] = vec[i];
+        }
+        return new $vectortype$(res);
+    }
+
+    @Override
+    public $vectortype$ rotateER(int j) {
+        $type$[] res = new $type$[length()];
+        for (int i = 0; i < length(); i++){
+            int z = i - j;
+            if(j < 0) {
+                res[length() + z] = vec[i];
+            } else {
+                res[z] = vec[i];
+            }
+        }
+        return new $vectortype$(res);
+    }
+
+    @Override
+    public $vectortype$ shiftEL(int j) {
+        $type$[] res = new $type$[length()];
+        for (int i = 0; i < length() - j; i++) {
+            res[i] = vec[i + j];
+        }
+        return new $vectortype$(res);
+    }
+
+    @Override
+    public $vectortype$ shiftER(int j) {
+        $type$[] res = new $type$[length()];
+        for (int i = 0; i < length() - j; i++){
+            res[i + j] = vec[i];
+        }
+        return new $vectortype$(res);
+    }
+
+    @Override
+    public $vectortype$ shuffle(Vector<$Boxtype$, Shapes.$shape$> o, Shuffle<$Boxtype$, Shapes.$shape$> s) {
+        $vectortype$ v = ($vectortype$) o;
+        return uOp((i, a) -> {
+            int e = s.getElement(i);
+            if(e > 0 && e < length()) {
+                //from this
+                return vec[e];
+            } else if(e < length() * 2) {
+                //from o
+                return v.vec[e - length()];
+            } else {
+                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
+            }
+        });
+    }
+
+    @Override
+    public $vectortype$ swizzle(Shuffle<$Boxtype$, Shapes.$shape$> s) {
+        return uOp((i, a) -> {
+            int e = s.getElement(i);
+            if(e > 0 && e < length()) {
+                return vec[e];
+            } else {
+                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
+            }
+        });
+    }
+
+    @Override
+    public <F, Z extends Shape<Vector<?, ?>>> Vector<F, Z> cast(Class<F> type, Z shape) {
+        Vector.Species<F,Z> species = Vector.speciesInstance(type, shape);
+
+        // Whichever is larger
+        int blen = Math.max(species.bitSize(), bitSize()) / Byte.SIZE;
+        ByteBuffer bb = ByteBuffer.allocate(blen);
+
+        int limit = Math.min(species.length(), length());
+
+        if (type == Byte.class) {
+            for (int i = 0; i < limit; i++){
+                bb.put(i, (byte) vec[i]);
+            }
+        } else if (type == Short.class) {
+            for (int i = 0; i < limit; i++){
+                bb.asShortBuffer().put(i, (short) vec[i]);
+            }
+        } else if (type == Integer.class) {
+            for (int i = 0; i < limit; i++){
+                bb.asIntBuffer().put(i, (int) vec[i]);
+            }
+        } else if (type == Long.class){
+            for (int i = 0; i < limit; i++){
+                bb.asLongBuffer().put(i, (long) vec[i]);
+            }
+        } else if (type == Float.class){
+            for (int i = 0; i < limit; i++){
+                bb.asFloatBuffer().put(i, (float) vec[i]);
+            }
+        } else if (type == Double.class){
+            for (int i = 0; i < limit; i++){
+                bb.asDoubleBuffer().put(i, (double) vec[i]);
+            }
+        } else {
+            throw new UnsupportedOperationException("Bad lane type for casting.");
+        }
+
+        return species.fromByteBuffer(bb);
+    }
+
+    // Accessors
+
+    @Override
+    public $type$ get(int i) {
+        return vec[i];
+    }
+
+    @Override
+    public $vectortype$ with(int i, $type$ e) {
+        $type$[] res = vec.clone();
+        res[i] = e;
+        return new $vectortype$(res);
+    }
+
+    // Species
+
+    @Override
+    public $Type$$bits$Species species() {
+        return SPECIES;
+    }
+
+    static final class $Type$$bits$Species extends $Type$Species<Shapes.$shape$> {
+        static final int BIT_SIZE = Shapes.$Shape$.bitSize();
+
+        static final int LENGTH = BIT_SIZE / $Boxtype$.SIZE;
+
+        @Override
+        public String toString() {
+           StringBuilder sb = new StringBuilder("Shape[");
+           sb.append(bitSize()).append(" bits, ");
+           sb.append(length()).append(" ").append($type$.class.getSimpleName()).append("s x ");
+           sb.append(elementSize()).append(" bits");
+           sb.append("]");
+           return sb.toString();
+        }
+
+        @Override
+        public int bitSize() {
+            return BIT_SIZE;
+        }
+
+        @Override
+        public int length() {
+            return LENGTH;
+        }
+
+        @Override
+        public Class<$Boxtype$> elementType() {
+            return $Boxtype$.class;
+        }
+
+        @Override
+        public int elementSize() {
+            return $Boxtype$.SIZE;
+        }
+
+        @Override
+        public Shapes.$shape$ shape() {
+            return Shapes.$Shape$;
+        }
+
+        @Override
+        $vectortype$ op(FOp f) {
+            $type$[] res = new $type$[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = f.apply(i);
+            }
+            return new $vectortype$(res);
+        }
+
+        @Override
+        $vectortype$ op(Mask<$Boxtype$, Shapes.$shape$> m, FOp f) {
+            $type$[] res = new $type$[length()];
+            for (int i = 0; i < length(); i++) {
+                if (m.getElement(i)) {
+                    res[i] = f.apply(i);
+                }
+            }
+            return new $vectortype$(res);
+        }
+
+        // Factories
+
+        @Override
+        public $vectortype$ zero() {
+            return ZERO;
+        }
+    }
+}

@@ -86,6 +86,9 @@ module java.base {
     exports java.math;
     exports java.net;
     exports java.net.spi;
+    exports java.nicl;
+    exports java.nicl.metadata;
+    exports java.nicl.types;
     exports java.nio;
     exports java.nio.channels;
     exports java.nio.channels.spi;
@@ -116,6 +119,10 @@ module java.base {
     exports java.util.spi;
     exports java.util.stream;
     exports java.util.zip;
+    exports javax.arrays.tbd;
+    exports javax.arrays.v2;
+    exports javax.arrays.v2.nodes;
+    exports javax.arrays.v2.ops;
     exports javax.crypto;
     exports javax.crypto.interfaces;
     exports javax.crypto.spec;
@@ -134,6 +141,8 @@ module java.base {
 
     exports com.sun.security.ntlm to
         java.security.sasl;
+    exports jdk.internal to // for @HotSpotIntrinsicCandidate
+            jdk.incubator.vector;
     exports jdk.internal.jimage to
         jdk.jlink;
     exports jdk.internal.jimage.decompressor to
@@ -148,12 +157,15 @@ module java.base {
         java.logging;
     exports jdk.internal.org.objectweb.asm to
         jdk.jartool,
+        jdk.jextract,
         jdk.jlink,
         jdk.scripting.nashorn,
         jdk.internal.vm.ci;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm.util to
+        jdk.jextract,
+        jdk.jlink,
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.commons to
         jdk.scripting.nashorn;

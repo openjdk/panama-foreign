@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>panama</groupId>
+    <artifactId>expressions</artifactId>
+    <version>.01-SNAPSHOT</version>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.6.1</version>
+                <configuration>
+                    <fork>true</fork>
+                    <source>1.9</source>
+                    <target>1.9</target>
+                    <verbose>true</verbose>
+                    <compilerArgs>
+                        <!-- the expression here is a total hack to work around
+                        limitations in the expressing of compiler options -->
+                        <compilerArgument>--add-exports"
+                            "java.base/jdk.internal.misc=ALL-UNNAMED</compilerArgument>
+                        <compilerArgument>--add-exports"
+                            "java.base/jdk.internal.vm.annotation=ALL-UNNAMED</compilerArgument>
+                        <compilerArgument>--add-exports"
+                            "jdk.vm.ci/jdk.vm.ci.code=ALL-UNNAMED</compilerArgument>
+                        <compilerArgument>--add-exports"
+                            "jdk.vm.ci/jdk.vm.ci.amd64=ALL-UNNAMED</compilerArgument>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

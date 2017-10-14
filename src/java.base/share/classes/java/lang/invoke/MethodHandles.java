@@ -25,6 +25,7 @@
 
 package java.lang.invoke;
 
+import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -44,6 +45,8 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ReflectPermission;
+import java.nicl.Library;
+import java.nicl.LibrarySymbol;
 import java.nio.ByteOrder;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -1564,6 +1567,57 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
         public MethodHandle findStaticSetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
             MemberName field = resolveOrFail(REF_putStatic, refc, name, type);
             return getDirectField(REF_putStatic, refc, field);
+        }
+
+        /** TODO */
+        private static class Lazy {
+            private static final MethodHandle INVOKE_NATIVE_MH;
+            private static final MethodType INVOKE_NATIVE_MT = MethodType.methodType(void.class, long[].class, long[].class, long[].class, NativeEntryPoint.class);
+
+            static {
+                try {
+                    // Can cause deadlocks if constructed eagerly.
+                    INVOKE_NATIVE_MH = Lookup.IMPL_LOOKUP.findStatic(MethodHandleNatives.class, "invokeNative", INVOKE_NATIVE_MT);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        private static final java.nicl.types.PointerToken TOKEN = new jdk.internal.nicl.types.PointerTokenImpl();
+
+        public MethodHandle findNative2(LibrarySymbol sym, String name) throws NoSuchMethodException, IllegalAccessException {
+            MethodHandle invokeNativeMH = Lazy.INVOKE_NATIVE_MH;
+            NativeEntryPoint nativeFunc = NativeEntryPoint.make(sym.getAddress().addr(TOKEN), name, invokeNativeMH.type());
+            return MethodHandles.insertArguments(invokeNativeMH, invokeNativeMH.type().parameterCount() - 1, nativeFunc);
+        }
+
+        public MethodHandle findNative(Library lib, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
+            return NativeMethodHandle.make(type, NativeEntryPoint.make(lib.lookup(name).getAddress().addr(TOKEN), name, type));
+        }
+
+        public MethodHandle findNative(String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
+            long addr = findNativeAddress(name);
+            if (addr == 0) {
+                throw new NoSuchMethodException("Failed to look up " + name);
+            }
+            NativeEntryPoint nativeFunc = NativeEntryPoint.make(addr, name, type);
+            MethodHandle mh = NativeMethodHandle.make(type, nativeFunc);
+            return mh;
+        }
+
+        // FIXME: remove
+        public MethodHandle makeSnippet(String name, long addr, MethodType type, int[][] regMasks, int[] killedRegMask, Object generator, int flags) {
+            MachineCodeSnippet codeSnippet = MachineCodeSnippet.make(addr, name, type, regMasks, killedRegMask, generator, flags);
+            MethodHandle mh = NativeMethodHandle.make(type, codeSnippet);
+            return mh;
+        }
+
+        private static Unsafe UNSAFE = Unsafe.getUnsafe();
+
+        /** TODO */
+        private long findNativeAddress(String name) {
+            return UNSAFE.findNativeAddress(name);
         }
 
         /**

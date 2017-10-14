@@ -1,0 +1,913 @@
+/*
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have
+ * questions.
+ */
+package jdk.incubator.vector;
+
+import jdk.internal.HotSpotIntrinsicCandidate;
+
+import java.nio.ByteBuffer;
+#if[!byte]
+import java.nio.$Type$Buffer;
+#end[!byte]
+#if[FP]
+import java.util.concurrent.ThreadLocalRandom;
+#end[FP]
+
+@SuppressWarnings("cast")
+public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> implements Vector<$Boxtype$,S> {
+
+    $abstractvectortype$() {}
+
+    // Unary operator
+
+    interface FUnOp {
+        $type$ apply(int i, $type$ a);
+    }
+
+    abstract $abstractvectortype$<S> uOp(FUnOp f);
+
+    abstract $abstractvectortype$<S> uOp(Mask<$Boxtype$, S> m, FUnOp f);
+
+    // Binary operator
+
+    interface FBinOp {
+        $type$ apply(int i, $type$ a, $type$ b);
+    }
+
+    abstract $abstractvectortype$<S> bOp(Vector<$Boxtype$,S> o, FBinOp f);
+
+    abstract $abstractvectortype$<S> bOp(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m, FBinOp f);
+
+    // Trinary operator
+
+    interface FTriOp {
+        $type$ apply(int i, $type$ a, $type$ b, $type$ c);
+    }
+
+    abstract $abstractvectortype$<S> tOp(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2, FTriOp f);
+
+    abstract $abstractvectortype$<S> tOp(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2, Mask<$Boxtype$, S> m, FTriOp f);
+
+    // Reduction operator
+
+    abstract $type$ rOp($type$ v, FBinOp f);
+
+    // Binary test
+
+    interface FBinTest {
+        boolean apply(int i, $type$ a, $type$ b);
+    }
+
+    abstract Mask<$Boxtype$, S> bTest(Vector<$Boxtype$,S> o, FBinTest f);
+
+    // Foreach
+
+    interface FUnCon {
+        void apply(int i, $type$ a);
+    }
+
+    abstract void forEach(FUnCon f);
+
+    abstract void forEach(Mask<$Boxtype$, S> m, FUnCon f);
+
+    //
+
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
+    @Override
+    public $abstractvectortype$<S> add(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a + b));
+    }
+
+    @Override
+    public $abstractvectortype$<S> add(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a + b));
+    }
+
+    @Override
+    public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    }
+
+    @Override
+    public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    }
+
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
+    @Override
+    public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a - b));
+    }
+
+    @Override
+    public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a - b));
+    }
+
+    @Override
+    public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
+    }
+
+    @Override
+    public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
+    }
+
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
+    @Override
+    public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a * b));
+    }
+
+    @Override
+    public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a * b));
+    }
+
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
+    @Override
+    public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a / b));
+    }
+
+    @Override
+    public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a / b));
+    }
+
+    @Override
+    public $abstractvectortype$<S> neg() {
+        return uOp((i, a) -> ($type$) (-a));
+    }
+
+    @Override
+    public $abstractvectortype$<S> neg(Mask<$Boxtype$, S> m) {
+        return uOp(m, (i, a) -> ($type$) (-a));
+    }
+
+    @Override
+    public $abstractvectortype$<S> abs() {
+        return uOp((i, a) -> ($type$) Math.abs(a));
+    }
+
+    @Override
+    public $abstractvectortype$<S> abs(Mask<$Boxtype$, S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.abs(a));
+    }
+
+    @Override
+    public $abstractvectortype$<S> min(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> (a <= b) ? a : b);
+    }
+
+    @Override
+    public $abstractvectortype$<S> max(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> (a >= b) ? a : b);
+    }
+
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
+    @Override
+    public Mask<$Boxtype$, S> equal(Vector<$Boxtype$,S> o) {
+        return bTest(o, (i, a, b) -> a == b);
+    }
+
+    @Override
+    public Mask<$Boxtype$, S> notEqual(Vector<$Boxtype$,S> o) {
+        return bTest(o, (i, a, b) -> a != b);
+    }
+
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
+    @Override
+    public Mask<$Boxtype$, S> lessThan(Vector<$Boxtype$,S> o) {
+        return bTest(o, (i, a, b) -> a < b);
+    }
+
+    @Override
+    public Mask<$Boxtype$, S> lessThanEq(Vector<$Boxtype$,S> o) {
+        return bTest(o, (i, a, b) -> a <= b);
+    }
+
+    @Override
+    public Mask<$Boxtype$, S> greaterThan(Vector<$Boxtype$,S> o) {
+        return bTest(o, (i, a, b) -> a > b);
+    }
+
+    @Override
+    public Mask<$Boxtype$, S> greaterThanEq(Vector<$Boxtype$,S> o) {
+        return bTest(o, (i, a, b) -> a >= b);
+    }
+
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
+    @Override
+    public $abstractvectortype$<S> blend(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, (i, a, b) -> m.getElement(i) ? a : b);
+    }
+
+#if[intOrlong]
+    public $abstractvectortype$<S> addExact(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> Math.addExact(a, b));
+    }
+
+    public $abstractvectortype$<S> addExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return bOp(o, m, (i, a, b) -> Math.addExact(a, b));
+    }
+
+    public $abstractvectortype$<S> decrementExact() {
+        return uOp((i, a) -> Math.decrementExact(a));
+    }
+
+    public $abstractvectortype$<S> decrementExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> Math.decrementExact(a));
+    }
+
+    public $abstractvectortype$<S> incrementExact(Vector<$Boxtype$,S> o) {
+        return uOp((i, a) -> Math.incrementExact(a));
+    }
+
+    public $abstractvectortype$<S> incrementExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> Math.incrementExact(a));
+    }
+
+    public $abstractvectortype$<S> multiplyExact(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> Math.multiplyExact(a, b));
+    }
+
+    public $abstractvectortype$<S> multiplyExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> Math.multiplyExact(a, b));
+    }
+
+    public $abstractvectortype$<S> negateExact() {
+        return uOp((i, a) -> Math.negateExact(a));
+    }
+
+    public $abstractvectortype$<S> negateExact(Mask<$Boxtype$, S> m) {
+        return uOp(m, (i, a) -> Math.negateExact(a));
+    }
+
+    public $abstractvectortype$<S> subtractExtract(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> Math.subtractExact(a, b));
+    }
+
+    public $abstractvectortype$<S> subtractExtract(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return bOp(o, m, (i, a, b) -> Math.subtractExact(a, b));
+    }
+#end[intOrlong]
+#if[int]
+    // @@@ Shape specific
+    // Int256Vector -> Long512Vector
+    /*
+
+    public $abstractvectortype$<S> multiplyFull(Vector<$Boxtype$,S> o) {
+        throw new UnsupportedOperationException("multiplyFull not supported on Float");
+    }
+
+    public $abstractvectortype$<S> multiplyFull(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        throw new UnsupportedOperationException("multiplyFull not supported on Float");
+    }
+    */
+#end[int]
+#if[long]
+    /*
+    // @@@ Shape specific
+    // long,int-> long : S, S / 2 -> S
+    // Long512Vector, Int256Vector -> Long512Vector
+
+    public $abstractvectortype$<S> multiplyExact(Vector<$Boxtype$,S> o) {
+        throw new UnsupportedOperationException("multiplyExact not supported on Float");
+    }
+
+    public $abstractvectortype$<S> multiplyExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        throw new UnsupportedOperationException("multiplyExact not supported on Float");
+    }
+
+    // @@@ Shape specific
+    // long->int
+    // Long512Vector -> Int256Vector
+
+    public Vector<Integer, Shapes.S128Bit> toIntExact() {
+        throw new UnsupportedOperationException("toIntExact not implemented.");
+    }
+
+    // Top 64 of 128 bits
+
+    public $abstractvectortype$<S> multiplyHigh(Vector<$Boxtype$,S> o) {
+        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
+    }
+
+    public $abstractvectortype$<S> multiplyHigh(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
+    }
+    */
+#end[long]
+#if[FP]
+    public $abstractvectortype$<S> sqrt() {
+        return uOp((i, a) -> ($type$) Math.sqrt((double) a));
+    }
+
+    public $abstractvectortype$<S> sqrt(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.sqrt((double) a));
+    }
+
+    public $abstractvectortype$<S> tan() {
+        return uOp((i, a) -> ($type$) Math.tan((double) a));
+    }
+
+    public $abstractvectortype$<S> tan(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.tan((double) a));
+    }
+
+    public $abstractvectortype$<S> tanh() {
+        return uOp((i, a) -> ($type$) Math.tanh((double) a));
+    }
+
+    public $abstractvectortype$<S> tanh(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.tanh((double) a));
+    }
+
+    public $abstractvectortype$<S> toDegrees() {
+        return uOp((i, a) -> ($type$) Math.toDegrees((double) a));
+    }
+
+    public $abstractvectortype$<S> toDegrees(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.toDegrees((double) a));
+    }
+
+    public $abstractvectortype$<S> toRadians() {
+        return uOp((i, a) -> ($type$) Math.toRadians((double) a));
+    }
+
+    public $abstractvectortype$<S> toRadians(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.toRadians((double) a));
+    }
+
+    public $abstractvectortype$<S> ulp() {
+        return uOp((i, a) -> ($type$) Math.ulp((double) a));
+    }
+
+    public $abstractvectortype$<S> ulp(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.ulp((double) a));
+    }
+
+    public $abstractvectortype$<S> sin() {
+        return uOp((i, a) -> ($type$) Math.sin((double) a));
+    }
+
+    public $abstractvectortype$<S> sin(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.sin((double) a));
+    }
+
+    public $abstractvectortype$<S> sinh() {
+        return uOp((i, a) -> ($type$) Math.sinh((double) a));
+    }
+
+    public $abstractvectortype$<S> sinh(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.sinh((double) a));
+    }
+
+    public $abstractvectortype$<S> cos() {
+        return uOp((i, a) -> ($type$) Math.cos((double) a));
+    }
+
+    public $abstractvectortype$<S> cos(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.cos((double) a));
+    }
+
+    public $abstractvectortype$<S> cosh() {
+        return uOp((i, a) -> ($type$) Math.cosh((double) a));
+    }
+
+    public $abstractvectortype$<S> cosh(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.cosh((double) a));
+    }
+
+    public $abstractvectortype$<S> asin() {
+        return uOp((i, a) -> ($type$) Math.asin((double) a));
+    }
+
+    public $abstractvectortype$<S> asin(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.asin((double) a));
+    }
+
+    public $abstractvectortype$<S> acos() {
+        return uOp((i, a) -> ($type$) Math.acos((double) a));
+    }
+
+    public $abstractvectortype$<S> acos(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.acos((double) a));
+    }
+
+    public $abstractvectortype$<S> atan() {
+        return uOp((i, a) -> ($type$) Math.atan((double) a));
+    }
+
+    public $abstractvectortype$<S> atan(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.atan((double) a));
+    }
+
+    public $abstractvectortype$<S> atan2(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> atan2(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> cbrt() {
+        return uOp((i, a) -> ($type$) Math.cbrt((double) a));
+    }
+
+    public $abstractvectortype$<S> cbrt(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.cbrt((double) a));
+    }
+
+    public $abstractvectortype$<S> ceil() {
+        return uOp((i, a) -> ($type$) Math.ceil((double) a));
+    }
+
+    public $abstractvectortype$<S> ceil(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.ceil((double) a));
+    }
+
+    public $abstractvectortype$<S> copySign(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) Math.copySign((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> copySign(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) Math.copySign((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> log() {
+        return uOp((i, a) -> ($type$) Math.log((double) a));
+    }
+
+    public $abstractvectortype$<S> log(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.log((double) a));
+    }
+
+    public $abstractvectortype$<S> log10() {
+        return uOp((i, a) -> ($type$) Math.log10((double) a));
+    }
+
+    public $abstractvectortype$<S> log10(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.log10((double) a));
+    }
+
+    public $abstractvectortype$<S> log1p() {
+        return uOp((i, a) -> ($type$) Math.log1p((double) a));
+    }
+
+    public $abstractvectortype$<S> log1p(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.log1p((double) a));
+    }
+
+    public $abstractvectortype$<S> nextAfter(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) Math.nextAfter((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> nextAfter(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) Math.nextAfter((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> nextDown() {
+        return uOp((i, a) -> ($type$) Math.nextDown((double) a));
+    }
+
+    public $abstractvectortype$<S> nextDown(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.nextDown((double) a));
+    }
+
+    public $abstractvectortype$<S> nextUp() {
+        return uOp((i, a) -> ($type$) Math.nextUp((double) a));
+    }
+
+    public $abstractvectortype$<S> nextUp(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.nextUp((double) a));
+    }
+
+    public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> random() {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        return uOp((i, a) -> r.next$Boxtype$());
+    }
+
+    public $abstractvectortype$<S> rint() {
+        return uOp((i, a) -> ($type$) Math.rint((double) a));
+    }
+
+    public $abstractvectortype$<S> rint(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.rint((double) a));
+    }
+
+    public $abstractvectortype$<S> round() {
+        return uOp((i, a) -> ($type$) Math.round((double) a));
+    }
+
+    public $abstractvectortype$<S> round(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.round((double) a));
+    }
+
+    public $abstractvectortype$<S> scalb(Vector<Integer, S> o) {
+        throw  new UnsupportedOperationException("Scalb not implemented yet.");
+    }
+
+    public $abstractvectortype$<S> scalb(Vector<Integer, S> o, Mask<$Boxtype$,S> m) {
+        throw  new UnsupportedOperationException("Scalb not implemented yet.");
+    }
+
+    public $abstractvectortype$<S> signum() {
+        return uOp((i, a) -> ($type$) Math.signum((double) a));
+    }
+
+    public $abstractvectortype$<S> signum(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.signum((double) a));
+    }
+
+    public $abstractvectortype$<S> exp() {
+        return uOp((i, a) -> ($type$) Math.exp((double) a));
+    }
+
+    public $abstractvectortype$<S> exp(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.exp((double) a));
+    }
+
+    public $abstractvectortype$<S> expm1() {
+        return uOp((i, a) -> ($type$) Math.expm1((double) a));
+    }
+
+    public $abstractvectortype$<S> expm1(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.expm1((double) a));
+    }
+
+    public $abstractvectortype$<S> floor() {
+        return uOp((i, a) -> ($type$) Math.floor((double) a));
+    }
+
+    public $abstractvectortype$<S> floor(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.floor((double) a));
+    }
+
+    public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2) {
+        return tOp(o1, o2, (i, a, b, c) -> Math.fma(a, b, c));
+    }
+
+    public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2, Mask<$Boxtype$,S> m) {
+        return tOp(o1, o2, m, (i, a, b, c) -> Math.fma(a, b, c));
+    }
+
+    public $abstractvectortype$<S> getExponent() {
+        return uOp((i, a) -> ($type$) Math.getExponent((double) a));
+    }
+
+    public $abstractvectortype$<S> getExponent(Mask<$Boxtype$,S> m) {
+        return uOp(m, (i, a) -> ($type$) Math.getExponent((double) a));
+    }
+
+    public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> IEEEremainder(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) Math.IEEEremainder((double) a, (double) b));
+    }
+
+    public $abstractvectortype$<S> IEEEremainder(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) Math.IEEEremainder((double) a, (double) b));
+    }
+#end[FP]
+
+#if[BITWISE]
+    public $abstractvectortype$<S> and(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a & b));
+    }
+
+    public $abstractvectortype$<S> and(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a & b));
+    }
+
+    public $abstractvectortype$<S> or(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a | b));
+    }
+
+    public $abstractvectortype$<S> or(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a | b));
+    }
+
+    public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a ^ b));
+    }
+
+    public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a ^ b));
+    }
+
+    public $abstractvectortype$<S> not() {
+        return uOp((i, a) -> ($type$) (~a));
+    }
+
+    public $abstractvectortype$<S> not(Mask<$Boxtype$, S> m) {
+        return uOp(m, (i, a) -> ($type$) (~a));
+    }
+
+    public $abstractvectortype$<S> floorDiv(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a / b));
+    }
+
+    public $abstractvectortype$<S> floorDiv(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a / b));
+    }
+
+    public $abstractvectortype$<S> floorMod(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a % b));
+    }
+
+    public $abstractvectortype$<S> floorMod(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a % b));
+    }
+
+    public $abstractvectortype$<S> shiftL(int s) {
+        return uOp((i, a) -> ($type$) (a << s));
+    }
+
+    public $abstractvectortype$<S> shiftR(int s) {
+        return uOp((i, a) -> ($type$) (a >> s));
+    }
+
+    public $abstractvectortype$<S> aShiftR(int s) {
+        return uOp((i, a) -> ($type$) (a >>> s));
+    }
+
+    public $abstractvectortype$<S> rotateL(int j) {
+        return uOp((i, a) -> ($type$) $Wideboxtype$.rotateLeft(a, j));
+    }
+
+    public $abstractvectortype$<S> rotateR(int j) {
+        return uOp((i, a) -> ($type$) $Wideboxtype$.rotateRight(a, j));
+    }
+#end[BITWISE]
+
+    @Override
+    public void intoByteArray(byte[] a, int ix) {
+        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+        intoByteBuffer(bb);
+    }
+
+    @Override
+    public void intoByteArray(byte[] a, int ix, Mask<$Boxtype$, S> m) {
+        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+        intoByteBuffer(bb, m);
+    }
+
+    @Override
+    public void intoByteBuffer(ByteBuffer bb) {
+        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+        forEach((i, a) -> fb.put(a));
+    }
+
+    @Override
+    public void intoByteBuffer(ByteBuffer bb, Mask<$Boxtype$, S> m) {
+        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+        forEach((i, a) -> {
+            if (m.getElement(i))
+                fb.put(a);
+            else
+                fb.position(fb.position() + 1);
+        });
+    }
+
+    @Override
+    public void intoByteBuffer(ByteBuffer bb, int ix) {
+        bb = bb.duplicate().position(ix);
+        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+        forEach((i, a) -> fb.put(i, a));
+    }
+
+    @Override
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, S> m) {
+        bb = bb.duplicate().position(ix);
+        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+        forEach(m, (i, a) -> fb.put(i, a));
+    }
+
+
+    // Type specific horizontal reductions
+
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
+    public $type$ sumAll() {
+        return rOp(($type$) 0, (i, a, b) -> ($type$) (a + b));
+    }
+
+    public $type$ subAll() {
+        return rOp(($type$) 0, (i, a, b) -> ($type$) (a - b));
+    }
+
+    public $type$ prodAll() {
+        return rOp(($type$) 1, (i, a, b) -> ($type$) (a * b));
+    }
+
+    public $type$ minAll() {
+        return rOp($Boxtype$.MAX_VALUE, (i, a, b) -> a > b ? b : a);
+    }
+
+    public $type$ maxAll() {
+        return rOp($Boxtype$.MIN_VALUE, (i, a, b) -> a < b ? b : a);
+    }
+
+#if[BITWISE]
+    public $type$ orAll() {
+        return rOp(($type$) 0, (i, a, b) -> ($type$) (a | b));
+    }
+
+    public $type$ andAll() {
+        return rOp(($type$) -1, (i, a, b) -> ($type$) (a & b));
+    }
+
+    public $type$ xorAll() {
+        return rOp(($type$) 0, (i, a, b) -> ($type$) (a ^ b));
+    }
+#end[BITWISE]
+
+
+    // Type specific accessors
+
+    public abstract $type$ get(int i);
+
+    public abstract $abstractvectortype$<S> with(int i, $type$ e);
+
+    // Type specific extractors
+
+    @HotSpotIntrinsicCandidate
+    public void intoArray($type$[] a, int ix) {
+        forEach((i, a_) -> a[ix + i] = a_);
+    }
+
+    public void intoArray($type$[] a, int ix, Mask<$Boxtype$, S> m) {
+        forEach(m, (i, a_) -> a[ix + i] = a_);
+    }
+
+    // Species
+
+    @Override
+    public abstract $Type$Species<S> species();
+
+    public static abstract class $Type$Species<S extends Vector.Shape<Vector<?,?>>> implements Vector.Species<$Boxtype$, S> {
+        interface FOp {
+            $type$ apply(int i);
+        }
+
+        abstract $abstractvectortype$<S> op(FOp f);
+
+        abstract $abstractvectortype$<S> op(Mask<$Boxtype$, S> m, FOp f);
+
+        // Factories
+
+#if[FP]
+        @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+        @HotSpotIntrinsicCandidate
+#end[int]
+        @Override
+        public abstract $abstractvectortype$<S> zero();
+
+#if[FP]
+        @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+        @HotSpotIntrinsicCandidate
+#end[int]
+        public $abstractvectortype$<S> broadcast($type$ e) {
+            return op(i -> e);
+        }
+
+        public $abstractvectortype$<S> single($type$ e) {
+            return op(i -> i == 0 ? e : ($type$) 0);
+        }
+
+        @HotSpotIntrinsicCandidate
+        public $abstractvectortype$<S> fromArray($type$[] a, int ix) {
+            return op(i -> a[ix + i]);
+        }
+
+        public $abstractvectortype$<S> fromArray($type$[] a, int ix, Mask<$Boxtype$, S> m) {
+            return op(m, i -> a[ix + i]);
+        }
+
+        @Override
+        public $abstractvectortype$<S> fromByteArray(byte[] a, int ix) {
+            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+            return fromByteBuffer(bb);
+        }
+
+        @Override
+        public $abstractvectortype$<S> fromByteArray(byte[] a, int ix, Mask<$Boxtype$, S> m) {
+            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+            return fromByteBuffer(bb, m);
+        }
+
+        @Override
+        public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb) {
+            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+            return op(i -> fb.get());
+        }
+
+        @Override
+        public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, Mask<$Boxtype$, S> m) {
+            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+            return op(i -> {
+                if(m.getElement(i))
+                    return fb.get();
+                else {
+                    fb.position(fb.position() + 1);
+                    return ($type$) 0;
+                }
+            });
+        }
+
+        @Override
+        public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, int ix) {
+            bb = bb.duplicate().position(ix);
+            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+            return op(i -> fb.get(i));
+        }
+
+        @Override
+        public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, S> m) {
+            bb = bb.duplicate().position(ix);
+            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+            return op(m, i -> fb.get(i));
+        }
+    }
+}

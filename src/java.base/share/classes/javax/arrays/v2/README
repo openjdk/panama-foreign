@@ -1,0 +1,43 @@
+
+NOTE - this is a prototype.  Everything you see here is completely subject to
+change even in the next version (v3) of this prototype, including method names,
+organization, you name it.  Comments on the choices made here are not only
+welcome, they are demanded.  Questions about the missing documentation are also
+welcome/demanded.  I hit my deadline for publishing this, and it's a week since,
+so it needs to go out.
+
+In particular, I would love some guidance in the naming schemes, and in the
+organization of the factories for matrices and arrays.  Look at the tests
+for guidance in how to use, in particular A2OpEval.java.
+
+To do (an incomplete list):
+- need to add recursive subdivision to the loops that calculate inner products
+  in matrix-vector product.  This is necessary for locality, parallelism, and
+  for indexing simplification.
+
+- need to devise a scheme for specializing kernels to prevent polymorphic call
+  sites from wiping out performance.  Note this interacts with preceding change.
+
+- need to experiment with coding up additional operations, e.g. convolution
+  (stenciling) and various reductions (Gaussian Elimination, Cholesky, QR).
+
+- need to (re-)add ability to set matrices read-only.
+
+- need to fill in/reorganize the primitive array types (make them more like
+  primitive matrix types); need to see if code can be more factored there
+  where it implements the streams interfaces.
+
+- need to get the tests right in their expected-vs-seen parameter order.
+
+- need to experiment with "user mode" extension of operators and matrices of
+  primitives (storing boolean in bits seems like a really good idea).
+
+- need to be sure that row and column sectioning commutes with submatrix;
+  a subarray of a section should become a section of a submatrix (this is
+  important for index simplification). (done, not tested)
+
+A particular problem is the incorporation of inner product into the ASTs.
+Because scalar "T" is not necessarily an interface and is not necessarily lazy,
+scalars need to be refactored into wrapped scalars with a "getValue" method,
+so that they and inner-product expressions can behave in the same way and have
+potentially lazy implementations. (done, tested)
