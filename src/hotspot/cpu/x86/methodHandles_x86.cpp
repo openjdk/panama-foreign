@@ -33,6 +33,7 @@
 #include "prims/methodHandles.hpp"
 #include "runtime/javaCalls.hpp"
 #include "logging/log.hpp"
+#include "logging/logStream.hpp"
 
 #define __ _masm->
 
@@ -979,34 +980,36 @@ static void dump_stack_slot(outputStream* out, size_t offset, uint64_t value) {
 
 static void dump_argument_registers(struct ShuffleDowncallContext* ctxt) {
 #ifdef _LP64
-  if (log_is_enabled(Info, panama)) {
-    outputStream* out = Log(panama)::info_stream();
-    out->print("Argument registers:\n");
+  LogTarget(Info, panama) lt;
+  if (lt.is_enabled()) {
+    LogStream ls(lt);
+    ls.print("Argument registers:\n");
     for (size_t i = 0; i < INTEGER_ARGUMENT_REGISTERS_NOOF; i++) {
-      dump_integer_register(out, integer_argument_registers[i], ctxt->arguments.integer[i]);
+      dump_integer_register(&ls, integer_argument_registers[i], ctxt->arguments.integer[i]);
     }
     for (size_t i = 0; i < VECTOR_ARGUMENT_REGISTERS_NOOF; i++) {
-      dump_vector_register(out, vector_argument_registers[i], ctxt->arguments.vector[i]);
+      dump_vector_register(&ls, vector_argument_registers[i], ctxt->arguments.vector[i]);
     }
-    dump_integer_register(out, rax, ctxt->arguments.rax);
+    dump_integer_register(&ls, rax, ctxt->arguments.rax);
 
     for (size_t i = 0; i < ctxt->arguments.stack_args_bytes; i += sizeof(uint64_t)) {
       size_t slot = i / sizeof(uint64_t);
-      dump_stack_slot(out, i, ctxt->arguments.stack_args[slot]);
+      dump_stack_slot(&ls, i, ctxt->arguments.stack_args[slot]);
     }
   }
 #endif
 }
 
 static void dump_return_registers(struct ShuffleDowncallContext* ctxt) {
-  if (log_is_enabled(Info, panama)) {
-    outputStream* out = Log(panama)::info_stream();
-    out->print("Return registers:\n");
+  LogTarget(Info, panama) lt;
+  if (lt.is_enabled()) {
+    LogStream ls(lt);
+    ls.print("Return registers:\n");
     for (size_t i = 0; i < INTEGER_RETURN_REGISTERS_NOOF; i++) {
-      dump_integer_register(out, integer_return_registers[i], ctxt->returns.integer[i]);
+      dump_integer_register(&ls, integer_return_registers[i], ctxt->returns.integer[i]);
     }
     for (size_t i = 0; i < VECTOR_RETURN_REGISTERS_NOOF; i++) {
-      dump_vector_register(out, vector_return_registers[i], ctxt->returns.vector[i]);
+      dump_vector_register(&ls, vector_return_registers[i], ctxt->returns.vector[i]);
     }
   }
 }
@@ -1058,12 +1061,13 @@ public:
 
 private:
   void copy_argument_value(void** src_addrp) {
-    if (log_is_enabled(Debug, panama)) {
-      outputStream* out = Log(panama)::info_stream();
+    LogTarget(Debug, panama) lt;
+    if (lt.is_enabled()) {
+      LogStream ls(lt);
       uint64_t* values = (uint64_t*)*src_addrp;
       for (size_t i = 0; i < _npulls; i++) {
-	out->print_cr("Pulling %3zd times to %20s[%3zd]: 0x%" PRIx64 "\n",
-		      _npulls, index2storage_class_name[_cur_class], _index_in_class, values[i]);
+        ls.print_cr("Pulling %3zd times to %20s[%3zd]: 0x%" PRIx64 "\n",
+          _npulls, index2storage_class_name[_cur_class], _index_in_class, values[i]);
       }
     }
 
@@ -1076,9 +1080,9 @@ private:
     case CLASS_STACK:
       assert(_index_in_class < _recipe.stack_args_slots(), "out of bounds");
       memcpy(&_context.arguments.stack_args[_index_in_class], *src_addrp, sizeof(uint64_t));
-      if (log_is_enabled(Debug, panama)) {
-	outputStream* out = Log(panama)::info_stream();
-	out->print_cr("Pulling stack value: 0x%" PRIx64 "\n", *(uint64_t*)*src_addrp);
+      if (lt.is_enabled()) {
+        LogStream ls(lt);
+        ls.print_cr("Pulling stack value: 0x%" PRIx64 "\n", *(uint64_t*)*src_addrp);
       }
       break;
 
@@ -1510,7 +1514,7 @@ void MethodHandles::generate_invoke_native(MacroAssembler* _masm) {
 static struct {
   bool inited;
   struct {
-    KlassHandle klass;
+    Klass* klass;
     Symbol* name;
     Symbol* sig;
   } upcall_method;  // java.nicl.UpcallHandler::invoke

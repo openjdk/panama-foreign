@@ -30,7 +30,7 @@ include LibCommon.gmk
 ifeq ($(ENABLE_LIBCLANG), yes)
 
   LIBJCLANG_SRC := \
-      $(JDK_TOPDIR)/src/jdk.internal.clang/share/native/libjclang
+      $(TOPDIR)/src/jdk.internal.clang/share/native/libjclang
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBJCLANG, \
       LIBRARY := jclang, \

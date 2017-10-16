@@ -1095,17 +1095,17 @@ void Deoptimization::reassign_fields(frame* fr, RegisterMap* reg_map, GrowableAr
       InstanceKlass* ik = InstanceKlass::cast(k);
       reassign_fields_by_klass(ik, fr, reg_map, sv, 0, obj(), skip_internal);
       // FIXME
-      if (k() == SystemDictionary::Long2_klass() ||
-          k() == SystemDictionary::Long4_klass() ||
-          k() == SystemDictionary::Long8_klass()) {
+      if (k == SystemDictionary::Long2_klass() ||
+          k == SystemDictionary::Long4_klass() ||
+          k == SystemDictionary::Long8_klass()) {
         StackValue* value = StackValue::create_stack_value(fr, reg_map, sv->field_at(0));
         assert(value->type() == T_ILLEGAL, "");
         address value_addr = (address)value->get_addr();
-        int vec_len = (k() == SystemDictionary::Long2_klass()) ? 2 :
-                       (k() == SystemDictionary::Long4_klass() ? 4 : 8);
-        int offset = (k() == SystemDictionary::Long2_klass()) ? java_lang_Long2::base_offset_in_bytes() :
-                      (k() == SystemDictionary::Long4_klass() ? java_lang_Long4::base_offset_in_bytes() :
-                                                                java_lang_Long8::base_offset_in_bytes());
+        int vec_len = (k == SystemDictionary::Long2_klass()) ? 2 :
+                       (k == SystemDictionary::Long4_klass() ? 4 : 8);
+        int offset = (k == SystemDictionary::Long2_klass()) ? java_lang_Long2::base_offset_in_bytes() :
+                      (k == SystemDictionary::Long4_klass() ? java_lang_Long4::base_offset_in_bytes() :
+                                                              java_lang_Long8::base_offset_in_bytes());
         for (int i = 0; i < vec_len; i++) {
           obj->long_field_put(offset + 8*i, *(jlong*) (value_addr + 8*i));
         }

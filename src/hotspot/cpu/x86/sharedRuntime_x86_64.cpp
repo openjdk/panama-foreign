@@ -4034,7 +4034,7 @@ static nmethod* generate_native_call_quick(MacroAssembler* masm,
   int stack_slots = SharedRuntime::out_preserve_stack_slots() + out_arg_slots;
 
   const int StackAlignmentInSlots = StackAlignmentInBytes / VMRegImpl::stack_slot_size;
-  stack_slots = round_to(stack_slots, StackAlignmentInSlots);
+  stack_slots = align_up(stack_slots, StackAlignmentInSlots);
 
   int stack_size = stack_slots * VMRegImpl::stack_slot_size;
 

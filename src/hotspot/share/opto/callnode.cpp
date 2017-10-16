@@ -2186,8 +2186,10 @@ int VBoxNode::base_offset_in_bytes() {
     case Type::VectorX: return java_lang_Long2::base_offset_in_bytes();
     case Type::VectorY: return java_lang_Long4::base_offset_in_bytes();
     case Type::VectorZ: return java_lang_Long8::base_offset_in_bytes();
+    default: {
+      NOT_PRODUCT(_t->dump();)
+      fatal("Unexpected type");
+    }
   }
-  NOT_PRODUCT(_t->dump();)
-  fatal("Unexpected type");
   return 0;
 }

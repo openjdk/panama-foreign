@@ -7322,7 +7322,7 @@ bool LibraryCallKit::inline_vector_cmp(BasicType type, int num_elem, vmIntrinsic
     return false;
   }
 
-  bool maybe_null = true;
+  ProfilePtrKind maybe_null = ProfileMaybeNull;
   ciKlass* better_type = NULL;
   const TypeInstPtr* box_type = TypeInstPtr::NOTNULL;
   if ( !method()->return_profiled_type(bci(), better_type, maybe_null) ) {
@@ -7440,6 +7440,8 @@ bool LibraryCallKit::inline_vector_sumAll(const TypeInstPtr* box_type, BasicType
     break;
   case T_DOUBLE:
     ReductionAdd = _gvn.transform(new AddReductionVDNode(NULL, zerocon(T_DOUBLE), opd1));
+    break;
+  default:
     break;
   }
   set_result(ReductionAdd);
@@ -7580,6 +7582,8 @@ static bool is_vector_cmp(vmIntrinsics::ID id) {
     case vmIntrinsics::_VectorLessThanDouble:
     case vmIntrinsics::_VectorLessThanInt:
       return true;
+    default:
+      return false;
   }
   return false;
 }
@@ -7590,6 +7594,8 @@ bool is_vector_zero(vmIntrinsics::ID id) {
   case vmIntrinsics::_VectorZeroDouble:
   case vmIntrinsics::_VectorZeroInt:
     return true;
+  default:
+    return false;
   }
   return false;
 }
@@ -7600,6 +7606,8 @@ static bool is_vector_broadcast(vmIntrinsics::ID id) {
   case vmIntrinsics::_VectorBroadcastDouble:
   case vmIntrinsics::_VectorBroadcastInt:
     return true;
+  default:
+    return false;
   }
   return false;
 }
@@ -7610,6 +7618,8 @@ static bool is_vector_blend(vmIntrinsics::ID id) {
   case vmIntrinsics::_VectorBlendDouble:
   case vmIntrinsics::_VectorBlendInt:
     return true;
+  default:
+    return false;
   }
   return false;
 }
@@ -7620,6 +7630,8 @@ static bool is_vector_sumAll(vmIntrinsics::ID id) {
   case vmIntrinsics::_VectorSumAllDouble:
   case vmIntrinsics::_VectorSumAllInt:
     return true;
+  default:
+    return false;
   }
   return false;
 }
@@ -7633,6 +7645,8 @@ static bool is_vector_load(vmIntrinsics::ID id) {
   case vmIntrinsics::_VectorLoadShort:
   case vmIntrinsics::_VectorLoadByte:
     return true;
+  default:
+    return false;
   }
   return false;
 }
@@ -7646,6 +7660,8 @@ static bool is_vector_store(vmIntrinsics::ID id) {
   case vmIntrinsics::_VectorStoreShort:
   case vmIntrinsics::_VectorStoreByte:
     return true;
+  default:
+    return false;
   }
   return false;
 }
@@ -7735,6 +7751,8 @@ bool LibraryCallKit::inline_zero_vector_op(const TypeInstPtr* box_type, BasicTyp
   case T_DOUBLE:
     broadcast = _gvn.transform(new ReplicateDNode(zerocon(T_DOUBLE), TypeVect::make(bt, num_elem)));
     break;
+  default:
+    break;
   }
   Node* box = _gvn.transform(new VectorBoxNode(box_type, broadcast));
   set_result(box);
@@ -7777,7 +7795,9 @@ bool LibraryCallKit::inline_broadcast_vector_op(const TypeInstPtr* box_type, Bas
   case T_DOUBLE:
     broadcast = _gvn.transform(new ReplicateDNode(element, TypeVect::make(bt, num_elem)));
     break;
-}
+  default:
+    break;
+  }
   Node* box = _gvn.transform(new VectorBoxNode(box_type, broadcast));
   set_result(box);
 #ifndef PRODUCT

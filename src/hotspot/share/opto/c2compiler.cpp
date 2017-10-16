@@ -213,6 +213,8 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
     case vmIntrinsics::_VectorDivInt:
       // Assume true if enabled and allow implementation which will determine typing to figure out if supported.
       return UseVectorApiIntrinsics;
+    default:
+      break;
   }
 
   // Only Object.hashCode and Object.clone intrinsics implement also a virtual

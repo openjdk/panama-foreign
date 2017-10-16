@@ -84,8 +84,7 @@ import static java.lang.invoke.MethodTypeForm.LF_NEWINVSPECIAL;
         assert (outArgs[outArgs.length - 1] == names[GET_MEMBER]);  // look, shifted args!
         int result = LAST_RESULT;
         names[LINKER_CALL] = new LambdaForm.Name(linker, outArgs);
-        String lambdaName = "NMH.invokeNative" + "_" + shortenSignature(basicTypeSignature(mtype));
-        LambdaForm lform = new LambdaForm(lambdaName, ARG_LIMIT, names, result);
+        LambdaForm lform = new LambdaForm(ARG_LIMIT, names, result);
         // This is a tricky bit of code.  Don't send it through the LF interpreter.
         lform.compileToBytecode();
         return lform;
