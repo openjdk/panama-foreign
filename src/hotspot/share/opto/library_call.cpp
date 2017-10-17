@@ -328,7 +328,8 @@ class LibraryCallKit : public GraphKit {
 
   // Vector intrinsification:
   const TypeInstPtr* get_receiver_box_type(ciKlass** exact_kls_ptr);
-  const TypeInstPtr* get_return_box_type(ciKlass** exact_kls_ptr);
+  const TypeInstPtr* get_return_box_type(ciKlass** exact_kls_ptr, vmIntrinsics::ID id);
+  const TypeInstPtr* get_derived_return_box_type(ciKlass** exact_kls_ptr, vmIntrinsics::ID id);
   Node* unboxVectorObj(Node* in, BasicType bt, int num_elem);
   Node* getVectorInput(Node* in, BasicType bt, int num_elem);
   Node* wrapWithVectorBox(Node* vector, const TypeInstPtr* box_type);
@@ -6798,6 +6799,147 @@ bool LibraryCallKit::inline_sha_implCompressMB(Node* digestBase_obj, ciInstanceK
   return true;
 }
 
+#ifdef ASSERT
+static bool is_bin_vector_op(vmIntrinsics::ID id) {
+  switch(id) {
+    case vmIntrinsics::_VectorAddFloat:
+    case vmIntrinsics::_VectorAddInt:
+    case vmIntrinsics::_VectorAddDouble:
+    case vmIntrinsics::_VectorSubFloat:
+    case vmIntrinsics::_VectorSubInt:
+    case vmIntrinsics::_VectorSubDouble:
+    case vmIntrinsics::_VectorMulFloat:
+    case vmIntrinsics::_VectorMulInt:
+    case vmIntrinsics::_VectorMulDouble:
+    case vmIntrinsics::_VectorDivFloat:
+    case vmIntrinsics::_VectorDivInt:
+    case vmIntrinsics::_VectorDivDouble:
+      return true;
+    default:
+      return false;
+  }
+}
+#endif // ASSERT
+
+static bool is_vector_cmp(vmIntrinsics::ID id) {
+  switch(id) {
+    case vmIntrinsics::_VectorEqualFloat:
+    case vmIntrinsics::_VectorEqualDouble:
+    case vmIntrinsics::_VectorEqualInt:
+    case vmIntrinsics::_VectorLessThanFloat:
+    case vmIntrinsics::_VectorLessThanDouble:
+    case vmIntrinsics::_VectorLessThanInt:
+      return true;
+    default:
+      return false;
+  }
+}
+
+static bool is_vector_load(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorLoadFloat:
+  case vmIntrinsics::_VectorLoadDouble:
+  case vmIntrinsics::_VectorLoadInt:
+  case vmIntrinsics::_VectorLoadLong:
+  case vmIntrinsics::_VectorLoadShort:
+  case vmIntrinsics::_VectorLoadByte:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_zero(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorZeroFloat:
+  case vmIntrinsics::_VectorZeroDouble:
+  case vmIntrinsics::_VectorZeroInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_broadcast(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorBroadcastFloat:
+  case vmIntrinsics::_VectorBroadcastDouble:
+  case vmIntrinsics::_VectorBroadcastInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_blend(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorBlendFloat:
+  case vmIntrinsics::_VectorBlendDouble:
+  case vmIntrinsics::_VectorBlendInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_sumAll(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorSumAllFloat:
+  case vmIntrinsics::_VectorSumAllDouble:
+  case vmIntrinsics::_VectorSumAllInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_store(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorStoreFloat:
+  case vmIntrinsics::_VectorStoreDouble:
+  case vmIntrinsics::_VectorStoreInt:
+  case vmIntrinsics::_VectorStoreLong:
+  case vmIntrinsics::_VectorStoreShort:
+  case vmIntrinsics::_VectorStoreByte:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_mask_make(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorConstantMask:
+  case vmIntrinsics::_VectorTrueMask:
+  case vmIntrinsics::_VectorFalseMask:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_mask_test(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorMaskAllTrue:
+  case vmIntrinsics::_VectorMaskAnyTrue:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool need_type_from_return(vmIntrinsics::ID id) {
+  if ( is_vector_mask_make(id) ||
+      is_vector_load(id) ||
+      is_vector_zero(id) ||
+      is_vector_broadcast(id) ||
+      is_vector_cmp(id) ||
+      id == vmIntrinsics::_VectorCastFloat ) {
+    return true;
+  }
+  return false;
+}
+
 const TypeInstPtr* LibraryCallKit::get_receiver_box_type(ciKlass** exact_kls_ptr) {
   ciKlass* exact_kls = profile_has_unique_klass();
   const TypeInstPtr* box_type = TypeInstPtr::NOTNULL;
@@ -6819,18 +6961,108 @@ const TypeInstPtr* LibraryCallKit::get_receiver_box_type(ciKlass** exact_kls_ptr
   return box_type;
 }
 
-const TypeInstPtr* LibraryCallKit::get_return_box_type(ciKlass** exact_kls_ptr) {
+static const char* species_to_instance(vmSymbols::SID species) {
+  switch(species) {
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Species):
+      return "jdk/incubator/vector/Float128Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Species):
+      return "jdk/incubator/vector/Float256Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Species):
+      return "jdk/incubator/vector/Float512Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Species):
+      return "jdk/incubator/vector/Double128Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Species):
+      return "jdk/incubator/vector/Double256Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Species):
+      return "jdk/incubator/vector/Double512Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Species):
+      return "jdk/incubator/vector/Int128Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Species):
+      return "jdk/incubator/vector/Int256Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Species):
+      return "jdk/incubator/vector/Int512Vector";
+    default:
+      break;
+  }
+  return NULL;
+}
+
+static const char* species_to_instance_cast_to_float(vmSymbols::SID species) {
+  switch(species) {
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Species):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Species):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Species):
+      return "jdk/incubator/vector/Float128Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Species):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Species):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Species):
+      return "jdk/incubator/vector/Float256Vector";
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Species):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Species):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Species):
+      return "jdk/incubator/vector/Float512Vector";
+    default:
+      break;
+  }
+  return NULL;
+}
+
+
+const TypeInstPtr* LibraryCallKit::get_derived_return_box_type(ciKlass** exact_kls_ptr, vmIntrinsics::ID id) {
+  // If it is a load or broadcast, we can derive instance type from receiver type by mapping species to instance.
+  if (!need_type_from_return(id)) {
+    return TypeInstPtr::NOTNULL;
+  }
+
+  assert(exact_kls_ptr != NULL, "expected not null");
+  *exact_kls_ptr = NULL;
+  const TypeInstPtr* receiver_type = get_receiver_box_type(exact_kls_ptr);
+  if (*exact_kls_ptr == NULL || !(*exact_kls_ptr)->is_vectorapi_vector()) {
+    return TypeInstPtr::NOTNULL;
+  }
+
+  const char* instance_klass_name = NULL;
+  if (is_vector_mask_make(id) || is_vector_cmp(id)) {
+    instance_klass_name = "jdk/incubator/vector/GenericMask";
+  } else if (is_vector_load(id) || is_vector_zero(id) || is_vector_broadcast(id)) {
+    instance_klass_name = species_to_instance((*exact_kls_ptr)->name()->sid());
+  } else if (id == vmIntrinsics::_VectorCastFloat) {
+    instance_klass_name = species_to_instance_cast_to_float((*exact_kls_ptr)->name()->sid());
+  } else {
+    assert(false, "Logic is missing to derive return type from receiver type");
+    return TypeInstPtr::NOTNULL;
+  }
+
+  if (instance_klass_name == NULL) {
+    return TypeInstPtr::NOTNULL;
+  }
+
+  ciKlass* klass = (*exact_kls_ptr)->find_klass(ciSymbol::make(instance_klass_name));
+  if (klass == NULL) {
+    return TypeInstPtr::NOTNULL;
+  }
+
+  const TypeInstPtr* box_type = TypeInstPtr::make(TypePtr::NotNull, klass);
+  if (exact_kls_ptr != NULL) {
+    *exact_kls_ptr = klass;
+  }
+  return box_type;
+}
+
+const TypeInstPtr* LibraryCallKit::get_return_box_type(ciKlass** exact_kls_ptr, vmIntrinsics::ID id) {
   ProfilePtrKind maybe_null = ProfileMaybeNull;
   ciKlass* exact_kls = NULL;
-  const TypeInstPtr* box_type = TypeInstPtr::NOTNULL;
-  if (!method()->return_profiled_type(bci(), exact_kls, maybe_null) ) {
-    return box_type;
-  }
-  if (exact_kls == NULL) {
-    return box_type;
-  }
-  box_type = TypeInstPtr::make(TypePtr::NotNull, exact_kls);
 
+  // Look at the return type profile to determine type.
+  if (!method()->return_profiled_type(bci(), exact_kls, maybe_null) ) {
+    return get_derived_return_box_type(exact_kls_ptr, id);
+  }
+  // Sanity check that class is not null even though profile says true.
+  if (exact_kls == NULL) {
+    return get_derived_return_box_type(exact_kls_ptr, id);
+  }
+
+  const TypeInstPtr* box_type = TypeInstPtr::make(TypePtr::NotNull, exact_kls);
   if (exact_kls_ptr != NULL) {
     *exact_kls_ptr = exact_kls;
   }
@@ -7371,147 +7603,6 @@ static int get_op_from_intrinsic(vmIntrinsics::ID id) {
   return 0;
 }
 
-#ifdef ASSERT
-static bool is_bin_vector_op(vmIntrinsics::ID id) {
-  switch(id) {
-    case vmIntrinsics::_VectorAddFloat:
-    case vmIntrinsics::_VectorAddInt:
-    case vmIntrinsics::_VectorAddDouble:
-    case vmIntrinsics::_VectorSubFloat:
-    case vmIntrinsics::_VectorSubInt:
-    case vmIntrinsics::_VectorSubDouble:
-    case vmIntrinsics::_VectorMulFloat:
-    case vmIntrinsics::_VectorMulInt:
-    case vmIntrinsics::_VectorMulDouble:
-    case vmIntrinsics::_VectorDivFloat:
-    case vmIntrinsics::_VectorDivInt:
-    case vmIntrinsics::_VectorDivDouble:
-      return true;
-    default:
-      return false;
-  }
-}
-#endif // ASSERT
-
-static bool is_vector_cmp(vmIntrinsics::ID id) {
-  switch(id) {
-    case vmIntrinsics::_VectorEqualFloat:
-    case vmIntrinsics::_VectorEqualDouble:
-    case vmIntrinsics::_VectorEqualInt:
-    case vmIntrinsics::_VectorLessThanFloat:
-    case vmIntrinsics::_VectorLessThanDouble:
-    case vmIntrinsics::_VectorLessThanInt:
-      return true;
-    default:
-      return false;
-  }
-}
-
-bool is_vector_zero(vmIntrinsics::ID id) {
-  switch (id) {
-  case vmIntrinsics::_VectorZeroFloat:
-  case vmIntrinsics::_VectorZeroDouble:
-  case vmIntrinsics::_VectorZeroInt:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool is_vector_broadcast(vmIntrinsics::ID id) {
-  switch (id) {
-  case vmIntrinsics::_VectorBroadcastFloat:
-  case vmIntrinsics::_VectorBroadcastDouble:
-  case vmIntrinsics::_VectorBroadcastInt:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool is_vector_blend(vmIntrinsics::ID id) {
-  switch (id) {
-  case vmIntrinsics::_VectorBlendFloat:
-  case vmIntrinsics::_VectorBlendDouble:
-  case vmIntrinsics::_VectorBlendInt:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool is_vector_sumAll(vmIntrinsics::ID id) {
-  switch (id) {
-  case vmIntrinsics::_VectorSumAllFloat:
-  case vmIntrinsics::_VectorSumAllDouble:
-  case vmIntrinsics::_VectorSumAllInt:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool is_vector_load(vmIntrinsics::ID id) {
-  switch (id) {
-  case vmIntrinsics::_VectorLoadFloat:
-  case vmIntrinsics::_VectorLoadDouble:
-  case vmIntrinsics::_VectorLoadInt:
-  case vmIntrinsics::_VectorLoadLong:
-  case vmIntrinsics::_VectorLoadShort:
-  case vmIntrinsics::_VectorLoadByte:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool is_vector_store(vmIntrinsics::ID id) {
-  switch (id) {
-  case vmIntrinsics::_VectorStoreFloat:
-  case vmIntrinsics::_VectorStoreDouble:
-  case vmIntrinsics::_VectorStoreInt:
-  case vmIntrinsics::_VectorStoreLong:
-  case vmIntrinsics::_VectorStoreShort:
-  case vmIntrinsics::_VectorStoreByte:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool is_vector_mask_make(vmIntrinsics::ID id) {
-  switch (id) {
-  case vmIntrinsics::_VectorConstantMask:
-  case vmIntrinsics::_VectorTrueMask:
-  case vmIntrinsics::_VectorFalseMask:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool is_vector_mask_test(vmIntrinsics::ID id) {
-  switch (id) {
-  case vmIntrinsics::_VectorMaskAllTrue:
-  case vmIntrinsics::_VectorMaskAnyTrue:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool need_type_from_return(vmIntrinsics::ID id) {
-  if ( is_vector_mask_make(id) ||
-      is_vector_load(id) ||
-      is_vector_zero(id) ||
-      is_vector_broadcast(id) ||
-      is_vector_cmp(id) ||
-      id == vmIntrinsics::_VectorCastFloat ) {
-    return true;
-  }
-  return false;
-}
-
 bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
   assert(UseVectorApiIntrinsics, "Should not try to intrinsify Vector API when disabled.");
 #ifndef PRODUCT
@@ -7526,7 +7617,7 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
   }
 
   ciKlass* exact_kls = NULL;
-  const TypeInstPtr* box_type = need_type_from_return(id) ? get_return_box_type(&exact_kls) : get_receiver_box_type(&exact_kls);
+  const TypeInstPtr* box_type = need_type_from_return(id) ? get_return_box_type(&exact_kls, id) : get_receiver_box_type(&exact_kls);
 #ifndef PRODUCT
   if (DebugVectorApi && box_type != NULL) {
     tty->print_cr("Type for %s is %s", vmIntrinsics::name_at(id), box_type->name()->as_utf8());
