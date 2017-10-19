@@ -1155,6 +1155,8 @@ void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop 
           int_args++;
           break;
         }
+        default:
+          break;
       }
     } else {
       Register r = INT_ArgReg[int_args];

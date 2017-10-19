@@ -2825,7 +2825,8 @@ void PhaseMacroExpand::expand_vbox_nodes() {
   while (macro_idx >= 0) {
     Node * n = C->macro_node(macro_idx);
     assert(n->is_macro(), "only macro nodes expected here");
-    if (n->Opcode() == Op_Opaque1 || n->Opcode() == Op_Opaque2) {
+    if (n->Opcode() == Op_Opaque1 || n->Opcode() == Op_Opaque2 ||
+            n->Opcode() == Op_Opaque3 || n->Opcode() == Op_Opaque4) {
       // skip
     } else if (_igvn.type(n) == Type::TOP || n->in(0)->is_top() ) {
       // node is unreachable, so don't try to expand it

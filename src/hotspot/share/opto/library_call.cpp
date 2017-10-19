@@ -7568,6 +7568,8 @@ static bool is_bin_vector_op(vmIntrinsics::ID id) {
     case vmIntrinsics::_VectorDivFloat:
     case vmIntrinsics::_VectorDivInt:
       return true;
+    default:
+      return false;
   }
   return false;
 }
