@@ -116,6 +116,10 @@ module java.base {
     exports java.util.spi;
     exports java.util.stream;
     exports java.util.zip;
+    exports javax.arrays.tbd;
+    exports javax.arrays.v2;
+    exports javax.arrays.v2.nodes;
+    exports javax.arrays.v2.ops;
     exports javax.crypto;
     exports javax.crypto.interfaces;
     exports javax.crypto.spec;
