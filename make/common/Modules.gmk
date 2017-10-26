@@ -113,6 +113,7 @@ PLATFORM_MODULES += \
     jdk.dynalink \
     jdk.httpserver \
     jdk.incubator.httpclient \
+    jdk.internal.clang \
     jdk.internal.vm.compiler.management \
     jdk.jsobject \
     jdk.localedata \
@@ -224,6 +225,13 @@ endif
 
 ifeq ($(ENABLE_AOT), false)
   MODULES_FILTER += jdk.aot
+endif
+
+################################################################################
+# Filter out panama specific modules if libclang is disabled
+
+ifeq ($(ENABLE_LIBCLANG), no)
+  MODULES_FILTER += jdk.internal.clang
 endif
 
 ################################################################################
