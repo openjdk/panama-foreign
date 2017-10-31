@@ -88,7 +88,8 @@ private:
   Node *value_from_mem(Node *mem, Node *ctl, BasicType ft, const Type *ftype, const TypeOopPtr *adr_t, AllocateNode *alloc);
   Node *value_from_mem_phi(Node *mem, BasicType ft, const Type *ftype, const TypeOopPtr *adr_t, AllocateNode *alloc, Node_Stack *value_phis, int level);
 
-  void expand_vectorbox_node(VectorBoxNode *vec_box);
+  void vectorbox_remove_allocate(Node* allocate);
+  void eliminate_vectorbox_node(VectorBoxNode *vec_box, bool final);
   void expand_vectorunbox_node(VectorUnboxNode* vunbox);
 
   bool eliminate_boxing_node(CallStaticJavaNode *boxing);

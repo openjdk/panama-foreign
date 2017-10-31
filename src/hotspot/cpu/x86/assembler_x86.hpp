@@ -1549,6 +1549,7 @@ private:
   void packuswb(XMMRegister dst, XMMRegister src);
   void packuswb(XMMRegister dst, Address src);
   void vpackuswb(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  void vpackusdw(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
   // Pemutation of 64bit words
   void vpermq(XMMRegister dst, XMMRegister src, int imm8, int vector_len);
@@ -1623,6 +1624,7 @@ private:
   void evpmovzxbw(XMMRegister dst, KRegister mask, Address src, int vector_len);
 
   void vpmovzxbd(XMMRegister dst, XMMRegister src, int vector_len);
+  void vpmovsxbd(XMMRegister dst, XMMRegister src, int vector_len);
 
   void evpmovwb(Address dst, XMMRegister src, int vector_len);
   void evpmovwb(Address dst, KRegister mask, XMMRegister src, int vector_len);

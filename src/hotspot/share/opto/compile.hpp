@@ -969,10 +969,12 @@ class Compile : public Phase {
                                    bool allow_intrinsics = true, bool delayed_forbidden = false);
   bool should_delay_inlining(ciMethod* call_method, JVMState* jvms) {
     return should_delay_string_inlining(call_method, jvms) ||
-           should_delay_boxing_inlining(call_method, jvms);
+           should_delay_boxing_inlining(call_method, jvms) ||
+           should_delay_vector_inlining(call_method, jvms);
   }
   bool should_delay_string_inlining(ciMethod* call_method, JVMState* jvms);
   bool should_delay_boxing_inlining(ciMethod* call_method, JVMState* jvms);
+  bool should_delay_vector_inlining(ciMethod* call_method, JVMState* jvms);
 
   // Helper functions to identify inlining potential at call-site
   ciMethod* optimize_virtual_call(ciMethod* caller, int bci, ciInstanceKlass* klass,

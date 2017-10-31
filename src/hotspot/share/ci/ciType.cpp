@@ -196,9 +196,10 @@ int ciType::vectorapi_vector_size() {
 }
 
 BasicType ciType::vectorapi_vector_bt() {
+  if ( is_vectormask() ) return T_BOOLEAN;
   if ( is_float128vector() || is_float256vector() || is_float512vector() ) return T_FLOAT;
   if ( is_double128vector() || is_double256vector() || is_double512vector() ) return T_DOUBLE;
-  if ( is_int128vector() || is_int256vector() || is_int512vector() || is_vectormask() ) return T_INT;
+  if ( is_int128vector() || is_int256vector() || is_int512vector() ) return T_INT;
   return T_VOID;
 }
 

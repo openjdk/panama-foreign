@@ -134,6 +134,9 @@ CallGenerator* Compile::call_generator(ciMethod* callee, int vtable_index, bool 
       if (cg->does_virtual_dispatch()) {
         cg_intrinsic = cg;
         cg = NULL;
+      } else if (should_delay_vector_inlining(callee, jvms)) {
+        assert(!delayed_forbidden, "delay should be allowed");
+        return CallGenerator::for_late_inline(callee, cg);
       } else {
         return cg;
       }
@@ -373,6 +376,10 @@ bool Compile::should_delay_boxing_inlining(ciMethod* call_method, JVMState* jvms
     return aggressive_unboxing();
   }
   return false;
+}
+
+bool Compile::should_delay_vector_inlining(ciMethod* call_method, JVMState* jvms) {
+  return call_method->is_vector_method();
 }
 
 // uncommon-trap call-sites where callee is unloaded, uninitialized or will not link

@@ -893,6 +893,7 @@ class VectorMaskCmpNode : public VectorNode {
  public:
   VectorMaskCmpNode(BoolTest::mask predicate, Node* in1, Node* in2) :
       VectorNode(in1, in2, TypeVect::make(T_INT, in1->bottom_type()->is_vect()->length())), _predicate(predicate) {
+    // FIXME The Type T_INT is incorrect here for the general case.
     assert(in1->bottom_type()->is_vect()->element_basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),
            "VectorMaskCmp inputs must have same type for elements");
     assert(in1->bottom_type()->is_vect()->length() == in2->bottom_type()->is_vect()->length(),
@@ -959,8 +960,26 @@ class VectorZeroExtendNode : public VectorNode {
     : VectorNode(vec1, cast_type) {
     BasicType fromBt = from_type->element_basic_type();
     BasicType toBt = cast_type->element_basic_type();
-    assert(toBt == T_INT, "expecting cast to int");
     assert(is_subword_type(fromBt) && !is_signed_subword_type(fromBt), "zero cast only applies to unsigned");
+  }
+
+  virtual int Opcode() const;
+};
+
+class VectorLoadMaskNode : public VectorNode {
+ public:
+  VectorLoadMaskNode(Node* in, const TypeVect* vt)
+    : VectorNode(in, vt) {
+    // TODO Add appropriate asserts to ensure type consistency. Namely, check that input is boolean vector type as expected.
+  }
+
+  virtual int Opcode() const;
+};
+
+class VectorStoreMaskNode : public VectorNode {
+ public:
+  VectorStoreMaskNode(Node* in, uint num_elem)
+    : VectorNode(in, TypeVect::make(T_BOOLEAN, num_elem)) {
   }
 
   virtual int Opcode() const;

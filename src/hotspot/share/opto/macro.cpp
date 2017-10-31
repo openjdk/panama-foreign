@@ -301,7 +301,8 @@ void PhaseMacroExpand::eliminate_card_mark(Node* p2x) {
         }
       }
     } else {
-      assert(!GraphKit::use_ReduceInitialCardMarks(), "can only happen with card marking");
+      // When using Vector API intrisification, card marking can be removed when eliminating VectorBox.
+      assert(!GraphKit::use_ReduceInitialCardMarks() || UseVectorApiIntrinsics, "can only happen with card marking");
       // This is a G1 post barrier emitted by the Object.clone() intrinsic.
       // Search for the CastP2X->URShiftX->AddP->LoadB->Cmp path which checks if the card
       // is marked as young_gen and replace the Cmp with 0 (false) to collapse the barrier.
@@ -2816,39 +2817,185 @@ void PhaseMacroExpand::expand_vbox_nodes() {
   }
 
   macro_idx = C->macro_count() - 1;
+  while(macro_idx >= 0) {
+    Node * n = C->macro_node(macro_idx);
+    assert(n->is_macro(), "only macro nodes expected here");
+    if (n->is_VectorBox()) {
+      eliminate_vectorbox_node(n->as_VectorBox(), false);
+    }
+    if (C->failing())  return;
+    macro_idx = MIN2(macro_idx - 1, C->macro_count() - 1);
+  }
+
+  // Repeat trying to remove VectorBox just in case any were missed.
+  macro_idx = C->macro_count() - 1;
+  while(macro_idx >= 0) {
+    Node * n = C->macro_node(macro_idx);
+    assert(n->is_macro(), "only macro nodes expected here");
+    if (n->is_VectorBox()) {
+      eliminate_vectorbox_node(n->as_VectorBox(), true);
+    }
+    if (C->failing())  return;
+    macro_idx = MIN2(macro_idx - 1, C->macro_count() - 1);
+  }
+
+  macro_idx = C->macro_count() - 1;
   while (macro_idx >= 0) {
     Node * n = C->macro_node(macro_idx);
     assert(n->is_macro(), "only macro nodes expected here");
     if (n->Opcode() == Op_Opaque1 || n->Opcode() == Op_Opaque2 ||
-           n->Opcode() == Op_Opaque3 || n->Opcode() == Op_Opaque4 ||
-           n->Opcode() == Op_VectorUnbox) {
+           n->Opcode() == Op_Opaque3 || n->Opcode() == Op_Opaque4) {
       // skip
-    } else if (n->is_VectorBox()) {
-      expand_vectorbox_node(n->as_VectorBox());
+    } else if (n->is_VectorBox() || n->Opcode() == Op_VectorUnbox) {
+      assert (false, "All VectorBox and VectorUnbox nodes should have been removed");
     }
     if (C->failing())  return;
-    macro_idx--;
+    macro_idx = MIN2(macro_idx - 1, C->macro_count() - 1);
   }
   _igvn.set_delay_transform(false);
   _igvn.optimize();
 }
 
-void PhaseMacroExpand::expand_vectorbox_node(VectorBoxNode *vec_box) {
+static Node* find_alloc(Node* allocated_obj) {
+  if (allocated_obj == NULL) {
+    return NULL;
+  }
+  Node* n = allocated_obj->uncast();
+  if (n->is_Proj()) {
+    n = n->in(0);
+  }
+  if (n->is_Allocate() || n->is_AllocateArray()) {
+    return n;
+  }
+  return NULL;
+}
+
+static void vectorbox_remove_store(PhaseIterGVN& gvn, Node* store) {
+  if (store != NULL) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      store->dump();
+    }
+#endif
+    assert(store->is_Mem(), "must be mem");
+    gvn.replace_node(store, store->in(MemNode::Memory));
+    gvn.remove_dead_node(store);
+  }
+}
+
+void PhaseMacroExpand::vectorbox_remove_allocate(Node* allocate) {
+  if (allocate != NULL && allocate->is_Allocate()) {
+    allocate->as_Allocate()->_is_scalar_replaceable = true;
+    allocate->as_Allocate()->_is_non_escaping = true;
+
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      allocate->dump();
+    }
+#endif
+
+    bool eliminated = eliminate_allocate_node(allocate->as_Allocate());
+    if (eliminated) {
+      C->remove_macro_node(allocate);
+#ifndef PRODUCT
+      if (DebugVectorApi) {
+        tty->print_cr("Eliminated allocate node");
+      }
+#endif
+    } else {
+      // Restore allocate previous state.
+      allocate->as_Allocate()->_is_scalar_replaceable = false;
+      allocate->as_Allocate()->_is_non_escaping = false;
+#ifndef PRODUCT
+      if (DebugVectorApi) {
+        tty->print_cr("Failed to eliminate allocate node");
+      }
+#endif
+    }
+  }
+}
+
+void PhaseMacroExpand::eliminate_vectorbox_node(VectorBoxNode *vec_box, bool final) {
   if ( _igvn.type(vec_box) != Type::TOP ) {
     Node* ctrl = vec_box->in(TypeFunc::Control);
     Node* mem  = vec_box->in(TypeFunc::Memory);
-    Node* box  = vec_box->in(VectorBoxNode::VecBox);
+    Node* obj  = vec_box->in(VectorBoxNode::VecBox);
 
     Node* ctrlproj = vec_box->proj_out(TypeFunc::Control);
     Node* memproj  = vec_box->proj_out(TypeFunc::Memory);
     Node* outproj = vec_box->proj_out(VectorBoxNode::VecBox);
 
-    if (outproj  != NULL) _igvn.replace_node(outproj, box);
-    if (ctrlproj != NULL)  _igvn.replace_node(ctrlproj, ctrl);
-    if (memproj  != NULL)  _igvn.replace_node(memproj,  mem);
-    _igvn.remove_dead_node(vec_box);
+    bool handled = false;
+    if (outproj == NULL || outproj->outcnt() == 0) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("=== Eliminating VectorBox due to no uses ===");
+      vec_box->dump();
+    }
+#endif
 
-    C->remove_macro_node(vec_box);
+      // The out projection is not actually being used.
+      Node* fstore = vec_box->in(VectorBoxNode::FieldStore);
+      Node* vstore = vec_box->in(VectorBoxNode::VectorStore);
+      Node* obj_alloc = find_alloc(obj);
+      Node* arr_alloc = find_alloc(vec_box->in(VectorBoxNode::ArrayAlloc));
+
+      vec_box->set_req(VectorBoxNode::ArrayAlloc, NULL);
+      vec_box->set_req(VectorBoxNode::VecBox, NULL);
+      vec_box->set_req(VectorBoxNode::FieldStore, NULL);
+      vec_box->set_req(VectorBoxNode::VectorStore, NULL);
+
+      vectorbox_remove_store(_igvn, fstore);
+      vectorbox_remove_store(_igvn, vstore);
+
+      vectorbox_remove_allocate(obj_alloc);
+      vectorbox_remove_allocate(arr_alloc);
+
+      handled = true;
+    } else {
+#ifndef PRODUCT
+      if (DebugVectorApi) {
+        tty->print_cr("=== NOT eliminating VectorBox due to uses ===");
+        vec_box->dump();
+
+        Unique_Node_List users;
+        for (DUIterator_Fast jmax, j = outproj->fast_outs(jmax); j < jmax; j++) {
+          users.push(outproj->fast_out(j));
+        }
+
+        while (users.size() > 0) {
+          Node* user = users.pop();
+
+          if ( user->is_ConstraintCast() ) {
+            for ( DUIterator j = user->outs(); user->has_out(j); j++ ) {
+              users.push(user->out(j));
+            }
+            continue;
+          }
+
+          user->dump();
+
+        }
+        tty->print_cr("-------------------------------");
+      }
+#endif
+    }
+
+    if (final || handled) {
+      if (outproj  != NULL) {
+        assert (!obj->is_Con(), "Not expecting the object to be a constant");
+        _igvn.replace_node(outproj, obj);
+      }
+      if (ctrlproj != NULL) {
+        _igvn.replace_node(ctrlproj, ctrl);
+      }
+      if (memproj  != NULL) {
+        _igvn.replace_node(memproj,  mem);
+      }
+      _igvn.remove_dead_node(vec_box);
+
+      C->remove_macro_node(vec_box);
+    }
   }
 }
 
@@ -2944,7 +3091,6 @@ void PhaseMacroExpand::expand_vectorunbox_node(VectorUnboxNode* vunbox) {
   if (from_kls->is_vectormask()) {
     from_kls = from_kls->find_klass(ciSymbol::make("jdk/incubator/vector/GenericMask"))->as_instance_klass();
     field_name = "bits";
-    bt = T_BOOLEAN;
   }
 
   ciField* field = from_kls->get_field_by_name(ciSymbol::make(field_name),
@@ -2963,24 +3109,25 @@ void PhaseMacroExpand::expand_vectorunbox_node(VectorUnboxNode* vunbox) {
                                                       mem,
                                                       vec_adr,
                                                       vec_adr->bottom_type()->is_ptr(),
-                                                      TypeAryPtr::get_array_body_type(bt),
+                                                      TypeOopPtr::make_from_klass(field->type()->as_klass()),
                                                       T_OBJECT,
                                                       MemNode::unordered));
 
   Node* adr = array_element_address(vec_field_ld, intcon(0), bt);
   const TypePtr* adr_type = adr->bottom_type()->is_ptr();
-  Node* vec_val_load =
-      transform_later(LoadVectorNode::make(-1 /* not used */,
-                                           ctrl,
-                                           mem,
-                                           adr,
-                                           adr_type,
-                                           vunbox->bottom_type()->is_vect()->length(),
-                                           bt));
-
-  if (bt == T_BOOLEAN) {
-    const TypeVect* from = vec_val_load->as_LoadVector()->vect_type();
-    vec_val_load = transform_later(new VectorZeroExtendNode(vec_val_load, from, TypeVect::make(T_INT, from->length())));
+  int num_elem = vunbox->bottom_type()->is_vect()->length();
+  Node* vec_val_load = transform_later(LoadVectorNode::make(-1,
+                                                            ctrl,
+                                                            mem,
+                                                            adr,
+                                                            adr_type,
+                                                            num_elem,
+                                                            bt));
+  if (from_kls->is_vectormask()) {
+    BasicType masktype = vunbox->bottom_type()->is_vect()->element_basic_type();
+    if (masktype == T_FLOAT) masktype = T_INT;
+    if (masktype == T_DOUBLE) masktype = T_LONG;
+    vec_val_load = transform_later(new VectorLoadMaskNode(vec_val_load, TypeVect::make(masktype, num_elem)));
   }
 
 #ifndef PRODUCT

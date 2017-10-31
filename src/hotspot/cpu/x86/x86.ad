@@ -10723,19 +10723,21 @@ instruct vptest4inae(rRegI dst, vecX src1, vecX src2) %{
     int vector_len = 0;
     __ vptest($src1$$XMMRegister, $src2$$XMMRegister, vector_len);
     __ setb(Assembler::carrySet, $dst$$Register);
+    __ movzbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct vptest4ieq(rRegI dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::zero);
+  predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::notZero);
   match(Set dst (VectorTest src1 src2 ));
   format %{ "vptest  $src1,$src2\n\t" 
             "setb  $dst\t!" %}
   ins_encode %{
     int vector_len = 0;
     __ vptest($src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-    __ setb(Assembler::zero, $dst$$Register);
+    __ setb(Assembler::notZero, $dst$$Register);
+    __ movzbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -10749,19 +10751,21 @@ instruct vptest8inae(rRegI dst, vecY src1, vecY src2) %{
     int vector_len = 1;
     __ vptest($src1$$XMMRegister, $src2$$XMMRegister, vector_len);
     __ setb(Assembler::carrySet, $dst$$Register);
+    __ movzbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct vptest8ieq(rRegI dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::zero);
+  predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::notZero);
   match(Set dst (VectorTest src1 src2 ));
   format %{ "vptest  $src1,$src2\n\t" 
             "setb  $dst\t!" %}
   ins_encode %{
     int vector_len = 1;
     __ vptest($src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-    __ setb(Assembler::zero, $dst$$Register);
+    __ setb(Assembler::notZero, $dst$$Register);
+    __ movzbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -10773,6 +10777,57 @@ instruct vpzeroextend(vecY dst, vecD src) %{
   ins_encode %{
     int vector_len = 1;
     __ vpmovzxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadmask4b(vecX dst, vecS src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4);
+  match(Set dst (VectorLoadMask src));
+  effect(TEMP dst);
+  format %{ "vpxor  $dst,$dst\n\t"
+           "vpsubb $dst,$src\n\t"
+           "vpmovsxbd $dst\t! load mask (4 bytes)" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vpmovsxbd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadmask8b(vecY dst, vecD src) %{
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8);
+  match(Set dst (VectorLoadMask src));
+  effect(TEMP dst);
+  format %{ "vpxor  $dst,$dst\n\t"
+           "vpsubb $dst,$src\n\t"
+           "vpmovsxbd $dst\t! load mask (8 bytes)" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vpsubb($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vpmovsxbd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct storemask8b(vecD dst, vecY src, vecY tmp) %{
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8);
+  match(Set dst (VectorStoreMask src));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpxor  $dst,$dst\n\t"
+           "vpsubb $dst,$src\n\t"
+           "vpackusdw $dst,$dst,$dst\n\t"
+           "vpackuswb $dst,$dst,$dst\t! store mask (8 bytes)" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vpsubd($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vextracti128($tmp$$XMMRegister, $dst$$XMMRegister, 0x1);
+    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, 0);
   %}
   ins_pipe( pipe_slow );
 %}
