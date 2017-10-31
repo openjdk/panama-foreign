@@ -225,7 +225,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         Int128Vector v = (Int128Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -241,7 +241,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
     public Int128Vector swizzle(Shuffle<Integer, Shapes.S128Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

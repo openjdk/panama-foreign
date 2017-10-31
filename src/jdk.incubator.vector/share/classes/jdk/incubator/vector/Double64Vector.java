@@ -225,7 +225,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         Double64Vector v = (Double64Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -241,7 +241,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     public Double64Vector swizzle(Shuffle<Double, Shapes.S64Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

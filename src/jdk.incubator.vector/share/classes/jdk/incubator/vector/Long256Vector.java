@@ -225,7 +225,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         Long256Vector v = (Long256Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -241,7 +241,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
     public Long256Vector swizzle(Shuffle<Long, Shapes.S256Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

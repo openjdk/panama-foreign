@@ -225,7 +225,7 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         Int64Vector v = (Int64Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -241,7 +241,7 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     public Int64Vector swizzle(Shuffle<Integer, Shapes.S64Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

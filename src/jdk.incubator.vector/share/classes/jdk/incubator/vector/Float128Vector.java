@@ -225,7 +225,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         Float128Vector v = (Float128Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -241,7 +241,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     public Float128Vector swizzle(Shuffle<Float, Shapes.S128Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

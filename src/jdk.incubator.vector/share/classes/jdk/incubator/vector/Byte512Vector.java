@@ -218,7 +218,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         Byte512Vector v = (Byte512Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -234,7 +234,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     public Byte512Vector swizzle(Shuffle<Byte, Shapes.S512Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

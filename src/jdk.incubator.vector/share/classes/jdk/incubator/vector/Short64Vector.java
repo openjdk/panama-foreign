@@ -218,7 +218,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         Short64Vector v = (Short64Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -234,7 +234,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     public Short64Vector swizzle(Shuffle<Short, Shapes.S64Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

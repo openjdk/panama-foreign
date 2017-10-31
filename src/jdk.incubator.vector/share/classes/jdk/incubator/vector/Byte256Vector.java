@@ -218,7 +218,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         Byte256Vector v = (Byte256Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -234,7 +234,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
     public Byte256Vector swizzle(Shuffle<Byte, Shapes.S256Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

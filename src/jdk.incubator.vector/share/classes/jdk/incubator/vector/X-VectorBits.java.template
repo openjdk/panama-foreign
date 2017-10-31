@@ -236,7 +236,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         $vectortype$ v = ($vectortype$) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -252,7 +252,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     public $vectortype$ swizzle(Shuffle<$Boxtype$, Shapes.$shape$> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

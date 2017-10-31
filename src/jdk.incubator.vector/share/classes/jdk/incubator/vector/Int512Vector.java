@@ -225,7 +225,7 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         Int512Vector v = (Int512Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -241,7 +241,7 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     public Int512Vector swizzle(Shuffle<Integer, Shapes.S512Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");

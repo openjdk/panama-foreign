@@ -218,7 +218,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         Short128Vector v = (Short128Vector) o;
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
@@ -234,7 +234,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
     public Short128Vector swizzle(Shuffle<Short, Shapes.S128Bit> s) {
         return uOp((i, a) -> {
             int e = s.getElement(i);
-            if(e > 0 && e < length()) {
+            if(e >= 0 && e < length()) {
                 return vec[e];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
