@@ -1,0 +1,4 @@
+Temporary changes, not to be merged back to dev main-line:
+
+* make/CompileJavaModules.gmk: Disabled doclint warnings in java.base ('java.base_ADD_JAVAC_FLAGS').
+
