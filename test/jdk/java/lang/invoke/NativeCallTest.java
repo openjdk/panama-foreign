@@ -23,7 +23,7 @@
 
 /* @test
  * @summary unit tests for native call support
- * @modules java.base/jdk.internal.misc
+ * @modules java.base/jdk.internal.misc:+open
  * @run main/othervm NativeCallTest
  */
 
