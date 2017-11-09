@@ -166,6 +166,7 @@ class GCTimer;
   do_klass(LambdaForm_klass,                            java_lang_invoke_LambdaForm,               Opt                 ) \
   do_klass(MethodType_klass,                            java_lang_invoke_MethodType,               Pre                 ) \
   do_klass(BootstrapMethodError_klass,                  java_lang_BootstrapMethodError,            Pre                 ) \
+  do_klass(NativeEntryPoint_klass,                      java_lang_invoke_NativeEntryPoint,         Pre                 ) \
   do_klass(CallSite_klass,                              java_lang_invoke_CallSite,                 Pre                 ) \
   do_klass(Context_klass,                               java_lang_invoke_MethodHandleNatives_CallSiteContext, Pre      ) \
   do_klass(ConstantCallSite_klass,                      java_lang_invoke_ConstantCallSite,         Pre                 ) \

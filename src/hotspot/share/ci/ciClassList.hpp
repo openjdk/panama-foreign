@@ -48,6 +48,7 @@ class   ciNullObject;
 class   ciInstance;
 class     ciCallSite;
 class     ciMemberName;
+class     ciNativeEntryPoint;
 class     ciMethodHandle;
 class     ciMethodType;
 class     ciArray;

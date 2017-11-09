@@ -25,6 +25,7 @@
 
 package java.lang.invoke;
 
+import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -1564,6 +1565,44 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
         public MethodHandle findStaticSetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
             MemberName field = resolveOrFail(REF_putStatic, refc, name, type);
             return getDirectField(REF_putStatic, refc, field);
+        }
+
+        /** TODO */
+        private static class Lazy {
+            private static final MethodHandle INVOKE_NATIVE_MH;
+            private static final MethodType INVOKE_NATIVE_MT = MethodType.methodType(void.class, long[].class, long[].class, long[].class, NativeEntryPoint.class);
+
+            static {
+                try {
+                    // Can cause deadlocks if constructed eagerly.
+                    INVOKE_NATIVE_MH = Lookup.IMPL_LOOKUP.findStatic(MethodHandleNatives.class, "invokeNative", INVOKE_NATIVE_MT);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        /** TODO */
+        public MethodHandle findNative(Object dll, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
+            // FIXME: take dll into account during symbol lookup
+            return findNative(name, type);
+        }
+
+        public MethodHandle findNative(String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
+            long addr = findNativeAddress(name);
+            if (addr == 0) {
+                throw new NoSuchMethodException("Failed to look up " + name);
+            }
+            NativeEntryPoint nativeFunc = NativeEntryPoint.make(addr, name, type);
+            MethodHandle mh = NativeMethodHandle.make(type, nativeFunc);
+            return mh;
+        }
+
+        private static Unsafe UNSAFE = Unsafe.getUnsafe();
+
+        /** TODO */
+        private long findNativeAddress(String name) {
+            return UNSAFE.findNativeAddress(name);
         }
 
         /**

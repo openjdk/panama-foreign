@@ -249,6 +249,7 @@
   template(linkToStatic_name,                         "linkToStatic")                             \
   template(linkToSpecial_name,                        "linkToSpecial")                            \
   template(linkToInterface_name,                      "linkToInterface")                          \
+  template(linkToNative_name,                         "linkToNative")                             \
   template(compiledLambdaForm_name,                   "<compiledLambdaForm>")  /*fake name*/      \
   template(star_name,                                 "*") /*not really a name*/                  \
   template(invoke_name,                               "invoke")                                   \
@@ -290,11 +291,13 @@
   template(java_lang_invoke_MethodType_signature,     "Ljava/lang/invoke/MethodType;")            \
   template(java_lang_invoke_ResolvedMethodName_signature, "Ljava/lang/invoke/ResolvedMethodName;")\
   template(java_lang_invoke_MemberName_signature,     "Ljava/lang/invoke/MemberName;")            \
+  template(java_lang_invoke_NativeEntryPoint_signature, "Ljava/lang/invoke/NativeEntryPoint;")    \
   template(java_lang_invoke_LambdaForm_signature,     "Ljava/lang/invoke/LambdaForm;")            \
   template(java_lang_invoke_MethodHandle_signature,   "Ljava/lang/invoke/MethodHandle;")          \
   /* internal classes known only to the JVM: */                                                   \
   template(java_lang_invoke_MemberName,               "java/lang/invoke/MemberName")              \
   template(java_lang_invoke_ResolvedMethodName,       "java/lang/invoke/ResolvedMethodName")      \
+  template(java_lang_invoke_NativeEntryPoint,         "java/lang/invoke/NativeEntryPoint")        \
   template(java_lang_invoke_MethodHandleNatives,      "java/lang/invoke/MethodHandleNatives")     \
   template(java_lang_invoke_MethodHandleNatives_CallSiteContext, "java/lang/invoke/MethodHandleNatives$CallSiteContext") \
   template(java_lang_invoke_LambdaForm,               "java/lang/invoke/LambdaForm")              \
@@ -421,6 +424,8 @@
   template(vmindex_name,                              "vmindex")                                  \
   template(vmcount_name,                              "vmcount")                                  \
   template(vmentry_name,                              "vmentry")                                  \
+  template(addr_name,                                 "addr")                                     \
+  template(snippet_name,                              "snippet")                                  \
   template(flags_name,                                "flags")                                    \
   template(rtype_name,                                "rtype")                                    \
   template(ptypes_name,                               "ptypes")                                   \
@@ -1013,8 +1018,8 @@
   do_class(com_sun_crypto_provider_cipherBlockChaining,            "com/sun/crypto/provider/CipherBlockChaining")       \
    do_intrinsic(_cipherBlockChaining_encryptAESCrypt, com_sun_crypto_provider_cipherBlockChaining, encrypt_name, byteArray_int_int_byteArray_int_signature, F_R)   \
    do_intrinsic(_cipherBlockChaining_decryptAESCrypt, com_sun_crypto_provider_cipherBlockChaining, decrypt_name, byteArray_int_int_byteArray_int_signature, F_R)   \
-   do_name(     encrypt_name,                                      "implEncrypt")                                       \
-   do_name(     decrypt_name,                                      "implDecrypt")                                       \
+   do_name(     encrypt_name,                                      "implEncrypt")                                           \
+   do_name(     decrypt_name,                                      "implDecrypt")                                           \
    do_signature(byteArray_int_int_byteArray_int_signature,         "([BII[BI)I")                                        \
                                                                                                                         \
   do_class(com_sun_crypto_provider_counterMode,      "com/sun/crypto/provider/CounterMode")                             \
@@ -1412,13 +1417,14 @@
                                                                                                                           \
   do_intrinsic(_invoke,                   java_lang_reflect_Method, invoke_name, object_object_array_object_signature, F_R) \
   /*   (symbols invoke_name and invoke_signature defined above) */                                                      \
-  /* the polymorphic MH intrinsics must be in compact order, with _invokeGeneric first and _linkToInterface last */     \
+  /* the polymorphic MH intrinsics must be in compact order, with _invokeGeneric first and _linkToNative last */        \
   do_intrinsic(_invokeGeneric,            java_lang_invoke_MethodHandle, invoke_name,           star_name, F_RN)        \
   do_intrinsic(_invokeBasic,              java_lang_invoke_MethodHandle, invokeBasic_name,      star_name, F_RN)        \
   do_intrinsic(_linkToVirtual,            java_lang_invoke_MethodHandle, linkToVirtual_name,    star_name, F_SN)        \
   do_intrinsic(_linkToStatic,             java_lang_invoke_MethodHandle, linkToStatic_name,     star_name, F_SN)        \
   do_intrinsic(_linkToSpecial,            java_lang_invoke_MethodHandle, linkToSpecial_name,    star_name, F_SN)        \
   do_intrinsic(_linkToInterface,          java_lang_invoke_MethodHandle, linkToInterface_name,  star_name, F_SN)        \
+  do_intrinsic(_linkToNative,             java_lang_invoke_MethodHandle, linkToNative_name,     star_name, F_SN)        \
   /* special marker for bytecode generated for the JVM from a LambdaForm: */                                            \
   do_intrinsic(_compiledLambdaForm,       java_lang_invoke_MethodHandle, compiledLambdaForm_name, star_name, F_RN)      \
                                                                                                                         \
@@ -1562,7 +1568,7 @@ class vmIntrinsics: AllStatic {
     LAST_COMPILER_INLINE = _getAndSetObject,
     FIRST_MH_SIG_POLY    = _invokeGeneric,
     FIRST_MH_STATIC      = _linkToVirtual,
-    LAST_MH_SIG_POLY     = _linkToInterface,
+    LAST_MH_SIG_POLY     = _linkToNative,
 
     FIRST_ID = _none + 1
   };

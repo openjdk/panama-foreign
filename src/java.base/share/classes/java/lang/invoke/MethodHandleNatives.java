@@ -59,6 +59,8 @@ class MethodHandleNatives {
     static native Object staticFieldBase(MemberName self);  // e.g., returns clazz
     static native Object getMemberVMInfo(MemberName self);  // returns {vmindex,vmtarget}
 
+    static native void invokeNative(long[] args, long[] rets, long[] recipe, NativeEntryPoint entryPoint);
+
     /// CallSite support
 
     /** Tell the JVM that we need to change the target of a CallSite. */

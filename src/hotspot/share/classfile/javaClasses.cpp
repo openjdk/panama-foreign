@@ -3153,6 +3153,35 @@ bool java_lang_invoke_LambdaForm::is_instance(oop obj) {
 }
 
 
+int java_lang_invoke_NativeEntryPoint::_addr_offset;
+int java_lang_invoke_NativeEntryPoint::_name_offset;
+int java_lang_invoke_NativeEntryPoint::_type_offset;
+
+bool java_lang_invoke_NativeEntryPoint::is_instance(oop obj) {
+  return obj != NULL && is_subclass(obj->klass());
+}
+
+void java_lang_invoke_NativeEntryPoint::compute_offsets() {
+  Klass* klass_oop = SystemDictionary::NativeEntryPoint_klass();
+  if (klass_oop != NULL) {
+    compute_offset(_addr_offset, klass_oop, vmSymbols::addr_name(), vmSymbols::long_signature());
+    compute_offset(_name_offset, klass_oop, vmSymbols::name_name(), vmSymbols::string_signature());
+    compute_offset(_type_offset, klass_oop, vmSymbols::type_name(), vmSymbols::java_lang_invoke_MethodType_signature());
+  }
+}
+
+address java_lang_invoke_NativeEntryPoint::addr(oop entry) {
+  return (address)entry->long_field(_addr_offset);
+}
+
+oop java_lang_invoke_NativeEntryPoint::name(oop entry) {
+  return entry->obj_field(_name_offset);
+}
+
+oop java_lang_invoke_NativeEntryPoint::type(oop entry) {
+  return entry->obj_field(_type_offset);
+}
+
 oop java_lang_invoke_MethodHandle::type(oop mh) {
   return mh->obj_field(_type_offset);
 }
@@ -3879,6 +3908,7 @@ void JavaClasses::compute_offsets() {
   java_lang_invoke_DirectMethodHandle::compute_offsets();
   java_lang_invoke_MemberName::compute_offsets();
   java_lang_invoke_ResolvedMethodName::compute_offsets();
+  java_lang_invoke_NativeEntryPoint::compute_offsets();
   java_lang_invoke_LambdaForm::compute_offsets();
   java_lang_invoke_MethodType::compute_offsets();
   java_lang_invoke_CallSite::compute_offsets();

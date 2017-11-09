@@ -195,6 +195,12 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
     __ should_not_reach_here();           // empty stubs make SG sick
     return NULL;
   }
+  // No need in interpreter entry for linkToNative for now.
+  // Interpreter calls compiled entry through i2c.
+  if (iid == vmIntrinsics::_linkToNative) {
+    __ should_not_reach_here();
+    return NULL;
+  }
 
   // Rmethod: Method*
   // Rparams (SP on 32-bit ARM): pointer to parameters
@@ -591,3 +597,11 @@ void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adapt
   BLOCK_COMMENT("} trace_method_handle");
 }
 #endif //PRODUCT
+
+void MethodHandles::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, arrayHandle rets_arr, address code, JavaThread* thread) {
+  fatal("NIY");
+}
+
+void MethodHandles::generate_invoke_native(MacroAssembler* _masm) {
+  //fatal("NIY");
+}

@@ -2718,6 +2718,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_constant(vmIntrinsics::_linkToStatic)                           \
   declare_constant(vmIntrinsics::_linkToSpecial)                          \
   declare_constant(vmIntrinsics::_linkToInterface)                        \
+  declare_constant(vmIntrinsics::_linkToNative)                           \
                                                                           \
   /********************************/                                      \
   /* Calling convention constants */                                      \

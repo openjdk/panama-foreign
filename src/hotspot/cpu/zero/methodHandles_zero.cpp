@@ -183,3 +183,14 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
     return NULL;
   }
 }
+
+
+void MethodHandles::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, arrayHandle rets_arr, address code, JavaThread* thread) {
+  ShouldNotCallThis();
+  fatal("NIY");
+}
+
+void MethodHandles::generate_invoke_native(MacroAssembler* _masm) {
+  ShouldNotCallThis();
+  fatal("NIY");
+}
