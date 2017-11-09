@@ -28,7 +28,7 @@
 #include "code/codeCache.hpp"
 #include "compiler/disassembler.hpp"
 #include "memory/resourceArea.hpp"
-#include "prims/jni.h"
+#include "jni.h"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/decoder.hpp"

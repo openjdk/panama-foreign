@@ -25,7 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/javaClasses.hpp"
 #include "oops/oop.inline.hpp"
-#include "prims/jni.h"
+#include "jni.h"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/jniHandles.hpp"
 #include "utilities/exceptions.hpp"
