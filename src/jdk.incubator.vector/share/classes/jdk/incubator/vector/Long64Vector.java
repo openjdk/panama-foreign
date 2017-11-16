@@ -33,9 +33,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     static final Long64Vector ZERO = new Long64Vector();
 
-    static final Mask<Long, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Long, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     long[] vec;
 
     Long64Vector() {
@@ -59,10 +56,11 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     }
 
     @Override
-    Long64Vector uOp(Mask<Long, Shapes.S64Bit> m, FUnOp f) {
+    Long64Vector uOp(Mask<Long, Shapes.S64Bit> o, FUnOp f) {
         long[] res = new long[length()];
+        Long64Mask m = (Long64Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Long64Vector(res);
     }
@@ -80,11 +78,12 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     }
 
     @Override
-    Long64Vector bOp(Vector<Long, Shapes.S64Bit> o, Mask<Long, Shapes.S64Bit> m, FBinOp f) {
+    Long64Vector bOp(Vector<Long, Shapes.S64Bit> o1, Mask<Long, Shapes.S64Bit> o2, FBinOp f) {
         long[] res = new long[length()];
-        Long64Vector v = (Long64Vector) o;
+        Long64Vector v = (Long64Vector) o1;
+        Long64Mask m = (Long64Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Long64Vector(res);
     }
@@ -103,12 +102,13 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     }
 
     @Override
-    Long64Vector tOp(Vector<Long, Shapes.S64Bit> o1, Vector<Long, Shapes.S64Bit> o2, Mask<Long, Shapes.S64Bit> m, FTriOp f) {
+    Long64Vector tOp(Vector<Long, Shapes.S64Bit> o1, Vector<Long, Shapes.S64Bit> o2, Mask<Long, Shapes.S64Bit> o3, FTriOp f) {
         long[] res = new long[length()];
         Long64Vector v1 = (Long64Vector) o1;
         Long64Vector v2 = (Long64Vector) o2;
+        Long64Mask m = (Long64Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Long64Vector(res);
     }
@@ -145,13 +145,13 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     // Binary test
 
     @Override
-    Mask<Long, Shapes.S64Bit> bTest(Vector<Long, Shapes.S64Bit> o, FBinTest f) {
+    Long64Mask bTest(Vector<Long, Shapes.S64Bit> o, FBinTest f) {
         Long64Vector v = (Long64Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Long64Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     }
 
     @Override
-    void forEach(Mask<Long, Shapes.S64Bit> m, FUnCon f) {
+    void forEach(Mask<Long, Shapes.S64Bit> o, FUnCon f) {
+        Long64Mask m = (Long64Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         return new Long64Vector(res);
     }
 
+    // Mask
+
+    static final class Long64Mask extends AbstractMask<Long, Shapes.S64Bit> {
+        static final Long64Mask TRUE_MASK = new Long64Mask(true);
+        static final Long64Mask FALSE_MASK = new Long64Mask(false);
+
+        public Long64Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Long64Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Long64Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Long64Mask(res);
+        }
+
+        @Override
+        Long64Mask bOp(Mask<Long, Shapes.S64Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Long64Mask m = (Long64Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Long64Mask(res);
+        }
+
+        @Override
+        public Long64Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Long64Vector toVector() {
+            long[] res = new long[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (long) (bits[i] ? -1 : 0);
+            }
+            return new Long64Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         }
 
         @Override
-        Long64Vector op(Mask<Long, Shapes.S64Bit> m, FOp f) {
+        Long64Vector op(Mask<Long, Shapes.S64Bit> o, FOp f) {
             long[] res = new long[length()];
+            Long64Mask m = (Long64Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         }
 
         @Override
-        public Mask<Long, Shapes.S64Bit> trueMask() {
-            return TRUEMASK;
+        public Long64Mask constantMask(boolean... bits) {
+            return new Long64Mask(bits);
         }
 
         @Override
-        public Mask<Long, Shapes.S64Bit> falseMask() {
-            return FALSEMASK;
+        public Long64Mask trueMask() {
+            return Long64Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Long64Mask falseMask() {
+            return Long64Mask.FALSE_MASK;
         }
     }
 }

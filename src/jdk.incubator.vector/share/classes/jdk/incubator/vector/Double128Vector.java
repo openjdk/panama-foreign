@@ -33,9 +33,6 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     static final Double128Vector ZERO = new Double128Vector();
 
-    static final Mask<Double, Shapes.S128Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Double, Shapes.S128Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     double[] vec;
 
     Double128Vector() {
@@ -59,10 +56,11 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     }
 
     @Override
-    Double128Vector uOp(Mask<Double, Shapes.S128Bit> m, FUnOp f) {
+    Double128Vector uOp(Mask<Double, Shapes.S128Bit> o, FUnOp f) {
         double[] res = new double[length()];
+        Double128Mask m = (Double128Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Double128Vector(res);
     }
@@ -80,11 +78,12 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     }
 
     @Override
-    Double128Vector bOp(Vector<Double, Shapes.S128Bit> o, Mask<Double, Shapes.S128Bit> m, FBinOp f) {
+    Double128Vector bOp(Vector<Double, Shapes.S128Bit> o1, Mask<Double, Shapes.S128Bit> o2, FBinOp f) {
         double[] res = new double[length()];
-        Double128Vector v = (Double128Vector) o;
+        Double128Vector v = (Double128Vector) o1;
+        Double128Mask m = (Double128Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Double128Vector(res);
     }
@@ -103,12 +102,13 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     }
 
     @Override
-    Double128Vector tOp(Vector<Double, Shapes.S128Bit> o1, Vector<Double, Shapes.S128Bit> o2, Mask<Double, Shapes.S128Bit> m, FTriOp f) {
+    Double128Vector tOp(Vector<Double, Shapes.S128Bit> o1, Vector<Double, Shapes.S128Bit> o2, Mask<Double, Shapes.S128Bit> o3, FTriOp f) {
         double[] res = new double[length()];
         Double128Vector v1 = (Double128Vector) o1;
         Double128Vector v2 = (Double128Vector) o2;
+        Double128Mask m = (Double128Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Double128Vector(res);
     }
@@ -145,13 +145,13 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     // Binary test
 
     @Override
-    Mask<Double, Shapes.S128Bit> bTest(Vector<Double, Shapes.S128Bit> o, FBinTest f) {
+    Double128Mask bTest(Vector<Double, Shapes.S128Bit> o, FBinTest f) {
         Double128Vector v = (Double128Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Double128Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     }
 
     @Override
-    void forEach(Mask<Double, Shapes.S128Bit> m, FUnCon f) {
+    void forEach(Mask<Double, Shapes.S128Bit> o, FUnCon f) {
+        Double128Mask m = (Double128Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         return new Double128Vector(res);
     }
 
+    // Mask
+
+    static final class Double128Mask extends AbstractMask<Double, Shapes.S128Bit> {
+        static final Double128Mask TRUE_MASK = new Double128Mask(true);
+        static final Double128Mask FALSE_MASK = new Double128Mask(false);
+
+        public Double128Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Double128Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Double128Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Double128Mask(res);
+        }
+
+        @Override
+        Double128Mask bOp(Mask<Double, Shapes.S128Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Double128Mask m = (Double128Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Double128Mask(res);
+        }
+
+        @Override
+        public Double128Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Double128Vector toVector() {
+            double[] res = new double[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (double) (bits[i] ? -1 : 0);
+            }
+            return new Double128Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         }
 
         @Override
-        Double128Vector op(Mask<Double, Shapes.S128Bit> m, FOp f) {
+        Double128Vector op(Mask<Double, Shapes.S128Bit> o, FOp f) {
             double[] res = new double[length()];
+            Double128Mask m = (Double128Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         }
 
         @Override
-        public Mask<Double, Shapes.S128Bit> trueMask() {
-            return TRUEMASK;
+        public Double128Mask constantMask(boolean... bits) {
+            return new Double128Mask(bits);
         }
 
         @Override
-        public Mask<Double, Shapes.S128Bit> falseMask() {
-            return FALSEMASK;
+        public Double128Mask trueMask() {
+            return Double128Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Double128Mask falseMask() {
+            return Double128Mask.FALSE_MASK;
         }
     }
 }

@@ -33,9 +33,6 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
     static final Short512Vector ZERO = new Short512Vector();
 
-    static final Mask<Short, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Short, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     short[] vec;
 
     Short512Vector() {
@@ -59,10 +56,11 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
     }
 
     @Override
-    Short512Vector uOp(Mask<Short, Shapes.S512Bit> m, FUnOp f) {
+    Short512Vector uOp(Mask<Short, Shapes.S512Bit> o, FUnOp f) {
         short[] res = new short[length()];
+        Short512Mask m = (Short512Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Short512Vector(res);
     }
@@ -80,11 +78,12 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
     }
 
     @Override
-    Short512Vector bOp(Vector<Short, Shapes.S512Bit> o, Mask<Short, Shapes.S512Bit> m, FBinOp f) {
+    Short512Vector bOp(Vector<Short, Shapes.S512Bit> o1, Mask<Short, Shapes.S512Bit> o2, FBinOp f) {
         short[] res = new short[length()];
-        Short512Vector v = (Short512Vector) o;
+        Short512Vector v = (Short512Vector) o1;
+        Short512Mask m = (Short512Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Short512Vector(res);
     }
@@ -103,12 +102,13 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
     }
 
     @Override
-    Short512Vector tOp(Vector<Short, Shapes.S512Bit> o1, Vector<Short, Shapes.S512Bit> o2, Mask<Short, Shapes.S512Bit> m, FTriOp f) {
+    Short512Vector tOp(Vector<Short, Shapes.S512Bit> o1, Vector<Short, Shapes.S512Bit> o2, Mask<Short, Shapes.S512Bit> o3, FTriOp f) {
         short[] res = new short[length()];
         Short512Vector v1 = (Short512Vector) o1;
         Short512Vector v2 = (Short512Vector) o2;
+        Short512Mask m = (Short512Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Short512Vector(res);
     }
@@ -145,13 +145,13 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
     // Binary test
 
     @Override
-    Mask<Short, Shapes.S512Bit> bTest(Vector<Short, Shapes.S512Bit> o, FBinTest f) {
+    Short512Mask bTest(Vector<Short, Shapes.S512Bit> o, FBinTest f) {
         Short512Vector v = (Short512Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Short512Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
     }
 
     @Override
-    void forEach(Mask<Short, Shapes.S512Bit> m, FUnCon f) {
+    void forEach(Mask<Short, Shapes.S512Bit> o, FUnCon f) {
+        Short512Mask m = (Short512Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -297,6 +298,54 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         return new Short512Vector(res);
     }
 
+    // Mask
+
+    static final class Short512Mask extends AbstractMask<Short, Shapes.S512Bit> {
+        static final Short512Mask TRUE_MASK = new Short512Mask(true);
+        static final Short512Mask FALSE_MASK = new Short512Mask(false);
+
+        public Short512Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Short512Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Short512Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Short512Mask(res);
+        }
+
+        @Override
+        Short512Mask bOp(Mask<Short, Shapes.S512Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Short512Mask m = (Short512Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Short512Mask(res);
+        }
+
+        @Override
+        public Short512Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Short512Vector toVector() {
+            short[] res = new short[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (short) (bits[i] ? -1 : 0);
+            }
+            return new Short512Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -354,10 +403,11 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         }
 
         @Override
-        Short512Vector op(Mask<Short, Shapes.S512Bit> m, FOp f) {
+        Short512Vector op(Mask<Short, Shapes.S512Bit> o, FOp f) {
             short[] res = new short[length()];
+            Short512Mask m = (Short512Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -372,13 +422,18 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         }
 
         @Override
-        public Mask<Short, Shapes.S512Bit> trueMask() {
-            return TRUEMASK;
+        public Short512Mask constantMask(boolean... bits) {
+            return new Short512Mask(bits);
         }
 
         @Override
-        public Mask<Short, Shapes.S512Bit> falseMask() {
-            return FALSEMASK;
+        public Short512Mask trueMask() {
+            return Short512Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Short512Mask falseMask() {
+            return Short512Mask.FALSE_MASK;
         }
     }
 }

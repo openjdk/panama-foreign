@@ -33,9 +33,6 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
     static final Long256Vector ZERO = new Long256Vector();
 
-    static final Mask<Long, Shapes.S256Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Long, Shapes.S256Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     long[] vec;
 
     Long256Vector() {
@@ -59,10 +56,11 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
     }
 
     @Override
-    Long256Vector uOp(Mask<Long, Shapes.S256Bit> m, FUnOp f) {
+    Long256Vector uOp(Mask<Long, Shapes.S256Bit> o, FUnOp f) {
         long[] res = new long[length()];
+        Long256Mask m = (Long256Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Long256Vector(res);
     }
@@ -80,11 +78,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
     }
 
     @Override
-    Long256Vector bOp(Vector<Long, Shapes.S256Bit> o, Mask<Long, Shapes.S256Bit> m, FBinOp f) {
+    Long256Vector bOp(Vector<Long, Shapes.S256Bit> o1, Mask<Long, Shapes.S256Bit> o2, FBinOp f) {
         long[] res = new long[length()];
-        Long256Vector v = (Long256Vector) o;
+        Long256Vector v = (Long256Vector) o1;
+        Long256Mask m = (Long256Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Long256Vector(res);
     }
@@ -103,12 +102,13 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
     }
 
     @Override
-    Long256Vector tOp(Vector<Long, Shapes.S256Bit> o1, Vector<Long, Shapes.S256Bit> o2, Mask<Long, Shapes.S256Bit> m, FTriOp f) {
+    Long256Vector tOp(Vector<Long, Shapes.S256Bit> o1, Vector<Long, Shapes.S256Bit> o2, Mask<Long, Shapes.S256Bit> o3, FTriOp f) {
         long[] res = new long[length()];
         Long256Vector v1 = (Long256Vector) o1;
         Long256Vector v2 = (Long256Vector) o2;
+        Long256Mask m = (Long256Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Long256Vector(res);
     }
@@ -145,13 +145,13 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
     // Binary test
 
     @Override
-    Mask<Long, Shapes.S256Bit> bTest(Vector<Long, Shapes.S256Bit> o, FBinTest f) {
+    Long256Mask bTest(Vector<Long, Shapes.S256Bit> o, FBinTest f) {
         Long256Vector v = (Long256Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Long256Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
     }
 
     @Override
-    void forEach(Mask<Long, Shapes.S256Bit> m, FUnCon f) {
+    void forEach(Mask<Long, Shapes.S256Bit> o, FUnCon f) {
+        Long256Mask m = (Long256Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         return new Long256Vector(res);
     }
 
+    // Mask
+
+    static final class Long256Mask extends AbstractMask<Long, Shapes.S256Bit> {
+        static final Long256Mask TRUE_MASK = new Long256Mask(true);
+        static final Long256Mask FALSE_MASK = new Long256Mask(false);
+
+        public Long256Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Long256Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Long256Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Long256Mask(res);
+        }
+
+        @Override
+        Long256Mask bOp(Mask<Long, Shapes.S256Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Long256Mask m = (Long256Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Long256Mask(res);
+        }
+
+        @Override
+        public Long256Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Long256Vector toVector() {
+            long[] res = new long[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (long) (bits[i] ? -1 : 0);
+            }
+            return new Long256Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         }
 
         @Override
-        Long256Vector op(Mask<Long, Shapes.S256Bit> m, FOp f) {
+        Long256Vector op(Mask<Long, Shapes.S256Bit> o, FOp f) {
             long[] res = new long[length()];
+            Long256Mask m = (Long256Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         }
 
         @Override
-        public Mask<Long, Shapes.S256Bit> trueMask() {
-            return TRUEMASK;
+        public Long256Mask constantMask(boolean... bits) {
+            return new Long256Mask(bits);
         }
 
         @Override
-        public Mask<Long, Shapes.S256Bit> falseMask() {
-            return FALSEMASK;
+        public Long256Mask trueMask() {
+            return Long256Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Long256Mask falseMask() {
+            return Long256Mask.FALSE_MASK;
         }
     }
 }

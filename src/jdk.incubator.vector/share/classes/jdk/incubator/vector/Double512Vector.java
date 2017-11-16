@@ -33,9 +33,6 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     static final Double512Vector ZERO = new Double512Vector();
 
-    static final Mask<Double, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Double, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     double[] vec;
 
     Double512Vector() {
@@ -59,10 +56,11 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     }
 
     @Override
-    Double512Vector uOp(Mask<Double, Shapes.S512Bit> m, FUnOp f) {
+    Double512Vector uOp(Mask<Double, Shapes.S512Bit> o, FUnOp f) {
         double[] res = new double[length()];
+        Double512Mask m = (Double512Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Double512Vector(res);
     }
@@ -80,11 +78,12 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     }
 
     @Override
-    Double512Vector bOp(Vector<Double, Shapes.S512Bit> o, Mask<Double, Shapes.S512Bit> m, FBinOp f) {
+    Double512Vector bOp(Vector<Double, Shapes.S512Bit> o1, Mask<Double, Shapes.S512Bit> o2, FBinOp f) {
         double[] res = new double[length()];
-        Double512Vector v = (Double512Vector) o;
+        Double512Vector v = (Double512Vector) o1;
+        Double512Mask m = (Double512Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Double512Vector(res);
     }
@@ -103,12 +102,13 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     }
 
     @Override
-    Double512Vector tOp(Vector<Double, Shapes.S512Bit> o1, Vector<Double, Shapes.S512Bit> o2, Mask<Double, Shapes.S512Bit> m, FTriOp f) {
+    Double512Vector tOp(Vector<Double, Shapes.S512Bit> o1, Vector<Double, Shapes.S512Bit> o2, Mask<Double, Shapes.S512Bit> o3, FTriOp f) {
         double[] res = new double[length()];
         Double512Vector v1 = (Double512Vector) o1;
         Double512Vector v2 = (Double512Vector) o2;
+        Double512Mask m = (Double512Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Double512Vector(res);
     }
@@ -145,13 +145,13 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     // Binary test
 
     @Override
-    Mask<Double, Shapes.S512Bit> bTest(Vector<Double, Shapes.S512Bit> o, FBinTest f) {
+    Double512Mask bTest(Vector<Double, Shapes.S512Bit> o, FBinTest f) {
         Double512Vector v = (Double512Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Double512Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     }
 
     @Override
-    void forEach(Mask<Double, Shapes.S512Bit> m, FUnCon f) {
+    void forEach(Mask<Double, Shapes.S512Bit> o, FUnCon f) {
+        Double512Mask m = (Double512Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         return new Double512Vector(res);
     }
 
+    // Mask
+
+    static final class Double512Mask extends AbstractMask<Double, Shapes.S512Bit> {
+        static final Double512Mask TRUE_MASK = new Double512Mask(true);
+        static final Double512Mask FALSE_MASK = new Double512Mask(false);
+
+        public Double512Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Double512Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Double512Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Double512Mask(res);
+        }
+
+        @Override
+        Double512Mask bOp(Mask<Double, Shapes.S512Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Double512Mask m = (Double512Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Double512Mask(res);
+        }
+
+        @Override
+        public Double512Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Double512Vector toVector() {
+            double[] res = new double[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (double) (bits[i] ? -1 : 0);
+            }
+            return new Double512Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         }
 
         @Override
-        Double512Vector op(Mask<Double, Shapes.S512Bit> m, FOp f) {
+        Double512Vector op(Mask<Double, Shapes.S512Bit> o, FOp f) {
             double[] res = new double[length()];
+            Double512Mask m = (Double512Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         }
 
         @Override
-        public Mask<Double, Shapes.S512Bit> trueMask() {
-            return TRUEMASK;
+        public Double512Mask constantMask(boolean... bits) {
+            return new Double512Mask(bits);
         }
 
         @Override
-        public Mask<Double, Shapes.S512Bit> falseMask() {
-            return FALSEMASK;
+        public Double512Mask trueMask() {
+            return Double512Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Double512Mask falseMask() {
+            return Double512Mask.FALSE_MASK;
         }
     }
 }

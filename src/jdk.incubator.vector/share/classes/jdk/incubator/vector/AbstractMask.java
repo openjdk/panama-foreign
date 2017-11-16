@@ -26,26 +26,47 @@ package jdk.incubator.vector;
 
 import java.util.Arrays;
 
-final class GenericMask<E, S extends Vector.Shape<Vector<?, ?>>> implements Vector.Mask<E, S> {
+abstract class AbstractMask<E, S extends Vector.Shape<Vector<?, ?>>> implements Vector.Mask<E, S> {
+    final boolean[] bits;
 
-    private final Vector.Species<E, S> s;
-    private final boolean[] bits;
-
-    public GenericMask(Vector.Species<E, S> s, boolean[] bits) {
-        this.s = s;
-
+    AbstractMask(boolean[] bits) {
         if (bits.length != species().length())
             throw new ArrayIndexOutOfBoundsException("Boolean array must be the same length as the masked vector");
 
         this.bits = bits.clone();
     }
 
-    public GenericMask(Vector.Species<E, S> s, boolean val) {
-        this.s = s;
+    AbstractMask(boolean val) {
         this.bits = new boolean[species().length()];
         for (int i = 0; i < this.bits.length; i++) {
             this.bits[i] = val;
         }
+    }
+
+    // Unary operator
+
+    interface MUnOp {
+        boolean apply(int i, boolean a);
+    }
+
+    abstract AbstractMask<E, S> uOp(MUnOp f);
+
+    // Binary operator
+
+    interface MBinOp {
+        boolean apply(int i, boolean a, boolean b);
+    }
+
+    abstract AbstractMask<E, S> bOp(Vector.Mask<E, S> o, MBinOp f);
+
+    @Override
+    public String toString() {
+        return Arrays.toString(bits);
+    }
+
+    @Override
+    public boolean getElement(int i) {
+        return bits[i];
     }
 
     @Override
@@ -74,16 +95,34 @@ final class GenericMask<E, S extends Vector.Shape<Vector<?, ?>>> implements Vect
 
     @Override
     public boolean allTrue() {
-        boolean res = true;
         for (boolean i : bits) {
-            res = res && i;
+            if (!i) return false;
         }
-        return res;
+        return true;
     }
 
     @Override
-    public Vector.Species<E, S> species() {
-        return s;
+    public int trueCount() {
+        int c = 0;
+        for (boolean i : bits) {
+            if (i) c++;
+        }
+        return c;
+    }
+
+    @Override
+    public AbstractMask<E, S> and(Vector.Mask<E, S> o) {
+        return bOp(o, (i, a, b) -> a && b);
+    }
+
+    @Override
+    public AbstractMask<E, S> or(Vector.Mask<E, S> o) {
+        return bOp(o, (i, a, b) -> a || b);
+    }
+
+    @Override
+    public AbstractMask<E, S> not() {
+        return uOp((i, a) -> !a);
     }
 
     @Override
@@ -133,19 +172,14 @@ final class GenericMask<E, S extends Vector.Shape<Vector<?, ?>>> implements Vect
             return (Vector<Z, S>) ((ByteVector.ByteSpecies<S>) species).fromArray(ar, 0);
         }
         else {
-            throw new UnsupportedOperationException("Invalid vector element specified for GenericMask.");
+            throw new UnsupportedOperationException("Invalid vector element specified for Mask.");
         }
     }
 
     @Override
     public <F, Z extends Vector.Shape<Vector<?, ?>>>
-    GenericMask<F, Z> reshape(Class<F> type, Z shape) {
+    Vector.Mask<F, Z> reshape(Class<F> type, Z shape) {
         Vector.Species<F, Z> species = Vector.speciesInstance(type, shape);
-        return new GenericMask<>(species, Arrays.copyOf(bits, species.length()));
-    }
-
-    @Override
-    public boolean getElement(int i) {
-        return bits[i];
+        return species.constantMask(Arrays.copyOf(bits, species.length()));
     }
 }

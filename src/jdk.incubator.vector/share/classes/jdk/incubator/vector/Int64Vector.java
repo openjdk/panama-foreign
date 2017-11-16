@@ -33,9 +33,6 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
 
     static final Int64Vector ZERO = new Int64Vector();
 
-    static final Mask<Integer, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Integer, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     int[] vec;
 
     Int64Vector() {
@@ -59,10 +56,11 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     }
 
     @Override
-    Int64Vector uOp(Mask<Integer, Shapes.S64Bit> m, FUnOp f) {
+    Int64Vector uOp(Mask<Integer, Shapes.S64Bit> o, FUnOp f) {
         int[] res = new int[length()];
+        Int64Mask m = (Int64Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Int64Vector(res);
     }
@@ -80,11 +78,12 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     }
 
     @Override
-    Int64Vector bOp(Vector<Integer, Shapes.S64Bit> o, Mask<Integer, Shapes.S64Bit> m, FBinOp f) {
+    Int64Vector bOp(Vector<Integer, Shapes.S64Bit> o1, Mask<Integer, Shapes.S64Bit> o2, FBinOp f) {
         int[] res = new int[length()];
-        Int64Vector v = (Int64Vector) o;
+        Int64Vector v = (Int64Vector) o1;
+        Int64Mask m = (Int64Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Int64Vector(res);
     }
@@ -103,12 +102,13 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     }
 
     @Override
-    Int64Vector tOp(Vector<Integer, Shapes.S64Bit> o1, Vector<Integer, Shapes.S64Bit> o2, Mask<Integer, Shapes.S64Bit> m, FTriOp f) {
+    Int64Vector tOp(Vector<Integer, Shapes.S64Bit> o1, Vector<Integer, Shapes.S64Bit> o2, Mask<Integer, Shapes.S64Bit> o3, FTriOp f) {
         int[] res = new int[length()];
         Int64Vector v1 = (Int64Vector) o1;
         Int64Vector v2 = (Int64Vector) o2;
+        Int64Mask m = (Int64Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Int64Vector(res);
     }
@@ -145,13 +145,13 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     // Binary test
 
     @Override
-    Mask<Integer, Shapes.S64Bit> bTest(Vector<Integer, Shapes.S64Bit> o, FBinTest f) {
+    Int64Mask bTest(Vector<Integer, Shapes.S64Bit> o, FBinTest f) {
         Int64Vector v = (Int64Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Int64Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     }
 
     @Override
-    void forEach(Mask<Integer, Shapes.S64Bit> m, FUnCon f) {
+    void forEach(Mask<Integer, Shapes.S64Bit> o, FUnCon f) {
+        Int64Mask m = (Int64Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         return new Int64Vector(res);
     }
 
+    // Mask
+
+    static final class Int64Mask extends AbstractMask<Integer, Shapes.S64Bit> {
+        static final Int64Mask TRUE_MASK = new Int64Mask(true);
+        static final Int64Mask FALSE_MASK = new Int64Mask(false);
+
+        public Int64Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Int64Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Int64Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Int64Mask(res);
+        }
+
+        @Override
+        Int64Mask bOp(Mask<Integer, Shapes.S64Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Int64Mask m = (Int64Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Int64Mask(res);
+        }
+
+        @Override
+        public Int64Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Int64Vector toVector() {
+            int[] res = new int[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (int) (bits[i] ? -1 : 0);
+            }
+            return new Int64Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         }
 
         @Override
-        Int64Vector op(Mask<Integer, Shapes.S64Bit> m, FOp f) {
+        Int64Vector op(Mask<Integer, Shapes.S64Bit> o, FOp f) {
             int[] res = new int[length()];
+            Int64Mask m = (Int64Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         }
 
         @Override
-        public Mask<Integer, Shapes.S64Bit> trueMask() {
-            return TRUEMASK;
+        public Int64Mask constantMask(boolean... bits) {
+            return new Int64Mask(bits);
         }
 
         @Override
-        public Mask<Integer, Shapes.S64Bit> falseMask() {
-            return FALSEMASK;
+        public Int64Mask trueMask() {
+            return Int64Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Int64Mask falseMask() {
+            return Int64Mask.FALSE_MASK;
         }
     }
 }

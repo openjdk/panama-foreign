@@ -33,9 +33,6 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     static final Byte64Vector ZERO = new Byte64Vector();
 
-    static final Mask<Byte, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Byte, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     byte[] vec;
 
     Byte64Vector() {
@@ -59,10 +56,11 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     }
 
     @Override
-    Byte64Vector uOp(Mask<Byte, Shapes.S64Bit> m, FUnOp f) {
+    Byte64Vector uOp(Mask<Byte, Shapes.S64Bit> o, FUnOp f) {
         byte[] res = new byte[length()];
+        Byte64Mask m = (Byte64Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Byte64Vector(res);
     }
@@ -80,11 +78,12 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     }
 
     @Override
-    Byte64Vector bOp(Vector<Byte, Shapes.S64Bit> o, Mask<Byte, Shapes.S64Bit> m, FBinOp f) {
+    Byte64Vector bOp(Vector<Byte, Shapes.S64Bit> o1, Mask<Byte, Shapes.S64Bit> o2, FBinOp f) {
         byte[] res = new byte[length()];
-        Byte64Vector v = (Byte64Vector) o;
+        Byte64Vector v = (Byte64Vector) o1;
+        Byte64Mask m = (Byte64Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Byte64Vector(res);
     }
@@ -103,12 +102,13 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     }
 
     @Override
-    Byte64Vector tOp(Vector<Byte, Shapes.S64Bit> o1, Vector<Byte, Shapes.S64Bit> o2, Mask<Byte, Shapes.S64Bit> m, FTriOp f) {
+    Byte64Vector tOp(Vector<Byte, Shapes.S64Bit> o1, Vector<Byte, Shapes.S64Bit> o2, Mask<Byte, Shapes.S64Bit> o3, FTriOp f) {
         byte[] res = new byte[length()];
         Byte64Vector v1 = (Byte64Vector) o1;
         Byte64Vector v2 = (Byte64Vector) o2;
+        Byte64Mask m = (Byte64Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Byte64Vector(res);
     }
@@ -145,13 +145,13 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     // Binary test
 
     @Override
-    Mask<Byte, Shapes.S64Bit> bTest(Vector<Byte, Shapes.S64Bit> o, FBinTest f) {
+    Byte64Mask bTest(Vector<Byte, Shapes.S64Bit> o, FBinTest f) {
         Byte64Vector v = (Byte64Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Byte64Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     }
 
     @Override
-    void forEach(Mask<Byte, Shapes.S64Bit> m, FUnCon f) {
+    void forEach(Mask<Byte, Shapes.S64Bit> o, FUnCon f) {
+        Byte64Mask m = (Byte64Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -297,6 +298,54 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         return new Byte64Vector(res);
     }
 
+    // Mask
+
+    static final class Byte64Mask extends AbstractMask<Byte, Shapes.S64Bit> {
+        static final Byte64Mask TRUE_MASK = new Byte64Mask(true);
+        static final Byte64Mask FALSE_MASK = new Byte64Mask(false);
+
+        public Byte64Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Byte64Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Byte64Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Byte64Mask(res);
+        }
+
+        @Override
+        Byte64Mask bOp(Mask<Byte, Shapes.S64Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Byte64Mask m = (Byte64Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Byte64Mask(res);
+        }
+
+        @Override
+        public Byte64Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Byte64Vector toVector() {
+            byte[] res = new byte[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (byte) (bits[i] ? -1 : 0);
+            }
+            return new Byte64Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -354,10 +403,11 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         }
 
         @Override
-        Byte64Vector op(Mask<Byte, Shapes.S64Bit> m, FOp f) {
+        Byte64Vector op(Mask<Byte, Shapes.S64Bit> o, FOp f) {
             byte[] res = new byte[length()];
+            Byte64Mask m = (Byte64Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -372,13 +422,18 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         }
 
         @Override
-        public Mask<Byte, Shapes.S64Bit> trueMask() {
-            return TRUEMASK;
+        public Byte64Mask constantMask(boolean... bits) {
+            return new Byte64Mask(bits);
         }
 
         @Override
-        public Mask<Byte, Shapes.S64Bit> falseMask() {
-            return FALSEMASK;
+        public Byte64Mask trueMask() {
+            return Byte64Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Byte64Mask falseMask() {
+            return Byte64Mask.FALSE_MASK;
         }
     }
 }

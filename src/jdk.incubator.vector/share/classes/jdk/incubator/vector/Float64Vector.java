@@ -33,9 +33,6 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
 
     static final Float64Vector ZERO = new Float64Vector();
 
-    static final Mask<Float, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Float, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     float[] vec;
 
     Float64Vector() {
@@ -59,10 +56,11 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     }
 
     @Override
-    Float64Vector uOp(Mask<Float, Shapes.S64Bit> m, FUnOp f) {
+    Float64Vector uOp(Mask<Float, Shapes.S64Bit> o, FUnOp f) {
         float[] res = new float[length()];
+        Float64Mask m = (Float64Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Float64Vector(res);
     }
@@ -80,11 +78,12 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     }
 
     @Override
-    Float64Vector bOp(Vector<Float, Shapes.S64Bit> o, Mask<Float, Shapes.S64Bit> m, FBinOp f) {
+    Float64Vector bOp(Vector<Float, Shapes.S64Bit> o1, Mask<Float, Shapes.S64Bit> o2, FBinOp f) {
         float[] res = new float[length()];
-        Float64Vector v = (Float64Vector) o;
+        Float64Vector v = (Float64Vector) o1;
+        Float64Mask m = (Float64Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Float64Vector(res);
     }
@@ -103,12 +102,13 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     }
 
     @Override
-    Float64Vector tOp(Vector<Float, Shapes.S64Bit> o1, Vector<Float, Shapes.S64Bit> o2, Mask<Float, Shapes.S64Bit> m, FTriOp f) {
+    Float64Vector tOp(Vector<Float, Shapes.S64Bit> o1, Vector<Float, Shapes.S64Bit> o2, Mask<Float, Shapes.S64Bit> o3, FTriOp f) {
         float[] res = new float[length()];
         Float64Vector v1 = (Float64Vector) o1;
         Float64Vector v2 = (Float64Vector) o2;
+        Float64Mask m = (Float64Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Float64Vector(res);
     }
@@ -145,13 +145,13 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     // Binary test
 
     @Override
-    Mask<Float, Shapes.S64Bit> bTest(Vector<Float, Shapes.S64Bit> o, FBinTest f) {
+    Float64Mask bTest(Vector<Float, Shapes.S64Bit> o, FBinTest f) {
         Float64Vector v = (Float64Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Float64Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     }
 
     @Override
-    void forEach(Mask<Float, Shapes.S64Bit> m, FUnCon f) {
+    void forEach(Mask<Float, Shapes.S64Bit> o, FUnCon f) {
+        Float64Mask m = (Float64Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
         return new Float64Vector(res);
     }
 
+    // Mask
+
+    static final class Float64Mask extends AbstractMask<Float, Shapes.S64Bit> {
+        static final Float64Mask TRUE_MASK = new Float64Mask(true);
+        static final Float64Mask FALSE_MASK = new Float64Mask(false);
+
+        public Float64Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Float64Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Float64Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Float64Mask(res);
+        }
+
+        @Override
+        Float64Mask bOp(Mask<Float, Shapes.S64Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Float64Mask m = (Float64Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Float64Mask(res);
+        }
+
+        @Override
+        public Float64Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Float64Vector toVector() {
+            float[] res = new float[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (float) (bits[i] ? -1 : 0);
+            }
+            return new Float64Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
         }
 
         @Override
-        Float64Vector op(Mask<Float, Shapes.S64Bit> m, FOp f) {
+        Float64Vector op(Mask<Float, Shapes.S64Bit> o, FOp f) {
             float[] res = new float[length()];
+            Float64Mask m = (Float64Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
         }
 
         @Override
-        public Mask<Float, Shapes.S64Bit> trueMask() {
-            return TRUEMASK;
+        public Float64Mask constantMask(boolean... bits) {
+            return new Float64Mask(bits);
         }
 
         @Override
-        public Mask<Float, Shapes.S64Bit> falseMask() {
-            return FALSEMASK;
+        public Float64Mask trueMask() {
+            return Float64Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Float64Mask falseMask() {
+            return Float64Mask.FALSE_MASK;
         }
     }
 }

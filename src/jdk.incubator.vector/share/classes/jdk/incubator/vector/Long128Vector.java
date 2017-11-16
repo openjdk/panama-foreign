@@ -33,9 +33,6 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     static final Long128Vector ZERO = new Long128Vector();
 
-    static final Mask<Long, Shapes.S128Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Long, Shapes.S128Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     long[] vec;
 
     Long128Vector() {
@@ -59,10 +56,11 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
     @Override
-    Long128Vector uOp(Mask<Long, Shapes.S128Bit> m, FUnOp f) {
+    Long128Vector uOp(Mask<Long, Shapes.S128Bit> o, FUnOp f) {
         long[] res = new long[length()];
+        Long128Mask m = (Long128Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Long128Vector(res);
     }
@@ -80,11 +78,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
     @Override
-    Long128Vector bOp(Vector<Long, Shapes.S128Bit> o, Mask<Long, Shapes.S128Bit> m, FBinOp f) {
+    Long128Vector bOp(Vector<Long, Shapes.S128Bit> o1, Mask<Long, Shapes.S128Bit> o2, FBinOp f) {
         long[] res = new long[length()];
-        Long128Vector v = (Long128Vector) o;
+        Long128Vector v = (Long128Vector) o1;
+        Long128Mask m = (Long128Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Long128Vector(res);
     }
@@ -103,12 +102,13 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
     @Override
-    Long128Vector tOp(Vector<Long, Shapes.S128Bit> o1, Vector<Long, Shapes.S128Bit> o2, Mask<Long, Shapes.S128Bit> m, FTriOp f) {
+    Long128Vector tOp(Vector<Long, Shapes.S128Bit> o1, Vector<Long, Shapes.S128Bit> o2, Mask<Long, Shapes.S128Bit> o3, FTriOp f) {
         long[] res = new long[length()];
         Long128Vector v1 = (Long128Vector) o1;
         Long128Vector v2 = (Long128Vector) o2;
+        Long128Mask m = (Long128Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Long128Vector(res);
     }
@@ -145,13 +145,13 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     // Binary test
 
     @Override
-    Mask<Long, Shapes.S128Bit> bTest(Vector<Long, Shapes.S128Bit> o, FBinTest f) {
+    Long128Mask bTest(Vector<Long, Shapes.S128Bit> o, FBinTest f) {
         Long128Vector v = (Long128Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Long128Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
     @Override
-    void forEach(Mask<Long, Shapes.S128Bit> m, FUnCon f) {
+    void forEach(Mask<Long, Shapes.S128Bit> o, FUnCon f) {
+        Long128Mask m = (Long128Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         return new Long128Vector(res);
     }
 
+    // Mask
+
+    static final class Long128Mask extends AbstractMask<Long, Shapes.S128Bit> {
+        static final Long128Mask TRUE_MASK = new Long128Mask(true);
+        static final Long128Mask FALSE_MASK = new Long128Mask(false);
+
+        public Long128Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Long128Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Long128Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Long128Mask(res);
+        }
+
+        @Override
+        Long128Mask bOp(Mask<Long, Shapes.S128Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Long128Mask m = (Long128Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Long128Mask(res);
+        }
+
+        @Override
+        public Long128Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Long128Vector toVector() {
+            long[] res = new long[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (long) (bits[i] ? -1 : 0);
+            }
+            return new Long128Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         }
 
         @Override
-        Long128Vector op(Mask<Long, Shapes.S128Bit> m, FOp f) {
+        Long128Vector op(Mask<Long, Shapes.S128Bit> o, FOp f) {
             long[] res = new long[length()];
+            Long128Mask m = (Long128Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         }
 
         @Override
-        public Mask<Long, Shapes.S128Bit> trueMask() {
-            return TRUEMASK;
+        public Long128Mask constantMask(boolean... bits) {
+            return new Long128Mask(bits);
         }
 
         @Override
-        public Mask<Long, Shapes.S128Bit> falseMask() {
-            return FALSEMASK;
+        public Long128Mask trueMask() {
+            return Long128Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Long128Mask falseMask() {
+            return Long128Mask.FALSE_MASK;
         }
     }
 }

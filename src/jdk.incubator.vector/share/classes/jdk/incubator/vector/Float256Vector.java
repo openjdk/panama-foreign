@@ -33,9 +33,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
     static final Float256Vector ZERO = new Float256Vector();
 
-    static final Mask<Float, Shapes.S256Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Float, Shapes.S256Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     float[] vec;
 
     Float256Vector() {
@@ -59,10 +56,11 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     }
 
     @Override
-    Float256Vector uOp(Mask<Float, Shapes.S256Bit> m, FUnOp f) {
+    Float256Vector uOp(Mask<Float, Shapes.S256Bit> o, FUnOp f) {
         float[] res = new float[length()];
+        Float256Mask m = (Float256Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Float256Vector(res);
     }
@@ -80,11 +78,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     }
 
     @Override
-    Float256Vector bOp(Vector<Float, Shapes.S256Bit> o, Mask<Float, Shapes.S256Bit> m, FBinOp f) {
+    Float256Vector bOp(Vector<Float, Shapes.S256Bit> o1, Mask<Float, Shapes.S256Bit> o2, FBinOp f) {
         float[] res = new float[length()];
-        Float256Vector v = (Float256Vector) o;
+        Float256Vector v = (Float256Vector) o1;
+        Float256Mask m = (Float256Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Float256Vector(res);
     }
@@ -103,12 +102,13 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     }
 
     @Override
-    Float256Vector tOp(Vector<Float, Shapes.S256Bit> o1, Vector<Float, Shapes.S256Bit> o2, Mask<Float, Shapes.S256Bit> m, FTriOp f) {
+    Float256Vector tOp(Vector<Float, Shapes.S256Bit> o1, Vector<Float, Shapes.S256Bit> o2, Mask<Float, Shapes.S256Bit> o3, FTriOp f) {
         float[] res = new float[length()];
         Float256Vector v1 = (Float256Vector) o1;
         Float256Vector v2 = (Float256Vector) o2;
+        Float256Mask m = (Float256Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Float256Vector(res);
     }
@@ -145,13 +145,13 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     // Binary test
 
     @Override
-    Mask<Float, Shapes.S256Bit> bTest(Vector<Float, Shapes.S256Bit> o, FBinTest f) {
+    Float256Mask bTest(Vector<Float, Shapes.S256Bit> o, FBinTest f) {
         Float256Vector v = (Float256Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Float256Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     }
 
     @Override
-    void forEach(Mask<Float, Shapes.S256Bit> m, FUnCon f) {
+    void forEach(Mask<Float, Shapes.S256Bit> o, FUnCon f) {
+        Float256Mask m = (Float256Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         return new Float256Vector(res);
     }
 
+    // Mask
+
+    static final class Float256Mask extends AbstractMask<Float, Shapes.S256Bit> {
+        static final Float256Mask TRUE_MASK = new Float256Mask(true);
+        static final Float256Mask FALSE_MASK = new Float256Mask(false);
+
+        public Float256Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Float256Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Float256Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Float256Mask(res);
+        }
+
+        @Override
+        Float256Mask bOp(Mask<Float, Shapes.S256Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Float256Mask m = (Float256Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Float256Mask(res);
+        }
+
+        @Override
+        public Float256Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Float256Vector toVector() {
+            float[] res = new float[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (float) (bits[i] ? -1 : 0);
+            }
+            return new Float256Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         }
 
         @Override
-        Float256Vector op(Mask<Float, Shapes.S256Bit> m, FOp f) {
+        Float256Vector op(Mask<Float, Shapes.S256Bit> o, FOp f) {
             float[] res = new float[length()];
+            Float256Mask m = (Float256Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         }
 
         @Override
-        public Mask<Float, Shapes.S256Bit> trueMask() {
-            return TRUEMASK;
+        public Float256Mask constantMask(boolean... bits) {
+            return new Float256Mask(bits);
         }
 
         @Override
-        public Mask<Float, Shapes.S256Bit> falseMask() {
-            return FALSEMASK;
+        public Float256Mask trueMask() {
+            return Float256Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Float256Mask falseMask() {
+            return Float256Mask.FALSE_MASK;
         }
     }
 }

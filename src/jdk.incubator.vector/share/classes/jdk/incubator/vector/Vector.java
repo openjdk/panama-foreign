@@ -186,19 +186,13 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
 
         //Mask and shuffle constructions
         @HotSpotIntrinsicCandidate
-        default Mask<E, S> constantMask(boolean... bits) {
-            return new GenericMask<>(this, bits);
-        }
+        Mask<E, S> constantMask(boolean... bits);
 
         @HotSpotIntrinsicCandidate
-        default Mask<E, S> trueMask() {
-            return new GenericMask<>(this, true);
-        }
+        Mask<E, S> trueMask();
 
         @HotSpotIntrinsicCandidate
-        default Mask<E, S> falseMask() {
-            return new GenericMask<>(this, false);
-        }
+        Mask<E, S> falseMask();
 
         default Shuffle<E, S> constantShuffle(int... ixs) {
             return new GenericShuffle<>(this, ixs);
@@ -224,12 +218,22 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
         @HotSpotIntrinsicCandidate
         boolean allTrue();
 
+        int trueCount();
+
+        Mask<E, S> and(Mask<E, S> o);
+
+        Mask<E, S> or(Mask<E, S> o);
+
+        Mask<E, S> not();
+
         //TODO: counting trues? LZ count
         Species<E, S> species();
 
+        Vector<E, S> toVector();
+
         <Z> Vector<Z, S> toVector(Class<Z> e);
 
-        default boolean getElement(int i) { return i < 64 ? ((toLong() >>> i) & 1) != 0 : toArray()[i]; }
+        boolean getElement(int i);
 
         <F, Z extends Vector.Shape<Vector<?, ?>>>
         Mask<F, Z> reshape(Class<F> type, Z shape);

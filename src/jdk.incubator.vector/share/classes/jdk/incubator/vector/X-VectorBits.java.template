@@ -33,9 +33,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     static final $vectortype$ ZERO = new $vectortype$();
 
-    static final Mask<$Boxtype$, Shapes.$shape$> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<$Boxtype$, Shapes.$shape$> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     $type$[] vec;
 
     $vectortype$() {
@@ -59,10 +56,11 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     }
 
     @Override
-    $vectortype$ uOp(Mask<$Boxtype$, Shapes.$shape$> m, FUnOp f) {
+    $vectortype$ uOp(Mask<$Boxtype$, Shapes.$shape$> o, FUnOp f) {
         $type$[] res = new $type$[length()];
+        $masktype$ m = ($masktype$) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new $vectortype$(res);
     }
@@ -80,11 +78,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     }
 
     @Override
-    $vectortype$ bOp(Vector<$Boxtype$, Shapes.$shape$> o, Mask<$Boxtype$, Shapes.$shape$> m, FBinOp f) {
+    $vectortype$ bOp(Vector<$Boxtype$, Shapes.$shape$> o1, Mask<$Boxtype$, Shapes.$shape$> o2, FBinOp f) {
         $type$[] res = new $type$[length()];
-        $vectortype$ v = ($vectortype$) o;
+        $vectortype$ v = ($vectortype$) o1;
+        $masktype$ m = ($masktype$) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new $vectortype$(res);
     }
@@ -103,12 +102,13 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     }
 
     @Override
-    $vectortype$ tOp(Vector<$Boxtype$, Shapes.$shape$> o1, Vector<$Boxtype$, Shapes.$shape$> o2, Mask<$Boxtype$, Shapes.$shape$> m, FTriOp f) {
+    $vectortype$ tOp(Vector<$Boxtype$, Shapes.$shape$> o1, Vector<$Boxtype$, Shapes.$shape$> o2, Mask<$Boxtype$, Shapes.$shape$> o3, FTriOp f) {
         $type$[] res = new $type$[length()];
         $vectortype$ v1 = ($vectortype$) o1;
         $vectortype$ v2 = ($vectortype$) o2;
+        $masktype$ m = ($masktype$) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new $vectortype$(res);
     }
@@ -145,13 +145,13 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     // Binary test
 
     @Override
-    Mask<$Boxtype$, Shapes.$shape$> bTest(Vector<$Boxtype$, Shapes.$shape$> o, FBinTest f) {
+    $masktype$ bTest(Vector<$Boxtype$, Shapes.$shape$> o, FBinTest f) {
         $vectortype$ v = ($vectortype$) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new $masktype$(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     }
 
     @Override
-    void forEach(Mask<$Boxtype$, Shapes.$shape$> m, FUnCon f) {
+    void forEach(Mask<$Boxtype$, Shapes.$shape$> o, FUnCon f) {
+        $masktype$ m = ($masktype$) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -315,6 +316,54 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         return new $vectortype$(res);
     }
 
+    // Mask
+
+    static final class $masktype$ extends AbstractMask<$Boxtype$, Shapes.$shape$> {
+        static final $masktype$ TRUE_MASK = new $masktype$(true);
+        static final $masktype$ FALSE_MASK = new $masktype$(false);
+
+        public $masktype$(boolean[] bits) {
+            super(bits);
+        }
+
+        public $masktype$(boolean val) {
+            super(val);
+        }
+
+        @Override
+        $masktype$ uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new $masktype$(res);
+        }
+
+        @Override
+        $masktype$ bOp(Mask<$Boxtype$, Shapes.$shape$> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            $masktype$ m = ($masktype$) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new $masktype$(res);
+        }
+
+        @Override
+        public $Type$$bits$Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public $vectortype$ toVector() {
+            $type$[] res = new $type$[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = ($type$) (bits[i] ? -1 : 0);
+            }
+            return new $vectortype$(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -372,10 +421,11 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         }
 
         @Override
-        $vectortype$ op(Mask<$Boxtype$, Shapes.$shape$> m, FOp f) {
+        $vectortype$ op(Mask<$Boxtype$, Shapes.$shape$> o, FOp f) {
             $type$[] res = new $type$[length()];
+            $masktype$ m = ($masktype$) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -390,13 +440,18 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         }
 
         @Override
-        public Mask<$Boxtype$, Shapes.$shape$> trueMask() {
-            return TRUEMASK;
+        public $masktype$ constantMask(boolean... bits) {
+            return new $masktype$(bits);
         }
 
         @Override
-        public Mask<$Boxtype$, Shapes.$shape$> falseMask() {
-            return FALSEMASK;
+        public $masktype$ trueMask() {
+            return $masktype$.TRUE_MASK;
+        }
+
+        @Override
+        public $masktype$ falseMask() {
+            return $masktype$.FALSE_MASK;
         }
     }
 }

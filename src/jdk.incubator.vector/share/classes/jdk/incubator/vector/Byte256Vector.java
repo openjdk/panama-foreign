@@ -33,9 +33,6 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
 
     static final Byte256Vector ZERO = new Byte256Vector();
 
-    static final Mask<Byte, Shapes.S256Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Byte, Shapes.S256Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     byte[] vec;
 
     Byte256Vector() {
@@ -59,10 +56,11 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
     }
 
     @Override
-    Byte256Vector uOp(Mask<Byte, Shapes.S256Bit> m, FUnOp f) {
+    Byte256Vector uOp(Mask<Byte, Shapes.S256Bit> o, FUnOp f) {
         byte[] res = new byte[length()];
+        Byte256Mask m = (Byte256Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Byte256Vector(res);
     }
@@ -80,11 +78,12 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
     }
 
     @Override
-    Byte256Vector bOp(Vector<Byte, Shapes.S256Bit> o, Mask<Byte, Shapes.S256Bit> m, FBinOp f) {
+    Byte256Vector bOp(Vector<Byte, Shapes.S256Bit> o1, Mask<Byte, Shapes.S256Bit> o2, FBinOp f) {
         byte[] res = new byte[length()];
-        Byte256Vector v = (Byte256Vector) o;
+        Byte256Vector v = (Byte256Vector) o1;
+        Byte256Mask m = (Byte256Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Byte256Vector(res);
     }
@@ -103,12 +102,13 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
     }
 
     @Override
-    Byte256Vector tOp(Vector<Byte, Shapes.S256Bit> o1, Vector<Byte, Shapes.S256Bit> o2, Mask<Byte, Shapes.S256Bit> m, FTriOp f) {
+    Byte256Vector tOp(Vector<Byte, Shapes.S256Bit> o1, Vector<Byte, Shapes.S256Bit> o2, Mask<Byte, Shapes.S256Bit> o3, FTriOp f) {
         byte[] res = new byte[length()];
         Byte256Vector v1 = (Byte256Vector) o1;
         Byte256Vector v2 = (Byte256Vector) o2;
+        Byte256Mask m = (Byte256Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Byte256Vector(res);
     }
@@ -145,13 +145,13 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
     // Binary test
 
     @Override
-    Mask<Byte, Shapes.S256Bit> bTest(Vector<Byte, Shapes.S256Bit> o, FBinTest f) {
+    Byte256Mask bTest(Vector<Byte, Shapes.S256Bit> o, FBinTest f) {
         Byte256Vector v = (Byte256Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Byte256Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
     }
 
     @Override
-    void forEach(Mask<Byte, Shapes.S256Bit> m, FUnCon f) {
+    void forEach(Mask<Byte, Shapes.S256Bit> o, FUnCon f) {
+        Byte256Mask m = (Byte256Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -297,6 +298,54 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         return new Byte256Vector(res);
     }
 
+    // Mask
+
+    static final class Byte256Mask extends AbstractMask<Byte, Shapes.S256Bit> {
+        static final Byte256Mask TRUE_MASK = new Byte256Mask(true);
+        static final Byte256Mask FALSE_MASK = new Byte256Mask(false);
+
+        public Byte256Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Byte256Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Byte256Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Byte256Mask(res);
+        }
+
+        @Override
+        Byte256Mask bOp(Mask<Byte, Shapes.S256Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Byte256Mask m = (Byte256Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Byte256Mask(res);
+        }
+
+        @Override
+        public Byte256Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Byte256Vector toVector() {
+            byte[] res = new byte[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (byte) (bits[i] ? -1 : 0);
+            }
+            return new Byte256Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -354,10 +403,11 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         }
 
         @Override
-        Byte256Vector op(Mask<Byte, Shapes.S256Bit> m, FOp f) {
+        Byte256Vector op(Mask<Byte, Shapes.S256Bit> o, FOp f) {
             byte[] res = new byte[length()];
+            Byte256Mask m = (Byte256Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -372,13 +422,18 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         }
 
         @Override
-        public Mask<Byte, Shapes.S256Bit> trueMask() {
-            return TRUEMASK;
+        public Byte256Mask constantMask(boolean... bits) {
+            return new Byte256Mask(bits);
         }
 
         @Override
-        public Mask<Byte, Shapes.S256Bit> falseMask() {
-            return FALSEMASK;
+        public Byte256Mask trueMask() {
+            return Byte256Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Byte256Mask falseMask() {
+            return Byte256Mask.FALSE_MASK;
         }
     }
 }

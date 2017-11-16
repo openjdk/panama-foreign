@@ -33,9 +33,6 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
 
     static final Short128Vector ZERO = new Short128Vector();
 
-    static final Mask<Short, Shapes.S128Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Short, Shapes.S128Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     short[] vec;
 
     Short128Vector() {
@@ -59,10 +56,11 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
     }
 
     @Override
-    Short128Vector uOp(Mask<Short, Shapes.S128Bit> m, FUnOp f) {
+    Short128Vector uOp(Mask<Short, Shapes.S128Bit> o, FUnOp f) {
         short[] res = new short[length()];
+        Short128Mask m = (Short128Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Short128Vector(res);
     }
@@ -80,11 +78,12 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
     }
 
     @Override
-    Short128Vector bOp(Vector<Short, Shapes.S128Bit> o, Mask<Short, Shapes.S128Bit> m, FBinOp f) {
+    Short128Vector bOp(Vector<Short, Shapes.S128Bit> o1, Mask<Short, Shapes.S128Bit> o2, FBinOp f) {
         short[] res = new short[length()];
-        Short128Vector v = (Short128Vector) o;
+        Short128Vector v = (Short128Vector) o1;
+        Short128Mask m = (Short128Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Short128Vector(res);
     }
@@ -103,12 +102,13 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
     }
 
     @Override
-    Short128Vector tOp(Vector<Short, Shapes.S128Bit> o1, Vector<Short, Shapes.S128Bit> o2, Mask<Short, Shapes.S128Bit> m, FTriOp f) {
+    Short128Vector tOp(Vector<Short, Shapes.S128Bit> o1, Vector<Short, Shapes.S128Bit> o2, Mask<Short, Shapes.S128Bit> o3, FTriOp f) {
         short[] res = new short[length()];
         Short128Vector v1 = (Short128Vector) o1;
         Short128Vector v2 = (Short128Vector) o2;
+        Short128Mask m = (Short128Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Short128Vector(res);
     }
@@ -145,13 +145,13 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
     // Binary test
 
     @Override
-    Mask<Short, Shapes.S128Bit> bTest(Vector<Short, Shapes.S128Bit> o, FBinTest f) {
+    Short128Mask bTest(Vector<Short, Shapes.S128Bit> o, FBinTest f) {
         Short128Vector v = (Short128Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Short128Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
     }
 
     @Override
-    void forEach(Mask<Short, Shapes.S128Bit> m, FUnCon f) {
+    void forEach(Mask<Short, Shapes.S128Bit> o, FUnCon f) {
+        Short128Mask m = (Short128Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -297,6 +298,54 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         return new Short128Vector(res);
     }
 
+    // Mask
+
+    static final class Short128Mask extends AbstractMask<Short, Shapes.S128Bit> {
+        static final Short128Mask TRUE_MASK = new Short128Mask(true);
+        static final Short128Mask FALSE_MASK = new Short128Mask(false);
+
+        public Short128Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Short128Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Short128Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Short128Mask(res);
+        }
+
+        @Override
+        Short128Mask bOp(Mask<Short, Shapes.S128Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Short128Mask m = (Short128Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Short128Mask(res);
+        }
+
+        @Override
+        public Short128Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Short128Vector toVector() {
+            short[] res = new short[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (short) (bits[i] ? -1 : 0);
+            }
+            return new Short128Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -354,10 +403,11 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         }
 
         @Override
-        Short128Vector op(Mask<Short, Shapes.S128Bit> m, FOp f) {
+        Short128Vector op(Mask<Short, Shapes.S128Bit> o, FOp f) {
             short[] res = new short[length()];
+            Short128Mask m = (Short128Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -372,13 +422,18 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         }
 
         @Override
-        public Mask<Short, Shapes.S128Bit> trueMask() {
-            return TRUEMASK;
+        public Short128Mask constantMask(boolean... bits) {
+            return new Short128Mask(bits);
         }
 
         @Override
-        public Mask<Short, Shapes.S128Bit> falseMask() {
-            return FALSEMASK;
+        public Short128Mask trueMask() {
+            return Short128Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Short128Mask falseMask() {
+            return Short128Mask.FALSE_MASK;
         }
     }
 }

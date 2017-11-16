@@ -33,9 +33,6 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     static final Short64Vector ZERO = new Short64Vector();
 
-    static final Mask<Short, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Short, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     short[] vec;
 
     Short64Vector() {
@@ -59,10 +56,11 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     }
 
     @Override
-    Short64Vector uOp(Mask<Short, Shapes.S64Bit> m, FUnOp f) {
+    Short64Vector uOp(Mask<Short, Shapes.S64Bit> o, FUnOp f) {
         short[] res = new short[length()];
+        Short64Mask m = (Short64Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Short64Vector(res);
     }
@@ -80,11 +78,12 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     }
 
     @Override
-    Short64Vector bOp(Vector<Short, Shapes.S64Bit> o, Mask<Short, Shapes.S64Bit> m, FBinOp f) {
+    Short64Vector bOp(Vector<Short, Shapes.S64Bit> o1, Mask<Short, Shapes.S64Bit> o2, FBinOp f) {
         short[] res = new short[length()];
-        Short64Vector v = (Short64Vector) o;
+        Short64Vector v = (Short64Vector) o1;
+        Short64Mask m = (Short64Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Short64Vector(res);
     }
@@ -103,12 +102,13 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     }
 
     @Override
-    Short64Vector tOp(Vector<Short, Shapes.S64Bit> o1, Vector<Short, Shapes.S64Bit> o2, Mask<Short, Shapes.S64Bit> m, FTriOp f) {
+    Short64Vector tOp(Vector<Short, Shapes.S64Bit> o1, Vector<Short, Shapes.S64Bit> o2, Mask<Short, Shapes.S64Bit> o3, FTriOp f) {
         short[] res = new short[length()];
         Short64Vector v1 = (Short64Vector) o1;
         Short64Vector v2 = (Short64Vector) o2;
+        Short64Mask m = (Short64Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Short64Vector(res);
     }
@@ -145,13 +145,13 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     // Binary test
 
     @Override
-    Mask<Short, Shapes.S64Bit> bTest(Vector<Short, Shapes.S64Bit> o, FBinTest f) {
+    Short64Mask bTest(Vector<Short, Shapes.S64Bit> o, FBinTest f) {
         Short64Vector v = (Short64Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Short64Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     }
 
     @Override
-    void forEach(Mask<Short, Shapes.S64Bit> m, FUnCon f) {
+    void forEach(Mask<Short, Shapes.S64Bit> o, FUnCon f) {
+        Short64Mask m = (Short64Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -297,6 +298,54 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         return new Short64Vector(res);
     }
 
+    // Mask
+
+    static final class Short64Mask extends AbstractMask<Short, Shapes.S64Bit> {
+        static final Short64Mask TRUE_MASK = new Short64Mask(true);
+        static final Short64Mask FALSE_MASK = new Short64Mask(false);
+
+        public Short64Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Short64Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Short64Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Short64Mask(res);
+        }
+
+        @Override
+        Short64Mask bOp(Mask<Short, Shapes.S64Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Short64Mask m = (Short64Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Short64Mask(res);
+        }
+
+        @Override
+        public Short64Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Short64Vector toVector() {
+            short[] res = new short[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (short) (bits[i] ? -1 : 0);
+            }
+            return new Short64Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -354,10 +403,11 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         }
 
         @Override
-        Short64Vector op(Mask<Short, Shapes.S64Bit> m, FOp f) {
+        Short64Vector op(Mask<Short, Shapes.S64Bit> o, FOp f) {
             short[] res = new short[length()];
+            Short64Mask m = (Short64Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -372,13 +422,18 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         }
 
         @Override
-        public Mask<Short, Shapes.S64Bit> trueMask() {
-            return TRUEMASK;
+        public Short64Mask constantMask(boolean... bits) {
+            return new Short64Mask(bits);
         }
 
         @Override
-        public Mask<Short, Shapes.S64Bit> falseMask() {
-            return FALSEMASK;
+        public Short64Mask trueMask() {
+            return Short64Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Short64Mask falseMask() {
+            return Short64Mask.FALSE_MASK;
         }
     }
 }

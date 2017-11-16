@@ -33,9 +33,6 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
 
     static final Int512Vector ZERO = new Int512Vector();
 
-    static final Mask<Integer, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Integer, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     int[] vec;
 
     Int512Vector() {
@@ -59,10 +56,11 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     }
 
     @Override
-    Int512Vector uOp(Mask<Integer, Shapes.S512Bit> m, FUnOp f) {
+    Int512Vector uOp(Mask<Integer, Shapes.S512Bit> o, FUnOp f) {
         int[] res = new int[length()];
+        Int512Mask m = (Int512Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Int512Vector(res);
     }
@@ -80,11 +78,12 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     }
 
     @Override
-    Int512Vector bOp(Vector<Integer, Shapes.S512Bit> o, Mask<Integer, Shapes.S512Bit> m, FBinOp f) {
+    Int512Vector bOp(Vector<Integer, Shapes.S512Bit> o1, Mask<Integer, Shapes.S512Bit> o2, FBinOp f) {
         int[] res = new int[length()];
-        Int512Vector v = (Int512Vector) o;
+        Int512Vector v = (Int512Vector) o1;
+        Int512Mask m = (Int512Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Int512Vector(res);
     }
@@ -103,12 +102,13 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     }
 
     @Override
-    Int512Vector tOp(Vector<Integer, Shapes.S512Bit> o1, Vector<Integer, Shapes.S512Bit> o2, Mask<Integer, Shapes.S512Bit> m, FTriOp f) {
+    Int512Vector tOp(Vector<Integer, Shapes.S512Bit> o1, Vector<Integer, Shapes.S512Bit> o2, Mask<Integer, Shapes.S512Bit> o3, FTriOp f) {
         int[] res = new int[length()];
         Int512Vector v1 = (Int512Vector) o1;
         Int512Vector v2 = (Int512Vector) o2;
+        Int512Mask m = (Int512Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Int512Vector(res);
     }
@@ -145,13 +145,13 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     // Binary test
 
     @Override
-    Mask<Integer, Shapes.S512Bit> bTest(Vector<Integer, Shapes.S512Bit> o, FBinTest f) {
+    Int512Mask bTest(Vector<Integer, Shapes.S512Bit> o, FBinTest f) {
         Int512Vector v = (Int512Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Int512Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     }
 
     @Override
-    void forEach(Mask<Integer, Shapes.S512Bit> m, FUnCon f) {
+    void forEach(Mask<Integer, Shapes.S512Bit> o, FUnCon f) {
+        Int512Mask m = (Int512Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         return new Int512Vector(res);
     }
 
+    // Mask
+
+    static final class Int512Mask extends AbstractMask<Integer, Shapes.S512Bit> {
+        static final Int512Mask TRUE_MASK = new Int512Mask(true);
+        static final Int512Mask FALSE_MASK = new Int512Mask(false);
+
+        public Int512Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Int512Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Int512Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Int512Mask(res);
+        }
+
+        @Override
+        Int512Mask bOp(Mask<Integer, Shapes.S512Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Int512Mask m = (Int512Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Int512Mask(res);
+        }
+
+        @Override
+        public Int512Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Int512Vector toVector() {
+            int[] res = new int[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (int) (bits[i] ? -1 : 0);
+            }
+            return new Int512Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         }
 
         @Override
-        Int512Vector op(Mask<Integer, Shapes.S512Bit> m, FOp f) {
+        Int512Vector op(Mask<Integer, Shapes.S512Bit> o, FOp f) {
             int[] res = new int[length()];
+            Int512Mask m = (Int512Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         }
 
         @Override
-        public Mask<Integer, Shapes.S512Bit> trueMask() {
-            return TRUEMASK;
+        public Int512Mask constantMask(boolean... bits) {
+            return new Int512Mask(bits);
         }
 
         @Override
-        public Mask<Integer, Shapes.S512Bit> falseMask() {
-            return FALSEMASK;
+        public Int512Mask trueMask() {
+            return Int512Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Int512Mask falseMask() {
+            return Int512Mask.FALSE_MASK;
         }
     }
 }

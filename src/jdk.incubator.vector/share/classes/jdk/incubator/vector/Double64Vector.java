@@ -33,9 +33,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
     static final Double64Vector ZERO = new Double64Vector();
 
-    static final Mask<Double, Shapes.S64Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Double, Shapes.S64Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     double[] vec;
 
     Double64Vector() {
@@ -59,10 +56,11 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     }
 
     @Override
-    Double64Vector uOp(Mask<Double, Shapes.S64Bit> m, FUnOp f) {
+    Double64Vector uOp(Mask<Double, Shapes.S64Bit> o, FUnOp f) {
         double[] res = new double[length()];
+        Double64Mask m = (Double64Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Double64Vector(res);
     }
@@ -80,11 +78,12 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     }
 
     @Override
-    Double64Vector bOp(Vector<Double, Shapes.S64Bit> o, Mask<Double, Shapes.S64Bit> m, FBinOp f) {
+    Double64Vector bOp(Vector<Double, Shapes.S64Bit> o1, Mask<Double, Shapes.S64Bit> o2, FBinOp f) {
         double[] res = new double[length()];
-        Double64Vector v = (Double64Vector) o;
+        Double64Vector v = (Double64Vector) o1;
+        Double64Mask m = (Double64Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Double64Vector(res);
     }
@@ -103,12 +102,13 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     }
 
     @Override
-    Double64Vector tOp(Vector<Double, Shapes.S64Bit> o1, Vector<Double, Shapes.S64Bit> o2, Mask<Double, Shapes.S64Bit> m, FTriOp f) {
+    Double64Vector tOp(Vector<Double, Shapes.S64Bit> o1, Vector<Double, Shapes.S64Bit> o2, Mask<Double, Shapes.S64Bit> o3, FTriOp f) {
         double[] res = new double[length()];
         Double64Vector v1 = (Double64Vector) o1;
         Double64Vector v2 = (Double64Vector) o2;
+        Double64Mask m = (Double64Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Double64Vector(res);
     }
@@ -145,13 +145,13 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     // Binary test
 
     @Override
-    Mask<Double, Shapes.S64Bit> bTest(Vector<Double, Shapes.S64Bit> o, FBinTest f) {
+    Double64Mask bTest(Vector<Double, Shapes.S64Bit> o, FBinTest f) {
         Double64Vector v = (Double64Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Double64Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     }
 
     @Override
-    void forEach(Mask<Double, Shapes.S64Bit> m, FUnCon f) {
+    void forEach(Mask<Double, Shapes.S64Bit> o, FUnCon f) {
+        Double64Mask m = (Double64Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         return new Double64Vector(res);
     }
 
+    // Mask
+
+    static final class Double64Mask extends AbstractMask<Double, Shapes.S64Bit> {
+        static final Double64Mask TRUE_MASK = new Double64Mask(true);
+        static final Double64Mask FALSE_MASK = new Double64Mask(false);
+
+        public Double64Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Double64Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Double64Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Double64Mask(res);
+        }
+
+        @Override
+        Double64Mask bOp(Mask<Double, Shapes.S64Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Double64Mask m = (Double64Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Double64Mask(res);
+        }
+
+        @Override
+        public Double64Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Double64Vector toVector() {
+            double[] res = new double[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (double) (bits[i] ? -1 : 0);
+            }
+            return new Double64Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         }
 
         @Override
-        Double64Vector op(Mask<Double, Shapes.S64Bit> m, FOp f) {
+        Double64Vector op(Mask<Double, Shapes.S64Bit> o, FOp f) {
             double[] res = new double[length()];
+            Double64Mask m = (Double64Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         }
 
         @Override
-        public Mask<Double, Shapes.S64Bit> trueMask() {
-            return TRUEMASK;
+        public Double64Mask constantMask(boolean... bits) {
+            return new Double64Mask(bits);
         }
 
         @Override
-        public Mask<Double, Shapes.S64Bit> falseMask() {
-            return FALSEMASK;
+        public Double64Mask trueMask() {
+            return Double64Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Double64Mask falseMask() {
+            return Double64Mask.FALSE_MASK;
         }
     }
 }

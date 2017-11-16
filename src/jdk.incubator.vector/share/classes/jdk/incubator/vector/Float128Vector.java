@@ -33,9 +33,6 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     static final Float128Vector ZERO = new Float128Vector();
 
-    static final Mask<Float, Shapes.S128Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Float, Shapes.S128Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     float[] vec;
 
     Float128Vector() {
@@ -59,10 +56,11 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     }
 
     @Override
-    Float128Vector uOp(Mask<Float, Shapes.S128Bit> m, FUnOp f) {
+    Float128Vector uOp(Mask<Float, Shapes.S128Bit> o, FUnOp f) {
         float[] res = new float[length()];
+        Float128Mask m = (Float128Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Float128Vector(res);
     }
@@ -80,11 +78,12 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     }
 
     @Override
-    Float128Vector bOp(Vector<Float, Shapes.S128Bit> o, Mask<Float, Shapes.S128Bit> m, FBinOp f) {
+    Float128Vector bOp(Vector<Float, Shapes.S128Bit> o1, Mask<Float, Shapes.S128Bit> o2, FBinOp f) {
         float[] res = new float[length()];
-        Float128Vector v = (Float128Vector) o;
+        Float128Vector v = (Float128Vector) o1;
+        Float128Mask m = (Float128Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Float128Vector(res);
     }
@@ -103,12 +102,13 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     }
 
     @Override
-    Float128Vector tOp(Vector<Float, Shapes.S128Bit> o1, Vector<Float, Shapes.S128Bit> o2, Mask<Float, Shapes.S128Bit> m, FTriOp f) {
+    Float128Vector tOp(Vector<Float, Shapes.S128Bit> o1, Vector<Float, Shapes.S128Bit> o2, Mask<Float, Shapes.S128Bit> o3, FTriOp f) {
         float[] res = new float[length()];
         Float128Vector v1 = (Float128Vector) o1;
         Float128Vector v2 = (Float128Vector) o2;
+        Float128Mask m = (Float128Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Float128Vector(res);
     }
@@ -145,13 +145,13 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     // Binary test
 
     @Override
-    Mask<Float, Shapes.S128Bit> bTest(Vector<Float, Shapes.S128Bit> o, FBinTest f) {
+    Float128Mask bTest(Vector<Float, Shapes.S128Bit> o, FBinTest f) {
         Float128Vector v = (Float128Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Float128Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     }
 
     @Override
-    void forEach(Mask<Float, Shapes.S128Bit> m, FUnCon f) {
+    void forEach(Mask<Float, Shapes.S128Bit> o, FUnCon f) {
+        Float128Mask m = (Float128Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -304,6 +305,54 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         return new Float128Vector(res);
     }
 
+    // Mask
+
+    static final class Float128Mask extends AbstractMask<Float, Shapes.S128Bit> {
+        static final Float128Mask TRUE_MASK = new Float128Mask(true);
+        static final Float128Mask FALSE_MASK = new Float128Mask(false);
+
+        public Float128Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Float128Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Float128Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Float128Mask(res);
+        }
+
+        @Override
+        Float128Mask bOp(Mask<Float, Shapes.S128Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Float128Mask m = (Float128Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Float128Mask(res);
+        }
+
+        @Override
+        public Float128Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Float128Vector toVector() {
+            float[] res = new float[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (float) (bits[i] ? -1 : 0);
+            }
+            return new Float128Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -361,10 +410,11 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         }
 
         @Override
-        Float128Vector op(Mask<Float, Shapes.S128Bit> m, FOp f) {
+        Float128Vector op(Mask<Float, Shapes.S128Bit> o, FOp f) {
             float[] res = new float[length()];
+            Float128Mask m = (Float128Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -379,13 +429,18 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         }
 
         @Override
-        public Mask<Float, Shapes.S128Bit> trueMask() {
-            return TRUEMASK;
+        public Float128Mask constantMask(boolean... bits) {
+            return new Float128Mask(bits);
         }
 
         @Override
-        public Mask<Float, Shapes.S128Bit> falseMask() {
-            return FALSEMASK;
+        public Float128Mask trueMask() {
+            return Float128Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Float128Mask falseMask() {
+            return Float128Mask.FALSE_MASK;
         }
     }
 }

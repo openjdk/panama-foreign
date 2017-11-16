@@ -33,9 +33,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
 
     static final Byte512Vector ZERO = new Byte512Vector();
 
-    static final Mask<Byte, Shapes.S512Bit> TRUEMASK = new GenericMask<>(SPECIES, true);
-    static final Mask<Byte, Shapes.S512Bit> FALSEMASK = new GenericMask<>(SPECIES, false);
-
     byte[] vec;
 
     Byte512Vector() {
@@ -59,10 +56,11 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     }
 
     @Override
-    Byte512Vector uOp(Mask<Byte, Shapes.S512Bit> m, FUnOp f) {
+    Byte512Vector uOp(Mask<Byte, Shapes.S512Bit> o, FUnOp f) {
         byte[] res = new byte[length()];
+        Byte512Mask m = (Byte512Mask) o;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Byte512Vector(res);
     }
@@ -80,11 +78,12 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     }
 
     @Override
-    Byte512Vector bOp(Vector<Byte, Shapes.S512Bit> o, Mask<Byte, Shapes.S512Bit> m, FBinOp f) {
+    Byte512Vector bOp(Vector<Byte, Shapes.S512Bit> o1, Mask<Byte, Shapes.S512Bit> o2, FBinOp f) {
         byte[] res = new byte[length()];
-        Byte512Vector v = (Byte512Vector) o;
+        Byte512Vector v = (Byte512Vector) o1;
+        Byte512Mask m = (Byte512Mask) o2;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
         }
         return new Byte512Vector(res);
     }
@@ -103,12 +102,13 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     }
 
     @Override
-    Byte512Vector tOp(Vector<Byte, Shapes.S512Bit> o1, Vector<Byte, Shapes.S512Bit> o2, Mask<Byte, Shapes.S512Bit> m, FTriOp f) {
+    Byte512Vector tOp(Vector<Byte, Shapes.S512Bit> o1, Vector<Byte, Shapes.S512Bit> o2, Mask<Byte, Shapes.S512Bit> o3, FTriOp f) {
         byte[] res = new byte[length()];
         Byte512Vector v1 = (Byte512Vector) o1;
         Byte512Vector v2 = (Byte512Vector) o2;
+        Byte512Mask m = (Byte512Mask) o3;
         for (int i = 0; i < length(); i++) {
-            res[i] = m.getElement(i) ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
         }
         return new Byte512Vector(res);
     }
@@ -145,13 +145,13 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     // Binary test
 
     @Override
-    Mask<Byte, Shapes.S512Bit> bTest(Vector<Byte, Shapes.S512Bit> o, FBinTest f) {
+    Byte512Mask bTest(Vector<Byte, Shapes.S512Bit> o, FBinTest f) {
         Byte512Vector v = (Byte512Vector) o;
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
             bits[i] = f.apply(i, vec[i], v.vec[i]);
         }
-        return new GenericMask<>(this.species(), bits);
+        return new Byte512Mask(bits);
     }
 
     // Foreach
@@ -164,9 +164,10 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     }
 
     @Override
-    void forEach(Mask<Byte, Shapes.S512Bit> m, FUnCon f) {
+    void forEach(Mask<Byte, Shapes.S512Bit> o, FUnCon f) {
+        Byte512Mask m = (Byte512Mask) o;
         forEach((i, a) -> {
-            if (m.getElement(i)) { f.apply(i, a); }
+            if (m.bits[i]) { f.apply(i, a); }
         });
     }
 
@@ -297,6 +298,54 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         return new Byte512Vector(res);
     }
 
+    // Mask
+
+    static final class Byte512Mask extends AbstractMask<Byte, Shapes.S512Bit> {
+        static final Byte512Mask TRUE_MASK = new Byte512Mask(true);
+        static final Byte512Mask FALSE_MASK = new Byte512Mask(false);
+
+        public Byte512Mask(boolean[] bits) {
+            super(bits);
+        }
+
+        public Byte512Mask(boolean val) {
+            super(val);
+        }
+
+        @Override
+        Byte512Mask uOp(MUnOp f) {
+            boolean[] res = new boolean[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i]);
+            }
+            return new Byte512Mask(res);
+        }
+
+        @Override
+        Byte512Mask bOp(Mask<Byte, Shapes.S512Bit> o, MBinOp f) {
+            boolean[] res = new boolean[species().length()];
+            Byte512Mask m = (Byte512Mask) o;
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = f.apply(i, bits[i], m.bits[i]);
+            }
+            return new Byte512Mask(res);
+        }
+
+        @Override
+        public Byte512Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public Byte512Vector toVector() {
+            byte[] res = new byte[species().length()];
+            for (int i = 0; i < species().length(); i++) {
+                res[i] = (byte) (bits[i] ? -1 : 0);
+            }
+            return new Byte512Vector(res);
+        }
+    }
+
     // Species
 
     @Override
@@ -354,10 +403,11 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         }
 
         @Override
-        Byte512Vector op(Mask<Byte, Shapes.S512Bit> m, FOp f) {
+        Byte512Vector op(Mask<Byte, Shapes.S512Bit> o, FOp f) {
             byte[] res = new byte[length()];
+            Byte512Mask m = (Byte512Mask) o;
             for (int i = 0; i < length(); i++) {
-                if (m.getElement(i)) {
+                if (m.bits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -372,13 +422,18 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         }
 
         @Override
-        public Mask<Byte, Shapes.S512Bit> trueMask() {
-            return TRUEMASK;
+        public Byte512Mask constantMask(boolean... bits) {
+            return new Byte512Mask(bits);
         }
 
         @Override
-        public Mask<Byte, Shapes.S512Bit> falseMask() {
-            return FALSEMASK;
+        public Byte512Mask trueMask() {
+            return Byte512Mask.TRUE_MASK;
+        }
+
+        @Override
+        public Byte512Mask falseMask() {
+            return Byte512Mask.FALSE_MASK;
         }
     }
 }
