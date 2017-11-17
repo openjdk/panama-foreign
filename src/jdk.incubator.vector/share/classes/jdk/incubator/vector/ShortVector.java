@@ -328,7 +328,7 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
 
     // Type specific horizontal reductions
 
-    public short sumAll() {
+    public short addAll() {
         return rOp((short) 0, (i, a, b) -> (short) (a + b));
     }
 
@@ -336,7 +336,7 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
         return rOp((short) 0, (i, a, b) -> (short) (a - b));
     }
 
-    public short prodAll() {
+    public short mulAll() {
         return rOp((short) 1, (i, a, b) -> (short) (a * b));
     }
 

@@ -327,7 +327,7 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
 
     // Type specific horizontal reductions
 
-    public byte sumAll() {
+    public byte addAll() {
         return rOp((byte) 0, (i, a, b) -> (byte) (a + b));
     }
 
@@ -335,7 +335,7 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
         return rOp((byte) 0, (i, a, b) -> (byte) (a - b));
     }
 
-    public byte prodAll() {
+    public byte mulAll() {
         return rOp((byte) 1, (i, a, b) -> (byte) (a * b));
     }
 

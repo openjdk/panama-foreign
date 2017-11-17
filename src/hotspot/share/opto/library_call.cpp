@@ -343,7 +343,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_un_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
   bool inline_vector_cmp(const TypeInstPtr* box_type, BasicType in_type, int num_elem, vmIntrinsics::ID id);
   bool inline_vector_blend(const TypeInstPtr* box_type, BasicType type, int num_elem);
-  bool inline_vector_sumAll(const TypeInstPtr* box_type, BasicType type, int num_elem);
+  bool inline_vector_addAll(const TypeInstPtr* box_type, BasicType type, int num_elem);
   bool inline_vector_length(int num_elem);
   bool inline_vector_make_mask(const TypeInstPtr* box_type, vmIntrinsics::ID id);
   bool inline_vector_mask_test(vmIntrinsics::ID id);
@@ -6882,11 +6882,11 @@ static bool is_vector_blend(vmIntrinsics::ID id) {
   }
 }
 
-static bool is_vector_sumAll(vmIntrinsics::ID id) {
+static bool is_vector_addAll(vmIntrinsics::ID id) {
   switch (id) {
-  case vmIntrinsics::_VectorSumAllFloat:
-  case vmIntrinsics::_VectorSumAllDouble:
-  case vmIntrinsics::_VectorSumAllInt:
+  case vmIntrinsics::_VectorAddAllFloat:
+  case vmIntrinsics::_VectorAddAllDouble:
+  case vmIntrinsics::_VectorAddAllInt:
     return true;
   default:
     return false;
@@ -7403,10 +7403,10 @@ bool LibraryCallKit::inline_vector_blend(const TypeInstPtr* box_type, BasicType 
   return true;
 }
 
-bool LibraryCallKit::inline_vector_sumAll(const TypeInstPtr* box_type, BasicType type, int num_elem) {
+bool LibraryCallKit::inline_vector_addAll(const TypeInstPtr* box_type, BasicType type, int num_elem) {
 #ifndef PRODUCT
   if (DebugVectorApi) {
-    tty->print_cr("Trying to intrinsify vector sumAll.");
+    tty->print_cr("Trying to intrinsify vector addAll.");
   }
 #endif
 
@@ -7689,8 +7689,8 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
         return return_and_print_if_failed(inline_store_vector_op(type, num_elem), id);
       } else if (is_vector_blend(id)) {
         return return_and_print_if_failed(inline_vector_blend(box_type, type, num_elem), id);
-      } else if (is_vector_sumAll(id)) {
-        return return_and_print_if_failed(inline_vector_sumAll(box_type, type, num_elem), id);
+      } else if (is_vector_addAll(id)) {
+        return return_and_print_if_failed(inline_vector_addAll(box_type, type, num_elem), id);
       } else if (is_vector_cmp(id)) {
         return return_and_print_if_failed(inline_vector_cmp(box_type, type, num_elem, id), id);
       } else if (id == vmIntrinsics::_VectorLength) {

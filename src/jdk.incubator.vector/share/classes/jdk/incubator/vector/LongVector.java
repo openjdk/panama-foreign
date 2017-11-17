@@ -406,7 +406,7 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
 
     // Type specific horizontal reductions
 
-    public long sumAll() {
+    public long addAll() {
         return rOp((long) 0, (i, a, b) -> (long) (a + b));
     }
 
@@ -414,7 +414,7 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
         return rOp((long) 0, (i, a, b) -> (long) (a - b));
     }
 
-    public long prodAll() {
+    public long mulAll() {
         return rOp((long) 1, (i, a, b) -> (long) (a * b));
     }
 

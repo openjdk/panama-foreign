@@ -554,7 +554,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
     // Type specific horizontal reductions
 
     @HotSpotIntrinsicCandidate
-    public double sumAll() {
+    public double addAll() {
         return rOp((double) 0, (i, a, b) -> (double) (a + b));
     }
 
@@ -562,7 +562,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return rOp((double) 0, (i, a, b) -> (double) (a - b));
     }
 
-    public double prodAll() {
+    public double mulAll() {
         return rOp((double) 1, (i, a, b) -> (double) (a * b));
     }
 

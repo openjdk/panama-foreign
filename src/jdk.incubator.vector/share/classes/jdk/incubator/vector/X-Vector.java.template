@@ -765,7 +765,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
-    public $type$ sumAll() {
+    public $type$ addAll() {
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a + b));
     }
 
@@ -773,7 +773,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a - b));
     }
 
-    public $type$ prodAll() {
+    public $type$ mulAll() {
         return rOp(($type$) 1, (i, a, b) -> ($type$) (a * b));
     }
 

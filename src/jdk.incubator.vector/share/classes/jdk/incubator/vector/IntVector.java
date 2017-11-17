@@ -395,7 +395,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
     // Type specific horizontal reductions
 
     @HotSpotIntrinsicCandidate
-    public int sumAll() {
+    public int addAll() {
         return rOp((int) 0, (i, a, b) -> (int) (a + b));
     }
 
@@ -403,7 +403,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return rOp((int) 0, (i, a, b) -> (int) (a - b));
     }
 
-    public int prodAll() {
+    public int mulAll() {
         return rOp((int) 1, (i, a, b) -> (int) (a * b));
     }
 

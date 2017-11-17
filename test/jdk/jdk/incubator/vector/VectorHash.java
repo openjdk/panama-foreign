@@ -113,7 +113,7 @@ public class VectorHash {
         for (; i < (a.length & ~(BYTE_64_SPECIES.length() - 1)); i += BYTE_64_SPECIES.length()) {
             ByteVector<Shapes.S64Bit> b = BYTE_64_SPECIES.fromArray(a, i);
             IntVector<Shapes.S256Bit> x = (IntVector<Shapes.S256Bit>) b.cast(Integer.class, Shapes.S_256_BIT);
-            h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).sumAll();
+            h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).addAll();
         }
 
         for (; i < a.length; i++) {
@@ -128,7 +128,7 @@ public class VectorHash {
         for (; i < (a.length & ~(BYTE_128_SPECIES.length() - 1)); i += BYTE_128_SPECIES.length()) {
             ByteVector<Shapes.S128Bit> b = BYTE_128_SPECIES.fromArray(a, i);
             IntVector<Shapes.S512Bit> x = (IntVector<Shapes.S512Bit>) b.cast(Integer.class, Shapes.S_512_BIT);
-            h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).sumAll();
+            h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addAll();
         }
 
         for (; i < a.length; i++) {

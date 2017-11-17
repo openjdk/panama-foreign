@@ -554,7 +554,7 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
     // Type specific horizontal reductions
 
     @HotSpotIntrinsicCandidate
-    public float sumAll() {
+    public float addAll() {
         return rOp((float) 0, (i, a, b) -> (float) (a + b));
     }
 
@@ -562,7 +562,7 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
         return rOp((float) 0, (i, a, b) -> (float) (a - b));
     }
 
-    public float prodAll() {
+    public float mulAll() {
         return rOp((float) 1, (i, a, b) -> (float) (a * b));
     }
 
