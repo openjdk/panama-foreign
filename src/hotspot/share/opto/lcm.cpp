@@ -855,6 +855,11 @@ uint PhaseCFG::sched_call(Block* block, uint node_cnt, Node_List& worklist, Grow
       save_policy = _matcher._c_reg_save_policy;
       break;
 
+    case Op_CallSnippet:
+      save_policy = _matcher._no_reg_save_policy;
+//      save_policy = _matcher._c_reg_save_policy;
+      break;
+
     case Op_CallStaticJava:
     case Op_CallDynamicJava:
       // Calling Java code so use Java calling convention
@@ -887,6 +892,29 @@ uint PhaseCFG::sched_call(Block* block, uint node_cnt, Node_List& worklist, Grow
 
   add_call_kills(proj, regs, save_policy, exclude_soe);
 
+  if (mcall->is_MachCallSnippet()) {
+    MachCallSnippetNode* snippet = mcall->as_MachCallSnippet();
+
+    proj->_rout.Clear();
+    proj->_rout.OR(snippet->_killed_reg_mask);
+    proj->_rout.SUBTRACT(regs);
+
+    if (PrintCodeSnippets) {
+      ttyLocker ttyl;
+      tty->print("KILL [%s]:", snippet->_name); proj->_rout.dump(tty); tty->cr();
+
+      if (Verbose) {
+        tty->print("  snippet: "); snippet->_killed_reg_mask.dump(tty); tty->cr();
+        tty->print("  defined: "); regs.dump(tty); tty->cr();
+#ifndef PRODUCT
+        for (DUIterator_Fast imax, i = mcall->fast_outs(imax); i < imax; i++) {
+          Node* n = snippet->fast_out(i);
+          tty->print("    "); n->dump();
+        }
+#endif
+      }
+    }
+  }
   return node_cnt;
 }
 

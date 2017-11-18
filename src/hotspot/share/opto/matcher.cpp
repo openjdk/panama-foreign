@@ -41,6 +41,7 @@
 #include "runtime/os.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/align.hpp"
+#include "ci/ciMethodType.hpp"
 
 OptoReg::Name OptoReg::c_frame_pointer;
 
@@ -66,6 +67,7 @@ Matcher::Matcher()
   _must_clone(must_clone),
   _register_save_policy(register_save_policy),
   _c_reg_save_policy(c_reg_save_policy),
+  _no_reg_save_policy(no_reg_save_policy),
   _register_save_type(register_save_type),
   _ruleName(ruleName),
   _allocation_started(false),
@@ -421,7 +423,7 @@ static RegMask *init_input_masks( uint size, RegMask &ret_adr, RegMask &fp ) {
 void Matcher::init_first_stack_mask() {
 
   // Allocate storage for spill masks as masks for the appropriate load type.
-  RegMask *rms = (RegMask*)C->comp_arena()->Amalloc_D(sizeof(RegMask) * (3*6+5));
+  RegMask *rms = (RegMask*)C->comp_arena()->Amalloc_D(sizeof(RegMask) * (3*11));
 
   idealreg2spillmask  [Op_RegN] = &rms[0];
   idealreg2spillmask  [Op_RegI] = &rms[1];
@@ -449,6 +451,18 @@ void Matcher::init_first_stack_mask() {
   idealreg2spillmask  [Op_VecX] = &rms[20];
   idealreg2spillmask  [Op_VecY] = &rms[21];
   idealreg2spillmask  [Op_VecZ] = &rms[22];
+
+  idealreg2debugmask  [Op_VecS] = &rms[23];
+  idealreg2debugmask  [Op_VecD] = &rms[24];
+  idealreg2debugmask  [Op_VecX] = &rms[25];
+  idealreg2debugmask  [Op_VecY] = &rms[26];
+  idealreg2debugmask  [Op_VecZ] = &rms[27];
+
+  idealreg2mhdebugmask[Op_VecS] = &rms[28];
+  idealreg2mhdebugmask[Op_VecD] = &rms[29];
+  idealreg2mhdebugmask[Op_VecX] = &rms[30];
+  idealreg2mhdebugmask[Op_VecY] = &rms[31];
+  idealreg2mhdebugmask[Op_VecZ] = &rms[32];
 
   OptoReg::Name i;
 
@@ -578,12 +592,24 @@ void Matcher::init_first_stack_mask() {
   *idealreg2debugmask  [Op_RegD]= *idealreg2spillmask[Op_RegD];
   *idealreg2debugmask  [Op_RegP]= *idealreg2spillmask[Op_RegP];
 
+  *idealreg2debugmask  [Op_VecS]= *idealreg2spillmask[Op_VecS];
+  *idealreg2debugmask  [Op_VecD]= *idealreg2spillmask[Op_VecD];
+  *idealreg2debugmask  [Op_VecX]= *idealreg2spillmask[Op_VecX];
+  *idealreg2debugmask  [Op_VecY]= *idealreg2spillmask[Op_VecY];
+  *idealreg2debugmask  [Op_VecZ]= *idealreg2spillmask[Op_VecZ];
+
   *idealreg2mhdebugmask[Op_RegN]= *idealreg2spillmask[Op_RegN];
   *idealreg2mhdebugmask[Op_RegI]= *idealreg2spillmask[Op_RegI];
   *idealreg2mhdebugmask[Op_RegL]= *idealreg2spillmask[Op_RegL];
   *idealreg2mhdebugmask[Op_RegF]= *idealreg2spillmask[Op_RegF];
   *idealreg2mhdebugmask[Op_RegD]= *idealreg2spillmask[Op_RegD];
   *idealreg2mhdebugmask[Op_RegP]= *idealreg2spillmask[Op_RegP];
+
+  *idealreg2mhdebugmask[Op_VecS]= *idealreg2spillmask[Op_VecS];
+  *idealreg2mhdebugmask[Op_VecD]= *idealreg2spillmask[Op_VecD];
+  *idealreg2mhdebugmask[Op_VecX]= *idealreg2spillmask[Op_VecX];
+  *idealreg2mhdebugmask[Op_VecY]= *idealreg2spillmask[Op_VecY];
+  *idealreg2mhdebugmask[Op_VecZ]= *idealreg2spillmask[Op_VecZ];
 
   // Prevent stub compilations from attempting to reference
   // callee-saved registers from debug info
@@ -1184,6 +1210,26 @@ MachNode *Matcher::match_sfpt( SafePointNode *sfpt ) {
     }
     else if( mcall->is_MachCallRuntime() ) {
       mcall->as_MachCallRuntime()->_name = call->as_CallRuntime()->_name;
+      if ( mcall->is_MachCallSnippet()) {
+        CallSnippetNode* snippet = call->as_CallSnippet();
+        mcall->as_MachCallSnippet()->_generator = snippet->_generator;
+        mcall->as_MachCallSnippet()->_mt = snippet->_mt;
+        snippet->compute_kill_regmask(&mcall->as_MachCallSnippet()->_killed_reg_mask);
+
+        if (//!snippet->_generator->is_null_object() &&
+            !snippet->_reg_masks->is_null_object() &&
+            snippet->tf()->return_type() != T_VOID &&
+            snippet->proj_out(TypeFunc::Parms) == NULL) {
+          // No result projection found: return value isn't consumed, but register mask is provided.
+          // Need to create an auxiliary projection node to attach register mask to.
+          RegMask rm;
+          snippet->compute_return_regmask(&rm);
+          uint ideal_reg = snippet->tf()->range()->field_at(TypeFunc::Parms)->ideal_reg();
+
+          MachProjNode* ret_proj = new MachProjNode(mcall, TypeFunc::Parms, rm, ideal_reg);
+          push_projection(ret_proj);
+        }
+      }
     }
     msfpt = mcall;
   }
@@ -1221,67 +1267,84 @@ MachNode *Matcher::match_sfpt( SafePointNode *sfpt ) {
 
 
   // Do the normal argument list (parameters) register masks
-  int argcnt = cnt - TypeFunc::Parms;
-  if( argcnt > 0 ) {          // Skip it all if we have no args
-    BasicType *sig_bt  = NEW_RESOURCE_ARRAY( BasicType, argcnt );
-    VMRegPair *parm_regs = NEW_RESOURCE_ARRAY( VMRegPair, argcnt );
-    int i;
-    for( i = 0; i < argcnt; i++ ) {
-      sig_bt[i] = domain->field_at(i+TypeFunc::Parms)->basic_type();
-    }
-    // V-call to pick proper calling convention
-    call->calling_convention( sig_bt, parm_regs, argcnt );
+  if (cnt > TypeFunc::Parms) {          // Skip it all if we have no args
+    if (call->is_CallSnippet()) {
+      const TypeTuple* dom = call->tf()->domain();
+      int halves = 0;
+      for (uint i = TypeFunc::Parms; i < cnt; i++ ) {
+        if (dom->field_at(i) == Type::HALF) {
+          halves++;
+          continue; // Avoid halves
+        }
+        // Address of incoming argument mask to fill in
+        RegMask *rm = &mcall->_in_rms[i];
+        int arg_idx = i - halves - TypeFunc::Parms;
+        call->as_CallSnippet()->compute_arg_regmask(rm, arg_idx);
+      } // End of for all arguments
+    } else {
+      int argcnt = cnt - TypeFunc::Parms;
+      BasicType *sig_bt  = NEW_RESOURCE_ARRAY( BasicType, argcnt );
+      VMRegPair *parm_regs = NEW_RESOURCE_ARRAY( VMRegPair, argcnt );
+      int i;
+      for( i = 0; i < argcnt; i++ ) {
+        sig_bt[i] = domain->field_at(i+TypeFunc::Parms)->basic_type();
+      }
+      // V-call to pick proper calling convention
+      call->calling_convention( sig_bt, parm_regs, argcnt );
 
 #ifdef ASSERT
-    // Sanity check users' calling convention.  Really handy during
-    // the initial porting effort.  Fairly expensive otherwise.
-    { for (int i = 0; i<argcnt; i++) {
-      if( !parm_regs[i].first()->is_valid() &&
-          !parm_regs[i].second()->is_valid() ) continue;
-      VMReg reg1 = parm_regs[i].first();
-      VMReg reg2 = parm_regs[i].second();
-      for (int j = 0; j < i; j++) {
-        if( !parm_regs[j].first()->is_valid() &&
-            !parm_regs[j].second()->is_valid() ) continue;
-        VMReg reg3 = parm_regs[j].first();
-        VMReg reg4 = parm_regs[j].second();
-        if( !reg1->is_valid() ) {
-          assert( !reg2->is_valid(), "valid halvsies" );
-        } else if( !reg3->is_valid() ) {
-          assert( !reg4->is_valid(), "valid halvsies" );
-        } else {
-          assert( reg1 != reg2, "calling conv. must produce distinct regs");
-          assert( reg1 != reg3, "calling conv. must produce distinct regs");
-          assert( reg1 != reg4, "calling conv. must produce distinct regs");
-          assert( reg2 != reg3, "calling conv. must produce distinct regs");
-          assert( reg2 != reg4 || !reg2->is_valid(), "calling conv. must produce distinct regs");
-          assert( reg3 != reg4, "calling conv. must produce distinct regs");
+      // Sanity check users' calling convention.  Really handy during
+      // the initial porting effort.  Fairly expensive otherwise.
+      { for (int i = 0; i<argcnt; i++) {
+        if( !parm_regs[i].first()->is_valid() &&
+            !parm_regs[i].second()->is_valid() ) continue;
+        VMReg reg1 = parm_regs[i].first();
+        VMReg reg2 = parm_regs[i].second();
+        for (int j = 0; j < i; j++) {
+          if( !parm_regs[j].first()->is_valid() &&
+              !parm_regs[j].second()->is_valid() ) continue;
+          VMReg reg3 = parm_regs[j].first();
+          VMReg reg4 = parm_regs[j].second();
+          if( !reg1->is_valid() ) {
+            assert( !reg2->is_valid(), "valid halvsies" );
+          } else if( !reg3->is_valid() ) {
+            assert( !reg4->is_valid(), "valid halvsies" );
+          } else {
+            assert( reg1 != reg2, "calling conv. must produce distinct regs");
+            assert( reg1 != reg3, "calling conv. must produce distinct regs");
+            assert( reg1 != reg4, "calling conv. must produce distinct regs");
+            assert( reg2 != reg3, "calling conv. must produce distinct regs");
+            assert( reg2 != reg4 || !reg2->is_valid(), "calling conv. must produce distinct regs");
+            assert( reg3 != reg4, "calling conv. must produce distinct regs");
+          }
         }
       }
-    }
-    }
+      }
 #endif
 
-    // Visit each argument.  Compute its outgoing register mask.
-    // Return results now can have 2 bits returned.
-    // Compute max over all outgoing arguments both per call-site
-    // and over the entire method.
-    for( i = 0; i < argcnt; i++ ) {
-      // Address of incoming argument mask to fill in
-      RegMask *rm = &mcall->_in_rms[i+TypeFunc::Parms];
-      if( !parm_regs[i].first()->is_valid() &&
-          !parm_regs[i].second()->is_valid() ) {
-        continue;               // Avoid Halves
-      }
-      // Grab first register, adjust stack slots and insert in mask.
-      OptoReg::Name reg1 = warp_outgoing_stk_arg(parm_regs[i].first(), begin_out_arg_area, out_arg_limit_per_call );
-      if (OptoReg::is_valid(reg1))
-        rm->Insert( reg1 );
-      // Grab second register (if any), adjust stack slots and insert in mask.
-      OptoReg::Name reg2 = warp_outgoing_stk_arg(parm_regs[i].second(), begin_out_arg_area, out_arg_limit_per_call );
-      if (OptoReg::is_valid(reg2))
-        rm->Insert( reg2 );
-    } // End of for all arguments
+      // Visit each argument.  Compute its outgoing register mask.
+      // Return results now can have 2 bits returned.
+      // Compute max over all outgoing arguments both per call-site
+      // and over the entire method.
+      for( i = 0; i < argcnt; i++ ) {
+        // Address of incoming argument mask to fill in
+        RegMask *rm = &mcall->_in_rms[i+TypeFunc::Parms];
+        VMReg fst = parm_regs[i].first();
+        VMReg snd = parm_regs[i].second();
+        if( !fst->is_valid() &&
+            !snd->is_valid() ) {
+          continue;               // Avoid Halves
+        }
+        // Grab first register, adjust stack slots and insert in mask.
+        OptoReg::Name reg1 = warp_outgoing_stk_arg(fst, begin_out_arg_area, out_arg_limit_per_call );
+        if (OptoReg::is_valid(reg1))
+          rm->Insert( reg1 );
+        // Grab second register (if any), adjust stack slots and insert in mask.
+        OptoReg::Name reg2 = warp_outgoing_stk_arg(snd, begin_out_arg_area, out_arg_limit_per_call );
+        if (OptoReg::is_valid(reg2))
+          rm->Insert( reg2 );
+      } // End of for all arguments
+    }
 
     // Compute number of stack slots needed to restore stack in case of
     // Pascal-style argument popping.
@@ -1294,7 +1357,7 @@ MachNode *Matcher::match_sfpt( SafePointNode *sfpt ) {
   if( _out_arg_limit < out_arg_limit_per_call)
     _out_arg_limit = out_arg_limit_per_call;
 
-  if (mcall) {
+  if (mcall && !mcall->is_MachCallSnippet()) {
     // Kill the outgoing argument area, including any non-argument holes and
     // any legacy C-killed slots.  Use Fat-Projections to do the killing.
     // Since the max-per-method covers the max-per-call-site and debug info

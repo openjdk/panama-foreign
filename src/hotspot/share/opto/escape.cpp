@@ -901,10 +901,15 @@ void ConnectionGraph::add_call_node(CallNode* call) {
         }
       }
     }
+  } else if (call->Opcode() == Op_VBox) {
+    add_java_object(call, PointsToNode::NoEscape);
+  } else if (call->Opcode() == Op_CallSnippet) {
+    // FIXME
+    add_java_object(call, PointsToNode::NoEscape);
   } else {
     // An other type of call, assume the worst case:
     // returned value is unknown and globally escapes.
-    assert(call->Opcode() == Op_CallDynamicJava, "add failed case check");
+    assert(call->Opcode() == Op_CallDynamicJava || call->Opcode() == Op_CallLeaf, "add failed case check");
     map_ideal_node(call, phantom_obj);
   }
 }
@@ -1000,7 +1005,8 @@ void ConnectionGraph::process_call_arguments(CallNode *call) {
                   strcmp(call->as_CallLeaf()->_name, "mulAdd") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "montgomery_multiply") == 0 ||
                   strcmp(call->as_CallLeaf()->_name, "montgomery_square") == 0 ||
-                  strcmp(call->as_CallLeaf()->_name, "vectorizedMismatch") == 0)
+                  strcmp(call->as_CallLeaf()->_name, "vectorizedMismatch") == 0 ||
+                  strcmp(call->as_CallLeaf()->_name, "native_call") == 0)
                  ))) {
             call->dump();
             fatal("EA unexpected CallLeaf %s", call->as_CallLeaf()->_name);
@@ -1724,7 +1730,8 @@ void ConnectionGraph::adjust_scalar_replaceable_state(JavaObjectNode* jobj) {
     //
     Node* n = field->ideal_node();
     for (DUIterator_Fast imax, i = n->fast_outs(imax); i < imax; i++) {
-      if (n->fast_out(i)->is_LoadStore()) {
+      Node* use = n->fast_out(i);
+      if (use->is_LoadStore()) {
         jobj->set_scalar_replaceable(false);
         return;
       }

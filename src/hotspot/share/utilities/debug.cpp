@@ -517,6 +517,11 @@ extern "C" void pss() { // print all stacks
   Threads::print(true, PRODUCT_ONLY(false) NOT_PRODUCT(true));
 }
 
+//void dump_ir() {
+//  Command c("dump_ir");
+//  Compile::current()->print_method(PHASE_END, 0);
+//}
+
 #ifndef PRODUCT
 
 extern "C" void debug() {               // to set things up for compiler debugging

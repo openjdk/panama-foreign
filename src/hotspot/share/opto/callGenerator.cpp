@@ -41,6 +41,7 @@
 #include "opto/subnode.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "ci/ciNativeEntryPoint.hpp"
+#include "ci/ciMachineCodeSnippet.hpp"
 
 // Utility function.
 const TypeFunc* CallGenerator::tf() const {
@@ -826,11 +827,21 @@ JVMState* NativeCallGenerator::generate(JVMState* jvms) {
 
   const TypeFunc *t = TypeFunc::make(tf(), tf()->domain()->cnt()-1);
   Node* call = NULL;
-  address addr = _nep->get_entry_point();
-  if (kit.C->log() != NULL) {
-    kit.C->log()->elem("native_call bci='%d' entry_point='" INTPTR_FORMAT "'", jvms->bci(), p2i(addr));
+  if (_nep->is_machine_code_snippet()) {
+    address addr = _nep->get_entry_point();
+    if (kit.C->log() != NULL) {
+      kit.C->log()->elem("native_snippet bci='%d' entry_point='" INTPTR_FORMAT,
+          jvms->bci(), p2i(addr));
+    }
+    call = kit.make_snippet_call(t, method()->arg_size()-1, (ciMachineCodeSnippet*)_nep);
+  } else {
+    assert(_nep->is_native_entry_point(), "sanity");
+    address addr = _nep->get_entry_point();
+    if (kit.C->log() != NULL) {
+      kit.C->log()->elem("native_call bci='%d' entry_point='" INTPTR_FORMAT "'", jvms->bci(), p2i(addr));
+    }
+    call = kit.make_native_call(t, method()->arg_size()-1, addr);
   }
-  call = kit.make_native_call(t, method()->arg_size()-1, addr);
 
   return kit.transfer_exceptions_into_jvms();
 }

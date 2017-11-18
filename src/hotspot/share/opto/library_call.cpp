@@ -49,6 +49,7 @@
 #include "opto/runtime.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/subnode.hpp"
+#include "opto/vectornode.hpp"
 #include "prims/nativeLookup.hpp"
 #include "prims/unsafe.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -328,6 +329,11 @@ class LibraryCallKit : public GraphKit {
 
   bool inline_profileBoolean();
   bool inline_isCompileConstant();
+
+  bool inline_getLong(int vec_size);
+
+  bool inline_vector_make(ciInstanceKlass* vec_klass);
+  bool inline_vector_make_zero(ciInstanceKlass* vec_klass);
 };
 
 //---------------------------make_vm_intrinsic----------------------------
@@ -862,6 +868,31 @@ bool LibraryCallKit::try_to_inline(int predicate) {
   case vmIntrinsics::_fmaF:
     return inline_fma(intrinsic_id());
 
+  case vmIntrinsics::_getLong2:
+    return inline_getLong(2);
+  case vmIntrinsics::_getLong4:
+    return inline_getLong(4);
+  case vmIntrinsics::_getLong8:
+    return inline_getLong(8);
+  case vmIntrinsics::_Long2_make:
+  case vmIntrinsics::_Long4_make:
+  case vmIntrinsics::_Long8_make:
+    return inline_vector_make(callee()->holder());
+
+  case vmIntrinsics::_Long2_make_zero:
+  case vmIntrinsics::_Long4_make_zero:
+  case vmIntrinsics::_Long8_make_zero:
+    return inline_vector_make_zero(callee()->holder());
+
+  case vmIntrinsics::_Long2_extract:
+  case vmIntrinsics::_Long4_extract:
+  case vmIntrinsics::_Long8_extract:
+    return false;
+
+  case vmIntrinsics::_Long2_equals:
+  case vmIntrinsics::_Long4_equals:
+  case vmIntrinsics::_Long8_equals:
+    return false;
   default:
     // If you get here, it may be that someone has added a new intrinsic
     // to the list in vmSymbols.hpp without implementing it here.
@@ -6965,5 +6996,70 @@ bool LibraryCallKit::inline_profileBoolean() {
 bool LibraryCallKit::inline_isCompileConstant() {
   Node* n = argument(0);
   set_result(n->is_Con() ? intcon(1) : intcon(0));
+  return true;
+}
+
+bool LibraryCallKit::inline_getLong(int vec_size) {
+  Node* box = argument(1);
+  Node* src = argument(2);
+  Node* off = argument(3);
+
+  Node* adr = basic_plus_adr(src, off);
+  const TypePtr* adr_type = adr->bottom_type()->is_ptr();
+  Node* mem = memory(adr_type);
+  Node* val = gvn().transform(LoadVectorNode::make(0, NULL, mem, adr, adr_type, vec_size, T_LONG));
+
+  VBoxNode* vbox = VBoxNode::make(this, TypeVect::make(T_LONG, vec_size), box, val);
+  Node* n = gvn().transform(vbox);
+  assert(vbox == n, "");
+
+  set_predefined_output_for_runtime_call(vbox);
+
+  Node* ret = gvn().transform(new ProjNode(vbox, TypeFunc::Parms));
+  set_result(ret);
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_make_zero(ciInstanceKlass* vec_klass) {
+  Node* kls = makecon(TypeKlassPtr::make(vec_klass));
+  Node* obj = new_instance(kls);
+  set_result(obj);
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_make(ciInstanceKlass* vec_klass) {
+  assert(vec_klass->is_vector(), "sanity");
+
+  PreserveReexecuteState preexecs(this);
+  jvms()->set_should_reexecute(true);
+
+  // NB! pack should be constructed before calling new_instance since it changes JVM state
+  // due to should_reexecute=true.
+  int vec_size = vec_klass->vector_size();
+  PackNode* pack = PackNode::make(argument(0), vec_size, T_LONG);
+  for (int i = 1; i < vec_size; i++) {
+    pack->add_opd(argument(2*i)); // 2 arg slots per long arg
+  }
+  pack = pack->binary_tree_pack(1, 1 + vec_size); // FIXME: linear pack requires less ops
+  //  pack = pack->linear_pack(1, 1 + vec_size);
+
+  Node* value = gvn().transform(pack);
+
+  Node* kls = makecon(TypeKlassPtr::make(vec_klass));
+  Node* obj = new_instance(kls);
+  set_result(obj);
+
+  int base_offset = 0x10; // FIXME
+  Node* adr = basic_plus_adr(obj, base_offset);
+  const TypePtr* adr_type = adr->bottom_type()->is_ptr();
+  int adr_idx = C->get_alias_index(adr_type);
+  Node *mem = memory(adr_idx);
+  Node* vec_store = gvn().transform(StoreVectorNode::make(/*NU*/-1, NULL, mem, adr, adr_type, value, /*NU*/-1));
+  set_memory(vec_store, adr_idx);
+  record_for_igvn(vec_store);
+
+  int max_vlen = MAX2(C->max_vector_size(), vec_size * 8); // FIXME
+  C->set_max_vector_size(max_vlen);
+
   return true;
 }

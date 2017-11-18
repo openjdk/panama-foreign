@@ -54,7 +54,7 @@ class StackValue : public ResourceObj {
 
   // Only used during deopt- preserve object type.
   StackValue(intptr_t o, BasicType t) {
-    assert(t == T_OBJECT, "should not be used");
+    //assert(t == T_OBJECT, "should not be used");
     _type   = t;
     _i      = o;
   }
@@ -79,6 +79,10 @@ class StackValue : public ResourceObj {
     return _i;
   }
 
+  intptr_t get_addr() {
+    assert(type() == T_ILLEGAL, "type check"); // FIXME
+    return _i;
+  }
   // For special case in deopt.
   intptr_t get_int(BasicType t) const {
     assert(t == T_OBJECT && type() == T_OBJECT, "type check");

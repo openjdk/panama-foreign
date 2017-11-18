@@ -36,4 +36,10 @@ module jdk.internal.vm.ci {
         jdk.vm.ci.hotspot.aarch64.AArch64HotSpotJVMCIBackendFactory,
         jdk.vm.ci.hotspot.amd64.AMD64HotSpotJVMCIBackendFactory,
         jdk.vm.ci.hotspot.sparc.SPARCHotSpotJVMCIBackendFactory;
+
+    // For Panama
+    exports jdk.vm.ci.panama;
+    exports jdk.vm.ci.panama.amd64;
+    exports jdk.vm.ci.code;
+    exports jdk.vm.ci.amd64;
 }

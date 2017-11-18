@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "opto/opaquenode.hpp"
 #include "opto/phaseX.hpp"
+#include "opto/type.hpp"
 
 //=============================================================================
 // Do not allow value-numbering
@@ -92,3 +93,14 @@ Node* ProfileBooleanNode::Identity(PhaseGVN* phase) {
     return in(1);
   }
 }
+
+//=============================================================================
+
+uint OpaqueVBoxNode::hash() const { return NO_HASH; }
+uint OpaqueVBoxNode::cmp( const Node &n ) const {
+  return (&n == this);
+}
+
+//Node *OpaqueVBoxNode::Identity( PhaseTransform *phase ) {
+//  return phase->C->major_progress() ? this : in(1);
+//}

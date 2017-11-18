@@ -1019,6 +1019,10 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
   return stack;
 }
 
+void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name) {
+  fatal("NYI");
+}
+
 // A simple move of integer like type
 static void simple_move32(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
   if (src.first()->is_stack()) {

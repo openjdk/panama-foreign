@@ -362,6 +362,10 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
   return slot;
 }
 
+void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name) {
+  fatal("NYI");
+}
+
 // Helper class mostly to avoid passing masm everywhere, and handle
 // store displacement overflow logic.
 class AdapterGenerator {

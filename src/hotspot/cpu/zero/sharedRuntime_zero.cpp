@@ -55,6 +55,10 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
   return 0;
 }
 
+void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name) {
+  fatal("NYI");
+}
+
 AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(
                         MacroAssembler *masm,
                         int total_args_passed,

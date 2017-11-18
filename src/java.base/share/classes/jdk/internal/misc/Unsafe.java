@@ -3694,7 +3694,13 @@ public final class Unsafe {
     private static int convEndian(boolean big, int n)     { return big == BE ? n : Integer.reverseBytes(n)  ; }
     private static long convEndian(boolean big, long n)   { return big == BE ? n : Long.reverseBytes(n)     ; }
 
+    public Long2 getLong2(Object o, long offset) { return getLong2(Long2.make(), o, offset); }
+    public Long4 getLong4(Object o, long offset) { return getLong4(Long4.make(), o, offset); }
+    public Long8 getLong8(Object o, long offset) { return getLong8(Long8.make(), o, offset); }
 
+    @HotSpotIntrinsicCandidate private native Long2 getLong2(Long2 box, Object o, long offset);
+    @HotSpotIntrinsicCandidate private native Long4 getLong4(Long4 box, Object o, long offset);
+    @HotSpotIntrinsicCandidate private native Long8 getLong8(Long8 box, Object o, long offset);
 
     public native long findNativeAddress(String name);
 

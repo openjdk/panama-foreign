@@ -47,6 +47,32 @@
 // correspondingly. The names in the enums must be identical to the actual field
 // names in order for the verification code to work.
 
+class java_lang_Long2 : AllStatic {
+  private:
+    static int _base_offset;
+  public:
+    static void compute_offsets();
+
+    static int base_offset_in_bytes()                { return _base_offset; }
+};
+
+class java_lang_Long4 : AllStatic {
+  private:
+    static int _base_offset;
+  public:
+    static void compute_offsets();
+
+    static int base_offset_in_bytes()                { return _base_offset; }
+};
+
+class java_lang_Long8 : AllStatic {
+  private:
+    static int _base_offset;
+  public:
+    static void compute_offsets();
+
+    static int base_offset_in_bytes()                { return _base_offset; }
+};
 
 // Interface to java.lang.String objects
 
@@ -1040,6 +1066,42 @@ class java_lang_invoke_NativeEntryPoint: AllStatic {
   static int      addr_offset_in_bytes() { return      _addr_offset; }
   static int      name_offset_in_bytes() { return      _name_offset; }
   static int      type_offset_in_bytes() { return      _type_offset; }
+};
+
+// Interface to java.lang.invoke.MachineCodeSnippet objects
+// (These are a private interface for managing adapter code generation.)
+
+class java_lang_invoke_MachineCodeSnippet: AllStatic {
+  friend class JavaClasses;
+
+ private:
+  static int       _reg_masks_offset;
+  static int _killed_reg_mask_offset;
+  static int       _generator_offset;
+  static int           _flags_offset;
+
+  static void compute_offsets();
+
+ public:
+  // Accessors
+  static objArrayOop        reg_masks(oop entry);
+  static typeArrayOop killed_reg_mask(oop entry);
+  static oop                generator(oop entry);
+  static jint                   flags(oop entry);
+
+
+  // Testers
+  static bool is_subclass(Klass* klass) {
+    return SystemDictionary::MachineCodeSnippet_klass() != NULL &&
+      klass->is_subclass_of(SystemDictionary::MachineCodeSnippet_klass());
+  }
+  static bool is_instance(oop obj);
+
+  // Accessors for code generation:
+  static int reg_masks_offset_in_bytes()       { return       _reg_masks_offset; }
+  static int killed_reg_mask_offset_in_bytes() { return  _killed_reg_mask_offset; }
+  static int generator_offset_in_bytes()       { return       _generator_offset; }
+  static int flags_offset_in_bytes()           { return           _flags_offset; }
 };
 
 // Interface to java.lang.invoke.MemberName objects

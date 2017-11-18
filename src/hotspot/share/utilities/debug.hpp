@@ -187,4 +187,6 @@ template<> struct STATIC_ASSERT_FAILURE<true> { enum { value = 1 }; };
 // out of memory reporting
 void report_java_out_of_memory(const char* message);
 
+void dump_ir();
+
 #endif // SHARE_VM_UTILITIES_DEBUG_HPP

@@ -1185,6 +1185,48 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
   return ret;
 } UNSAFE_END
 
+void copy_jlong(oop src, jlong off1, oop dst, jlong off2) {
+  jlong v = *(jlong*)index_oop_from_field_offset_long(src, off1);
+  *(jlong*)index_oop_from_field_offset_long(dst, off2) = v;
+}
+
+UNSAFE_ENTRY(jobject, Unsafe_GetLong2(JNIEnv *env, jobject unsafe, jobject box, jobject obj, jlong offset))
+  oop p = JNIHandles::resolve(obj);
+  oop b = JNIHandles::resolve(box);
+  static jlong l2_base = java_lang_Long2::base_offset_in_bytes();
+  copy_jlong(p, offset,   b, l2_base);
+  copy_jlong(p, offset+8, b, l2_base+8);
+  OrderAccess::fence();
+  return box;
+UNSAFE_END
+
+UNSAFE_ENTRY(jobject, Unsafe_GetLong4(JNIEnv *env, jobject unsafe, jobject box, jobject obj, jlong offset))
+  oop p = JNIHandles::resolve(obj);
+  oop b = JNIHandles::resolve(box);
+  static jlong l4_base = java_lang_Long4::base_offset_in_bytes();
+  copy_jlong(p, offset,    b, l4_base);
+  copy_jlong(p, offset+8,  b, l4_base+8);
+  copy_jlong(p, offset+16, b, l4_base+16);
+  copy_jlong(p, offset+24, b, l4_base+24);
+  OrderAccess::fence();
+  return box;
+UNSAFE_END
+
+UNSAFE_ENTRY(jobject, Unsafe_GetLong8(JNIEnv *env, jobject unsafe, jobject box, jobject obj, jlong offset))
+  oop p = JNIHandles::resolve(obj);
+  oop b = JNIHandles::resolve(box);
+  static jlong l8_base = java_lang_Long8::base_offset_in_bytes();
+  copy_jlong(p, offset,    b, l8_base);
+  copy_jlong(p, offset+8,  b, l8_base+8);
+  copy_jlong(p, offset+16, b, l8_base+16);
+  copy_jlong(p, offset+24, b, l8_base+24);
+  copy_jlong(p, offset+32, b, l8_base+32);
+  copy_jlong(p, offset+40, b, l8_base+40);
+  copy_jlong(p, offset+48, b, l8_base+48);
+  copy_jlong(p, offset+56, b, l8_base+56);
+  OrderAccess::fence();
+  return box;
+UNSAFE_END
 
 /// JVM_RegisterUnsafeMethods
 
@@ -1196,6 +1238,10 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
 #define CLS LANG "Class;"
 #define FLD LANG "reflect/Field;"
 #define THR LANG "Throwable;"
+
+#define LNG2 LANG "Long2;"
+#define LNG4 LANG "Long4;"
+#define LNG8 LANG "Long8;"
 
 #define DC_Args  LANG "String;[BII" LANG "ClassLoader;" "Ljava/security/ProtectionDomain;"
 #define DAC_Args CLS "[B[" OBJ
@@ -1270,7 +1316,11 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
     {CC "fullFence",          CC "()V",                  FN_PTR(Unsafe_FullFence)},
 
     {CC "isBigEndian0",       CC "()Z",                  FN_PTR(Unsafe_isBigEndian0)},
-    {CC "unalignedAccess0",   CC "()Z",                  FN_PTR(Unsafe_unalignedAccess0)}
+    {CC "unalignedAccess0",   CC "()Z",                  FN_PTR(Unsafe_unalignedAccess0)},
+
+    {CC "getLong2",   CC "(" LNG2 OBJ "J)" LNG2,            FN_PTR(Unsafe_GetLong2)},
+    {CC "getLong4",   CC "(" LNG4 OBJ "J)" LNG4,            FN_PTR(Unsafe_GetLong4)},
+    {CC "getLong8",   CC "(" LNG8 OBJ "J)" LNG8,            FN_PTR(Unsafe_GetLong8)},
 };
 
 #undef CC
@@ -1284,6 +1334,10 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
 #undef THR
 #undef DC_Args
 #undef DAC_Args
+
+#undef LNG2
+#undef LNG4
+#undef LNG8
 
 #undef DECLARE_GETPUTOOP
 

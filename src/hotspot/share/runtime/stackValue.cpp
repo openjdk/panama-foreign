@@ -90,6 +90,9 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
     case Location::lng:
       // Long   value in an aligned adjacent pair
       return new StackValue(*(intptr_t*)value_addr);
+    case Location::vector:
+      // Vector value in an aligned adjacent tuple (4, 8, or  16 slots).
+      return new StackValue((intptr_t)value_addr, T_ILLEGAL); // FIXME
     case Location::narrowoop: {
       union { intptr_t p; narrowOop noop;} value;
       value.p = (intptr_t) CONST64(0xDEADDEAFDEADDEAF);

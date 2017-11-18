@@ -2835,6 +2835,90 @@ instruct storeV64_qword(memory mem, vecZ src) %{
   ins_pipe( pipe_slow );
 %}
 
+// ===========================================================================
+
+#ifdef _LP64
+instruct extractL(rRegL dst, vecX src, immI8 idx) %{
+  // predicate (idx < 2)
+  match(Set dst (ExtractL src idx));
+  format %{ "pextrq $dst,$src,$idx" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ pextrq($dst$$Register, $src$$XMMRegister, (int)$idx$$constant);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+//instruct extract2L(rRegL dst, vecY src, immI8 idx) %{
+//  // predicate (idx < 4)
+//  match(Set dst (Extract2L src idx));
+//  format %{ "vpextrq $dst,$src,$idx" %}
+//  ins_encode %{
+//    __ vpextrq($dst$$Register, $src$$XMMRegister, (int)$idx$$constant);
+//  %}
+//  ins_pipe( pipe_slow );
+//%}
+//
+//instruct extract4L(rRegL dst, vecY src, immI8 idx) %{
+//  // predicate (idx < 8)
+//  match(Set dst (Extract2L src idx));
+//  format %{ "vpextrq $dst,$src,$idx" %}
+//  ins_encode %{
+//    __ vpextrq($dst$$Register, $src$$XMMRegister, (int)$idx$$constant);
+//  %}
+//  ins_pipe( pipe_slow );
+//%}
+
+instruct packL_binary(vecX dst, rRegL lo, rRegL hi) %{
+  match(Set dst (PackL lo hi));
+  format %{ "pinsrq $dst,$lo,0x0\n"
+            "pinsrq $dst,$hi,0x1" %}
+  ins_encode %{
+    __ pinsrq($dst$$XMMRegister, $lo$$Register, 0);
+    __ pinsrq($dst$$XMMRegister, $hi$$Register, 1);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// FIXME: is there any other way to avoid dst, lo, and hi reg collision except using temp reg?
+// Shouldn't be a problem for linear packing though.
+instruct pack2L_binary(vecY dst, vecX lo, vecX hi, vecY tmp) %{
+  predicate(UseAVX > 0);
+  match(Set dst (Pack2L lo hi));
+  effect(TEMP tmp);
+  format %{ "vinserti128 $dst,$lo,$hi,1" %}
+  ins_encode %{
+    __ vinserti128($dst$$XMMRegister, $lo$$XMMRegister, $hi$$XMMRegister, 1);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+//instruct pack2L_linear(vecY dst, rRegL elem, immI con) %{
+//  // in == 2
+//  match(Set dst (Pack2L lo hi));
+//  format %{ "vpinsrq $dst,$elem,$con"%}
+//  ins_encode %{
+//    __ vinserti128($dst$$XMMRegister, $elem$$Register, $con$$constant);
+//  %}
+//  ins_pipe( pipe_slow );
+//%}
+
+//instruct pack4L_binary(vecZ dst, vecY lo, vecY hi) %{
+//  // in == 2
+//  match(Set dst (Pack4L lo hi));
+//  format %{ "vpinsrq $dst,$lo,0x0\n"
+//            "vpinsrq $dst,$hi,0x1"%}
+//  ins_encode %{
+//    __ vpinsrq($dst$$XMMRegister, $lo$$XMMRegister, 0);
+//    __ vpinsrq($dst$$XMMRegister, $hi$$XMMRegister, 1);
+//  %}
+//  ins_pipe( pipe_slow );
+//%}
+
+#else
+
+#endif // _LP64
+
 // ====================LEGACY REPLICATE=======================================
 
 instruct Repl4B_mem(vecS dst, memory mem) %{

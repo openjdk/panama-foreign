@@ -26,6 +26,7 @@
 #define SHARE_VM_OPTO_OPAQUENODE_HPP
 
 #include "opto/node.hpp"
+#include "opto/multnode.hpp"
 #include "opto/opcodes.hpp"
 
 //------------------------------Opaque1Node------------------------------------
@@ -133,6 +134,38 @@ class ProfileBooleanNode : public Node {
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
   virtual Node* Identity(PhaseGVN* phase);
   virtual const Type *bottom_type() const { return TypeInt::BOOL; }
+};
+
+class OpaqueVBoxNode : public MultiNode {
+  virtual uint hash() const ;                  // { return NO_HASH; }
+  virtual uint cmp( const Node &n ) const;
+
+  const Type* _t;
+  const TypePtr* _adr_type;
+
+ public:
+  OpaqueVBoxNode(Compile* C, Node* mem, Node* box, Node* val, const TypePtr* adr_type) : MultiNode(4) {
+    init_req(0, NULL);
+    init_req(1, mem);
+    init_req(2, box);
+    init_req(3, val);
+
+    const Type **fields = TypeTuple::fields(2);
+    fields[0] = Type::MEMORY;
+    fields[1] = box->bottom_type();
+    _t = TypeTuple::make(2, fields);
+
+    _adr_type = adr_type;
+
+    init_flags(Flag_is_macro);
+    C->add_macro_node(this);
+  }
+
+  virtual int Opcode() const;
+
+  virtual const Type *bottom_type() const { return _t; }
+  virtual const class TypePtr *adr_type() const { return _adr_type; }
+//  virtual Node *Identity( PhaseTransform *phase );
 };
 
 #endif // SHARE_VM_OPTO_OPAQUENODE_HPP

@@ -321,6 +321,10 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
   return align_up(stk_args, 2);
 }
 
+void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name) {
+  fatal("NYI");
+}
+
 // Patch the callers callsite with entry to compiled code if it exists.
 static void patch_callers_callsite(MacroAssembler *masm) {
   Label L;

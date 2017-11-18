@@ -2490,3 +2490,7 @@ RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const cha
 
   return RuntimeStub::new_runtime_stub(name, &buffer, frame_complete, frame_size_words, oop_maps, true);
 }
+
+void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name) {
+  fatal("NYI");
+}

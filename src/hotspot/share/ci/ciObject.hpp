@@ -126,6 +126,7 @@ public:
   virtual bool is_instance()                   { return false; }
   virtual bool is_member_name()          const { return false; }
   virtual bool is_native_entry_point()   const { return false; }
+  virtual bool is_machine_code_snippet() const { return false; }
   virtual bool is_method_handle()        const { return false; }
   virtual bool is_method_type()          const { return false; }
   virtual bool is_array()                      { return false; }

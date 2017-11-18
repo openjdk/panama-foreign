@@ -100,6 +100,8 @@ extern Mutex*   ProfilePrint_lock;               // a lock used to serialize the
 extern Mutex*   ExceptionCache_lock;             // a lock used to synchronize exception cache updates
 extern Mutex*   OsrList_lock;                    // a lock used to serialize access to OSR queues
 
+extern Monitor* CodeSnippet_lock;                // a lock used for code snippet customization
+
 #ifndef PRODUCT
 extern Mutex*   FullGCALot_lock;                 // a lock to make FullGCALot MT safe
 #endif // PRODUCT

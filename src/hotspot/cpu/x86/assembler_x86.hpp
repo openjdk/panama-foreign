@@ -1622,6 +1622,13 @@ private:
   void evpmovwb(Address dst, XMMRegister src, int vector_len);
   void evpmovwb(Address dst, KRegister mask, XMMRegister src, int vector_len);
 
+  // AVX2 extract
+  //void pextrd(Register dst, XMMRegister src, int imm8);
+  void vpextrq(Register dst, XMMRegister src, int imm8);
+
+  // AVX2 insert
+  void vinserti128vi(XMMRegister dst, XMMRegister src, int imm8);
+
 #ifndef _LP64 // no 32bit push/pop on amd64
   void popl(Address dst);
 #endif

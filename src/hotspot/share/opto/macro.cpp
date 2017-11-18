@@ -45,6 +45,7 @@
 #include "opto/runtime.hpp"
 #include "opto/subnode.hpp"
 #include "opto/type.hpp"
+#include "opto/vectornode.hpp"
 #include "runtime/sharedRuntime.hpp"
 
 
@@ -2660,12 +2661,15 @@ void PhaseMacroExpand::eliminate_macro_nodes() {
         break;
       case Node::Class_ArrayCopy:
         break;
+      case Node::Class_VBox:
+        break;
       default:
         assert(n->Opcode() == Op_LoopLimit ||
                n->Opcode() == Op_Opaque1   ||
                n->Opcode() == Op_Opaque2   ||
                n->Opcode() == Op_Opaque3   ||
-               n->Opcode() == Op_Opaque4, "unknown node type in macro list");
+               n->Opcode() == Op_Opaque4   ||
+               n->Opcode() == Op_OpaqueVBox, "unknown node type in macro list");
       }
       assert(success == (C->macro_count() < old_macro_count), "elimination reduces macro count");
       progress = progress || success;
@@ -2753,6 +2757,9 @@ bool PhaseMacroExpand::expand_macro_nodes() {
       int macro_count = C->macro_count();
       expand_arraycopy_node(n->as_ArrayCopy());
       assert(C->macro_count() < macro_count, "must have deleted a node from macro list");
+    } else if(n->is_VBox()) {
+      int macro_count = C->macro_count();
+      expand_vbox_node(n->as_VBox());
     }
     if (C->failing())  return true;
     macro_idx --;
@@ -2789,8 +2796,74 @@ bool PhaseMacroExpand::expand_macro_nodes() {
     if (C->failing())  return true;
   }
 
+  C->print_method(PHASE_MACRO_STEP, 4);
+
   _igvn.set_delay_transform(false);
   _igvn.optimize();
+
+  C->print_method(PHASE_MACRO_STEP, 4);
+
   if (C->failing())  return true;
   return false;
+}
+
+//------------------------------expand_macro_nodes----------------------
+//  Returns true if a failure occurred.
+void PhaseMacroExpand::expand_vbox_nodes() {
+  int macro_idx = C->macro_count() - 1;
+  while (macro_idx >= 0) {
+    Node * n = C->macro_node(macro_idx);
+    assert(n->is_macro(), "only macro nodes expected here");
+    if (n->Opcode() == Op_Opaque1 || n->Opcode() == Op_Opaque2 ||
+        n->Opcode() == Op_Opaque3 || n->Opcode() == Op_Opaque4) {
+      // skip
+    } else if (_igvn.type(n) == Type::TOP || n->in(0)->is_top() ) {
+      // node is unreachable, so don't try to expand it
+//      C->remove_macro_node(n);
+    } else if(n->is_VBox()) {
+//      C->remove_macro_node(n);
+      VBoxNode* vbox = n->as_VBox();
+      expand_vbox_node(vbox);
+    }
+    if (C->failing())  return;
+    macro_idx--;
+  }
+  _igvn.set_delay_transform(false);
+  _igvn.optimize();
+}
+
+void PhaseMacroExpand::expand_vbox_node(VBoxNode *vbox) {
+  Node* ctrl = vbox->in(TypeFunc::Control);
+  Node* mem  = vbox->in(TypeFunc::Memory);
+  Node* box  = vbox->in(VBoxNode::Box);
+  Node* val  = vbox->in(VBoxNode::Value);
+
+  Node* ctrlproj = vbox->proj_out(TypeFunc::Control);
+  Node* memproj  = vbox->proj_out(TypeFunc::Memory);
+  Node* parmproj = vbox->proj_out(TypeFunc::Parms);
+
+  if (parmproj != NULL) {
+    // If the boxed version is used, update the value.
+    uint vlen = vbox->type()->length();
+    int base_offset = vbox->base_offset_in_bytes();
+    Node* adr = basic_plus_adr(box, base_offset);
+    const TypePtr* adr_type = adr->bottom_type()->is_ptr();
+    int adr_idx = C->get_alias_index(adr_type);
+    Node* vec_store = transform_later(StoreVectorNode::make(/*NU*/-1, ctrl, mem, adr, adr_type, val, /*NU*/vlen));
+
+    int max_vlen = MAX2(C->max_vector_size(), (int)vbox->type()->length_in_bytes()); // FIXME
+    C->set_max_vector_size(max_vlen);
+
+    Node* new_mem = transform_later(MergeMemNode::make(mem));
+    MergeMemNode* merged_mem = new_mem->as_MergeMem();
+    merged_mem->set_memory_at(adr_idx, vec_store);
+    mem = merged_mem;
+  }
+
+  // Remove the node.
+  if (parmproj != NULL)  _igvn.replace_node(parmproj, box);
+  if (ctrlproj != NULL)  _igvn.replace_node(ctrlproj, ctrl);
+  if (memproj  != NULL)  _igvn.replace_node(memproj,  mem);
+
+  _igvn.remove_dead_node(vbox);
 }

@@ -149,6 +149,24 @@ compute_optional_offset(int& dest_offset,
   }
 }
 
+int java_lang_Long2::_base_offset  = 0;
+int java_lang_Long4::_base_offset  = 0;
+int java_lang_Long8::_base_offset  = 0;
+
+void java_lang_Long2::compute_offsets() {
+  Klass* k = SystemDictionary::Long2_klass();
+  compute_offset(_base_offset, k, vmSymbols::l1_name(),  vmSymbols::long_signature());
+}
+
+void java_lang_Long4::compute_offsets() {
+  Klass* k = SystemDictionary::Long4_klass();
+  compute_offset(_base_offset, k, vmSymbols::l1_name(),  vmSymbols::long_signature());
+}
+
+void java_lang_Long8::compute_offsets() {
+  Klass* k = SystemDictionary::Long8_klass();
+  compute_offset(_base_offset, k, vmSymbols::l1_name(),  vmSymbols::long_signature());
+}
 
 int java_lang_String::value_offset  = 0;
 int java_lang_String::hash_offset   = 0;
@@ -3182,6 +3200,41 @@ oop java_lang_invoke_NativeEntryPoint::type(oop entry) {
   return entry->obj_field(_type_offset);
 }
 
+int java_lang_invoke_MachineCodeSnippet::_reg_masks_offset;
+int java_lang_invoke_MachineCodeSnippet::_killed_reg_mask_offset;
+int java_lang_invoke_MachineCodeSnippet::_generator_offset;
+int java_lang_invoke_MachineCodeSnippet::_flags_offset;
+
+objArrayOop java_lang_invoke_MachineCodeSnippet::reg_masks(oop entry) {
+  return (objArrayOop)entry->obj_field(_reg_masks_offset);
+}
+
+typeArrayOop java_lang_invoke_MachineCodeSnippet::killed_reg_mask(oop entry) {
+  return (typeArrayOop)entry->obj_field(_killed_reg_mask_offset);
+}
+
+oop java_lang_invoke_MachineCodeSnippet::generator(oop entry) {
+  return entry->obj_field(_generator_offset);
+}
+
+jint java_lang_invoke_MachineCodeSnippet::flags(oop entry) {
+  return entry->int_field(_flags_offset);
+}
+
+bool java_lang_invoke_MachineCodeSnippet::is_instance(oop obj) {
+  return obj != NULL && is_subclass(obj->klass());
+}
+
+void java_lang_invoke_MachineCodeSnippet::compute_offsets() {
+  Klass* klass_oop = SystemDictionary::MachineCodeSnippet_klass();
+  if (klass_oop != NULL) {
+    compute_offset(      _reg_masks_offset, klass_oop, vmSymbols::registerMasks_name(), vmSymbols::int_int_array_signature());
+    compute_offset(_killed_reg_mask_offset, klass_oop, vmSymbols::killedRegisterMask_name(), vmSymbols::int_array_signature());
+    compute_offset(      _generator_offset, klass_oop, vmSymbols::codeGenerator_name(), vmSymbols::object_signature());
+    compute_offset(          _flags_offset, klass_oop, vmSymbols::flags_name(), vmSymbols::int_signature());
+  }
+}
+
 oop java_lang_invoke_MethodHandle::type(oop mh) {
   return mh->obj_field(_type_offset);
 }
@@ -3909,6 +3962,7 @@ void JavaClasses::compute_offsets() {
   java_lang_invoke_MemberName::compute_offsets();
   java_lang_invoke_ResolvedMethodName::compute_offsets();
   java_lang_invoke_NativeEntryPoint::compute_offsets();
+  java_lang_invoke_MachineCodeSnippet::compute_offsets();
   java_lang_invoke_LambdaForm::compute_offsets();
   java_lang_invoke_MethodType::compute_offsets();
   java_lang_invoke_CallSite::compute_offsets();
@@ -3929,6 +3983,10 @@ void JavaClasses::compute_offsets() {
   java_lang_Module::compute_offsets();
   java_lang_StackFrameInfo::compute_offsets();
   java_lang_LiveStackFrameInfo::compute_offsets();
+
+  java_lang_Long2::compute_offsets();
+  java_lang_Long4::compute_offsets();
+  java_lang_Long8::compute_offsets();
 
   // generated interpreter code wants to know about the offsets we just computed:
   AbstractAssembler::update_delayed_values();

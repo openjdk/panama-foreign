@@ -1598,6 +1598,13 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
             return mh;
         }
 
+        // FIXME: remove
+        public MethodHandle makeSnippet(String name, long addr, MethodType type, int[][] regMasks, int[] killedRegMask, Object generator, int flags) {
+            MachineCodeSnippet codeSnippet = MachineCodeSnippet.make(addr, name, type, regMasks, killedRegMask, generator, flags);
+            MethodHandle mh = NativeMethodHandle.make(type, codeSnippet);
+            return mh;
+        }
+
         private static Unsafe UNSAFE = Unsafe.getUnsafe();
 
         /** TODO */

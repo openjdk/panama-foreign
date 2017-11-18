@@ -130,6 +130,18 @@ ciType* ciType::make(BasicType t) {
   return _basic_types[t];
 }
 
+bool ciType::is_long2() /*const*/ {
+  return basic_type() == T_OBJECT && is_subtype_of(CURRENT_ENV->Long2_klass());
+}
+
+bool ciType::is_long4() /*const*/ {
+  return basic_type() == T_OBJECT && is_subtype_of(CURRENT_ENV->Long4_klass());
+}
+
+bool ciType::is_long8() /*const*/ {
+  return basic_type() == T_OBJECT && is_subtype_of(CURRENT_ENV->Long8_klass());
+}
+
 // ciReturnAddress
 //
 // This class represents the type of a specific return address in the

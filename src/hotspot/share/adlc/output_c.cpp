@@ -3657,6 +3657,7 @@ void ArchDesc::buildReduceMaps(FILE *fp_hpp, FILE *fp_cpp) {
   fprintf(fp_hpp, "\n");
   fprintf(fp_hpp, "extern const char  register_save_policy[];\n");
   fprintf(fp_hpp, "extern const char  c_reg_save_policy[];\n");
+  fprintf(fp_hpp, "extern const char  no_reg_save_policy[];\n");
   fprintf(fp_hpp, "extern const int   register_save_type[];\n");
   fprintf(fp_hpp, "\n");
 
@@ -3679,6 +3680,18 @@ void ArchDesc::buildReduceMaps(FILE *fp_hpp, FILE *fp_cpp) {
   for( rdef = _register->iter_RegDefs(); rdef != NULL; rdef = next ) {
     next        = _register->iter_RegDefs();
     char policy = reg_save_policy(rdef->_c_conv);
+    const char *comma = (next != NULL) ? "," : " // no trailing comma";
+    fprintf(fp_cpp, "  '%c'%s // %s\n", policy, comma, rdef->_regname);
+  }
+  fprintf(fp_cpp, "};\n\n");
+
+  // Construct Native Save-Policy array
+  fprintf(fp_cpp, "// Map from machine-independent register number to no_reg_save_policy\n");
+  fprintf(fp_cpp, "const        char no_reg_save_policy[] = {\n");
+  _register->reset_RegDefs();
+  for( rdef = _register->iter_RegDefs(); rdef != NULL; rdef = next ) {
+    next        = _register->iter_RegDefs();
+    char policy = 'N'; // never
     const char *comma = (next != NULL) ? "," : " // no trailing comma";
     fprintf(fp_cpp, "  '%c'%s // %s\n", policy, comma, rdef->_regname);
   }

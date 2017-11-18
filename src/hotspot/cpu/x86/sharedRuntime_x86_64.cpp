@@ -1092,6 +1092,127 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
   return stk_args;
 }
 
+#ifdef _WIN64
+static const Register INT_ArgReg[Argument::n_int_register_parameters_c] = {
+  c_rarg0, c_rarg1, c_rarg2, c_rarg3
+};
+static const XMMRegister FP_ArgReg[Argument::n_float_register_parameters_c] = {
+  c_farg0, c_farg1, c_farg2, c_farg3
+};
+#else
+static const Register INT_ArgReg[Argument::n_int_register_parameters_c] = {
+  c_rarg0, c_rarg1, c_rarg2, c_rarg3, c_rarg4, c_rarg5
+};
+static const XMMRegister FP_ArgReg[Argument::n_float_register_parameters_c] = {
+  c_farg0, c_farg1, c_farg2, c_farg3,
+  c_farg4, c_farg5, c_farg6, c_farg7
+};
+#endif // _WIN64
+static const XMMRegister VEC_ArgReg[32] = {
+  xmm0,  xmm1,  xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,  xmm8,  xmm9,
+  xmm10, xmm11, xmm12, xmm13, xmm14, xmm15, xmm16, xmm17, xmm18, xmm19,
+  xmm20, xmm21, xmm22, xmm23, xmm24, xmm25, xmm26, xmm27, xmm28, xmm29,
+  xmm30, xmm31
+};
+
+static uint count_fp_args(oop mt) {
+  uint fp_args = 0;
+  int arity = java_lang_invoke_MethodType::ptype_count(mt);
+  for (int i = 0; i < arity; i++) {
+    oop pt = java_lang_invoke_MethodType::ptype(mt, i);
+    if (java_lang_Class::is_primitive(pt)) {
+      BasicType bt = java_lang_Class::primitive_type(pt);
+      if (bt == T_FLOAT || bt == T_DOUBLE) {
+        fp_args++;
+      }
+    }
+  }
+  return fp_args;
+}
+
+void SharedRuntime::generate_snippet(MacroAssembler* masm, oop mt, typeArrayOop code, const char* name) {
+  //No_Safepoint_Verifier nsv();
+
+  int code_size = code->length();
+
+  __ enter();
+
+  uint int_args = 0;
+  uint fp_args = count_fp_args(mt);
+  uint vec_args = MIN2(fp_args, (uint)Argument::n_float_register_parameters_c);
+  int arity = java_lang_invoke_MethodType::ptype_count(mt);
+  for (int i = 0; i < arity; i++) {
+    oop pt = java_lang_invoke_MethodType::ptype(mt, i);
+    if (java_lang_Class::is_primitive(pt)) {
+      BasicType bt = java_lang_Class::primitive_type(pt);
+      switch(bt) {
+        case T_BOOLEAN:
+        case T_CHAR:
+        case T_BYTE:
+        case T_SHORT:
+        case T_INT:
+        case T_LONG: {
+          int_args++;
+          break;
+        }
+        default:
+          break;
+      }
+    } else {
+      Register r = INT_ArgReg[int_args];
+      if (CheckCodeSnippets) {
+        stringStream ss;
+        ss.print("snippet=%s: arg#%d=%s: not an oop", name, i, java_lang_Class::as_external_name(pt));
+        __ verify_oop(r, ss.as_string(), /*force=*/true);
+      }
+      Klass* pk = java_lang_Class::as_Klass(pt);
+      if (pk == SystemDictionary::Long2_klass()) {
+        assert(int_args < Argument::n_int_register_parameters_c, "loads from stack not supported yet");
+        __ movdqu(VEC_ArgReg[vec_args++], Address(r, java_lang_Long2::base_offset_in_bytes()));
+      } else if (pk == SystemDictionary::Long4_klass()) {
+        // TODO: check AVX2 support
+        assert(int_args < Argument::n_int_register_parameters_c, "loads from stack not supported yet");
+        __ vmovdqu(VEC_ArgReg[vec_args++], Address(r, java_lang_Long4::base_offset_in_bytes()));
+      } else if (pk == SystemDictionary::Long8_klass()) {
+        fatal("Long8 requires AVX-512 support");
+//        __ vmovdqu(VEC_ArgReg[vec_args++], Address(r, java_lang_Long8::base_offset_in_bytes()));
+      }
+      int_args++;
+    }
+  }
+
+  // FIXME: spill registers
+  __ block_comment("snippet {");
+  for (int i = 0; i < code_size; i++) {
+    __ emit_int8(code->byte_at(i));
+  }
+  __ block_comment("} snippet");
+
+  // TODO: verify callee-saved registers aren't modified
+
+  oop rt = java_lang_invoke_MethodType::rtype(mt);
+  Klass* kls = java_lang_Class::as_Klass(rt);
+  if (kls == SystemDictionary::Long2_klass()) {
+    __ mov(rax, c_rarg0);
+    __ movdqu(Address(rax, java_lang_Long2::base_offset_in_bytes()), xmm0);
+  } else if (kls == SystemDictionary::Long4_klass()) {
+    // TODO: check AVX2 suport
+    __ mov(rax, c_rarg0);
+    __ vmovdqu(Address(rax, java_lang_Long4::base_offset_in_bytes()), xmm0);
+  } else if (kls == SystemDictionary::Long8_klass()) {
+    fatal("Long8 requires AVX-512 support");
+    // __ mov(rax, c_rarg0);
+    // __ vmovdqu(Address(rax, java_lang_Long8::base_offset_in_bytes()), xmm0);
+  }
+  if (CheckCodeSnippets && !java_lang_Class::is_primitive(rt)) {
+    stringStream ss;
+    ss.print("snippet=%s: ret=%s: not an oop", name, java_lang_Class::as_external_name(rt));
+    __ verify_oop(rax, ss.as_string(), /*force=*/true);
+  }
+  __ leave();
+  __ ret(0);
+}
+
 // On 64 bit we will store integer like items to the stack as
 // 64 bits items (sparc abi) even though java would only store
 // 32bits for a parameter. On 32bit it will simply be 32 bits

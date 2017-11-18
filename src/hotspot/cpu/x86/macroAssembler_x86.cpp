@@ -6090,8 +6090,8 @@ void MacroAssembler::cmov32(Condition cc, Register dst, Register src) {
   }
 }
 
-void MacroAssembler::verify_oop(Register reg, const char* s) {
-  if (!VerifyOops) return;
+void MacroAssembler::verify_oop(Register reg, const char* s, bool force_check) {
+  if (!VerifyOops && !force_check) return;
 
   // Pass register number to verify_oop_subroutine
   const char* b = NULL;

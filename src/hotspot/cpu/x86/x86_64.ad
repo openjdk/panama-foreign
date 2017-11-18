@@ -2833,10 +2833,10 @@ frame
   // Location of compiled Java return values.  Same as C for now.
   return_value
   %{
-    assert(ideal_reg >= Op_RegI && ideal_reg <= Op_RegL,
+    assert(ideal_reg >= Op_RegI && ideal_reg <= Op_VecZ,
            "only return normal values");
 
-    static const int lo[Op_RegL + 1] = {
+    static const int lo[Op_VecZ + 1] = {
       0,
       0,
       RAX_num,  // Op_RegN
@@ -2844,9 +2844,14 @@ frame
       RAX_num,  // Op_RegP
       XMM0_num, // Op_RegF
       XMM0_num, // Op_RegD
-      RAX_num   // Op_RegL
+      RAX_num,  // Op_RegL
+      XMM0_num, // Op_VecS
+      XMM0_num, // Op_VecD
+      XMM0_num, // Op_VecX
+      XMM0_num, // Op_VecY
+      XMM0_num  // Op_VecZ
     };
-    static const int hi[Op_RegL + 1] = {
+    static const int hi[Op_VecZ + 1] = {
       0,
       0,
       OptoReg::Bad, // Op_RegN
@@ -2854,10 +2859,15 @@ frame
       RAX_H_num,    // Op_RegP
       OptoReg::Bad, // Op_RegF
       XMM0b_num,    // Op_RegD
-      RAX_H_num     // Op_RegL
+      RAX_H_num,    // Op_RegL
+      OptoReg::Bad, // Op_VecS
+      XMM0b_num,    // Op_VecD
+      XMM0d_num,    // Op_VecX
+      XMM0h_num,    // Op_VecY
+      XMM0p_num     // Op_VecZ
+
     };
-    // Excluded flags and vector registers.
-    assert(ARRAY_SIZE(hi) == _last_machine_leaf - 6, "missing type");
+    assert(ARRAY_SIZE(hi) == _last_machine_leaf - 1, "missing type");
     return OptoRegPair(hi[ideal_reg], lo[ideal_reg]);
   %}
 %}
@@ -12156,6 +12166,28 @@ instruct CallLeafNoFPDirect(method meth)
   ins_cost(300);
   format %{ "call_leaf_nofp,runtime " %}
   ins_encode(clear_avx, Java_To_Runtime(meth));
+  ins_pipe(pipe_slow);
+%}
+
+instruct CallSnippetDirect(method meth)
+%{
+  match(CallSnippet);
+  effect(USE meth);
+
+  ins_cost(300);
+  format %{ "code_snippet" %}
+  ins_encode %{
+    if (!_generator->is_null_object()) {
+      ((MachCallSnippetNode*)this)->specialize(ra_); // FIXME
+    }
+    //assert(_code != NULL && _size > 0, "");
+
+    begin_comment(_masm);
+    for(int i = 0; i < _size; i++) {
+      __ emit_int8(_code[i]);
+    }
+    end_comment(_masm);
+  %}
   ins_pipe(pipe_slow);
 %}
 

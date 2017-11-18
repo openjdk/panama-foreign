@@ -25,8 +25,26 @@
 #include "memory/allocation.inline.hpp"
 #include "opto/connode.hpp"
 #include "opto/vectornode.hpp"
+#include "opto/callnode.hpp"
 
 //------------------------------VectorNode--------------------------------------
+
+Node* LoadVectorNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+  //dump(3);
+  //if ()
+  return NULL;
+}
+
+Node* LoadVectorNode::Identity(PhaseGVN *phase ) {
+  if (in(2)->is_AddP()) {
+    Node* proj = in(2)->in(2)->uncast();
+    if (proj->is_Proj() &&
+        proj->in(0)->is_VBox()) {
+      return proj->in(0)->in(VBoxNode::Value);
+    }
+  }
+  return this;
+}
 
 // Return the vector operator for the specified scalar operation
 // and vector length.
@@ -451,11 +469,11 @@ PackNode* PackNode::binary_tree_pack(int lo, int hi) {
     case T_INT:
       return new PackLNode(n1, n2, TypeVect::make(T_LONG, 2));
     case T_LONG:
-      return new Pack2LNode(n1, n2, TypeVect::make(T_LONG, 2));
+      return new Pack2LNode(n1, n2, TypeVect::make(T_LONG, 4));
     case T_FLOAT:
       return new PackDNode(n1, n2, TypeVect::make(T_DOUBLE, 2));
     case T_DOUBLE:
-      return new Pack2DNode(n1, n2, TypeVect::make(T_DOUBLE, 2));
+      return new Pack2DNode(n1, n2, TypeVect::make(T_DOUBLE, 4));
     default:
       fatal("Type '%s' is not supported for vectors", type2name(bt));
       return NULL;
@@ -580,3 +598,4 @@ bool ReductionNode::implemented(int opc, uint vlen, BasicType bt) {
   }
   return false;
 }
+

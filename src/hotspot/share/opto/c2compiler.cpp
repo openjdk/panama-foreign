@@ -594,6 +594,28 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_isCompileConstant:
   case vmIntrinsics::_Preconditions_checkIndex:
     break;
+  case vmIntrinsics::_getLong2:
+  case vmIntrinsics::_Long2_make: // FIXME: check capabilities
+  case vmIntrinsics::_Long2_make_zero:
+  case vmIntrinsics::_Long2_extract:
+  case vmIntrinsics::_Long2_equals:
+    if (!Matcher::match_rule_supported(Op_PackL)) return false;
+    break;
+  case vmIntrinsics::_getLong4:
+  case vmIntrinsics::_Long4_make:
+  case vmIntrinsics::_Long4_make_zero:
+  case vmIntrinsics::_Long4_extract:
+  case vmIntrinsics::_Long4_equals:
+    if (!Matcher::match_rule_supported(Op_Pack2L)) return false;
+    break;
+  case vmIntrinsics::_getLong8:
+  case vmIntrinsics::_Long8_make:
+  case vmIntrinsics::_Long8_make_zero:
+  case vmIntrinsics::_Long8_extract:
+  case vmIntrinsics::_Long8_equals:
+    //if (!Matcher::match_rule_supported(Op_Pack4L)) return false;
+    return false; // FIXME: not supported yet
+    break;
   default:
     return false;
   }

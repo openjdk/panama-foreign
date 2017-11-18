@@ -542,6 +542,9 @@ class LoadVectorNode : public LoadNode {
 
   virtual int store_Opcode() const { return Op_StoreVector; }
 
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+  virtual Node *Identity(PhaseGVN *phase );
+
   static LoadVectorNode* make(int opc, Node* ctl, Node* mem,
                               Node* adr, const TypePtr* atyp,
                               uint vlen, BasicType bt,
@@ -555,7 +558,7 @@ class StoreVectorNode : public StoreNode {
  public:
   StoreVectorNode(Node* c, Node* mem, Node* adr, const TypePtr* at, Node* val)
     : StoreNode(c, mem, adr, at, val, MemNode::unordered) {
-    assert(val->is_Vector() || val->is_LoadVector(), "sanity");
+    assert(val->is_Vector() || val->is_LoadVector() || val->is_Proj(), "sanity");
     init_class_id(Class_StoreVector);
   }
 
@@ -642,8 +645,10 @@ class PackNode : public VectorNode {
 
   // Create a binary tree form for Packs. [lo, hi) (half-open) range
   PackNode* binary_tree_pack(int lo, int hi);
+  PackNode* linear_pack(int lo, int hi);
 
   static PackNode* make(Node* s, uint vlen, BasicType bt);
+  static PackNode* make(Node* s1, Node* s2, BasicType bt);
 };
 
 //------------------------------PackBNode--------------------------------------

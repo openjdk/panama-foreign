@@ -79,6 +79,9 @@
   template(java_lang_Integer,                         "java/lang/Integer")                        \
   template(java_lang_Integer_IntegerCache,            "java/lang/Integer$IntegerCache")           \
   template(java_lang_Long,                            "java/lang/Long")                           \
+  template(java_lang_Long2,                           "java/lang/Long2")                          \
+  template(java_lang_Long4,                           "java/lang/Long4")                          \
+  template(java_lang_Long8,                           "java/lang/Long8")                          \
   template(java_lang_Long_LongCache,                  "java/lang/Long$LongCache")                 \
   template(java_lang_Shutdown,                        "java/lang/Shutdown")                       \
   template(java_lang_ref_Reference,                   "java/lang/ref/Reference")                  \
@@ -292,12 +295,14 @@
   template(java_lang_invoke_ResolvedMethodName_signature, "Ljava/lang/invoke/ResolvedMethodName;")\
   template(java_lang_invoke_MemberName_signature,     "Ljava/lang/invoke/MemberName;")            \
   template(java_lang_invoke_NativeEntryPoint_signature, "Ljava/lang/invoke/NativeEntryPoint;")    \
+  template(java_lang_invoke_MachineCodeSnippet_signature, "Ljava/lang/invoke/MachineCodeSnippet;") \
   template(java_lang_invoke_LambdaForm_signature,     "Ljava/lang/invoke/LambdaForm;")            \
   template(java_lang_invoke_MethodHandle_signature,   "Ljava/lang/invoke/MethodHandle;")          \
   /* internal classes known only to the JVM: */                                                   \
   template(java_lang_invoke_MemberName,               "java/lang/invoke/MemberName")              \
   template(java_lang_invoke_ResolvedMethodName,       "java/lang/invoke/ResolvedMethodName")      \
   template(java_lang_invoke_NativeEntryPoint,         "java/lang/invoke/NativeEntryPoint")        \
+  template(java_lang_invoke_MachineCodeSnippet,       "java/lang/invoke/MachineCodeSnippet")      \
   template(java_lang_invoke_MethodHandleNatives,      "java/lang/invoke/MethodHandleNatives")     \
   template(java_lang_invoke_MethodHandleNatives_CallSiteContext, "java/lang/invoke/MethodHandleNatives$CallSiteContext") \
   template(java_lang_invoke_LambdaForm,               "java/lang/invoke/LambdaForm")              \
@@ -371,6 +376,9 @@
   template(put_name,                                  "put")                                      \
   template(type_name,                                 "type")                                     \
   template(findNative_name,                           "findNative")                               \
+  template(codeGenerator_name,                        "codeGenerator")                            \
+  template(registerMasks_name,                        "registerMasks")                            \
+  template(killedRegisterMask_name,                   "killedRegisterMask")                       \
   template(deadChild_name,                            "deadChild")                                \
   template(getFromClass_name,                         "getFromClass")                             \
   template(dispatch_name,                             "dispatch")                                 \
@@ -469,6 +477,7 @@
   template(module_entry_name,                         "module_entry")                             \
   template(resolved_references_name,                  "<resolved_references>")                    \
   template(init_lock_name,                            "<init_lock>")                              \
+  template(l1_name,                                   "l1")                                       \
                                                                                                   \
   /* name symbols needed by intrinsics */                                                         \
   VM_INTRINSICS_DO(VM_INTRINSIC_IGNORE, VM_SYMBOL_IGNORE, template, VM_SYMBOL_IGNORE, VM_ALIAS_IGNORE) \
@@ -486,6 +495,7 @@
   template(bool_void_signature,                       "(Z)V")                                     \
   template(int_void_signature,                        "(I)V")                                     \
   template(int_int_signature,                         "(I)I")                                     \
+  template(int_long_signature,                        "(I)J")                                     \
   template(char_char_signature,                       "(C)C")                                     \
   template(short_short_signature,                     "(S)S")                                     \
   template(int_bool_signature,                        "(I)Z")                                     \
@@ -508,6 +518,7 @@
   template(byte_array_signature,                      "[B")                                       \
   template(char_array_signature,                      "[C")                                       \
   template(int_array_signature,                       "[I")                                       \
+  template(int_int_array_signature,                   "[[I")                                       \
   template(object_void_signature,                     "(Ljava/lang/Object;)V")                    \
   template(object_int_signature,                      "(Ljava/lang/Object;)I")                    \
   template(object_boolean_signature,                  "(Ljava/lang/Object;)Z")                    \
@@ -1154,6 +1165,46 @@
   do_intrinsic(_putLong,            jdk_internal_misc_Unsafe,     putLong_name, putLong_signature,               F_RN)  \
   do_intrinsic(_putFloat,           jdk_internal_misc_Unsafe,     putFloat_name, putFloat_signature,             F_RN)  \
   do_intrinsic(_putDouble,          jdk_internal_misc_Unsafe,     putDouble_name, putDouble_signature,           F_RN)  \
+                                                                                                                        \
+  do_intrinsic(_getLong2,           jdk_internal_misc_Unsafe,     getLong2_name, getLong2_signature,             F_RN)  \
+   do_name(     getLong2_name,                                   "getLong2")                                            \
+   do_signature(getLong2_signature,                              "(Ljava/lang/Long2;Ljava/lang/Object;J)Ljava/lang/Long2;") \
+                                                                                                                        \
+  do_intrinsic(_getLong4,           jdk_internal_misc_Unsafe,     getLong4_name, getLong4_signature,             F_RN)  \
+   do_name(     getLong4_name,                                   "getLong4")                                            \
+   do_signature(getLong4_signature,                              "(Ljava/lang/Long4;Ljava/lang/Object;J)Ljava/lang/Long4;") \
+                                                                                                                        \
+  do_intrinsic(_getLong8,           jdk_internal_misc_Unsafe,     getLong8_name, getLong8_signature,             F_RN)  \
+   do_name(     getLong8_name,                                   "getLong8")                                            \
+   do_signature(getLong8_signature,                              "(Ljava/lang/Long8;Ljava/lang/Object;J)Ljava/lang/Long8;") \
+                                                                                                                        \
+  /* Long2, Long4, Long8 */                                                                                             \
+   do_name(make_name,                     "make")                                                                       \
+  do_intrinsic(_Long2_make,               java_lang_Long2,        make_name, Long2_make_signature, F_SN)                \
+   do_signature(Long2_make_signature,                            "(JJ)Ljava/lang/Long2;")                               \
+  do_intrinsic(_Long4_make,               java_lang_Long4,        make_name, Long4_make_signature, F_SN)                \
+   do_signature(Long4_make_signature,                            "(JJJJ)Ljava/lang/Long4;")                             \
+  do_intrinsic(_Long8_make,               java_lang_Long8,        make_name, Long8_make_signature, F_SN)                \
+   do_signature(Long8_make_signature,                            "(JJJJJJJJ)Ljava/lang/Long8;")                         \
+                                                                                                                        \
+  do_intrinsic(_Long2_make_zero,          java_lang_Long2,        make_name, Long2_make_zero_signature, F_S)            \
+   do_signature(Long2_make_zero_signature,                       "()Ljava/lang/Long2;")                                 \
+  do_intrinsic(_Long4_make_zero,          java_lang_Long4,        make_name, Long4_make_zero_signature, F_S)            \
+   do_signature(Long4_make_zero_signature,                       "()Ljava/lang/Long4;")                                 \
+  do_intrinsic(_Long8_make_zero,          java_lang_Long8,        make_name, Long8_make_zero_signature, F_S)            \
+   do_signature(Long8_make_zero_signature,                       "()Ljava/lang/Long8;")                                 \
+                                                                                                                        \
+   do_name(extract_name,                  "extract")                                                                    \
+  do_intrinsic(_Long2_extract,            java_lang_Long2,        extract_name, int_long_signature, F_RN)               \
+  do_intrinsic(_Long4_extract,            java_lang_Long4,        extract_name, int_long_signature, F_RN)               \
+  do_intrinsic(_Long8_extract,            java_lang_Long8,        extract_name, int_long_signature, F_RN)               \
+                                                                                                                        \
+  do_intrinsic(_Long2_equals,             java_lang_Long2,        equals_name, Long2_equals_signature, F_R)             \
+   do_signature(Long2_equals_signature,                           "(Ljava/lang/Long2;)Z")                               \
+  do_intrinsic(_Long4_equals,             java_lang_Long4,        equals_name, Long4_equals_signature, F_R)             \
+   do_signature(Long4_equals_signature,                           "(Ljava/lang/Long4;)Z")                               \
+  do_intrinsic(_Long8_equals,             java_lang_Long8,        equals_name, Long8_equals_signature, F_R)             \
+   do_signature(Long8_equals_signature,                           "(Ljava/lang/Long8;)Z")                               \
                                                                                                                         \
   do_name(getObjectVolatile_name,"getObjectVolatile")   do_name(putObjectVolatile_name,"putObjectVolatile")             \
   do_name(getBooleanVolatile_name,"getBooleanVolatile") do_name(putBooleanVolatile_name,"putBooleanVolatile")           \
