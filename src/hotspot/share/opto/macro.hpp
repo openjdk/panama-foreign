@@ -30,6 +30,8 @@
 class  AllocateNode;
 class  AllocateArrayNode;
 class  CallNode;
+class VectorBoxNode;
+class VectorUnboxNode;
 class  Node;
 class  PhaseIterGVN;
 

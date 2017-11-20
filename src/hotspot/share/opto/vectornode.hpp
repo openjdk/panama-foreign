@@ -28,6 +28,8 @@
 #include "opto/memnode.hpp"
 #include "opto/node.hpp"
 #include "opto/opcodes.hpp"
+#include "opto/callnode.hpp"
+#include "opto/subnode.hpp"
 
 //------------------------------VectorNode-------------------------------------
 // Vector Operation
