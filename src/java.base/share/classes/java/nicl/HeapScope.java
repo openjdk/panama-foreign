@@ -33,6 +33,10 @@ public class HeapScope implements Scope {
     private boolean isAlive = true;
 
     public HeapScope() {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.nicl.HeapScope", "create"));
+        }
     }
 
     @Override
