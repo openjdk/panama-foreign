@@ -3696,6 +3696,8 @@ public final class Unsafe {
 
 
 
+    public native int getMaxVectorSize(Class<?> element); // FIXME: move to a different place
+
     private native long allocateMemory0(long bytes);
     private native long reallocateMemory0(long address, long bytes);
     private native void freeMemory0(long address);
