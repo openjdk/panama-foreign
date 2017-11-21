@@ -55,8 +55,11 @@ public class NativeScope implements Scope {
 
     private boolean isAlive = true;
 
-
     public NativeScope() {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.nicl.NativeScope", "create"));
+        }
         block = U.allocateMemory(UNIT_SIZE);
         free_offset = 0;
         transaction_origin = -1;

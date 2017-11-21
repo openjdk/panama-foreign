@@ -22,6 +22,7 @@
  */
 package java.nicl;
 
+import java.io.File;
 import jdk.internal.nicl.Errno;
 import jdk.internal.nicl.NativeLibraryImpl;
 import jdk.internal.nicl.types.BindingRegistry;
@@ -33,8 +34,11 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.nicl.types.LayoutType;
 
-public class NativeLibrary {
+public final class NativeLibrary {
     private static final Errno ERRNO = Errno.platformHasErrno() ? new Errno() : null;
+
+    // don't create
+    private NativeLibrary() {}
 
     /**
      * Create a raw, uncivilized version of the interface
@@ -45,6 +49,10 @@ public class NativeLibrary {
      */
     @Deprecated
     public static <T> T bindRaw(Class<T> c, Library lib) {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.nicl.bindRaw"));
+        }
         return NativeLibraryImpl.bindRaw(c, lib);
     }
 
@@ -55,6 +63,10 @@ public class NativeLibrary {
      * @return
      */
     public static <T> T bindRaw(Class<T> c) {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.nicl.bindRaw"));
+        }
         return NativeLibraryImpl.bindRaw(c);
     }
 
@@ -66,6 +78,10 @@ public class NativeLibrary {
      */
     @Deprecated
     public static Object bind(Class<?> c) {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.nicl.bind"));
+        }
         return NativeLibraryImpl.bind(c);
     }
 
@@ -78,6 +94,10 @@ public class NativeLibrary {
      */
     @Deprecated
     public static Object bind(Class<?> c, Library lib) {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.nicl.bind"));
+        }
         return NativeLibraryImpl.bind(c, lib);
     }
 
@@ -93,6 +113,10 @@ public class NativeLibrary {
      * @throws IllegalAccessException
      */
     public static MethodHandle lookupNativeMethod(Library[] libs, String symbolName, MethodType methodType, boolean isVarArgs) throws NoSuchMethodException, IllegalAccessException {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.nicl.lookupNative", symbolName));
+        }
         return NativeLibraryImpl.lookupNativeMethod(libs, symbolName, methodType, isVarArgs);
     }
 
@@ -101,14 +125,30 @@ public class NativeLibrary {
     }
 
     public static Library loadLibrary(String name) {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkLink(name);
+        }
         return NativeLibraryImpl.loadLibrary(name);
     }
 
     public static Library loadLibraryFile(String name) {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkLink(name);
+        }
+        if (!(new File(name).isAbsolute())) {
+            throw new UnsatisfiedLinkError(
+                "Expecting an absolute path of the library: " + name);
+        }
         return NativeLibraryImpl.loadLibraryFile(name);
     }
 
     public static Library getDefaultLibrary() {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.nicl.getDefaultLibrary"));
+        }
         return NativeLibraryImpl.getDefaultLibrary();
     }
 
