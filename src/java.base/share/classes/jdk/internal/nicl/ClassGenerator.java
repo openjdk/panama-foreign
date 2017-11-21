@@ -35,6 +35,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.stream.Stream;
 
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
 
@@ -42,16 +43,17 @@ abstract class ClassGenerator implements ImplGenerator {
     private static final String DEBUG_DUMP_CLASSES_DIR_PROPERTY = "jdk.internal.nicl.ClassGenerator.DEBUG_DUMP_CLASSES_DIR";
     private static final String DEBUG_USE_ANON_CLASSES_PROPERTY = "jdk.internal.nicl.ClassGenerator.DEBUG_USE_ANON_CLASSES";
 
-    private static final boolean DEBUG = Boolean.getBoolean("jdk.internal.nicl.ClassGenerator.DEBUG");
+    private static final boolean DEBUG = Boolean.parseBoolean(
+        privilegedGetProperty("jdk.internal.nicl.ClassGenerator.DEBUG"));
 
     private static final File DEBUG_DUMP_CLASSES_DIR;
     private static final boolean DEBUG_USE_ANON_CLASSES;
 
     static {
-        String path = System.getProperty(DEBUG_DUMP_CLASSES_DIR_PROPERTY);
+        String path = privilegedGetProperty(DEBUG_DUMP_CLASSES_DIR_PROPERTY);
         if (path == null) {
             DEBUG_DUMP_CLASSES_DIR = null;
-            DEBUG_USE_ANON_CLASSES = Boolean.valueOf(System.getProperty(DEBUG_USE_ANON_CLASSES_PROPERTY, "true"));
+            DEBUG_USE_ANON_CLASSES = Boolean.valueOf(privilegedGetProperty(DEBUG_USE_ANON_CLASSES_PROPERTY, "true"));
         } else {
             // Turn off the use of anonymous classes to enable debugging
             DEBUG_USE_ANON_CLASSES = false;

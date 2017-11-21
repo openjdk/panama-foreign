@@ -38,10 +38,12 @@ import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Reference;
 
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
 class HeaderImplGenerator extends ClassGenerator {
-    private static final boolean FAIL_EAGERLY = Boolean.valueOf(System.getProperty("jdk.internal.nicl.HeaderImplGenerator.FAIL_EAGERLY", "false"));
+    private static final boolean FAIL_EAGERLY = Boolean.valueOf(
+        privilegedGetProperty("jdk.internal.nicl.HeaderImplGenerator.FAIL_EAGERLY", "false"));
 
     // name of pointer field, only used for record types
     private static final String POINTER_FIELD_NAME = "ptr";

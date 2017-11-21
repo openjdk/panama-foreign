@@ -29,10 +29,14 @@ import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
 import java.nicl.types.Transformer;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static jdk.internal.nicl.UnixDynamicLibraries.*;
 
 public class LdLoader extends LibraryLoader {
-    private static final boolean DEBUG = Boolean.getBoolean("jdk.internal.nicl.LdLoader.DEBUG");
+    private static final boolean DEBUG = Boolean.parseBoolean(
+        privilegedGetProperty("jdk.internal.nicl.LdLoader.DEBUG"));
 
     private final String[] usr_paths;
 
@@ -40,13 +44,15 @@ public class LdLoader extends LibraryLoader {
     private final UnixLibrary defaultLibrary;
 
     private String[] getUserClassPath() {
-        try {
-            Field f = ClassLoader.class.getDeclaredField("usr_paths");
-            f.setAccessible(true);
-            return (String[])f.get(null);
-        } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        return AccessController.doPrivileged((PrivilegedAction<String[]>)() -> {
+            try {
+                Field f = ClassLoader.class.getDeclaredField("usr_paths");
+                f.setAccessible(true);
+                return (String[])f.get(null);
+            } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public LdLoader() {

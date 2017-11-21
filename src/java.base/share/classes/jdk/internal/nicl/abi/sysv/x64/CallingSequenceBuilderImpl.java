@@ -38,9 +38,11 @@ import jdk.internal.nicl.types.Pointer;
 import jdk.internal.nicl.types.Scalar;
 import jdk.internal.nicl.types.Type;
 import java.util.ArrayList;
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderImpl {
-    private static final boolean DEBUG = Boolean.getBoolean("jdk.internal.nicl.abi.sysv.x64.DEBUG");
+    private static final boolean DEBUG = Boolean.parseBoolean(
+        privilegedGetProperty("jdk.internal.nicl.abi.sysv.x64.DEBUG"));
 
     // The AVX 512 enlightened ABI says "eight eightbytes"
     private static final int MAX_AGGREGATE_REGS_SIZE = 8;

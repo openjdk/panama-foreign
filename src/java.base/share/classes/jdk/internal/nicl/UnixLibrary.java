@@ -28,11 +28,12 @@ import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
 import java.nicl.types.Transformer;
-
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static jdk.internal.nicl.UnixDynamicLibraries.RTLD_DEFAULT_PTR;
 
 class UnixLibrary implements Library {
-    private static final boolean DEBUG = Boolean.getBoolean("jdk.internal.nicl.UnixLibrary.DEBUG");
+    private static final boolean DEBUG = Boolean.parseBoolean(
+        privilegedGetProperty("jdk.internal.nicl.UnixLibrary.DEBUG"));
 
     private final Pointer<Void> handle;
 
