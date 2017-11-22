@@ -130,78 +130,157 @@ ciType* ciType::make(BasicType t) {
   return _basic_types[t];
 }
 
-bool ciType::is_float128vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Species));
+static bool is_float128vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector);
+}
+static bool is_float128species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Species);
+}
+static bool is_float128mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Mask);
+}
+static bool is_float128(BasicType bt, vmSymbols::SID sid) {
+  return is_float128vector(bt, sid) || is_float128species(bt, sid) || is_float128mask(bt, sid);
+}
+static bool is_float256vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector);
+}
+static bool is_float256species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Species);
+}
+static bool is_float256mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Mask);
+}
+static bool is_float256(BasicType bt, vmSymbols::SID sid) {
+  return is_float256vector(bt, sid) || is_float256species(bt, sid) || is_float256mask(bt, sid);
+}
+static bool is_float512vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector);
+}
+static bool is_float512species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Species);
+}
+static bool is_float512mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Mask);
+}
+static bool is_float512(BasicType bt, vmSymbols::SID sid) {
+  return is_float512vector(bt, sid) || is_float512species(bt, sid) || is_float512mask(bt, sid);
+}
+static bool is_float_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
+  return is_float128(bt, sid) || is_float256(bt, sid) || is_float512(bt, sid);
+}
+static bool is_double128vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector);
+}
+static bool is_double128species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Species);
+}
+static bool is_double128mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Mask);
+}
+static bool is_double128(BasicType bt, vmSymbols::SID sid) {
+  return is_double128vector(bt, sid) || is_double128species(bt, sid) || is_double128mask(bt, sid);
+}
+static bool is_double256vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector);
+}
+static bool is_double256species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Species);
+}
+static bool is_double256mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Mask);
+}
+static bool is_double256(BasicType bt, vmSymbols::SID sid) {
+  return is_double256vector(bt, sid) || is_double256species(bt, sid) || is_double256mask(bt, sid);
+}
+static bool is_double512vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector);
+}
+static bool is_double512species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Species);
+}
+static bool is_double512mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Mask);
+}
+static bool is_double512(BasicType bt, vmSymbols::SID sid) {
+  return is_double512vector(bt, sid) || is_double512species(bt, sid) || is_double512mask(bt, sid);
+}
+static bool is_double_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
+  return is_double128(bt, sid) || is_double256(bt, sid) || is_double512(bt, sid);
+}
+static bool is_int128vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector);
+}
+static bool is_int128species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Species);
+}
+static bool is_int128mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Mask);
+}
+static bool is_int128(BasicType bt, vmSymbols::SID sid) {
+  return is_int128vector(bt, sid) || is_int128species(bt, sid) || is_int128mask(bt, sid);
+}
+static bool is_int256vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector);
+}
+static bool is_int256species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Species);
+}
+static bool is_int256mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Mask);
+}
+static bool is_int256(BasicType bt, vmSymbols::SID sid) {
+  return is_int256vector(bt, sid) || is_int256species(bt, sid) || is_int256mask(bt, sid);
+}
+static bool is_int512vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector);
+}
+static bool is_int512species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Species);
+}
+static bool is_int512mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Mask);
+}
+static bool is_int512(BasicType bt, vmSymbols::SID sid) {
+  return is_int512vector(bt, sid) || is_int512species(bt, sid) || is_int512mask(bt, sid);
+}
+static bool is_int_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
+  return is_int128(bt, sid) || is_int256(bt, sid) || is_int512(bt, sid);
 }
 
-bool ciType::is_float256vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Species));
-}
-
-bool ciType::is_float512vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Species));
-}
-
-bool ciType::is_int128vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Species));
-}
-
-bool ciType::is_int256vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Species));
-}
-
-bool ciType::is_int512vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Species));
-}
-
-bool ciType::is_double128vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Species));
-}
-
-bool ciType::is_double256vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Species));
-}
-
-bool ciType::is_double512vector() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Species));
-}
+#define __ basic_type(), as_klass()->name()->sid()
 
 bool ciType::is_vectormask() {
-  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_VectorMask) ||
-  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_VectorGenericMask));
+  return basic_type() == T_OBJECT &&
+      (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_VectorMask) ||
+      (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_VectorAbstractMask)) ||
+      is_float128mask(__) || is_float256mask(__) || is_float512mask(__) ||
+      is_double128mask(__) || is_double256mask(__) || is_double512mask(__) ||
+      is_int128mask(__) || is_int256mask(__) || is_int512mask(__));
 }
 
 bool ciType::is_vectorapi_vector() {
-  return is_float128vector() || is_float256vector() || is_float512vector() ||
-      is_double128vector() || is_double256vector() || is_double512vector() ||
-      is_int128vector() || is_int256vector() || is_int512vector() ||
-      is_vectormask();
+  return is_float_vec_or_mask(__) ||
+      is_double_vec_or_mask(__) ||
+      is_int_vec_or_mask(__);
 }
 
 int ciType::vectorapi_vector_size() {
-  if ( is_double128vector() ) return 2;
-  if ( is_float128vector() || is_int128vector() || is_double256vector() ) return 4;
-  if ( is_float256vector() || is_int256vector() || is_double512vector() ) return 8;
-  if ( is_float512vector() || is_int512vector()) return 16;
+  if ( is_double128(__) ) return 2;
+  if ( is_float128(__) || is_int128(__) || is_double256(__) ) return 4;
+  if ( is_float256(__) || is_int256(__) || is_double512(__) ) return 8;
+  if ( is_float512(__) || is_int512(__)) return 16;
   return -1;
 }
 
 BasicType ciType::vectorapi_vector_bt() {
-  if ( is_vectormask() ) return T_BOOLEAN;
-  if ( is_float128vector() || is_float256vector() || is_float512vector() ) return T_FLOAT;
-  if ( is_double128vector() || is_double256vector() || is_double512vector() ) return T_DOUBLE;
-  if ( is_int128vector() || is_int256vector() || is_int512vector() ) return T_INT;
+  if ( is_float_vec_or_mask(__) ) return T_FLOAT;
+  if ( is_double_vec_or_mask(__) ) return T_DOUBLE;
+  if ( is_int_vec_or_mask(__) ) return T_INT;
   return T_VOID;
 }
+
+#undef __
 
 // ciReturnAddress
 //

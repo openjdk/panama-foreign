@@ -73,15 +73,6 @@ public:
   bool is_one_word() const                  { return size() == 1; }
   bool is_two_word() const                  { return size() == 2; }
 
-  bool is_float128vector();
-  bool is_float256vector();
-  bool is_float512vector();
-  bool is_int128vector();
-  bool is_int256vector();
-  bool is_int512vector();
-  bool is_double128vector();
-  bool is_double256vector();
-  bool is_double512vector();
   bool is_vectormask();
   bool is_vectorapi_vector();
   int vectorapi_vector_size();

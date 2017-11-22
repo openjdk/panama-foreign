@@ -3086,11 +3086,12 @@ void PhaseMacroExpand::expand_vectorunbox_node(VectorUnboxNode* vunbox) {
   ciInstanceKlass* from_kls = tinst->klass()->as_instance_klass();
   assert(from_kls->is_vectorapi_vector(), "expecting it to be Vector API class");
   BasicType bt = from_kls->vectorapi_vector_bt();
+  BasicType masktype = bt;
 
   const char* field_name = "vec";
   if (from_kls->is_vectormask()) {
-    from_kls = from_kls->find_klass(ciSymbol::make("jdk/incubator/vector/GenericMask"))->as_instance_klass();
     field_name = "bits";
+    bt = T_BOOLEAN;
   }
 
   ciField* field = from_kls->get_field_by_name(ciSymbol::make(field_name),
@@ -3124,9 +3125,9 @@ void PhaseMacroExpand::expand_vectorunbox_node(VectorUnboxNode* vunbox) {
                                                             num_elem,
                                                             bt));
   if (from_kls->is_vectormask()) {
-    BasicType masktype = vunbox->bottom_type()->is_vect()->element_basic_type();
     if (masktype == T_FLOAT) masktype = T_INT;
     if (masktype == T_DOUBLE) masktype = T_LONG;
+    assert(vunbox->bottom_type()->is_vect()->element_basic_type() == masktype, "expect mask type consistency");
     vec_val_load = transform_later(new VectorLoadMaskNode(vec_val_load, TypeVect::make(masktype, num_elem)));
   }
 

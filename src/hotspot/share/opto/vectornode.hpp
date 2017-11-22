@@ -865,7 +865,7 @@ class VectorBoxNode : public CallNode {
   const  TypeInstPtr* box_type() const { assert(_box_type != NULL, "sanity"); return _box_type; };
   virtual       uint  ideal_reg() const { return box_type()->ideal_reg(); }
   virtual       uint  size_of() const { return sizeof(*this); }
-  virtual       bool  is_CFG() const { return false; }
+  virtual       bool  is_CFG() const { return true; }
   virtual       bool  guaranteed_safepoint()  { return false; }
 
   static const TypeFunc* vec_box_type(const TypeInstPtr* box_type, const TypeVect* vt);
@@ -893,9 +893,8 @@ class VectorMaskCmpNode : public VectorNode {
   uint size_of() const { return sizeof(*this); }
 
  public:
-  VectorMaskCmpNode(BoolTest::mask predicate, Node* in1, Node* in2) :
-      VectorNode(in1, in2, TypeVect::make(T_INT, in1->bottom_type()->is_vect()->length())), _predicate(predicate) {
-    // FIXME The Type T_INT is incorrect here for the general case.
+  VectorMaskCmpNode(BoolTest::mask predicate, Node* in1, Node* in2, const TypeVect* vt) :
+      VectorNode(in1, in2, vt), _predicate(predicate) {
     assert(in1->bottom_type()->is_vect()->element_basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),
            "VectorMaskCmp inputs must have same type for elements");
     assert(in1->bottom_type()->is_vect()->length() == in2->bottom_type()->is_vect()->length(),

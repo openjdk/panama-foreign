@@ -330,24 +330,25 @@ class LibraryCallKit : public GraphKit {
   const TypeInstPtr* get_receiver_box_type(ciKlass** exact_kls_ptr);
   const TypeInstPtr* get_return_box_type(ciKlass** exact_kls_ptr, vmIntrinsics::ID id);
   const TypeInstPtr* get_derived_return_box_type(ciKlass** exact_kls_ptr, vmIntrinsics::ID id);
-  Node* unboxVectorObj(Node* in, BasicType bt, int num_elem);
-  Node* getVectorInput(Node* in, BasicType bt, int num_elem);
+  bool get_receiver_type_numelem(BasicType& rc_type, int& rc_num_elem);
+  Node* unboxVectorObj(Node* in, const TypeInstPtr* box_type, BasicType bt, int num_elem);
+  Node* getVectorInput(Node* in, const TypeInstPtr* box_type, BasicType bt, int num_elem);
   Node* wrapWithVectorBox(Node* vector, const TypeInstPtr* box_type);
   void setVectorOutput(Node* out, bool set_res = true);
   bool inline_vector_operation(vmIntrinsics::ID id);
   bool inline_zero_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem);
   bool inline_broadcast_vector_op(const TypeInstPtr* box_type, BasicType type, int num_elem);
   bool inline_load_vector_op(const TypeInstPtr* box_type, BasicType type, int num_elem);
-  bool inline_store_vector_op(BasicType bt, int num_elem);
+  bool inline_store_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem);
   bool inline_bin_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
   bool inline_un_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
-  bool inline_vector_cmp(const TypeInstPtr* box_type, BasicType in_type, int num_elem, vmIntrinsics::ID id);
+  bool inline_vector_cmp(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
   bool inline_vector_blend(const TypeInstPtr* box_type, BasicType type, int num_elem);
   bool inline_vector_addAll(const TypeInstPtr* box_type, BasicType type, int num_elem);
   bool inline_vector_length(int num_elem);
-  bool inline_vector_make_mask(const TypeInstPtr* box_type, vmIntrinsics::ID id);
-  bool inline_vector_mask_test(vmIntrinsics::ID id);
-  bool inline_vector_mask_rebracket(const TypeInstPtr* box_type);
+  bool inline_vector_make_mask(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
+  bool inline_vector_mask_test(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
+  bool inline_vector_mask_rebracket(const TypeInstPtr* box_type, BasicType type, int num_elem);
 
   bool inline_profileBoolean();
   bool inline_isCompileConstant();
@@ -6928,17 +6929,27 @@ static bool is_vector_mask_test(vmIntrinsics::ID id) {
   }
 }
 
+static bool is_casting_operation(vmIntrinsics::ID id) {
+  if ( id == vmIntrinsics::_VectorMaskRebracket ||
+      id == vmIntrinsics::_VectorCastFloat ) {
+    return true;
+  }
+  return false;
+}
+
 static bool need_type_from_return(vmIntrinsics::ID id) {
   if ( is_vector_mask_make(id) ||
       is_vector_load(id) ||
       is_vector_zero(id) ||
       is_vector_broadcast(id) ||
       is_vector_cmp(id) ||
-      id == vmIntrinsics::_VectorCastFloat ) {
+      is_casting_operation(id) ) {
     return true;
   }
   return false;
 }
+
+
 
 const TypeInstPtr* LibraryCallKit::get_receiver_box_type(ciKlass** exact_kls_ptr) {
   ciKlass* exact_kls = profile_has_unique_klass();
@@ -6961,54 +6972,86 @@ const TypeInstPtr* LibraryCallKit::get_receiver_box_type(ciKlass** exact_kls_ptr
   return box_type;
 }
 
-static const char* species_to_instance(vmSymbols::SID species) {
-  switch(species) {
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Species):
-      return "jdk/incubator/vector/Float128Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Species):
-      return "jdk/incubator/vector/Float256Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Species):
-      return "jdk/incubator/vector/Float512Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Species):
-      return "jdk/incubator/vector/Double128Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Species):
-      return "jdk/incubator/vector/Double256Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Species):
-      return "jdk/incubator/vector/Double512Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Species):
-      return "jdk/incubator/vector/Int128Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Species):
-      return "jdk/incubator/vector/Int256Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Species):
-      return "jdk/incubator/vector/Int512Vector";
-    default:
-      assert(false, "Should be able to determine species to instance type");
-      break;
+bool LibraryCallKit::get_receiver_type_numelem(BasicType& rc_type, int& rc_num_elem) {
+  ciKlass* exact_kls = NULL;
+  const TypeInstPtr* box_type = get_receiver_box_type(&exact_kls);
+  if (exact_kls == NULL) {
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Could nore recover receiver type");
   }
-  return NULL;
+#endif
+    return false;
+  }
+
+  rc_type = exact_kls->vectorapi_vector_bt();
+  rc_num_elem = exact_kls->vectorapi_vector_size();
+  if (exact_kls->is_vectorapi_vector() && rc_type != T_VOID && rc_num_elem > 0) {
+    return true;
+  }
+
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Could nore recover vector information from receiver type");
+  }
+#endif
+  return false;
 }
 
-static const char* species_to_instance_cast_to_float(vmSymbols::SID species) {
-  switch(species) {
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Species):
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Species):
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Species):
-      return "jdk/incubator/vector/Float128Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Species):
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Species):
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Species):
-      return "jdk/incubator/vector/Float256Vector";
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Species):
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Species):
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Species):
-      return "jdk/incubator/vector/Float512Vector";
-    default:
-      assert(false, "Should be able to determine float type");
-      break;
-  }
-  return NULL;
-}
+enum VectorApiObjectType {
+  VECAPI_VECTOR,
+  VECAPI_MASK,
+  VECAPI_SPECIES,
+  VECAPI_SHUFFLE,
+};
 
+static ciKlass* get_exact_klass_for_vector_box(ciKlass* ctx, BasicType bt, int num_elem, VectorApiObjectType obj_type) {
+  // FIXME: use VM symbol table instead
+  ResourceMark rm;
+  stringStream ss;
+  ss.print_raw("jdk/incubator/vector/");
+  switch (bt) {
+    case T_INT: ss.print_raw("Int"); break;
+    case T_FLOAT: ss.print_raw("Float"); break;
+    case T_DOUBLE: ss.print_raw("Double"); break;
+    default: fatal("unknown element type: %d", bt);
+  }
+  int bits = num_elem * BitsPerByte * type2aelembytes(bt);
+  switch (bits) {
+    case  64: // fall through
+    case 128: // fall through
+    case 256: // fall through
+    case 512: ss.print("%d", bits); break;
+    default: fatal("unknown vector size: %d", bits);
+  }
+  ss.print_raw("Vector");
+  if (obj_type != VECAPI_VECTOR) {
+    ss.print_raw("$");
+    switch (bt) {
+      case T_INT: ss.print_raw("Int"); break;
+      case T_FLOAT: ss.print_raw("Float"); break;
+      case T_DOUBLE: ss.print_raw("Double"); break;
+      default: fatal("unknown element type: %d", bt);
+    }
+    switch (bits) {
+      case  64: // fall through
+      case 128: // fall through
+      case 256: // fall through
+      case 512: ss.print("%d", bits); break;
+      default: fatal("unknown vector size: %d", bits);
+    }
+    switch (obj_type) {
+      case VECAPI_MASK: ss.print_raw("Mask"); break;
+      case VECAPI_SPECIES: ss.print_raw("Species"); break;
+      case VECAPI_SHUFFLE: ss.print_raw("Shuffle"); break;
+      default: fatal("unknown vector object type");
+    }
+  }
+
+  ciSymbol* vector_klass_name = ciSymbol::make(ss.as_string());
+  ciKlass* vector_klass = ctx->find_klass(vector_klass_name);
+  return vector_klass;
+}
 
 const TypeInstPtr* LibraryCallKit::get_derived_return_box_type(ciKlass** exact_kls_ptr, vmIntrinsics::ID id) {
   // If it is a load or broadcast, we can derive instance type from receiver type by mapping species to instance.
@@ -7023,23 +7066,65 @@ const TypeInstPtr* LibraryCallKit::get_derived_return_box_type(ciKlass** exact_k
     return TypeInstPtr::NOTNULL;
   }
 
-  const char* instance_klass_name = NULL;
+  int num_elem = (*exact_kls_ptr)->vectorapi_vector_size();
+  BasicType type = (*exact_kls_ptr)->vectorapi_vector_bt();
+
+  BasicType cast_to_type = T_VOID;
+  if (is_casting_operation(id)) {
+    // For casting / rebracket operations, we need to get the "class" argument to figure out
+    // the resulting type.
+    const TypeInstPtr* vector_klass = _gvn.type(argument(1))->is_instptr();
+    if (vector_klass->const_oop() != NULL) {
+      ciKlass* cast_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
+      switch(cast_klass->name()->sid()) {
+        case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Integer):
+          cast_to_type = T_INT;
+          break;
+        case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Long):
+          cast_to_type = T_LONG;
+          break;
+        case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Byte):
+          cast_to_type = T_BYTE;
+          break;
+        case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Short):
+          cast_to_type = T_SHORT;
+          break;
+        case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Float):
+          cast_to_type = T_FLOAT;
+          break;
+        case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Double):
+          cast_to_type = T_DOUBLE;
+          break;
+        default:
+          break;
+      }
+    }
+
+    if (cast_to_type == T_VOID) {
+#ifndef PRODUCT
+      if (DebugVectorApi) {
+        tty->print_cr("Failed to figure out derived return type because argument for cast was not "
+            "constant and not primitive box");
+      }
+#endif
+      return TypeInstPtr::NOTNULL;
+    }
+  }
+
+  ciKlass* klass = NULL;
   if (is_vector_mask_make(id) || is_vector_cmp(id)) {
-    instance_klass_name = "jdk/incubator/vector/GenericMask";
+    klass = get_exact_klass_for_vector_box((*exact_kls_ptr), type, num_elem, VECAPI_MASK);
   } else if (is_vector_load(id) || is_vector_zero(id) || is_vector_broadcast(id)) {
-    instance_klass_name = species_to_instance((*exact_kls_ptr)->name()->sid());
+    klass = get_exact_klass_for_vector_box((*exact_kls_ptr), type, num_elem, VECAPI_VECTOR);
   } else if (id == vmIntrinsics::_VectorCastFloat) {
-    instance_klass_name = species_to_instance_cast_to_float((*exact_kls_ptr)->name()->sid());
+    klass = get_exact_klass_for_vector_box((*exact_kls_ptr), cast_to_type, num_elem, VECAPI_VECTOR);
+  } else if (id == vmIntrinsics::_VectorMaskRebracket) {
+    klass = get_exact_klass_for_vector_box((*exact_kls_ptr), cast_to_type, num_elem, VECAPI_MASK);
   } else {
     assert(false, "Logic is missing to derive return type from receiver type");
     return TypeInstPtr::NOTNULL;
   }
 
-  if (instance_klass_name == NULL) {
-    return TypeInstPtr::NOTNULL;
-  }
-
-  ciKlass* klass = (*exact_kls_ptr)->find_klass(ciSymbol::make(instance_klass_name));
   if (klass == NULL) {
     return TypeInstPtr::NOTNULL;
   }
@@ -7093,36 +7178,40 @@ static BasicType getMaskBasicType(BasicType use_type) {
   if (use_type == T_DOUBLE) {
     return T_LONG;
   }
+  assert(is_java_primitive(use_type), "must be java primitive");
   return use_type;
 }
 
-static int getDefaultMaskVecLength() {
-  // FIXME Anyone using this is getting the length wrong. We have to figure out a mechanism to recover it.
-  return 8;
-}
-
-Node* LibraryCallKit::unboxVectorObj(Node* in, BasicType type, int num_elem) {
+Node* LibraryCallKit::unboxVectorObj(Node* in, const TypeInstPtr* box_type, BasicType type, int num_elem) {
   if (type == T_VOID || num_elem < 0) {
     return NULL;
   }
 
-  if (in->is_Phi() || (!in->is_Vector() && !in->is_LoadVector())) {
-    const TypeInstPtr* box_type = _gvn.type(in)->isa_instptr();
-    if (box_type != NULL &&
-        box_type->klass() != NULL &&
-        box_type->klass()->is_vectorapi_vector()) {
-      const TypeVect* vec_type = TypeVect::make(type, num_elem);
-      Node* unbox = new VectorUnboxNode(C, vec_type, in, merged_memory());
-      unbox->set_req(0, control());
-      return _gvn.transform(unbox);
-    } else {
-      return NULL;
+  assert (!in->is_Vector() && !in->is_LoadVector(), "Should not be unboxing a vector");
+  assert(box_type->klass()->is_vectorapi_vector(), "Must be Vector API Vector");
+
+  // Determine the type object from graph. If type cannot be determined, create a cast.
+  const TypeInstPtr* gvn_box_type = _gvn.type(in)->isa_instptr();
+  if ( Type::cmp(gvn_box_type, box_type) != 0 ) {
+    const Type* cast_type = TypeOopPtr::make_from_klass(box_type->klass());
+    in = _gvn.transform(new CheckCastPPNode(control(), in, cast_type));
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Created a checkcastpp node while creating VectorUnbox because incoming type was not as expected");
+      cast_type->dump();
+      tty->print_cr("");
+      in->dump(1);
     }
+#endif
   }
-  return in;
+
+  const TypeVect* vec_type = TypeVect::make(type, num_elem);
+  Node* unbox = new VectorUnboxNode(C, vec_type, in, merged_memory());
+  unbox->set_req(0, control());
+  return _gvn.transform(unbox);
 }
 
-Node* LibraryCallKit::getVectorInput(Node* in, BasicType bt, int num_elem) {
+Node* LibraryCallKit::getVectorInput(Node* in, const TypeInstPtr* box_type, BasicType bt, int num_elem) {
   if (in->is_Call()) {
     in = in->as_Call()->proj_out(TypeFunc::Parms);
   }
@@ -7135,7 +7224,7 @@ Node* LibraryCallKit::getVectorInput(Node* in, BasicType bt, int num_elem) {
   }
 
   // Seems value was not found - so all we have is the object. Create a VectorUnbox node for it.
-  return unboxVectorObj(in, bt, num_elem);
+  return unboxVectorObj(in, box_type, bt, num_elem);
 }
 
 static const char* array_type_string(BasicType type) {
@@ -7168,17 +7257,14 @@ Node* LibraryCallKit::wrapWithVectorBox(Node* vector, const TypeInstPtr* box_typ
   BasicType bt = box_klass->vectorapi_vector_bt();
   int num_elem = box_klass->vectorapi_vector_size();
   bool is_mask = box_klass->is_vectormask();
-  if (!is_mask) {
-    assert(static_cast<int>(vect_type->length()) == num_elem, "consistent vector length expected");
-    assert(vect_type->element_basic_type() == bt, "consistent vector element type expected");
-  }
+  assert(static_cast<int>(vect_type->length()) == num_elem, "consistent vector length expected");
+  assert(vect_type->element_basic_type() == (is_mask ? getMaskBasicType(bt) : bt), "consistent vector element type expected");
 
   Node* mask_store = NULL;
   if (is_mask) {
-    // Masks have to be prepared in a special manner to correspond to Java implementation of boolean array.
-    // Thus we insert an instruction that will prepare that transition.
-    num_elem = vect_type->length();
     mask_store = _gvn.transform(new VectorStoreMaskNode(vector, num_elem));
+    // Although type of mask depends on its definition, in terms of storage everything is stored in boolean array.
+    bt = T_BOOLEAN;
     assert(mask_store->as_Vector()->bottom_type()->is_vect()->element_basic_type() == bt,
            "must be consistent with mask representation");
   }
@@ -7222,8 +7308,6 @@ Node* LibraryCallKit::wrapWithVectorBox(Node* vector, const TypeInstPtr* box_typ
                                                       num_elem));
   set_memory(vstore, arr_adr_type);
 
-  // FIXME If it is a mask, also need to store the Species instance in its field.
-
   Node* vbox = new VectorBoxNode(C, box_type, vect_type, vector, obj);
   vbox->set_req(TypeFunc::Memory, merged_memory());
   vbox->set_req(TypeFunc::Control, control());
@@ -7235,6 +7319,29 @@ Node* LibraryCallKit::wrapWithVectorBox(Node* vector, const TypeInstPtr* box_typ
   set_all_memory_call(vbox, false);
   set_control(_gvn.transform(new ProjNode(vbox, TypeFunc::Control)));
   return _gvn.transform(new ProjNode(vbox, VectorBoxNode::VecBox));
+}
+
+static Node* gen_replicate(BasicType bt, int num_elem, Node* con) {
+  switch (bt) {
+  case T_BOOLEAN:
+  case T_BYTE:
+    return new ReplicateBNode(con, TypeVect::make(bt, num_elem));
+  case T_CHAR:
+  case T_SHORT:
+    return new ReplicateSNode(con, TypeVect::make(bt, num_elem));
+  case T_INT:
+    return new ReplicateINode(con, TypeVect::make(bt, num_elem));
+  case T_LONG:
+    return new ReplicateLNode(con, TypeVect::make(bt, num_elem));
+  case T_FLOAT:
+    return new ReplicateFNode(con, TypeVect::make(bt, num_elem));
+  case T_DOUBLE:
+    return new ReplicateDNode(con, TypeVect::make(bt, num_elem));
+  default:
+    assert(false, "Unknown type for replicate");
+    break;
+  }
+  return NULL;
 }
 
 void LibraryCallKit::setVectorOutput(Node* out, bool set_res) {
@@ -7268,8 +7375,8 @@ bool LibraryCallKit::inline_bin_vector_op(const TypeInstPtr* box_type, int op, B
     return false;
   }
 
-  Node* opd1 = getVectorInput(argument(0), type, num_elem);
-  Node* opd2 = getVectorInput(argument(1), type, num_elem);
+  Node* opd1 = getVectorInput(argument(0), box_type, type, num_elem);
+  Node* opd2 = getVectorInput(argument(1), box_type, type, num_elem);
   if (opd1 == NULL || opd2 == NULL) {
     return false;
   }
@@ -7302,7 +7409,7 @@ bool LibraryCallKit::inline_un_vector_op(const TypeInstPtr* box_type, int op, Ba
     return false;
   }
 
-  Node* opd1 = getVectorInput(argument(0), type, num_elem);
+  Node* opd1 = getVectorInput(argument(0), get_receiver_box_type(NULL), type, num_elem);
   if (opd1 == NULL) {
     return false;
   }
@@ -7327,7 +7434,7 @@ bool LibraryCallKit::inline_un_vector_op(const TypeInstPtr* box_type, int op, Ba
 }
 
 
-bool LibraryCallKit::inline_vector_cmp(const TypeInstPtr* box_type, BasicType in_type,
+bool LibraryCallKit::inline_vector_cmp(const TypeInstPtr* box_type, BasicType type,
                                        int num_elem, vmIntrinsics::ID id) {
 #ifndef PRODUCT
   if (DebugVectorApi) {
@@ -7361,13 +7468,23 @@ bool LibraryCallKit::inline_vector_cmp(const TypeInstPtr* box_type, BasicType in
     return false;
   }
 
-  Node* opd1 = getVectorInput(argument(0), in_type, num_elem);
-  Node* opd2 = getVectorInput(argument(1), in_type, num_elem);
+#ifndef PRODUCT
+  BasicType in_type = T_VOID; int in_num_elem = -1;
+  bool got_in_info = get_receiver_type_numelem(in_type, in_num_elem);
+  assert(got_in_info, "Expected to be able to get receiver information since we have return info");
+  assert(in_type == type, "mask basic type should be same as receiver type");
+  assert(in_num_elem == num_elem, "mask length should be same as receiver length ");
+#endif
+
+  const TypeInstPtr* receiver_type = get_receiver_box_type(NULL);
+  Node* opd1 = getVectorInput(argument(0), receiver_type, type, num_elem);
+  Node* opd2 = getVectorInput(argument(1), receiver_type, type, num_elem);
   if (opd1 == NULL || opd2 == NULL) {
     return false;
   }
 
-  Node* operation = new VectorMaskCmpNode(comp, opd1, opd2);
+  const TypeVect* vt = TypeVect::make(getMaskBasicType(type), num_elem);
+  Node* operation = new VectorMaskCmpNode(comp, opd1, opd2, vt);
   operation = _gvn.transform(operation);
   operation = wrapWithVectorBox(operation, box_type);
 
@@ -7385,10 +7502,22 @@ bool LibraryCallKit::inline_vector_blend(const TypeInstPtr* box_type, BasicType 
     return false;
   }
 
+#ifndef PRODUCT
+  BasicType in_type = T_VOID; int in_num_elem = -1;
+  bool got_in_info = get_receiver_type_numelem(in_type, in_num_elem);
+  assert(got_in_info, "Expected to be able to get receiver information since we have return info");
+  assert(in_type == type, "mask basic type should be same as receiver type");
+  assert(in_num_elem == num_elem, "mask length should be same as receiver length ");
+#endif
+
   BasicType mask_type = getMaskBasicType(type);
-  Node* opd1 = getVectorInput(argument(0), type, num_elem);
-  Node* opd2 = getVectorInput(argument(1), type, num_elem);
-  Node* opd3 = getVectorInput(argument(2), mask_type, num_elem);
+  Node* opd1 = getVectorInput(argument(0), box_type, type, num_elem);
+  Node* opd2 = getVectorInput(argument(1), box_type, type, num_elem);
+  const TypeInstPtr* mask_box_type = TypeInstPtr::make(TypePtr::NotNull,
+                                                       get_exact_klass_for_vector_box(box_type->klass(),
+                                                                                      type, num_elem,
+                                                                                      VECAPI_MASK));
+  Node* opd3 = getVectorInput(argument(2), mask_box_type, mask_type, num_elem);
 
   if (opd1 == NULL || opd2 == NULL || opd3 == NULL) {
     return false;
@@ -7410,7 +7539,7 @@ bool LibraryCallKit::inline_vector_addAll(const TypeInstPtr* box_type, BasicType
   }
 #endif
 
-  Node* opd1 = getVectorInput(argument(0), type, num_elem);
+  Node* opd1 = getVectorInput(argument(0), box_type, type, num_elem);
   if (opd1 == NULL) {
     return false;
   }
@@ -7443,66 +7572,44 @@ bool LibraryCallKit::inline_vector_length(int num_elem) {
   return true;
 }
 
-bool LibraryCallKit::inline_vector_make_mask(const TypeInstPtr* box_type, vmIntrinsics::ID id) {
+bool LibraryCallKit::inline_vector_make_mask(const TypeInstPtr* box_type, BasicType bt, int num_elem, vmIntrinsics::ID id) {
   if (id == vmIntrinsics::_VectorConstantMask) {
     return false;
   } else {
     assert (id == vmIntrinsics::_VectorTrueMask || id == vmIntrinsics::_VectorFalseMask, "must be absolute mask");
   }
 
-  // To get number of elements we need to look at receiver type.
-  ciKlass* exact_kls = NULL;
-  const TypeInstPtr* rec_type = get_receiver_box_type(&exact_kls);
-  if (exact_kls == NULL || !exact_kls->is_vectorapi_vector()) {
-#ifndef PRODUCT
-    if (DebugVectorApi) {
-      tty->print_cr("Could not recover vector class for mask to get number of elements");
-    }
-#endif
-    return false;
-  }
+  bt = getMaskBasicType(bt);
 
-  BasicType bt = getMaskBasicType(exact_kls->vectorapi_vector_bt());
-  int num_elem = exact_kls->vectorapi_vector_size();
-  if (!Matcher::vector_size_supported(bt, num_elem)) {
-    return false;
-  }
-
-  int con = (id == vmIntrinsics::_VectorTrueMask) ? 1 : 0;
-  Node* mask = new ReplicateINode(intcon(con), TypeVect::make(bt, num_elem));
+  jint icon = (id == vmIntrinsics::_VectorTrueMask) ? max_juint : 0;
+  jlong jcon = (id == vmIntrinsics::_VectorTrueMask) ? max_julong : 0;
+  Node* input = bt == T_LONG ? longcon(jcon) : intcon(icon);
+  Node* mask = gen_replicate(bt, num_elem, input);
   mask = _gvn.transform(mask);
   mask = wrapWithVectorBox(mask, box_type);
   setVectorOutput(mask);
   return true;
 }
 
-bool LibraryCallKit::inline_vector_mask_test(vmIntrinsics::ID id) {
-  if (!Matcher::match_rule_supported(Op_VectorTest)) {
-    return false;
-  }
-
-  int num_elem = getDefaultMaskVecLength();
+bool LibraryCallKit::inline_vector_mask_test(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id) {
   if (!Matcher::match_rule_supported(Op_VectorTest) && !Matcher::match_rule_supported_vector(Op_VectorTest, num_elem)) {
     return false;
   }
 
-  // FIXME This type is incorrect because we need to derived it.
-  BasicType bt = getMaskBasicType(T_INT);
-  Node* opd1 = getVectorInput(argument(0), bt, num_elem);
+  type = getMaskBasicType(type);
+  Node* opd1 = getVectorInput(argument(0), box_type, type, num_elem);
   if (opd1 == NULL) {
     return false;
   }
 
   Node* rhs_val = NULL;
+  Node* con = NULL;
   Assembler::Condition booltest = Assembler::zero;
   switch(id) {
     case vmIntrinsics::_VectorMaskAllTrue:
-      // Using -1 means bits are all 0xFFFFFFFF.
-      assert(bt == T_INT, "Replicate kind depends on type");
-      rhs_val =
-          _gvn.transform(new ReplicateINode(intcon(-1),
-                                            TypeVect::make(bt,
-                                                           opd1->bottom_type()->is_vect()->length())));
+      // When testing for all true, want all bits to be set (aka -1 in each slot)
+      con = (type == T_LONG) ? longcon((jlong)max_julong) : intcon(max_juint);
+      rhs_val = gen_replicate(type, num_elem, con);
       // Test whether CF flag is 1.
       booltest = Assembler::carrySet;
       break;
@@ -7523,16 +7630,30 @@ bool LibraryCallKit::inline_vector_mask_test(vmIntrinsics::ID id) {
   return true;
 }
 
-bool LibraryCallKit::inline_vector_mask_rebracket(const TypeInstPtr* box_type) {
-  // FIXME Wrong mask type is used here.
-  BasicType bt = getMaskBasicType(T_INT);
-  int num_elem = getDefaultMaskVecLength();
+bool LibraryCallKit::inline_vector_mask_rebracket(const TypeInstPtr* box_type, BasicType type, int num_elem) {
+  BasicType in_type = T_VOID; int in_num_elem = -1;
+  bool got_in_info = get_receiver_type_numelem(in_type, in_num_elem);
+  assert(got_in_info, "Expected to be able to get receiver information since we have return info");
 
-  if (!Matcher::vector_size_supported(bt, num_elem)) {
+  if (getMaskBasicType(in_type) != getMaskBasicType(type)) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Inconsistent mask types found %s %s", type2name(in_type), type2name(type));
+    }
+#endif
     return false;
   }
 
-  Node* opd1 = getVectorInput(argument(0), bt, num_elem);
+  if (num_elem != in_num_elem) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Inconsistent mask lengths found %d %d", num_elem, in_num_elem);
+    }
+#endif
+    return false;
+  }
+
+  Node* opd1 = getVectorInput(argument(0), get_receiver_box_type(NULL), getMaskBasicType(in_type), in_num_elem);
   if (opd1 == NULL) {
     return false;
   }
@@ -7643,11 +7764,6 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
   }
 #endif
 
-  // Mask tests produce boolean and thus no need to figure out exact class.
-  if ( is_vector_mask_test(id) ) {
-    return return_and_print_if_failed(inline_vector_mask_test(id), id);
-  }
-
   ciKlass* exact_kls = NULL;
   const TypeInstPtr* box_type = need_type_from_return(id) ? get_return_box_type(&exact_kls, id) : get_receiver_box_type(&exact_kls);
 #ifndef PRODUCT
@@ -7656,52 +7772,40 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
   }
 #endif
 
-  if (exact_kls != NULL && exact_kls->is_vectorapi_vector()) {
-    if ( exact_kls->is_vectormask() ) {
-      // FIXME Need to check that arch supports the mask sizes the masking creates.
-      // FIXME Need to fix detection for mask making because dispatch only sees specialized class.
-      if ( is_vector_mask_make(id) ) {
-        return return_and_print_if_failed(inline_vector_make_mask(box_type, id), id);
-      } else if ( id == vmIntrinsics::_VectorMaskRebracket ) {
-        return return_and_print_if_failed(inline_vector_mask_rebracket(box_type), id);
-      } else if (is_vector_cmp(id)) {
-        // Try to get the receiver class in order to recover type and number of elements for mask.
-        get_receiver_box_type(&exact_kls);
-        if (exact_kls == NULL || !exact_kls->is_vectorapi_vector()) {
-          return return_and_print_if_failed(false, id);
-        }
-      }
-    }
+  int num_elem = exact_kls->vectorapi_vector_size();
+  assert(num_elem != -1, "VM should be able to recover vector size from vector class.");
+  BasicType type = exact_kls->vectorapi_vector_bt();
+  assert(type != T_VOID, "VM should be able to recover vector type from vector class.");
 
-    int num_elem = exact_kls->vectorapi_vector_size();
-    assert(num_elem != -1, "VM should be able to recover vector size from vector class.");
-    BasicType type = exact_kls->vectorapi_vector_bt();
-    assert(type != T_VOID, "VM should be able to recover vector type from vector class.");
-
-    if (Matcher::vector_size_supported(type, num_elem)) {
-      if (is_vector_load(id)) {
-        return return_and_print_if_failed(inline_load_vector_op(box_type, type, num_elem), id);
-      } else if (is_vector_broadcast(id)) {
-        return return_and_print_if_failed(inline_broadcast_vector_op(box_type, type, num_elem), id);
-      } else if (is_vector_zero(id)) {
-        return return_and_print_if_failed(inline_zero_vector_op(box_type, type, num_elem), id);
-      } else if (is_vector_store(id)) {
-        return return_and_print_if_failed(inline_store_vector_op(type, num_elem), id);
-      } else if (is_vector_blend(id)) {
-        return return_and_print_if_failed(inline_vector_blend(box_type, type, num_elem), id);
-      } else if (is_vector_addAll(id)) {
-        return return_and_print_if_failed(inline_vector_addAll(box_type, type, num_elem), id);
-      } else if (is_vector_cmp(id)) {
-        return return_and_print_if_failed(inline_vector_cmp(box_type, type, num_elem, id), id);
-      } else if (id == vmIntrinsics::_VectorLength) {
-        return return_and_print_if_failed(inline_vector_length(num_elem), id);
-      } else if (id == vmIntrinsics::_VectorCastFloat && type == T_DOUBLE) {
-        return return_and_print_if_failed(inline_un_vector_op(box_type, Op_ConvertVF2VD, type, num_elem), id);
-      } else {
-        int op = get_op_from_intrinsic(id);
-        assert(is_bin_vector_op(id), "Expected binary operation here. If not binary, support needs added.");
-        return return_and_print_if_failed(inline_bin_vector_op(box_type, op, type, num_elem), id);
-      }
+  if (Matcher::vector_size_supported(type, num_elem)) {
+    if (is_vector_load(id)) {
+      return return_and_print_if_failed(inline_load_vector_op(box_type, type, num_elem), id);
+    } else if (is_vector_broadcast(id)) {
+      return return_and_print_if_failed(inline_broadcast_vector_op(box_type, type, num_elem), id);
+    } else if (is_vector_zero(id)) {
+      return return_and_print_if_failed(inline_zero_vector_op(box_type, type, num_elem), id);
+    } else if (is_vector_store(id)) {
+      return return_and_print_if_failed(inline_store_vector_op(box_type, type, num_elem), id);
+    } else if (is_vector_blend(id)) {
+      return return_and_print_if_failed(inline_vector_blend(box_type, type, num_elem), id);
+    } else if (is_vector_addAll(id)) {
+      return return_and_print_if_failed(inline_vector_addAll(box_type, type, num_elem), id);
+    } else if (is_vector_cmp(id)) {
+      return return_and_print_if_failed(inline_vector_cmp(box_type, type, num_elem, id), id);
+    } else if (id == vmIntrinsics::_VectorLength) {
+      return return_and_print_if_failed(inline_vector_length(num_elem), id);
+    } else if (id == vmIntrinsics::_VectorCastFloat && type == T_DOUBLE) {
+      return return_and_print_if_failed(inline_un_vector_op(box_type, Op_ConvertVF2VD, type, num_elem), id);
+    } else if ( is_vector_mask_make(id) ) {
+      return return_and_print_if_failed(inline_vector_make_mask(box_type, type, num_elem, id), id);
+    } else if ( id == vmIntrinsics::_VectorMaskRebracket ) {
+      return return_and_print_if_failed(inline_vector_mask_rebracket(box_type, type, num_elem), id);
+    } else if ( is_vector_mask_test(id) ) {
+      return return_and_print_if_failed(inline_vector_mask_test(box_type, type, num_elem, id), id);
+    } else {
+      int op = get_op_from_intrinsic(id);
+      assert(is_bin_vector_op(id), "Expected binary operation here. If not binary, support needs added.");
+      return return_and_print_if_failed(inline_bin_vector_op(box_type, op, type, num_elem), id);
     }
   }
 
@@ -7757,31 +7861,7 @@ bool LibraryCallKit::inline_broadcast_vector_op(const TypeInstPtr* box_type, Bas
   }
 #endif
   Node* element = argument(1);
-  Node* broadcast = NULL;
-  switch (bt) {
-  case T_BOOLEAN:
-  case T_BYTE:
-    broadcast = new ReplicateBNode(element, TypeVect::make(bt, num_elem));
-    break;
-  case T_CHAR:
-  case T_SHORT:
-    broadcast = new ReplicateSNode(element, TypeVect::make(bt, num_elem));
-    break;
-  case T_INT:
-    broadcast = new ReplicateINode(element, TypeVect::make(bt, num_elem));
-    break;
-  case T_LONG:
-    broadcast = new ReplicateLNode(element, TypeVect::make(bt, num_elem));
-    break;
-  case T_FLOAT:
-    broadcast = new ReplicateFNode(element, TypeVect::make(bt, num_elem));
-    break;
-  case T_DOUBLE:
-    broadcast = new ReplicateDNode(element, TypeVect::make(bt, num_elem));
-    break;
-  default:
-    break;
-  }
+  Node* broadcast = gen_replicate(bt, num_elem, element);
   // No control is set for broadcast because just like constants, we want to be able to generate them
   // anywhere it makes sense in the graph.
   broadcast = _gvn.transform(broadcast);
@@ -7813,14 +7893,14 @@ bool LibraryCallKit::inline_load_vector_op(const TypeInstPtr* box_type, BasicTyp
   return true;
 }
 
-bool LibraryCallKit::inline_store_vector_op(BasicType bt, int num_elem) {
+bool LibraryCallKit::inline_store_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem) {
 #ifndef PRODUCT
   if (DebugVectorApi) {
     tty->print_cr("Trying to intrinsify vector store.");
   }
 #endif
 
-  Node* vector = getVectorInput(argument(0), bt, num_elem);
+  Node* vector = getVectorInput(argument(0), box_type, bt, num_elem);
   if (vector == NULL) {
     return false;
   }

@@ -80,36 +80,45 @@
   template(java_lang_Integer_IntegerCache,            "java/lang/Integer$IntegerCache")           \
   template(java_lang_Long,                            "java/lang/Long")                           \
   template(java_lang_Long_LongCache,                  "java/lang/Long$LongCache")                 \
-  template(jdk_incubator_vector_Vector,                  "jdk/incubator/vector/Vector")                 \
-  template(jdk_incubator_vector_VectorSpecies,           "jdk/incubator/vector/Vector$Species")         \
-  template(jdk_incubator_vector_VectorMask,              "jdk/incubator/vector/Vector$Mask")            \
-  template(jdk_incubator_vector_VectorGenericMask,       "jdk/incubator/vector/GenericMask")            \
-  template(jdk_incubator_vector_FloatVector,             "jdk/incubator/vector/FloatVector")            \
+  template(jdk_incubator_vector_Vector,                  "jdk/incubator/vector/Vector")                   \
+  template(jdk_incubator_vector_VectorSpecies,           "jdk/incubator/vector/Vector$Species")           \
+  template(jdk_incubator_vector_VectorMask,              "jdk/incubator/vector/Vector$Mask")              \
+  template(jdk_incubator_vector_VectorAbstractMask,      "jdk/incubator/vector/AbstractMask")             \
+  template(jdk_incubator_vector_FloatVector,             "jdk/incubator/vector/FloatVector")              \
   template(jdk_incubator_vector_FloatVector_FloatSpecies,"jdk/incubator/vector/FloatVector$FloatSpecies") \
-  template(jdk_incubator_vector_Float128Vector,          "jdk/incubator/vector/Float128Vector")         \
-  template(jdk_incubator_vector_Float128Vector_Float128Species,"jdk/incubator/vector/Float128Vector$Float128Species") \
-  template(jdk_incubator_vector_Float256Vector,          "jdk/incubator/vector/Float256Vector")         \
-  template(jdk_incubator_vector_Float256Vector_Float256Species,"jdk/incubator/vector/Float256Vector$Float256Species") \
-  template(jdk_incubator_vector_Float512Vector,          "jdk/incubator/vector/Float512Vector")         \
-  template(jdk_incubator_vector_Float512Vector_Float512Species,"jdk/incubator/vector/Float512Vector$Float512Species") \
-  template(jdk_incubator_vector_DoubleVector,             "jdk/incubator/vector/DoubleVector")          \
-  template(jdk_incubator_vector_DoubleVector_DoubleSpecies,"jdk/incubator/vector/DoubleVector$DoubleSpecies") \
-  template(jdk_incubator_vector_Double128Vector,             "jdk/incubator/vector/Double128Vector")          \
+  template(jdk_incubator_vector_Float128Vector,          "jdk/incubator/vector/Float128Vector")                           \
+  template(jdk_incubator_vector_Float128Vector_Float128Species,"jdk/incubator/vector/Float128Vector$Float128Species")     \
+  template(jdk_incubator_vector_Float128Vector_Float128Mask,"jdk/incubator/vector/Float128Vector$Float128Mask")           \
+  template(jdk_incubator_vector_Float256Vector,          "jdk/incubator/vector/Float256Vector")                           \
+  template(jdk_incubator_vector_Float256Vector_Float256Species,"jdk/incubator/vector/Float256Vector$Float256Species")     \
+  template(jdk_incubator_vector_Float256Vector_Float256Mask,"jdk/incubator/vector/Float256Vector$Float256Mask")           \
+  template(jdk_incubator_vector_Float512Vector,          "jdk/incubator/vector/Float512Vector")                           \
+  template(jdk_incubator_vector_Float512Vector_Float512Species,"jdk/incubator/vector/Float512Vector$Float512Species")     \
+  template(jdk_incubator_vector_Float512Vector_Float512Mask,"jdk/incubator/vector/Float512Vector$Float512Mask")           \
+  template(jdk_incubator_vector_DoubleVector,             "jdk/incubator/vector/DoubleVector")                            \
+  template(jdk_incubator_vector_DoubleVector_DoubleSpecies,"jdk/incubator/vector/DoubleVector$DoubleSpecies")             \
+  template(jdk_incubator_vector_Double128Vector,             "jdk/incubator/vector/Double128Vector")                      \
   template(jdk_incubator_vector_Double128Vector_Double128Species,"jdk/incubator/vector/Double128Vector$Double128Species") \
-  template(jdk_incubator_vector_Double256Vector,             "jdk/incubator/vector/Double256Vector")          \
+  template(jdk_incubator_vector_Double128Vector_Double128Mask,"jdk/incubator/vector/Double128Vector$Double128Mask")       \
+  template(jdk_incubator_vector_Double256Vector,             "jdk/incubator/vector/Double256Vector")                      \
   template(jdk_incubator_vector_Double256Vector_Double256Species,"jdk/incubator/vector/Double256Vector$Double256Species") \
-  template(jdk_incubator_vector_Double512Vector,             "jdk/incubator/vector/Double512Vector")          \
+  template(jdk_incubator_vector_Double256Vector_Double256Mask,"jdk/incubator/vector/Double256Vector$Double256Mask")       \
+  template(jdk_incubator_vector_Double512Vector,             "jdk/incubator/vector/Double512Vector")                      \
   template(jdk_incubator_vector_Double512Vector_Double512Species,"jdk/incubator/vector/Double512Vector$Double512Species") \
+  template(jdk_incubator_vector_Double512Vector_Double512Mask,"jdk/incubator/vector/Double512Vector$Double512Mask")       \
   template(jdk_incubator_vector_LongVector,              "jdk/incubator/vector/LongVector")             \
   template(jdk_incubator_vector_LongVector_LongSpecies,  "jdk/incubator/vector/LongVector$LongSpecies") \
   template(jdk_incubator_vector_IntVector,               "jdk/incubator/vector/IntVector")              \
   template(jdk_incubator_vector_IntVector_IntSpecies,    "jdk/incubator/vector/IntVector$IntSpecies")   \
   template(jdk_incubator_vector_Int128Vector,            "jdk/incubator/vector/Int128Vector")           \
   template(jdk_incubator_vector_Int128Vector_Int128Species,"jdk/incubator/vector/Int128Vector$Int128Species") \
+  template(jdk_incubator_vector_Int128Vector_Int128Mask,"jdk/incubator/vector/Int128Vector$Int128Mask") \
   template(jdk_incubator_vector_Int256Vector,            "jdk/incubator/vector/Int256Vector")           \
   template(jdk_incubator_vector_Int256Vector_Int256Species,"jdk/incubator/vector/Int256Vector$Int256Species") \
+  template(jdk_incubator_vector_Int256Vector_Int256Mask,"jdk/incubator/vector/Int256Vector$Int256Mask") \
   template(jdk_incubator_vector_Int512Vector,            "jdk/incubator/vector/Int512Vector")           \
   template(jdk_incubator_vector_Int512Vector_Int512Species,"jdk/incubator/vector/Int512Vector$Int512Species") \
+  template(jdk_incubator_vector_Int512Vector_Int512Mask,"jdk/incubator/vector/Int512Vector$Int512Mask") \
   template(jdk_incubator_vector_ShortVector,             "jdk/incubator/vector/ShortVector")            \
   template(jdk_incubator_vector_ShortVector_ShortSpecies,"jdk/incubator/vector/ShortVector$ShortSpecies") \
   template(jdk_incubator_vector_ByteVector,              "jdk/incubator/vector/ByteVector")             \
