@@ -266,12 +266,14 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
         return uOp((i, a) -> (short) (a << s));
     }
 
+    // logical, or unsigned, shift right
     public ShortVector<S> shiftR(int s) {
-        return uOp((i, a) -> (short) (a >> s));
+        return uOp((i, a) -> (short) (a >>> s));
     }
 
+    // arithmetic, or signed, shift right
     public ShortVector<S> aShiftR(int s) {
-        return uOp((i, a) -> (short) (a >>> s));
+        return uOp((i, a) -> (short) (a >> s));
     }
 
     public ShortVector<S> rotateL(int j) {

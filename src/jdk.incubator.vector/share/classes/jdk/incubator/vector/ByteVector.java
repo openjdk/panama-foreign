@@ -265,12 +265,14 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
         return uOp((i, a) -> (byte) (a << s));
     }
 
+    // logical, or unsigned, shift right
     public ByteVector<S> shiftR(int s) {
-        return uOp((i, a) -> (byte) (a >> s));
+        return uOp((i, a) -> (byte) (a >>> s));
     }
 
+    // arithmetic, or signed, shift right
     public ByteVector<S> aShiftR(int s) {
-        return uOp((i, a) -> (byte) (a >>> s));
+        return uOp((i, a) -> (byte) (a >> s));
     }
 
     public ByteVector<S> rotateL(int j) {

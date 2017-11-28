@@ -344,12 +344,14 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
         return uOp((i, a) -> (long) (a << s));
     }
 
+    // logical, or unsigned, shift right
     public LongVector<S> shiftR(int s) {
-        return uOp((i, a) -> (long) (a >> s));
+        return uOp((i, a) -> (long) (a >>> s));
     }
 
+    // arithmetic, or signed, shift right
     public LongVector<S> aShiftR(int s) {
-        return uOp((i, a) -> (long) (a >>> s));
+        return uOp((i, a) -> (long) (a >> s));
     }
 
     public LongVector<S> rotateL(int j) {

@@ -332,12 +332,14 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return uOp((i, a) -> (int) (a << s));
     }
 
+    // logical, or unsigned, shift right
     public IntVector<S> shiftR(int s) {
-        return uOp((i, a) -> (int) (a >> s));
+        return uOp((i, a) -> (int) (a >>> s));
     }
 
+    // arithmetic, or signed, shift right
     public IntVector<S> aShiftR(int s) {
-        return uOp((i, a) -> (int) (a >>> s));
+        return uOp((i, a) -> (int) (a >> s));
     }
 
     public IntVector<S> rotateL(int j) {

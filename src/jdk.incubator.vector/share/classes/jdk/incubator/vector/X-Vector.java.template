@@ -696,12 +696,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return uOp((i, a) -> ($type$) (a << s));
     }
 
+    // logical, or unsigned, shift right
     public $abstractvectortype$<S> shiftR(int s) {
-        return uOp((i, a) -> ($type$) (a >> s));
+        return uOp((i, a) -> ($type$) (a >>> s));
     }
 
+    // arithmetic, or signed, shift right
     public $abstractvectortype$<S> aShiftR(int s) {
-        return uOp((i, a) -> ($type$) (a >>> s));
+        return uOp((i, a) -> ($type$) (a >> s));
     }
 
     public $abstractvectortype$<S> rotateL(int j) {
