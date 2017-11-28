@@ -7772,6 +7772,10 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
   }
 #endif
 
+  if (exact_kls == NULL || !exact_kls->is_vectorapi_vector()) {
+    return return_and_print_if_failed(false, id);
+  }
+
   int num_elem = exact_kls->vectorapi_vector_size();
   assert(num_elem != -1, "VM should be able to recover vector size from vector class.");
   BasicType type = exact_kls->vectorapi_vector_bt();
