@@ -10672,7 +10672,7 @@ instruct vcmplt8I(vecY dst, vecY src1, vecY src2, vecY tmp) %{
 
 instruct vblendvps4F(vecX dst, vecX src1, vecX src2, vecX mask) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 4);
-  match(Set dst (VectorBlend (Binary src2 src1) mask));
+  match(Set dst (VectorBlend (Binary src1 src2) mask));
   format %{ "vblendvps  $dst,$src1,$src2,$mask\t! packed4F" %}
   ins_encode %{
     int vector_len = 0;
@@ -10683,7 +10683,7 @@ instruct vblendvps4F(vecX dst, vecX src1, vecX src2, vecX mask) %{
 
 instruct vblendvps8F(vecY dst, vecY src1, vecY src2, vecY mask) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 8);
-  match(Set dst (VectorBlend (Binary src2 src1) mask));
+  match(Set dst (VectorBlend (Binary src1 src2) mask));
   format %{ "vblendvps  $dst,$src1,$src2,$mask\t! packed8F" %}
   ins_encode %{
     int vector_len = 1;
@@ -10694,7 +10694,7 @@ instruct vblendvps8F(vecY dst, vecY src1, vecY src2, vecY mask) %{
 
 instruct vpblendvb4I(vecX dst, vecX src1, vecX src2, vecZ mask) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 4);
-  match(Set dst (VectorBlend (Binary src2 src1) mask));
+  match(Set dst (VectorBlend (Binary src1 src2) mask));
   format %{ "vblendvb  $dst,$src1,$src2,$mask\t! blend packed4I" %}
   ins_encode %{
     int vector_len = 0;
@@ -10705,7 +10705,7 @@ instruct vpblendvb4I(vecX dst, vecX src1, vecX src2, vecZ mask) %{
 
 instruct vpblendvb8I(vecY dst, vecY src1, vecY src2, vecY mask) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 8);
-  match(Set dst (VectorBlend (Binary src2 src1) mask));
+  match(Set dst (VectorBlend (Binary src1 src2) mask));
   format %{ "vblendvb  $dst,$src1,$src2,$mask\t! blend packed8I" %}
   ins_encode %{
     int vector_len = 1;
