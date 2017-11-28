@@ -218,7 +218,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
     @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> blend(Vector<Double,S> o, Mask<Double, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? a : b);
+        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
     public DoubleVector<S> sqrt() {

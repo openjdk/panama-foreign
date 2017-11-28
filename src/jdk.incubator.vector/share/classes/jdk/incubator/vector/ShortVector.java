@@ -210,7 +210,7 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
 
     @Override
     public ShortVector<S> blend(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? a : b);
+        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
 

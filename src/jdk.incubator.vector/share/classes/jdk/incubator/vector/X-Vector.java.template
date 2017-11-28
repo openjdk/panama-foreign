@@ -257,7 +257,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
 #end[int]
     @Override
     public $abstractvectortype$<S> blend(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? a : b);
+        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
 #if[intOrlong]

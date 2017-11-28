@@ -218,7 +218,7 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
     @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> blend(Vector<Float,S> o, Mask<Float, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? a : b);
+        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
     public FloatVector<S> sqrt() {

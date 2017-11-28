@@ -217,7 +217,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
     @HotSpotIntrinsicCandidate
     @Override
     public IntVector<S> blend(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? a : b);
+        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
     public IntVector<S> addExact(Vector<Integer,S> o) {

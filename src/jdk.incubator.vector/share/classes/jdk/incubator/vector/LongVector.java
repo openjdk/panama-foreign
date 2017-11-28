@@ -210,7 +210,7 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
 
     @Override
     public LongVector<S> blend(Vector<Long,S> o, Mask<Long, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? a : b);
+        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
     public LongVector<S> addExact(Vector<Long,S> o) {

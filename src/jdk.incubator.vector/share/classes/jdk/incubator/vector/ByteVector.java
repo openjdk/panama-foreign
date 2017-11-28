@@ -209,7 +209,7 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
 
     @Override
     public ByteVector<S> blend(Vector<Byte,S> o, Mask<Byte, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? a : b);
+        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
 
