@@ -30,6 +30,7 @@
 #include "interpreter/bytecodes.hpp"
 #include "memory/universe.hpp"
 #include "prims/methodHandles.hpp"
+#include "prims/nativeInvoker.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/icache.hpp"
@@ -149,6 +150,7 @@ jint init_globals() {
   javaClasses_init();   // must happen after vtable initialization
   stubRoutines_init2(); // note: StubRoutines need 2-phase init
   MethodHandles::generate_adapters();
+  NativeInvoker::generate_adapter();
 
 #if INCLUDE_NMT
   // Solaris stack is walkable only after stubRoutines are set up.

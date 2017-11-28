@@ -86,6 +86,9 @@ module java.base {
     exports java.math;
     exports java.net;
     exports java.net.spi;
+    exports java.nicl;
+    exports java.nicl.metadata;
+    exports java.nicl.types;
     exports java.nio;
     exports java.nio.channels;
     exports java.nio.channels.spi;

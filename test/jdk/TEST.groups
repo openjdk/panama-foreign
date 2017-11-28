@@ -308,6 +308,9 @@ jdk_svc = \
     :jdk_jdi \
     :svc_tools
 
+jdk_nicl = \
+    java/nicl
+
 #############################
 
 #
