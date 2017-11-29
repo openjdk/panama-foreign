@@ -29,8 +29,11 @@ import java.nicl.NativeLibrary;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
+
 public class BoundedPointer<T> implements Pointer<T> {
-    private static final boolean DEBUG_WARN_ON_OOBPTR = Boolean.valueOf(System.getProperty("jdk.internal.nicl.types.DEBUG_WARN_ON_OOBPTR", "true"));
+    private static final boolean DEBUG_WARN_ON_OOBPTR = Boolean.valueOf(
+        privilegedGetProperty("jdk.internal.nicl.types.DEBUG_WARN_ON_OOBPTR", "true"));
 
     public static final Pointer<Void> NULL = new BoundedPointer<>(NativeLibrary.createLayout(void.class), BoundedMemoryRegion.NOTHING, 0, 0);
 

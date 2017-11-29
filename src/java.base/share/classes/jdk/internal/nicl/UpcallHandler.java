@@ -40,10 +40,12 @@ import java.nicl.Scope;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 import java.util.ArrayList;
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 public class UpcallHandler {
 
-    private static final boolean DEBUG = Boolean.getBoolean("jdk.internal.nicl.UpcallHandler.DEBUG");
+    private static final boolean DEBUG = Boolean.parseBoolean(
+        privilegedGetProperty("jdk.internal.nicl.UpcallHandler.DEBUG"));
     private static final LayoutType<Long> LONG_LAYOUT_TYPE = NativeLibrary.createLayout(long.class);
 
     private static final long MAX_STACK_ARG_BYTES = 64 * 1024; // FIXME: Arbitrary limitation for now...

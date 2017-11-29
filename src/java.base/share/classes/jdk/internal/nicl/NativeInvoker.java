@@ -39,10 +39,12 @@ import java.nicl.types.*;
 import java.nicl.types.Pointer;
 import java.util.ArrayList;
 
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 class NativeInvoker {
-    private static final boolean DEBUG = Boolean.getBoolean("jdk.internal.nicl.NativeInvoker.DEBUG");
+    private static final boolean DEBUG = Boolean.parseBoolean(
+        privilegedGetProperty("jdk.internal.nicl.NativeInvoker.DEBUG"));
 
     private static final LayoutType<Long> LAYOUT_TYPE_LONG = LayoutTypeImpl.create(long.class);
 

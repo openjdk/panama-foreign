@@ -29,9 +29,11 @@ import java.lang.reflect.Method;
 import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.util.stream.Stream;
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 class CivilizedHeaderImplGenerator<T> extends ClassGenerator {
-    private static final boolean DEBUG = Boolean.getBoolean("jdk.internal.nicl.CivilizedHeaderImplGenerator.DEBUG");
+    private static final boolean DEBUG = Boolean.parseBoolean(
+        privilegedGetProperty("jdk.internal.nicl.CivilizedHeaderImplGenerator.DEBUG"));
 
     // the interface/type to implement
     private final Class<T> c;

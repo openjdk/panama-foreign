@@ -34,6 +34,8 @@ import java.nicl.metadata.NativeType;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 public class NativeLibraryImpl {
     enum ImplType {
@@ -84,7 +86,9 @@ public class NativeLibraryImpl {
         if (implCls == null) {
             Class<? extends T> newCls;
             try {
-                newCls = (Class<? extends T>) generator.generate();
+                newCls = (Class<? extends T>)AccessController.doPrivileged((PrivilegedAction<Class<?>>) () -> {
+                        return generator.generate();
+                    });
             } catch (Exception e) {
                 throw new RuntimeException("Failed to generate " + type + " for class " + c, e);
             }

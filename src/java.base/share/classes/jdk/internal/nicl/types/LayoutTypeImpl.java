@@ -29,9 +29,11 @@ import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.util.Arrays;
 import java.util.Objects;
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 public class LayoutTypeImpl<T> implements LayoutType<T> {
-    private static final boolean QUIET = Boolean.parseBoolean(System.getProperty("LayoutTypeImpl.QUIET"));
+    private static final boolean QUIET = Boolean.parseBoolean(
+        privilegedGetProperty("LayoutTypeImpl.QUIET"));
 
     private final java.lang.reflect.Type carrierType;
     private final Type type;
