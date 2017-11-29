@@ -35,7 +35,6 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.nicl.NativeLibrary;
 import java.nicl.NativeScope;
-import java.nicl.RuntimeSupport;
 import java.nicl.Scope;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
@@ -249,7 +248,7 @@ public class UpcallHandler {
                 System.err.println("Copying struct data, value: 0x" + Long.toHexString(src.lvalue().get()));
             }
 
-            RuntimeSupport.copy(src, dst, binding.getStorage().getSize());
+            Util.copy(src, dst, binding.getStorage().getSize());
 
             return r;
         } else {
@@ -287,8 +286,8 @@ public class UpcallHandler {
 
     private void copy(long bits, Pointer<Long> dst) throws IllegalAccessException {
         try (Scope scope = new NativeScope()) {
-            Pointer<Long> src = RuntimeSupport.createArrayElementsPointer(new long[] { bits }, scope);
-            RuntimeSupport.copy(src, dst, 8);
+            Pointer<Long> src = Util.createArrayElementsPointer(new long[] { bits }, scope);
+            Util.copy(src, dst, 8);
         }
     }
 
@@ -338,7 +337,7 @@ public class UpcallHandler {
                     throw new UnsupportedOperationException("Unhandled type: " + c.getName());
             }
         } else if (Pointer.class.isAssignableFrom(c)) {
-            long addr = RuntimeSupport.unpack((Pointer<?>) o, TOKEN);
+            long addr = Util.unpack((Pointer<?>) o, TOKEN);
 
             dst.lvalue().set(addr);
         } else if (Util.isCStruct(c)) {
@@ -357,7 +356,7 @@ public class UpcallHandler {
                 long size = Util.alignUp(Util.sizeof(c), 8);
                 Pointer<Long> dstStructPtr = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(structAddr, size));
 
-                RuntimeSupport.copy(src, dstStructPtr, size);
+                Util.copy(src, dstStructPtr, size);
 
                 // the first integer return register needs to be populated with the (caller supplied) struct addr
                 Pointer<Long> retRegPtr = context.getPtr(new Storage(StorageClass.INTEGER_RETURN_REGISTER, 0, Constants.INTEGER_REGISTER_SIZE));
@@ -368,7 +367,7 @@ public class UpcallHandler {
                 }
                 Pointer<Long> srcPtr = src.offset(binding.getOffset() / LONG_LAYOUT_TYPE.getNativeTypeSize());
 
-                RuntimeSupport.copy(srcPtr, dst, binding.getStorage().getSize());
+                Util.copy(srcPtr, dst, binding.getStorage().getSize());
             }
         } else {
             throw new UnsupportedOperationException("Unhandled type: " + c.getName());

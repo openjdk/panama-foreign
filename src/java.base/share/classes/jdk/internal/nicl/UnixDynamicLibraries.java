@@ -31,7 +31,6 @@ import java.lang.invoke.MethodType;
 import java.nicl.Library;
 import java.nicl.LibrarySymbol;
 import java.nicl.NativeLibrary;
-import java.nicl.RuntimeSupport;
 import java.nicl.types.Pointer;
 import java.nicl.types.PointerToken;
 
@@ -152,7 +151,7 @@ class UnixDynamicLibraries {
                 return null;
             }
 
-            return new BoundedPointer<>(NativeLibrary.createLayout(byte.class), new BoundedMemoryRegion(addr, RuntimeSupport.strlen(addr) + 1));
+            return new BoundedPointer<>(NativeLibrary.createLayout(byte.class), new BoundedMemoryRegion(addr, Util.strlen(addr) + 1));
         } catch (Throwable t) {
             t.printStackTrace();
             throw new RuntimeException("Failed to invoke dlopen");

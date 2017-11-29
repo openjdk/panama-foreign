@@ -25,7 +25,6 @@ package jdk.internal.nicl.types;
 import jdk.internal.nicl.UpcallHandler;
 import jdk.internal.nicl.Util;
 
-import java.nicl.RuntimeSupport;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 
@@ -114,7 +113,7 @@ class ReferenceImpl<T> implements Reference<T> {
             if (type.getInnerType() == null) {
                 throw new IllegalArgumentException("Inner type unexpectedly null: " + this);
             }
-            return (T) RuntimeSupport.createPtr(getLongBits(), (LayoutType)type.getInnerType());
+            return (T) Util.createPtr(getLongBits(), (LayoutType)type.getInnerType());
         } else if (Util.isCStruct(c)) {
             return ptr().deref();
         } else {
@@ -168,14 +167,14 @@ class ReferenceImpl<T> implements Reference<T> {
         } else if (Pointer.class.isAssignableFrom(c)) {
             Pointer<?> ptr = (Pointer<?>) value;
             try {
-                region.putAddress(offset, RuntimeSupport.unpack(ptr, PointerTokenImpl.getToken()));
+                region.putAddress(offset, Util.unpack(ptr, PointerTokenImpl.getToken()));
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException("Access denied", iae);
             }
         } else if (Util.isCStruct(c)) {
             // FIXME: This may not be the right thing to do...
             Reference<?> r = (Reference)value;
-            RuntimeSupport.copy(r.ptr(), ptr(), Util.sizeof(c));
+            Util.copy(r.ptr(), ptr(), Util.sizeof(c));
         } else if (Util.isFunctionalInterface(c)) {
             long codePtr;
             try {

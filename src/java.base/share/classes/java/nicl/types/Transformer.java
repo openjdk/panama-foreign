@@ -22,12 +22,12 @@
  */
 package java.nicl.types;
 
+import jdk.internal.nicl.Util;
 import jdk.internal.nicl.types.BindingRegistry;
 import jdk.internal.nicl.types.Descriptor;
 
 import java.io.ByteArrayOutputStream;
 import java.nicl.NativeLibrary;
-import java.nicl.RuntimeSupport;
 import java.nicl.Scope;
 import java.util.function.Function;
 
@@ -80,8 +80,8 @@ public class Transformer {
     private static Pointer<Byte> toCString(byte[] ar, Scope scope) {
         try {
             Pointer<Byte> buf = scope.allocateArray(BYTE_TYPE, ar.length + 1);
-            Pointer<Byte> src = RuntimeSupport.createArrayElementsPointer(ar);
-            RuntimeSupport.copy(src, buf, ar.length);
+            Pointer<Byte> src = Util.createArrayElementsPointer(ar);
+            Util.copy(src, buf, ar.length);
             buf.offset(ar.length).lvalue().set((byte)0);
             return buf;
         } catch (IllegalAccessException e) {

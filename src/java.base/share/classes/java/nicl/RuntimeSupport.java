@@ -22,80 +22,12 @@
  */
 package java.nicl;
 
-import jdk.internal.misc.Unsafe;
-import jdk.internal.nicl.types.BoundedMemoryRegion;
-import jdk.internal.nicl.types.BoundedPointer;
-import jdk.internal.nicl.types.PointerTokenImpl;
-
+import jdk.internal.nicl.Util;
 import java.nicl.types.*;
 
-public class RuntimeSupport {
-    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
-
-    // FIXME: Only here for debugging/until all uses of pointer have been updated
-    @Deprecated
-    public static PointerToken debugCreatePointerToken() {
-        return new PointerTokenImpl();
-    }
-
-    public static long unpack(Pointer<?> ptr, PointerToken token) throws IllegalAccessException {
-        if (ptr == null) {
-            return 0;
-        }
-        return ptr.addr(token);
-    }
-
-    public static <T> Pointer<T> createPtr(long addr, LayoutType<T> type) {
-        return createPtr(null, addr, type);
-    }
-
-    public static <T> Pointer<T> createPtr(Object base, long addr, LayoutType<T> type) {
-        // FIXME: Long.MAX_VALUE is not correct
-        return new BoundedPointer<>(type, new BoundedMemoryRegion(base, addr, Long.MAX_VALUE), 0);
-    }
-
-    public static long strlen(long addr) {
-        long i = 0;
-
-        while (UNSAFE.getByte(addr + i) != 0) {
-            i++;
-        }
-
-        return i;
-    }
-
-    // FIXME: Helper methods useful for playing with pointers into the Java heap and data copying
-
-    public static MemoryRegion createRegionForArrayElements(long[] arr) {
-        return new BoundedMemoryRegion(arr, jdk.internal.misc.Unsafe.getUnsafe().arrayBaseOffset(long[].class), arr.length * 8, MemoryRegion.MODE_RW);
-    }
-
-    public static MemoryRegion createRegionForArrayElements(byte[] arr) {
-        return new BoundedMemoryRegion(arr, jdk.internal.misc.Unsafe.getUnsafe().arrayBaseOffset(byte[].class), arr.length, MemoryRegion.MODE_RW);
-    }
-
-    public static MemoryRegion createRegionForArrayElements(long[] arr, Scope scope) {
-        return new BoundedMemoryRegion(arr, jdk.internal.misc.Unsafe.getUnsafe().arrayBaseOffset(long[].class), arr.length * 8, MemoryRegion.MODE_RW, scope);
-    }
-
-    public static Pointer<Long> createArrayElementsPointer(long[] arr) {
-        return new BoundedPointer<>(NativeLibrary.createLayout(long.class), createRegionForArrayElements(arr), 0);
-    }
-
-    public static Pointer<Byte> createArrayElementsPointer(byte[] arr) {
-        return new BoundedPointer<>(NativeLibrary.createLayout(byte.class), createRegionForArrayElements(arr), 0);
-    }
-
-    public static Pointer<Long> createArrayElementsPointer(long[] arr, Scope scope) {
-        return new BoundedPointer<>(NativeLibrary.createLayout(long.class), createRegionForArrayElements(arr, scope), 0);
-    }
-
-    public static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
-        BoundedPointer<?> bsrc = (BoundedPointer<?>)src;
-        BoundedPointer<?> bdst = (BoundedPointer<?>)dst;
-
-        bsrc.copyTo(bdst, bytes);
-    }
+// These static utility methods are invoked from generated code
+public final class RuntimeSupport {
+    private RuntimeSupport() {}
 
     /*** FIXME: Temporary exports ***/
     @Deprecated
@@ -140,5 +72,10 @@ public class RuntimeSupport {
         for (int i = 0; i < nElems; i++) {
             dst[i] = src.offset(i).lvalue().get();
         }
+    }
+
+    // used by sample code
+    public static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
+        Util.copy(src, dst, bytes);
     }
 }

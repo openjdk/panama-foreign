@@ -62,7 +62,7 @@ public class Errno {
 
     public int errno() {
         try {
-            Pointer<Integer> p = RuntimeSupport.createPtr((long)errnoMH.invoke(), NativeLibrary.createLayout(int.class));
+            Pointer<Integer> p = Util.createPtr((long)errnoMH.invoke(), NativeLibrary.createLayout(int.class));
             return p.lvalue().get();
         } catch (Throwable t) {
             throw new RuntimeException(t);
@@ -71,7 +71,7 @@ public class Errno {
 
     public String strerror(int errno) {
         try {
-            Pointer<Byte> p = RuntimeSupport.createPtr((long)strerrorMH.invoke(errno), NativeLibrary.createLayout(byte.class));
+            Pointer<Byte> p = Util.createPtr((long)strerrorMH.invoke(errno), NativeLibrary.createLayout(byte.class));
             return Transformer.toString(p);
         } catch (Throwable t) {
             throw new RuntimeException(t);

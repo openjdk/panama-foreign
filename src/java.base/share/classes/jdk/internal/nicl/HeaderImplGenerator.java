@@ -521,7 +521,7 @@ class HeaderImplGenerator extends ClassGenerator {
     private void generateRefHelper(ClassGeneratorContext ctxt) {
         /*
          * private <T> Reference<T> ref(long offset, LayoutType<T> t) {
-         *     return RuntimeSupport.createRef(p, offset, t);
+         *     return RuntimeSupport.buildRef(p, offset, t);
          * }
          */
         ClassWriter cw = ctxt.getClassWriter();

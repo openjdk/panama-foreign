@@ -23,8 +23,11 @@
 package jdk.internal.nicl;
 
 import jdk.internal.misc.Unsafe;
+import jdk.internal.nicl.types.BoundedMemoryRegion;
+import jdk.internal.nicl.types.BoundedPointer;
 import jdk.internal.nicl.types.Descriptor;
 import jdk.internal.nicl.types.LayoutTypeImpl;
+import jdk.internal.nicl.types.PointerTokenImpl;
 import jdk.internal.nicl.types.Types;
 import jdk.internal.nicl.types.UncheckedPointer;
 import jdk.internal.org.objectweb.asm.Type;
@@ -34,14 +37,17 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.nicl.LibrarySymbol;
+import java.nicl.NativeLibrary;
+import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.NativeType;
 import java.nicl.types.*;
+import java.util.Objects;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
-public class Util {
+public final class Util {
     private Util() {
     }
 
@@ -309,5 +315,72 @@ public class Util {
                 }
             });
         return new NativeInvoker(mt, false, lookup, sym).getBoundMethodHandle();
+    }
+
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
+
+    // FIXME: Only here for debugging/until all uses of pointer have been updated
+    @Deprecated
+    public static PointerToken debugCreatePointerToken() {
+        return new PointerTokenImpl();
+    }
+
+    public static long unpack(Pointer<?> ptr, PointerToken token) throws IllegalAccessException {
+        if (ptr == null) {
+            return 0;
+        }
+        return ptr.addr(token);
+    }
+
+    public static long strlen(long addr) {
+        long i = 0;
+
+        while (UNSAFE.getByte(addr + i) != 0) {
+            i++;
+        }
+
+        return i;
+    }
+
+    public static <T> Pointer<T> createPtr(long addr, LayoutType<T> type) {
+        return createPtr(null, addr, type);
+    }
+
+    public static <T> Pointer<T> createPtr(Object base, long addr, LayoutType<T> type) {
+        // FIXME: Long.MAX_VALUE is not correct
+        return new BoundedPointer<>(type, new BoundedMemoryRegion(base, addr, Long.MAX_VALUE), 0);
+    }
+
+    // Helper methods useful for playing with pointers into the Java heap and data copying
+
+    public static MemoryRegion createRegionForArrayElements(long[] arr) {
+        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(long[].class), arr.length * 8, MemoryRegion.MODE_RW);
+    }
+
+    public static MemoryRegion createRegionForArrayElements(byte[] arr) {
+        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(byte[].class), arr.length, MemoryRegion.MODE_RW);
+    }
+
+    public static MemoryRegion createRegionForArrayElements(long[] arr, Scope scope) {
+        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(long[].class), arr.length * 8, MemoryRegion.MODE_RW, scope);
+    }
+
+    public static Pointer<Long> createArrayElementsPointer(long[] arr) {
+        return new BoundedPointer<>(NativeLibrary.createLayout(long.class), createRegionForArrayElements(arr), 0);
+    }
+
+    public static Pointer<Byte> createArrayElementsPointer(byte[] arr) {
+        return new BoundedPointer<>(NativeLibrary.createLayout(byte.class), createRegionForArrayElements(arr), 0);
+    }
+
+    public static Pointer<Long> createArrayElementsPointer(long[] arr, Scope scope) {
+        return new BoundedPointer<>(NativeLibrary.createLayout(long.class), createRegionForArrayElements(arr, scope), 0);
+    }
+
+    public static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
+        BoundedPointer<?> bsrc = (BoundedPointer<?>)Objects.requireNonNull(src);
+        BoundedPointer<?> bdst = (BoundedPointer<?>)Objects.requireNonNull(dst);
+
+        bsrc.copyTo(bdst, bytes);
     }
 }

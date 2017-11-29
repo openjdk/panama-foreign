@@ -206,7 +206,7 @@ class NativeInvoker {
                         binding.getStorage().getStorageIndex() == 0) {
                         long n = binding.getStorage().getSize() / 8;
                         assert returnStruct != null;
-                        long[] argValues = new long[] { RuntimeSupport.unpack(returnStruct.ptr(), TOKEN) };
+                        long[] argValues = new long[] { Util.unpack(returnStruct.ptr(), TOKEN) };
                         System.arraycopy(argValues, 0, values, curValueArrayIndex, (int)n);
                         curValueArrayIndex += n;
                     } else {
@@ -272,7 +272,7 @@ class NativeInvoker {
                     throw new UnsupportedOperationException("NYI: " + methodType.returnType().getName());
             }
         } else if (Pointer.class.isAssignableFrom(methodType.returnType())) {
-            return RuntimeSupport.createPtr(returnValues[0], Util.createLayoutType(genericReturnType).getInnerType());
+            return Util.createPtr(returnValues[0], Util.createLayoutType(genericReturnType).getInnerType());
         } else if (Util.isCStruct(methodType.returnType())) {
             if (!callingSequence.returnsInMemory()) {
                 int curValueArrayIndex = 0;
@@ -344,7 +344,7 @@ class NativeInvoker {
         } else if (carrierType.isArray()) {
             throw new IllegalArgumentException("Array types NIY: " + carrierType);
         } else if (Pointer.class.isAssignableFrom(carrierType)) {
-            return new long[] { RuntimeSupport.unpack((Pointer)arg, TOKEN) };
+            return new long[] { Util.unpack((Pointer)arg, TOKEN) };
         } else if (Util.isCStruct(carrierType)) {
             long[] values = new long[(int)n];
             Reference<?> r = (Reference<?>)arg;
