@@ -101,7 +101,7 @@ public class PointerTest {
 
         for (int i = 0; i < pi.deref(); i++) {
             Pointer<Byte> cstr = values.offset(i).deref();
-            String str = Transformer.toString(cstr);
+            String str = Pointer.toString(cstr);
 
             debug("str[" + i + "] = " + str);
 
@@ -148,7 +148,7 @@ public class PointerTest {
 
         for (int i = 0; i < pi.deref(); i++) {
             pointers.MyStruct s = structs.offset(i).deref().deref();
-            String str = Transformer.toString(s.str$get());
+            String str = Pointer.toString(s.str$get());
             debug("str[" + i + "] = " + str);
 
             assertEquals(VERIFICATION_STRINGS[i], str);

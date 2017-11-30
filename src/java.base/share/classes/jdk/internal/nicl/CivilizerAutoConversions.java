@@ -27,7 +27,6 @@ import jdk.internal.nicl.types.LayoutTypeImpl;
 import java.lang.reflect.ParameterizedType;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
-import java.nicl.types.Transformer;
 import java.util.HashMap;
 
 class CivilizerAutoConversions {
@@ -68,7 +67,7 @@ class CivilizerAutoConversions {
             @Override
             @SuppressWarnings("unchecked")
             public String project(Pointer<Byte> o, Scope scope) {
-                return Transformer.toString(o);
+                return Pointer.toString(o);
             }
 
             @Override
@@ -86,7 +85,7 @@ class CivilizerAutoConversions {
         projectionsTo.put(p2bType, new Projection<String, Pointer<Byte>>() {
             @Override
             public Pointer<Byte> project(String o, Scope scope) {
-                return Transformer.toCString(o, scope);
+                return scope.toCString(o);
             }
 
             @Override

@@ -28,7 +28,6 @@ import java.nicl.Library;
 import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
-import java.nicl.types.Transformer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
@@ -71,7 +70,7 @@ public class LdLoader extends LibraryLoader {
         }
 
         try (Scope scope = new NativeScope()) {
-            Pointer<Byte> cname = Transformer.toCString(libPath, scope);
+            Pointer<Byte> cname = scope.toCString(libPath);
 
             try {
                 Pointer<Void> handle = UnixDynamicLibraries.getInstance().dlopen(cname, RTLD_LAZY);
@@ -82,7 +81,7 @@ public class LdLoader extends LibraryLoader {
                 if (DEBUG) {
                     Pointer<Byte> err = UnixDynamicLibraries.getInstance().dlerror();
                     if (err != null) {
-                        System.err.println(Transformer.toString(err));
+                        System.err.println(Pointer.toString(err));
                     }
                 }
 

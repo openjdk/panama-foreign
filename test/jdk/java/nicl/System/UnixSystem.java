@@ -114,14 +114,14 @@ public class UnixSystem {
 
             LayoutType<Byte> t = NativeLibrary.createLayout(byte.class);
             Pointer<Byte> buf = scope.allocate(t, bufSize);
-            Pointer<Byte> cfmt = Transformer.toCString(fmt, scope);
+            Pointer<Byte> cfmt = scope.toCString(fmt);
 
             int n = i.snprintf(buf, bufSize, cfmt, args);
             if (n >= bufSize) {
                 throw new IndexOutOfBoundsException(n);
             }
 
-            return Transformer.toString(buf);
+            return Pointer.toString(buf);
         }
     }
 
@@ -134,8 +134,8 @@ public class UnixSystem {
         assertEquals("foo: 4711", lowerAndSprintf(i, "foo: %d", 4711));
         assertEquals("foo: 47 11", lowerAndSprintf(i, "foo: %d %d", 47, 11));
         try (Scope scope = new NativeScope()) {
-            assertEquals("foo: bar", lowerAndSprintf(i, "foo: %s", Transformer.toCString("bar", scope)));
-            assertEquals("foo: bar baz", lowerAndSprintf(i, "foo: %s %s", Transformer.toCString("bar", scope), Transformer.toCString("baz", scope)));
+            assertEquals("foo: bar", lowerAndSprintf(i, "foo: %s", scope.toCString("bar")));
+            assertEquals("foo: bar baz", lowerAndSprintf(i, "foo: %s %s", scope.toCString("bar"), scope.toCString("baz")));
         }
     }
 
@@ -160,7 +160,7 @@ public class UnixSystem {
 
             s = p.deref();
 
-            int res = i.__xstat(1, Transformer.toCString(path, scope), p);
+            int res = i.__xstat(1, scope.toCString(path), p);
             if (res != 0) {
                 NativeLibrary.throwErrnoException("Call to __xstat failed");
             }
@@ -178,7 +178,7 @@ public class UnixSystem {
 
             s = p.deref();
 
-            int res = i.stat$INODE64(Transformer.toCString(path, scope), p);
+            int res = i.stat$INODE64(scope.toCString(path), p);
             if (res != 0) {
                 NativeLibrary.throwErrnoException("Call to stat failed");
             }
@@ -223,7 +223,7 @@ public class UnixSystem {
             // Pointer version
             Pointer<Pointer<Byte>> pp = (Pointer)i.environ$get().cast(NativeLibrary.createLayout(byte.class).ptrType());
             Pointer<Byte> sp = (Pointer)pp.lvalue().get().cast(NativeLibrary.createLayout(byte.class));
-            System.out.println("testEnviron.str: " + Transformer.toString(sp));
+            System.out.println("testEnviron.str: " + Pointer.toString(sp));
         }
 
         {
@@ -231,7 +231,7 @@ public class UnixSystem {
             Reference<Pointer<Pointer<Byte>>> r = i.environ$ref();
             Pointer<Pointer<Byte>> spp = (Pointer)r.get().cast(NativeLibrary.createLayout(byte.class).ptrType());
             Pointer<Byte> sp = (Pointer)spp.lvalue().get().cast(NativeLibrary.createLayout(byte.class));
-            System.out.println("testEnviron.str: " + Transformer.toString(sp));
+            System.out.println("testEnviron.str: " + Pointer.toString(sp));
         }
     }
 

@@ -317,6 +317,10 @@ public final class Util {
         return new NativeInvoker(mt, false, lookup, sym).getBoundMethodHandle();
     }
 
+
+    public static final LayoutType<Byte> BYTE_TYPE = NativeLibrary.createLayout(byte.class);
+    public static final LayoutType<Pointer<Byte>> BYTE_PTR_TYPE = BYTE_TYPE.ptrType();
+
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
     // FIXME: Only here for debugging/until all uses of pointer have been updated

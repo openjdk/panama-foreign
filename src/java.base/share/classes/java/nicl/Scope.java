@@ -26,6 +26,7 @@ import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Reference;
 import java.nicl.types.Resource;
+import jdk.internal.nicl.Util;
 
 public interface Scope extends AutoCloseable {
     void checkAlive();
@@ -62,4 +63,34 @@ public interface Scope extends AutoCloseable {
 
     @Override
     void close();
+
+    private Pointer<Byte> toCString(byte[] ar) {
+        try {
+            Pointer<Byte> buf = allocateArray(Util.BYTE_TYPE, ar.length + 1);
+            Pointer<Byte> src = Util.createArrayElementsPointer(ar);
+            Util.copy(src, buf, ar.length);
+            buf.offset(ar.length).lvalue().set((byte)0);
+            return buf;
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    public default Pointer<Byte> toCString(String str) {
+        return toCString(str.getBytes());
+    }
+
+    public default Pointer<Pointer<Byte>> toCStrArray(String[] ar) {
+        if (ar.length == 0) {
+            return null;
+        }
+
+        Pointer<Pointer<Byte>> ptr = allocateArray(Util.BYTE_PTR_TYPE, ar.length);
+        for (int i = 0; i < ar.length; i++) {
+            Pointer<Byte> s = toCString(ar[i]);
+            ptr.offset(i).lvalue().set(s);
+        }
+
+        return ptr;
+    }
 }

@@ -24,16 +24,39 @@ package jdk.internal.nicl.types;
 
 import jdk.internal.nicl.Platform;
 
+import java.nicl.types.MemoryRegion;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.stream.Stream;
 import java.lang.invoke.MethodType;
 
-import static java.nicl.types.Transformer.N2J;
-import static java.nicl.types.Transformer.J2N;
-
 public class BindingRegistry {
+    @FunctionalInterface
+    public interface N2J<T> {
+        T convert(MemoryRegion r);
+
+        default <S> N2J<S> combine(java.util.function.Function<T, S> fn) {
+            return r -> fn.apply(convert(r));
+        }
+    }
+
+    @FunctionalInterface
+    public interface J2N<T> {
+        void convert(T o, MemoryRegion r);
+
+        default <S> J2N<S> combine(java.util.function.Function<S, T> fn) {
+            return (o, r) -> convert(fn.apply(o), r);
+        }
+    }
+
+    public static final <T> boolean register(String nativeDescriptor, Class<T> carrierClass,
+            N2J<T> native2java, J2N<T> java2native) {
+        Type nt = (new Descriptor(nativeDescriptor)).types().findFirst().get();
+        BindingRegistry registry = BindingRegistry.getInstance();
+        return registry.register(nt, carrierClass, native2java, java2native);
+    }
+
     private final class NativeBinding<T> {
         final jdk.internal.nicl.types.Type nativeType;
         final Class<T> carrierClass;

@@ -29,7 +29,6 @@ import java.nicl.NativeLibrary;
 import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
-import java.nicl.types.Transformer;
 
 public class Printf {
     /**
@@ -43,7 +42,7 @@ public class Printf {
 
         // Convert the Java string to a native one
         // Basically uses Unsafe to allocate memory and copy the bytes
-        Pointer<Byte> fmt = Transformer.toCString("Hello, World!\n", scope);
+        Pointer<Byte> fmt = scope.toCString("Hello, World!\n");
 
         // Call printf
         i.printf(fmt);
@@ -66,7 +65,7 @@ public class Printf {
         Scope scope = new NativeScope();
 
         // Convert the Java string to a native one
-        Pointer<Byte> fmt = Transformer.toCString("Hello, %d!\n", scope);
+        Pointer<Byte> fmt = scope.toCString("Hello, %d!\n");
 
         // Call printf
         printf.invoke(i, fmt, 4711);
@@ -88,7 +87,7 @@ public class Printf {
         // Create a scope to allocate things in
         Scope scope = new NativeScope();
 
-        Pointer<Byte> fmt = Transformer.toCString("Hello, %d!\n", scope);
+        Pointer<Byte> fmt = scope.toCString("Hello, %d!\n");
         printf.invoke(i, fmt, 4711);
 
         // Make sure output is not stuck in buffer
@@ -106,8 +105,8 @@ public class Printf {
         // Lookup a MH for the printf function
         MethodHandle printf = Util.lookup(Util.Function.PRINTF);
 
-        Pointer<Byte> fmt = Transformer.toCString("Hello, %s!\n", scope);
-        Pointer<Byte> arg = Transformer.toCString("World", scope);
+        Pointer<Byte> fmt = scope.toCString("Hello, %s!\n");
+        Pointer<Byte> arg = scope.toCString("World");
 
         printf.invoke(i, fmt, arg);
 

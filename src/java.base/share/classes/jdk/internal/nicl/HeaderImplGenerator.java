@@ -32,7 +32,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.nicl.NativeLibrary;
-import java.nicl.RuntimeSupport;
 import java.nicl.metadata.*;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
@@ -208,7 +207,7 @@ class HeaderImplGenerator extends ClassGenerator {
         if (componentType.isPrimitive()) {
             switch (PrimitiveClassType.typeof(componentType)) {
                 case INT:
-                    mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(RuntimeSupport.class), "copyToArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(int[].class), Type.INT_TYPE), false);
+                    mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "copyToArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(int[].class), Type.INT_TYPE), true);
                     break;
 
                 // FIXME: Add other primitives here
@@ -217,7 +216,7 @@ class HeaderImplGenerator extends ClassGenerator {
             }
         } else {
             mv.visitLdcInsn(Type.getType(componentType));
-            mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(RuntimeSupport.class), "copyToArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(Object[].class), Type.INT_TYPE, Type.getType(Class.class)), false);
+            mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "copyToArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(Object[].class), Type.INT_TYPE, Type.getType(Class.class)), true);
         }
 
         mv.visitVarInsn(ALOAD, 1);
@@ -245,7 +244,7 @@ class HeaderImplGenerator extends ClassGenerator {
         if (componentType.isPrimitive()) {
             switch (PrimitiveClassType.typeof(componentType)) {
                 case INT:
-                    mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(RuntimeSupport.class), "copyFromArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(int[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE), false);
+                    mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "copyFromArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(int[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE), true);
                     break;
 
                 // FIXME: Add other primitives here
@@ -254,7 +253,7 @@ class HeaderImplGenerator extends ClassGenerator {
             }
         } else {
             mv.visitLdcInsn(Type.getType(componentType));
-            mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(RuntimeSupport.class), "copyFromArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE, Type.getType(Class.class)), false);
+            mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "copyFromArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE, Type.getType(Class.class)), true);
         }
 
         mv.visitInsn(RETURN);
@@ -521,7 +520,7 @@ class HeaderImplGenerator extends ClassGenerator {
     private void generateRefHelper(ClassGeneratorContext ctxt) {
         /*
          * private <T> Reference<T> ref(long offset, LayoutType<T> t) {
-         *     return RuntimeSupport.buildRef(p, offset, t);
+         *     return Pointer.buildRef(p, offset, t);
          * }
          */
         ClassWriter cw = ctxt.getClassWriter();
@@ -531,7 +530,7 @@ class HeaderImplGenerator extends ClassGenerator {
         mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
         mv.visitVarInsn(LLOAD, 1);
         mv.visitVarInsn(ALOAD, 3);
-        mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(RuntimeSupport.class), "buildRef", Type.getMethodDescriptor(Type.getType(Reference.class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), false);
+        mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "buildRef", Type.getMethodDescriptor(Type.getType(Reference.class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), true);
         mv.visitInsn(ARETURN);
         mv.visitMaxs(0, 0);
         mv.visitEnd();

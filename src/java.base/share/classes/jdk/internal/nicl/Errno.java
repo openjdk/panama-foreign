@@ -26,9 +26,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nicl.NativeLibrary;
-import java.nicl.RuntimeSupport;
 import java.nicl.types.Pointer;
-import java.nicl.types.Transformer;
 
 public class Errno {
     private static String getErrnoLocationFunctionName() {
@@ -72,7 +70,7 @@ public class Errno {
     public String strerror(int errno) {
         try {
             Pointer<Byte> p = Util.createPtr((long)strerrorMH.invoke(errno), NativeLibrary.createLayout(byte.class));
-            return Transformer.toString(p);
+            return Pointer.toString(p);
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }

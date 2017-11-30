@@ -27,7 +27,6 @@ import java.nicl.LibrarySymbol;
 import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
-import java.nicl.types.Transformer;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static jdk.internal.nicl.UnixDynamicLibraries.RTLD_DEFAULT_PTR;
 
@@ -48,7 +47,7 @@ class UnixLibrary implements Library {
         }
 
         try (Scope scope = new NativeScope()) {
-            Pointer<Byte> cname = Transformer.toCString(name, scope);
+            Pointer<Byte> cname = scope.toCString(name);
 
             Pointer<Void> h;
             if (handle == null) {
