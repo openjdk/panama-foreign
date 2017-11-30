@@ -24,4 +24,6 @@
  */
 
 module jdk.internal.clang {
+    exports jdk.internal.clang to
+        jdk.jextract;
 }

@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,17 +21,32 @@
  * questions.
  */
 
-/**
- * Internal option processing API
- *
- * @since 9
- */
-module jdk.internal.opt {
-    exports jdk.internal.joptsimple to
-        jdk.jextract,
-        jdk.jlink,
-        jdk.jshell;
+package com.sun.tools.jextract;
 
-    exports jdk.internal.joptsimple.util to
-        jdk.jextract;
+import jdk.internal.clang.Cursor;
+
+import java.util.Map;
+
+/**
+ * Interface of factory that takes libclang cursors and generate java codes
+ */
+public abstract class CodeFactory {
+    /**
+     * Generate code for the declaring cursor
+     * @param type
+     * @param cursor
+     * @return The JType for the generated entity
+     */
+    protected abstract CodeFactory addType(JType type, Cursor cursor);
+
+    protected abstract CodeFactory addMacro(Cursor cursor);
+
+    protected abstract void produce();
+
+    /**
+     * Collect the classes generated from this CodeFactory. The Map key is the
+     * full qualified class name, and the value is bytecode for the class.
+     * @return Map contains class name and bytecode.
+     */
+    protected abstract Map<String, byte[]> collect();
 }

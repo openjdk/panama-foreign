@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,17 +23,48 @@
  * questions.
  */
 
-/**
- * Internal option processing API
- *
- * @since 9
- */
-module jdk.internal.opt {
-    exports jdk.internal.joptsimple to
-        jdk.jextract,
-        jdk.jlink,
-        jdk.jshell;
+package com.sun.tools.jextract;
 
-    exports jdk.internal.joptsimple.util to
-        jdk.jextract;
+import jdk.internal.clang.Cursor;
+import jdk.internal.clang.Type;
+
+/**
+ * Enhances JType with native type descriptor
+ */
+public class JType2 implements JType {
+    final JType delegate;
+    final Type cType;
+    final Cursor cursor;
+
+    private JType2(Type ct, Cursor c, JType type) {
+        cType = ct;
+        cursor = c;
+        delegate = type;
+    }
+
+    public String getNativeDescriptor() {
+        return Utils.getLayout(cType);
+    }
+
+    public int getCallingConvention() {
+        return cType.getCallingConvention().ordinal();
+    }
+
+    public JType getDelegate() {
+        return delegate;
+    }
+
+    public static JType2 bind(JType type, Type cType, Cursor c) {
+        return new JType2(cType, c, type);
+    }
+
+    @Override
+    public String getDescriptor() {
+        return delegate.getDescriptor();
+    }
+
+    @Override
+    public String getSignature() {
+        return delegate.getSignature();
+    }
 }

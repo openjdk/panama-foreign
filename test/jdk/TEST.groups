@@ -311,6 +311,10 @@ jdk_svc = \
 jdk_nicl = \
     java/nicl
 
+jdk_nicl = \
+    java/nicl \
+    com/sun/tools/jextract
+
 #############################
 
 #

@@ -151,12 +151,14 @@ module java.base {
         java.logging;
     exports jdk.internal.org.objectweb.asm to
         jdk.jartool,
+        jdk.jextract,
         jdk.jlink,
         jdk.scripting.nashorn,
         jdk.internal.vm.ci;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm.util to
+        jdk.jextract,
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.commons to
         jdk.scripting.nashorn;
