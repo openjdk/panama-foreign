@@ -71,9 +71,11 @@ IDEA_TEMPLATE="$IDEA_MAKE/template"
 IML_TEMPLATE="$IDEA_TEMPLATE/jdk.iml"
 ANT_TEMPLATE="$IDEA_TEMPLATE/ant.xml"
 MISC_TEMPLATE="$IDEA_TEMPLATE/misc.xml"
+RUN_JEXTRACT_TEMPLATE="$IDEA_TEMPLATE/runConfigurations/jextract.xml"
 IDEA_IML="$IDEA_OUTPUT/jdk.iml"
 IDEA_ANT="$IDEA_OUTPUT/ant.xml"
 IDEA_MISC="$IDEA_OUTPUT/misc.xml"
+IDEA_RUN_JEXTRACT="$IDEA_OUTPUT/runConfigurations/jextract.xml"
 
 if [ "$VERBOSE" = "true" ] ; then
   echo "output dir: $IDEA_OUTPUT"
@@ -153,6 +155,22 @@ addBuildDir() {
   printf "%s\n" "$mn" >> $IDEA_ANT
 }
 
+LD_PATH="<env name=\"LD_LIBRARY_PATH\" value=\"####\" />"
+
+addClangLib() {
+  CLANG_LIB=`echo $LIBCLANG_LDFLAGS | sed 's/^-L//g'`
+  mn="`echo "$LD_PATH" | sed -e s@"\(.*\)####\(.*\)"@"\1$CLANG_LIB\2"@`"
+  printf "%s\n" "$mn" >> $IDEA_RUN_JEXTRACT
+}
+
+ALTERNATE_JRE="    <option name=\"ALTERNATIVE_JRE_PATH\" value=\"####/images/jdk\" />"
+
+addAltJreDir() {
+  DIR=`dirname $SPEC`
+  mn="`echo "$ALTERNATE_JRE" | sed -e s@"\(.*\)####\(.*\)"@"\1$DIR\2"@`"
+  printf "%s\n" "$mn" >> $IDEA_RUN_JEXTRACT
+}
+
 ### Generate ant.xml
 
 rm -f $IDEA_ANT
@@ -198,6 +216,18 @@ do
     printf "%s\n" "$line" >> $IDEA_MISC
   fi
 done < "$MISC_TEMPLATE"
+
+rm -f $IDEA_RUN_JEXTRACT
+while IFS= read -r line
+do
+  if echo "$line" | egrep "^ .* <env name=\"LD_LIBRARY_PATH\"" > /dev/null ; then
+    addClangLib
+  elif echo "$line" | egrep "^ .*<option name=\"ALTERNATIVE_JRE_PATH\"" > /dev/null ; then
+    addAltJreDir
+  else
+    printf "%s\n" "$line" >> $IDEA_RUN_JEXTRACT
+  fi
+done < "$RUN_JEXTRACT_TEMPLATE"
 
 ### Compile the custom Logger
 
