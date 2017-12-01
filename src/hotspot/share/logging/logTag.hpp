@@ -101,7 +101,6 @@
   LOG_TAG(oopmap) \
   LOG_TAG(os) \
   LOG_TAG(pagesize) \
-  LOG_TAG(panama) \
   LOG_TAG(patch) \
   LOG_TAG(path) \
   LOG_TAG(perf) \

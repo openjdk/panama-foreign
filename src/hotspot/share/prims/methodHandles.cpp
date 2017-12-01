@@ -62,18 +62,6 @@
 
 bool MethodHandles::_enabled = false; // set true after successful native linkage
 MethodHandlesAdapterBlob* MethodHandles::_adapter_code = NULL;
-BufferBlob* MethodHandles::_invoke_native_blob = NULL;
-
-class InvokeNativeGenerator : public StubCodeGenerator {
-public:
-  InvokeNativeGenerator(CodeBuffer* code) : StubCodeGenerator(code, PrintMethodHandleStubs) {}
-
-  void generate();
-};
-
-void InvokeNativeGenerator::generate() {
-  MethodHandles::generate_invoke_native(_masm);
-}
 
 /**
  * Generates method handle adapters. Returns 'false' if memory allocation
@@ -90,15 +78,6 @@ void MethodHandles::generate_adapters() {
   MethodHandlesAdapterGenerator g(&code);
   g.generate();
   code.log_section_sizes("MethodHandlesAdapterBlob");
-
-  {
-    _invoke_native_blob = BufferBlob::create("invoke_native_blob", adapter_code_size);
-
-    CodeBuffer code2(_invoke_native_blob);
-    InvokeNativeGenerator g2(&code2);
-    g2.generate();
-    code2.log_section_sizes("InvokeNativeBlob");
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -1346,19 +1325,6 @@ JVM_ENTRY(void, MHN_clearCallSiteContext(JNIEnv* env, jobject igcls, jobject con
 }
 JVM_END
 
-JVM_ENTRY(void, MHN_invokeNative(JNIEnv* env, jobject igcls, jlongArray args_jh, jlongArray rets_jh, jlongArray recipe_jh, jobject nep_jh)) {
-  arrayHandle recipe(THREAD, (arrayOop)JNIHandles::resolve(recipe_jh));
-  arrayHandle args(THREAD, (arrayOop)JNIHandles::resolve(args_jh));
-  arrayHandle rets(THREAD, (arrayOop)JNIHandles::resolve(rets_jh));
-
-  assert(thread->thread_state() == _thread_in_vm, "thread state is: %d", thread->thread_state());
-
-  address c = java_lang_invoke_NativeEntryPoint::addr(JNIHandles::resolve(nep_jh));
-
-  MethodHandles::invoke_native(recipe, args, rets, c, thread);
-} JVM_END
-
-
 /**
  * Throws a java/lang/UnsupportedOperationException unconditionally.
  * This is required by the specification of MethodHandle.invoke if
@@ -1396,7 +1362,6 @@ JVM_END
 #define MH    JLINV "MethodHandle;"
 #define MEM   JLINV "MemberName;"
 #define CTX   JLINV "MethodHandleNatives$CallSiteContext;"
-#define NEP    JLINV "NativeEntryPoint;"
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
@@ -1417,8 +1382,7 @@ static JNINativeMethod MHN_methods[] = {
   {CC "clearCallSiteContext",      CC "(" CTX ")V",                          FN_PTR(MHN_clearCallSiteContext)},
   {CC "staticFieldOffset",         CC "(" MEM ")J",                          FN_PTR(MHN_staticFieldOffset)},
   {CC "staticFieldBase",           CC "(" MEM ")" OBJ,                        FN_PTR(MHN_staticFieldBase)},
-  {CC "getMemberVMInfo",           CC "(" MEM ")" OBJ,                        FN_PTR(MHN_getMemberVMInfo)},
-  {CC "invokeNative",              CC "([J[J[J" NEP ")V",                    FN_PTR(MHN_invokeNative)}
+  {CC "getMemberVMInfo",           CC "(" MEM ")" OBJ,                        FN_PTR(MHN_getMemberVMInfo)}
 };
 
 static JNINativeMethod MH_methods[] = {

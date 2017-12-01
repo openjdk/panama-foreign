@@ -454,13 +454,3 @@ void trace_method_handle_stub_wrapper(MethodHandleStubArguments* args) {  }
 
 void MethodHandles::trace_method_handle(MacroAssembler* _masm, const char* adaptername) {  }
 #endif //PRODUCT
-
-
-
-void MethodHandles::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, arrayHandle rets_arr, address code, JavaThread* thread) {
-  fatal("NIY");
-}
-
-void MethodHandles::generate_invoke_native(MacroAssembler* _masm) {
-  //fatal("NIY");
-}
