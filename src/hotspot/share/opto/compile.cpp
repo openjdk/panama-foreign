@@ -2173,10 +2173,9 @@ void Compile::Optimize() {
     if (AlwaysIncrementalInline) {
       inline_incrementally(igvn);
     }
+    if (failing())  return;
 
     print_method(PHASE_INCREMENTAL_BOXING_INLINE, 2);
-
-    if (failing())  return;
   }
 
   // Remove the speculative part of types and clean up the graph from
