@@ -61,9 +61,9 @@ public class AddTest {
 
     static void workloadIndexMapped() {
         for (int i = 0; i < a.length; i += SPECIES.length()) {
-            FloatVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i, IDENTITY_INDEX_MAPPING);
-            FloatVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i, IDENTITY_INDEX_MAPPING);
-            av.add(bv).intoArray(c, i, IDENTITY_INDEX_MAPPING);
+            FloatVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i, IDENTITY_INDEX_MAPPING, 0);
+            FloatVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i, IDENTITY_INDEX_MAPPING, 0);
+            av.add(bv).intoArray(c, i, IDENTITY_INDEX_MAPPING, 0);
         }
     }
 

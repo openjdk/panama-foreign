@@ -378,20 +378,20 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
     // Type specific extractors
 
     @HotSpotIntrinsicCandidate
-    public void intoArray(short[] a, int ix) {
-        forEach((i, a_) -> a[ix + i] = a_);
+    public void intoArray(short[] a, int ax) {
+        forEach((i, a_) -> a[ax + i] = a_);
     }
 
-    public void intoArray(short[] a, int ix, Mask<Short, S> m) {
-        forEach(m, (i, a_) -> a[ix + i] = a_);
+    public void intoArray(short[] a, int ax, Mask<Short, S> m) {
+        forEach(m, (i, a_) -> a[ax + i] = a_);
     }
 
-    public void intoArray(short[] a, int ix, int[] indexMap) {
-        forEach((i, a_) -> a[ix + indexMap[i]] = a_);
+    public void intoArray(short[] a, int ax, int[] indexMap, int mx) {
+        forEach((i, a_) -> a[ax + indexMap[mx + i]] = a_);
     }
 
-    public void intoArray(short[] a, int ix, Mask<Short, S> m, int[] indexMap) {
-        forEach(m, (i, a_) -> a[ix + indexMap[i]] = a_);
+    public void intoArray(short[] a, int ax, Mask<Short, S> m, int[] indexMap, int mx) {
+        forEach(m, (i, a_) -> a[ax + indexMap[mx + i]] = a_);
     }
 
     // Species
@@ -424,20 +424,20 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
         }
 
         @HotSpotIntrinsicCandidate
-        public ShortVector<S> fromArray(short[] a, int ix) {
-            return op(i -> a[ix + i]);
+        public ShortVector<S> fromArray(short[] a, int ax) {
+            return op(i -> a[ax + i]);
         }
 
-        public ShortVector<S> fromArray(short[] a, int ix, Mask<Short, S> m) {
-            return op(m, i -> a[ix + i]);
+        public ShortVector<S> fromArray(short[] a, int ax, Mask<Short, S> m) {
+            return op(m, i -> a[ax + i]);
         }
 
-        public ShortVector<S> fromArray(short[] a, int ix, int[] indexMap) {
-            return op(i -> a[ix + indexMap[i]]);
+        public ShortVector<S> fromArray(short[] a, int ax, int[] indexMap, int mx) {
+            return op(i -> a[ax + indexMap[mx + i]]);
         }
 
-        public ShortVector<S> fromArray(short[] a, int ix, Mask<Short, S> m, int[] indexMap) {
-            return op(m, i -> a[ix + indexMap[i]]);
+        public ShortVector<S> fromArray(short[] a, int ax, Mask<Short, S> m, int[] indexMap, int mx) {
+            return op(m, i -> a[ax + indexMap[mx + i]]);
         }
 
         @Override

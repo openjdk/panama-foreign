@@ -445,20 +445,20 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
     // Type specific extractors
 
     @HotSpotIntrinsicCandidate
-    public void intoArray(int[] a, int ix) {
-        forEach((i, a_) -> a[ix + i] = a_);
+    public void intoArray(int[] a, int ax) {
+        forEach((i, a_) -> a[ax + i] = a_);
     }
 
-    public void intoArray(int[] a, int ix, Mask<Integer, S> m) {
-        forEach(m, (i, a_) -> a[ix + i] = a_);
+    public void intoArray(int[] a, int ax, Mask<Integer, S> m) {
+        forEach(m, (i, a_) -> a[ax + i] = a_);
     }
 
-    public void intoArray(int[] a, int ix, int[] indexMap) {
-        forEach((i, a_) -> a[ix + indexMap[i]] = a_);
+    public void intoArray(int[] a, int ax, int[] indexMap, int mx) {
+        forEach((i, a_) -> a[ax + indexMap[mx + i]] = a_);
     }
 
-    public void intoArray(int[] a, int ix, Mask<Integer, S> m, int[] indexMap) {
-        forEach(m, (i, a_) -> a[ix + indexMap[i]] = a_);
+    public void intoArray(int[] a, int ax, Mask<Integer, S> m, int[] indexMap, int mx) {
+        forEach(m, (i, a_) -> a[ax + indexMap[mx + i]] = a_);
     }
 
     // Species
@@ -493,20 +493,20 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         }
 
         @HotSpotIntrinsicCandidate
-        public IntVector<S> fromArray(int[] a, int ix) {
-            return op(i -> a[ix + i]);
+        public IntVector<S> fromArray(int[] a, int ax) {
+            return op(i -> a[ax + i]);
         }
 
-        public IntVector<S> fromArray(int[] a, int ix, Mask<Integer, S> m) {
-            return op(m, i -> a[ix + i]);
+        public IntVector<S> fromArray(int[] a, int ax, Mask<Integer, S> m) {
+            return op(m, i -> a[ax + i]);
         }
 
-        public IntVector<S> fromArray(int[] a, int ix, int[] indexMap) {
-            return op(i -> a[ix + indexMap[i]]);
+        public IntVector<S> fromArray(int[] a, int ax, int[] indexMap, int mx) {
+            return op(i -> a[ax + indexMap[mx + i]]);
         }
 
-        public IntVector<S> fromArray(int[] a, int ix, Mask<Integer, S> m, int[] indexMap) {
-            return op(m, i -> a[ix + indexMap[i]]);
+        public IntVector<S> fromArray(int[] a, int ax, Mask<Integer, S> m, int[] indexMap, int mx) {
+            return op(m, i -> a[ax + indexMap[mx + i]]);
         }
 
         @Override

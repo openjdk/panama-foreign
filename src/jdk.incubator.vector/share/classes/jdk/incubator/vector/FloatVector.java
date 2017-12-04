@@ -592,20 +592,20 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
     // Type specific extractors
 
     @HotSpotIntrinsicCandidate
-    public void intoArray(float[] a, int ix) {
-        forEach((i, a_) -> a[ix + i] = a_);
+    public void intoArray(float[] a, int ax) {
+        forEach((i, a_) -> a[ax + i] = a_);
     }
 
-    public void intoArray(float[] a, int ix, Mask<Float, S> m) {
-        forEach(m, (i, a_) -> a[ix + i] = a_);
+    public void intoArray(float[] a, int ax, Mask<Float, S> m) {
+        forEach(m, (i, a_) -> a[ax + i] = a_);
     }
 
-    public void intoArray(float[] a, int ix, int[] indexMap) {
-        forEach((i, a_) -> a[ix + indexMap[i]] = a_);
+    public void intoArray(float[] a, int ax, int[] indexMap, int mx) {
+        forEach((i, a_) -> a[ax + indexMap[mx + i]] = a_);
     }
 
-    public void intoArray(float[] a, int ix, Mask<Float, S> m, int[] indexMap) {
-        forEach(m, (i, a_) -> a[ix + indexMap[i]] = a_);
+    public void intoArray(float[] a, int ax, Mask<Float, S> m, int[] indexMap, int mx) {
+        forEach(m, (i, a_) -> a[ax + indexMap[mx + i]] = a_);
     }
 
     // Species
@@ -640,20 +640,20 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
         }
 
         @HotSpotIntrinsicCandidate
-        public FloatVector<S> fromArray(float[] a, int ix) {
-            return op(i -> a[ix + i]);
+        public FloatVector<S> fromArray(float[] a, int ax) {
+            return op(i -> a[ax + i]);
         }
 
-        public FloatVector<S> fromArray(float[] a, int ix, Mask<Float, S> m) {
-            return op(m, i -> a[ix + i]);
+        public FloatVector<S> fromArray(float[] a, int ax, Mask<Float, S> m) {
+            return op(m, i -> a[ax + i]);
         }
 
-        public FloatVector<S> fromArray(float[] a, int ix, int[] indexMap) {
-            return op(i -> a[ix + indexMap[i]]);
+        public FloatVector<S> fromArray(float[] a, int ax, int[] indexMap, int mx) {
+            return op(i -> a[ax + indexMap[mx + i]]);
         }
 
-        public FloatVector<S> fromArray(float[] a, int ix, Mask<Float, S> m, int[] indexMap) {
-            return op(m, i -> a[ix + indexMap[i]]);
+        public FloatVector<S> fromArray(float[] a, int ax, Mask<Float, S> m, int[] indexMap, int mx) {
+            return op(m, i -> a[ax + indexMap[mx + i]]);
         }
 
         @Override
