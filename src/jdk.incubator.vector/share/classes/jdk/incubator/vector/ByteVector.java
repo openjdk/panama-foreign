@@ -422,6 +422,10 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
             return op(i -> i == 0 ? e : (byte) 0);
         }
 
+        public ByteVector<S> scalars(byte... es) {
+            return op(i -> es[i]);
+        }
+
         @HotSpotIntrinsicCandidate
         public ByteVector<S> fromArray(byte[] a, int ax) {
             return op(i -> a[ax + i]);

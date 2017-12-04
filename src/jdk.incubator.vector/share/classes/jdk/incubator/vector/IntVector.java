@@ -492,6 +492,10 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
             return op(i -> i == 0 ? e : (int) 0);
         }
 
+        public IntVector<S> scalars(int... es) {
+            return op(i -> es[i]);
+        }
+
         @HotSpotIntrinsicCandidate
         public IntVector<S> fromArray(int[] a, int ax) {
             return op(i -> a[ax + i]);

@@ -423,6 +423,10 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
             return op(i -> i == 0 ? e : (short) 0);
         }
 
+        public ShortVector<S> scalars(short... es) {
+            return op(i -> es[i]);
+        }
+
         @HotSpotIntrinsicCandidate
         public ShortVector<S> fromArray(short[] a, int ax) {
             return op(i -> a[ax + i]);

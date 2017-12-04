@@ -877,6 +877,10 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
             return op(i -> i == 0 ? e : ($type$) 0);
         }
 
+        public $abstractvectortype$<S> scalars($type$... es) {
+            return op(i -> es[i]);
+        }
+
         @HotSpotIntrinsicCandidate
         public $abstractvectortype$<S> fromArray($type$[] a, int ax) {
             return op(i -> a[ax + i]);

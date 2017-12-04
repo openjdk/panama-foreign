@@ -639,6 +639,10 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
             return op(i -> i == 0 ? e : (float) 0);
         }
 
+        public FloatVector<S> scalars(float... es) {
+            return op(i -> es[i]);
+        }
+
         @HotSpotIntrinsicCandidate
         public FloatVector<S> fromArray(float[] a, int ax) {
             return op(i -> a[ax + i]);

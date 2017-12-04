@@ -638,6 +638,10 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
             return op(i -> i == 0 ? e : (double) 0);
         }
 
+        public DoubleVector<S> scalars(double... es) {
+            return op(i -> es[i]);
+        }
+
         @HotSpotIntrinsicCandidate
         public DoubleVector<S> fromArray(double[] a, int ax) {
             return op(i -> a[ax + i]);

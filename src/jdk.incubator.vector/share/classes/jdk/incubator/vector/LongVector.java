@@ -501,6 +501,10 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
             return op(i -> i == 0 ? e : (long) 0);
         }
 
+        public LongVector<S> scalars(long... es) {
+            return op(i -> es[i]);
+        }
+
         @HotSpotIntrinsicCandidate
         public LongVector<S> fromArray(long[] a, int ax) {
             return op(i -> a[ax + i]);
