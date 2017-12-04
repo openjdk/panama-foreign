@@ -464,6 +464,14 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
         forEach(m, (i, a_) -> a[ix + i] = a_);
     }
 
+    public void intoArray(long[] a, int ix, int[] indexMap) {
+        forEach((i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
+    public void intoArray(long[] a, int ix, Mask<Long, S> m, int[] indexMap) {
+        forEach(m, (i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
     // Species
 
     @Override
@@ -500,6 +508,14 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
 
         public LongVector<S> fromArray(long[] a, int ix, Mask<Long, S> m) {
             return op(m, i -> a[ix + i]);
+        }
+
+        public LongVector<S> fromArray(long[] a, int ix, int[] indexMap) {
+            return op(i -> a[ix + indexMap[i]]);
+        }
+
+        public LongVector<S> fromArray(long[] a, int ix, Mask<Long, S> m, int[] indexMap) {
+            return op(m, i -> a[ix + indexMap[i]]);
         }
 
         @Override

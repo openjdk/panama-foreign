@@ -599,6 +599,14 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         forEach(m, (i, a_) -> a[ix + i] = a_);
     }
 
+    public void intoArray(double[] a, int ix, int[] indexMap) {
+        forEach((i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
+    public void intoArray(double[] a, int ix, Mask<Double, S> m, int[] indexMap) {
+        forEach(m, (i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
     // Species
 
     @Override
@@ -637,6 +645,14 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
 
         public DoubleVector<S> fromArray(double[] a, int ix, Mask<Double, S> m) {
             return op(m, i -> a[ix + i]);
+        }
+
+        public DoubleVector<S> fromArray(double[] a, int ix, int[] indexMap) {
+            return op(i -> a[ix + indexMap[i]]);
+        }
+
+        public DoubleVector<S> fromArray(double[] a, int ix, Mask<Double, S> m, int[] indexMap) {
+            return op(m, i -> a[ix + indexMap[i]]);
         }
 
         @Override

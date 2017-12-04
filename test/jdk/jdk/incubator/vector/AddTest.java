@@ -30,7 +30,12 @@ import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.Shapes;
 import jdk.incubator.vector.Vector;
 
+import java.util.Arrays;
+import java.util.stream.IntStream;
+
 public class AddTest {
+    static final FloatVector.FloatSpecies<Shapes.S256Bit> SPECIES = (FloatVector.FloatSpecies<Shapes.S256Bit>)
+            Vector.speciesInstance(Float.class, Shapes.S_256_BIT);
 
     static final int SIZE = 1024;
     static float[] a = new float[SIZE];
@@ -45,17 +50,36 @@ public class AddTest {
     }
 
     static void workload() {
-        FloatVector.FloatSpecies<Shapes.S256Bit> species = (FloatVector.FloatSpecies<Shapes.S256Bit>) Vector.speciesInstance(Float.class, Shapes.S_256_BIT);
-        for (int i = 0; i < a.length; i += species.length()) {
-            FloatVector<Shapes.S256Bit> av = species.fromArray(a, i);
-            FloatVector<Shapes.S256Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            FloatVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+            FloatVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
             av.add(bv).intoArray(c, i);
+        }
+    }
+
+    static final int[] IDENTITY_INDEX_MAPPING = IntStream.range(0, SPECIES.length()).toArray();
+
+    static void workloadIndexMapped() {
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            FloatVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i, IDENTITY_INDEX_MAPPING);
+            FloatVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i, IDENTITY_INDEX_MAPPING);
+            av.add(bv).intoArray(c, i, IDENTITY_INDEX_MAPPING);
         }
     }
 
     public static void main(String args[]) {
         for (int i = 0; i < 30_0000; i++) {
             workload();
+        }
+        for (int i = 0; i < a.length; i++) {
+            if (c[i] != a[i] + b[i])
+                throw new AssertionError();
+        }
+
+        Arrays.fill(c, 0.0f);
+
+        for (int i = 0; i < 30_0000; i++) {
+            workloadIndexMapped();
         }
         for (int i = 0; i < a.length; i++) {
             if (c[i] != a[i] + b[i])

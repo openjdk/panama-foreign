@@ -600,6 +600,14 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
         forEach(m, (i, a_) -> a[ix + i] = a_);
     }
 
+    public void intoArray(float[] a, int ix, int[] indexMap) {
+        forEach((i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
+    public void intoArray(float[] a, int ix, Mask<Float, S> m, int[] indexMap) {
+        forEach(m, (i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
     // Species
 
     @Override
@@ -638,6 +646,14 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
 
         public FloatVector<S> fromArray(float[] a, int ix, Mask<Float, S> m) {
             return op(m, i -> a[ix + i]);
+        }
+
+        public FloatVector<S> fromArray(float[] a, int ix, int[] indexMap) {
+            return op(i -> a[ix + indexMap[i]]);
+        }
+
+        public FloatVector<S> fromArray(float[] a, int ix, Mask<Float, S> m, int[] indexMap) {
+            return op(m, i -> a[ix + indexMap[i]]);
         }
 
         @Override

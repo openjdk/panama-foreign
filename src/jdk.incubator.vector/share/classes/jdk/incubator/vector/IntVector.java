@@ -453,6 +453,14 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         forEach(m, (i, a_) -> a[ix + i] = a_);
     }
 
+    public void intoArray(int[] a, int ix, int[] indexMap) {
+        forEach((i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
+    public void intoArray(int[] a, int ix, Mask<Integer, S> m, int[] indexMap) {
+        forEach(m, (i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
     // Species
 
     @Override
@@ -491,6 +499,14 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
 
         public IntVector<S> fromArray(int[] a, int ix, Mask<Integer, S> m) {
             return op(m, i -> a[ix + i]);
+        }
+
+        public IntVector<S> fromArray(int[] a, int ix, int[] indexMap) {
+            return op(i -> a[ix + indexMap[i]]);
+        }
+
+        public IntVector<S> fromArray(int[] a, int ix, Mask<Integer, S> m, int[] indexMap) {
+            return op(m, i -> a[ix + indexMap[i]]);
         }
 
         @Override

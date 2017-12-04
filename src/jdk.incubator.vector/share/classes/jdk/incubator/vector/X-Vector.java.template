@@ -828,6 +828,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         forEach(m, (i, a_) -> a[ix + i] = a_);
     }
 
+    public void intoArray($type$[] a, int ix, int[] indexMap) {
+        forEach((i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
+    public void intoArray($type$[] a, int ix, Mask<$Boxtype$, S> m, int[] indexMap) {
+        forEach(m, (i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
     // Species
 
     @Override
@@ -876,6 +884,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
 
         public $abstractvectortype$<S> fromArray($type$[] a, int ix, Mask<$Boxtype$, S> m) {
             return op(m, i -> a[ix + i]);
+        }
+
+        public $abstractvectortype$<S> fromArray($type$[] a, int ix, int[] indexMap) {
+            return op(i -> a[ix + indexMap[i]]);
+        }
+
+        public $abstractvectortype$<S> fromArray($type$[] a, int ix, Mask<$Boxtype$, S> m, int[] indexMap) {
+            return op(m, i -> a[ix + indexMap[i]]);
         }
 
         @Override

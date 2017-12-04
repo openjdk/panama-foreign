@@ -385,6 +385,14 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
         forEach(m, (i, a_) -> a[ix + i] = a_);
     }
 
+    public void intoArray(byte[] a, int ix, int[] indexMap) {
+        forEach((i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
+    public void intoArray(byte[] a, int ix, Mask<Byte, S> m, int[] indexMap) {
+        forEach(m, (i, a_) -> a[ix + indexMap[i]] = a_);
+    }
+
     // Species
 
     @Override
@@ -421,6 +429,14 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
 
         public ByteVector<S> fromArray(byte[] a, int ix, Mask<Byte, S> m) {
             return op(m, i -> a[ix + i]);
+        }
+
+        public ByteVector<S> fromArray(byte[] a, int ix, int[] indexMap) {
+            return op(i -> a[ix + indexMap[i]]);
+        }
+
+        public ByteVector<S> fromArray(byte[] a, int ix, Mask<Byte, S> m, int[] indexMap) {
+            return op(m, i -> a[ix + indexMap[i]]);
         }
 
         @Override
