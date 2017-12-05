@@ -348,6 +348,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_vector_length(int num_elem);
   bool inline_vector_make_mask(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
   bool inline_vector_mask_test(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
+  bool inline_vector_mask_op(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
   bool inline_vector_mask_rebracket(const TypeInstPtr* box_type, BasicType type, int num_elem);
 
   bool inline_profileBoolean();
@@ -6911,8 +6912,52 @@ static bool is_vector_store(vmIntrinsics::ID id) {
 static bool is_vector_mask_make(vmIntrinsics::ID id) {
   switch (id) {
   case vmIntrinsics::_VectorConstantMask:
-  case vmIntrinsics::_VectorTrueMask:
-  case vmIntrinsics::_VectorFalseMask:
+  case vmIntrinsics::_VectorTrueMaskFloat128:
+  case vmIntrinsics::_VectorFalseMaskFloat128:
+  case vmIntrinsics::_VectorTrueMaskFloat256:
+  case vmIntrinsics::_VectorFalseMaskFloat256:
+  case vmIntrinsics::_VectorTrueMaskFloat512:
+  case vmIntrinsics::_VectorFalseMaskFloat512:
+  case vmIntrinsics::_VectorTrueMaskDouble128:
+  case vmIntrinsics::_VectorFalseMaskDouble128:
+  case vmIntrinsics::_VectorTrueMaskDouble256:
+  case vmIntrinsics::_VectorFalseMaskDouble256:
+  case vmIntrinsics::_VectorTrueMaskDouble512:
+  case vmIntrinsics::_VectorFalseMaskDouble512:
+  case vmIntrinsics::_VectorTrueMaskInt128:
+  case vmIntrinsics::_VectorFalseMaskInt128:
+  case vmIntrinsics::_VectorTrueMaskInt256:
+  case vmIntrinsics::_VectorFalseMaskInt256:
+  case vmIntrinsics::_VectorTrueMaskInt512:
+  case vmIntrinsics::_VectorFalseMaskInt512:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_mask_make_true(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorTrueMaskFloat128:
+  case vmIntrinsics::_VectorTrueMaskFloat256:
+  case vmIntrinsics::_VectorTrueMaskFloat512:
+  case vmIntrinsics::_VectorTrueMaskDouble128:
+  case vmIntrinsics::_VectorTrueMaskDouble256:
+  case vmIntrinsics::_VectorTrueMaskDouble512:
+  case vmIntrinsics::_VectorTrueMaskInt128:
+  case vmIntrinsics::_VectorTrueMaskInt256:
+  case vmIntrinsics::_VectorTrueMaskInt512:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_mask_op(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorMaskOr:
+  case vmIntrinsics::_VectorMaskAnd:
+  case vmIntrinsics::_VectorMaskNot:
     return true;
   default:
     return false;
@@ -7575,14 +7620,14 @@ bool LibraryCallKit::inline_vector_length(int num_elem) {
 bool LibraryCallKit::inline_vector_make_mask(const TypeInstPtr* box_type, BasicType bt, int num_elem, vmIntrinsics::ID id) {
   if (id == vmIntrinsics::_VectorConstantMask) {
     return false;
-  } else {
-    assert (id == vmIntrinsics::_VectorTrueMask || id == vmIntrinsics::_VectorFalseMask, "must be absolute mask");
   }
+
+  bool is_true_mask = is_vector_mask_make_true(id);
 
   bt = getMaskBasicType(bt);
 
-  jint icon = (id == vmIntrinsics::_VectorTrueMask) ? max_juint : 0;
-  jlong jcon = (id == vmIntrinsics::_VectorTrueMask) ? max_julong : 0;
+  jint icon = is_true_mask ? max_juint : 0;
+  jlong jcon = is_true_mask ? max_julong : 0;
   Node* input = bt == T_LONG ? longcon(jcon) : intcon(icon);
   Node* mask = gen_replicate(bt, num_elem, input);
   mask = _gvn.transform(mask);
@@ -7627,6 +7672,50 @@ bool LibraryCallKit::inline_vector_mask_test(const TypeInstPtr* box_type, BasicT
   Node* test = new VectorTestNode(opd1, rhs_val, booltest);
   test = _gvn.transform(test);
   setVectorOutput(test);
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_mask_op(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id) {
+  if (id == vmIntrinsics::_VectorMaskNot) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Vector Mask NOT is not yet supported due to missing backend implementation");
+    }
+#endif
+    return false;
+  }
+
+  BasicType mask_type = getMaskBasicType(type);
+  Node* opd1 = getVectorInput(argument(0), box_type, mask_type, num_elem);
+  if (opd1 == NULL) {
+    return false;
+  }
+
+  Node* opd2 = NULL;
+  // Not has a single operand. All rest are binary.
+  if (id != vmIntrinsics::_VectorMaskNot) {
+    opd2 = getVectorInput(argument(1), box_type, mask_type, num_elem);
+    if (opd2 == NULL) {
+      return false;
+    }
+  }
+
+  Node* result = NULL;
+  const TypeVect* vt = TypeVect::make(mask_type, num_elem);
+  switch(id) {
+    case vmIntrinsics::_VectorMaskAnd:
+      result = new AndVNode(opd1, opd2, vt);
+      break;
+    case vmIntrinsics::_VectorMaskOr:
+      result = new OrVNode(opd1, opd2, vt);
+      break;
+    default:
+      Unimplemented();
+  }
+
+  result = _gvn.transform(result);
+  result = wrapWithVectorBox(result, box_type);
+  setVectorOutput(result);
   return true;
 }
 
@@ -7811,6 +7900,8 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
       return return_and_print_if_failed(inline_vector_mask_rebracket(box_type, type, num_elem), id);
     } else if ( is_vector_mask_test(id) ) {
       return return_and_print_if_failed(inline_vector_mask_test(box_type, type, num_elem, id), id);
+    } else if ( is_vector_mask_op(id) ) {
+      return return_and_print_if_failed(inline_vector_mask_op(box_type, type, num_elem, id), id);
     } else {
       int op = get_op_from_intrinsic(id);
       assert(is_bin_vector_op(id), "Expected binary operation here. If not binary, support needs added.");
