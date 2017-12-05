@@ -26,6 +26,7 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import jdk.internal.HotSpotIntrinsicCandidate;
 
 @SuppressWarnings("cast")
 final class Int256Vector extends IntVector<Shapes.S256Bit> {
@@ -433,11 +434,13 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
             return new Int256Mask(bits);
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         public Int256Mask trueMask() {
             return Int256Mask.TRUE_MASK;
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         public Int256Mask falseMask() {
             return Int256Mask.FALSE_MASK;

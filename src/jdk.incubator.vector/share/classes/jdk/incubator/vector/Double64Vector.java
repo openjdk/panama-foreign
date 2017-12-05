@@ -26,6 +26,7 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import jdk.internal.HotSpotIntrinsicCandidate;
 
 @SuppressWarnings("cast")
 final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
@@ -433,11 +434,13 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             return new Double64Mask(bits);
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         public Double64Mask trueMask() {
             return Double64Mask.TRUE_MASK;
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         public Double64Mask falseMask() {
             return Double64Mask.FALSE_MASK;

@@ -188,10 +188,8 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
         @HotSpotIntrinsicCandidate
         Mask<E, S> constantMask(boolean... bits);
 
-        @HotSpotIntrinsicCandidate
         Mask<E, S> trueMask();
 
-        @HotSpotIntrinsicCandidate
         Mask<E, S> falseMask();
 
         default Shuffle<E, S> constantShuffle(int... ixs) {
@@ -220,10 +218,13 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
 
         int trueCount();
 
+        @HotSpotIntrinsicCandidate
         Mask<E, S> and(Mask<E, S> o);
 
+        @HotSpotIntrinsicCandidate
         Mask<E, S> or(Mask<E, S> o);
 
+        @HotSpotIntrinsicCandidate
         Mask<E, S> not();
 
         //TODO: counting trues? LZ count

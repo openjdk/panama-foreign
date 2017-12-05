@@ -26,6 +26,12 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+#if[FP]
+import jdk.internal.HotSpotIntrinsicCandidate;
+#end[FP]
+#if[int]
+import jdk.internal.HotSpotIntrinsicCandidate;
+#end[int]
 
 @SuppressWarnings("cast")
 final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
@@ -444,11 +450,23 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             return new $masktype$(bits);
         }
 
+#if[FP]
+        @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+        @HotSpotIntrinsicCandidate
+#end[int]
         @Override
         public $masktype$ trueMask() {
             return $masktype$.TRUE_MASK;
         }
 
+#if[FP]
+        @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+        @HotSpotIntrinsicCandidate
+#end[int]
         @Override
         public $masktype$ falseMask() {
             return $masktype$.FALSE_MASK;

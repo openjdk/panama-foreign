@@ -26,6 +26,7 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import jdk.internal.HotSpotIntrinsicCandidate;
 
 @SuppressWarnings("cast")
 final class Float64Vector extends FloatVector<Shapes.S64Bit> {
@@ -433,11 +434,13 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             return new Float64Mask(bits);
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         public Float64Mask trueMask() {
             return Float64Mask.TRUE_MASK;
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         public Float64Mask falseMask() {
             return Float64Mask.FALSE_MASK;

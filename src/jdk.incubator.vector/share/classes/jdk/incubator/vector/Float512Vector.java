@@ -26,6 +26,7 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import jdk.internal.HotSpotIntrinsicCandidate;
 
 @SuppressWarnings("cast")
 final class Float512Vector extends FloatVector<Shapes.S512Bit> {
@@ -433,11 +434,13 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             return new Float512Mask(bits);
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         public Float512Mask trueMask() {
             return Float512Mask.TRUE_MASK;
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         public Float512Mask falseMask() {
             return Float512Mask.FALSE_MASK;
