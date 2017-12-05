@@ -7773,6 +7773,11 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
 #endif
 
   if (exact_kls == NULL || !exact_kls->is_vectorapi_vector()) {
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Class recovered is not marked as being a Vector API class");
+  }
+#endif
     return return_and_print_if_failed(false, id);
   }
 
@@ -7811,6 +7816,13 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
       assert(is_bin_vector_op(id), "Expected binary operation here. If not binary, support needs added.");
       return return_and_print_if_failed(inline_bin_vector_op(box_type, op, type, num_elem), id);
     }
+  } else {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Matcher responded that architecture does not support type:%s num_elem:%d combination",
+                    type2name(type), num_elem);
+    }
+#endif
   }
 
   return return_and_print_if_failed(false, id);
