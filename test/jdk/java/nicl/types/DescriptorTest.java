@@ -241,6 +241,11 @@ public class DescriptorTest {
         expected = List.of(new BitFields((Scalar) Types.UNSIGNED.SHORT, new int[] {2,3}),
                 new Function(new Type[] { Types.INT }, Types.POINTER, false));
         validate(descriptor, expected);
+
+        descriptor = "i:2bb3b20i";
+        expected = List.of(new BitFields((Scalar) Types.INT, new int[] {2,1,3}),
+                new Array(Types.INT, 20));
+        validate(descriptor, expected);
     }
 
     @Test
