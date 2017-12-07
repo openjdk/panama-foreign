@@ -1470,6 +1470,7 @@
    do_name(div_method_name, "div")                                                                                                             \
    do_name(equal_method_name, "equal")                                                                                                         \
    do_name(lessthan_method_name, "lessThan")                                                                                                   \
+   do_name(greaterthan_method_name, "greaterThan")                                                                                             \
    do_name(blend_method_name, "blend")                                                                                                         \
    do_name(addall_method_name, "addAll")                                                                                                       \
    do_name(rebracket_method_name, "rebracket")                                                                                                 \
@@ -1524,6 +1525,7 @@
    do_intrinsic(_VectorStoreByte, jdk_incubator_vector_ByteVector, store_vector_name, implCompress_signature, F_R)                             \
    do_intrinsic(_VectorEqualInt, jdk_incubator_vector_IntVector, equal_method_name, vector_cmp_sig, F_R)                                       \
    do_intrinsic(_VectorLessThanInt, jdk_incubator_vector_IntVector, lessthan_method_name, vector_cmp_sig, F_R)                                 \
+   do_intrinsic(_VectorGreaterThanInt, jdk_incubator_vector_IntVector, greaterthan_method_name, vector_cmp_sig, F_R)                           \
    do_intrinsic(_VectorBlendInt, jdk_incubator_vector_IntVector, blend_method_name, vector_int_blend_sig, F_R)                                 \
    do_intrinsic(_VectorAddAllInt, jdk_incubator_vector_IntVector, addall_method_name, void_int_signature, F_R)                                 \
    do_intrinsic(_VectorSubInt, jdk_incubator_vector_IntVector, sub_method_name, vector_int_bin_op_sig, F_R)                                    \
@@ -1532,6 +1534,7 @@
    do_intrinsic(_VectorAddInt, jdk_incubator_vector_IntVector, add_method_name, vector_int_bin_op_sig, F_R)                                    \
    do_intrinsic(_VectorEqualDouble, jdk_incubator_vector_DoubleVector, equal_method_name, vector_cmp_sig, F_R)                                 \
    do_intrinsic(_VectorLessThanDouble, jdk_incubator_vector_DoubleVector, lessthan_method_name, vector_cmp_sig, F_R)                           \
+   do_intrinsic(_VectorGreaterThanDouble, jdk_incubator_vector_DoubleVector, greaterthan_method_name, vector_cmp_sig, F_R)                     \
    do_intrinsic(_VectorBlendDouble, jdk_incubator_vector_DoubleVector, blend_method_name, vector_double_blend_sig, F_R)                        \
    do_intrinsic(_VectorAddAllDouble, jdk_incubator_vector_DoubleVector, addall_method_name, void_double_signature, F_R)                        \
    do_intrinsic(_VectorSubDouble, jdk_incubator_vector_DoubleVector, sub_method_name, vector_double_bin_op_sig, F_R)                           \
@@ -1541,6 +1544,7 @@
    do_intrinsic(_VectorCastFloat, jdk_incubator_vector_FloatVector, Class_cast_name, vector_cast_sig, F_R)                                     \
    do_intrinsic(_VectorEqualFloat, jdk_incubator_vector_FloatVector, equal_method_name, vector_cmp_sig, F_R)                                   \
    do_intrinsic(_VectorLessThanFloat, jdk_incubator_vector_FloatVector, lessthan_method_name, vector_cmp_sig, F_R)                             \
+   do_intrinsic(_VectorGreaterThanFloat, jdk_incubator_vector_FloatVector, greaterthan_method_name, vector_cmp_sig, F_R)                       \
    do_intrinsic(_VectorBlendFloat, jdk_incubator_vector_FloatVector, blend_method_name, vector_float_blend_sig, F_R)                           \
    do_intrinsic(_VectorAddAllFloat, jdk_incubator_vector_FloatVector, addall_method_name, void_float_signature, F_R)                           \
    do_intrinsic(_VectorSubFloat, jdk_incubator_vector_FloatVector, sub_method_name, vector_float_bin_op_sig, F_R)                              \

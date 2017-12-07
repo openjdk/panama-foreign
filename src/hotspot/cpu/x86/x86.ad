@@ -10612,6 +10612,30 @@ instruct vcmplt8F(vecY dst, vecY src1, vecY src2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct vcmpgt4F(vecX dst, vecX src1, vecX src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt);
+  match(Set dst (VectorMaskCmp src1 src2));
+  format %{ "vcmpltps  $dst,$src2,$src1\t! packed4F" %}
+  ins_encode %{
+    int vector_len = 0;
+    int cmp = 1;  // Use lessthan but swap operands.
+    __ vcmpps($dst$$XMMRegister, $src2$$XMMRegister, $src1$$XMMRegister, cmp, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcmpgt8F(vecY dst, vecY src1, vecY src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt);
+  match(Set dst (VectorMaskCmp src1 src2));
+  format %{ "vcmpltps  $dst,$src2,$src1\t! packed8F" %}
+  ins_encode %{
+    int vector_len = 1;
+    int cmp = 1;  // Use lessthan but swap operands.
+    __ vcmpps($dst$$XMMRegister, $src2$$XMMRegister, $src1$$XMMRegister, cmp, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct vcmpeq4I(vecX dst, vecX src1, vecX src2) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
@@ -10637,7 +10661,7 @@ instruct vcmpeq8I(vecY dst, vecY src1, vecY src2) %{
 %}
 
 instruct vcmplt4I(vecX dst, vecX src1, vecX src2, vecZ tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP tmp, TEMP dst);
   format %{ "vcmpgtd  $dst,$src1,$src2\n\t"
@@ -10654,7 +10678,7 @@ instruct vcmplt4I(vecX dst, vecX src1, vecX src2, vecZ tmp) %{
 %}
 
 instruct vcmplt8I(vecY dst, vecY src1, vecY src2, vecY tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP tmp, TEMP dst);
   format %{ "vcmpgtd  $dst,$src1,$src2\n\t"
@@ -10664,6 +10688,40 @@ instruct vcmplt8I(vecY dst, vecY src1, vecY src2, vecY tmp) %{
     int vector_len = 1;
     int cmp = 1;
     __ vcmpgtd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vcmpeqd($tmp$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vcmpeqd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcmpgt4I(vecX dst, vecX src1, vecX src2, vecZ tmp) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorMaskCmp src1 src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "vcmpgtd  $dst,$src2,$src1\n\t"
+            "vcmpeqd  $tmp,$src1,$src2\n\t"
+            "vcmpeqd  $dst,$dst,$tmp\t! cmplt packed4I" %}
+  ins_encode %{
+    int vector_len = 0;
+    int cmp = 1;
+    __ vcmpgtd($dst$$XMMRegister, $src2$$XMMRegister, $src1$$XMMRegister, vector_len);
+    __ vcmpeqd($tmp$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vcmpeqd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcmpgt8I(vecY dst, vecY src1, vecY src2, vecY tmp) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorMaskCmp src1 src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "vcmpgtd  $dst,$src2,$src1\n\t"
+            "vcmpeqd  $tmp,$src1,$src2\n\t"
+            "vcmpeqd  $dst,$dst,$tmp\t! cmplt packed8I" %}
+  ins_encode %{
+    int vector_len = 1;
+    int cmp = 1;
+    __ vcmpgtd($dst$$XMMRegister, $src2$$XMMRegister, $src1$$XMMRegister, vector_len);
     __ vcmpeqd($tmp$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
     __ vcmpeqd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
   %}
