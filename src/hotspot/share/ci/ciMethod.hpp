@@ -343,6 +343,7 @@ class ciMethod : public ciMetadata {
   bool is_boxing_method() const;
   bool is_unboxing_method() const;
   bool is_vector_method() const;
+  bool is_vector_api_class() const;
   bool is_object_initializer() const;
 
   // Replay data methods

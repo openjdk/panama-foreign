@@ -620,6 +620,16 @@ void Parse::do_call() {
     }
   }
 
+  if ( DebugVectorApiMissingIntrinsics &&
+      !cg->is_intrinsic() &&
+      !cg->is_mh_late_inline() &&
+      cg->method()->is_vector_api_class() &&
+      !cg->method()->is_compiled_lambda_form() &&
+      !cg->method()->is_initializer() ) {
+    cg->method()->print();
+    tty->print_cr("");
+  }
+
   if (cg->is_inline()) {
     // Accumulate has_loops estimate
     C->set_has_loops(C->has_loops() || cg->method()->has_loops());
