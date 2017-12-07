@@ -29,8 +29,6 @@ import java.nicl.types.*;
 import java.nicl.types.Pointer;
 
 class ReferenceImpl<T> implements Reference<T> {
-    private static final PointerToken TOKEN = new PointerTokenImpl();
-
     private final MemoryRegion region;
     private final long offset;
 
@@ -167,7 +165,7 @@ class ReferenceImpl<T> implements Reference<T> {
         } else if (Pointer.class.isAssignableFrom(c)) {
             Pointer<?> ptr = (Pointer<?>) value;
             try {
-                region.putAddress(offset, Util.unpack(ptr, PointerTokenImpl.getToken()));
+                region.putAddress(offset, Util.unpack(ptr));
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException("Access denied", iae);
             }
@@ -181,7 +179,7 @@ class ReferenceImpl<T> implements Reference<T> {
                 if (value == null) {
                     codePtr = 0;
                 } else {
-                    codePtr = UpcallHandler.make(c, value).getNativeEntryPoint().addr(TOKEN);
+                    codePtr = UpcallHandler.make(c, value).getNativeEntryPoint().addr();
                 }
             } catch (Throwable t) {
                 throw new RuntimeException(t);

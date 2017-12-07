@@ -24,15 +24,12 @@ package jdk.internal.nicl;
 
 import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
-import jdk.internal.nicl.types.PointerTokenImpl;
 
 import java.lang.ref.Cleaner;
 import java.nicl.NativeLibrary;
 import java.nicl.types.Pointer;
-import java.nicl.types.PointerToken;
 
 class UpcallStub {
-    private static final PointerToken TOKEN = new PointerTokenImpl();
     private static final Cleaner cleaner = Cleaner.create();
 
     static class Stub implements Runnable {
@@ -48,7 +45,7 @@ class UpcallStub {
         @Override
         public void run() {
             try {
-                NativeInvoker.freeUpcallStub(id, entryPoint.addr(TOKEN));
+                NativeInvoker.freeUpcallStub(id, entryPoint.addr());
             } catch (Throwable t) {
                 // all exception in cleanser atr ignored anyway
             }

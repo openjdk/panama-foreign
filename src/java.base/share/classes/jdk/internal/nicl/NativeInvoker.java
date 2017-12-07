@@ -52,8 +52,6 @@ class NativeInvoker {
     private static final MethodHandle BRIDGE_METHOD_HANDLE;
     private static final MethodHandle INVOKE_NATIVE_MH;
 
-    private static final PointerToken TOKEN = new PointerTokenImpl();
-
     @Retention(RUNTIME)
     private @interface InvokerMethod {
     }
@@ -80,7 +78,7 @@ class NativeInvoker {
 
 
     private static MethodHandle lookupNativeFunction(SymbolLookup lookup, String symbolName) throws NoSuchMethodException, IllegalAccessException {
-        long addr = lookup.lookup(symbolName).getAddress().addr(TOKEN);
+        long addr = lookup.lookup(symbolName).getAddress().addr();
         return MethodHandles.insertArguments(INVOKE_NATIVE_MH, INVOKE_NATIVE_MH.type().parameterCount() - 1, addr);
     }
 
@@ -206,7 +204,7 @@ class NativeInvoker {
                         binding.getStorage().getStorageIndex() == 0) {
                         long n = binding.getStorage().getSize() / 8;
                         assert returnStruct != null;
-                        long[] argValues = new long[] { Util.unpack(returnStruct.ptr(), TOKEN) };
+                        long[] argValues = new long[] { Util.unpack(returnStruct.ptr()) };
                         System.arraycopy(argValues, 0, values, curValueArrayIndex, (int)n);
                         curValueArrayIndex += n;
                     } else {
@@ -344,7 +342,7 @@ class NativeInvoker {
         } else if (carrierType.isArray()) {
             throw new IllegalArgumentException("Array types NIY: " + carrierType);
         } else if (Pointer.class.isAssignableFrom(carrierType)) {
-            return new long[] { Util.unpack((Pointer)arg, TOKEN) };
+            return new long[] { Util.unpack((Pointer)arg) };
         } else if (Util.isCStruct(carrierType)) {
             long[] values = new long[(int)n];
             Reference<?> r = (Reference<?>)arg;
@@ -356,7 +354,7 @@ class NativeInvoker {
             }
             return values;
         } else if (Util.isFunctionalInterface(carrierType)) {
-            return new long[] { UpcallHandler.make(carrierType, arg).getNativeEntryPoint().addr(TOKEN) };
+            return new long[] { UpcallHandler.make(carrierType, arg).getNativeEntryPoint().addr() };
         } else {
             throw new UnsupportedOperationException("NYI: " + carrierType.getName());
         }

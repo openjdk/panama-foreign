@@ -35,9 +35,7 @@ public interface Pointer<T> extends Resource {
 
     boolean isNull();
 
-    // FIXME: Figure out how to allow for this without rogue/user Pointer implementations
-    // capturing the token
-    long addr(PointerToken token) throws IllegalAccessException;
+    long addr() throws IllegalAccessException;
 
     Reference<T> lvalue();
     T deref();

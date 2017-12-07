@@ -94,10 +94,7 @@ public class BoundedPointer<T> implements Pointer<T> {
     }
 
     @Override
-    public long addr(PointerToken token) throws UnsupportedOperationException, IllegalAccessException {
-        if (token == null) {
-            throw new IllegalAccessException();
-        }
+    public long addr() throws UnsupportedOperationException, IllegalAccessException {
         return effectiveAddress();
     }
 

@@ -32,7 +32,6 @@ import java.nicl.Library;
 import java.nicl.LibrarySymbol;
 import java.nicl.NativeLibrary;
 import java.nicl.types.Pointer;
-import java.nicl.types.PointerToken;
 
 // FIXME: Grovel this?
 class UnixDynamicLibraries {
@@ -84,7 +83,6 @@ class UnixDynamicLibraries {
     private final MethodHandle DLCLOSE;
     private final MethodHandle DLERROR;
     private final MethodHandle DLSYM;
-    private final PointerToken TOKEN = new PointerTokenImpl();
 
     private UnixDynamicLibraries() {
         try {
@@ -109,7 +107,7 @@ class UnixDynamicLibraries {
 
     public Pointer<Void> dlopen(Pointer<Byte> filename, int flag) {
         try {
-            long handle = (long)DLOPEN.invokeExact(filename.addr(TOKEN), flag);
+            long handle = (long)DLOPEN.invokeExact(filename.addr(), flag);
             if (handle == 0) {
                 return null;
             }
@@ -123,7 +121,7 @@ class UnixDynamicLibraries {
 
     public Pointer<Void> dlsym(Pointer<Void> handle, Pointer<Byte> symbol) {
         try {
-            long addr = (long)DLSYM.invokeExact(handle.addr(TOKEN), symbol.addr(TOKEN));
+            long addr = (long)DLSYM.invokeExact(handle.addr(), symbol.addr());
             if (addr == 0) {
                 return null;
             }
@@ -137,7 +135,7 @@ class UnixDynamicLibraries {
 
     public int dlclose(Pointer<Byte> handle) {
         try {
-            return (int)DLCLOSE.invokeExact(handle.addr(TOKEN));
+            return (int)DLCLOSE.invokeExact(handle.addr());
         } catch (Throwable t) {
             t.printStackTrace();
             throw new RuntimeException("Failed to invoke dlopen");

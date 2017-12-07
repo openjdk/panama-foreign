@@ -51,7 +51,6 @@ public class UpcallHandler {
 
     private static final Object HANDLERS_LOCK = new Object();
     private static final ArrayList<UpcallHandler> ID2HANDLER = new ArrayList<>();
-    private static final PointerToken TOKEN;
 
     private final MethodHandle mh;
     private final Function ftype;
@@ -69,7 +68,6 @@ public class UpcallHandler {
         if ((Constants.VECTOR_REGISTER_SIZE % size) != 0) {
             throw new Error("Invalid size: " + Constants.VECTOR_REGISTER_SIZE);
         }
-        TOKEN = new PointerTokenImpl();
     }
 
     public static UpcallHandler make(Class<?> c, Object o) throws Throwable {
@@ -337,7 +335,7 @@ public class UpcallHandler {
                     throw new UnsupportedOperationException("Unhandled type: " + c.getName());
             }
         } else if (Pointer.class.isAssignableFrom(c)) {
-            long addr = Util.unpack((Pointer<?>) o, TOKEN);
+            long addr = Util.unpack((Pointer<?>) o);
 
             dst.lvalue().set(addr);
         } else if (Util.isCStruct(c)) {

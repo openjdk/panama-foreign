@@ -27,7 +27,6 @@ import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
 import jdk.internal.nicl.types.Descriptor;
 import jdk.internal.nicl.types.LayoutTypeImpl;
-import jdk.internal.nicl.types.PointerTokenImpl;
 import jdk.internal.nicl.types.Types;
 import jdk.internal.nicl.types.UncheckedPointer;
 import jdk.internal.org.objectweb.asm.Type;
@@ -323,17 +322,8 @@ public final class Util {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
-    // FIXME: Only here for debugging/until all uses of pointer have been updated
-    @Deprecated
-    public static PointerToken debugCreatePointerToken() {
-        return new PointerTokenImpl();
-    }
-
-    public static long unpack(Pointer<?> ptr, PointerToken token) throws IllegalAccessException {
-        if (ptr == null) {
-            return 0;
-        }
-        return ptr.addr(token);
+    public static long unpack(Pointer<?> ptr) throws IllegalAccessException {
+        return ptr == null? 0 : ptr.addr();
     }
 
     public static long strlen(long addr) {
