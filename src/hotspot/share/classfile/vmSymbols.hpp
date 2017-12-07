@@ -1482,6 +1482,7 @@
    do_intrinsic(_VectorMaskAllTrue, jdk_incubator_vector_VectorMask, all_true_name, void_boolean_signature, F_R)                               \
    do_intrinsic(_VectorMaskAnyTrue, jdk_incubator_vector_VectorMask, any_true_name, void_boolean_signature, F_R)                               \
    do_intrinsic(_VectorMaskRebracket, jdk_incubator_vector_VectorMask, rebracket_method_name, vector_mask_rebracket_sig, F_R)                  \
+   do_intrinsic(_VectorRebracket, jdk_incubator_vector_Vector, rebracket_method_name, vector_cast_sig, F_R)                                    \
    do_intrinsic(_VectorMaskAnd, jdk_incubator_vector_VectorMask, and_method_name, vector_bop_mask_sig, F_R)                                    \
    do_intrinsic(_VectorMaskOr, jdk_incubator_vector_VectorMask, or_method_name, vector_bop_mask_sig, F_R)                                      \
    do_intrinsic(_VectorMaskNot, jdk_incubator_vector_VectorMask, not_method_name, vector_make_mask_sig, F_R)                                   \

@@ -350,6 +350,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_vector_mask_test(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
   bool inline_vector_mask_op(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
   bool inline_vector_mask_rebracket(const TypeInstPtr* box_type, BasicType type, int num_elem);
+  bool inline_vector_rebracket(const TypeInstPtr* box_type, BasicType type, int num_elem);
 
   bool inline_profileBoolean();
   bool inline_isCompileConstant();
@@ -6976,7 +6977,8 @@ static bool is_vector_mask_test(vmIntrinsics::ID id) {
 
 static bool is_casting_operation(vmIntrinsics::ID id) {
   if ( id == vmIntrinsics::_VectorMaskRebracket ||
-      id == vmIntrinsics::_VectorCastFloat ) {
+      id == vmIntrinsics::_VectorCastFloat ||
+      id == vmIntrinsics::_VectorRebracket) {
     return true;
   }
   return false;
@@ -7161,7 +7163,7 @@ const TypeInstPtr* LibraryCallKit::get_derived_return_box_type(ciKlass** exact_k
     klass = get_exact_klass_for_vector_box((*exact_kls_ptr), type, num_elem, VECAPI_MASK);
   } else if (is_vector_load(id) || is_vector_zero(id) || is_vector_broadcast(id)) {
     klass = get_exact_klass_for_vector_box((*exact_kls_ptr), type, num_elem, VECAPI_VECTOR);
-  } else if (id == vmIntrinsics::_VectorCastFloat) {
+  } else if (id == vmIntrinsics::_VectorCastFloat || id == vmIntrinsics::_VectorRebracket) {
     klass = get_exact_klass_for_vector_box((*exact_kls_ptr), cast_to_type, num_elem, VECAPI_VECTOR);
   } else if (id == vmIntrinsics::_VectorMaskRebracket) {
     klass = get_exact_klass_for_vector_box((*exact_kls_ptr), cast_to_type, num_elem, VECAPI_MASK);
@@ -7752,6 +7754,40 @@ bool LibraryCallKit::inline_vector_mask_rebracket(const TypeInstPtr* box_type, B
   return true;
 }
 
+bool LibraryCallKit::inline_vector_rebracket(const TypeInstPtr* box_type, BasicType type, int num_elem) {
+  BasicType in_type = T_VOID; int in_num_elem = -1;
+  bool got_in_info = get_receiver_type_numelem(in_type, in_num_elem);
+  assert(got_in_info, "Expected to be able to get receiver information since we have return info");
+
+  // For now require consistency in resulting vector size. Otherwise we will need
+  // some backend tricks to handle register allocation for size change.
+  int in_size = type2aelembytes(in_type) * in_num_elem;
+  int out_size = type2aelembytes(type) * num_elem;
+  if (in_size != out_size) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Inconsistent sizes between input and output found %d %d", in_size, out_size);
+    }
+#endif
+    return false;
+  }
+
+  Node* opd1 = getVectorInput(argument(0), get_receiver_box_type(NULL), in_type, in_num_elem);
+  if (opd1 == NULL) {
+    return false;
+  }
+
+  // The VectorReinterpret node is intended to allow for type transitions - but seems that the VM does
+  // not enforce vector types as strictly as required. So for now, leave the reinterpret node out.
+  /*Node* result = _gvn.transform(new VectorReinterpretNode(opd1, TypeVect::make(in_type, in_num_elem),
+                                                          TypeVect::make(type, num_elem)));
+  result = wrapWithVectorBox(result, box_type);*/
+
+  Node* result = wrapWithVectorBox(opd1, box_type);
+  setVectorOutput(result);
+  return true;
+}
+
 static int get_load_opcode(BasicType bt) {
   switch(bt) {
     case T_BOOLEAN:
@@ -7898,6 +7934,8 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
       return return_and_print_if_failed(inline_vector_make_mask(box_type, type, num_elem, id), id);
     } else if ( id == vmIntrinsics::_VectorMaskRebracket ) {
       return return_and_print_if_failed(inline_vector_mask_rebracket(box_type, type, num_elem), id);
+    } else if ( id == vmIntrinsics::_VectorRebracket ) {
+      return return_and_print_if_failed(inline_vector_rebracket(box_type, type, num_elem), id);
     } else if ( is_vector_mask_test(id) ) {
       return return_and_print_if_failed(inline_vector_mask_test(box_type, type, num_elem, id), id);
     } else if ( is_vector_mask_op(id) ) {

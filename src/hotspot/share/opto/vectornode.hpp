@@ -986,4 +986,22 @@ class VectorStoreMaskNode : public VectorNode {
   virtual int Opcode() const;
 };
 
+// This is intended for use as a simple reinterpret node that has no cast.
+class VectorReinterpretNode : public VectorNode {
+ public:
+  VectorReinterpretNode(Node* in, const TypeVect* src_vt, const TypeVect* dst_vt)
+      : VectorNode(in, dst_vt) {
+    BasicType src_bt = src_vt->element_basic_type();
+    BasicType dst_bt = dst_vt->element_basic_type();
+    int src_len = src_vt->length();
+    int dst_len = src_vt->length();
+    // For now require consistency in resulting vector size. Otherwise we will need
+    // some backend tricks to handle register allocation for size change.
+    assert(type2aelembytes(src_bt) * src_len == type2aelembytes(dst_bt) * dst_len,
+           "reinterpreting means we cannot change vector size upwards");
+  }
+
+  virtual int Opcode() const;
+};
+
 #endif // SHARE_VM_OPTO_VECTORNODE_HPP
