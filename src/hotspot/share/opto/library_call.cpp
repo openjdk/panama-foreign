@@ -8025,9 +8025,8 @@ bool LibraryCallKit::inline_store_vector_op(const TypeInstPtr* box_type, BasicTy
   Node* adr = array_element_address(dest_arr, idx, bt);
   const TypePtr* adr_type = adr->bottom_type()->is_ptr();
 
-  Node* mem = memory(adr);
-  //Node* mem = reset_memory();
-  //set_all_memory(mem);
+  Node* mem = reset_memory();
+  set_all_memory(mem);
   Node* vstore = _gvn.transform(StoreVectorNode::make(opc, control(), mem, adr, adr_type, vector, num_elem));
 
   // TODO Check if this is correct given that adr_type only captures element type and not the whole vector size.
