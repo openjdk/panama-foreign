@@ -7077,7 +7077,10 @@ static ciKlass* get_exact_klass_for_vector_box(ciKlass* ctx, BasicType bt, int n
   stringStream ss;
   ss.print_raw("jdk/incubator/vector/");
   switch (bt) {
+    case T_BYTE: ss.print_raw("Byte"); break;
+    case T_SHORT: ss.print_raw("Short"); break;
     case T_INT: ss.print_raw("Int"); break;
+    case T_LONG: ss.print_raw("Long"); break;
     case T_FLOAT: ss.print_raw("Float"); break;
     case T_DOUBLE: ss.print_raw("Double"); break;
     default: fatal("unknown element type: %d", bt);
@@ -7094,7 +7097,10 @@ static ciKlass* get_exact_klass_for_vector_box(ciKlass* ctx, BasicType bt, int n
   if (obj_type != VECAPI_VECTOR) {
     ss.print_raw("$");
     switch (bt) {
+      case T_BYTE: ss.print_raw("Byte"); break;
+      case T_SHORT: ss.print_raw("Short"); break;
       case T_INT: ss.print_raw("Int"); break;
+      case T_LONG: ss.print_raw("Long"); break;
       case T_FLOAT: ss.print_raw("Float"); break;
       case T_DOUBLE: ss.print_raw("Double"); break;
       default: fatal("unknown element type: %d", bt);
