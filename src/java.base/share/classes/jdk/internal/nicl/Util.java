@@ -25,7 +25,8 @@ package jdk.internal.nicl;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
-import jdk.internal.nicl.types.Descriptor;
+import jdk.internal.nicl.types.DescriptorParser;
+import jdk.internal.nicl.types.Function;
 import jdk.internal.nicl.types.LayoutTypeImpl;
 import jdk.internal.nicl.types.Types;
 import jdk.internal.nicl.types.UncheckedPointer;
@@ -43,6 +44,7 @@ import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.NativeType;
 import java.nicl.types.*;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -129,19 +131,13 @@ public final class Util {
     }
 
     public static jdk.internal.nicl.types.Function typeof(MethodType methodType) {
-        Descriptor.FunctionBuilder builder = new Descriptor.FunctionBuilder();
-
-        for (Class<?> c : methodType.parameterArray()) {
-            builder.add(typeof2(c));
-        }
-
-        builder.add(typeof2(methodType.returnType()));
-
-        return builder.build();
+        return new Function(
+                Stream.of(methodType.parameterArray()).map(Util::typeof2).toArray(jdk.internal.nicl.types.Type[]::new),
+                typeof2(methodType.returnType()), false);
     }
 
     private static jdk.internal.nicl.types.Type typeof(NativeType nt) {
-        return (new Descriptor(nt.layout())).types().findFirst().get();
+        return new DescriptorParser(nt.layout()).parseLayout().findFirst().get();
     }
 
     private static jdk.internal.nicl.types.Type typeofFunctionalInterfaceMethod(Class<?> clz) {

@@ -51,6 +51,6 @@ public interface Type {
     long getSize();
 
     static Type of(String descriptor) {
-        return (new Descriptor(descriptor)).types().findFirst().get();
+        return new DescriptorParser(descriptor).parseLayout().findFirst().get();
     }
 }

@@ -35,7 +35,6 @@ import java.nicl.metadata.Header;
 import java.nicl.metadata.NativeType;
 import java.nicl.metadata.Offset;
 import java.nicl.types.Pointer;
-import java.nicl.types.PointerToken;
 import java.nicl.types.Reference;
 
 public class StructUpcall {

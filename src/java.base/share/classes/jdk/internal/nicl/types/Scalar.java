@@ -23,7 +23,7 @@ public class Scalar implements Type {
     public Scalar(char type, Endianness endianness, int bits) {
         this.type = type;
         this.size = ((bits & 7) != 0) ? (bits >> 3) + 1 : bits >> 3;
-        this.endianness = (noEndianness.indexOf(type) == -1) ?
+        this.endianness = (noEndianness.indexOf(type) != -1) ?
                 Endianness.NATIVE : endianness;
     }
 

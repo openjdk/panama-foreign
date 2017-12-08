@@ -44,34 +44,10 @@ import static org.testng.Assert.*;
  * @run testng DescriptorTest
  */
 public class DescriptorTest {
-    private static Stream<Type> expandType(Type t) {
-        if (t instanceof Container) {
-            Container c = (Container) t;
-            return Stream.concat(c.getMembers().flatMap(DescriptorTest::expandType), Stream.of(t));
-        } else if (t instanceof Function) {
-            Function f = (Function) t;
-            return Stream.concat(f.arguments().flatMap(DescriptorTest::expandType), Stream.of(t));
-        } else if (t instanceof BitFields) {
-            BitFields bf = (BitFields) t;
-            return Stream.concat(Stream.concat(Stream.of(bf.getStorage()), bf.fields()), Stream.of(t));
-        } else {
-            return Stream.of(t);
-        }
-    }
 
     private void validate(String descriptor, List<Type> types) {
-        Descriptor d = new Descriptor(descriptor);
-        List<Type> actual = d.elements()
-                //.peek(System.out::println)
-                .collect(Collectors.toList());
-        List<Type> expected = types.stream()
-                .flatMap(DescriptorTest::expandType)
-                .collect(Collectors.toList());
-        assertEquals(actual, expected, descriptor);
-
-        actual = d.types()
-                //.peek(System.out::println)
-                .collect(Collectors.toList());
+        DescriptorParser d = new DescriptorParser(descriptor);
+        List<Type> actual = d.parseLayout().collect(Collectors.toList());
         assertEquals(actual, types, descriptor);
     }
 
@@ -79,15 +55,15 @@ public class DescriptorTest {
     public void testValidCharacters() {
         final String validSingleType = "osilqOSILQfdeFDEpxVcB";
         for (char ch = Character.MIN_VALUE; ch < Character.MAX_VALUE; ch++) {
-            Descriptor td = new Descriptor("" + ch);
             try {
-                Optional<Type> t = td.elements().findFirst();
+                Stream<Type> ts = new DescriptorParser("" + ch).parseLayout();
+                Optional<Type> t = ts.findFirst();
                 if (t.isPresent()) {
                     assertFalse(validSingleType.indexOf(ch) == -1);
                 } else {
-                    assertFalse(" \t\n\r#".indexOf(ch) == -1);
+                    fail("separator-only layouts are not supported by the grammar: " + ch);
                 }
-            } catch (Descriptor.InvalidDescriptorException ex) {
+            } catch (DescriptorParser.InvalidDescriptorException ex) {
                 assertTrue(validSingleType.indexOf(ch) == -1);
             }
         }
@@ -122,19 +98,19 @@ public class DescriptorTest {
 
             type = new Scalar(ch, Type.Endianness.BIG);
             expected = Collections.singletonList(type);
-            validate("" + Descriptor.BIG_ENDIAN + ch, expected);
+            validate(">" + ch, expected);
 
             type = new Scalar(ch, Type.Endianness.LITTLE);
             expected = Collections.singletonList(type);
-            validate("" + Descriptor.LITTLE_ENDIAN + ch, expected);
+            validate("<" + ch, expected);
 
             type = new Scalar(ch, Type.Endianness.NATIVE);
             expected = Collections.singletonList(type);
-            validate("" + Descriptor.NATIVE_ENDIAN + ch, expected);
+            validate("@" + ch, expected);
 
             type = new Scalar(ch);
             expected = Collections.singletonList(type);
-            validate("" + Descriptor.NATIVE_ENDIAN + ch, expected);
+            validate("@" + ch, expected);
         }
     }
 
@@ -155,11 +131,11 @@ public class DescriptorTest {
             { "[i[]l]", "empty container"}
     };
 
-    @Test(expectedExceptions = {Descriptor.InvalidDescriptorException.class},
+    @Test(expectedExceptions = {DescriptorParser.InvalidDescriptorException.class},
           dataProvider = "badCases")
     public void testBadDescriptors(String descriptor, String reason) {
-        Descriptor d = new Descriptor(descriptor);
-        d.elements().count();
+        DescriptorParser d = new DescriptorParser(descriptor);
+        d.parseLayout().count();
         fail("Should not reach here! " + reason);
     }
 
@@ -234,12 +210,6 @@ public class DescriptorTest {
                 new Scalar('v', Type.Endianness.NATIVE, 256), Types.INT16,
                 new Scalar('f', Type.Endianness.BIG, 32), new Scalar('I', Type.Endianness.NATIVE, 128),
                 new Scalar('F', Type.Endianness.NATIVE, 64));
-        validate(descriptor, expected);
-
-        // TODO: test coverage, typically function descriptor should not mix in descriptor
-        descriptor = "S:2b3b(i)p";
-        expected = List.of(new BitFields((Scalar) Types.UNSIGNED.SHORT, new int[] {2,3}),
-                new Function(new Type[] { Types.INT }, Types.POINTER, false));
         validate(descriptor, expected);
 
         descriptor = "i:2bb3b20i";

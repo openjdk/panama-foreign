@@ -52,7 +52,7 @@ public class BindingRegistry {
 
     public static final <T> boolean register(String nativeDescriptor, Class<T> carrierClass,
             N2J<T> native2java, J2N<T> java2native) {
-        Type nt = (new Descriptor(nativeDescriptor)).types().findFirst().get();
+        Type nt = new DescriptorParser(nativeDescriptor).parseLayout().findFirst().get();
         BindingRegistry registry = BindingRegistry.getInstance();
         return registry.register(nt, carrierClass, native2java, java2native);
     }
