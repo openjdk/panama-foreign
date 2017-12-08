@@ -205,6 +205,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return bTest(o, (i, a, b) -> a <= b);
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public Mask<Double, S> greaterThan(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a > b);

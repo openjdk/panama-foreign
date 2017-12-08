@@ -239,6 +239,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bTest(o, (i, a, b) -> a <= b);
     }
 
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     @Override
     public Mask<$Boxtype$, S> greaterThan(Vector<$Boxtype$,S> o) {
         return bTest(o, (i, a, b) -> a > b);
@@ -644,6 +650,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
 #end[FP]
 
 #if[BITWISE]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $abstractvectortype$<S> and(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a & b));
     }
@@ -652,6 +661,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, m, (i, a, b) -> ($type$) (a & b));
     }
 
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $abstractvectortype$<S> or(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a | b));
     }
@@ -660,6 +672,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, m, (i, a, b) -> ($type$) (a | b));
     }
 
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a ^ b));
     }
@@ -692,16 +707,25 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, m, (i, a, b) -> ($type$) (a % b));
     }
 
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $abstractvectortype$<S> shiftL(int s) {
         return uOp((i, a) -> ($type$) (a << s));
     }
 
     // logical, or unsigned, shift right
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $abstractvectortype$<S> shiftR(int s) {
         return uOp((i, a) -> ($type$) (a >>> s));
     }
 
     // arithmetic, or signed, shift right
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $abstractvectortype$<S> aShiftR(int s) {
         return uOp((i, a) -> ($type$) (a >> s));
     }

@@ -204,6 +204,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bTest(o, (i, a, b) -> a <= b);
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public Mask<Integer, S> greaterThan(Vector<Integer,S> o) {
         return bTest(o, (i, a, b) -> a > b);
@@ -280,6 +281,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
     }
     */
 
+    @HotSpotIntrinsicCandidate
     public IntVector<S> and(Vector<Integer,S> o) {
         return bOp(o, (i, a, b) -> (int) (a & b));
     }
@@ -288,6 +290,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, m, (i, a, b) -> (int) (a & b));
     }
 
+    @HotSpotIntrinsicCandidate
     public IntVector<S> or(Vector<Integer,S> o) {
         return bOp(o, (i, a, b) -> (int) (a | b));
     }
@@ -296,6 +299,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, m, (i, a, b) -> (int) (a | b));
     }
 
+    @HotSpotIntrinsicCandidate
     public IntVector<S> xor(Vector<Integer,S> o) {
         return bOp(o, (i, a, b) -> (int) (a ^ b));
     }
@@ -328,16 +332,19 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, m, (i, a, b) -> (int) (a % b));
     }
 
+    @HotSpotIntrinsicCandidate
     public IntVector<S> shiftL(int s) {
         return uOp((i, a) -> (int) (a << s));
     }
 
     // logical, or unsigned, shift right
+    @HotSpotIntrinsicCandidate
     public IntVector<S> shiftR(int s) {
         return uOp((i, a) -> (int) (a >>> s));
     }
 
     // arithmetic, or signed, shift right
+    @HotSpotIntrinsicCandidate
     public IntVector<S> aShiftR(int s) {
         return uOp((i, a) -> (int) (a >> s));
     }

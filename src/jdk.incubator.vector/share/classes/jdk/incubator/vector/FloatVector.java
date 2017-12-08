@@ -205,6 +205,7 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
         return bTest(o, (i, a, b) -> a <= b);
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public Mask<Float, S> greaterThan(Vector<Float,S> o) {
         return bTest(o, (i, a, b) -> a > b);

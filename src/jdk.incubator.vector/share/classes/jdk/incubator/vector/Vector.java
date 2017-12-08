@@ -126,6 +126,7 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
     }
 
     //Costless vector cast.  Bit-wise contents preserved
+    @HotSpotIntrinsicCandidate
     default <F> Vector<F, S> rebracket(Class<F> type) { return reshape(type, shape());}
 
     //Size-fixed semantic cast
