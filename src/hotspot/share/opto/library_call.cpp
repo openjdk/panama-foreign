@@ -335,6 +335,7 @@ class LibraryCallKit : public GraphKit {
   Node* getVectorInput(Node* in, const TypeInstPtr* box_type, BasicType bt, int num_elem);
   Node* wrapWithVectorBox(Node* vector, const TypeInstPtr* box_type);
   void setVectorOutput(Node* out, bool set_res = true);
+  Node* get_vector_shift_operand(Node* operand, int shift_op, BasicType bt, int num_elem);
   bool inline_vector_operation(vmIntrinsics::ID id);
   bool inline_zero_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem);
   bool inline_broadcast_vector_op(const TypeInstPtr* box_type, BasicType type, int num_elem);
@@ -6803,6 +6804,17 @@ bool LibraryCallKit::inline_sha_implCompressMB(Node* digestBase_obj, ciInstanceK
 }
 
 #ifdef ASSERT
+static bool is_vector_shift(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorShiftLInt:
+  case vmIntrinsics::_VectorShiftRInt:
+  case vmIntrinsics::_VectorAShiftRInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
 static bool is_bin_vector_op(vmIntrinsics::ID id) {
   switch(id) {
     case vmIntrinsics::_VectorAddFloat:
@@ -6817,9 +6829,13 @@ static bool is_bin_vector_op(vmIntrinsics::ID id) {
     case vmIntrinsics::_VectorDivFloat:
     case vmIntrinsics::_VectorDivInt:
     case vmIntrinsics::_VectorDivDouble:
+    case vmIntrinsics::_VectorAndInt:
+    case vmIntrinsics::_VectorOrInt:
+    case vmIntrinsics::_VectorXorInt:
       return true;
     default:
-      return false;
+      // Vector Shifts are sort of binary in the sense that second operand is the shift count.
+      return is_vector_shift(id);
   }
 }
 #endif // ASSERT
@@ -7407,6 +7423,41 @@ void LibraryCallKit::setVectorOutput(Node* out, bool set_res) {
 #endif
 }
 
+Node* LibraryCallKit::get_vector_shift_operand(Node* operand, int shift_op, BasicType bt, int num_elem) {
+  assert(bt == T_INT || bt == T_LONG, "Only long and int are supported");
+  juint mask = (bt == T_INT) ? (BitsPerInt - 1) : (BitsPerLong - 1);
+  const TypeInt* t = operand->find_int_type();
+  if (t != NULL && t->is_con()) {
+    juint shift = t->get_con();
+    if (shift > mask) {
+      return _gvn.transform(ConNode::make(TypeInt::make(shift & mask)));
+    } else {
+      return operand;
+    }
+  } else {
+    Node* cnt = operand;
+    if (t == NULL || t->_lo < 0 || t->_hi > (int)mask) {
+      cnt = _gvn.transform(ConNode::make(TypeInt::make(mask)));
+      cnt = _gvn.transform(new AndINode(operand, cnt));
+    }
+
+    const TypeVect* vt = TypeVect::make(bt, num_elem);
+    switch (shift_op) {
+      case Op_LShiftVI:
+      case Op_LShiftVL:
+        return _gvn.transform(new LShiftCntVNode(cnt, vt));
+      case Op_RShiftVI:
+      case Op_RShiftVL:
+      case Op_URShiftVI:
+      case Op_URShiftVL:
+        return _gvn.transform(new RShiftCntVNode(cnt, vt));
+    }
+
+    assert(false, "Not expected to get here");
+    return NULL;
+  }
+}
+
 bool LibraryCallKit::inline_bin_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem) {
   assert(op != 0, "Operation should be valid");
 
@@ -7426,8 +7477,17 @@ bool LibraryCallKit::inline_bin_vector_op(const TypeInstPtr* box_type, int op, B
   }
 
   Node* opd1 = getVectorInput(argument(0), box_type, type, num_elem);
-  Node* opd2 = getVectorInput(argument(1), box_type, type, num_elem);
-  if (opd1 == NULL || opd2 == NULL) {
+  if (opd1 == NULL) {
+    return false;
+  }
+
+  Node* opd2 = NULL;
+  if (op == Op_LShiftVI || op == Op_RShiftVI || op == Op_URShiftVI) {
+    opd2 = get_vector_shift_operand(argument(1), op, type, num_elem);
+  } else {
+    opd2 = getVectorInput(argument(1), box_type, type, num_elem);
+  }
+  if ( opd2 == NULL ) {
     return false;
   }
 
@@ -7872,6 +7932,18 @@ static int get_op_from_intrinsic(vmIntrinsics::ID id) {
     //case vmIntrinsics::_VectorDivInt:
     //  return Op_DivVI;
       /*Add these later: Op_DivVL Op_DivVS Op_DivVB*/
+    case vmIntrinsics::_VectorAndInt:
+      return Op_AndV;
+    case vmIntrinsics::_VectorOrInt:
+      return Op_OrV;
+    case vmIntrinsics::_VectorXorInt:
+      return Op_XorV;
+    case vmIntrinsics::_VectorShiftLInt:
+      return Op_LShiftVI;
+    case vmIntrinsics::_VectorShiftRInt:
+      return Op_URShiftVI;
+    case vmIntrinsics::_VectorAShiftRInt:
+      return Op_RShiftVI;
     default:
       break;
   }

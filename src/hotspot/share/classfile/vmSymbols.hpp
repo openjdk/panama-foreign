@@ -1468,6 +1468,9 @@
    do_name(sub_method_name, "sub")                                                                                                             \
    do_name(mul_method_name, "mul")                                                                                                             \
    do_name(div_method_name, "div")                                                                                                             \
+   do_name(shiftl_method_name, "shiftL")                                                                                                       \
+   do_name(shiftr_method_name, "shiftR")                                                                                                       \
+   do_name(ashiftr_method_name, "aShiftR")                                                                                                     \
    do_name(equal_method_name, "equal")                                                                                                         \
    do_name(lessthan_method_name, "lessThan")                                                                                                   \
    do_name(greaterthan_method_name, "greaterThan")                                                                                             \
@@ -1477,6 +1480,7 @@
    do_name(and_method_name, "and")                                                                                                             \
    do_name(or_method_name, "or")                                                                                                               \
    do_name(not_method_name, "not")                                                                                                             \
+   do_name(xor_method_name, "xor")                                                                                                             \
    /* _VectorLength should be first one in list as it is used as marker for beginning of Vector API methods */                                 \
    do_intrinsic(_VectorLength, jdk_incubator_vector_Vector, length_name, void_int_signature, F_R)                                              \
    do_intrinsic(_VectorConstantMask, jdk_incubator_vector_VectorSpecies, constant_mask_name, vector_constant_mask_sig, F_R)                    \
@@ -1532,6 +1536,12 @@
    do_intrinsic(_VectorMulInt, jdk_incubator_vector_IntVector, mul_method_name, vector_int_bin_op_sig, F_R)                                    \
    do_intrinsic(_VectorDivInt, jdk_incubator_vector_IntVector, div_method_name, vector_int_bin_op_sig, F_R)                                    \
    do_intrinsic(_VectorAddInt, jdk_incubator_vector_IntVector, add_method_name, vector_int_bin_op_sig, F_R)                                    \
+   do_intrinsic(_VectorAndInt, jdk_incubator_vector_IntVector, and_method_name, vector_int_bin_op_sig, F_R)                                    \
+   do_intrinsic(_VectorOrInt, jdk_incubator_vector_IntVector, or_method_name, vector_int_bin_op_sig, F_R)                                      \
+   do_intrinsic(_VectorXorInt, jdk_incubator_vector_IntVector, xor_method_name, vector_int_bin_op_sig, F_R)                                    \
+   do_intrinsic(_VectorShiftLInt, jdk_incubator_vector_IntVector, shiftl_method_name, vector_int_broadcast_sig, F_R)                           \
+   do_intrinsic(_VectorShiftRInt, jdk_incubator_vector_IntVector, shiftr_method_name, vector_int_broadcast_sig, F_R)                           \
+   do_intrinsic(_VectorAShiftRInt, jdk_incubator_vector_IntVector, ashiftr_method_name, vector_int_broadcast_sig, F_R)                         \
    do_intrinsic(_VectorEqualDouble, jdk_incubator_vector_DoubleVector, equal_method_name, vector_cmp_sig, F_R)                                 \
    do_intrinsic(_VectorLessThanDouble, jdk_incubator_vector_DoubleVector, lessthan_method_name, vector_cmp_sig, F_R)                           \
    do_intrinsic(_VectorGreaterThanDouble, jdk_incubator_vector_DoubleVector, greaterthan_method_name, vector_cmp_sig, F_R)                     \
