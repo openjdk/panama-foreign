@@ -326,6 +326,20 @@ class LibraryCallKit : public GraphKit {
   bool inline_vectorizedMismatch();
   bool inline_fma(vmIntrinsics::ID id);
 
+  // Vector intrinsification:
+  const TypeInstPtr* get_box_type_receiver(ciKlass** exact_kls_ptr);
+  bool inline_vector_operation(vmIntrinsics::ID id);
+  bool inline_zero_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem);
+  bool inline_broadcast_vector_op(const TypeInstPtr* box_type, BasicType type, int num_elem);
+  bool inline_load_vector_op(const TypeInstPtr* box_type, BasicType type, int num_elem);
+  bool inline_store_vector_op(BasicType bt, int num_elem);
+  bool inline_bin_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
+  bool inline_un_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
+  bool inline_vector_cmp(BasicType type, int num_elem, vmIntrinsics::ID id);
+  bool inline_vector_blend(const TypeInstPtr* box_type, BasicType type, int num_elem);
+  bool inline_vector_sumAll(const TypeInstPtr* box_type, BasicType type, int num_elem);
+  bool inline_vector_length(int num_elem);
+
   bool inline_profileBoolean();
   bool inline_isCompileConstant();
 };
@@ -861,6 +875,51 @@ bool LibraryCallKit::try_to_inline(int predicate) {
   case vmIntrinsics::_fmaD:
   case vmIntrinsics::_fmaF:
     return inline_fma(intrinsic_id());
+
+  case vmIntrinsics::_VectorLength:
+  case vmIntrinsics::_VectorZeroFloat:
+  case vmIntrinsics::_VectorZeroDouble:
+  case vmIntrinsics::_VectorZeroInt:
+  case vmIntrinsics::_VectorBroadcastFloat:
+  case vmIntrinsics::_VectorBroadcastDouble:
+  case vmIntrinsics::_VectorBroadcastInt:
+  case vmIntrinsics::_VectorLoadFloat:
+  case vmIntrinsics::_VectorStoreFloat:
+  case vmIntrinsics::_VectorLoadDouble:
+  case vmIntrinsics::_VectorStoreDouble:
+  case vmIntrinsics::_VectorLoadInt:
+  case vmIntrinsics::_VectorStoreInt:
+  case vmIntrinsics::_VectorLoadLong:
+  case vmIntrinsics::_VectorStoreLong:
+  case vmIntrinsics::_VectorLoadShort:
+  case vmIntrinsics::_VectorStoreShort:
+  case vmIntrinsics::_VectorLoadByte:
+  case vmIntrinsics::_VectorStoreByte:
+  case vmIntrinsics::_VectorBlendFloat:
+  case vmIntrinsics::_VectorSumAllFloat:
+  case vmIntrinsics::_VectorEqualFloat:
+  case vmIntrinsics::_VectorLessThanFloat:
+  case vmIntrinsics::_VectorAddFloat:
+  case vmIntrinsics::_VectorSubFloat:
+  case vmIntrinsics::_VectorMulFloat:
+  case vmIntrinsics::_VectorDivFloat:
+  case vmIntrinsics::_VectorBlendDouble:
+  case vmIntrinsics::_VectorSumAllDouble:
+  case vmIntrinsics::_VectorEqualDouble:
+  case vmIntrinsics::_VectorLessThanDouble:
+  case vmIntrinsics::_VectorAddDouble:
+  case vmIntrinsics::_VectorSubDouble:
+  case vmIntrinsics::_VectorMulDouble:
+  case vmIntrinsics::_VectorDivDouble:
+  case vmIntrinsics::_VectorBlendInt:
+  case vmIntrinsics::_VectorSumAllInt:
+  case vmIntrinsics::_VectorEqualInt:
+  case vmIntrinsics::_VectorLessThanInt:
+  case vmIntrinsics::_VectorAddInt:
+  case vmIntrinsics::_VectorSubInt:
+  case vmIntrinsics::_VectorMulInt:
+  case vmIntrinsics::_VectorDivInt:
+    return inline_vector_operation(intrinsic_id());
 
   default:
     // If you get here, it may be that someone has added a new intrinsic
@@ -6770,6 +6829,760 @@ bool LibraryCallKit::inline_sha_implCompressMB(Node* digestBase_obj, ciInstanceK
   Node* result = _gvn.transform(new ProjNode(call, TypeFunc::Parms));
   set_result(result);
 
+  return true;
+}
+
+const TypeInstPtr* LibraryCallKit::get_box_type_receiver(ciKlass** exact_kls_ptr) {
+  ciKlass* exact_kls = profile_has_unique_klass();
+  const TypeInstPtr* box_type = TypeInstPtr::NOTNULL;
+  if (exact_kls == NULL) {
+    const TypeInstPtr* receiver_type = _gvn.type(argument(0))->isa_instptr();
+    if (receiver_type != NULL && receiver_type->is_loaded() && receiver_type->klass_is_exact()) {
+      box_type = receiver_type;
+      exact_kls = receiver_type->klass();
+    } else {
+      return NULL;
+    }
+  } else {
+    box_type = TypeInstPtr::make(TypePtr::NotNull, exact_kls);
+  }
+
+  if (exact_kls_ptr != NULL) {
+    *exact_kls_ptr = exact_kls;
+  }
+  return box_type;
+}
+
+static Node* unwrapCast(Node* in) {
+  if (in->is_CheckCastPP()) {
+    // TODO Check that unwrapping cast is safe by looking at vector box type.
+    return in->in(1);
+  }
+  return in;
+}
+
+static Node* unwrapVectorBox(Node* in) {
+  if (in->is_VectorBox()) {
+    return in->as_VectorBox()->vector_val();
+  }
+  return in;
+}
+
+bool LibraryCallKit::inline_bin_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem) {
+  assert(op != 0, "Operation should be valid");
+
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector op %s", NodeClassNames[op]);
+  }
+#endif
+
+  if (!Matcher::match_rule_supported(op) && !Matcher::match_rule_supported_vector(op, num_elem)) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector op (%s,%d) because architecture does not support it", NodeClassNames[op], num_elem);
+    }
+#endif
+    return false;
+  }
+
+  Node* opd1 = unwrapVectorBox(unwrapCast(argument(0)));
+  Node* opd2 = unwrapVectorBox(unwrapCast(argument(1)));
+  // Only intrinsify if the inputs are already vectors.
+  bool opd1_is_vector = opd1->is_Vector() || opd1->is_LoadVector();
+  bool opd2_is_vector = opd2->is_Vector() || opd2->is_LoadVector();
+  if (!opd1_is_vector|| !opd2_is_vector) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector op (%s,%d) because inputs are not valid vectors:", NodeClassNames[op], num_elem);
+      tty->print("\t");
+      opd1->dump();
+      tty->print("\t");
+      opd2->dump();
+    }
+#endif
+    return false;
+  }
+
+  Node* operation = _gvn.transform(VectorNode::make(op, opd1, opd2, num_elem, type));
+  assert(operation != NULL, "Excepted to generate vector operation node");
+
+  // Wrap it up in VectorBox to keep object type information.
+  operation = _gvn.transform(new VectorBoxNode(box_type, operation));
+
+  set_result(operation);
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Accepted vector op (%s,%d) successfully by generating: ", NodeClassNames[op], num_elem);
+    operation->dump(1);
+  }
+#endif
+
+  return true;
+}
+
+bool LibraryCallKit::inline_un_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem) {
+  assert(op != 0, "Operation should be valid");
+
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector op %s", NodeClassNames[op]);
+  }
+#endif
+
+  if (!Matcher::match_rule_supported(op) && !Matcher::match_rule_supported_vector(op, num_elem)) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector op (%s,%d) because architecture does not support it", NodeClassNames[op], num_elem);
+    }
+#endif
+    return false;
+  }
+
+  Node* opd1 = unwrapVectorBox(unwrapCast(argument(0)));
+  // Only intrinsify if the inputs are already vectors.
+  bool opd1_is_vector = opd1->is_Vector() || opd1->is_LoadVector();
+  if (!opd1_is_vector) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector op (%s,%d) because input is not valid vector:", NodeClassNames[op], num_elem);
+      tty->print("\t");
+      opd1->dump();
+    }
+#endif
+    return false;
+  }
+
+  Node* operation = NULL;
+  const TypeVect* vt = TypeVect::make(type, num_elem);
+  switch(op) {
+    case Op_ConvertVF2VD:
+      operation = _gvn.transform(new ConvertVF2VDNode(opd1, vt));
+      break;
+    default:
+      assert(false, "Expecting to be able to support this vector operation");
+      return false;
+  }
+  assert(operation != NULL, "Excepted to generate vector operation node");
+
+  // Wrap it up in VectorBox to keep object type information.
+  operation = _gvn.transform(new VectorBoxNode(box_type, operation));
+
+  set_result(operation);
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Accepted vector op (%s,%d) successfully by generating: ", NodeClassNames[op], num_elem);
+    operation->dump(1);
+  }
+#endif
+
+  return true;
+}
+
+
+bool LibraryCallKit::inline_vector_cmp(BasicType type, int num_elem, vmIntrinsics::ID id) {
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector comparison operation.");
+  }
+#endif
+
+  VectorMaskCmpNode::ComparisonPredicate comp = VectorMaskCmpNode::EQ;
+  switch (id) {
+    case vmIntrinsics::_VectorEqualFloat:
+    case vmIntrinsics::_VectorEqualDouble:
+    case vmIntrinsics::_VectorEqualInt:
+      comp = VectorMaskCmpNode::EQ;
+      break;
+    case vmIntrinsics::_VectorLessThanFloat:
+    case vmIntrinsics::_VectorLessThanDouble:
+    case vmIntrinsics::_VectorLessThanInt:
+      comp = VectorMaskCmpNode::LT;
+      break;
+    default:
+      assert(false, "Unknown mask predicate");
+      break;
+  }
+
+  if (!Matcher::match_rule_supported(Op_VectorMaskCmp) && !Matcher::match_rule_supported_vector(Op_VectorMaskCmp, num_elem)) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector comparison because architecture does not support it");
+    }
+#endif
+    return false;
+  }
+
+  Node* opd1 = unwrapVectorBox(unwrapCast(argument(0)));
+  Node* opd2 = unwrapVectorBox(unwrapCast(argument(1)));
+  // Only intrinsify if the inputs are already vectors.
+  bool opd1_is_vector = opd1->is_Vector() || opd1->is_LoadVector();
+  bool opd2_is_vector = opd2->is_Vector() || opd2->is_LoadVector();
+  if (!opd1_is_vector|| !opd2_is_vector) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector comparison because inputs are not valid vectors:");
+      tty->print("\t");
+      opd1->dump();
+      tty->print("\t");
+      opd2->dump();
+    }
+#endif
+    return false;
+  }
+
+  ProfilePtrKind maybe_null = ProfileMaybeNull;
+  ciKlass* better_type = NULL;
+  const TypeInstPtr* box_type = TypeInstPtr::NOTNULL;
+  if ( !method()->return_profiled_type(bci(), better_type, maybe_null) ) {
+    // No profiled type.
+    // TODO Return type profiling might not be enabled. Might be worth it to see if the return value is used
+    // as received in another call to be able to get type from there. For now, assume that return type profiling is on.
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector comparison because type of mask could not be recovered.");
+    }
+#endif
+    return false;
+  }
+
+  if ( better_type == NULL ) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector comparison because type of mask could not be recovered.");
+    }
+#endif
+    return false;
+  }
+
+  Node* operation = _gvn.transform(new VectorMaskCmpNode(comp, opd1, opd2));
+  box_type = TypeInstPtr::make(TypePtr::NotNull, better_type);
+  operation = _gvn.transform(new VectorBoxNode(box_type, operation));
+  set_result(operation);
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Accepted vector comparison successfully by generating: ");
+    operation->dump(1);
+  }
+#endif
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_blend(const TypeInstPtr* box_type, BasicType type, int num_elem) {
+  if (!Matcher::match_rule_supported(Op_VectorBlend) && !Matcher::match_rule_supported_vector(Op_VectorBlend, num_elem)) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector blend because architecture does not support it");
+    }
+#endif
+    return false;
+  }
+
+  Node* opd1 = unwrapVectorBox(unwrapCast(argument(0)));
+  Node* opd2 = unwrapVectorBox(unwrapCast(argument(1)));
+  Node* opd3 = unwrapVectorBox(unwrapCast(argument(2)));
+
+  // Only intrinsify if the inputs are already vectors.
+  bool opd1_is_vector = opd1->is_Vector() || opd1->is_LoadVector();
+  bool opd2_is_vector = opd2->is_Vector() || opd2->is_LoadVector();
+  bool opd3_is_vector = opd3->is_VectorMaskCmp();
+  if (!opd1_is_vector|| !opd2_is_vector || !opd3_is_vector) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector blend because inputs are not valid vectors:");
+      tty->print("\t");
+      opd1->dump();
+      tty->print("\t");
+      opd2->dump();
+      tty->print("\t");
+      opd3->dump();
+    }
+#endif
+    return false;
+  }
+
+  Node* operation = _gvn.transform(new VectorBlendNode(opd1, opd2, opd3));
+  operation = _gvn.transform(new VectorBoxNode(box_type, operation));
+  set_result(operation);
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Accepted vector blend successfully by generating: ");
+    operation->dump(1);
+  }
+#endif
+
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_sumAll(const TypeInstPtr* box_type, BasicType type, int num_elem) {
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector sumAll.");
+  }
+#endif
+
+  Node* opd1 = unwrapVectorBox(unwrapCast(argument(0)));
+
+  // Only intrinsify if the inputs are already vectors.
+  bool opd1_is_vector = opd1->is_Vector() || opd1->is_LoadVector();
+  if (!opd1_is_vector) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector sumAll because inputs are not valid vectors:");
+      tty->print("\t");
+      opd1->dump();
+    }
+#endif
+    return false;
+  }
+
+  Node* ReductionAdd = NULL;
+  switch (type) {
+  case T_INT:
+    ReductionAdd = _gvn.transform(new AddReductionVINode(NULL, zerocon(T_INT), opd1));
+    break;
+  case T_LONG:
+    ReductionAdd = _gvn.transform(new AddReductionVLNode(NULL, zerocon(T_LONG), opd1));
+    break;
+  case T_FLOAT:
+    ReductionAdd = _gvn.transform(new AddReductionVFNode(NULL, zerocon(T_FLOAT), opd1));
+    break;
+  case T_DOUBLE:
+    ReductionAdd = _gvn.transform(new AddReductionVDNode(NULL, zerocon(T_DOUBLE), opd1));
+    break;
+  default:
+    break;
+  }
+  set_result(ReductionAdd);
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Accepted vector sumAll successfully by generating: ");
+    ReductionAdd->dump(1);
+  }
+#endif
+
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_length(int num_elem) {
+  set_result(intcon(num_elem));
+  return true;
+}
+
+static int get_load_opcode(BasicType bt) {
+  switch(bt) {
+    case T_BOOLEAN:
+      return Op_LoadUB;
+    case T_CHAR:
+      return Op_LoadUS;
+    case T_FLOAT:
+      return Op_LoadF;
+    case T_DOUBLE:
+      return Op_LoadD;
+    case T_BYTE:
+      return Op_LoadB;
+    case T_SHORT:
+      return Op_LoadS;
+    case T_INT:
+      return Op_LoadI;
+    case T_LONG:
+      return Op_LoadL;
+    default:
+      break;
+  }
+  return 0;
+}
+
+static int get_store_opcode(BasicType bt) {
+  switch(bt) {
+    case T_BOOLEAN:
+    case T_BYTE:
+      return Op_StoreB;
+    case T_CHAR:
+    case T_SHORT:
+      return Op_StoreC;
+    case T_FLOAT:
+      return Op_StoreF;
+    case T_DOUBLE:
+      return Op_StoreD;
+    case T_INT:
+      return Op_StoreI;
+    case T_LONG:
+      return Op_StoreL;
+    default:
+      break;
+  }
+  return 0;
+}
+
+static BasicType get_type_from_vector_class(ciKlass* kls) {
+  if (kls->is_vectorapi_vector()) {
+    if (kls->is_float256vector()) {
+      return T_FLOAT;
+    } else if(kls->is_int256vector()) {
+      return T_INT;
+    } else if(kls->is_double256vector()) {
+      return T_DOUBLE;
+    }
+  }
+  return T_VOID;
+}
+
+static int get_op_from_intrinsic(vmIntrinsics::ID id) {
+  switch(id) {
+    case vmIntrinsics::_VectorAddFloat:
+      return Op_AddVF;
+    case vmIntrinsics::_VectorAddDouble:
+      return Op_AddVD;
+    case vmIntrinsics::_VectorAddInt:
+      return Op_AddVI;
+      /*Add these later: Op_AddVD Op_AddVL Op_AddVS Op_AddVB*/
+    case vmIntrinsics::_VectorSubFloat:
+      return Op_SubVF;
+    case vmIntrinsics::_VectorSubDouble:
+      return Op_SubVD;
+    case vmIntrinsics::_VectorSubInt:
+      return Op_SubVI;
+      /*Add these later: Op_SubVD Op_SubVL Op_SubVS Op_SubVB*/
+    case vmIntrinsics::_VectorMulFloat:
+      return Op_MulVF;
+    case vmIntrinsics::_VectorMulDouble:
+      return Op_MulVD;
+    case vmIntrinsics::_VectorMulInt:
+      return Op_MulVI;
+      /*Add these later: Op_MulVD Op_MulVL Op_MulVS Op_MulVB*/
+    case vmIntrinsics::_VectorDivFloat:
+      return Op_DivVF;
+    case vmIntrinsics::_VectorDivDouble:
+      return Op_DivVD;
+    //case vmIntrinsics::_VectorDivInt:
+    //  return Op_DivVI;
+      /*Add these later: Op_DivVD Op_DivVL Op_DivVS Op_DivVB*/
+    default:
+      break;
+  }
+  assert(false, "VM should be able to recover vector operation from intrinsic id.");
+  return 0;
+}
+
+#ifdef ASSERT
+static bool is_bin_vector_op(vmIntrinsics::ID id) {
+  switch(id) {
+    case vmIntrinsics::_VectorAddFloat:
+    case vmIntrinsics::_VectorAddInt:
+    case vmIntrinsics::_VectorSubFloat:
+    case vmIntrinsics::_VectorSubInt:
+    case vmIntrinsics::_VectorMulFloat:
+    case vmIntrinsics::_VectorMulInt:
+    case vmIntrinsics::_VectorDivFloat:
+    case vmIntrinsics::_VectorDivInt:
+      return true;
+    default:
+      return false;
+  }
+}
+#endif // ASSERT
+
+static bool is_vector_cmp(vmIntrinsics::ID id) {
+  switch(id) {
+    case vmIntrinsics::_VectorEqualFloat:
+    case vmIntrinsics::_VectorEqualDouble:
+    case vmIntrinsics::_VectorEqualInt:
+    case vmIntrinsics::_VectorLessThanFloat:
+    case vmIntrinsics::_VectorLessThanDouble:
+    case vmIntrinsics::_VectorLessThanInt:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool is_vector_zero(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorZeroFloat:
+  case vmIntrinsics::_VectorZeroDouble:
+  case vmIntrinsics::_VectorZeroInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_broadcast(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorBroadcastFloat:
+  case vmIntrinsics::_VectorBroadcastDouble:
+  case vmIntrinsics::_VectorBroadcastInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_blend(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorBlendFloat:
+  case vmIntrinsics::_VectorBlendDouble:
+  case vmIntrinsics::_VectorBlendInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_sumAll(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorSumAllFloat:
+  case vmIntrinsics::_VectorSumAllDouble:
+  case vmIntrinsics::_VectorSumAllInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_load(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorLoadFloat:
+  case vmIntrinsics::_VectorLoadDouble:
+  case vmIntrinsics::_VectorLoadInt:
+  case vmIntrinsics::_VectorLoadLong:
+  case vmIntrinsics::_VectorLoadShort:
+  case vmIntrinsics::_VectorLoadByte:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_store(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorStoreFloat:
+  case vmIntrinsics::_VectorStoreDouble:
+  case vmIntrinsics::_VectorStoreInt:
+  case vmIntrinsics::_VectorStoreLong:
+  case vmIntrinsics::_VectorStoreShort:
+  case vmIntrinsics::_VectorStoreByte:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
+  assert(UseVectorApiIntrinsics, "Should not try to intrinsify Vector API when disabled.");
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Found Vector API intrinsic: %s ", vmIntrinsics::name_at(id));
+  }
+#endif
+  // TODO Check that arr and num_elem are invariants for the context in which this call is placed.
+  ciKlass* exact_kls = NULL;
+  const TypeInstPtr* box_type = get_box_type_receiver(&exact_kls);
+#ifndef PRODUCT
+  if (DebugVectorApi && box_type != NULL) {
+    tty->print_cr("Type for %s is %s", vmIntrinsics::name_at(id), box_type->name()->as_utf8());
+  }
+#endif
+
+  if (exact_kls != NULL && exact_kls->is_vectorapi_vector()) {
+    int num_elem = exact_kls->vectorapi_vector_size();
+    assert(num_elem != -1, "VM should be able to recover vector size from vector class.");
+    BasicType type = get_type_from_vector_class(exact_kls);
+    assert(type != T_VOID, "VM should be able to recover vector type from vector class.");
+    if (Matcher::vector_size_supported(type, num_elem)) {
+      if (is_vector_load(id)) {
+        return inline_load_vector_op(box_type, type, num_elem);
+      } else if (is_vector_broadcast(id)) {
+        return inline_broadcast_vector_op(box_type, type, num_elem);
+      } else if (is_vector_zero(id)) {
+        return inline_zero_vector_op(box_type, type, num_elem);
+      } else if (is_vector_store(id)) {
+        return inline_store_vector_op(type, num_elem);
+      } else if (is_vector_cmp(id)) {
+        return inline_vector_cmp(type, num_elem, id);
+      } else if (is_vector_blend(id)) {
+        return inline_vector_blend(box_type, type, num_elem);
+      } else if (is_vector_sumAll(id)) {
+        return inline_vector_sumAll(box_type, type, num_elem);
+      } else if (id == vmIntrinsics::_VectorLength) {
+        return inline_vector_length(num_elem);
+      } else {
+        int op = get_op_from_intrinsic(id);
+        assert(is_bin_vector_op(id), "Expected binary operation here. If not binary, support needs added.");
+        return inline_bin_vector_op(box_type, op, type, num_elem);
+      }
+    }
+  }
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Failed intrinsification of %s ", vmIntrinsics::name_at(id));
+  }
+#endif
+  return false;
+}
+
+bool LibraryCallKit::inline_zero_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem) {
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector zero.");
+  }
+#endif
+  Node* broadcast =  NULL;
+  switch (bt) {
+  case T_BOOLEAN:
+    broadcast = _gvn.transform(new ReplicateBNode(zerocon(T_BOOLEAN), TypeVect::make(bt, num_elem)));
+    break;
+  case T_BYTE:
+    broadcast = _gvn.transform(new ReplicateBNode(zerocon(T_BYTE), TypeVect::make(bt, num_elem)));
+    break;
+  case T_CHAR:
+    broadcast = _gvn.transform(new ReplicateSNode(zerocon(T_CHAR), TypeVect::make(bt, num_elem)));
+    break;
+  case T_SHORT:
+    broadcast = _gvn.transform(new ReplicateSNode(zerocon(T_SHORT), TypeVect::make(bt, num_elem)));
+    break;
+  case T_INT:
+    broadcast = _gvn.transform(new ReplicateINode(zerocon(T_INT), TypeVect::make(bt, num_elem)));
+    break;
+  case T_LONG:
+    broadcast = _gvn.transform(new ReplicateLNode(zerocon(T_LONG), TypeVect::make(bt, num_elem)));
+    break;
+  case T_FLOAT:
+    broadcast = _gvn.transform(new ReplicateFNode(zerocon(T_FLOAT), TypeVect::make(bt, num_elem)));
+    break;
+  case T_DOUBLE:
+    broadcast = _gvn.transform(new ReplicateDNode(zerocon(T_DOUBLE), TypeVect::make(bt, num_elem)));
+    break;
+  default:
+    break;
+  }
+  Node* box = _gvn.transform(new VectorBoxNode(box_type, broadcast));
+  set_result(box);
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Accepted vector zero successfully by generating: ");
+    box->dump(1);
+  }
+#endif
+
+  return true;
+}
+
+bool LibraryCallKit::inline_broadcast_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem) {
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector broadcast.");
+  }
+#endif
+  Node* element = argument(1);
+  Node* broadcast = NULL;
+  switch (bt) {
+  case T_BOOLEAN:
+  case T_BYTE:
+    broadcast = _gvn.transform(new ReplicateBNode(element, TypeVect::make(bt, num_elem)));
+    break;
+  case T_CHAR:
+  case T_SHORT:
+    broadcast = _gvn.transform(new ReplicateSNode(element, TypeVect::make(bt, num_elem)));
+    break;
+  case T_INT:
+    broadcast = _gvn.transform(new ReplicateINode(element, TypeVect::make(bt, num_elem)));
+    break;
+  case T_LONG:
+    broadcast = _gvn.transform(new ReplicateLNode(element, TypeVect::make(bt, num_elem)));
+    break;
+  case T_FLOAT:
+    broadcast = _gvn.transform(new ReplicateFNode(element, TypeVect::make(bt, num_elem)));
+    break;
+  case T_DOUBLE:
+    broadcast = _gvn.transform(new ReplicateDNode(element, TypeVect::make(bt, num_elem)));
+    break;
+  default:
+    break;
+  }
+  Node* box = _gvn.transform(new VectorBoxNode(box_type, broadcast));
+  set_result(box);
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Accepted vector broadcast successfully by generating: ");
+    box->dump(1);
+  }
+#endif
+
+  return true;
+}
+
+bool LibraryCallKit::inline_load_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem) {
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector load.");
+  }
+#endif
+
+  int opc = get_load_opcode(bt);
+  assert(opc != 0, "Expected to get load opcode from element type");
+
+  Node* arr = argument(1);
+  Node* idx = argument(2);
+  Node* adr = array_element_address(arr, idx, bt);
+  const TypePtr* adr_type = adr->bottom_type()->is_ptr();
+
+  Node* vload = _gvn.transform(LoadVectorNode::make(opc, control(), memory(adr), adr, adr_type, num_elem, bt));
+  Node* box = _gvn.transform(new VectorBoxNode(box_type, vload));
+  set_result(box);
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Accepted vector load successfully by generating: ");
+    box->dump(1);
+  }
+#endif
+
+  return true;
+}
+
+bool LibraryCallKit::inline_store_vector_op(BasicType bt, int num_elem) {
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector store.");
+  }
+#endif
+
+  Node* vector = argument(0);
+
+  if (!vector->is_Vector() && !vector->is_LoadVector() && !vector->is_VectorBox()) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector store because input is not valid vector.");
+    }
+#endif
+    return false;
+  }
+
+  if (vector->is_VectorBox()) {
+    vector = vector->as_VectorBox()->vector_val();
+    assert(vector->is_Vector() || vector->is_LoadVector(), "Vector Box must hide a vector");
+  }
+
+  int opc = get_store_opcode(bt);
+  assert(opc != 0, "Expected to get store opcode from element type");
+
+  Node* dest_arr = argument(1);
+  Node* idx = argument(2);
+  Node* adr = array_element_address(dest_arr, idx, bt);
+  const TypePtr* adr_type = adr->bottom_type()->is_ptr();
+
+  Node* mem = memory(adr);
+  Node* vstore = _gvn.transform(StoreVectorNode::make(opc, control(), mem, adr, adr_type, vector, num_elem));
+
+  // TODO Check if this is correct given that adr_type only captures element type and not the whole vector size.
+  set_memory(vstore, adr_type);
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Accepted vector store successfully by generating: ");
+    vstore->dump();
+  }
+#endif
   return true;
 }
 

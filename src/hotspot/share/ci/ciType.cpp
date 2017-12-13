@@ -130,6 +130,31 @@ ciType* ciType::make(BasicType t) {
   return _basic_types[t];
 }
 
+bool ciType::is_float256vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Species));
+}
+
+bool ciType::is_double256vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Species));
+}
+
+bool ciType::is_int256vector() {
+  return basic_type() == T_OBJECT && (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector) ||
+  as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Species));
+}
+
+bool ciType::is_vectorapi_vector() {
+  return is_float256vector() || is_double256vector() || is_int256vector();
+}
+
+int ciType::vectorapi_vector_size() {
+  if (is_float256vector() || is_int256vector()) return 8;
+  else if (is_double256vector()) return 4;
+  return -1;
+}
+
 // ciReturnAddress
 //
 // This class represents the type of a specific return address in the

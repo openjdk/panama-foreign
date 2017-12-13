@@ -184,6 +184,48 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_StoreD:
     return Op_StoreVector;
 
+  case Op_AddVB:
+  case Op_AddVS:
+  case Op_AddVI:
+  case Op_AddVL:
+  case Op_AddVF:
+  case Op_AddVD:
+  case Op_SubVB:
+  case Op_SubVS:
+  case Op_SubVI:
+  case Op_SubVL:
+  case Op_SubVF:
+  case Op_SubVD:
+  case Op_MulVS:
+  case Op_MulVI:
+  case Op_MulVL:
+  case Op_MulVF:
+  case Op_MulVD:
+  case Op_DivVF:
+  case Op_DivVD:
+  case Op_AbsVF:
+  case Op_AbsVD:
+  case Op_NegVF:
+  case Op_NegVD:
+  case Op_SqrtVD:
+  case Op_LShiftVB:
+  case Op_LShiftVS:
+  case Op_LShiftVI:
+  case Op_LShiftVL:
+  case Op_RShiftVB:
+  case Op_RShiftVS:
+  case Op_RShiftVI:
+  case Op_RShiftVL:
+  case Op_URShiftVB:
+  case Op_URShiftVS:
+  case Op_URShiftVI:
+  case Op_URShiftVL:
+  case Op_AndV:
+  case Op_OrV:
+  case Op_XorV:
+    // When op is already vectorized, return that directly.
+    return sopc;
+
   default:
     return 0; // Unimplemented
   }
@@ -200,7 +242,6 @@ bool VectorNode::implemented(int opc, uint vlen, BasicType bt) {
   }
   return false;
 }
-
 bool VectorNode::is_shift(Node* n) {
   switch (n->Opcode()) {
   case Op_LShiftI:
@@ -547,7 +588,6 @@ int ReductionNode::opcode(int opc, BasicType bt) {
   }
   return vopc;
 }
-
 // Return the appropriate reduction node.
 ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, BasicType bt) {
 

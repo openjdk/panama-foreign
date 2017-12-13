@@ -1070,6 +1070,10 @@ private:
 
   void cvttpd2dq(XMMRegister dst, XMMRegister src);
 
+  // Convert vector float and double
+  void vcvtps2pd(XMMRegister dst, XMMRegister src, int vector_len);
+  void evcvtps2pd(XMMRegister dst, XMMRegister src, int vector_len);
+
   // Divide Scalar Double-Precision Floating-Point Values
   void divsd(XMMRegister dst, Address src);
   void divsd(XMMRegister dst, XMMRegister src);
@@ -2116,6 +2120,12 @@ private:
   void cmppd(XMMRegister dst, XMMRegister nds, XMMRegister src, int cop, int vector_len);
   void blendvpd(XMMRegister dst, XMMRegister nds, XMMRegister src1, XMMRegister src2, int vector_len);
   void vpblendd(XMMRegister dst, XMMRegister nds, XMMRegister src, int imm8, int vector_len);
+
+  void vcmpps(XMMRegister dst, XMMRegister nds, XMMRegister src, int comparison, int vector_len);
+  void vblendvps(XMMRegister dst, XMMRegister nds, XMMRegister src, XMMRegister mask, int vector_len);
+  void vcmpgtd(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  void vcmpeqd(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  void vblendvb(XMMRegister dst, XMMRegister nds, XMMRegister src, XMMRegister mask, int vector_len);
 
  protected:
   // Next instructions require address alignment 16 bytes SSE mode.

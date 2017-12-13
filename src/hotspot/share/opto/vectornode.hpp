@@ -822,4 +822,75 @@ public:
   virtual const Type *Value(PhaseGVN *phase) const { return TypeInt::INT; }
 };
 
+// Type conversion nodes
+class ConvertVF2VDNode : public VectorNode {
+ public:
+  ConvertVF2VDNode(Node* in, const TypeVect* vt) : VectorNode(in,vt) {}
+  virtual int Opcode() const;
+};
+
+class VectorBoxNode : public TypeNode {
+public:
+  VectorBoxNode(const TypeInstPtr* box_type, Node* vector)
+    : TypeNode(box_type, 2)
+  {
+    init_class_id(Class_VectorBox);
+    init_req(1, vector);
+    assert(vector->is_Vector() || vector->is_LoadVector(), "VectorBox construction needs a vector value");
+  }
+
+  virtual int Opcode() const;
+  Node* vector_val() const { return in(1); }
+};
+
+class VectorMaskCmpNode : public VectorNode {
+ public:
+  enum ComparisonPredicate {
+    EQ = 0, NE = 1, LT = 2, LTE = 3, GT = 4, GTE = 5
+  };
+
+  VectorMaskCmpNode(ComparisonPredicate predicate, Node* in1, Node* in2) :
+      VectorNode(in1, in2, TypeVect::make(T_BOOLEAN, in1->bottom_type()->is_vect()->length())), comparison(predicate) {
+    assert(in1->bottom_type()->is_vect()->element_basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),
+           "VectorMaskCmp inputs must have same type for elements");
+    assert(in1->bottom_type()->is_vect()->length() == in2->bottom_type()->is_vect()->length(),
+           "VectorMaskCmp inputs must have same number of elements");
+    init_class_id(Class_VectorMaskCmp);
+  }
+
+  virtual int Opcode() const;
+  ComparisonPredicate get_predicate() { return comparison; }
+
+ private:
+  ComparisonPredicate comparison;
+ protected:
+  uint size_of() const { return sizeof(*this); }
+};
+
+// Used to wrap other vector nodes in order to add masking functionality.
+class VectorMaskWrapperNode : public VectorNode {
+public:
+  VectorMaskWrapperNode(Node* vector, Node* mask)
+    : VectorNode(vector, mask, vector->bottom_type()->is_vect()) {
+    assert(mask->is_VectorMaskCmp(), "VectorMaskWrapper requires that second argument be a mask");
+  }
+
+  virtual int Opcode() const;
+  Node* vector_val() const { return in(1); }
+  Node* vector_mask() const { return in(2); }
+};
+
+class VectorBlendNode : public VectorNode {
+public:
+  VectorBlendNode(Node* vec1, Node* vec2, Node* mask)
+    : VectorNode(vec1, vec2, mask, vec1->bottom_type()->is_vect()) {
+    // assert(mask->is_VectorMask(), "VectorBlendNode requires that third argument be a mask");
+  }
+
+  virtual int Opcode() const;
+  Node* vec1() const { return in(1); }
+  Node* vec2() const { return in(2); }
+  Node* vec_mask() const { return in(3); }
+};
+
 #endif // SHARE_VM_OPTO_VECTORNODE_HPP
