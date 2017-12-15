@@ -822,7 +822,11 @@ bool PhaseMacroExpand::scalar_replacement(AllocateNode *alloc, GrowableArray <Sa
       // find the fields of the class which will be needed for safepoint debug information
       assert(klass->is_instance_klass(), "must be an instance klass.");
       iklass = klass->as_instance_klass();
-      nfields = iklass->nof_nonstatic_fields();
+      if (iklass->is_vector()) {
+        nfields = 1; // FIXME
+      } else {
+        nfields = iklass->nof_nonstatic_fields();
+      }
     } else {
       // find the array's elements which will be needed for safepoint debug information
       nfields = alloc->in(AllocateNode::ALength)->find_int_con(-1);
@@ -860,8 +864,13 @@ bool PhaseMacroExpand::scalar_replacement(AllocateNode *alloc, GrowableArray <Sa
       if (iklass != NULL) {
         field = iklass->nonstatic_field_at(j);
         offset = field->offset();
-        elem_type = field->type();
-        basic_elem_type = field->layout_type();
+        if (iklass->is_vector()) { // FIXME
+          elem_type = NULL;
+          basic_elem_type = T_ILLEGAL;
+        } else {
+          elem_type = field->type();
+          basic_elem_type = field->layout_type();
+        }
       } else {
         offset = array_base + j * (intptr_t)element_size;
       }
@@ -885,6 +894,8 @@ bool PhaseMacroExpand::scalar_replacement(AllocateNode *alloc, GrowableArray <Sa
           field_type = field_type->make_narrowoop();
           basic_elem_type = T_NARROWOOP;
         }
+      } else if (iklass != NULL && iklass->is_vector()) {
+        field_type = TypeVect::make(T_LONG, iklass->vector_size()); // FIXME
       } else {
         field_type = Type::get_const_basic_type(basic_elem_type);
       }
