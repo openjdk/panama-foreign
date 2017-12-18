@@ -7997,39 +7997,40 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
   BasicType type = exact_kls->vectorapi_vector_bt();
   assert(type != T_VOID, "VM should be able to recover vector type from vector class.");
 
+  bool generated = false;
   if (Matcher::vector_size_supported(type, num_elem)) {
     if (is_vector_load(id)) {
-      return return_and_print_if_failed(inline_load_vector_op(box_type, type, num_elem), id);
+      generated = inline_load_vector_op(box_type, type, num_elem), id;
     } else if (is_vector_broadcast(id)) {
-      return return_and_print_if_failed(inline_broadcast_vector_op(box_type, type, num_elem), id);
+      generated = inline_broadcast_vector_op(box_type, type, num_elem), id;
     } else if (is_vector_zero(id)) {
-      return return_and_print_if_failed(inline_zero_vector_op(box_type, type, num_elem), id);
+      generated = inline_zero_vector_op(box_type, type, num_elem), id;
     } else if (is_vector_store(id)) {
-      return return_and_print_if_failed(inline_store_vector_op(box_type, type, num_elem), id);
+      generated = inline_store_vector_op(box_type, type, num_elem), id;
     } else if (is_vector_blend(id)) {
-      return return_and_print_if_failed(inline_vector_blend(box_type, type, num_elem), id);
+      generated = inline_vector_blend(box_type, type, num_elem), id;
     } else if (is_vector_addAll(id)) {
-      return return_and_print_if_failed(inline_vector_addAll(box_type, type, num_elem), id);
+      generated = inline_vector_addAll(box_type, type, num_elem), id;
     } else if (is_vector_cmp(id)) {
-      return return_and_print_if_failed(inline_vector_cmp(box_type, type, num_elem, id), id);
+      generated = inline_vector_cmp(box_type, type, num_elem, id), id;
     } else if (id == vmIntrinsics::_VectorLength) {
-      return return_and_print_if_failed(inline_vector_length(num_elem), id);
+      generated = inline_vector_length(num_elem), id;
     } else if (id == vmIntrinsics::_VectorCastFloat && type == T_DOUBLE) {
-      return return_and_print_if_failed(inline_un_vector_op(box_type, Op_ConvertVF2VD, type, num_elem), id);
+      generated = inline_un_vector_op(box_type, Op_ConvertVF2VD, type, num_elem), id;
     } else if ( is_vector_mask_make(id) ) {
-      return return_and_print_if_failed(inline_vector_make_mask(box_type, type, num_elem, id), id);
+      generated = inline_vector_make_mask(box_type, type, num_elem, id), id;
     } else if ( id == vmIntrinsics::_VectorMaskRebracket ) {
-      return return_and_print_if_failed(inline_vector_mask_rebracket(box_type, type, num_elem), id);
+      generated = inline_vector_mask_rebracket(box_type, type, num_elem), id;
     } else if ( id == vmIntrinsics::_VectorRebracket ) {
-      return return_and_print_if_failed(inline_vector_rebracket(box_type, type, num_elem), id);
+      generated = inline_vector_rebracket(box_type, type, num_elem), id;
     } else if ( is_vector_mask_test(id) ) {
-      return return_and_print_if_failed(inline_vector_mask_test(box_type, type, num_elem, id), id);
+      generated = inline_vector_mask_test(box_type, type, num_elem, id), id;
     } else if ( is_vector_mask_op(id) ) {
-      return return_and_print_if_failed(inline_vector_mask_op(box_type, type, num_elem, id), id);
+      generated = inline_vector_mask_op(box_type, type, num_elem, id), id;
     } else {
       int op = get_op_from_intrinsic(id);
       assert(is_bin_vector_op(id), "Expected binary operation here. If not binary, support needs added.");
-      return return_and_print_if_failed(inline_bin_vector_op(box_type, op, type, num_elem), id);
+      generated = inline_bin_vector_op(box_type, op, type, num_elem), id;
     }
   } else {
 #ifndef PRODUCT
@@ -8040,7 +8041,7 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
 #endif
   }
 
-  return return_and_print_if_failed(false, id);
+  return return_and_print_if_failed(generated, id);
 }
 
 bool LibraryCallKit::inline_zero_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem) {
