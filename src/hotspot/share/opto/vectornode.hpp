@@ -971,18 +971,27 @@ class VectorLoadMaskNode : public VectorNode {
  public:
   VectorLoadMaskNode(Node* in, const TypeVect* vt)
     : VectorNode(in, vt) {
-    // TODO Add appropriate asserts to ensure type consistency. Namely, check that input is boolean vector type as expected.
+    assert(in->is_LoadVector(), "expected load vector");
+    assert(in->as_LoadVector()->vect_type()->element_basic_type() == T_BOOLEAN, "must be boolean");
   }
 
+  int GetOutMaskSize() const { return type2aelembytes(vect_type()->element_basic_type()); }
   virtual int Opcode() const;
 };
 
 class VectorStoreMaskNode : public VectorNode {
+ private:
+  int _mask_size;
+ protected:
+  uint size_of() const { return sizeof(*this); }
+
  public:
-  VectorStoreMaskNode(Node* in, uint num_elem)
+  VectorStoreMaskNode(Node* in, BasicType in_type, uint num_elem)
     : VectorNode(in, TypeVect::make(T_BOOLEAN, num_elem)) {
+    _mask_size = type2aelembytes(in_type);
   }
 
+  int GetInputMaskSize() const { return _mask_size; }
   virtual int Opcode() const;
 };
 
