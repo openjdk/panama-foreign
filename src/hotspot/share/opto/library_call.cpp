@@ -7333,8 +7333,8 @@ Node* LibraryCallKit::wrapWithVectorBox(Node* vector, const TypeInstPtr* box_typ
   assert(vect_type->element_basic_type() == (is_mask ? getMaskBasicType(bt) : bt), "consistent vector element type expected");
 
   Node* mask_store = NULL;
-  if (is_mask) {
-    mask_store = _gvn.transform(new VectorStoreMaskNode(vector, num_elem));
+  if (is_mask && bt != T_BOOLEAN) {
+    mask_store = _gvn.transform(new VectorStoreMaskNode(vector, bt, num_elem));
     // Although type of mask depends on its definition, in terms of storage everything is stored in boolean array.
     bt = T_BOOLEAN;
     assert(mask_store->as_Vector()->bottom_type()->is_vect()->element_basic_type() == bt,

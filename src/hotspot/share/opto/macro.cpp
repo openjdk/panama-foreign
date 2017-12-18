@@ -3126,7 +3126,7 @@ void PhaseMacroExpand::expand_vectorunbox_node(VectorUnboxNode* vunbox) {
                                                             adr_type,
                                                             num_elem,
                                                             bt));
-  if (from_kls->is_vectormask()) {
+  if (from_kls->is_vectormask() && masktype != T_BOOLEAN) {
     if (masktype == T_FLOAT) masktype = T_INT;
     if (masktype == T_DOUBLE) masktype = T_LONG;
     assert(vunbox->bottom_type()->is_vect()->element_basic_type() == masktype, "expect mask type consistency");
