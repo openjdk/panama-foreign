@@ -8000,37 +8000,37 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
   bool generated = false;
   if (Matcher::vector_size_supported(type, num_elem)) {
     if (is_vector_load(id)) {
-      generated = inline_load_vector_op(box_type, type, num_elem), id;
+      generated = inline_load_vector_op(box_type, type, num_elem);
     } else if (is_vector_broadcast(id)) {
-      generated = inline_broadcast_vector_op(box_type, type, num_elem), id;
+      generated = inline_broadcast_vector_op(box_type, type, num_elem);
     } else if (is_vector_zero(id)) {
-      generated = inline_zero_vector_op(box_type, type, num_elem), id;
+      generated = inline_zero_vector_op(box_type, type, num_elem);
     } else if (is_vector_store(id)) {
-      generated = inline_store_vector_op(box_type, type, num_elem), id;
+      generated = inline_store_vector_op(box_type, type, num_elem);
     } else if (is_vector_blend(id)) {
-      generated = inline_vector_blend(box_type, type, num_elem), id;
+      generated = inline_vector_blend(box_type, type, num_elem);
     } else if (is_vector_addAll(id)) {
-      generated = inline_vector_addAll(box_type, type, num_elem), id;
+      generated = inline_vector_addAll(box_type, type, num_elem);
     } else if (is_vector_cmp(id)) {
-      generated = inline_vector_cmp(box_type, type, num_elem, id), id;
+      generated = inline_vector_cmp(box_type, type, num_elem, id);
     } else if (id == vmIntrinsics::_VectorLength) {
-      generated = inline_vector_length(num_elem), id;
+      generated = inline_vector_length(num_elem);
     } else if (id == vmIntrinsics::_VectorCastFloat && type == T_DOUBLE) {
-      generated = inline_un_vector_op(box_type, Op_ConvertVF2VD, type, num_elem), id;
+      generated = inline_un_vector_op(box_type, Op_ConvertVF2VD, type, num_elem);
     } else if ( is_vector_mask_make(id) ) {
-      generated = inline_vector_make_mask(box_type, type, num_elem, id), id;
+      generated = inline_vector_make_mask(box_type, type, num_elem, id);
     } else if ( id == vmIntrinsics::_VectorMaskRebracket ) {
-      generated = inline_vector_mask_rebracket(box_type, type, num_elem), id;
+      generated = inline_vector_mask_rebracket(box_type, type, num_elem);
     } else if ( id == vmIntrinsics::_VectorRebracket ) {
-      generated = inline_vector_rebracket(box_type, type, num_elem), id;
+      generated = inline_vector_rebracket(box_type, type, num_elem);
     } else if ( is_vector_mask_test(id) ) {
-      generated = inline_vector_mask_test(box_type, type, num_elem, id), id;
+      generated = inline_vector_mask_test(box_type, type, num_elem, id);
     } else if ( is_vector_mask_op(id) ) {
-      generated = inline_vector_mask_op(box_type, type, num_elem, id), id;
+      generated = inline_vector_mask_op(box_type, type, num_elem, id);
     } else {
       int op = get_op_from_intrinsic(id);
       assert(is_bin_vector_op(id), "Expected binary operation here. If not binary, support needs added.");
-      generated = inline_bin_vector_op(box_type, op, type, num_elem), id;
+      generated = inline_bin_vector_op(box_type, op, type, num_elem);
     }
   } else {
 #ifndef PRODUCT
