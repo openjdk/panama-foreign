@@ -501,6 +501,8 @@ void Parse::do_call() {
 
     bool should_specialize = true;
 
+    // TODO Instead of checking for is_VectorBox, maybe should check if intrinsifiable VectorApi class?
+    // The issue here is that mask creation needs specialized dispatch.
     if (UseVectorApiIntrinsics) {
       // For Vector API, we do not specialize in order to keep intrinsics dispatch logic simple.
       if (receiver_node->is_VectorBox()) {
