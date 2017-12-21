@@ -68,6 +68,7 @@ class CompilerPhaseTypeHelper {
       case PHASE_AFTER_PARSING:              return "After Parsing";
       case PHASE_ITER_GVN1:                  return "Iter GVN 1";
       case PHASE_PHASEIDEAL_BEFORE_EA:       return "PhaseIdealLoop before EA";
+      case PHASE_ITER_GVN_BEFORE_EA:         return "Iter GVN before EA";
       case PHASE_ITER_GVN_AFTER_EA:          return "Iter GVN after EA";
       case PHASE_ITER_GVN_AFTER_ELIMINATION: return "Iter GVN after eliminating allocations and locks";
       case PHASE_PHASEIDEALLOOP1:            return "PhaseIdealLoop 1";
