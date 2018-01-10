@@ -68,6 +68,13 @@ public class AsmCodeFactory extends CodeFactory {
         av.visitEnd();
     }
 
+    private void handleException(Exception ex) {
+        System.err.println(Main.format("cannot.write.class.file", owner.pkgName + "." + owner.clsName, ex));
+        if (Main.DEBUG) {
+            ex.printStackTrace(System.err);
+        }
+    }
+
     private void annotateC(ClassVisitor cw, Cursor dcl) {
         AnnotationVisitor av = cw.visitAnnotation(
                 "Ljava/nicl/metadata/C;", true);
@@ -203,7 +210,7 @@ public class AsmCodeFactory extends CodeFactory {
         try {
             writeClassFile(cw, owner.clsName + "$" + intf);
         } catch (IOException ex) {
-            ex.printStackTrace(System.err);
+            handleException(ex);
         }
     }
 
@@ -246,7 +253,7 @@ public class AsmCodeFactory extends CodeFactory {
         try {
             writeClassFile(cw, owner.clsName + "$" + intf);
         } catch (IOException ex) {
-            ex.printStackTrace(System.err);
+            handleException(ex);
         }
     }
 
@@ -285,7 +292,7 @@ public class AsmCodeFactory extends CodeFactory {
         try {
             writeClassFile(cw, owner.clsName + "$" + intf);
         } catch (IOException ex) {
-            ex.printStackTrace(System.err);
+            handleException(ex);
         }
     }
 
@@ -328,7 +335,7 @@ public class AsmCodeFactory extends CodeFactory {
         try {
             writeClassFile(cw, owner.clsName + "$" + intf);
         } catch (IOException ex) {
-            ex.printStackTrace(System.err);
+            handleException(ex);
         }
     }
 
@@ -381,7 +388,7 @@ public class AsmCodeFactory extends CodeFactory {
         try {
             writeClassFile(cw, owner.clsName + "$" + intf);
         } catch (IOException ex) {
-            ex.printStackTrace(System.err);
+            handleException(ex);
         }
     }
 
@@ -472,7 +479,9 @@ public class AsmCodeFactory extends CodeFactory {
             jt = jt2.getDelegate();
         } else {
             logger.warning(() -> "Should have JType2 in addType");
-            new Throwable().printStackTrace(System.err);
+            if (Main.DEBUG) {
+                new Throwable().printStackTrace(System.err);
+            }
         }
         if (cursor == null) {
             assert (jt2 != null);
@@ -510,7 +519,7 @@ public class AsmCodeFactory extends CodeFactory {
                     break;
             }
         } catch (Exception ex) {
-            ex.printStackTrace(System.err);
+            handleException(ex);
             logger.warning("Cursor causing above exception is: " + cursor.spelling());
             logger.fine(() -> Printer.Stringifier(p -> p.dumpCursor(cursor, true)));
         }
@@ -694,7 +703,7 @@ public class AsmCodeFactory extends CodeFactory {
         try {
             writeClassFile(global_cw, owner.clsName);
         } catch (IOException ex) {
-            ex.printStackTrace(System.err);
+            handleException(ex);
         }
     }
 

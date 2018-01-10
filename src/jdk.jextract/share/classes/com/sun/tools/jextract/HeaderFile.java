@@ -64,7 +64,9 @@ public final class HeaderFile {
         if (null != this.cf) {
             logger.config(() -> "CodeFactory had been initialized for " + path);
             // Diagnosis code
-            new Throwable().printStackTrace(System.out);
+            if (Main.DEBUG) {
+                new Throwable().printStackTrace(System.err);
+            }
         } else {
             this.cf = cf;
         }

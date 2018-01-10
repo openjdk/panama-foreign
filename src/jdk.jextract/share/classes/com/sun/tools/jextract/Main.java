@@ -30,14 +30,30 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 public final class Main {
+    public static final boolean DEBUG = Boolean.getBoolean("jextract.debug");
+
     // FIXME: Remove this if/when the macros support is deemed stable
     public static boolean INCLUDE_MACROS = Boolean.parseBoolean(System.getProperty("jextract.INCLUDE_MACROS", "true"));
+
+    private static final String MESSAGES_RESOURCE = "com.sun.tools.jextract.resources.Messages";
+
+    private static final ResourceBundle MESSAGES_BUNDLE;
+    static {
+        MESSAGES_BUNDLE = ResourceBundle.getBundle(MESSAGES_RESOURCE, Locale.getDefault());
+    }
+
+    public static String format(String msgId, Object... args) {
+        return new MessageFormat(MESSAGES_BUNDLE.getString(msgId)).format(args);
+    }
 
     final Context ctx;
     String targetPackage;
@@ -58,7 +74,7 @@ public final class Main {
             pkgName = kv.value;
 
             if (!Files.isDirectory(p)) {
-                throw new IllegalArgumentException("Not a directory: " + kv.key);
+                throw new IllegalArgumentException(format("not.a.directory", kv.key));
             }
         }
 
@@ -69,7 +85,7 @@ public final class Main {
     private void processHeader(Object header) {
         Path p = Paths.get((String) header);
         if (!Files.isReadable(p)) {
-            throw new IllegalArgumentException("Cannot read the file: " + header);
+            throw new IllegalArgumentException(format("cannot.read.header.file", header));
         }
         p = p.toAbsolutePath();
         ctx.usePackageForFolder(p.getParent(), targetPackage);
@@ -107,12 +123,17 @@ public final class Main {
             try {
                 parser.printHelpOn(System.out);
             } catch (IOException ex) {
+                if (Main.DEBUG) {
+                    ex.printStackTrace(System.err);
+                }
             }
             System.exit(1);
         }
 
         if (options.has("log")) {
             setupLogging(Level.parse((String) options.valueOf("log")));
+        } else {
+            setupLogging(Level.WARNING);
         }
 
         if (options.has("I")) {
@@ -132,11 +153,14 @@ public final class Main {
             options.valuesOf("m").forEach(this::processPackageMapping);
         }
 
-        options.nonOptionArguments().stream().forEach(this::processHeader);
         try {
+            options.nonOptionArguments().stream().forEach(this::processHeader);
             ctx.parse(AsmCodeFactory::new);
         } catch (RuntimeException re) {
-            re.printStackTrace(System.err);
+            System.err.println(re.getMessage());
+            if (Main.DEBUG) {
+                re.printStackTrace(System.err);
+            }
             System.exit(2);
         }
 
@@ -145,8 +169,10 @@ public final class Main {
             try {
                 ctx.collectJarFile(jar, targetPackage);
             } catch (IOException ex) {
-                System.out.println("Error occurred producing jar file.");
-                ex.printStackTrace(System.err);
+                System.err.println(format("cannot.write.jar.file", jar, ex));
+                if (Main.DEBUG) {
+                    ex.printStackTrace(System.err);
+                }
                 System.exit(3);
             }
         }

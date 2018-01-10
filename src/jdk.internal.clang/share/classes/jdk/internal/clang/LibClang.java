@@ -22,7 +22,9 @@
  */
 package jdk.internal.clang;
 
+
 public class LibClang {
+    private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
 
     // simplified version
 
@@ -31,6 +33,8 @@ public class LibClang {
 
     static {
         System.loadLibrary("jclang");
-        System.err.println("Loading LibClang JNI");
+        if (DEBUG) {
+            System.err.println("Loading LibClang JNI");
+        }
     }
 }
