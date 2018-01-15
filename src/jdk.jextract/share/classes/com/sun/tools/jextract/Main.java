@@ -22,6 +22,7 @@
  */
 package com.sun.tools.jextract;
 
+import jdk.internal.joptsimple.OptionException;
 import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
 import jdk.internal.joptsimple.util.KeyValuePair;
@@ -103,31 +104,46 @@ public final class Main {
         logger.addHandler(log);
     }
 
+    private void printHelpAndExit(OptionParser parser) {
+        try {
+            parser.printHelpOn(System.err);
+        } catch (IOException ex) {
+            if (Main.DEBUG) {
+                ex.printStackTrace(System.err);
+            }
+        }
+        System.exit(1);
+    }
+
     public void run(String[] args) {
         OptionParser parser = new OptionParser();
-        parser.accepts("I", "specify include files path").withRequiredArg();
-        parser.accepts("L", "specify library path").withRequiredArg();
-        parser.accepts("l", "specify a library").withRequiredArg();
-        parser.accepts("o", "specify output jar file").withRequiredArg();
-        parser.accepts("t", "target package for specified header files").withRequiredArg();
-        parser.accepts("m", "specify package mapping as dir=pkg").withRequiredArg();
-        parser.accepts("h", "print help").forHelp();
-        parser.accepts("C", "pass through argument for clang").withRequiredArg();
-        parser.accepts("log", "specify log level in j.u.l.Level name").withRequiredArg();
-        parser.accepts("?", "print help").forHelp();
-        parser.nonOptions("header files");
+        parser.accepts("dry-run", format("help.dry_run"));
+        parser.accepts("I", format("help.I")).withRequiredArg();
+        parser.accepts("L", format("help.L")).withRequiredArg();
+        parser.accepts("l", format("help.l")).withRequiredArg();
+        parser.accepts("o", format("help.o")).withRequiredArg();
+        parser.accepts("t", format("help.t")).withRequiredArg();
+        parser.accepts("m", format("help.m")).withRequiredArg();
+        parser.accepts("h", format("help.h")).forHelp();
+        parser.accepts("help", format("help.h")).forHelp();
+        parser.accepts("C", format("help.C")).withRequiredArg();
+        parser.accepts("log", format("help.log")).withRequiredArg();
+        parser.accepts("?", format("help.h")).forHelp();
+        parser.nonOptions(format("help.non.option"));
 
-        OptionSet options = parser.parse(args);
+        OptionSet options = null;
+        try {
+             options = parser.parse(args);
+        } catch (OptionException oe) {
+             System.err.println(oe.getMessage());
+             if (Main.DEBUG) {
+                 oe.printStackTrace(System.err);
+             }
+             printHelpAndExit(parser);
+        }
 
-        if (args.length == 0 || options.has("h") || options.has("?")) {
-            try {
-                parser.printHelpOn(System.out);
-            } catch (IOException ex) {
-                if (Main.DEBUG) {
-                    ex.printStackTrace(System.err);
-                }
-            }
-            System.exit(1);
+        if (args.length == 0 || options.has("h") || options.has("?") || options.has("help")) {
+             printHelpAndExit(parser);
         }
 
         if (options.has("log")) {
@@ -164,17 +180,21 @@ public final class Main {
             System.exit(2);
         }
 
-        if (options.has("o")) {
-            Path jar = Paths.get((String) options.valueOf("o"));
-            try {
-                ctx.collectJarFile(jar, targetPackage);
-            } catch (IOException ex) {
-                System.err.println(format("cannot.write.jar.file", jar, ex));
-                if (Main.DEBUG) {
-                    ex.printStackTrace(System.err);
-                }
-                System.exit(3);
+        if (options.has("dry-run")) {
+            System.exit(0);
+        }
+
+        String outputName = options.has("o")? (String)options.valueOf("o") :
+            options.nonOptionArguments().get(0) + ".jar";
+        Path jar = Paths.get(outputName);
+        try {
+            ctx.collectJarFile(jar, targetPackage);
+        } catch (IOException ex) {
+            System.err.println(format("cannot.write.jar.file", jar, ex));
+            if (Main.DEBUG) {
+                ex.printStackTrace(System.err);
             }
+            System.exit(3);
         }
     }
 
