@@ -72,7 +72,7 @@ public class VectorArrays {
             Vector<Byte, S> vb = species.fromArray(b, i);
             Vector.Mask<Byte, S> m = va.notEqual(vb);
             if (m.anyTrue()) {
-                return i + m.trueCount();
+                break; // mismatch found
             }
         }
 
