@@ -347,7 +347,8 @@ class LibraryCallKit : public GraphKit {
   bool inline_un_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
   bool inline_vector_cmp(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
   bool inline_vector_blend(const TypeInstPtr* box_type, BasicType type, int num_elem);
-  bool inline_vector_addAll(const TypeInstPtr* box_type, BasicType type, int num_elem);
+  bool inline_vector_addAll(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
+  bool inline_vector_mulAll(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
   bool inline_vector_length(int num_elem);
   bool inline_vector_make_mask(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
   bool inline_vector_mask_test(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
@@ -6817,6 +6818,21 @@ static bool is_vector_shift(vmIntrinsics::ID id) {
   }
 }
 
+static bool is_un_vector_op(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorCastFloat:
+  case vmIntrinsics::_VectorNegInt:
+  case vmIntrinsics::_VectorNegFloat:
+  case vmIntrinsics::_VectorNegDouble:
+  case vmIntrinsics::_VectorAbsInt:
+  case vmIntrinsics::_VectorAbsFloat:
+  case vmIntrinsics::_VectorAbsDouble:
+    return true;
+  default:
+    return false;
+  }
+}
+
 static bool is_bin_vector_op(vmIntrinsics::ID id) {
   switch(id) {
     case vmIntrinsics::_VectorAddFloat:
@@ -6910,6 +6926,17 @@ static bool is_vector_addAll(vmIntrinsics::ID id) {
   case vmIntrinsics::_VectorAddAllFloat:
   case vmIntrinsics::_VectorAddAllDouble:
   case vmIntrinsics::_VectorAddAllInt:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool is_vector_mulAll(vmIntrinsics::ID id) {
+  switch (id) {
+  case vmIntrinsics::_VectorMulAllFloat:
+  case vmIntrinsics::_VectorMulAllDouble:
+  case vmIntrinsics::_VectorMulAllInt:
     return true;
   default:
     return false;
@@ -7656,7 +7683,13 @@ bool LibraryCallKit::inline_un_vector_op(const TypeInstPtr* box_type, int op, Ba
   const TypeVect* vt = TypeVect::make(type, num_elem);
   switch(op) {
     case Op_ConvertVF2VD:
-      operation = new ConvertVF2VDNode(opd1, vt);
+    case Op_NegVI:
+    case Op_NegVF:
+    case Op_NegVD:
+    case Op_AbsVI:
+    case Op_AbsVF:
+    case Op_AbsVD:
+      operation = VectorNode::make(op, opd1, NULL, num_elem, type);
       break;
     default:
       assert(false, "Expecting to be able to support this vector operation");
@@ -7773,12 +7806,21 @@ bool LibraryCallKit::inline_vector_blend(const TypeInstPtr* box_type, BasicType 
   return true;
 }
 
-bool LibraryCallKit::inline_vector_addAll(const TypeInstPtr* box_type, BasicType type, int num_elem) {
+bool LibraryCallKit::inline_vector_addAll(const TypeInstPtr* box_type, int op, BasicType type, int num_elem) {
 #ifndef PRODUCT
   if (DebugVectorApi) {
     tty->print_cr("Trying to intrinsify vector addAll.");
   }
 #endif
+
+  if (!Matcher::match_rule_supported(op) && !Matcher::match_rule_supported_vector(op, num_elem)) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector op (%s,%d) because architecture does not support it", NodeClassNames[op], num_elem);
+    }
+#endif
+    return false;
+  }
 
   Node* opd1 = getVectorInput(argument(0), box_type, type, num_elem);
   if (opd1 == NULL) {
@@ -7804,6 +7846,50 @@ bool LibraryCallKit::inline_vector_addAll(const TypeInstPtr* box_type, BasicType
   }
   add_reduction = _gvn.transform(add_reduction);
   setVectorOutput(add_reduction);
+
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_mulAll(const TypeInstPtr* box_type, int op, BasicType type, int num_elem) {
+#ifndef PRODUCT
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector mulAll.");
+  }
+#endif
+
+  if (!Matcher::match_rule_supported(op) && !Matcher::match_rule_supported_vector(op, num_elem)) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector op (%s,%d) because architecture does not support it", NodeClassNames[op], num_elem);
+    }
+#endif
+    return false;
+  }
+
+  Node* opd1 = getVectorInput(argument(0), box_type, type, num_elem);
+  if (opd1 == NULL) {
+    return false;
+  }
+
+  Node* mul_reduction = NULL;
+  switch (type) {
+  case T_INT:
+    mul_reduction = new MulReductionVINode(NULL, makecon(TypeInt::ONE), opd1);
+    break;
+  case T_LONG:
+    mul_reduction = new MulReductionVLNode(NULL, makecon(TypeLong::ONE), opd1);
+    break;
+  case T_FLOAT:
+    mul_reduction = new MulReductionVFNode(NULL, makecon(TypeF::ONE), opd1);
+    break;
+  case T_DOUBLE:
+    mul_reduction = new MulReductionVDNode(NULL, makecon(TypeD::ONE), opd1);
+    break;
+  default:
+    break;
+  }
+  mul_reduction = _gvn.transform(mul_reduction);
+  setVectorOutput(mul_reduction);
 
   return true;
 }
@@ -8035,6 +8121,18 @@ static int get_store_opcode(BasicType bt) {
 
 static int get_op_from_intrinsic(vmIntrinsics::ID id) {
   switch(id) {
+    case vmIntrinsics::_VectorAbsInt:
+      return Op_AbsVI;
+    case vmIntrinsics::_VectorAbsFloat:
+      return Op_AbsVF;
+    case vmIntrinsics::_VectorAbsDouble:
+      return Op_AbsVD;
+    case vmIntrinsics::_VectorNegInt:
+      return Op_NegVI;
+    case vmIntrinsics::_VectorNegFloat:
+      return Op_NegVF;
+    case vmIntrinsics::_VectorNegDouble:
+      return Op_NegVD;
     case vmIntrinsics::_VectorAddFloat:
       return Op_AddVF;
     case vmIntrinsics::_VectorAddDouble:
@@ -8073,6 +8171,20 @@ static int get_op_from_intrinsic(vmIntrinsics::ID id) {
       return Op_URShiftVI;
     case vmIntrinsics::_VectorAShiftRInt:
       return Op_RShiftVI;
+    case vmIntrinsics::_VectorMulAllInt:
+      return Op_MulReductionVI;
+    case vmIntrinsics::_VectorMulAllFloat:
+      return Op_MulReductionVF;
+    case vmIntrinsics::_VectorMulAllDouble:
+      return Op_MulReductionVD;
+    case vmIntrinsics::_VectorAddAllInt:
+      return Op_AddReductionVI;
+    case vmIntrinsics::_VectorAddAllFloat:
+      return Op_AddReductionVF;
+    case vmIntrinsics::_VectorAddAllDouble:
+      return Op_AddReductionVD;
+    case vmIntrinsics::_VectorCastFloat:
+      return Op_ConvertVF2VD;
     default:
       break;
   }
@@ -8137,13 +8249,15 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
     } else if (is_vector_blend(id)) {
       generated = inline_vector_blend(box_type, type, num_elem);
     } else if (is_vector_addAll(id)) {
-      generated = inline_vector_addAll(box_type, type, num_elem);
+      int op = get_op_from_intrinsic(id);
+      generated = inline_vector_addAll(box_type, op, type, num_elem);
+    } else if (is_vector_mulAll(id)) {
+      int op = get_op_from_intrinsic(id);
+      generated = inline_vector_mulAll(box_type, op, type, num_elem);
     } else if (is_vector_cmp(id)) {
       generated = inline_vector_cmp(box_type, type, num_elem, id);
     } else if (id == vmIntrinsics::_VectorLength) {
       generated = inline_vector_length(num_elem);
-    } else if (id == vmIntrinsics::_VectorCastFloat && type == T_DOUBLE) {
-      generated = inline_un_vector_op(box_type, Op_ConvertVF2VD, type, num_elem);
     } else if ( is_vector_mask_make(id) ) {
       generated = inline_vector_make_mask(box_type, type, num_elem, id);
     } else if ( id == vmIntrinsics::_VectorMaskRebracket ) {
@@ -8154,10 +8268,14 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
       generated = inline_vector_mask_test(box_type, type, num_elem, id);
     } else if ( is_vector_mask_op(id) ) {
       generated = inline_vector_mask_op(box_type, type, num_elem, id);
-    } else {
+    } else if (is_bin_vector_op(id)) {
       int op = get_op_from_intrinsic(id);
-      assert(is_bin_vector_op(id), "Expected binary operation here. If not binary, support needs added.");
       generated = inline_bin_vector_op(box_type, op, type, num_elem, is_mask_variant);
+    } else if ( is_un_vector_op(id) ) {
+      int op = get_op_from_intrinsic(id);
+      generated = inline_un_vector_op(box_type, op, type, num_elem);
+    } else {
+      fatal("Needs Intrinsic suppport for this operation %s", vmIntrinsics::name_at(id));
     }
   } else {
 #ifndef PRODUCT

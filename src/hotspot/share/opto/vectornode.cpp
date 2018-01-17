@@ -101,12 +101,18 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_DivD:
     assert(bt == T_DOUBLE, "must be");
     return Op_DivVD;
+  case Op_AbsI:
+    assert(bt == T_INT, "must be");
+    return Op_AbsVI;
   case Op_AbsF:
     assert(bt == T_FLOAT, "must be");
     return Op_AbsVF;
   case Op_AbsD:
     assert(bt == T_DOUBLE, "must be");
     return Op_AbsVD;
+  case Op_NegI:
+    assert(bt == T_INT, "must be");
+    return Op_NegVI;
   case Op_NegF:
     assert(bt == T_FLOAT, "must be");
     return Op_NegVF;
@@ -203,8 +209,10 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_MulVD:
   case Op_DivVF:
   case Op_DivVD:
+  case Op_AbsVI:
   case Op_AbsVF:
   case Op_AbsVD:
+  case Op_NegVI:
   case Op_NegVF:
   case Op_NegVD:
   case Op_SqrtVD:
@@ -351,9 +359,11 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_DivVF: return new DivVFNode(n1, n2, vt);
   case Op_DivVD: return new DivVDNode(n1, n2, vt);
 
+  case Op_AbsVI: return new AbsVINode(n1, vt);
   case Op_AbsVF: return new AbsVFNode(n1, vt);
   case Op_AbsVD: return new AbsVDNode(n1, vt);
 
+  case Op_NegVI: return new NegVINode(n1, vt);
   case Op_NegVF: return new NegVFNode(n1, vt);
   case Op_NegVD: return new NegVDNode(n1, vt);
 
@@ -378,6 +388,11 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_AndV: return new AndVNode(n1, n2, vt);
   case Op_OrV:  return new OrVNode (n1, n2, vt);
   case Op_XorV: return new XorVNode(n1, n2, vt);
+  
+  case Op_ConvertVF2VD:
+    if (bt == T_DOUBLE) {
+      return new ConvertVF2VDNode(n1, vt);
+    }
   default:
     fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
     return NULL;

@@ -1539,11 +1539,13 @@
    do_name(greaterthan_method_name, "greaterThan")                                                                                             \
    do_name(blend_method_name, "blend")                                                                                                         \
    do_name(addall_method_name, "addAll")                                                                                                       \
+   do_name(mulall_method_name, "mulAll")                                                                                                       \
    do_name(rebracket_method_name, "rebracket")                                                                                                 \
    do_name(and_method_name, "and")                                                                                                             \
    do_name(or_method_name, "or")                                                                                                               \
    do_name(not_method_name, "not")                                                                                                             \
    do_name(xor_method_name, "xor")                                                                                                             \
+   do_name(neg_method_name, "neg")                                                                                                             \
    /* _VectorLength should be first one in list as it is used as marker for beginning of Vector API methods */                                 \
    do_intrinsic(_VectorLength, jdk_incubator_vector_Vector, length_name, void_int_signature, F_R)                                              \
    do_intrinsic(_VectorConstantMask, jdk_incubator_vector_VectorSpecies, constant_mask_name, vector_constant_mask_sig, F_R)                    \
@@ -1611,11 +1613,14 @@
    do_intrinsic(_VectorStoreMaskShort, jdk_incubator_vector_ShortVector, store_vector_name, vector_short_store_masked_sig, F_R)                \
    do_intrinsic(_VectorLoadMaskByte, jdk_incubator_vector_ByteVector_ByteSpecies, load_vector_name, vector_byte_load_masked_sig, F_R)          \
    do_intrinsic(_VectorStoreMaskByte, jdk_incubator_vector_ByteVector, store_vector_name, vector_byte_store_masked_sig, F_R)                   \
+   do_intrinsic(_VectorNegInt, jdk_incubator_vector_IntVector, neg_method_name, vector_int_zero_sig, F_R)                                      \
    do_intrinsic(_VectorEqualInt, jdk_incubator_vector_IntVector, equal_method_name, vector_cmp_sig, F_R)                                       \
    do_intrinsic(_VectorLessThanInt, jdk_incubator_vector_IntVector, lessthan_method_name, vector_cmp_sig, F_R)                                 \
    do_intrinsic(_VectorGreaterThanInt, jdk_incubator_vector_IntVector, greaterthan_method_name, vector_cmp_sig, F_R)                           \
    do_intrinsic(_VectorBlendInt, jdk_incubator_vector_IntVector, blend_method_name, vector_int_blend_sig, F_R)                                 \
    do_intrinsic(_VectorAddAllInt, jdk_incubator_vector_IntVector, addall_method_name, void_int_signature, F_R)                                 \
+   do_intrinsic(_VectorMulAllInt, jdk_incubator_vector_IntVector, mulall_method_name, void_int_signature, F_R)                                 \
+   do_intrinsic(_VectorAbsInt, jdk_incubator_vector_IntVector, abs_name, vector_int_zero_sig, F_R)                                             \
    do_intrinsic(_VectorSubInt, jdk_incubator_vector_IntVector, sub_method_name, vector_int_bin_op_sig, F_R)                                    \
    do_intrinsic(_VectorSubMaskInt, jdk_incubator_vector_IntVector, sub_method_name, vector_int_blend_sig, F_R)                                 \
    do_intrinsic(_VectorMulInt, jdk_incubator_vector_IntVector, mul_method_name, vector_int_bin_op_sig, F_R)                                    \
@@ -1631,8 +1636,11 @@
    do_intrinsic(_VectorShiftLInt, jdk_incubator_vector_IntVector, shiftl_method_name, vector_int_broadcast_sig, F_R)                           \
    do_intrinsic(_VectorShiftRInt, jdk_incubator_vector_IntVector, shiftr_method_name, vector_int_broadcast_sig, F_R)                           \
    do_intrinsic(_VectorAShiftRInt, jdk_incubator_vector_IntVector, ashiftr_method_name, vector_int_broadcast_sig, F_R)                         \
+   do_intrinsic(_VectorNegDouble, jdk_incubator_vector_DoubleVector, neg_method_name, vector_double_zero_sig, F_R)                             \
    do_intrinsic(_VectorBlendDouble, jdk_incubator_vector_DoubleVector, blend_method_name, vector_double_blend_sig, F_R)                        \
    do_intrinsic(_VectorAddAllDouble, jdk_incubator_vector_DoubleVector, addall_method_name, void_double_signature, F_R)                        \
+   do_intrinsic(_VectorMulAllDouble, jdk_incubator_vector_DoubleVector, mulall_method_name, void_double_signature, F_R)                        \
+   do_intrinsic(_VectorAbsDouble, jdk_incubator_vector_DoubleVector, abs_name, vector_double_zero_sig, F_R)                                    \
    do_intrinsic(_VectorSubDouble, jdk_incubator_vector_DoubleVector, sub_method_name, vector_double_bin_op_sig, F_R)                           \
    do_intrinsic(_VectorSubMaskDouble, jdk_incubator_vector_DoubleVector, sub_method_name, vector_double_blend_sig, F_R)                        \
    do_intrinsic(_VectorMulDouble, jdk_incubator_vector_DoubleVector, mul_method_name, vector_double_bin_op_sig, F_R)                           \
@@ -1641,12 +1649,15 @@
    do_intrinsic(_VectorDivMaskDouble, jdk_incubator_vector_DoubleVector, div_method_name, vector_double_blend_sig, F_R)                        \
    do_intrinsic(_VectorAddDouble, jdk_incubator_vector_DoubleVector, add_method_name, vector_double_bin_op_sig, F_R)                           \
    do_intrinsic(_VectorAddMaskDouble, jdk_incubator_vector_DoubleVector, add_method_name, vector_double_blend_sig, F_R)                        \
+   do_intrinsic(_VectorNegFloat, jdk_incubator_vector_FloatVector, neg_method_name, vector_float_zero_sig, F_R)                                \
    do_intrinsic(_VectorCastFloat, jdk_incubator_vector_FloatVector, Class_cast_name, vector_cast_sig, F_R)                                     \
    do_intrinsic(_VectorEqualFloat, jdk_incubator_vector_FloatVector, equal_method_name, vector_cmp_sig, F_R)                                   \
    do_intrinsic(_VectorLessThanFloat, jdk_incubator_vector_FloatVector, lessthan_method_name, vector_cmp_sig, F_R)                             \
    do_intrinsic(_VectorGreaterThanFloat, jdk_incubator_vector_FloatVector, greaterthan_method_name, vector_cmp_sig, F_R)                       \
    do_intrinsic(_VectorBlendFloat, jdk_incubator_vector_FloatVector, blend_method_name, vector_float_blend_sig, F_R)                           \
    do_intrinsic(_VectorAddAllFloat, jdk_incubator_vector_FloatVector, addall_method_name, void_float_signature, F_R)                           \
+   do_intrinsic(_VectorMulAllFloat, jdk_incubator_vector_FloatVector, mulall_method_name, void_float_signature, F_R)                           \
+   do_intrinsic(_VectorAbsFloat, jdk_incubator_vector_FloatVector, abs_name, vector_float_zero_sig, F_R)                                       \
    do_intrinsic(_VectorSubFloat, jdk_incubator_vector_FloatVector, sub_method_name, vector_float_bin_op_sig, F_R)                              \
    do_intrinsic(_VectorSubMaskFloat, jdk_incubator_vector_FloatVector, sub_method_name, vector_float_blend_sig, F_R)                           \
    do_intrinsic(_VectorMulFloat, jdk_incubator_vector_FloatVector, mul_method_name, vector_float_bin_op_sig, F_R)                              \

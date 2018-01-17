@@ -157,6 +157,7 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
         return bOp(o, m, (i, a, b) -> (float) (a / b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> neg() {
         return uOp((i, a) -> (float) (-a));
@@ -167,6 +168,7 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
         return uOp(m, (i, a) -> (float) (-a));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> abs() {
         return uOp((i, a) -> (float) Math.abs(a));
@@ -567,6 +569,7 @@ public abstract class FloatVector<S extends Vector.Shape<Vector<?,?>>> implement
         return rOp((float) 0, (i, a, b) -> (float) (a - b));
     }
 
+    @HotSpotIntrinsicCandidate
     public float mulAll() {
         return rOp((float) 1, (i, a, b) -> (float) (a * b));
     }

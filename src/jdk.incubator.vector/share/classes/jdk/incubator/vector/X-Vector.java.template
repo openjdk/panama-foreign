@@ -195,6 +195,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, m, (i, a, b) -> ($type$) (a / b));
     }
 
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     @Override
     public $abstractvectortype$<S> neg() {
         return uOp((i, a) -> ($type$) (-a));
@@ -205,6 +211,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return uOp(m, (i, a) -> ($type$) (-a));
     }
 
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     @Override
     public $abstractvectortype$<S> abs() {
         return uOp((i, a) -> ($type$) Math.abs(a));
@@ -821,6 +833,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a - b));
     }
 
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $type$ mulAll() {
         return rOp(($type$) 1, (i, a, b) -> ($type$) (a * b));
     }

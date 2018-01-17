@@ -157,6 +157,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return bOp(o, m, (i, a, b) -> (double) (a / b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> neg() {
         return uOp((i, a) -> (double) (-a));
@@ -167,6 +168,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return uOp(m, (i, a) -> (double) (-a));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> abs() {
         return uOp((i, a) -> (double) Math.abs(a));
@@ -564,6 +566,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return rOp((double) 0, (i, a, b) -> (double) (a - b));
     }
 
+    @HotSpotIntrinsicCandidate
     public double mulAll() {
         return rOp((double) 1, (i, a, b) -> (double) (a * b));
     }

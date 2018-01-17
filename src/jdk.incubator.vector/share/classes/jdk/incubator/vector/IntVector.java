@@ -154,6 +154,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, m, (i, a, b) -> (int) (a / b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public IntVector<S> neg() {
         return uOp((i, a) -> (int) (-a));
@@ -164,6 +165,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return uOp(m, (i, a) -> (int) (-a));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public IntVector<S> abs() {
         return uOp((i, a) -> (int) Math.abs(a));
@@ -417,6 +419,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return rOp((int) 0, (i, a, b) -> (int) (a - b));
     }
 
+    @HotSpotIntrinsicCandidate
     public int mulAll() {
         return rOp((int) 1, (i, a, b) -> (int) (a * b));
     }
