@@ -95,6 +95,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return bOp(o, (i, a, b) -> (double) (a + b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> add(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a + b));
@@ -116,6 +117,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return bOp(o, (i, a, b) -> (double) (a - b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> sub(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a - b));
@@ -137,6 +139,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return bOp(o, (i, a, b) -> (double) (a * b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> mul(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a * b));
@@ -148,6 +151,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return bOp(o, (i, a, b) -> (double) (a / b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> div(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a / b));
@@ -183,7 +187,6 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return bOp(o, (i, a, b) -> (a >= b) ? a : b);
     }
 
-    @HotSpotIntrinsicCandidate
     @Override
     public Mask<Double, S> equal(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a == b);
@@ -194,7 +197,6 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return bTest(o, (i, a, b) -> a != b);
     }
 
-    @HotSpotIntrinsicCandidate
     @Override
     public Mask<Double, S> lessThan(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a < b);
@@ -205,7 +207,6 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         return bTest(o, (i, a, b) -> a <= b);
     }
 
-    @HotSpotIntrinsicCandidate
     @Override
     public Mask<Double, S> greaterThan(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a > b);
@@ -596,6 +597,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
+    @HotSpotIntrinsicCandidate
     public void intoArray(double[] a, int ax, Mask<Double, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -648,6 +650,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
             return op(i -> a[ax + i]);
         }
 
+        @HotSpotIntrinsicCandidate
         public DoubleVector<S> fromArray(double[] a, int ax, Mask<Double, S> m) {
             return op(m, i -> a[ax + i]);
         }

@@ -1617,14 +1617,20 @@ private:
   void pinsrw(XMMRegister dst, Register src, int imm8);
   void pinsrw(XMMRegister dst, Address src, int imm8);
 
-  // SSE4.1 packed move
+  // Zero extend moves
   void pmovzxbw(XMMRegister dst, XMMRegister src);
   void pmovzxbw(XMMRegister dst, Address src);
   void vpmovzxbw( XMMRegister dst, Address src, int vector_len);
+  void vpmovzxbd(XMMRegister dst, XMMRegister src, int vector_len);
   void evpmovzxbw(XMMRegister dst, KRegister mask, Address src, int vector_len);
 
-  void vpmovzxbd(XMMRegister dst, XMMRegister src, int vector_len);
+  // Sign extend moves
+  void pmovsxbw(XMMRegister dst, XMMRegister src);
+  void pmovsxbd(XMMRegister dst, XMMRegister src);
+  void pmovsxbq(XMMRegister dst, XMMRegister src);
   void vpmovsxbd(XMMRegister dst, XMMRegister src, int vector_len);
+  void vpmovsxbq(XMMRegister dst, XMMRegister src, int vector_len);
+  void vpmovsxbw(XMMRegister dst, XMMRegister src, int vector_len);
 
   void evpmovwb(Address dst, XMMRegister src, int vector_len);
   void evpmovwb(Address dst, KRegister mask, XMMRegister src, int vector_len);
@@ -2122,16 +2128,20 @@ private:
   // runtime code and native libraries.
   void vzeroupper();
 
-  // AVX support for vectorized conditional move (double). The following two instructions used only coupled.
+  // Vector compares
   void cmppd(XMMRegister dst, XMMRegister nds, XMMRegister src, int cop, int vector_len);
-  void blendvpd(XMMRegister dst, XMMRegister nds, XMMRegister src1, XMMRegister src2, int vector_len);
-  void vpblendd(XMMRegister dst, XMMRegister nds, XMMRegister src, int imm8, int vector_len);
-
   void vcmpps(XMMRegister dst, XMMRegister nds, XMMRegister src, int comparison, int vector_len);
-  void vblendvps(XMMRegister dst, XMMRegister nds, XMMRegister src, XMMRegister mask, int vector_len);
   void vcmpgtd(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vcmpeqd(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
-  void vblendvb(XMMRegister dst, XMMRegister nds, XMMRegister src, XMMRegister mask, int vector_len);
+
+  // Vector blends
+  void blendvps(XMMRegister dst, XMMRegister src);
+  void blendvpd(XMMRegister dst, XMMRegister src);
+  void pblendvb(XMMRegister dst, XMMRegister src);
+  void vblendvps(XMMRegister dst, XMMRegister nds, XMMRegister src, XMMRegister mask, int vector_len);
+  void vblendvpd(XMMRegister dst, XMMRegister nds, XMMRegister src1, XMMRegister src2, int vector_len);
+  void vpblendvb(XMMRegister dst, XMMRegister nds, XMMRegister src, XMMRegister mask, int vector_len);
+  void vpblendd(XMMRegister dst, XMMRegister nds, XMMRegister src, int imm8, int vector_len);
 
  protected:
   // Next instructions require address alignment 16 bytes SSE mode.

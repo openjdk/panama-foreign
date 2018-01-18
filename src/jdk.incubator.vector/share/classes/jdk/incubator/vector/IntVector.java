@@ -94,6 +94,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, (i, a, b) -> (int) (a + b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public IntVector<S> add(Vector<Integer,S> o, Mask<Integer, S> m) {
         return bOp(o, m, (i, a, b) -> (int) (a + b));
@@ -115,6 +116,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, (i, a, b) -> (int) (a - b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public IntVector<S> sub(Vector<Integer,S> o, Mask<Integer, S> m) {
         return bOp(o, m, (i, a, b) -> (int) (a - b));
@@ -136,12 +138,12 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, (i, a, b) -> (int) (a * b));
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public IntVector<S> mul(Vector<Integer,S> o, Mask<Integer, S> m) {
         return bOp(o, m, (i, a, b) -> (int) (a * b));
     }
 
-    @HotSpotIntrinsicCandidate
     @Override
     public IntVector<S> div(Vector<Integer,S> o) {
         return bOp(o, (i, a, b) -> (int) (a / b));
@@ -286,6 +288,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, (i, a, b) -> (int) (a & b));
     }
 
+    @HotSpotIntrinsicCandidate
     public IntVector<S> and(Vector<Integer,S> o, Mask<Integer, S> m) {
         return bOp(o, m, (i, a, b) -> (int) (a & b));
     }
@@ -295,6 +298,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, (i, a, b) -> (int) (a | b));
     }
 
+    @HotSpotIntrinsicCandidate
     public IntVector<S> or(Vector<Integer,S> o, Mask<Integer, S> m) {
         return bOp(o, m, (i, a, b) -> (int) (a | b));
     }
@@ -304,6 +308,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         return bOp(o, (i, a, b) -> (int) (a ^ b));
     }
 
+    @HotSpotIntrinsicCandidate
     public IntVector<S> xor(Vector<Integer,S> o, Mask<Integer, S> m) {
         return bOp(o, m, (i, a, b) -> (int) (a ^ b));
     }
@@ -456,6 +461,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
+    @HotSpotIntrinsicCandidate
     public void intoArray(int[] a, int ax, Mask<Integer, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -508,6 +514,7 @@ public abstract class IntVector<S extends Vector.Shape<Vector<?,?>>> implements 
             return op(i -> a[ax + i]);
         }
 
+        @HotSpotIntrinsicCandidate
         public IntVector<S> fromArray(int[] a, int ax, Mask<Integer, S> m) {
             return op(m, i -> a[ax + i]);
         }

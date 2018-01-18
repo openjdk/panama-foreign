@@ -208,6 +208,7 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
         return bTest(o, (i, a, b) -> a >= b);
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public ShortVector<S> blend(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
@@ -382,6 +383,7 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
+    @HotSpotIntrinsicCandidate
     public void intoArray(short[] a, int ax, Mask<Short, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -432,6 +434,7 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
             return op(i -> a[ax + i]);
         }
 
+        @HotSpotIntrinsicCandidate
         public ShortVector<S> fromArray(short[] a, int ax, Mask<Short, S> m) {
             return op(m, i -> a[ax + i]);
         }

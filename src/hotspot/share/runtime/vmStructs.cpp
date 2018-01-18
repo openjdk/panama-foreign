@@ -2043,6 +2043,17 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_c2_type(OverflowMulLNode, OverflowLNode)                        \
   declare_c2_type(FmaDNode, Node)                                         \
   declare_c2_type(FmaFNode, Node)                                         \
+  declare_c2_type(VectorLoadMaskNode, VectorNode)                         \
+  declare_c2_type(VectorStoreMaskNode, VectorNode)                        \
+  declare_c2_type(VectorBlendNode, VectorNode)                            \
+  declare_c2_type(VectorZeroExtendNode, VectorNode)                       \
+  declare_c2_type(VectorMaskWrapperNode, VectorNode)                      \
+  declare_c2_type(VectorMaskCmpNode, VectorNode)                          \
+  declare_c2_type(ConvertVF2VDNode, VectorNode)                           \
+  declare_c2_type(VectorUnboxNode, VectorNode)                            \
+  declare_c2_type(VectorReinterpretNode, VectorNode)                      \
+  declare_c2_type(VectorBoxNode, CallNode)                                \
+  declare_c2_type(VectorTestNode, Node)                                   \
                                                                           \
   /*********************/                                                 \
   /* Adapter Blob Entries */                                              \

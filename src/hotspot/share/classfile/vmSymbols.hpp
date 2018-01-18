@@ -1464,6 +1464,9 @@
                                                                                                                                \
    /* Vector API intrinsification support */                                                                                                   \
    do_signature(vector_cmp_sig, "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/Vector$Mask;")                                           \
+   do_signature(vector_long_blend_sig, "(Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/LongVector;")   \
+   do_signature(vector_byte_blend_sig, "(Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/ByteVector;")   \
+   do_signature(vector_short_blend_sig, "(Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/ShortVector;") \
    do_signature(vector_float_blend_sig, "(Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/FloatVector;") \
    do_signature(vector_float_bin_op_sig, "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/FloatVector;")                                  \
    do_signature(vector_float_zero_sig, "()Ljdk/incubator/vector/FloatVector;")                                                                 \
@@ -1487,14 +1490,29 @@
    do_signature(vector_short_load_sig, "([SI)Ljdk/incubator/vector/ShortVector;")                                                              \
    do_signature(vector_short_store_sig, "([SI)V")                                                                                              \
    do_signature(vector_byte_load_sig, "([BI)Ljdk/incubator/vector/ByteVector;")                                                                \
+   do_signature(vector_float_load_masked_sig, "([FILjdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/FloatVector;")                     \
+   do_signature(vector_float_store_masked_sig, "([FILjdk/incubator/vector/Vector$Mask;)V")                                                     \
+   do_signature(vector_double_load_masked_sig, "([DILjdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/DoubleVector;")                   \
+   do_signature(vector_double_store_masked_sig, "([DILjdk/incubator/vector/Vector$Mask;)V")                                                    \
+   do_signature(vector_int_load_masked_sig, "([IILjdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/IntVector;")                         \
+   do_signature(vector_int_store_masked_sig, "([IILjdk/incubator/vector/Vector$Mask;)V")                                                       \
+   do_signature(vector_long_load_masked_sig, "([JILjdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/LongVector;")                       \
+   do_signature(vector_long_store_masked_sig, "([JILjdk/incubator/vector/Vector$Mask;)V")                                                      \
+   do_signature(vector_short_load_masked_sig, "([SILjdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/ShortVector;")                     \
+   do_signature(vector_short_store_masked_sig, "([SILjdk/incubator/vector/Vector$Mask;)V")                                                     \
+   do_signature(vector_byte_load_masked_sig, "([BILjdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/ByteVector;")                       \
+   do_signature(vector_byte_store_masked_sig, "([BILjdk/incubator/vector/Vector$Mask;)V")                                                      \
    do_signature(vector_constant_mask_sig, "([Z)Ljdk/incubator/vector/Vector$Mask;")                                                            \
    do_signature(vector_make_mask_sig, "()Ljdk/incubator/vector/Vector$Mask;")                                                                  \
+   do_signature(vector_make_mask_float64_sig, "()Ljdk/incubator/vector/Float64Vector$Float64Mask;")                                            \
    do_signature(vector_make_mask_float128_sig, "()Ljdk/incubator/vector/Float128Vector$Float128Mask;")                                         \
    do_signature(vector_make_mask_float256_sig, "()Ljdk/incubator/vector/Float256Vector$Float256Mask;")                                         \
    do_signature(vector_make_mask_float512_sig, "()Ljdk/incubator/vector/Float512Vector$Float512Mask;")                                         \
+   do_signature(vector_make_mask_double64_sig, "()Ljdk/incubator/vector/Double64Vector$Double64Mask;")                                         \
    do_signature(vector_make_mask_double128_sig, "()Ljdk/incubator/vector/Double128Vector$Double128Mask;")                                      \
    do_signature(vector_make_mask_double256_sig, "()Ljdk/incubator/vector/Double256Vector$Double256Mask;")                                      \
    do_signature(vector_make_mask_double512_sig, "()Ljdk/incubator/vector/Double512Vector$Double512Mask;")                                      \
+   do_signature(vector_make_mask_int64_sig, "()Ljdk/incubator/vector/Int64Vector$Int64Mask;")                                                  \
    do_signature(vector_make_mask_int128_sig, "()Ljdk/incubator/vector/Int128Vector$Int128Mask;")                                               \
    do_signature(vector_make_mask_int256_sig, "()Ljdk/incubator/vector/Int256Vector$Int256Mask;")                                               \
    do_signature(vector_make_mask_int512_sig, "()Ljdk/incubator/vector/Int512Vector$Int512Mask;")                                               \
@@ -1542,24 +1560,33 @@
    do_intrinsic(_VectorBroadcastInt, jdk_incubator_vector_IntVector_IntSpecies, broadcast_vector_name, vector_int_broadcast_sig, F_R)          \
    do_intrinsic(_VectorZeroDouble, jdk_incubator_vector_DoubleVector_DoubleSpecies, zero_vector_name, vector_double_zero_sig, F_R)             \
    do_intrinsic(_VectorBroadcastDouble, jdk_incubator_vector_DoubleVector_DoubleSpecies, broadcast_vector_name, vector_double_broadcast_sig, F_R)        \
+   do_intrinsic(_VectorTrueMaskFloat64, jdk_incubator_vector_Float64Vector_Float64Species, true_mask_name, vector_make_mask_float64_sig, F_R)            \
+   do_intrinsic(_VectorFalseMaskFloat64, jdk_incubator_vector_Float64Vector_Float64Species, false_mask_name, vector_make_mask_float64_sig, F_R)          \
    do_intrinsic(_VectorTrueMaskFloat128, jdk_incubator_vector_Float128Vector_Float128Species, true_mask_name, vector_make_mask_float128_sig, F_R)        \
    do_intrinsic(_VectorFalseMaskFloat128, jdk_incubator_vector_Float128Vector_Float128Species, false_mask_name, vector_make_mask_float128_sig, F_R)      \
    do_intrinsic(_VectorTrueMaskFloat256, jdk_incubator_vector_Float256Vector_Float256Species, true_mask_name, vector_make_mask_float256_sig, F_R)        \
    do_intrinsic(_VectorFalseMaskFloat256, jdk_incubator_vector_Float256Vector_Float256Species, false_mask_name, vector_make_mask_float256_sig, F_R)      \
    do_intrinsic(_VectorTrueMaskFloat512, jdk_incubator_vector_Float512Vector_Float512Species, true_mask_name, vector_make_mask_float512_sig, F_R)        \
    do_intrinsic(_VectorFalseMaskFloat512, jdk_incubator_vector_Float512Vector_Float512Species, false_mask_name, vector_make_mask_float512_sig, F_R)      \
+   do_intrinsic(_VectorTrueMaskDouble64, jdk_incubator_vector_Double64Vector_Double64Species, true_mask_name, vector_make_mask_double64_sig, F_R)        \
+   do_intrinsic(_VectorFalseMaskDouble64, jdk_incubator_vector_Double64Vector_Double64Species, false_mask_name, vector_make_mask_double64_sig, F_R)      \
    do_intrinsic(_VectorTrueMaskDouble128, jdk_incubator_vector_Double128Vector_Double128Species, true_mask_name, vector_make_mask_double128_sig, F_R)    \
    do_intrinsic(_VectorFalseMaskDouble128, jdk_incubator_vector_Double128Vector_Double128Species, false_mask_name, vector_make_mask_double128_sig, F_R)  \
    do_intrinsic(_VectorTrueMaskDouble256, jdk_incubator_vector_Double256Vector_Double256Species, true_mask_name, vector_make_mask_double256_sig, F_R)    \
    do_intrinsic(_VectorFalseMaskDouble256, jdk_incubator_vector_Double256Vector_Double256Species, false_mask_name, vector_make_mask_double256_sig, F_R)  \
    do_intrinsic(_VectorTrueMaskDouble512, jdk_incubator_vector_Double512Vector_Double512Species, true_mask_name, vector_make_mask_double512_sig, F_R)    \
    do_intrinsic(_VectorFalseMaskDouble512, jdk_incubator_vector_Double512Vector_Double512Species, false_mask_name, vector_make_mask_double512_sig, F_R)  \
+   do_intrinsic(_VectorTrueMaskInt64, jdk_incubator_vector_Int64Vector_Int64Species, true_mask_name, vector_make_mask_int64_sig, F_R)                 \
+   do_intrinsic(_VectorFalseMaskInt64, jdk_incubator_vector_Int64Vector_Int64Species, false_mask_name, vector_make_mask_int64_sig, F_R)               \
    do_intrinsic(_VectorTrueMaskInt128, jdk_incubator_vector_Int128Vector_Int128Species, true_mask_name, vector_make_mask_int128_sig, F_R)             \
    do_intrinsic(_VectorFalseMaskInt128, jdk_incubator_vector_Int128Vector_Int128Species, false_mask_name, vector_make_mask_int128_sig, F_R)           \
    do_intrinsic(_VectorTrueMaskInt256, jdk_incubator_vector_Int256Vector_Int256Species, true_mask_name, vector_make_mask_int256_sig, F_R)             \
    do_intrinsic(_VectorFalseMaskInt256, jdk_incubator_vector_Int256Vector_Int256Species, false_mask_name, vector_make_mask_int256_sig, F_R)           \
    do_intrinsic(_VectorTrueMaskInt512, jdk_incubator_vector_Int512Vector_Int512Species, true_mask_name, vector_make_mask_int512_sig, F_R)             \
    do_intrinsic(_VectorFalseMaskInt512, jdk_incubator_vector_Int512Vector_Int512Species, false_mask_name, vector_make_mask_int512_sig, F_R)           \
+   do_intrinsic(_VectorBlendLong, jdk_incubator_vector_LongVector, blend_method_name, vector_long_blend_sig, F_R)                              \
+   do_intrinsic(_VectorBlendByte, jdk_incubator_vector_ByteVector, blend_method_name, vector_byte_blend_sig, F_R)                              \
+   do_intrinsic(_VectorBlendShort, jdk_incubator_vector_ShortVector, blend_method_name, vector_short_blend_sig, F_R)                           \
    do_intrinsic(_VectorLoadFloat, jdk_incubator_vector_FloatVector_FloatSpecies, load_vector_name, vector_float_load_sig, F_R)                 \
    do_intrinsic(_VectorStoreFloat, jdk_incubator_vector_FloatVector, store_vector_name, vector_float_store_sig, F_R)                           \
    do_intrinsic(_VectorLoadDouble, jdk_incubator_vector_DoubleVector_DoubleSpecies, load_vector_name, vector_double_load_sig, F_R)             \
@@ -1572,30 +1599,48 @@
    do_intrinsic(_VectorStoreShort, jdk_incubator_vector_ShortVector, store_vector_name, vector_short_store_sig, F_R)                           \
    do_intrinsic(_VectorLoadByte, jdk_incubator_vector_ByteVector_ByteSpecies, load_vector_name, vector_byte_load_sig, F_R)                     \
    do_intrinsic(_VectorStoreByte, jdk_incubator_vector_ByteVector, store_vector_name, implCompress_signature, F_R)                             \
+   do_intrinsic(_VectorLoadMaskFloat, jdk_incubator_vector_FloatVector_FloatSpecies, load_vector_name, vector_float_load_masked_sig, F_R)      \
+   do_intrinsic(_VectorStoreMaskFloat, jdk_incubator_vector_FloatVector, store_vector_name, vector_float_store_masked_sig, F_R)                \
+   do_intrinsic(_VectorLoadMaskDouble, jdk_incubator_vector_DoubleVector_DoubleSpecies, load_vector_name, vector_double_load_masked_sig, F_R)  \
+   do_intrinsic(_VectorStoreMaskDouble, jdk_incubator_vector_DoubleVector, store_vector_name, vector_double_store_masked_sig, F_R)             \
+   do_intrinsic(_VectorLoadMaskInt, jdk_incubator_vector_IntVector_IntSpecies, load_vector_name, vector_int_load_masked_sig, F_R)              \
+   do_intrinsic(_VectorStoreMaskInt, jdk_incubator_vector_IntVector, store_vector_name, vector_int_store_masked_sig, F_R)                      \
+   do_intrinsic(_VectorLoadMaskLong, jdk_incubator_vector_LongVector_LongSpecies, load_vector_name, vector_long_load_masked_sig, F_R)          \
+   do_intrinsic(_VectorStoreMaskLong, jdk_incubator_vector_LongVector, store_vector_name, vector_long_store_masked_sig, F_R)                   \
+   do_intrinsic(_VectorLoadMaskShort, jdk_incubator_vector_ShortVector_ShortSpecies, load_vector_name, vector_short_load_masked_sig, F_R)      \
+   do_intrinsic(_VectorStoreMaskShort, jdk_incubator_vector_ShortVector, store_vector_name, vector_short_store_masked_sig, F_R)                \
+   do_intrinsic(_VectorLoadMaskByte, jdk_incubator_vector_ByteVector_ByteSpecies, load_vector_name, vector_byte_load_masked_sig, F_R)          \
+   do_intrinsic(_VectorStoreMaskByte, jdk_incubator_vector_ByteVector, store_vector_name, vector_byte_store_masked_sig, F_R)                   \
    do_intrinsic(_VectorEqualInt, jdk_incubator_vector_IntVector, equal_method_name, vector_cmp_sig, F_R)                                       \
    do_intrinsic(_VectorLessThanInt, jdk_incubator_vector_IntVector, lessthan_method_name, vector_cmp_sig, F_R)                                 \
    do_intrinsic(_VectorGreaterThanInt, jdk_incubator_vector_IntVector, greaterthan_method_name, vector_cmp_sig, F_R)                           \
    do_intrinsic(_VectorBlendInt, jdk_incubator_vector_IntVector, blend_method_name, vector_int_blend_sig, F_R)                                 \
    do_intrinsic(_VectorAddAllInt, jdk_incubator_vector_IntVector, addall_method_name, void_int_signature, F_R)                                 \
    do_intrinsic(_VectorSubInt, jdk_incubator_vector_IntVector, sub_method_name, vector_int_bin_op_sig, F_R)                                    \
+   do_intrinsic(_VectorSubMaskInt, jdk_incubator_vector_IntVector, sub_method_name, vector_int_blend_sig, F_R)                                 \
    do_intrinsic(_VectorMulInt, jdk_incubator_vector_IntVector, mul_method_name, vector_int_bin_op_sig, F_R)                                    \
-   do_intrinsic(_VectorDivInt, jdk_incubator_vector_IntVector, div_method_name, vector_int_bin_op_sig, F_R)                                    \
+   do_intrinsic(_VectorMulMaskInt, jdk_incubator_vector_IntVector, mul_method_name, vector_int_blend_sig, F_R)                                 \
    do_intrinsic(_VectorAddInt, jdk_incubator_vector_IntVector, add_method_name, vector_int_bin_op_sig, F_R)                                    \
+   do_intrinsic(_VectorAddMaskInt, jdk_incubator_vector_IntVector, add_method_name, vector_int_blend_sig, F_R)                                 \
    do_intrinsic(_VectorAndInt, jdk_incubator_vector_IntVector, and_method_name, vector_int_bin_op_sig, F_R)                                    \
+   do_intrinsic(_VectorAndMaskInt, jdk_incubator_vector_IntVector, and_method_name, vector_int_blend_sig, F_R)                                 \
    do_intrinsic(_VectorOrInt, jdk_incubator_vector_IntVector, or_method_name, vector_int_bin_op_sig, F_R)                                      \
+   do_intrinsic(_VectorOrMaskInt, jdk_incubator_vector_IntVector, or_method_name, vector_int_blend_sig, F_R)                                   \
    do_intrinsic(_VectorXorInt, jdk_incubator_vector_IntVector, xor_method_name, vector_int_bin_op_sig, F_R)                                    \
+   do_intrinsic(_VectorXorMaskInt, jdk_incubator_vector_IntVector, xor_method_name, vector_int_blend_sig, F_R)                                 \
    do_intrinsic(_VectorShiftLInt, jdk_incubator_vector_IntVector, shiftl_method_name, vector_int_broadcast_sig, F_R)                           \
    do_intrinsic(_VectorShiftRInt, jdk_incubator_vector_IntVector, shiftr_method_name, vector_int_broadcast_sig, F_R)                           \
    do_intrinsic(_VectorAShiftRInt, jdk_incubator_vector_IntVector, ashiftr_method_name, vector_int_broadcast_sig, F_R)                         \
-   do_intrinsic(_VectorEqualDouble, jdk_incubator_vector_DoubleVector, equal_method_name, vector_cmp_sig, F_R)                                 \
-   do_intrinsic(_VectorLessThanDouble, jdk_incubator_vector_DoubleVector, lessthan_method_name, vector_cmp_sig, F_R)                           \
-   do_intrinsic(_VectorGreaterThanDouble, jdk_incubator_vector_DoubleVector, greaterthan_method_name, vector_cmp_sig, F_R)                     \
    do_intrinsic(_VectorBlendDouble, jdk_incubator_vector_DoubleVector, blend_method_name, vector_double_blend_sig, F_R)                        \
    do_intrinsic(_VectorAddAllDouble, jdk_incubator_vector_DoubleVector, addall_method_name, void_double_signature, F_R)                        \
    do_intrinsic(_VectorSubDouble, jdk_incubator_vector_DoubleVector, sub_method_name, vector_double_bin_op_sig, F_R)                           \
+   do_intrinsic(_VectorSubMaskDouble, jdk_incubator_vector_DoubleVector, sub_method_name, vector_double_blend_sig, F_R)                        \
    do_intrinsic(_VectorMulDouble, jdk_incubator_vector_DoubleVector, mul_method_name, vector_double_bin_op_sig, F_R)                           \
+   do_intrinsic(_VectorMulMaskDouble, jdk_incubator_vector_DoubleVector, mul_method_name, vector_double_blend_sig, F_R)                        \
    do_intrinsic(_VectorDivDouble, jdk_incubator_vector_DoubleVector, div_method_name, vector_double_bin_op_sig, F_R)                           \
+   do_intrinsic(_VectorDivMaskDouble, jdk_incubator_vector_DoubleVector, div_method_name, vector_double_blend_sig, F_R)                        \
    do_intrinsic(_VectorAddDouble, jdk_incubator_vector_DoubleVector, add_method_name, vector_double_bin_op_sig, F_R)                           \
+   do_intrinsic(_VectorAddMaskDouble, jdk_incubator_vector_DoubleVector, add_method_name, vector_double_blend_sig, F_R)                        \
    do_intrinsic(_VectorCastFloat, jdk_incubator_vector_FloatVector, Class_cast_name, vector_cast_sig, F_R)                                     \
    do_intrinsic(_VectorEqualFloat, jdk_incubator_vector_FloatVector, equal_method_name, vector_cmp_sig, F_R)                                   \
    do_intrinsic(_VectorLessThanFloat, jdk_incubator_vector_FloatVector, lessthan_method_name, vector_cmp_sig, F_R)                             \
@@ -1603,8 +1648,12 @@
    do_intrinsic(_VectorBlendFloat, jdk_incubator_vector_FloatVector, blend_method_name, vector_float_blend_sig, F_R)                           \
    do_intrinsic(_VectorAddAllFloat, jdk_incubator_vector_FloatVector, addall_method_name, void_float_signature, F_R)                           \
    do_intrinsic(_VectorSubFloat, jdk_incubator_vector_FloatVector, sub_method_name, vector_float_bin_op_sig, F_R)                              \
+   do_intrinsic(_VectorSubMaskFloat, jdk_incubator_vector_FloatVector, sub_method_name, vector_float_blend_sig, F_R)                           \
    do_intrinsic(_VectorMulFloat, jdk_incubator_vector_FloatVector, mul_method_name, vector_float_bin_op_sig, F_R)                              \
+   do_intrinsic(_VectorMulMaskFloat, jdk_incubator_vector_FloatVector, mul_method_name, vector_float_blend_sig, F_R)                           \
    do_intrinsic(_VectorDivFloat, jdk_incubator_vector_FloatVector, div_method_name, vector_float_bin_op_sig, F_R)                              \
+   do_intrinsic(_VectorDivMaskFloat, jdk_incubator_vector_FloatVector, div_method_name, vector_float_blend_sig, F_R)                           \
+   do_intrinsic(_VectorAddMaskFloat, jdk_incubator_vector_FloatVector, add_method_name, vector_float_blend_sig, F_R)                           \
    do_intrinsic(_VectorAddFloat, jdk_incubator_vector_FloatVector, add_method_name, vector_float_bin_op_sig, F_R)                              \
    /* _VectorAddFloat should be kept as the last one here because it is tagged as ending the list of intrinsics */                             \
                                                                                                                                \

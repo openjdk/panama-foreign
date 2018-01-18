@@ -104,6 +104,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, (i, a, b) -> ($type$) (a + b));
     }
 
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     @Override
     public $abstractvectortype$<S> add(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a + b));
@@ -130,6 +136,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, (i, a, b) -> ($type$) (a - b));
     }
 
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     @Override
     public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a - b));
@@ -156,6 +168,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, (i, a, b) -> ($type$) (a * b));
     }
 
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     @Override
     public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a * b));
@@ -164,14 +182,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
 #if[FP]
     @HotSpotIntrinsicCandidate
 #end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a / b));
     }
 
+#if[FP]
+    @HotSpotIntrinsicCandidate
+#end[FP]
     @Override
     public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a / b));
@@ -207,9 +225,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, (i, a, b) -> (a >= b) ? a : b);
     }
 
-#if[FP]
+#if[float]
     @HotSpotIntrinsicCandidate
-#end[FP]
+#end[float]
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
@@ -223,9 +241,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bTest(o, (i, a, b) -> a != b);
     }
 
-#if[FP]
+#if[float]
     @HotSpotIntrinsicCandidate
-#end[FP]
+#end[float]
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
@@ -239,9 +257,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bTest(o, (i, a, b) -> a <= b);
     }
 
-#if[FP]
+#if[float]
     @HotSpotIntrinsicCandidate
-#end[FP]
+#end[float]
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
@@ -255,12 +273,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bTest(o, (i, a, b) -> a >= b);
     }
 
-#if[FP]
     @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> blend(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
@@ -657,6 +670,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, (i, a, b) -> ($type$) (a & b));
     }
 
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $abstractvectortype$<S> and(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a & b));
     }
@@ -668,6 +684,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, (i, a, b) -> ($type$) (a | b));
     }
 
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $abstractvectortype$<S> or(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a | b));
     }
@@ -679,6 +698,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         return bOp(o, (i, a, b) -> ($type$) (a ^ b));
     }
 
+#if[int]
+    @HotSpotIntrinsicCandidate
+#end[int]
     public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a ^ b));
     }
@@ -848,6 +870,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
+    @HotSpotIntrinsicCandidate
     public void intoArray($type$[] a, int ax, Mask<$Boxtype$, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -910,6 +933,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
             return op(i -> a[ax + i]);
         }
 
+        @HotSpotIntrinsicCandidate
         public $abstractvectortype$<S> fromArray($type$[] a, int ax, Mask<$Boxtype$, S> m) {
             return op(m, i -> a[ax + i]);
         }

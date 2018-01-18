@@ -207,6 +207,7 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
         return bTest(o, (i, a, b) -> a >= b);
     }
 
+    @HotSpotIntrinsicCandidate
     @Override
     public ByteVector<S> blend(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
@@ -381,6 +382,7 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
+    @HotSpotIntrinsicCandidate
     public void intoArray(byte[] a, int ax, Mask<Byte, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -431,6 +433,7 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
             return op(i -> a[ax + i]);
         }
 
+        @HotSpotIntrinsicCandidate
         public ByteVector<S> fromArray(byte[] a, int ax, Mask<Byte, S> m) {
             return op(m, i -> a[ax + i]);
         }
