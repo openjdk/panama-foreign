@@ -71,6 +71,7 @@ public class VectorArrays {
             Vector<Byte, S> va = species.fromArray(a, i);
             Vector<Byte, S> vb = species.fromArray(b, i);
             Vector.Mask<Byte, S> m = va.notEqual(vb);
+            // @@@ count number of leading zeros with explicit method
             if (m.anyTrue()) {
                 break; // mismatch found
             }

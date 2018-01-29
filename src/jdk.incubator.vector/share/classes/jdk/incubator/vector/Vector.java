@@ -220,6 +220,10 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
 
         int trueCount();
 
+        // TODO: LZ count
+        // numberOfLeadingZeros
+        // numberOfTrailingZeros
+
         @HotSpotIntrinsicCandidate
         Mask<E, S> and(Mask<E, S> o);
 
@@ -229,7 +233,6 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
         @HotSpotIntrinsicCandidate
         Mask<E, S> not();
 
-        //TODO: counting trues? LZ count
         Species<E, S> species();
 
         Vector<E, S> toVector();
