@@ -25,6 +25,7 @@
 package jdk.incubator.vector;
 
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.misc.Unsafe;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -268,6 +269,80 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
     }
 
     @SuppressWarnings("unchecked")
+    static <E, S extends Vector.Shape<Vector<?, ?>>> Vector.Species<E, S> preferredSpeciesInstance(Class<E> c) {
+        Unsafe u = Unsafe.getUnsafe();
+
+        int vectorLength = u.getMaxVectorSize(boxToPrimitive(c));
+        int vectorBitSize = bitSizeForVectorLength(c, vectorLength);
+        Vector.Shape<Vector<?, ?>> s = shapeForVectorBitSize(vectorBitSize);
+        return (Vector.Species<E, S>) speciesInstance(c, s);
+    }
+
+    private static Class<?> boxToPrimitive(Class<?> c) {
+        if (c == Float.class) {
+            return float.class;
+        }
+        else if (c == Double.class) {
+            return double.class;
+        }
+        else if (c == Byte.class) {
+            return byte.class;
+        }
+        else if (c == Short.class) {
+            return short.class;
+        }
+        else if (c == Integer.class) {
+            return int.class;
+        }
+        else if (c == Long.class) {
+            return long.class;
+        }
+        else {
+            throw new IllegalArgumentException("Bad vector type: " + c.getName());
+        }
+    }
+    // @@@ public static method on Species?
+    private static int bitSizeForVectorLength(Class<?> c, int elementSize) {
+        if (c == Float.class) {
+            return Float.SIZE * elementSize;
+        }
+        else if (c == Double.class) {
+            return Double.SIZE * elementSize;
+        }
+        else if (c == Byte.class) {
+            return Byte.SIZE * elementSize;
+        }
+        else if (c == Short.class) {
+            return Short.SIZE * elementSize;
+        }
+        else if (c == Integer.class) {
+            return Integer.SIZE * elementSize;
+        }
+        else if (c == Long.class) {
+            return Long.SIZE * elementSize;
+        }
+        else {
+            throw new IllegalArgumentException("Bad vector type: " + c.getName());
+        }
+    }
+
+    // @@@ public static method on Shape?
+    private static Vector.Shape<Vector<?, ?>> shapeForVectorBitSize(int bitSize) {
+        switch (bitSize) {
+            case 64:
+                return Shapes.S_64_BIT;
+            case 128:
+                return Shapes.S_128_BIT;
+            case 256:
+                return Shapes.S_256_BIT;
+            case 512:
+                return Shapes.S_512_BIT;
+            default:
+                throw new IllegalArgumentException("Bad vector bit size: " + bitSize);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     static <E, S extends Vector.Shape<Vector<?, ?>>> Vector.Species<E, S> speciesInstance(Class<E> c, S s) {
         Vector.Species<E, S> res = null;
 
@@ -336,6 +411,9 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
                 res = (Vector.Species<E, S>) Long256Vector.SPECIES;
             else if (s == Shapes.S_512_BIT)
                 res = (Vector.Species<E, S>) Long512Vector.SPECIES;
+        }
+        else {
+            throw new IllegalArgumentException("Bad vector type: " + c.getName());
         }
         return res;
     }

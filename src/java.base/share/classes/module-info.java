@@ -176,6 +176,7 @@ module java.base {
         jdk.charsets,
         jdk.compiler,   // reflective dependency
         jdk.incubator.httpclient,
+        jdk.incubator.vector,
         jdk.jdeps,
         jdk.jlink,
         jdk.jshell,
