@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 
 @SuppressWarnings("cast")
-public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implements Vector<Short,S> {
+public abstract class ShortVector<S extends Vector.Shape> implements Vector<Short,S> {
 
     ShortVector() {}
 
@@ -401,7 +401,7 @@ public abstract class ShortVector<S extends Vector.Shape<Vector<?,?>>> implement
     @Override
     public abstract ShortSpecies<S> species();
 
-    public static abstract class ShortSpecies<S extends Vector.Shape<Vector<?,?>>> implements Vector.Species<Short, S> {
+    public static abstract class ShortSpecies<S extends Vector.Shape> implements Vector.Species<Short, S> {
         interface FOp {
             short apply(int i);
         }

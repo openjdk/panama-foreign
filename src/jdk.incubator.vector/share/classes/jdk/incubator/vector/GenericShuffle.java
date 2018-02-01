@@ -24,7 +24,7 @@
  */
 package jdk.incubator.vector;
 
-final class GenericShuffle<E, S extends Vector.Shape<Vector<?, ?>>> implements Vector.Shuffle<E, S> {
+final class GenericShuffle<E, S extends Vector.Shape> implements Vector.Shuffle<E, S> {
 
     private final Vector.Species<E, S> s;
     private final int[] reorder;

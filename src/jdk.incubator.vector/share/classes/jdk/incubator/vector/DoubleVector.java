@@ -31,7 +31,7 @@ import java.nio.DoubleBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
-public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implements Vector<Double,S> {
+public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Double,S> {
 
     DoubleVector() {}
 
@@ -618,7 +618,7 @@ public abstract class DoubleVector<S extends Vector.Shape<Vector<?,?>>> implemen
     @Override
     public abstract DoubleSpecies<S> species();
 
-    public static abstract class DoubleSpecies<S extends Vector.Shape<Vector<?,?>>> implements Vector.Species<Double, S> {
+    public static abstract class DoubleSpecies<S extends Vector.Shape> implements Vector.Species<Double, S> {
         interface FOp {
             double apply(int i);
         }

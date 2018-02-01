@@ -35,7 +35,7 @@ import java.util.concurrent.ThreadLocalRandom;
 #end[FP]
 
 @SuppressWarnings("cast")
-public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> implements Vector<$Boxtype$,S> {
+public abstract class $abstractvectortype$<S extends Vector.Shape> implements Vector<$Boxtype$,S> {
 
     $abstractvectortype$() {}
 
@@ -906,7 +906,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape<Vector<?,?>>> 
     @Override
     public abstract $Type$Species<S> species();
 
-    public static abstract class $Type$Species<S extends Vector.Shape<Vector<?,?>>> implements Vector.Species<$Boxtype$, S> {
+    public static abstract class $Type$Species<S extends Vector.Shape> implements Vector.Species<$Boxtype$, S> {
         interface FOp {
             $type$ apply(int i);
         }

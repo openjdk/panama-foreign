@@ -50,7 +50,7 @@ public class PreferredSpeciesTest {
 
     @Test(dataProvider = "classesProvider")
     void testVectorLength(Class<?> box, Class<?> prim) {
-        Vector.Species<?, Vector.Shape<Vector<?, ?>>> species =
+        Vector.Species<?, Vector.Shape> species =
                 Vector.preferredSpeciesInstance(box);
 
         Assert.assertEquals(species.length(), U.getMaxVectorSize(prim));

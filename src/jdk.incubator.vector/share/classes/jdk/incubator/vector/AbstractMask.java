@@ -26,7 +26,7 @@ package jdk.incubator.vector;
 
 import java.util.Arrays;
 
-abstract class AbstractMask<E, S extends Vector.Shape<Vector<?, ?>>> implements Vector.Mask<E, S> {
+abstract class AbstractMask<E, S extends Vector.Shape> implements Vector.Mask<E, S> {
     final boolean[] bits;
 
     AbstractMask(boolean[] bits) {
@@ -177,7 +177,7 @@ abstract class AbstractMask<E, S extends Vector.Shape<Vector<?, ?>>> implements 
     }
 
     @Override
-    public <F, Z extends Vector.Shape<Vector<?, ?>>>
+    public <F, Z extends Vector.Shape>
     Vector.Mask<F, Z> reshape(Class<F> type, Z shape) {
         Vector.Species<F, Z> species = Vector.speciesInstance(type, shape);
         return species.constantMask(Arrays.copyOf(bits, species.length()));

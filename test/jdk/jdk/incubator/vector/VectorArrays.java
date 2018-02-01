@@ -60,7 +60,7 @@ public class VectorArrays {
         return mismatch(a, b, species);
     }
 
-    static <S extends Vector.Shape<Vector<?, ?>>> int mismatch(byte[] a, byte[] b, ByteVector.ByteSpecies<S> species) {
+    static <S extends Vector.Shape> int mismatch(byte[] a, byte[] b, ByteVector.ByteSpecies<S> species) {
         int length = Math.min(a.length, b.length);
         if (a == b)
             return -1;

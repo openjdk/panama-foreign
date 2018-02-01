@@ -29,7 +29,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
 import java.nio.ByteBuffer;
 
 @SuppressWarnings("cast")
-public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements Vector<Byte,S> {
+public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,S> {
 
     ByteVector() {}
 
@@ -400,7 +400,7 @@ public abstract class ByteVector<S extends Vector.Shape<Vector<?,?>>> implements
     @Override
     public abstract ByteSpecies<S> species();
 
-    public static abstract class ByteSpecies<S extends Vector.Shape<Vector<?,?>>> implements Vector.Species<Byte, S> {
+    public static abstract class ByteSpecies<S extends Vector.Shape> implements Vector.Species<Byte, S> {
         interface FOp {
             byte apply(int i);
         }

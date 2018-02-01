@@ -244,7 +244,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     }
 
     @Override
-    public <F, Z extends Shape<Vector<?, ?>>> Vector<F, Z> cast(Class<F> type, Z shape) {
+    public <F, Z extends Shape> Vector<F, Z> cast(Class<F> type, Z shape) {
         Vector.Species<F,Z> species = Vector.speciesInstance(type, shape);
 
         // Whichever is larger

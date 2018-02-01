@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 @SuppressWarnings("cast")
-public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements Vector<Long,S> {
+public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,S> {
 
     LongVector() {}
 
@@ -479,7 +479,7 @@ public abstract class LongVector<S extends Vector.Shape<Vector<?,?>>> implements
     @Override
     public abstract LongSpecies<S> species();
 
-    public static abstract class LongSpecies<S extends Vector.Shape<Vector<?,?>>> implements Vector.Species<Long, S> {
+    public static abstract class LongSpecies<S extends Vector.Shape> implements Vector.Species<Long, S> {
         interface FOp {
             long apply(int i);
         }

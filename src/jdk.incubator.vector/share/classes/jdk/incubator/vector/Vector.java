@@ -30,7 +30,7 @@ import jdk.internal.misc.Unsafe;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
+public interface Vector<E, S extends Vector.Shape> {
 
     Species<E, S> species();
 
@@ -118,7 +118,7 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
 
 
     //Conversions
-    default <F, Z extends Shape<Vector<?, ?>>> Vector<F, Z> reshape(Class<F> type, Z shape) {
+    default <F, Z extends Shape> Vector<F, Z> reshape(Class<F> type, Z shape) {
         Vector.Species<F, Z> species = speciesInstance(type, shape);
         int blen = Math.max(species.bitSize(), bitSize());
         ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
@@ -131,10 +131,10 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
     default <F> Vector<F, S> rebracket(Class<F> type) { return reshape(type, shape());}
 
     //Size-fixed semantic cast
-    <F, Z extends Shape<Vector<?, ?>>>
+    <F, Z extends Shape>
     Vector<F, Z> cast(Class<F> type, Z shape);
 
-    default <Z extends Shape<Vector<?, ?>>>
+    default <Z extends Shape>
     Vector<E, Z> resize(Z shape) {
         return reshape(elementType(), shape);
     }
@@ -159,7 +159,7 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
     void intoByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
 
 
-    interface Species<E, S extends Vector.Shape<Vector<?, ?>>> {
+    interface Species<E, S extends Shape> {
         Class<E> elementType();
 
         int elementSize();
@@ -199,13 +199,14 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
         }
     }
 
-    interface Shape<V extends Vector<?, ?> /*extends Vector<?, Shape<V>>*/> {
+//    interface Shape<V extends Vector<?, ?> /*extends Vector<?, Shape<V>>*/> {
+    interface Shape {
         int bitSize();  // usually 64, 128, 256, etc.
 
         default int length(Species<?, ?> s) { return bitSize() / s.elementSize(); }  // usually bitSize / sizeof(s.elementType)
     }
 
-    interface Mask<E, S extends Shape<Vector<?, ?>>> {
+    interface Mask<E, S extends Shape> {
         default int length() { return species().length(); }
 
         long toLong();
@@ -241,7 +242,7 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
 
         boolean getElement(int i);
 
-        <F, Z extends Vector.Shape<Vector<?, ?>>>
+        <F, Z extends Shape>
         Mask<F, Z> reshape(Class<F> type, Z shape);
 
         @HotSpotIntrinsicCandidate
@@ -250,14 +251,14 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
             return reshape(e, species().shape());
         }
 
-        default <Z extends Vector.Shape<Vector<?, ?>>> Mask<E, Z>
+        default <Z extends Shape> Mask<E, Z>
         resize(Z shape) {
             return reshape(species().elementType(), shape);
         }
 
     }
 
-    interface Shuffle<E, S extends Shape<Vector<?, ?>>> {
+    interface Shuffle<E, S extends Shape> {
         default int length() {return getSpecies().length(); }
 
         int[] toArray();
@@ -272,12 +273,12 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
     }
 
     @SuppressWarnings("unchecked")
-    static <E, S extends Vector.Shape<Vector<?, ?>>> Vector.Species<E, S> preferredSpeciesInstance(Class<E> c) {
+    static <E, S extends Shape> Vector.Species<E, S> preferredSpeciesInstance(Class<E> c) {
         Unsafe u = Unsafe.getUnsafe();
 
         int vectorLength = u.getMaxVectorSize(boxToPrimitive(c));
         int vectorBitSize = bitSizeForVectorLength(c, vectorLength);
-        Vector.Shape<Vector<?, ?>> s = shapeForVectorBitSize(vectorBitSize);
+        Shape s = shapeForVectorBitSize(vectorBitSize);
         return (Vector.Species<E, S>) speciesInstance(c, s);
     }
 
@@ -330,7 +331,7 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
     }
 
     // @@@ public static method on Shape?
-    private static Vector.Shape<Vector<?, ?>> shapeForVectorBitSize(int bitSize) {
+    private static Shape shapeForVectorBitSize(int bitSize) {
         switch (bitSize) {
             case 64:
                 return Shapes.S_64_BIT;
@@ -346,7 +347,7 @@ public interface Vector<E, S extends Vector.Shape<Vector<?, ?>>> {
     }
 
     @SuppressWarnings("unchecked")
-    static <E, S extends Vector.Shape<Vector<?, ?>>> Vector.Species<E, S> speciesInstance(Class<E> c, S s) {
+    static <E, S extends Shape> Vector.Species<E, S> speciesInstance(Class<E> c, S s) {
         Vector.Species<E, S> res = null;
 
         //Float
