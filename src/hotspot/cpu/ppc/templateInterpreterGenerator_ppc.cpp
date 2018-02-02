@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2015, 2017, SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -582,25 +582,6 @@ address TemplateInterpreterGenerator::generate_ArrayIndexOutOfBounds_handler(con
   return entry;
 }
 
-#if 0
-// Call special ClassCastException constructor taking object to cast
-// and target class as arguments.
-address TemplateInterpreterGenerator::generate_ClassCastException_verbose_handler() {
-  address entry = __ pc();
-
-  // Expression stack must be empty before entering the VM if an
-  // exception happened.
-  __ empty_expression_stack();
-
-  // Thread will be loaded to R3_ARG1.
-  // Target class oop is in register R5_ARG3 by convention!
-  __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::throw_ClassCastException_verbose), R17_tos, R5_ARG3);
-  // Above call must not return here since exception pending.
-  DEBUG_ONLY(__ should_not_reach_here();)
-  return entry;
-}
-#endif
-
 address TemplateInterpreterGenerator::generate_ClassCastException_handler() {
   address entry = __ pc();
   // Expression stack must be empty before entering the VM if an
@@ -694,7 +675,7 @@ address TemplateInterpreterGenerator::generate_return_entry_for(TosState state, 
   return entry;
 }
 
-address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state, int step) {
+address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state, int step, address continuation) {
   address entry = __ pc();
   // If state != vtos, we're returning from a native method, which put it's result
   // into the result register. So move the value out of the return register back
@@ -721,7 +702,11 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state, i
   __ check_and_forward_exception(R11_scratch1, R12_scratch2);
 
   // Start executing bytecodes.
-  __ dispatch_next(state, step);
+  if (continuation == NULL) {
+    __ dispatch_next(state, step);
+  } else {
+    __ jump_to_entry(continuation, R11_scratch1);
+  }
 
   return entry;
 }
@@ -1531,23 +1516,17 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   // Acquire isn't strictly necessary here because of the fence, but
   // sync_state is declared to be volatile, so we do it anyway
   // (cmp-br-isync on one path, release (same as acquire on PPC64) on the other path).
-  int sync_state_offs = __ load_const_optimized(sync_state_addr, SafepointSynchronize::address_of_state(), /*temp*/R0, true);
 
-  // TODO PPC port assert(4 == SafepointSynchronize::sz_state(), "unexpected field size");
-  __ lwz(sync_state, sync_state_offs, sync_state_addr);
+  Label do_safepoint, sync_check_done;
+  // No synchronization in progress nor yet synchronized.
+  __ safepoint_poll(do_safepoint, sync_state);
 
+  // Not suspended.
   // TODO PPC port assert(4 == Thread::sz_suspend_flags(), "unexpected field size");
   __ lwz(suspend_flags, thread_(suspend_flags));
-
-  Label sync_check_done;
-  Label do_safepoint;
-  // No synchronization in progress nor yet synchronized.
-  __ cmpwi(CCR0, sync_state, SafepointSynchronize::_not_synchronized);
-  // Not suspended.
   __ cmpwi(CCR1, suspend_flags, 0);
-
-  __ bne(CCR0, do_safepoint);
   __ beq(CCR1, sync_check_done);
+
   __ bind(do_safepoint);
   __ isync();
   // Block. We do the call directly and leave the current
@@ -1588,7 +1567,7 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   // we don't want the current thread to continue until all our prior memory
   // accesses (including the new thread state) are visible to other threads.
   __ li(R0/*thread_state*/, _thread_in_Java);
-  __ release();
+  __ lwsync(); // Acquire safepoint and suspend state, release thread state.
   __ stw(R0/*thread_state*/, thread_(thread_state));
 
   if (CheckJNICalls) {
@@ -1854,10 +1833,7 @@ address TemplateInterpreterGenerator::generate_CRC32_update_entry() {
 
     // Safepoint check
     const Register sync_state = R11_scratch1;
-    int sync_state_offs = __ load_const_optimized(sync_state, SafepointSynchronize::address_of_state(), /*temp*/R0, true);
-    __ lwz(sync_state, sync_state_offs, sync_state);
-    __ cmpwi(CCR0, sync_state, SafepointSynchronize::_not_synchronized);
-    __ bne(CCR0, slow_path);
+    __ safepoint_poll(slow_path, sync_state);
 
     // We don't generate local frame and don't align stack because
     // we not even call stub code (we generate the code inline)
@@ -1901,7 +1877,6 @@ address TemplateInterpreterGenerator::generate_CRC32_update_entry() {
   return NULL;
 }
 
-
 /**
  * Method entry for static native methods:
  *   int java.util.zip.CRC32.updateBytes(     int crc, byte[] b,  int off, int len)
@@ -1914,10 +1889,7 @@ address TemplateInterpreterGenerator::generate_CRC32_updateBytes_entry(AbstractI
 
     // Safepoint check
     const Register sync_state = R11_scratch1;
-    int sync_state_offs = __ load_const_optimized(sync_state, SafepointSynchronize::address_of_state(), /*temp*/R0, true);
-    __ lwz(sync_state, sync_state_offs, sync_state);
-    __ cmpwi(CCR0, sync_state, SafepointSynchronize::_not_synchronized);
-    __ bne(CCR0, slow_path);
+    __ safepoint_poll(slow_path, sync_state);
 
     // We don't generate local frame and don't align stack because
     // we not even call stub code (we generate the code inline)

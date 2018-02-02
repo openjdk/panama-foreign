@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.JCDiagnostic;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
+import com.sun.tools.javac.util.JCDiagnostic.Error;
 import com.sun.tools.javac.util.Log;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -78,7 +79,7 @@ class CompletenessAnalyzer {
         Context context = new Context();
         Log log = CaLog.createLog(context);
         context.put(Log.class, log);
-        context.put(Source.class, Source.JDK1_9);
+        context.put(Source.class, Source.JDK9);
         scannerFactory = ScannerFactory.instance(context);
     }
 
@@ -128,22 +129,12 @@ class CompletenessAnalyzer {
         }
 
         @Override
-        public void error(DiagnosticPosition pos, String key, Object... args) {
-            die();
-        }
-
-        @Override
-        public void error(DiagnosticFlag flag, DiagnosticPosition pos, String key, Object... args) {
+        public void error(int pos, Error errorKey) {
             die();
         }
 
         @Override
         public void error(int pos, String key, Object... args) {
-            die();
-        }
-
-        @Override
-        public void error(DiagnosticFlag flag, int pos, String key, Object... args) {
             die();
         }
 

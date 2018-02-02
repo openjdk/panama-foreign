@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ class CountedLoopNode;
 class IdealLoopTree;
 class LoopNode;
 class Node;
+class OuterStripMinedLoopEndNode;
 class PhaseIdealLoop;
 class CountedLoopReserveKit;
 class VectorSet;
@@ -71,7 +72,8 @@ protected:
          VectorizedLoop=2048,
          HasAtomicPostLoop=4096,
          HasRangeChecks=8192,
-         IsMultiversioned=16384};
+         IsMultiversioned=16384,
+         StripMined=32768};
   char _unswitch_count;
   enum { _unswitch_max=3 };
   char _postloop_flags;
@@ -90,6 +92,7 @@ public:
   int is_partial_peel_loop() const { return _loop_flags & PartialPeelLoop; }
   void set_partial_peel_loop() { _loop_flags |= PartialPeelLoop; }
   int partial_peel_has_failed() const { return _loop_flags & PartialPeelFailed; }
+  int is_strip_mined() const { return _loop_flags & StripMined; }
 
   void mark_partial_peel_failed() { _loop_flags |= PartialPeelFailed; }
   void mark_has_reductions() { _loop_flags |= HasReductions; }
@@ -100,6 +103,8 @@ public:
   void mark_has_atomic_post_loop() { _loop_flags |= HasAtomicPostLoop; }
   void mark_has_range_checks() { _loop_flags |=  HasRangeChecks; }
   void mark_is_multiversioned() { _loop_flags |= IsMultiversioned; }
+  void mark_strip_mined() { _loop_flags |= StripMined; }
+  void clear_strip_mined() { _loop_flags &= ~StripMined; }
 
   int unswitch_max() { return _unswitch_max; }
   int unswitch_count() { return _unswitch_count; }
@@ -131,6 +136,13 @@ public:
 #ifndef PRODUCT
   virtual void dump_spec(outputStream *st) const;
 #endif
+
+  void verify_strip_mined(int expect_skeleton) const;
+  virtual LoopNode* skip_strip_mined(int expect_opaq = 1) { return this; }
+  virtual IfTrueNode* outer_loop_tail() const { ShouldNotReachHere(); return NULL; }
+  virtual OuterStripMinedLoopEndNode* outer_loop_end() const { ShouldNotReachHere(); return NULL; }
+  virtual IfFalseNode* outer_loop_exit() const { ShouldNotReachHere(); return NULL; }
+  virtual SafePointNode* outer_safepoint() const { ShouldNotReachHere(); return NULL; }
 };
 
 //------------------------------Counted Loops----------------------------------
@@ -203,6 +215,7 @@ public:
 
   Node *init_control() const { return in(EntryControl); }
   Node *back_control() const { return in(LoopBackControl); }
+  CountedLoopEndNode *loopexit_or_null() const;
   CountedLoopEndNode *loopexit() const;
   Node *init_trip() const;
   Node *stride() const;
@@ -278,6 +291,13 @@ public:
   void set_slp_max_unroll(int unroll_factor) { _slp_maximum_unroll_factor = unroll_factor; }
   int  slp_max_unroll() const                { return _slp_maximum_unroll_factor; }
 
+  virtual LoopNode* skip_strip_mined(int expect_opaq = 1);
+  OuterStripMinedLoopNode* outer_loop() const;
+  virtual IfTrueNode* outer_loop_tail() const;
+  virtual OuterStripMinedLoopEndNode* outer_loop_end() const;
+  virtual IfFalseNode* outer_loop_exit() const;
+  virtual SafePointNode* outer_safepoint() const;
+
 #ifndef PRODUCT
   virtual void dump_spec(outputStream *st) const;
 #endif
@@ -323,7 +343,7 @@ public:
       return NULL;
     }
     Node *ln = iv_phi->in(0);
-    if (ln->is_CountedLoop() && ln->as_CountedLoop()->loopexit() == this) {
+    if (ln->is_CountedLoop() && ln->as_CountedLoop()->loopexit_or_null() == this) {
       return (CountedLoopNode*)ln;
     }
     return NULL;
@@ -335,7 +355,7 @@ public:
 };
 
 
-inline CountedLoopEndNode *CountedLoopNode::loopexit() const {
+inline CountedLoopEndNode *CountedLoopNode::loopexit_or_null() const {
   Node *bc = back_control();
   if( bc == NULL ) return NULL;
   Node *le = bc->in(0);
@@ -343,13 +363,18 @@ inline CountedLoopEndNode *CountedLoopNode::loopexit() const {
     return NULL;
   return (CountedLoopEndNode*)le;
 }
-inline Node *CountedLoopNode::init_trip() const { return loopexit() ? loopexit()->init_trip() : NULL; }
-inline Node *CountedLoopNode::stride() const { return loopexit() ? loopexit()->stride() : NULL; }
-inline int CountedLoopNode::stride_con() const { return loopexit() ? loopexit()->stride_con() : 0; }
-inline bool CountedLoopNode::stride_is_con() const { return loopexit() && loopexit()->stride_is_con(); }
-inline Node *CountedLoopNode::limit() const { return loopexit() ? loopexit()->limit() : NULL; }
-inline Node *CountedLoopNode::incr() const { return loopexit() ? loopexit()->incr() : NULL; }
-inline Node *CountedLoopNode::phi() const { return loopexit() ? loopexit()->phi() : NULL; }
+inline CountedLoopEndNode *CountedLoopNode::loopexit() const {
+  CountedLoopEndNode* cle = loopexit_or_null();
+  assert(cle != NULL, "loopexit is NULL");
+  return cle;
+}
+inline Node *CountedLoopNode::init_trip() const { return loopexit_or_null() ? loopexit()->init_trip() : NULL; }
+inline Node *CountedLoopNode::stride() const { return loopexit_or_null() ? loopexit()->stride() : NULL; }
+inline int CountedLoopNode::stride_con() const { return loopexit_or_null() ? loopexit()->stride_con() : 0; }
+inline bool CountedLoopNode::stride_is_con() const { return loopexit_or_null() && loopexit()->stride_is_con(); }
+inline Node *CountedLoopNode::limit() const { return loopexit_or_null() ? loopexit()->limit() : NULL; }
+inline Node *CountedLoopNode::incr() const { return loopexit_or_null() ? loopexit()->incr() : NULL; }
+inline Node *CountedLoopNode::phi() const { return loopexit_or_null() ? loopexit()->phi() : NULL; }
 
 //------------------------------LoopLimitNode-----------------------------
 // Counted Loop limit node which represents exact final iterator value:
@@ -372,6 +397,40 @@ class LoopLimitNode : public Node {
   virtual const Type* Value(PhaseGVN* phase) const;
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
   virtual Node* Identity(PhaseGVN* phase);
+};
+
+// Support for strip mining
+class OuterStripMinedLoopNode : public LoopNode {
+private:
+  CountedLoopNode* inner_loop() const;
+public:
+  OuterStripMinedLoopNode(Compile* C, Node *entry, Node *backedge)
+    : LoopNode(entry, backedge) {
+    init_class_id(Class_OuterStripMinedLoop);
+    init_flags(Flag_is_macro);
+    C->add_macro_node(this);
+  }
+
+  virtual int Opcode() const;
+
+  virtual IfTrueNode* outer_loop_tail() const;
+  virtual OuterStripMinedLoopEndNode* outer_loop_end() const;
+  virtual IfFalseNode* outer_loop_exit() const;
+  virtual SafePointNode* outer_safepoint() const;
+  void adjust_strip_mined_loop(PhaseIterGVN* igvn);
+};
+
+class OuterStripMinedLoopEndNode : public IfNode {
+public:
+  OuterStripMinedLoopEndNode(Node *control, Node *test, float prob, float cnt)
+    : IfNode(control, test, prob, cnt) {
+    init_class_id(Class_OuterStripMinedLoopEnd);
+  }
+
+  virtual int Opcode() const;
+
+  virtual const Type* Value(PhaseGVN* phase) const;
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
 };
 
 // -----------------------------IdealLoopTree----------------------------------
@@ -780,6 +839,7 @@ private:
   void build_loop_early( VectorSet &visited, Node_List &worklist, Node_Stack &nstack );
   void build_loop_late ( VectorSet &visited, Node_List &worklist, Node_Stack &nstack );
   void build_loop_late_post ( Node* n );
+  void verify_strip_mined_scheduling(Node *n, Node* least);
 
   // Array of immediate dominance info for each CFG node indexed by node idx
 private:
@@ -877,7 +937,10 @@ public:
   // Per-Node transform
   virtual Node *transform( Node *a_node ) { return 0; }
 
-  bool is_counted_loop( Node *x, IdealLoopTree *loop );
+  bool is_counted_loop(Node* x, IdealLoopTree*& loop);
+  IdealLoopTree* create_outer_strip_mined_loop(BoolNode *test, Node *cmp, Node *init_control,
+                                               IdealLoopTree* loop, float cl_prob, float le_fcnt,
+                                               Node*& entry_control, Node*& iffalse);
 
   Node* exact_limit( IdealLoopTree *loop );
 
@@ -908,8 +971,24 @@ public:
   //   When nonnull, the clone and original are side-by-side, both are
   //      dominated by the passed in side_by_side_idom node.  Used in
   //      construction of unswitched loops.
+  enum CloneLoopMode {
+    IgnoreStripMined = 0,        // Only clone inner strip mined loop
+    CloneIncludesStripMined = 1, // clone both inner and outer strip mined loops
+    ControlAroundStripMined = 2  // Only clone inner strip mined loop,
+                                 // result control flow branches
+                                 // either to inner clone or outer
+                                 // strip mined loop.
+  };
   void clone_loop( IdealLoopTree *loop, Node_List &old_new, int dom_depth,
-                   Node* side_by_side_idom = NULL);
+                  CloneLoopMode mode, Node* side_by_side_idom = NULL);
+  void clone_loop_handle_data_uses(Node* old, Node_List &old_new,
+                                   IdealLoopTree* loop, IdealLoopTree* companion_loop,
+                                   Node_List*& split_if_set, Node_List*& split_bool_set,
+                                   Node_List*& split_cex_set, Node_List& worklist,
+                                   uint new_counter, CloneLoopMode mode);
+  void clone_outer_loop(LoopNode* head, CloneLoopMode mode, IdealLoopTree *loop,
+                        IdealLoopTree* outer_loop, int dd, Node_List &old_new,
+                        Node_List& extra_data_nodes);
 
   // If we got the effect of peeling, either by actually peeling or by
   // making a pre-loop which must execute at least once, we can remove
@@ -1020,7 +1099,8 @@ public:
   // and inserting an if to select fast-slow versions.
   ProjNode* create_slow_version_of_loop(IdealLoopTree *loop,
                                         Node_List &old_new,
-                                        int opcode);
+                                        int opcode,
+                                        CloneLoopMode mode);
 
   // Clone a loop and return the clone head (clone_loop_head).
   // Added nodes include int(1), int(0) - disconnected, If, IfTrue, IfFalse,
@@ -1098,7 +1178,7 @@ public:
   // "Nearly" because all Nodes have been cloned from the original in the loop,
   // but the fall-in edges to the Cmp are different.  Clone bool/Cmp pairs
   // through the Phi recursively, and return a Bool.
-  BoolNode *clone_iff( PhiNode *phi, IdealLoopTree *loop );
+  Node *clone_iff( PhiNode *phi, IdealLoopTree *loop );
   CmpNode *clone_bool( PhiNode *phi, IdealLoopTree *loop );
 
 

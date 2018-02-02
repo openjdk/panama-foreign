@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.code.Scope.WriteableScope;
+import com.sun.tools.javac.code.Source.Feature;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.TypeMetadata.Annotations;
@@ -58,7 +59,9 @@ import com.sun.tools.javac.tree.JCTree.JCPolyExpression.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
+import com.sun.tools.javac.util.JCDiagnostic.Error;
 import com.sun.tools.javac.util.JCDiagnostic.Fragment;
+import com.sun.tools.javac.util.JCDiagnostic.Warning;
 import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.code.Flags.*;
@@ -150,12 +153,12 @@ public class Attr extends JCTree.Visitor {
         Options options = Options.instance(context);
 
         Source source = Source.instance(context);
-        allowStringsInSwitch = source.allowStringsInSwitch();
-        allowPoly = source.allowPoly();
-        allowTypeAnnos = source.allowTypeAnnotations();
-        allowLambda = source.allowLambda();
-        allowDefaultMethods = source.allowDefaultMethods();
-        allowStaticInterfaceMethods = source.allowStaticInterfaceMethods();
+        allowStringsInSwitch = Feature.STRINGS_IN_SWITCH.allowedInSource(source);
+        allowPoly = Feature.POLY.allowedInSource(source);
+        allowTypeAnnos = Feature.TYPE_ANNOTATIONS.allowedInSource(source);
+        allowLambda = Feature.LAMBDA.allowedInSource(source);
+        allowDefaultMethods = Feature.DEFAULT_METHODS.allowedInSource(source);
+        allowStaticInterfaceMethods = Feature.STATIC_INTERFACE_METHODS.allowedInSource(source);
         sourceName = source.name;
         useBeforeDeclarationWarning = options.isSet("useBeforeDeclarationWarning");
 
@@ -1392,7 +1395,7 @@ public class Attr extends JCTree.Visitor {
             boolean enumSwitch = (seltype.tsym.flags() & Flags.ENUM) != 0;
             boolean stringSwitch = types.isSameType(seltype, syms.stringType);
             if (stringSwitch && !allowStringsInSwitch) {
-                log.error(DiagnosticFlag.SOURCE_LEVEL, tree.selector.pos(), Errors.StringSwitchNotSupportedInSource(sourceName));
+                log.error(DiagnosticFlag.SOURCE_LEVEL, tree.selector.pos(), Feature.STRINGS_IN_SWITCH.error(sourceName));
             }
             if (!enumSwitch && !stringSwitch)
                 seltype = chk.checkType(tree.selector.pos(), seltype, syms.intType);
@@ -1416,7 +1419,7 @@ public class Attr extends JCTree.Visitor {
                         if (!pattype.hasTag(ERROR)) {
                             if (pattype.constValue() == null) {
                                 log.error(c.pat.pos(),
-                                          (stringSwitch ? "string.const.req" : "const.expr.req"));
+                                          (stringSwitch ? Errors.StringConstReq : Errors.ConstExprReq));
                             } else if (!labels.add(pattype.constValue())) {
                                 log.error(c.pos(), Errors.DuplicateCaseLabel);
                             }
@@ -3667,15 +3670,14 @@ public class Attr extends JCTree.Visitor {
             }
             if (!allowStaticInterfaceMethods && sitesym.isInterface() &&
                     sym.isStatic() && sym.kind == MTH) {
-                log.error(DiagnosticFlag.SOURCE_LEVEL, tree.pos(), Errors.StaticIntfMethodInvokeNotSupportedInSource(sourceName));
+                log.error(DiagnosticFlag.SOURCE_LEVEL, tree.pos(), Feature.STATIC_INTERFACE_METHODS_INVOKE.error(sourceName));
             }
         } else if (sym.kind != ERR &&
                    (sym.flags() & STATIC) != 0 &&
                    sym.name != names._class) {
             // If the qualified item is not a type and the selected item is static, report
             // a warning. Make allowance for the class of an array type e.g. Object[].class)
-            chk.warnStatic(tree, "static.not.qualified.by.type",
-                           sym.kind.kindName(), sym.owner);
+            chk.warnStatic(tree, Warnings.StaticNotQualifiedByType(sym.kind.kindName(), sym.owner));
         }
 
         // If we are selecting an instance member via a `super', ...
@@ -3924,9 +3926,7 @@ public class Attr extends JCTree.Visitor {
                     if (s != null &&
                         s.isRaw() &&
                         !types.isSameType(v.type, v.erasure(types))) {
-                        chk.warnUnchecked(tree.pos(),
-                                          "unchecked.assign.to.var",
-                                          v, s);
+                        chk.warnUnchecked(tree.pos(), Warnings.UncheckedAssignToVar(v, s));
                     }
                 }
                 // The computed type of a variable is the type of the
@@ -4001,12 +4001,14 @@ public class Attr extends JCTree.Visitor {
                 ((v.flags() & STATIC) != 0) == Resolve.isStatic(env) &&
                 (!env.tree.hasTag(ASSIGN) ||
                  TreeInfo.skipParens(((JCAssign) env.tree).lhs) != tree)) {
-                String suffix = (initEnv.info.enclVar == v) ?
-                                "self.ref" : "forward.ref";
                 if (!onlyWarning || isStaticEnumField(v)) {
-                    log.error(tree.pos(), "illegal." + suffix);
+                    Error errkey = (initEnv.info.enclVar == v) ?
+                                Errors.IllegalSelfRef : Errors.IllegalForwardRef;
+                    log.error(tree.pos(), errkey);
                 } else if (useBeforeDeclarationWarning) {
-                    log.warning(tree.pos(), suffix, v);
+                    Warning warnkey = (initEnv.info.enclVar == v) ?
+                                Warnings.SelfRef(v) : Warnings.ForwardRef(v);
+                    log.warning(tree.pos(), warnkey);
                 }
             }
 
@@ -4116,9 +4118,7 @@ public class Attr extends JCTree.Visitor {
             if (s != null && s.isRaw() &&
                 !types.isSameTypes(sym.type.getParameterTypes(),
                                    sym.erasure(types).getParameterTypes())) {
-                chk.warnUnchecked(env.tree.pos(),
-                                  "unchecked.call.mbr.of.raw.type",
-                                  sym, s);
+                chk.warnUnchecked(env.tree.pos(), Warnings.UncheckedCallMbrOfRawType(sym, s));
             }
         }
 
@@ -4168,14 +4168,12 @@ public class Attr extends JCTree.Visitor {
             argtypes = argtypes.map(checkDeferredMap);
 
             if (noteWarner.hasNonSilentLint(LintCategory.UNCHECKED)) {
-                chk.warnUnchecked(env.tree.pos(),
-                        "unchecked.meth.invocation.applied",
-                        kindName(sym),
+                chk.warnUnchecked(env.tree.pos(), Warnings.UncheckedMethInvocationApplied(kindName(sym),
                         sym.name,
                         rs.methodArguments(sym.type.getParameterTypes()),
                         rs.methodArguments(argtypes.map(checkDeferredMap)),
                         kindName(sym.location()),
-                        sym.location());
+                        sym.location()));
                 if (resultInfo.pt != Infer.anyPoly ||
                         !owntype.hasTag(METHOD) ||
                         !owntype.isPartial()) {
@@ -4237,9 +4235,6 @@ public class Attr extends JCTree.Visitor {
     public void visitTypeArray(JCArrayTypeTree tree) {
         Type etype = attribType(tree.elemtype, env);
         Type type = new ArrayType(etype, syms.arrayClass);
-        if (etype.isErroneous()) {
-            type = types.createErrorType(type);
-        }
         result = check(tree, type, KindSelector.TYP, resultInfo);
     }
 
@@ -4745,9 +4740,8 @@ public class Attr extends JCTree.Visitor {
         // Check for proper use of serialVersionUID
         if (env.info.lint.isEnabled(LintCategory.SERIAL)
                 && isSerializable(c.type)
-                && (c.flags() & Flags.ENUM) == 0
-                && !c.isAnonymous()
-                && checkForSerial(c)) {
+                && (c.flags() & (Flags.ENUM | Flags.INTERFACE)) == 0
+                && !c.isAnonymous()) {
             checkSerialVersionUID(tree, c);
         }
         if (allowTypeAnnos) {
@@ -4759,17 +4753,6 @@ public class Attr extends JCTree.Visitor {
         }
     }
         // where
-        boolean checkForSerial(ClassSymbol c) {
-            if ((c.flags() & ABSTRACT) == 0) {
-                return true;
-            } else {
-                return c.members().anyMatch(anyNonAbstractOrDefaultMethod);
-            }
-        }
-
-        public static final Filter<Symbol> anyNonAbstractOrDefaultMethod = s ->
-                s.kind == MTH && (s.flags() & (DEFAULT | ABSTRACT)) != ABSTRACT;
-
         /** get a diagnostic position for an attribute of Type t, or null if attribute missing */
         private DiagnosticPosition getDiagnosticPosition(JCClassDecl tree, Type t) {
             for(List<JCAnnotation> al = tree.mods.annotations; !al.isEmpty(); al = al.tail) {

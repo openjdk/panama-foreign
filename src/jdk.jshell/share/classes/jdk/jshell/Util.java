@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -53,6 +54,11 @@ class Util {
      * The name of the invoke method.
      */
     static final String DOIT_METHOD_NAME = "do_it$";
+
+    /**
+     * The prefix for all anonymous classes upgraded to member classes.
+     */
+    static final String JSHELL_ANONYMOUS = "$JShell$anonymous$";
 
     /**
      * A pattern matching the full or simple class name of a wrapper class.
@@ -80,6 +86,17 @@ class Util {
             sb.append(comp);
         }
         return sb.toString();
+    }
+
+    /**
+     * Check if this is the name of something in JShell.
+     *
+     * @param s the name of the class, method, variable, ...
+     * @return true if it is, or is within a JShell defined wrapper class
+     */
+    static boolean isInJShellClass(String s) {
+        Matcher m = PREFIX_PATTERN.matcher(s);
+        return m.find() && m.start() == 0;
     }
 
     static String asLetters(int i) {

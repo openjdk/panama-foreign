@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,8 +118,10 @@ public class Resources extends java.util.ListResourceBundle {
                 "[-strict]                   treat warnings as errors"},
         {".conf.url.specify.a.pre.configured.options.file",
                 "[-conf <url>]               specify a pre-configured options file"},
+        {".print.this.help.message",
+                "[-? -h --help]              Print this help message"},
         {"Option.lacks.argument", "Option lacks argument"},
-        {"Please.type.jarsigner.help.for.usage", "Please type jarsigner -help for usage"},
+        {"Please.type.jarsigner.help.for.usage", "Please type jarsigner --help for usage"},
         {"Please.specify.jarfile.name", "Please specify jarfile name"},
         {"Please.specify.alias.name", "Please specify alias name"},
         {"Only.one.alias.can.be.specified", "Only one alias can be specified"},
@@ -270,7 +272,7 @@ public class Resources extends java.util.ListResourceBundle {
         {"The.1.algorithm.specified.for.the.2.option.is.considered.a.security.risk.",
                 "The %1$s algorithm specified for the %2$s option is considered a security risk."},
         {"The.1.signing.key.has.a.keysize.of.2.which.is.considered.a.security.risk.",
-                "The %s signing key has a keysize of %d which is considered a security risk."},
+                "The %1$s signing key has a keysize of %2$d which is considered a security risk."},
         {"This.jar.contains.entries.whose.certificate.chain.is.invalid.reason.1",
                  "This jar contains entries whose certificate chain is invalid. Reason: %s"},
         {"This.jar.contains.entries.whose.tsa.certificate.chain.is.invalid.reason.1",

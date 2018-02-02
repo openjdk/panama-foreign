@@ -23,16 +23,16 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "classfile/vmSymbols.hpp"
 #include "logging/log.hpp"
 #include "oops/oop.inline.hpp"
-#include "prims/jvm.h"
 #include "runtime/handles.inline.hpp"
 #include "runtime/java.hpp"
 #include "runtime/mutex.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/os.hpp"
-#include "runtime/perfData.hpp"
+#include "runtime/perfData.inline.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/globalDefinitions.hpp"
 
@@ -420,11 +420,11 @@ PerfLongConstant* PerfDataManager::create_long_constant(CounterNS ns,
 
 PerfStringVariable* PerfDataManager::create_string_variable(CounterNS ns,
                                                             const char* name,
-                                                            jint max_length,
+                                                            int max_length,
                                                             const char* s,
                                                             TRAPS) {
 
-  if (max_length == 0 && s != NULL) max_length = (jint)strlen(s);
+  if (max_length == 0 && s != NULL) max_length = (int)strlen(s);
 
   assert(max_length != 0, "PerfStringVariable with length 0");
 
@@ -610,4 +610,11 @@ PerfDataList* PerfDataList::clone() {
   assert(copy != NULL, "just checking");
 
   return copy;
+}
+
+PerfTraceTime::~PerfTraceTime() {
+  if (!UsePerfData || (_recursion_counter != NULL &&
+      --(*_recursion_counter) > 0)) return;
+  _t.stop();
+  _timerp->inc(_t.ticks());
 }

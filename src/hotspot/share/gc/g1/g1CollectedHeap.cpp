@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,31 +29,32 @@
 #include "code/codeCache.hpp"
 #include "code/icBuffer.hpp"
 #include "gc/g1/bufferingOopClosure.hpp"
-#include "gc/g1/concurrentG1Refine.hpp"
-#include "gc/g1/concurrentG1RefineThread.hpp"
 #include "gc/g1/concurrentMarkThread.inline.hpp"
 #include "gc/g1/g1Allocator.inline.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/g1CollectionSet.hpp"
 #include "gc/g1/g1CollectorPolicy.hpp"
 #include "gc/g1/g1CollectorState.hpp"
+#include "gc/g1/g1ConcurrentRefine.hpp"
+#include "gc/g1/g1ConcurrentRefineThread.hpp"
 #include "gc/g1/g1EvacStats.inline.hpp"
-#include "gc/g1/g1FullGCScope.hpp"
+#include "gc/g1/g1FullCollector.hpp"
 #include "gc/g1/g1GCPhaseTimes.hpp"
 #include "gc/g1/g1HeapSizingPolicy.hpp"
 #include "gc/g1/g1HeapTransition.hpp"
 #include "gc/g1/g1HeapVerifier.hpp"
 #include "gc/g1/g1HotCardCache.hpp"
+#include "gc/g1/g1MemoryPool.hpp"
 #include "gc/g1/g1OopClosures.inline.hpp"
 #include "gc/g1/g1ParScanThreadState.inline.hpp"
 #include "gc/g1/g1Policy.hpp"
 #include "gc/g1/g1RegionToSpaceMapper.hpp"
-#include "gc/g1/g1RemSet.inline.hpp"
+#include "gc/g1/g1RemSet.hpp"
 #include "gc/g1/g1RootClosures.hpp"
 #include "gc/g1/g1RootProcessor.hpp"
-#include "gc/g1/g1SerialFullCollector.hpp"
 #include "gc/g1/g1StringDedup.hpp"
 #include "gc/g1/g1YCTypes.hpp"
+#include "gc/g1/g1YoungRemSetSamplingThread.hpp"
 #include "gc/g1/heapRegion.inline.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/g1/heapRegionSet.inline.hpp"
@@ -80,6 +81,7 @@
 #include "runtime/atomic.hpp"
 #include "runtime/init.hpp"
 #include "runtime/orderAccess.inline.hpp"
+#include "runtime/threadSMR.hpp"
 #include "runtime/vmThread.hpp"
 #include "utilities/align.hpp"
 #include "utilities/globalDefinitions.hpp"
@@ -140,6 +142,12 @@ void G1RegionMappingChangedListener::on_commit(uint start_idx, size_t num_region
   // The from card cache is not the memory that is actually committed. So we cannot
   // take advantage of the zero_filled parameter.
   reset_from_card_cache(start_idx, num_regions);
+}
+
+
+HeapRegion* G1CollectedHeap::new_heap_region(uint hrs_index,
+                                             MemRegion mr) {
+  return new HeapRegion(hrs_index, bot(), mr);
 }
 
 // Private methods.
@@ -437,9 +445,7 @@ HeapWord* G1CollectedHeap::allocate_new_tlab(size_t word_size) {
   assert_heap_not_locked_and_not_at_safepoint();
   assert(!is_humongous(word_size), "we do not allow humongous TLABs");
 
-  uint dummy_gc_count_before;
-  uint dummy_gclocker_retry_count = 0;
-  return attempt_allocation(word_size, &dummy_gc_count_before, &dummy_gclocker_retry_count);
+  return attempt_allocation(word_size);
 }
 
 HeapWord*
@@ -447,62 +453,16 @@ G1CollectedHeap::mem_allocate(size_t word_size,
                               bool*  gc_overhead_limit_was_exceeded) {
   assert_heap_not_locked_and_not_at_safepoint();
 
-  // Loop until the allocation is satisfied, or unsatisfied after GC.
-  for (uint try_count = 1, gclocker_retry_count = 0; /* we'll return */; try_count += 1) {
-    uint gc_count_before;
-
-    HeapWord* result = NULL;
-    if (!is_humongous(word_size)) {
-      result = attempt_allocation(word_size, &gc_count_before, &gclocker_retry_count);
-    } else {
-      result = attempt_allocation_humongous(word_size, &gc_count_before, &gclocker_retry_count);
-    }
-    if (result != NULL) {
-      return result;
-    }
-
-    // Create the garbage collection operation...
-    VM_G1CollectForAllocation op(gc_count_before, word_size);
-    op.set_allocation_context(AllocationContext::current());
-
-    // ...and get the VM thread to execute it.
-    VMThread::execute(&op);
-
-    if (op.prologue_succeeded() && op.pause_succeeded()) {
-      // If the operation was successful we'll return the result even
-      // if it is NULL. If the allocation attempt failed immediately
-      // after a Full GC, it's unlikely we'll be able to allocate now.
-      HeapWord* result = op.result();
-      if (result != NULL && !is_humongous(word_size)) {
-        // Allocations that take place on VM operations do not do any
-        // card dirtying and we have to do it here. We only have to do
-        // this for non-humongous allocations, though.
-        dirty_young_block(result, word_size);
-      }
-      return result;
-    } else {
-      if (gclocker_retry_count > GCLockerRetryAllocationCount) {
-        return NULL;
-      }
-      assert(op.result() == NULL,
-             "the result should be NULL if the VM op did not succeed");
-    }
-
-    // Give a warning if we seem to be looping forever.
-    if ((QueuedAllocationWarningCount > 0) &&
-        (try_count % QueuedAllocationWarningCount == 0)) {
-      log_warning(gc)("G1CollectedHeap::mem_allocate retries %d times", try_count);
-    }
+  if (is_humongous(word_size)) {
+    return attempt_allocation_humongous(word_size);
   }
-
-  ShouldNotReachHere();
-  return NULL;
+  return attempt_allocation(word_size);
 }
 
 HeapWord* G1CollectedHeap::attempt_allocation_slow(size_t word_size,
-                                                   AllocationContext_t context,
-                                                   uint* gc_count_before_ret,
-                                                   uint* gclocker_retry_count_ret) {
+                                                   AllocationContext_t context) {
+  ResourceMark rm; // For retrieving the thread names in log messages.
+
   // Make sure you read the note in attempt_allocation_humongous().
 
   assert_heap_not_locked_and_not_at_safepoint();
@@ -517,7 +477,7 @@ HeapWord* G1CollectedHeap::attempt_allocation_slow(size_t word_size,
   // fails to perform the allocation. b) is the only case when we'll
   // return NULL.
   HeapWord* result = NULL;
-  for (int try_count = 1; /* we'll return */; try_count += 1) {
+  for (uint try_count = 1, gclocker_retry_count = 0; /* we'll return */; try_count += 1) {
     bool should_try_gc;
     uint gc_count_before;
 
@@ -528,30 +488,23 @@ HeapWord* G1CollectedHeap::attempt_allocation_slow(size_t word_size,
         return result;
       }
 
-      if (GCLocker::is_active_and_needs_gc()) {
-        if (g1_policy()->can_expand_young_list()) {
-          // No need for an ergo verbose message here,
-          // can_expand_young_list() does this when it returns true.
-          result = _allocator->attempt_allocation_force(word_size, context);
-          if (result != NULL) {
-            return result;
-          }
-        }
-        should_try_gc = false;
-      } else {
-        // The GCLocker may not be active but the GCLocker initiated
-        // GC may not yet have been performed (GCLocker::needs_gc()
-        // returns true). In this case we do not try this GC and
-        // wait until the GCLocker initiated GC is performed, and
-        // then retry the allocation.
-        if (GCLocker::needs_gc()) {
-          should_try_gc = false;
-        } else {
-          // Read the GC count while still holding the Heap_lock.
-          gc_count_before = total_collections();
-          should_try_gc = true;
+      // If the GCLocker is active and we are bound for a GC, try expanding young gen.
+      // This is different to when only GCLocker::needs_gc() is set: try to avoid
+      // waiting because the GCLocker is active to not wait too long.
+      if (GCLocker::is_active_and_needs_gc() && g1_policy()->can_expand_young_list()) {
+        // No need for an ergo message here, can_expand_young_list() does this when
+        // it returns true.
+        result = _allocator->attempt_allocation_force(word_size, context);
+        if (result != NULL) {
+          return result;
         }
       }
+      // Only try a GC if the GCLocker does not signal the need for a GC. Wait until
+      // the GCLocker initiated GC has been performed and then retry. This includes
+      // the case when the GC Locker is not active but has not been performed.
+      should_try_gc = !GCLocker::needs_gc();
+      // Read the GC count while still holding the Heap_lock.
+      gc_count_before = total_collections();
     }
 
     if (should_try_gc) {
@@ -560,28 +513,33 @@ HeapWord* G1CollectedHeap::attempt_allocation_slow(size_t word_size,
                                    GCCause::_g1_inc_collection_pause);
       if (result != NULL) {
         assert(succeeded, "only way to get back a non-NULL result");
+        log_trace(gc, alloc)("%s: Successfully scheduled collection returning " PTR_FORMAT,
+                             Thread::current()->name(), p2i(result));
         return result;
       }
 
       if (succeeded) {
-        // If we get here we successfully scheduled a collection which
-        // failed to allocate. No point in trying to allocate
-        // further. We'll just return NULL.
-        MutexLockerEx x(Heap_lock);
-        *gc_count_before_ret = total_collections();
+        // We successfully scheduled a collection which failed to allocate. No
+        // point in trying to allocate further. We'll just return NULL.
+        log_trace(gc, alloc)("%s: Successfully scheduled collection failing to allocate "
+                             SIZE_FORMAT " words", Thread::current()->name(), word_size);
         return NULL;
       }
+      log_trace(gc, alloc)("%s: Unsuccessfully scheduled collection allocating " SIZE_FORMAT " words",
+                           Thread::current()->name(), word_size);
     } else {
-      if (*gclocker_retry_count_ret > GCLockerRetryAllocationCount) {
-        MutexLockerEx x(Heap_lock);
-        *gc_count_before_ret = total_collections();
+      // Failed to schedule a collection.
+      if (gclocker_retry_count > GCLockerRetryAllocationCount) {
+        log_warning(gc, alloc)("%s: Retried waiting for GCLocker too often allocating "
+                               SIZE_FORMAT " words", Thread::current()->name(), word_size);
         return NULL;
       }
+      log_trace(gc, alloc)("%s: Stall until clear", Thread::current()->name());
       // The GCLocker is either active or the GCLocker initiated
       // GC has not yet been performed. Stall until it is and
       // then retry the allocation.
       GCLocker::stall_until_clear();
-      (*gclocker_retry_count_ret) += 1;
+      gclocker_retry_count += 1;
     }
 
     // We can reach here if we were unsuccessful in scheduling a
@@ -592,6 +550,7 @@ HeapWord* G1CollectedHeap::attempt_allocation_slow(size_t word_size,
     // first attempt (without holding the Heap_lock) here and the
     // follow-on attempt will be at the start of the next loop
     // iteration (after taking the Heap_lock).
+
     result = _allocator->attempt_allocation(word_size, context);
     if (result != NULL) {
       return result;
@@ -600,8 +559,8 @@ HeapWord* G1CollectedHeap::attempt_allocation_slow(size_t word_size,
     // Give a warning if we seem to be looping forever.
     if ((QueuedAllocationWarningCount > 0) &&
         (try_count % QueuedAllocationWarningCount == 0)) {
-      log_warning(gc)("G1CollectedHeap::attempt_allocation_slow() "
-                      "retries %d times", try_count);
+      log_warning(gc, alloc)("%s:  Retried allocation %u times for " SIZE_FORMAT " words",
+                             Thread::current()->name(), try_count, word_size);
     }
   }
 
@@ -822,9 +781,7 @@ void G1CollectedHeap::fill_archive_regions(MemRegion* ranges, size_t count) {
   }
 }
 
-inline HeapWord* G1CollectedHeap::attempt_allocation(size_t word_size,
-                                                     uint* gc_count_before_ret,
-                                                     uint* gclocker_retry_count_ret) {
+inline HeapWord* G1CollectedHeap::attempt_allocation(size_t word_size) {
   assert_heap_not_locked_and_not_at_safepoint();
   assert(!is_humongous(word_size), "attempt_allocation() should not "
          "be called for humongous allocation requests");
@@ -833,10 +790,7 @@ inline HeapWord* G1CollectedHeap::attempt_allocation(size_t word_size,
   HeapWord* result = _allocator->attempt_allocation(word_size, context);
 
   if (result == NULL) {
-    result = attempt_allocation_slow(word_size,
-                                     context,
-                                     gc_count_before_ret,
-                                     gclocker_retry_count_ret);
+    result = attempt_allocation_slow(word_size, context);
   }
   assert_heap_not_locked();
   if (result != NULL) {
@@ -917,9 +871,9 @@ void G1CollectedHeap::dealloc_archive_regions(MemRegion* ranges, size_t count) {
   decrease_used(size_used);
 }
 
-HeapWord* G1CollectedHeap::attempt_allocation_humongous(size_t word_size,
-                                                        uint* gc_count_before_ret,
-                                                        uint* gclocker_retry_count_ret) {
+HeapWord* G1CollectedHeap::attempt_allocation_humongous(size_t word_size) {
+  ResourceMark rm; // For retrieving the thread names in log messages.
+
   // The structure of this method has a lot of similarities to
   // attempt_allocation_slow(). The reason these two were not merged
   // into a single one is that such a method would require several "if
@@ -950,9 +904,10 @@ HeapWord* G1CollectedHeap::attempt_allocation_humongous(size_t word_size,
   // fails to perform the allocation. b) is the only case when we'll
   // return NULL.
   HeapWord* result = NULL;
-  for (int try_count = 1; /* we'll return */; try_count += 1) {
+  for (uint try_count = 1, gclocker_retry_count = 0; /* we'll return */; try_count += 1) {
     bool should_try_gc;
     uint gc_count_before;
+
 
     {
       MutexLockerEx x(Heap_lock);
@@ -967,69 +922,63 @@ HeapWord* G1CollectedHeap::attempt_allocation_humongous(size_t word_size,
         return result;
       }
 
-      if (GCLocker::is_active_and_needs_gc()) {
-        should_try_gc = false;
-      } else {
-         // The GCLocker may not be active but the GCLocker initiated
-        // GC may not yet have been performed (GCLocker::needs_gc()
-        // returns true). In this case we do not try this GC and
-        // wait until the GCLocker initiated GC is performed, and
-        // then retry the allocation.
-        if (GCLocker::needs_gc()) {
-          should_try_gc = false;
-        } else {
-          // Read the GC count while still holding the Heap_lock.
-          gc_count_before = total_collections();
-          should_try_gc = true;
-        }
-      }
+      // Only try a GC if the GCLocker does not signal the need for a GC. Wait until
+      // the GCLocker initiated GC has been performed and then retry. This includes
+      // the case when the GC Locker is not active but has not been performed.
+      should_try_gc = !GCLocker::needs_gc();
+      // Read the GC count while still holding the Heap_lock.
+      gc_count_before = total_collections();
     }
 
     if (should_try_gc) {
-      // If we failed to allocate the humongous object, we should try to
-      // do a collection pause (if we're allowed) in case it reclaims
-      // enough space for the allocation to succeed after the pause.
-
       bool succeeded;
       result = do_collection_pause(word_size, gc_count_before, &succeeded,
                                    GCCause::_g1_humongous_allocation);
       if (result != NULL) {
         assert(succeeded, "only way to get back a non-NULL result");
+        log_trace(gc, alloc)("%s: Successfully scheduled collection returning " PTR_FORMAT,
+                             Thread::current()->name(), p2i(result));
         return result;
       }
 
       if (succeeded) {
-        // If we get here we successfully scheduled a collection which
-        // failed to allocate. No point in trying to allocate
-        // further. We'll just return NULL.
-        MutexLockerEx x(Heap_lock);
-        *gc_count_before_ret = total_collections();
+        // We successfully scheduled a collection which failed to allocate. No
+        // point in trying to allocate further. We'll just return NULL.
+        log_trace(gc, alloc)("%s: Successfully scheduled collection failing to allocate "
+                             SIZE_FORMAT " words", Thread::current()->name(), word_size);
         return NULL;
       }
+      log_trace(gc, alloc)("%s: Unsuccessfully scheduled collection allocating " SIZE_FORMAT "",
+                           Thread::current()->name(), word_size);
     } else {
-      if (*gclocker_retry_count_ret > GCLockerRetryAllocationCount) {
-        MutexLockerEx x(Heap_lock);
-        *gc_count_before_ret = total_collections();
+      // Failed to schedule a collection.
+      if (gclocker_retry_count > GCLockerRetryAllocationCount) {
+        log_warning(gc, alloc)("%s: Retried waiting for GCLocker too often allocating "
+                               SIZE_FORMAT " words", Thread::current()->name(), word_size);
         return NULL;
       }
+      log_trace(gc, alloc)("%s: Stall until clear", Thread::current()->name());
       // The GCLocker is either active or the GCLocker initiated
       // GC has not yet been performed. Stall until it is and
       // then retry the allocation.
       GCLocker::stall_until_clear();
-      (*gclocker_retry_count_ret) += 1;
+      gclocker_retry_count += 1;
     }
+
 
     // We can reach here if we were unsuccessful in scheduling a
     // collection (because another thread beat us to it) or if we were
     // stalled due to the GC locker. In either can we should retry the
     // allocation attempt in case another thread successfully
-    // performed a collection and reclaimed enough space.  Give a
-    // warning if we seem to be looping forever.
+    // performed a collection and reclaimed enough space.
+    // Humongous object allocation always needs a lock, so we wait for the retry
+    // in the next iteration of the loop, unlike for the regular iteration case.
+    // Give a warning if we seem to be looping forever.
 
     if ((QueuedAllocationWarningCount > 0) &&
         (try_count % QueuedAllocationWarningCount == 0)) {
-      log_warning(gc)("G1CollectedHeap::attempt_allocation_humongous() "
-                      "retries %d times", try_count);
+      log_warning(gc, alloc)("%s: Retried allocation %u times for " SIZE_FORMAT " words",
+                             Thread::current()->name(), try_count, word_size);
     }
   }
 
@@ -1076,7 +1025,6 @@ void G1CollectedHeap::print_hrm_post_compaction() {
     PostCompactionPrinterClosure cl(hr_printer());
     heap_region_iterate(&cl);
   }
-
 }
 
 void G1CollectedHeap::abort_concurrent_cycle() {
@@ -1125,7 +1073,7 @@ void G1CollectedHeap::verify_before_full_collection(bool explicit_gc) {
   assert(!GCCause::is_user_requested_gc(gc_cause()) || explicit_gc, "invariant");
   assert(used() == recalculate_used(), "Should be equal");
   _verifier->verify_region_sets_optional();
-  _verifier->verify_before_gc();
+  _verifier->verify_before_gc(G1HeapVerifier::G1VerifyFull);
   _verifier->check_bitmaps("Full GC Start");
 }
 
@@ -1154,7 +1102,6 @@ void G1CollectedHeap::prepare_heap_for_mutators() {
 
 void G1CollectedHeap::abort_refinement() {
   if (_hot_card_cache->use_cache()) {
-    _hot_card_cache->reset_card_counts();
     _hot_card_cache->reset_hot_cache();
   }
 
@@ -1167,7 +1114,7 @@ void G1CollectedHeap::verify_after_full_collection() {
   check_gc_time_stamps();
   _hrm.verify_optional();
   _verifier->verify_region_sets_optional();
-  _verifier->verify_after_gc();
+  _verifier->verify_after_gc(G1HeapVerifier::G1VerifyFull);
   // Clear the previous marking bitmap, if needed for bitmap verification.
   // Note we cannot do this when we clear the next marking bitmap in
   // G1ConcurrentMark::abort() above since VerifyDuringGC verifies the
@@ -1198,6 +1145,10 @@ void G1CollectedHeap::verify_after_full_collection() {
 }
 
 void G1CollectedHeap::print_heap_after_full_collection(G1HeapTransition* heap_transition) {
+  // Post collection logging.
+  // We should do this after we potentially resize the heap so
+  // that all the COMMIT / UNCOMMIT events are generated before
+  // the compaction events.
   print_hrm_post_compaction();
   heap_transition->print();
   print_heap_after_gc();
@@ -1205,39 +1156,6 @@ void G1CollectedHeap::print_heap_after_full_collection(G1HeapTransition* heap_tr
 #ifdef TRACESPINNING
   ParallelTaskTerminator::print_termination_counts();
 #endif
-}
-
-void G1CollectedHeap::do_full_collection_inner(G1FullGCScope* scope) {
-  GCTraceTime(Info, gc) tm("Pause Full", NULL, gc_cause(), true);
-  g1_policy()->record_full_collection_start();
-
-  print_heap_before_gc();
-  print_heap_regions();
-
-  abort_concurrent_cycle();
-  verify_before_full_collection(scope->is_explicit_gc());
-
-  gc_prologue(true);
-  prepare_heap_for_full_collection();
-
-  G1SerialFullCollector serial(scope, ref_processor_stw());
-  serial.prepare_collection();
-  serial.collect();
-  serial.complete_collection();
-
-  prepare_heap_for_mutators();
-
-  g1_policy()->record_full_collection_end();
-  gc_epilogue(true);
-
-  // Post collection verification.
-  verify_after_full_collection();
-
-  // Post collection logging.
-  // We should do this after we potentially resize the heap so
-  // that all the COMMIT / UNCOMMIT events are generated before
-  // the compaction events.
-  print_heap_after_full_collection(scope->heap_transition());
 }
 
 bool G1CollectedHeap::do_full_collection(bool explicit_gc,
@@ -1252,8 +1170,12 @@ bool G1CollectedHeap::do_full_collection(bool explicit_gc,
   const bool do_clear_all_soft_refs = clear_all_soft_refs ||
       collector_policy()->should_clear_all_soft_refs();
 
-  G1FullGCScope scope(explicit_gc, do_clear_all_soft_refs);
-  do_full_collection_inner(&scope);
+  G1FullCollector collector(this, &_full_gc_memory_manager, explicit_gc, do_clear_all_soft_refs);
+  GCTraceTime(Info, gc) tm("Pause Full", NULL, gc_cause(), true);
+
+  collector.prepare_collection();
+  collector.collect();
+  collector.complete_collection();
 
   // Full collection was successfully completed.
   return true;
@@ -1268,10 +1190,10 @@ void G1CollectedHeap::do_full_collection(bool clear_all_soft_refs) {
 }
 
 void G1CollectedHeap::resize_if_necessary_after_full_collection() {
-  // Include bytes that will be pre-allocated to support collections, as "used".
-  const size_t used_after_gc = used();
+  // Capacity, free and used after the GC counted as full regions to
+  // include the waste in the following calculations.
   const size_t capacity_after_gc = capacity();
-  const size_t free_after_gc = capacity_after_gc - used_after_gc;
+  const size_t used_after_gc = capacity_after_gc - unused_committed_regions_in_bytes();
 
   // This is enforced in arguments.cpp.
   assert(MinHeapFreeRatio <= MaxHeapFreeRatio,
@@ -1325,8 +1247,9 @@ void G1CollectedHeap::resize_if_necessary_after_full_collection() {
     size_t expand_bytes = minimum_desired_capacity - capacity_after_gc;
 
     log_debug(gc, ergo, heap)("Attempt heap expansion (capacity lower than min desired capacity after Full GC). "
-                              "Capacity: " SIZE_FORMAT "B occupancy: " SIZE_FORMAT "B min_desired_capacity: " SIZE_FORMAT "B (" UINTX_FORMAT " %%)",
-                              capacity_after_gc, used_after_gc, minimum_desired_capacity, MinHeapFreeRatio);
+                              "Capacity: " SIZE_FORMAT "B occupancy: " SIZE_FORMAT "B live: " SIZE_FORMAT "B "
+                              "min_desired_capacity: " SIZE_FORMAT "B (" UINTX_FORMAT " %%)",
+                              capacity_after_gc, used_after_gc, used(), minimum_desired_capacity, MinHeapFreeRatio);
 
     expand(expand_bytes, _workers);
 
@@ -1336,8 +1259,9 @@ void G1CollectedHeap::resize_if_necessary_after_full_collection() {
     size_t shrink_bytes = capacity_after_gc - maximum_desired_capacity;
 
     log_debug(gc, ergo, heap)("Attempt heap shrinking (capacity higher than max desired capacity after Full GC). "
-                              "Capacity: " SIZE_FORMAT "B occupancy: " SIZE_FORMAT "B min_desired_capacity: " SIZE_FORMAT "B (" UINTX_FORMAT " %%)",
-                              capacity_after_gc, used_after_gc, minimum_desired_capacity, MinHeapFreeRatio);
+                              "Capacity: " SIZE_FORMAT "B occupancy: " SIZE_FORMAT "B live: " SIZE_FORMAT "B "
+                              "maximum_desired_capacity: " SIZE_FORMAT "B (" UINTX_FORMAT " %%)",
+                              capacity_after_gc, used_after_gc, used(), maximum_desired_capacity, MaxHeapFreeRatio);
 
     shrink(shrink_bytes);
   }
@@ -1356,7 +1280,6 @@ HeapWord* G1CollectedHeap::satisfy_failed_allocation_helper(size_t word_size,
                                     context,
                                     expect_null_mutator_alloc_region);
   if (result != NULL) {
-    assert(*gc_succeeded, "sanity");
     return result;
   }
 
@@ -1366,7 +1289,6 @@ HeapWord* G1CollectedHeap::satisfy_failed_allocation_helper(size_t word_size,
   // do something smarter than full collection to satisfy a failed alloc.)
   result = expand_and_allocate(word_size, context);
   if (result != NULL) {
-    assert(*gc_succeeded, "sanity");
     return result;
   }
 
@@ -1418,7 +1340,6 @@ HeapWord* G1CollectedHeap::satisfy_failed_allocation(size_t word_size,
                                             succeeded);
 
   if (result != NULL) {
-    assert(*succeeded, "sanity");
     return result;
   }
 
@@ -1429,7 +1350,6 @@ HeapWord* G1CollectedHeap::satisfy_failed_allocation(size_t word_size,
   // space available is large enough for the allocation, then a more
   // complete compaction phase than we've tried so far might be
   // appropriate.
-  assert(*succeeded, "sanity");
   return NULL;
 }
 
@@ -1541,7 +1461,13 @@ void G1CollectedHeap::shrink(size_t shrink_bytes) {
 
 G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* collector_policy) :
   CollectedHeap(),
+  _young_gen_sampling_thread(NULL),
   _collector_policy(collector_policy),
+  _memory_manager("G1 Young Generation", "end of minor GC"),
+  _full_gc_memory_manager("G1 Old Generation", "end of major GC"),
+  _eden_pool(NULL),
+  _survivor_pool(NULL),
+  _old_pool(NULL),
   _gc_timer_stw(new (ResourceObj::C_HEAP, mtGC) STWGCTimer()),
   _gc_tracer_stw(new (ResourceObj::C_HEAP, mtGC) G1NewTracer()),
   _g1_policy(create_g1_policy(_gc_timer_stw)),
@@ -1554,7 +1480,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* collector_policy) :
   _bot(NULL),
   _hot_card_cache(NULL),
   _g1_rem_set(NULL),
-  _cg1r(NULL),
+  _cr(NULL),
   _g1mm(NULL),
   _preserved_marks_set(true /* in_c_heap */),
   _secondary_free_list("Secondary Free List", new SecondaryFreeRegionListMtSafeChecker()),
@@ -1633,8 +1559,17 @@ G1RegionToSpaceMapper* G1CollectedHeap::create_aux_memory_mapper(const char* des
 
 jint G1CollectedHeap::initialize_concurrent_refinement() {
   jint ecode = JNI_OK;
-  _cg1r = ConcurrentG1Refine::create(&ecode);
+  _cr = G1ConcurrentRefine::create(&ecode);
   return ecode;
+}
+
+jint G1CollectedHeap::initialize_young_gen_sampling_thread() {
+  _young_gen_sampling_thread = new G1YoungRemSetSamplingThread();
+  if (_young_gen_sampling_thread->osthread() == NULL) {
+    vm_shutdown_during_initialization("Could not create G1YoungRemSetSamplingThread");
+    return JNI_ENOMEM;
+  }
+  return JNI_OK;
 }
 
 jint G1CollectedHeap::initialize() {
@@ -1789,10 +1724,15 @@ jint G1CollectedHeap::initialize() {
     return ecode;
   }
 
+  ecode = initialize_young_gen_sampling_thread();
+  if (ecode != JNI_OK) {
+    return ecode;
+  }
+
   JavaThread::dirty_card_queue_set().initialize(DirtyCardQ_CBL_mon,
                                                 DirtyCardQ_FL_lock,
-                                                (int)concurrent_g1_refine()->yellow_zone(),
-                                                (int)concurrent_g1_refine()->red_zone(),
+                                                (int)concurrent_refine()->yellow_zone(),
+                                                (int)concurrent_refine()->red_zone(),
                                                 Shared_DirtyCardQ_lock,
                                                 NULL,  // fl_owner
                                                 true); // init_free_ids
@@ -1832,11 +1772,26 @@ jint G1CollectedHeap::initialize() {
   return JNI_OK;
 }
 
+void G1CollectedHeap::initialize_serviceability() {
+  _eden_pool = new G1EdenPool(this);
+  _survivor_pool = new G1SurvivorPool(this);
+  _old_pool = new G1OldGenPool(this);
+
+  _full_gc_memory_manager.add_pool(_eden_pool);
+  _full_gc_memory_manager.add_pool(_survivor_pool);
+  _full_gc_memory_manager.add_pool(_old_pool);
+
+  _memory_manager.add_pool(_eden_pool);
+  _memory_manager.add_pool(_survivor_pool);
+
+}
+
 void G1CollectedHeap::stop() {
   // Stop all concurrent threads. We do this to make sure these threads
   // do not continue to execute and access resources (e.g. logging)
   // that are destroyed during shutdown.
-  _cg1r->stop();
+  _cr->stop();
+  _young_gen_sampling_thread->stop();
   _cmThread->stop();
   if (G1StringDedup::is_enabled()) {
     G1StringDedup::stop();
@@ -1856,6 +1811,7 @@ size_t G1CollectedHeap::conservative_max_heap_alignment() {
 }
 
 void G1CollectedHeap::post_initialize() {
+  CollectedHeap::post_initialize();
   ref_processing_init();
 }
 
@@ -1940,6 +1896,10 @@ CollectorPolicy* G1CollectedHeap::collector_policy() const {
 
 size_t G1CollectedHeap::capacity() const {
   return _hrm.length() * HeapRegion::GrainBytes;
+}
+
+size_t G1CollectedHeap::unused_committed_regions_in_bytes() const {
+  return _hrm.total_free_bytes();
 }
 
 void G1CollectedHeap::reset_gc_time_stamps(HeapRegion* hr) {
@@ -2124,7 +2084,7 @@ void G1CollectedHeap::increment_old_marking_cycles_completed(bool concurrent) {
   // This notify_all() will ensure that a thread that called
   // System.gc() with (with ExplicitGCInvokesConcurrent set or not)
   // and it's waiting for a full GC to finish will be woken up. It is
-  // waiting in VM_G1IncCollectionPause::doit_epilogue().
+  // waiting in VM_G1CollectForAllocation::doit_epilogue().
   FullGCCount_lock->notify_all();
 }
 
@@ -2152,13 +2112,12 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
       // Schedule an initial-mark evacuation pause that will start a
       // concurrent cycle. We're setting word_size to 0 which means that
       // we are not requesting a post-GC allocation.
-      VM_G1IncCollectionPause op(gc_count_before,
-                                 0,     /* word_size */
-                                 true,  /* should_initiate_conc_mark */
-                                 g1_policy()->max_pause_time_ms(),
-                                 cause);
-      op.set_allocation_context(AllocationContext::current());
-
+      VM_G1CollectForAllocation op(0,     /* word_size */
+                                   gc_count_before,
+                                   cause,
+                                   true,  /* should_initiate_conc_mark */
+                                   g1_policy()->max_pause_time_ms(),
+                                   AllocationContext::current());
       VMThread::execute(&op);
       if (!op.pause_succeeded()) {
         if (old_marking_count_before == _old_marking_cycles_started) {
@@ -2181,11 +2140,12 @@ void G1CollectedHeap::collect(GCCause::Cause cause) {
 
         // Schedule a standard evacuation pause. We're setting word_size
         // to 0 which means that we are not requesting a post-GC allocation.
-        VM_G1IncCollectionPause op(gc_count_before,
-                                   0,     /* word_size */
-                                   false, /* should_initiate_conc_mark */
-                                   g1_policy()->max_pause_time_ms(),
-                                   cause);
+        VM_G1CollectForAllocation op(0,     /* word_size */
+                                     gc_count_before,
+                                     cause,
+                                     false, /* should_initiate_conc_mark */
+                                     g1_policy()->max_pause_time_ms(),
+                                     AllocationContext::current());
         VMThread::execute(&op);
       } else {
         // Schedule a Full GC.
@@ -2245,10 +2205,15 @@ void G1CollectedHeap::heap_region_iterate(HeapRegionClosure* cl) const {
   _hrm.iterate(cl);
 }
 
-void G1CollectedHeap::heap_region_par_iterate(HeapRegionClosure* cl,
-                                              uint worker_id,
-                                              HeapRegionClaimer *hrclaimer) const {
-  _hrm.par_iterate(cl, worker_id, hrclaimer);
+void G1CollectedHeap::heap_region_par_iterate_from_worker_offset(HeapRegionClosure* cl,
+                                                                 HeapRegionClaimer *hrclaimer,
+                                                                 uint worker_id) const {
+  _hrm.par_iterate(cl, hrclaimer, hrclaimer->offset_for_worker(worker_id));
+}
+
+void G1CollectedHeap::heap_region_par_iterate_from_start(HeapRegionClosure* cl,
+                                                         HeapRegionClaimer *hrclaimer) const {
+  _hrm.par_iterate(cl, hrclaimer, 0);
 }
 
 void G1CollectedHeap::collection_set_iterate(HeapRegionClosure* cl) {
@@ -2257,14 +2222,6 @@ void G1CollectedHeap::collection_set_iterate(HeapRegionClosure* cl) {
 
 void G1CollectedHeap::collection_set_iterate_from(HeapRegionClosure *cl, uint worker_id) {
   _collection_set.iterate_from(cl, worker_id, workers()->active_workers());
-}
-
-HeapRegion* G1CollectedHeap::next_compaction_region(const HeapRegion* from) const {
-  HeapRegion* result = _hrm.next_region_in_heap(from);
-  while (result != NULL && result->is_pinned()) {
-    result = _hrm.next_region_in_heap(result);
-  }
-  return result;
 }
 
 HeapWord* G1CollectedHeap::block_start(const void* addr) const {
@@ -2358,7 +2315,7 @@ bool G1CollectedHeap::is_obj_dead_cond(const oop obj,
   switch (vo) {
   case VerifyOption_G1UsePrevMarking: return is_obj_dead(obj, hr);
   case VerifyOption_G1UseNextMarking: return is_obj_ill(obj, hr);
-  case VerifyOption_G1UseMarkWord:    return !obj->is_gc_marked() && !hr->is_archive();
+  case VerifyOption_G1UseFullMarking: return is_obj_dead_full(obj, hr);
   default:                            ShouldNotReachHere();
   }
   return false; // keep some compilers happy
@@ -2369,10 +2326,7 @@ bool G1CollectedHeap::is_obj_dead_cond(const oop obj,
   switch (vo) {
   case VerifyOption_G1UsePrevMarking: return is_obj_dead(obj);
   case VerifyOption_G1UseNextMarking: return is_obj_ill(obj);
-  case VerifyOption_G1UseMarkWord: {
-    HeapRegion* hr = _hrm.addr_to_region((HeapWord*)obj);
-    return !obj->is_gc_marked() && !hr->is_archive();
-  }
+  case VerifyOption_G1UseFullMarking: return is_obj_dead_full(obj);
   default:                            ShouldNotReachHere();
   }
   return false; // keep some compilers happy
@@ -2390,9 +2344,8 @@ void G1CollectedHeap::print_on(outputStream* st) const {
   st->print(" %-20s", "garbage-first heap");
   st->print(" total " SIZE_FORMAT "K, used " SIZE_FORMAT "K",
             capacity()/K, used_unlocked()/K);
-  st->print(" [" PTR_FORMAT ", " PTR_FORMAT ", " PTR_FORMAT ")",
+  st->print(" [" PTR_FORMAT ", " PTR_FORMAT ")",
             p2i(_hrm.reserved().start()),
-            p2i(_hrm.reserved().start() + _hrm.length() + HeapRegion::GrainWords),
             p2i(_hrm.reserved().end()));
   st->cr();
   st->print("  region size " SIZE_FORMAT "K, ", HeapRegion::GrainBytes / K);
@@ -2437,7 +2390,8 @@ void G1CollectedHeap::print_gc_threads_on(outputStream* st) const {
   _cmThread->print_on(st);
   st->cr();
   _cm->print_worker_threads_on(st);
-  _cg1r->print_worker_threads_on(st); // also prints the sample thread
+  _cr->print_threads_on(st);
+  _young_gen_sampling_thread->print_on(st);
   if (G1StringDedup::is_enabled()) {
     G1StringDedup::print_worker_threads_on(st);
   }
@@ -2447,7 +2401,8 @@ void G1CollectedHeap::gc_threads_do(ThreadClosure* tc) const {
   workers()->threads_do(tc);
   tc->do_thread(_cmThread);
   _cm->threads_do(tc);
-  _cg1r->threads_do(tc); // also iterates over the sample thread
+  _cr->threads_do(tc);
+  tc->do_thread(_young_gen_sampling_thread);
   if (G1StringDedup::is_enabled()) {
     G1StringDedup::threads_do(tc);
   }
@@ -2579,7 +2534,7 @@ void G1CollectedHeap::gc_epilogue(bool full) {
   // FIXME: what is this about?
   // I'm ignoring the "fill_newgen()" call if "alloc_event_enabled"
   // is set.
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   assert(DerivedPointerTable::is_empty(), "derived pointer present");
 #endif
   // always_do_update_barrier = true;
@@ -2601,13 +2556,12 @@ HeapWord* G1CollectedHeap::do_collection_pause(size_t word_size,
                                                bool* succeeded,
                                                GCCause::Cause gc_cause) {
   assert_heap_not_locked_and_not_at_safepoint();
-  VM_G1IncCollectionPause op(gc_count_before,
-                             word_size,
-                             false, /* should_initiate_conc_mark */
-                             g1_policy()->max_pause_time_ms(),
-                             gc_cause);
-
-  op.set_allocation_context(AllocationContext::current());
+  VM_G1CollectForAllocation op(word_size,
+                               gc_count_before,
+                               gc_cause,
+                               false, /* should_initiate_conc_mark */
+                               g1_policy()->max_pause_time_ms(),
+                               AllocationContext::current());
   VMThread::execute(&op);
 
   HeapWord* result = op.result();
@@ -2631,11 +2585,9 @@ G1CollectedHeap::doConcurrentMark() {
 
 size_t G1CollectedHeap::pending_card_num() {
   size_t extra_cards = 0;
-  JavaThread *curr = Threads::first();
-  while (curr != NULL) {
+  for (JavaThreadIteratorWithHandle jtiwh; JavaThread *curr = jtiwh.next(); ) {
     DirtyCardQueue& dcq = curr->dirty_card_queue();
     extra_cards += dcq.size();
-    curr = curr->next();
   }
   DirtyCardQueueSet& dcqs = JavaThread::dirty_card_queue_set();
   size_t buffer_size = dcqs.buffer_size();
@@ -2941,13 +2893,17 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
     GCTraceCPUTime tcpu;
 
+    G1HeapVerifier::G1VerifyType verify_type;
     FormatBuffer<> gc_string("Pause ");
     if (collector_state()->during_initial_mark_pause()) {
       gc_string.append("Initial Mark");
+      verify_type = G1HeapVerifier::G1VerifyInitialMark;
     } else if (collector_state()->gcs_are_young()) {
       gc_string.append("Young");
+      verify_type = G1HeapVerifier::G1VerifyYoungOnly;
     } else {
       gc_string.append("Mixed");
+      verify_type = G1HeapVerifier::G1VerifyMixed;
     }
     GCTraceTime(Info, gc) tm(gc_string, NULL, gc_cause(), true);
 
@@ -2958,7 +2914,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     log_info(gc,task)("Using %u workers of %u for evacuation", active_workers, workers()->total_workers());
 
     TraceCollectorStats tcs(g1mm()->incremental_collection_counters());
-    TraceMemoryManagerStats tms(false /* fullGC */, gc_cause());
+    TraceMemoryManagerStats tms(&_memory_manager, gc_cause());
 
     // If the secondary_free_list is not empty, append it to the
     // free_list. No need to wait for the cleanup operation to finish;
@@ -2988,11 +2944,11 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         heap_region_iterate(&v_cl);
       }
 
-      _verifier->verify_before_gc();
+      _verifier->verify_before_gc(verify_type);
 
       _verifier->check_bitmaps("GC Start");
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
       DerivedPointerTable::clear();
 #endif
 
@@ -3148,7 +3104,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
           heap_region_iterate(&v_cl);
         }
 
-        _verifier->verify_after_gc();
+        _verifier->verify_after_gc(verify_type);
         _verifier->check_bitmaps("GC End");
 
         assert(!ref_processor_stw()->discovery_enabled(), "Postcondition");
@@ -3622,7 +3578,7 @@ Monitor* G1CodeCacheUnloadingTask::_lock = new Monitor(Mutex::leaf, "Code Cache 
 
 class G1KlassCleaningTask : public StackObj {
   BoolObjectClosure*                      _is_alive;
-  volatile jint                           _clean_klass_tree_claimed;
+  volatile int                            _clean_klass_tree_claimed;
   ClassLoaderDataGraphKlassIteratorAtomic _klass_iterator;
 
  public:
@@ -3638,7 +3594,7 @@ class G1KlassCleaningTask : public StackObj {
       return false;
     }
 
-    return Atomic::cmpxchg(1, (jint*)&_clean_klass_tree_claimed, 0) == 0;
+    return Atomic::cmpxchg(1, &_clean_klass_tree_claimed, 0) == 0;
   }
 
   InstanceKlass* claim_next_klass() {
@@ -3675,7 +3631,7 @@ public:
 
 class G1ResolvedMethodCleaningTask : public StackObj {
   BoolObjectClosure* _is_alive;
-  volatile jint      _resolved_method_task_claimed;
+  volatile int       _resolved_method_task_claimed;
 public:
   G1ResolvedMethodCleaningTask(BoolObjectClosure* is_alive) :
       _is_alive(is_alive), _resolved_method_task_claimed(0) {}
@@ -3684,7 +3640,7 @@ public:
     if (_resolved_method_task_claimed) {
       return false;
     }
-    return Atomic::cmpxchg(1, (jint*)&_resolved_method_task_claimed, 0) == 0;
+    return Atomic::cmpxchg(1, &_resolved_method_task_claimed, 0) == 0;
   }
 
   // These aren't big, one thread can do it all.
@@ -4421,7 +4377,7 @@ void G1CollectedHeap::post_evacuate_collection_set(EvacuationInfo& evacuation_in
   purge_code_root_memory();
 
   redirty_logged_cards();
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   double start = os::elapsedTime();
   DerivedPointerTable::update_pointers();
   g1_policy()->phase_times()->record_derived_pointer_table_update_time((os::elapsedTime() - start) * 1000.0);
@@ -4766,7 +4722,7 @@ public:
       timer->record_time_secs(G1GCPhaseTimes::YoungFreeCSet, worker_id, young_time);
     }
     if (has_non_young_time) {
-      timer->record_time_secs(G1GCPhaseTimes::NonYoungFreeCSet, worker_id, young_time);
+      timer->record_time_secs(G1GCPhaseTimes::NonYoungFreeCSet, worker_id, non_young_time);
     }
   }
 };
@@ -5371,4 +5327,19 @@ public:
 void G1CollectedHeap::rebuild_strong_code_roots() {
   RebuildStrongCodeRootClosure blob_cl(this);
   CodeCache::blobs_do(&blob_cl);
+}
+
+GrowableArray<GCMemoryManager*> G1CollectedHeap::memory_managers() {
+  GrowableArray<GCMemoryManager*> memory_managers(2);
+  memory_managers.append(&_memory_manager);
+  memory_managers.append(&_full_gc_memory_manager);
+  return memory_managers;
+}
+
+GrowableArray<MemoryPool*> G1CollectedHeap::memory_pools() {
+  GrowableArray<MemoryPool*> memory_pools(3);
+  memory_pools.append(_eden_pool);
+  memory_pools.append(_survivor_pool);
+  memory_pools.append(_old_pool);
+  return memory_pools;
 }

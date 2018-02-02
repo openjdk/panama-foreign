@@ -65,6 +65,8 @@ public final class BinaryContainer implements SymbolTable {
 
     private final int codeEntryAlignment;
 
+    private final boolean threadLocalHandshakes;
+
     /**
      * Container holding code bits and any other related information.
      */
@@ -192,6 +194,8 @@ public final class BinaryContainer implements SymbolTable {
 
         {"StubRoutines::_checkcast_arraycopy", "_aot_stub_routines_checkcast_arraycopy"},
 
+        {"StubRoutines::_generic_arraycopy", "_aot_stub_routines_generic_arraycopy"},
+
         {"StubRoutines::_aescrypt_encryptBlock", "_aot_stub_routines_aescrypt_encryptBlock"},
         {"StubRoutines::_aescrypt_decryptBlock", "_aot_stub_routines_aescrypt_decryptBlock"},
         {"StubRoutines::_cipherBlockChaining_encryptAESCrypt", "_aot_stub_routines_cipherBlockChaining_encryptAESCrypt"},
@@ -277,6 +281,8 @@ public final class BinaryContainer implements SymbolTable {
 
         this.codeEntryAlignment = graalHotSpotVMConfig.codeEntryAlignment;
 
+        this.threadLocalHandshakes = graalHotSpotVMConfig.threadLocalHandshakes;
+
         // Section unique name is limited to 8 characters due to limitation on Windows.
         // Name could be longer but only first 8 characters are stored on Windows.
 
@@ -321,7 +327,8 @@ public final class BinaryContainer implements SymbolTable {
                                    TieredAOT.getValue(graalOptions),
                                    graalHotSpotVMConfig.enableContended,
                                    graalHotSpotVMConfig.restrictContended,
-                                   graphBuilderConfig.omitAssertions()
+                                   graphBuilderConfig.omitAssertions(),
+                                   graalHotSpotVMConfig.threadLocalHandshakes
         };
 
         int[] intFlags         = { graalHotSpotVMConfig.getOopEncoding().getShift(),
@@ -431,6 +438,11 @@ public final class BinaryContainer implements SymbolTable {
     public int getCodeEntryAlignment() {
         return codeEntryAlignment;
     }
+
+    public boolean getThreadLocalHandshakes() {
+        return threadLocalHandshakes;
+    }
+
 
     /**
      * Gets the global AOT symbol associated with the function name.

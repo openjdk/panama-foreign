@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
+import jdk.javadoc.internal.doclets.formats.html.markup.Links;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.AnnotationTypeWriter;
 import jdk.javadoc.internal.doclets.toolkit.Content;
@@ -108,7 +109,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     protected Content getNavLinkPackage() {
-        Content linkContent = getHyperLink(DocPaths.PACKAGE_SUMMARY,
+        Content linkContent = links.createLink(DocPaths.PACKAGE_SUMMARY,
                 contents.packageLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
@@ -132,7 +133,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     protected Content getNavLinkClassUse() {
-        Content linkContent = getHyperLink(DocPaths.CLASS_USE.resolve(filename), contents.useLabel);
+        Content linkContent = links.createLink(DocPaths.CLASS_USE.resolve(filename), contents.useLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -191,7 +192,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         }
         bodyTree.addContent(HtmlConstants.START_OF_CLASS_DATA);
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
-        div.addStyle(HtmlStyle.header);
+        div.setStyle(HtmlStyle.header);
         if (configuration.showModules) {
             ModuleElement mdle = configuration.docEnv.getElementUtils().getModuleOf(annotationType);
             Content typeModuleLabel = HtmlTree.SPAN(HtmlStyle.moduleLabelInType, contents.moduleLabel);
@@ -346,7 +347,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     protected Content getNavLinkTree() {
-        Content treeLinkContent = getHyperLink(DocPaths.PACKAGE_TREE,
+        Content treeLinkContent = links.createLink(DocPaths.PACKAGE_TREE,
                 contents.treeLabel, "", "");
         Content li = HtmlTree.LI(treeLinkContent);
         return li;

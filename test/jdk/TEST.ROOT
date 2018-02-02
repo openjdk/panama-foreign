@@ -17,7 +17,7 @@
 keys=2d dnd headful i18n intermittent printer randomness
 
 # Tests that must run in othervm mode
-othervm.dirs=java/awt java/beans javax/accessibility javax/imageio javax/sound javax/print javax/management com/sun/awt sun/awt sun/java2d sun/pisces javax/xml/jaxp/testng/validation java/lang/ProcessHandle
+othervm.dirs=java/awt java/beans javax/accessibility javax/imageio javax/sound javax/print javax/management com/sun/awt sun/awt sun/java2d javax/xml/jaxp/testng/validation java/lang/ProcessHandle
 
 # Tests that cannot run concurrently
 exclusiveAccess.dirs=java/rmi/Naming java/util/prefs sun/management/jmxremote sun/tools/jstatd sun/security/mscapi java/util/stream java/util/Arrays/largeMemory java/util/BitSet/stream javax/rmi com/sun/corba/cachedSocket
@@ -36,10 +36,11 @@ requires.extraPropDefns.vmOpts = -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
 requires.properties= \
     sun.arch.data.model \
     java.runtime.name \
+    vm.graal.enabled \
     vm.cds
 
 # Minimum jtreg version
-requiredVersion=4.2 b08
+requiredVersion=4.2 b11
 
 # Path to libraries in the topmost test directory. This is needed so @library
 # does not need ../../ notation to reach them

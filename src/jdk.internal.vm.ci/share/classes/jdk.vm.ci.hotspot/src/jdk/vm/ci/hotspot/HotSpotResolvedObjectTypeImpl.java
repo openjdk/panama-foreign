@@ -538,7 +538,7 @@ final class HotSpotResolvedObjectTypeImpl extends HotSpotResolvedJavaType implem
         return result;
     }
 
-    synchronized HotSpotResolvedJavaField createField(JavaType type, long offset, int rawFlags, int index) {
+    HotSpotResolvedJavaField createField(JavaType type, long offset, int rawFlags, int index) {
         return new HotSpotResolvedJavaFieldImpl(this, type, offset, rawFlags, index);
     }
 
@@ -922,7 +922,10 @@ final class HotSpotResolvedObjectTypeImpl extends HotSpotResolvedJavaType implem
     }
 
     public ResolvedJavaMethod getClassInitializer() {
-        return compilerToVM().getClassInitializer(this);
+        if (!isArray()) {
+            return compilerToVM().getClassInitializer(this);
+        }
+        return null;
     }
 
     @Override

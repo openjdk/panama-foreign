@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,14 +31,17 @@ import java.util.Set;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 
+import jdk.javadoc.internal.doclets.formats.html.markup.HtmlAttr;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
+import jdk.javadoc.internal.doclets.formats.html.markup.Links;
 import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
+import jdk.javadoc.internal.doclets.toolkit.util.DocLink;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
 
@@ -110,6 +113,17 @@ public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
         return li;
     }
 
+    private Content getModuleFramesHyperLink(ModuleElement mdle, Content label, String target) {
+        DocLink mdlLink = new DocLink(DocPaths.moduleFrame(mdle));
+        DocLink mtFrameLink = new DocLink(DocPaths.moduleTypeFrame(mdle));
+        DocLink cFrameLink = new DocLink(DocPaths.moduleSummary(mdle));
+        HtmlTree anchor = HtmlTree.A(mdlLink.toString(), label);
+        String onclickStr = "updateModuleFrame('" + mtFrameLink + "','" + cFrameLink + "');";
+        anchor.addAttr(HtmlAttr.TARGET, target);
+        anchor.addAttr(HtmlAttr.ONCLICK, onclickStr);
+        return anchor;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -138,7 +152,7 @@ public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
      * @param ul the Content object to which the all classes link should be added
      */
     protected void addAllClassesLink(Content ul) {
-        Content linkContent = getHyperLink(DocPaths.ALLCLASSES_FRAME,
+        Content linkContent = links.createLink(DocPaths.ALLCLASSES_FRAME,
                 contents.allClassesLabel, "", "packageFrame");
         Content li = HtmlTree.LI(linkContent);
         ul.addContent(li);
@@ -151,7 +165,7 @@ public class ModuleIndexFrameWriter extends AbstractModuleIndexWriter {
      * @param ul the Content object to which the all packages link should be added
      */
     protected void addAllPackagesLink(Content ul) {
-        Content linkContent = getHyperLink(DocPaths.OVERVIEW_FRAME,
+        Content linkContent = links.createLink(DocPaths.OVERVIEW_FRAME,
                 contents.allPackagesLabel, "", "packageListFrame");
         Content li = HtmlTree.LI(linkContent);
         ul.addContent(li);

@@ -28,6 +28,7 @@ package jdk.javadoc.internal.doclets.formats.html;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jdk.javadoc.internal.doclets.formats.html.markup.Comment;
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
 import jdk.javadoc.internal.doclets.formats.html.markup.FixedStringContent;
 import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml;
@@ -95,6 +96,7 @@ public class Contents {
     public final Content errors;
     public final Content exception;
     public final Content exceptions;
+    public final Content exportedTo;
     public final Content fieldLabel;
     public final Content fieldDetailsLabel;
     public final Content fieldSummaryLabel;
@@ -137,6 +139,7 @@ public class Contents {
     public final Content navProperty;
     public final Content navServices;
     public final Content nestedClassSummary;
+    public final Content newPage;
     public final Content nextClassLabel;
     public final Content nextLabel;
     public final Content nextLetter;
@@ -145,6 +148,7 @@ public class Contents {
     public final Content noFramesLabel;
     public final Content noScriptMessage;
     public final Content openModuleLabel;
+    public final Content openedTo;
     public final Content overridesLabel;
     public final Content overviewLabel;
     public final Content packageHierarchies;
@@ -227,6 +231,7 @@ public class Contents {
         errors = getContent("doclet.Errors");
         exception = getContent("doclet.Exception");
         exceptions = getContent("doclet.Exceptions");
+        exportedTo = getContent("doclet.ExportedTo");
         fieldDetailsLabel = getContent("doclet.Field_Detail");
         fieldSummaryLabel = getContent("doclet.Field_Summary");
         fieldLabel = getContent("doclet.Field");
@@ -269,6 +274,7 @@ public class Contents {
         navProperty = getContent("doclet.navProperty");
         navServices = getContent("doclet.navServices");
         nestedClassSummary = getContent("doclet.Nested_Class_Summary");
+        newPage = new Comment(resources.getText("doclet.New_Page"));
         nextClassLabel = getNonBreakContent("doclet.Next_Class");
         nextLabel = getNonBreakContent("doclet.Next");
         nextLetter = getContent("doclet.Next_Letter");
@@ -276,6 +282,7 @@ public class Contents {
         nextPackageLabel = getNonBreakContent("doclet.Next_Package");
         noFramesLabel = getNonBreakContent("doclet.No_Frames");
         noScriptMessage = getContent("doclet.No_Script_Message");
+        openedTo = getContent("doclet.OpenedTo");
         openModuleLabel = getContent("doclet.Open_Module");
         overridesLabel = getContent("doclet.Overrides");
         overviewLabel = getContent("doclet.Overview");

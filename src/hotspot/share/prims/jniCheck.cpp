@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "jni.h"
+#include "jvm.h"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -32,7 +33,6 @@
 #include "oops/oop.inline.hpp"
 #include "oops/symbol.hpp"
 #include "prims/jniCheck.hpp"
-#include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/handles.hpp"
@@ -826,7 +826,10 @@ JNI_ENTRY_CHECKED(jint,
     }
     jint result = UNCHECKED()->EnsureLocalCapacity(env, capacity);
     if (result == JNI_OK) {
-      add_planned_handle_capacity(thr->active_handles(), capacity);
+      // increase local ref capacity if needed
+      if ((size_t)capacity > thr->active_handles()->get_planned_capacity()) {
+        add_planned_handle_capacity(thr->active_handles(), capacity);
+      }
     }
     functionExit(thr);
     return result;

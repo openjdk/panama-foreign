@@ -414,6 +414,14 @@ address TemplateInterpreterGenerator::generate_return_entry_for(TosState state, 
   __ restore_constant_pool_cache();
   __ get_method(rmethod);
 
+  if (state == atos) {
+    Register obj = r0;
+    Register mdp = r1;
+    Register tmp = r2;
+    __ ldr(mdp, Address(rmethod, Method::method_data_offset()));
+    __ profile_return_type(mdp, obj, tmp);
+  }
+
   // Pop N words from the stack
   __ get_cache_and_index_at_bcp(r1, r2, 1, index_size);
   __ ldr(r1, Address(r1, ConstantPoolCache::base_offset() + ConstantPoolCacheEntry::flags_offset()));
@@ -447,7 +455,8 @@ address TemplateInterpreterGenerator::generate_return_entry_for(TosState state, 
 }
 
 address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state,
-                                                               int step) {
+                                                               int step,
+                                                               address continuation) {
   address entry = __ pc();
   __ restore_bcp();
   __ restore_locals();
@@ -472,7 +481,7 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state,
 #if INCLUDE_JVMCI
   // Check if we need to take lock at entry of synchronized method.  This can
   // only occur on method entry so emit it only for vtos with step 0.
-  if (UseJVMCICompiler && state == vtos && step == 0) {
+  if (EnableJVMCI && state == vtos && step == 0) {
     Label L;
     __ ldr(rscratch1, Address(rthread, Thread::pending_exception_offset()));
     __ cbz(rscratch1, L);
@@ -483,7 +492,7 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state,
     __ bind(L);
   } else {
 #ifdef ASSERT
-    if (UseJVMCICompiler) {
+    if (EnableJVMCI) {
       Label L;
       __ ldr(rscratch1, Address(rthread, Thread::pending_exception_offset()));
       __ cbz(rscratch1, L);
@@ -505,7 +514,11 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state,
     __ bind(L);
   }
 
-  __ dispatch_next(state, step);
+  if (continuation == NULL) {
+    __ dispatch_next(state, step);
+  } else {
+    __ jump_to_entry(continuation);
+  }
   return entry;
 }
 
@@ -962,12 +975,7 @@ address TemplateInterpreterGenerator::generate_CRC32_update_entry() {
 
     Label slow_path;
     // If we need a safepoint check, generate full interpreter entry.
-    ExternalAddress state(SafepointSynchronize::address_of_state());
-    unsigned long offset;
-    __ adrp(rscratch1, ExternalAddress(SafepointSynchronize::address_of_state()), offset);
-    __ ldrw(rscratch1, Address(rscratch1, offset));
-    assert(SafepointSynchronize::_not_synchronized == 0, "rewrite this code");
-    __ cbnz(rscratch1, slow_path);
+    __ safepoint_poll(slow_path);
 
     // We don't generate local frame and don't align stack because
     // we call stub code and there is no safepoint on this path.
@@ -981,12 +989,13 @@ address TemplateInterpreterGenerator::generate_CRC32_update_entry() {
     __ ldrw(val, Address(esp, 0));              // byte value
     __ ldrw(crc, Address(esp, wordSize));       // Initial CRC
 
+    unsigned long offset;
     __ adrp(tbl, ExternalAddress(StubRoutines::crc_table_addr()), offset);
     __ add(tbl, tbl, offset);
 
-    __ ornw(crc, zr, crc); // ~crc
+    __ mvnw(crc, crc); // ~crc
     __ update_byte_crc32(crc, val, tbl);
-    __ ornw(crc, zr, crc); // ~crc
+    __ mvnw(crc, crc); // ~crc
 
     // result in c_rarg0
 
@@ -1015,12 +1024,7 @@ address TemplateInterpreterGenerator::generate_CRC32_updateBytes_entry(AbstractI
 
     Label slow_path;
     // If we need a safepoint check, generate full interpreter entry.
-    ExternalAddress state(SafepointSynchronize::address_of_state());
-    unsigned long offset;
-    __ adrp(rscratch1, ExternalAddress(SafepointSynchronize::address_of_state()), offset);
-    __ ldrw(rscratch1, Address(rscratch1, offset));
-    assert(SafepointSynchronize::_not_synchronized == 0, "rewrite this code");
-    __ cbnz(rscratch1, slow_path);
+    __ safepoint_poll(slow_path);
 
     // We don't generate local frame and don't align stack because
     // we call stub code and there is no safepoint on this path.
@@ -1061,8 +1065,44 @@ address TemplateInterpreterGenerator::generate_CRC32_updateBytes_entry(AbstractI
   return NULL;
 }
 
-// Not supported
+/**
+ * Method entry for intrinsic-candidate (non-native) methods:
+ *   int java.util.zip.CRC32C.updateBytes(int crc, byte[] b, int off, int end)
+ *   int java.util.zip.CRC32C.updateDirectByteBuffer(int crc, long buf, int off, int end)
+ * Unlike CRC32, CRC32C does not have any methods marked as native
+ * CRC32C also uses an "end" variable instead of the length variable CRC32 uses
+ */
 address TemplateInterpreterGenerator::generate_CRC32C_updateBytes_entry(AbstractInterpreter::MethodKind kind) {
+  if (UseCRC32CIntrinsics) {
+    address entry = __ pc();
+
+    // Prepare jump to stub using parameters from the stack
+    const Register crc = c_rarg0; // initial crc
+    const Register buf = c_rarg1; // source java byte array address
+    const Register len = c_rarg2; // len argument to the kernel
+
+    const Register end = len; // index of last element to process
+    const Register off = crc; // offset
+
+    __ ldrw(end, Address(esp)); // int end
+    __ ldrw(off, Address(esp, wordSize)); // int offset
+    __ sub(len, end, off);
+    __ ldr(buf, Address(esp, 2*wordSize)); // byte[] buf | long buf
+    __ add(buf, buf, off); // + offset
+    if (kind == Interpreter::java_util_zip_CRC32C_updateDirectByteBuffer) {
+      __ ldrw(crc, Address(esp, 4*wordSize)); // long crc
+    } else {
+      __ add(buf, buf, arrayOopDesc::base_offset_in_bytes(T_BYTE)); // + header size
+      __ ldrw(crc, Address(esp, 3*wordSize)); // long crc
+    }
+
+    __ andr(sp, r13, -16); // Restore the caller's SP
+
+    // Jump to the stub.
+    __ b(CAST_FROM_FN_PTR(address, StubRoutines::updateBytesCRC32C()));
+
+    return entry;
+  }
   return NULL;
 }
 
@@ -1334,7 +1374,7 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   if (os::is_MP()) {
     if (UseMembar) {
       // Force this write out before the read below
-      __ dsb(Assembler::SY);
+      __ dmb(Assembler::ISH);
     } else {
       // Write serialization page so VM thread can do a pseudo remote membar.
       // We use the current thread pointer to calculate a thread specific
@@ -1346,16 +1386,8 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
 
   // check for safepoint operation in progress and/or pending suspend requests
   {
-    Label Continue;
-    {
-      unsigned long offset;
-      __ adrp(rscratch2, SafepointSynchronize::address_of_state(), offset);
-      __ ldrw(rscratch2, Address(rscratch2, offset));
-    }
-    assert(SafepointSynchronize::_not_synchronized == 0,
-           "SafepointSynchronize::_not_synchronized");
-    Label L;
-    __ cbnz(rscratch2, L);
+    Label L, Continue;
+    __ safepoint_poll_acquire(L);
     __ ldrw(rscratch2, Address(rthread, JavaThread::suspend_flags_offset()));
     __ cbz(rscratch2, Continue);
     __ bind(L);
@@ -1629,6 +1661,14 @@ address TemplateInterpreterGenerator::generate_normal_entry(bool synchronized) {
         in_bytes(JavaThread::do_not_unlock_if_synchronized_offset()));
   __ mov(rscratch2, true);
   __ strb(rscratch2, do_not_unlock_if_synchronized);
+
+  Label no_mdp;
+  Register mdp = r3;
+  __ ldr(mdp, Address(rmethod, Method::method_data_offset()));
+  __ cbz(mdp, no_mdp);
+  __ add(mdp, mdp, in_bytes(MethodData::data_offset()));
+  __ profile_parameters_type(mdp, r1, r2);
+  __ bind(no_mdp);
 
   // increment invocation count & check for overflow
   Label invocation_counter_overflow;

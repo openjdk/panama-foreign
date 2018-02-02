@@ -48,6 +48,10 @@ class JNIHandles : AllStatic {
   template<bool external_guard> inline static oop resolve_impl(jobject handle);
   template<bool external_guard> static oop resolve_jweak(jweak handle);
 
+  // This method is not inlined in order to avoid circular includes between
+  // this header file and thread.hpp.
+  static bool current_thread_in_native();
+
  public:
   // Low tag bit in jobject used to distinguish a jweak.  jweak is
   // type equivalent to jobject, but there are places where we need to
@@ -82,6 +86,7 @@ class JNIHandles : AllStatic {
   // Weak global handles
   static jobject make_weak_global(Handle obj);
   static void destroy_weak_global(jobject handle);
+  static bool is_global_weak_cleared(jweak handle); // Test jweak without resolution
 
   // Sentinel marking deleted handles in block. Note that we cannot store NULL as
   // the sentinel, since clearing weak global JNI refs are done by storing NULL in
@@ -147,7 +152,7 @@ class JNIHandleBlock : public CHeapObj<mtInternal> {
   static int      _blocks_allocated;            // For debugging/printing
 
   // Fill block with bad_handle values
-  void zap();
+  void zap() NOT_DEBUG_RETURN;
 
   // Free list computation
   void rebuild_free_list();
@@ -218,9 +223,8 @@ inline oop& JNIHandles::jweak_ref(jobject handle) {
 template<bool external_guard>
 inline oop JNIHandles::guard_value(oop value) {
   if (!external_guard) {
-    assert(value != badJNIHandle, "Pointing to zapped jni handle area");
     assert(value != deleted_handle(), "Used a deleted global handle");
-  } else if ((value == badJNIHandle) || (value == deleted_handle())) {
+  } else if (value == deleted_handle()) {
     value = NULL;
   }
   return value;
@@ -230,6 +234,7 @@ inline oop JNIHandles::guard_value(oop value) {
 template<bool external_guard>
 inline oop JNIHandles::resolve_impl(jobject handle) {
   assert(handle != NULL, "precondition");
+  assert(!current_thread_in_native(), "must not be in native");
   oop result;
   if (is_jweak(handle)) {       // Unlikely
     result = resolve_jweak<external_guard>(handle);

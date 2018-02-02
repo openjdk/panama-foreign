@@ -30,13 +30,23 @@
  * @key randomness
  */
 
-import java.util.*;
-import java.util.function.Supplier;
-import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
-import static org.testng.Assert.fail;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Supplier;
+
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class CheckedSetBash {
     static final int numItr = 100;
@@ -122,9 +132,8 @@ public class CheckedSetBash {
     }
 
     static void AddRandoms(Set s, int n) {
-        for (int i=0; i<n; i++) {
-            int r = rnd.nextInt() % n;
-            Integer e = new Integer(r < 0 ? -r : r);
+        for (int i = 0; i < n; i++) {
+            Integer e = rnd.nextInt(n);
 
             int preSize = s.size();
             boolean prePresent = s.contains(e);

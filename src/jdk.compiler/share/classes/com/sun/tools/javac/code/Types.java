@@ -41,6 +41,7 @@ import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.Attribute.RetentionPolicy;
 import com.sun.tools.javac.code.Lint.LintCategory;
+import com.sun.tools.javac.code.Source.Feature;
 import com.sun.tools.javac.code.Type.UndetVar.InferenceBound;
 import com.sun.tools.javac.code.TypeMetadata.Entry.Kind;
 import com.sun.tools.javac.comp.AttrContext;
@@ -113,9 +114,9 @@ public class Types {
         syms = Symtab.instance(context);
         names = Names.instance(context);
         Source source = Source.instance(context);
-        allowObjectToPrimitiveCast = source.allowObjectToPrimitiveCast();
-        allowDefaultMethods = source.allowDefaultMethods();
-        mapCapturesToBounds = source.mapCapturesToBounds();
+        allowObjectToPrimitiveCast = Feature.OBJECT_TO_PRIMITIVE_CAST.allowedInSource(source);
+        allowDefaultMethods = Feature.DEFAULT_METHODS.allowedInSource(source);
+        mapCapturesToBounds = Feature.MAP_CAPTURES_TO_BOUNDS.allowedInSource(source);
         chk = Check.instance(context);
         enter = Enter.instance(context);
         capturedName = names.fromString("<captured wildcard>");
@@ -237,7 +238,7 @@ public class Types {
      * {@code upwards(List<#CAP1>, [#CAP2]) = List<#CAP1> }
      * {@code downwards(List<#CAP1>, [#CAP1]) = not defined }
      */
-    class TypeProjection extends StructuralTypeMapping<ProjectionKind> {
+    class TypeProjection extends TypeMapping<ProjectionKind> {
 
         List<Type> vars;
         Set<Type> seen = new HashSet<>();
@@ -257,13 +258,21 @@ public class Types {
                 Type outer = t.getEnclosingType();
                 Type outer1 = visit(outer, pkind);
                 List<Type> typarams = t.getTypeArguments();
-                List<Type> typarams1 = typarams.map(ta -> mapTypeArgument(ta, pkind));
-                if (typarams1.stream().anyMatch(ta -> ta.hasTag(BOT))) {
-                    //not defined
-                    return syms.botType;
+                List<Type> formals = t.tsym.type.getTypeArguments();
+                ListBuffer<Type> typarams1 = new ListBuffer<>();
+                boolean changed = false;
+                for (Type actual : typarams) {
+                    Type t2 = mapTypeArgument(t, formals.head.getUpperBound(), actual, pkind);
+                    if (t2.hasTag(BOT)) {
+                        //not defined
+                        return syms.botType;
+                    }
+                    typarams1.add(t2);
+                    changed |= actual != t2;
+                    formals = formals.tail;
                 }
-                if (outer1 == outer && typarams1 == typarams) return t;
-                else return new ClassType(outer1, typarams1, t.tsym, t.getMetadata()) {
+                if (outer1 == outer && !changed) return t;
+                else return new ClassType(outer1, typarams1.toList(), t.tsym, t.getMetadata()) {
                     @Override
                     protected boolean needsStripping() {
                         return true;
@@ -272,21 +281,23 @@ public class Types {
             }
         }
 
-        protected Type makeWildcard(Type upper, Type lower) {
-            BoundKind bk;
-            Type bound;
-            if (upper.hasTag(BOT)) {
-                upper = syms.objectType;
-            }
-            boolean isUpperObject = isSameType(upper, syms.objectType);
-            if (!lower.hasTag(BOT) && isUpperObject) {
-                bound = lower;
-                bk = SUPER;
+        @Override
+        public Type visitArrayType(ArrayType t, ProjectionKind s) {
+            Type elemtype = t.elemtype;
+            Type elemtype1 = visit(elemtype, s);
+            if (elemtype1 == elemtype) {
+                return t;
+            } else if (elemtype1.hasTag(BOT)) {
+                //undefined
+                return syms.botType;
             } else {
-                bound = upper;
-                bk = isUpperObject ? UNBOUND : EXTENDS;
+                return new ArrayType(elemtype1, t.tsym, t.metadata) {
+                    @Override
+                    protected boolean needsStripping() {
+                        return true;
+                    }
+                };
             }
-            return new WildcardType(bound, bk, syms.boundClass);
         }
 
         @Override
@@ -322,33 +333,79 @@ public class Types {
             }
         }
 
-        @Override
-        public Type visitWildcardType(WildcardType wt, ProjectionKind pkind) {
-            switch (pkind) {
-                case UPWARDS:
-                    return wt.isExtendsBound() ?
-                            wt.type.map(this, pkind) :
-                            syms.objectType;
-                case DOWNWARDS:
-                    return wt.isSuperBound() ?
-                            wt.type.map(this, pkind) :
-                            syms.botType;
-                default:
-                    Assert.error();
-                    return null;
-            }
+        private Type mapTypeArgument(Type site, Type declaredBound, Type t, ProjectionKind pkind) {
+            return t.containsAny(vars) ?
+                    t.map(new TypeArgumentProjection(site, declaredBound), pkind) :
+                    t;
         }
 
-        private Type mapTypeArgument(Type t, ProjectionKind pkind) {
-            if (!t.containsAny(vars)) {
-                return t;
-            } else if (!t.hasTag(WILDCARD) && pkind == ProjectionKind.DOWNWARDS) {
-                //not defined
-                return syms.botType;
-            } else {
-                Type upper = t.map(this, pkind);
-                Type lower = t.map(this, pkind.complement());
-                return makeWildcard(upper, lower);
+        class TypeArgumentProjection extends TypeMapping<ProjectionKind> {
+
+            Type site;
+            Type declaredBound;
+
+            TypeArgumentProjection(Type site, Type declaredBound) {
+                this.site = site;
+                this.declaredBound = declaredBound;
+            }
+
+            @Override
+            public Type visitType(Type t, ProjectionKind pkind) {
+                //type argument is some type containing restricted vars
+                if (pkind == ProjectionKind.DOWNWARDS) {
+                    //not defined
+                    return syms.botType;
+                }
+                Type upper = t.map(TypeProjection.this, ProjectionKind.UPWARDS);
+                Type lower = t.map(TypeProjection.this, ProjectionKind.DOWNWARDS);
+                List<Type> formals = site.tsym.type.getTypeArguments();
+                BoundKind bk;
+                Type bound;
+                if (!isSameType(upper, syms.objectType) &&
+                        (declaredBound.containsAny(formals) ||
+                         !isSubtype(declaredBound, upper))) {
+                    bound = upper;
+                    bk = EXTENDS;
+                } else if (!lower.hasTag(BOT)) {
+                    bound = lower;
+                    bk = SUPER;
+                } else {
+                    bound = syms.objectType;
+                    bk = UNBOUND;
+                }
+                return makeWildcard(bound, bk);
+            }
+
+            @Override
+            public Type visitWildcardType(WildcardType wt, ProjectionKind pkind) {
+                //type argument is some wildcard whose bound contains restricted vars
+                Type bound = syms.botType;
+                BoundKind bk = wt.kind;
+                switch (wt.kind) {
+                    case EXTENDS:
+                        bound = wt.type.map(TypeProjection.this, pkind);
+                        if (bound.hasTag(BOT)) {
+                            return syms.botType;
+                        }
+                        break;
+                    case SUPER:
+                        bound = wt.type.map(TypeProjection.this, pkind.complement());
+                        if (bound.hasTag(BOT)) {
+                            bound = syms.objectType;
+                            bk = UNBOUND;
+                        }
+                        break;
+                }
+                return makeWildcard(bound, bk);
+            }
+
+            private Type makeWildcard(Type bound, BoundKind bk) {
+                return new WildcardType(bound, bk, syms.boundClass) {
+                    @Override
+                    protected boolean needsStripping() {
+                        return true;
+                    }
+                };
             }
         }
     }
@@ -1234,12 +1291,9 @@ public class Types {
      * lists are of different length, return false.
      */
     public boolean isSameTypes(List<Type> ts, List<Type> ss) {
-        return isSameTypes(ts, ss, false);
-    }
-    public boolean isSameTypes(List<Type> ts, List<Type> ss, boolean strict) {
         while (ts.tail != null && ss.tail != null
                /*inlined: ts.nonEmpty() && ss.nonEmpty()*/ &&
-               isSameType(ts.head, ss.head, strict)) {
+               isSameType(ts.head, ss.head)) {
             ts = ts.tail;
             ss = ss.tail;
         }
@@ -1268,15 +1322,15 @@ public class Types {
      * Is t the same type as s?
      */
     public boolean isSameType(Type t, Type s) {
-        return isSameType(t, s, false);
-    }
-    public boolean isSameType(Type t, Type s, boolean strict) {
-        return strict ?
-                isSameTypeStrict.visit(t, s) :
-                isSameTypeLoose.visit(t, s);
+        return isSameTypeVisitor.visit(t, s);
     }
     // where
-        abstract class SameTypeVisitor extends TypeRelation {
+
+        /**
+         * Type-equality relation - type variables are considered
+         * equals if they share the same object identity.
+         */
+        TypeRelation isSameTypeVisitor = new TypeRelation() {
 
             public Boolean visitType(Type t, Type s) {
                 if (t.equalsIgnoreMetadata(s))
@@ -1293,7 +1347,7 @@ public class Types {
                     if (s.hasTag(TYPEVAR)) {
                         //type-substitution does not preserve type-var types
                         //check that type var symbols and bounds are indeed the same
-                        return sameTypeVars((TypeVar)t, (TypeVar)s);
+                        return t == s;
                     }
                     else {
                         //special case for s == ? super X, where upper(s) = u
@@ -1308,8 +1362,6 @@ public class Types {
                 }
             }
 
-            abstract boolean sameTypeVars(TypeVar tv1, TypeVar tv2);
-
             @Override
             public Boolean visitWildcardType(WildcardType t, Type s) {
                 if (!s.hasTag(WILDCARD)) {
@@ -1317,7 +1369,7 @@ public class Types {
                 } else {
                     WildcardType t2 = (WildcardType)s;
                     return (t.kind == t2.kind || (t.isExtendsBound() && s.isExtendsBound())) &&
-                            isSameType(t.type, t2.type, true);
+                            isSameType(t.type, t2.type);
                 }
             }
 
@@ -1354,10 +1406,8 @@ public class Types {
                 }
                 return t.tsym == s.tsym
                     && visit(t.getEnclosingType(), s.getEnclosingType())
-                    && containsTypes(t.getTypeArguments(), s.getTypeArguments());
+                    && containsTypeEquivalent(t.getTypeArguments(), s.getTypeArguments());
             }
-
-            abstract protected boolean containsTypes(List<Type> ts1, List<Type> ts2);
 
             @Override
             public Boolean visitArrayType(ArrayType t, Type s) {
@@ -1413,70 +1463,6 @@ public class Types {
             @Override
             public Boolean visitErrorType(ErrorType t, Type s) {
                 return true;
-            }
-        }
-
-        /**
-         * Standard type-equality relation - type variables are considered
-         * equals if they share the same type symbol.
-         */
-        TypeRelation isSameTypeLoose = new LooseSameTypeVisitor();
-
-        private class LooseSameTypeVisitor extends SameTypeVisitor {
-
-            /** cache of the type-variable pairs being (recursively) tested. */
-            private Set<TypePair> cache = new HashSet<>();
-
-            @Override
-            boolean sameTypeVars(TypeVar tv1, TypeVar tv2) {
-                return tv1.tsym == tv2.tsym && checkSameBounds(tv1, tv2);
-            }
-            @Override
-            protected boolean containsTypes(List<Type> ts1, List<Type> ts2) {
-                return containsTypeEquivalent(ts1, ts2);
-            }
-
-            /**
-             * Since type-variable bounds can be recursive, we need to protect against
-             * infinite loops - where the same bounds are checked over and over recursively.
-             */
-            private boolean checkSameBounds(TypeVar tv1, TypeVar tv2) {
-                TypePair p = new TypePair(tv1, tv2, true);
-                if (cache.add(p)) {
-                    try {
-                        return visit(tv1.getUpperBound(), tv2.getUpperBound());
-                    } finally {
-                        cache.remove(p);
-                    }
-                } else {
-                    return false;
-                }
-            }
-        };
-
-        /**
-         * Strict type-equality relation - type variables are considered
-         * equals if they share the same object identity.
-         */
-        TypeRelation isSameTypeStrict = new SameTypeVisitor() {
-            @Override
-            boolean sameTypeVars(TypeVar tv1, TypeVar tv2) {
-                return tv1 == tv2;
-            }
-            @Override
-            protected boolean containsTypes(List<Type> ts1, List<Type> ts2) {
-                return isSameTypes(ts1, ts2, true);
-            }
-
-            @Override
-            public Boolean visitWildcardType(WildcardType t, Type s) {
-                if (!s.hasTag(WILDCARD)) {
-                    return false;
-                } else {
-                    WildcardType t2 = (WildcardType)s;
-                    return t.kind == t2.kind &&
-                            isSameType(t.type, t2.type, true);
-                }
             }
         };
 
@@ -3791,17 +3777,11 @@ public class Types {
     // where
         class TypePair {
             final Type t1;
-            final Type t2;
-            boolean strict;
+            final Type t2;;
 
             TypePair(Type t1, Type t2) {
-                this(t1, t2, false);
-            }
-
-            TypePair(Type t1, Type t2, boolean strict) {
                 this.t1 = t1;
                 this.t2 = t2;
-                this.strict = strict;
             }
             @Override
             public int hashCode() {
@@ -3812,8 +3792,8 @@ public class Types {
                 if (!(obj instanceof TypePair))
                     return false;
                 TypePair typePair = (TypePair)obj;
-                return isSameType(t1, typePair.t1, strict)
-                    && isSameType(t2, typePair.t2, strict);
+                return isSameType(t1, typePair.t1)
+                    && isSameType(t2, typePair.t2);
             }
         }
         Set<TypePair> mergeCache = new HashSet<>();
@@ -4403,7 +4383,7 @@ public class Types {
                 Type tmpLower = Si.lower.hasTag(UNDETVAR) ? ((UndetVar)Si.lower).qtype : Si.lower;
                 if (!Si.bound.hasTag(ERROR) &&
                     !Si.lower.hasTag(ERROR) &&
-                    isSameType(tmpBound, tmpLower, false)) {
+                    isSameType(tmpBound, tmpLower)) {
                     currentS.head = Si.bound;
                 }
             }

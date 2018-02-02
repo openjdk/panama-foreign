@@ -611,8 +611,8 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
-  // Support for jbyte atomic::atomic_cmpxchg(jbyte exchange_value, volatile jbyte* dest,
-  //                                          jbyte compare_value)
+  // Support for int8_t atomic::atomic_cmpxchg(int8_t exchange_value, volatile int8_t* dest,
+  //                                           int8_t compare_value)
   //
   // Arguments :
   //    c_rarg0: exchange_value
@@ -637,9 +637,9 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
-  // Support for jlong atomic::atomic_cmpxchg(jlong exchange_value,
-  //                                          volatile jlong* dest,
-  //                                          jlong compare_value)
+  // Support for int64_t atomic::atomic_cmpxchg(int64_t exchange_value,
+  //                                            volatile int64_t* dest,
+  //                                            int64_t compare_value)
   // Arguments :
   //    c_rarg0: exchange_value
   //    c_rarg1: dest
@@ -694,8 +694,8 @@ class StubGenerator: public StubCodeGenerator {
   // Result:
   //    *dest += add_value
   //    return *dest;
-  address generate_atomic_add_ptr() {
-    StubCodeMark mark(this, "StubRoutines", "atomic_add_ptr");
+  address generate_atomic_add_long() {
+    StubCodeMark mark(this, "StubRoutines", "atomic_add_long");
     address start = __ pc();
 
     __ movptr(rax, c_rarg0); // Copy to eax we need a return value anyhow
@@ -1264,8 +1264,11 @@ class StubGenerator: public StubCodeGenerator {
           CardTableModRefBS* ct = barrier_set_cast<CardTableModRefBS>(bs);
           assert(sizeof(*ct->byte_map_base) == sizeof(jbyte), "adjust this code");
 
-          Label L_loop;
+          Label L_loop, L_done;
           const Register end = count;
+
+          __ testl(count, count);
+          __ jcc(Assembler::zero, L_done); // zero count - nothing to do
 
           __ leaq(end, Address(start, count, TIMES_OOP, 0));  // end == start+count*oop_size
           __ subptr(end, BytesPerHeapOop); // end - 1 to make inclusive
@@ -1280,6 +1283,7 @@ class StubGenerator: public StubCodeGenerator {
           __ movb(Address(start, count, Address::times_1), 0);
           __ decrement(count);
           __ jcc(Assembler::greaterEqual, L_loop);
+        __ BIND(L_done);
         }
         break;
       default:
@@ -4619,6 +4623,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   address generate_libmExp() {
+    StubCodeMark mark(this, "StubRoutines", "libmExp");
+
     address start = __ pc();
 
     const XMMRegister x0  = xmm0;
@@ -4646,6 +4652,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   address generate_libmLog() {
+    StubCodeMark mark(this, "StubRoutines", "libmLog");
+
     address start = __ pc();
 
     const XMMRegister x0 = xmm0;
@@ -4674,6 +4682,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   address generate_libmLog10() {
+    StubCodeMark mark(this, "StubRoutines", "libmLog10");
+
     address start = __ pc();
 
     const XMMRegister x0 = xmm0;
@@ -4701,6 +4711,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   address generate_libmPow() {
+    StubCodeMark mark(this, "StubRoutines", "libmPow");
+
     address start = __ pc();
 
     const XMMRegister x0 = xmm0;
@@ -4731,6 +4743,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   address generate_libmSin() {
+    StubCodeMark mark(this, "StubRoutines", "libmSin");
+
     address start = __ pc();
 
     const XMMRegister x0 = xmm0;
@@ -4770,6 +4784,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   address generate_libmCos() {
+    StubCodeMark mark(this, "StubRoutines", "libmCos");
+
     address start = __ pc();
 
     const XMMRegister x0 = xmm0;
@@ -4809,6 +4825,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   address generate_libmTan() {
+    StubCodeMark mark(this, "StubRoutines", "libmTan");
+
     address start = __ pc();
 
     const XMMRegister x0 = xmm0;
@@ -4997,14 +5015,14 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_catch_exception_entry = generate_catch_exception();
 
     // atomic calls
-    StubRoutines::_atomic_xchg_entry         = generate_atomic_xchg();
-    StubRoutines::_atomic_xchg_long_entry    = generate_atomic_xchg_long();
-    StubRoutines::_atomic_cmpxchg_entry      = generate_atomic_cmpxchg();
-    StubRoutines::_atomic_cmpxchg_byte_entry = generate_atomic_cmpxchg_byte();
-    StubRoutines::_atomic_cmpxchg_long_entry = generate_atomic_cmpxchg_long();
-    StubRoutines::_atomic_add_entry          = generate_atomic_add();
-    StubRoutines::_atomic_add_ptr_entry      = generate_atomic_add_ptr();
-    StubRoutines::_fence_entry               = generate_orderaccess_fence();
+    StubRoutines::_atomic_xchg_entry          = generate_atomic_xchg();
+    StubRoutines::_atomic_xchg_long_entry     = generate_atomic_xchg_long();
+    StubRoutines::_atomic_cmpxchg_entry       = generate_atomic_cmpxchg();
+    StubRoutines::_atomic_cmpxchg_byte_entry  = generate_atomic_cmpxchg_byte();
+    StubRoutines::_atomic_cmpxchg_long_entry  = generate_atomic_cmpxchg_long();
+    StubRoutines::_atomic_add_entry           = generate_atomic_add();
+    StubRoutines::_atomic_add_long_entry      = generate_atomic_add_long();
+    StubRoutines::_fence_entry                = generate_orderaccess_fence();
 
     // platform dependent
     StubRoutines::x86::_get_previous_fp_entry = generate_get_previous_fp();

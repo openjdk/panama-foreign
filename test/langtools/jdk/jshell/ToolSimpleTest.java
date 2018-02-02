@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8153716 8143955 8151754 8150382 8153920 8156910 8131024 8160089 8153897 8167128 8154513 8170015 8170368 8172102 8172103  8165405 8173073 8173848 8174041 8173916 8174028 8174262 8174797 8177079 8180508 8177466
+ * @bug 8153716 8143955 8151754 8150382 8153920 8156910 8131024 8160089 8153897 8167128 8154513 8170015 8170368 8172102 8172103  8165405 8173073 8173848 8174041 8173916 8174028 8174262 8174797 8177079 8180508 8177466 8172154 8192979 8191842
  * @summary Simple jshell tool tests
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
@@ -216,7 +216,9 @@ public class ToolSimpleTest extends ReplToolTesting {
     public void testInvalidClassPath() {
         test(
                 a -> assertCommand(a, "/env --class-path snurgefusal",
-                        "|  File 'snurgefusal' for '--class-path' is not found.")
+                        "|  File 'snurgefusal' for '--class-path' is not found."),
+                a -> assertCommand(a, "/env --class-path ?",
+                        "|  File '?' for '--class-path' is not found.")
         );
     }
 
@@ -294,7 +296,7 @@ public class ToolSimpleTest extends ReplToolTesting {
     @Test
     public void testDropNegative() {
         test(false, new String[]{"--no-startup"},
-                a -> assertCommandOutputStartsWith(a, "/drop 0", "|  No snippet with id: 0"),
+                a -> assertCommandOutputStartsWith(a, "/drop 0", "|  No snippet with ID: 0"),
                 a -> assertCommandOutputStartsWith(a, "/drop a", "|  No such snippet: a"),
                 a -> assertCommandCheckOutput(a, "/drop",
                         assertStartsWith("|  In the /drop argument, please specify an import, variable, method, or class to drop.")),
@@ -366,6 +368,20 @@ public class ToolSimpleTest extends ReplToolTesting {
                 (a) -> assertHelp(a, "/help /help", "/help <command>"),
                 (a) -> assertHelp(a, "/help li", "/list -start"),
                 (a) -> assertHelp(a, "/help fe", "/set feedback -retain")
+        );
+    }
+
+    @Test
+    public void testHelpStart() {
+        test(
+                (a) -> assertCommandCheckOutput(a, "/help /exit",
+                        s -> assertTrue(s.replaceAll("\\r\\n?", "\n").startsWith(
+                                "|  \n" +
+                                "|                                   /exit\n" +
+                                "|                                   =====\n" +
+                                "|  "
+                        ))
+                )
         );
     }
 
@@ -633,6 +649,17 @@ public class ToolSimpleTest extends ReplToolTesting {
     }
 
     @Test
+    public void testJavaSeSetStart() {
+        test(
+                (a) -> assertCommand(a, "/set sta JAVASE", ""),
+                (a) -> assertCommand(a, "/reset", "|  Resetting state."),
+                (a) -> assertCommandCheckOutput(a, "/li -a",
+                            s -> assertTrue(s.split("import ").length > 160,
+                            "not enough imports for JAVASE:\n" + s))
+        );
+    }
+
+    @Test
     public void defineClasses() {
         test(
                 (a) -> assertCommandCheckOutput(a, "/list", assertList()),
@@ -759,7 +786,11 @@ public class ToolSimpleTest extends ReplToolTesting {
                 (a) -> assertCommandOutputContains(a, "var r1 = new Object() {}", "r1"),
                 (a) -> assertCommandOutputContains(a, "/vars r1", "|    <anonymous class extending Object> r1 = "),
                 (a) -> assertCommandOutputContains(a, "var r2 = new Runnable() { public void run() { } }", "r2"),
-                (a) -> assertCommandOutputContains(a, "/vars r2", "|    <anonymous class implementing Runnable> r2 = ")
+                (a) -> assertCommandOutputContains(a, "/vars r2", "|    <anonymous class implementing Runnable> r2 = "),
+                (a) -> assertCommandOutputContains(a, "import java.util.stream.*;", ""),
+                (a) -> assertCommandOutputContains(a, "var list = Stream.of(1, 2, 3).map(j -> new Object() { int i = j; }).collect(Collectors.toList());",
+                                                      "list"),
+                (a) -> assertCommandOutputContains(a, "/vars list", "|    List<<anonymous class extending Object>> list = ")
         );
     }
 }

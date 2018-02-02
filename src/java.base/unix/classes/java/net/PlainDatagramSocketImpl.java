@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,48 +45,48 @@ class PlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
             ExtendedSocketOptions.getInstance();
 
     protected <T> void setOption(SocketOption<T> name, T value) throws IOException {
-        if (!extendedOptions.isOptionSupported(name)) {
-            if (!name.equals(StandardSocketOptions.SO_REUSEPORT)) {
-                super.setOption(name, value);
+        if (isClosed()) {
+            throw new SocketException("Socket closed");
+        }
+        if (supportedOptions().contains(name)) {
+            if (extendedOptions.isOptionSupported(name)) {
+                extendedOptions.setOption(fd, name, value);
             } else {
-               if (supportedOptions().contains(name)) {
-                   super.setOption(name, value);
-               } else {
-                   throw new UnsupportedOperationException("unsupported option");
-               }
+                super.setOption(name, value);
             }
         } else {
-            if (isClosed()) {
-                throw new SocketException("Socket closed");
-            }
-            extendedOptions.setOption(fd, name, value);
+            throw new UnsupportedOperationException("unsupported option");
         }
     }
 
     @SuppressWarnings("unchecked")
     protected <T> T getOption(SocketOption<T> name) throws IOException {
-        if (!extendedOptions.isOptionSupported(name)) {
-            if (!name.equals(StandardSocketOptions.SO_REUSEPORT)) {
-                return super.getOption(name);
+        if (isClosed()) {
+            throw new SocketException("Socket closed");
+        }
+        if (supportedOptions().contains(name)) {
+            if (extendedOptions.isOptionSupported(name)) {
+                return (T) extendedOptions.getOption(fd, name);
             } else {
-                if (supportedOptions().contains(name)) {
-                    return super.getOption(name);
-                } else {
-                    throw new UnsupportedOperationException("unsupported option");
-                }
+                return super.getOption(name);
             }
         } else {
-            if (isClosed()) {
-                throw new SocketException("Socket closed");
-            }
-            return (T) extendedOptions.getOption(fd, name);
+            throw new UnsupportedOperationException("unsupported option");
         }
     }
 
     protected Set<SocketOption<?>> supportedOptions() {
         HashSet<SocketOption<?>> options = new HashSet<>(super.supportedOptions());
-        options.addAll(extendedOptions.options());
+        addExtSocketOptions(extendedOptions.options(), options);
         return options;
+    }
+
+    private void addExtSocketOptions(Set<SocketOption<?>> extOptions,
+                                     Set<SocketOption<?>> options) {
+        // TCP_QUICKACK is applicable for TCP Sockets only.
+        extOptions.stream()
+                .filter((option) -> !option.name().equals("TCP_QUICKACK"))
+                .forEach((option) -> options.add(option));
     }
 
     protected void socketSetOption(int opt, Object val) throws SocketException {

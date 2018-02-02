@@ -29,12 +29,16 @@
  * @key randomness
  */
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 
 public class Disjoint {
     static final int N = 20;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         // Make an array of lists each of which shares a single element
         // with its "neighbors," and no elements with other lists in the array
         Random rnd = new Random();

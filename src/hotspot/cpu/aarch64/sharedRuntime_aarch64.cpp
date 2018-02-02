@@ -41,7 +41,7 @@
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
 #endif
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
 #include "adfiles/ad_aarch64.hpp"
 #include "opto/runtime.hpp"
 #endif
@@ -114,7 +114,7 @@ class RegisterSaver {
 };
 
 OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_frame_words, int* total_frame_words, bool save_vectors) {
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   if (save_vectors) {
     // Save upper half of vector registers
     int vect_words = 32 * 8 / wordSize;
@@ -774,7 +774,7 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
     __ load_klass(rscratch1, receiver);
     __ ldr(tmp, Address(holder, CompiledICHolder::holder_klass_offset()));
     __ cmp(rscratch1, tmp);
-    __ ldr(rmethod, Address(holder, CompiledICHolder::holder_method_offset()));
+    __ ldr(rmethod, Address(holder, CompiledICHolder::holder_metadata_offset()));
     __ br(Assembler::EQ, ok);
     __ far_jump(RuntimeAddress(SharedRuntime::get_ic_miss_stub()));
 
@@ -1664,7 +1664,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   // critical natives they are offset down.
   GrowableArray<int> arg_order(2 * total_in_args);
   VMRegPair tmp_vmreg;
-  tmp_vmreg.set1(r19->as_VMReg());
+  tmp_vmreg.set2(r19->as_VMReg());
 
   if (!is_critical_native) {
     for (int i = total_in_args - 1, c_arg = total_c_args - 1; i >= 0; i--, c_arg--) {
@@ -1952,7 +1952,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
       __ strw(rscratch1, Address(rthread, JavaThread::thread_state_offset()));
 
       // Force this write out before the read below
-      __ dmb(Assembler::SY);
+      __ dmb(Assembler::ISH);
     } else {
       __ lea(rscratch2, Address(rthread, JavaThread::thread_state_offset()));
       __ stlrw(rscratch1, rscratch2);
@@ -1970,13 +1970,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   // check for safepoint operation in progress and/or pending suspend requests
   Label safepoint_in_progress, safepoint_in_progress_done;
   {
-    assert(SafepointSynchronize::_not_synchronized == 0, "fix this code");
-    unsigned long offset;
-    __ adrp(rscratch1,
-            ExternalAddress((address)SafepointSynchronize::address_of_state()),
-            offset);
-    __ ldrw(rscratch1, Address(rscratch1, offset));
-    __ cbnzw(rscratch1, safepoint_in_progress);
+    __ safepoint_poll_acquire(safepoint_in_progress);
     __ ldrw(rscratch1, Address(rthread, JavaThread::suspend_flags_offset()));
     __ cbnzw(rscratch1, safepoint_in_progress);
     __ bind(safepoint_in_progress_done);
@@ -2688,7 +2682,7 @@ uint SharedRuntime::out_preserve_stack_slots() {
   return 0;
 }
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
 //------------------------------generate_uncommon_trap_blob--------------------
 void SharedRuntime::generate_uncommon_trap_blob() {
   // Allocate space for the code
@@ -2894,7 +2888,7 @@ void SharedRuntime::generate_uncommon_trap_blob() {
   }
 #endif
 }
-#endif // COMPILER2
+#endif // COMPILER2_OR_JVMCI
 
 
 //------------------------------generate_handler_blob------
@@ -2932,8 +2926,11 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
 
   if (!cause_return) {
     // overwrite the return address pushed by save_live_registers
-    __ ldr(c_rarg0, Address(rthread, JavaThread::saved_exception_pc_offset()));
-    __ str(c_rarg0, Address(rfp, wordSize));
+    // Additionally, r20 is a callee-saved register so we can look at
+    // it later to determine if someone changed the return address for
+    // us!
+    __ ldr(r20, Address(rthread, JavaThread::saved_exception_pc_offset()));
+    __ str(r20, Address(rfp, wordSize));
   }
 
   // Do the call
@@ -2968,10 +2965,39 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   // No exception case
   __ bind(noException);
 
+  Label no_adjust, bail;
+  if (SafepointMechanism::uses_thread_local_poll() && !cause_return) {
+    // If our stashed return pc was modified by the runtime we avoid touching it
+    __ ldr(rscratch1, Address(rfp, wordSize));
+    __ cmp(r20, rscratch1);
+    __ br(Assembler::NE, no_adjust);
+
+#ifdef ASSERT
+    // Verify the correct encoding of the poll we're about to skip.
+    // See NativeInstruction::is_ldrw_to_zr()
+    __ ldrw(rscratch1, Address(r20));
+    __ ubfx(rscratch2, rscratch1, 22, 10);
+    __ cmpw(rscratch2, 0b1011100101);
+    __ br(Assembler::NE, bail);
+    __ ubfx(rscratch2, rscratch1, 0, 5);
+    __ cmpw(rscratch2, 0b11111);
+    __ br(Assembler::NE, bail);
+#endif
+    // Adjust return pc forward to step over the safepoint poll instruction
+    __ add(r20, r20, NativeInstruction::instruction_size);
+    __ str(r20, Address(rfp, wordSize));
+  }
+
+  __ bind(no_adjust);
   // Normal exit, restore registers and exit.
   RegisterSaver::restore_live_registers(masm, save_vectors);
 
   __ ret(lr);
+
+#ifdef ASSERT
+  __ bind(bail);
+  __ stop("Attempting to adjust pc to skip safepoint poll but the return point is not what we expected");
+#endif
 
   // Make sure all code is generated
   masm->flush();
@@ -3070,8 +3096,7 @@ RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const cha
   return RuntimeStub::new_runtime_stub(name, &buffer, frame_complete, frame_size_in_words, oop_maps, true);
 }
 
-
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
 // This is here instead of runtime_x86_64.cpp because it uses SimpleRuntimeFrame
 //
 //------------------------------generate_exception_blob---------------------------
@@ -3200,4 +3225,4 @@ void OptoRuntime::generate_exception_blob() {
   // Set exception blob
   _exception_blob =  ExceptionBlob::create(&buffer, oop_maps, SimpleRuntimeFrame::framesize >> 1);
 }
-#endif // COMPILER2
+#endif // COMPILER2_OR_JVMCI

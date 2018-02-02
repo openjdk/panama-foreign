@@ -23,11 +23,34 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
-#include "prims/jvm.h"
 #include "runtime/thread.hpp"
 #include "services/diagnosticArgument.hpp"
+
+StringArrayArgument::StringArrayArgument() {
+  _array = new(ResourceObj::C_HEAP, mtInternal)GrowableArray<char *>(32, true);
+  assert(_array != NULL, "Sanity check");
+}
+
+StringArrayArgument::~StringArrayArgument() {
+  for (int i=0; i<_array->length(); i++) {
+    if(_array->at(i) != NULL) { // Safety check
+      FREE_C_HEAP_ARRAY(char, _array->at(i));
+    }
+  }
+  delete _array;
+}
+
+void StringArrayArgument::add(const char* str, size_t len) {
+  if (str != NULL) {
+    char* ptr = NEW_C_HEAP_ARRAY(char, len+1, mtInternal);
+    strncpy(ptr, str, len);
+    ptr[len] = 0;
+    _array->append(ptr);
+  }
+}
 
 void GenDCmdArgument::read_value(const char* str, size_t len, TRAPS) {
   /* NOTE:Some argument types doesn't require a value,

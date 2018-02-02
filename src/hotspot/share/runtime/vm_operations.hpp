@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "memory/allocation.hpp"
 #include "oops/oop.hpp"
 #include "runtime/thread.hpp"
+#include "runtime/threadSMR.hpp"
 #include "code/codeCache.hpp"
 
 // The following classes are used for operations
@@ -66,9 +67,11 @@
   template(CGC_Operation)                         \
   template(CMS_Initial_Mark)                      \
   template(CMS_Final_Remark)                      \
-  template(G1CollectFull)                         \
   template(G1CollectForAllocation)                \
-  template(G1IncCollectionPause)                  \
+  template(G1CollectFull)                         \
+  template(HandshakeOneThread)                    \
+  template(HandshakeAllThreads)                   \
+  template(HandshakeFallback)                     \
   template(DestroyAllocationContext)              \
   template(EnableBiasedLocking)                   \
   template(RevokeBias)                            \
@@ -111,6 +114,7 @@
   template(ThreadsSuspendJVMTI)                   \
   template(ICBufferFull)                          \
   template(ScavengeMonitors)                      \
+  template(PrintMetadata)                         \
 
 class VM_Operation: public CHeapObj<mtInternal> {
  public:
@@ -374,15 +378,28 @@ class VM_PrintJNI: public VM_Operation {
   void doit();
 };
 
+class VM_PrintMetadata : public VM_Operation {
+ private:
+  outputStream* _out;
+  size_t        _scale;
+ public:
+  VM_PrintMetadata(outputStream* out, size_t scale) : _out(out), _scale(scale) {};
+
+  VMOp_Type type() const  { return VMOp_PrintMetadata; }
+  void doit();
+};
+
 class DeadlockCycle;
 class VM_FindDeadlocks: public VM_Operation {
  private:
-  bool           _concurrent_locks;
-  DeadlockCycle* _deadlocks;
-  outputStream*  _out;
+  bool              _concurrent_locks;
+  DeadlockCycle*    _deadlocks;
+  outputStream*     _out;
+  ThreadsListSetter _setter;  // Helper to set hazard ptr in the originating thread
+                              // which protects the JavaThreads in _deadlocks.
 
  public:
-  VM_FindDeadlocks(bool concurrent_locks) :  _concurrent_locks(concurrent_locks), _out(NULL), _deadlocks(NULL) {};
+  VM_FindDeadlocks(bool concurrent_locks) :  _concurrent_locks(concurrent_locks), _out(NULL), _deadlocks(NULL), _setter() {};
   VM_FindDeadlocks(outputStream* st) : _concurrent_locks(true), _out(st), _deadlocks(NULL) {};
   ~VM_FindDeadlocks();
 

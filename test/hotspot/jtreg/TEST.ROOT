@@ -53,11 +53,12 @@ requires.properties= \
     vm.rtm.os \
     vm.aot \
     vm.cds \
+    vm.cds.custom.loaders \
     vm.graal.enabled \
     docker.support
 
 # Minimum jtreg version
-requiredVersion=4.2 b08
+requiredVersion=4.2 b11
 
 # Path to libraries in the topmost test directory. This is needed so @library
 # does not need ../../../ notation to reach them

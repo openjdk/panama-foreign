@@ -22,6 +22,8 @@
  */
 package org.graalvm.compiler.nodes;
 
+import java.util.Map;
+
 import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.graph.NodeClass;
@@ -35,7 +37,7 @@ import org.graalvm.util.CollectionsUtil;
 /**
  * Value {@link PhiNode}s merge data flow values at control flow merges.
  */
-@NodeInfo(nameTemplate = "Phi({i#values})")
+@NodeInfo(nameTemplate = "Phi({i#values}, {p#valueDescription})")
 public class ValuePhiNode extends PhiNode implements ArrayLengthProvider {
 
     public static final NodeClass<ValuePhiNode> TYPE = NodeClass.create(ValuePhiNode.class);
@@ -103,14 +105,26 @@ public class ValuePhiNode extends PhiNode implements ArrayLengthProvider {
         for (ValueNode input : values()) {
             assert input != null;
             if (s == null) {
-                s = input.stamp();
+                s = input.stamp(NodeView.DEFAULT);
             } else {
-                if (!s.isCompatible(input.stamp())) {
+                if (!s.isCompatible(input.stamp(NodeView.DEFAULT))) {
                     fail("Phi Input Stamps are not compatible. Phi:%s inputs:%s", this,
-                                    CollectionsUtil.mapAndJoin(values(), x -> x.toString() + ":" + x.stamp(), ", "));
+                                    CollectionsUtil.mapAndJoin(values(), x -> x.toString() + ":" + x.stamp(NodeView.DEFAULT), ", "));
                 }
             }
         }
         return super.verify();
+    }
+
+    @Override
+    protected String valueDescription() {
+        return stamp(NodeView.DEFAULT).unrestricted().toString();
+    }
+
+    @Override
+    public Map<Object, Object> getDebugProperties(Map<Object, Object> map) {
+        Map<Object, Object> properties = super.getDebugProperties(map);
+        properties.put("valueDescription", valueDescription());
+        return properties;
     }
 }

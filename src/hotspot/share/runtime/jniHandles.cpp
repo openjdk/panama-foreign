@@ -30,6 +30,7 @@
 #include "runtime/jniHandles.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/thread.inline.hpp"
+#include "trace/traceMacros.hpp"
 #include "utilities/align.hpp"
 #if INCLUDE_ALL_GCS
 #include "gc/g1/g1SATBCardTableModRefBS.hpp"
@@ -46,6 +47,7 @@ jobject JNIHandles::make_local(oop obj) {
   } else {
     Thread* thread = Thread::current();
     assert(Universe::heap()->is_in_reserved(obj), "sanity check");
+    assert(!current_thread_in_native(), "must not be in native");
     return thread->active_handles()->allocate_handle(obj);
   }
 }
@@ -58,6 +60,8 @@ jobject JNIHandles::make_local(Thread* thread, oop obj) {
     return NULL;                // ignore null handles
   } else {
     assert(Universe::heap()->is_in_reserved(obj), "sanity check");
+    assert(thread->is_Java_thread(), "not a Java thread");
+    assert(!current_thread_in_native(), "must not be in native");
     return thread->active_handles()->allocate_handle(obj);
   }
 }
@@ -69,6 +73,7 @@ jobject JNIHandles::make_local(JNIEnv* env, oop obj) {
   } else {
     JavaThread* thread = JavaThread::thread_from_jni_environment(env);
     assert(Universe::heap()->is_in_reserved(obj), "sanity check");
+    assert(!current_thread_in_native(), "must not be in native");
     return thread->active_handles()->allocate_handle(obj);
   }
 }
@@ -76,6 +81,7 @@ jobject JNIHandles::make_local(JNIEnv* env, oop obj) {
 
 jobject JNIHandles::make_global(Handle obj) {
   assert(!Universe::heap()->is_gc_active(), "can't extend the root set during GC");
+  assert(!current_thread_in_native(), "must not be in native");
   jobject res = NULL;
   if (!obj.is_null()) {
     // ignore null handles
@@ -92,6 +98,7 @@ jobject JNIHandles::make_global(Handle obj) {
 
 jobject JNIHandles::make_weak_global(Handle obj) {
   assert(!Universe::heap()->is_gc_active(), "can't extend the root set during GC");
+  assert(!current_thread_in_native(), "must not be in native");
   jobject res = NULL;
   if (!obj.is_null()) {
     // ignore null handles
@@ -125,6 +132,11 @@ oop JNIHandles::resolve_jweak(jweak handle) {
 
 template oop JNIHandles::resolve_jweak<true>(jweak);
 template oop JNIHandles::resolve_jweak<false>(jweak);
+
+bool JNIHandles::is_global_weak_cleared(jweak handle) {
+  assert(is_jweak(handle), "not a weak handle");
+  return guard_value<false>(jweak_ref(handle)) == NULL;
+}
 
 void JNIHandles::destroy_global(jobject handle) {
   if (handle != NULL) {
@@ -259,6 +271,13 @@ void JNIHandles::verify() {
   weak_oops_do(&verify_handle);
 }
 
+// This method is implemented here to avoid circular includes between
+// jniHandles.hpp and thread.hpp.
+bool JNIHandles::current_thread_in_native() {
+  Thread* thread = Thread::current();
+  return (thread->is_Java_thread() &&
+          JavaThread::current()->thread_state() == _thread_in_native);
+}
 
 
 void jni_handles_init() {
@@ -273,13 +292,15 @@ JNIHandleBlock* JNIHandleBlock::_block_list           = NULL;
 #endif
 
 
+#ifdef ASSERT
 void JNIHandleBlock::zap() {
   // Zap block values
   _top = 0;
   for (int index = 0; index < block_size_in_oops; index++) {
-    _handles[index] = badJNIHandle;
+    _handles[index] = NULL;
   }
 }
+#endif // ASSERT
 
 JNIHandleBlock* JNIHandleBlock::allocate_block(Thread* thread)  {
   assert(thread == NULL || thread == Thread::current(), "sanity check");
@@ -301,7 +322,7 @@ JNIHandleBlock* JNIHandleBlock::allocate_block(Thread* thread)  {
       // Allocate new block
       block = new JNIHandleBlock();
       _blocks_allocated++;
-      if (ZapJNIHandleArea) block->zap();
+      block->zap();
       #ifndef PRODUCT
       // Link new block to list of all allocated blocks
       block->_block_list_link = _block_list;
@@ -333,7 +354,7 @@ void JNIHandleBlock::release_block(JNIHandleBlock* block, Thread* thread) {
   // we _don't_ want the block to be kept on the free_handle_block.
   // See for instance JavaThread::exit().
   if (thread != NULL ) {
-    if (ZapJNIHandleArea) block->zap();
+    block->zap();
     JNIHandleBlock* freelist = thread->free_handle_block();
     block->_pop_frame_link = NULL;
     thread->set_free_handle_block(block);
@@ -354,7 +375,7 @@ void JNIHandleBlock::release_block(JNIHandleBlock* block, Thread* thread) {
     MutexLockerEx ml(JNIHandleBlockFreeList_lock,
                      Mutex::_no_safepoint_check_flag);
     while (block != NULL) {
-      if (ZapJNIHandleArea) block->zap();
+      block->zap();
       JNIHandleBlock* next = block->_next;
       block->_next = _block_free_list;
       _block_free_list = block;
@@ -447,13 +468,13 @@ jobject JNIHandleBlock::allocate_handle(oop obj) {
         break;
       }
       current->_top = 0;
-      if (ZapJNIHandleArea) current->zap();
+      current->zap();
     }
     // Clear initial block
     _free_list = NULL;
     _allocate_before_rebuild = 0;
     _last = this;
-    if (ZapJNIHandleArea) zap();
+    zap();
   }
 
   // Try last block
