@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.AccessControlContext;
@@ -37,6 +38,7 @@ import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
@@ -44,7 +46,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -675,12 +676,11 @@ public abstract class ClassLoader {
                 return;
             }
 
-            final String name = cls.getName();
-            final int i = name.lastIndexOf('.');
-            if (i != -1) {
+            final String packageName = cls.getPackageName();
+            if (!packageName.isEmpty()) {
                 AccessController.doPrivileged(new PrivilegedAction<>() {
                     public Void run() {
-                        sm.checkPackageAccess(name.substring(0, i));
+                        sm.checkPackageAccess(packageName);
                         return null;
                     }
                 }, new AccessControlContext(new ProtectionDomain[] {pd}));
@@ -1814,7 +1814,7 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Returns the platform class loader for delegation.  All
+     * Returns the platform class loader.  All
      * <a href="#builtinLoaders">platform classes</a> are visible to
      * the platform class loader.
      *
@@ -1844,7 +1844,7 @@ public abstract class ClassLoader {
     }
 
     /**
-     * Returns the system class loader for delegation.  This is the default
+     * Returns the system class loader.  This is the default
      * delegation parent for new {@code ClassLoader} instances, and is
      * typically the class loader used to start the application.
      *
@@ -1868,7 +1868,7 @@ public abstract class ClassLoader {
      * to be the system class loader. During construction, the class loader
      * should take great care to avoid calling {@code getSystemClassLoader()}.
      * If circular initialization of the system class loader is detected then
-     * an unspecified error or exception is thrown.
+     * an {@code IllegalStateException} is thrown.
      *
      * @implNote The system property to override the system class loader is not
      * examined until the VM is almost fully initialized. Code that executes
@@ -1876,16 +1876,17 @@ public abstract class ClassLoader {
      * value until the system is fully initialized.
      *
      * <p> The name of the built-in system class loader is {@code "app"}.
-     * The class path used by the built-in system class loader is determined
-     * by the system property "{@code java.class.path}" during early
-     * initialization of the VM. If the system property is not defined,
-     * or its value is an empty string, then there is no class path
-     * when the initial module is a module on the application module path,
-     * i.e. <em>a named module</em>. If the initial module is not on
-     * the application module path then the class path defaults to
-     * the current working directory.
+     * The system property "{@code java.class.path}" is read during early
+     * initialization of the VM to determine the class path.
+     * An empty value of "{@code java.class.path}" property is interpreted
+     * differently depending on whether the initial module (the module
+     * containing the main class) is named or unnamed:
+     * If named, the built-in system class loader will have no class path and
+     * will search for classes and resources using the application module path;
+     * otherwise, if unnamed, it will set the class path to the current
+     * working directory.
      *
-     * @return  The system {@code ClassLoader} for delegation
+     * @return  The system {@code ClassLoader}
      *
      * @throws  SecurityException
      *          If a security manager is present, and the caller's class loader
@@ -1919,8 +1920,8 @@ public abstract class ClassLoader {
                 // the system class loader is the built-in app class loader during startup
                 return getBuiltinAppClassLoader();
             case 3:
-                String msg = "getSystemClassLoader should only be called after VM booted";
-                throw new InternalError(msg);
+                String msg = "getSystemClassLoader cannot be called during the system class loader instantiation";
+                throw new IllegalStateException(msg);
             case 4:
                 // system fully initialized
                 assert VM.isBooted() && scl != null;
@@ -1970,7 +1971,17 @@ public abstract class ClassLoader {
                                            .getDeclaredConstructor(ClassLoader.class);
                 scl = (ClassLoader) ctor.newInstance(builtinLoader);
             } catch (Exception e) {
-                throw new Error(e);
+                Throwable cause = e;
+                if (e instanceof InvocationTargetException) {
+                    cause = e.getCause();
+                    if (cause instanceof Error) {
+                        throw (Error) cause;
+                    }
+                }
+                if (cause instanceof RuntimeException) {
+                    throw (RuntimeException) cause;
+                }
+                throw new Error(cause.getMessage(), cause);
             }
         } else {
             scl = builtinLoader;
@@ -2486,7 +2497,7 @@ public abstract class ClassLoader {
         }
 
         // native libraries being loaded
-        static Deque<NativeLibrary> nativeLibraryContext = new LinkedList<>();
+        static Deque<NativeLibrary> nativeLibraryContext = new ArrayDeque<>(8);
 
         /*
          * The run() method will be invoked when this class loader becomes

@@ -333,8 +333,6 @@ public abstract class MemberSummaryBuilder extends AbstractMemberBuilder {
             VisibleMemberMap visibleMemberMap, LinkedList<Content> summaryTreeList) {
         SortedSet<Element> members = asSortedSet(visibleMemberMap.getLeafMembers());
         if (!members.isEmpty()) {
-            List<Content> tableContents = new LinkedList<>();
-            int counter = 0;
             for (Element member : members) {
                 final Element property = visibleMemberMap.getPropertyElement(member);
                 if (property != null) {
@@ -355,11 +353,9 @@ public abstract class MemberSummaryBuilder extends AbstractMemberBuilder {
                         firstSentenceTags = utils.getFirstSentenceTrees(inheritedDoc.holder);
                     }
                 }
-                writer.addMemberSummary(typeElement, member, firstSentenceTags,
-                        tableContents, counter, visibleMemberMap.kind);
-                counter++;
+                writer.addMemberSummary(typeElement, member, firstSentenceTags);
             }
-            summaryTreeList.add(writer.getSummaryTableTree(typeElement, tableContents));
+            summaryTreeList.add(writer.getSummaryTableTree(typeElement));
         }
     }
 
@@ -493,6 +489,10 @@ public abstract class MemberSummaryBuilder extends AbstractMemberBuilder {
                         continue;
                     }
 
+                    // Skip static methods in interfaces they are not inherited
+                    if (utils.isInterface(inheritedClass) && utils.isStatic(inheritedMember))
+                        continue;
+
                     // If applicable, filter those overridden methods that
                     // should not be documented in the summary/detail sections,
                     // and instead document them in the footnote. Care must be taken
@@ -500,9 +500,8 @@ public abstract class MemberSummaryBuilder extends AbstractMemberBuilder {
                     // but comments for these are synthesized on the output.
                     ExecutableElement inheritedMethod = (ExecutableElement)inheritedMember;
                     if (enclosedSuperMethods.stream()
-                            .anyMatch(e -> utils.executableMembersEqual(inheritedMethod, e)
-                                    && (!utils.isSimpleOverride(e)
-                                    || visibleMemberMap.getPropertyElement(e) != null))) {
+                            .anyMatch(e -> utils.executableMembersEqual(inheritedMethod, e) &&
+                                    (!utils.isSimpleOverride(e) || visibleMemberMap.getPropertyElement(e) != null))) {
                         inheritedMembers.add(inheritedMember);
                     }
                 }

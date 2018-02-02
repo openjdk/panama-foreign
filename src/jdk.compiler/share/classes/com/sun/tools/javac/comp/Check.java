@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Attribute.Compound;
 import com.sun.tools.javac.code.Directive.ExportsDirective;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
+import com.sun.tools.javac.code.Source.Feature;
 import com.sun.tools.javac.comp.Annotate.AnnotationTypeMetadata;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.resources.CompilerProperties.Errors;
@@ -42,7 +43,9 @@ import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
+import com.sun.tools.javac.util.JCDiagnostic.Error;
 import com.sun.tools.javac.util.JCDiagnostic.Fragment;
+import com.sun.tools.javac.util.JCDiagnostic.Warning;
 import com.sun.tools.javac.util.List;
 
 import com.sun.tools.javac.code.Lint;
@@ -127,11 +130,6 @@ public class Check {
         fileManager = context.get(JavaFileManager.class);
 
         source = Source.instance(context);
-        allowSimplifiedVarargs = source.allowSimplifiedVarargs();
-        allowDefaultMethods = source.allowDefaultMethods();
-        allowStrictMethodClashCheck = source.allowStrictMethodClashCheck();
-        allowPrivateSafeVarargs = source.allowPrivateSafeVarargs();
-        allowDiamondWithAnonymousClassCreation = source.allowDiamondWithAnonymousClassCreation();
         warnOnAnyAccessToMembers = options.isSet("warnOnAccessToMembers");
 
         Target target = Target.instance(context);
@@ -155,26 +153,6 @@ public class Check {
 
         deferredLintHandler = DeferredLintHandler.instance(context);
     }
-
-    /** Switch: simplified varargs enabled?
-     */
-    boolean allowSimplifiedVarargs;
-
-    /** Switch: default methods enabled?
-     */
-    boolean allowDefaultMethods;
-
-    /** Switch: should unrelated return types trigger a method clash?
-     */
-    boolean allowStrictMethodClashCheck;
-
-    /** Switch: can the @SafeVarargs annotation be applied to private methods?
-     */
-    boolean allowPrivateSafeVarargs;
-
-    /** Switch: can diamond inference be used in anonymous instance creation ?
-     */
-    boolean allowDiamondWithAnonymousClassCreation;
 
     /** Character for synthetic names
      */
@@ -229,16 +207,16 @@ public class Check {
         if (sym.isDeprecatedForRemoval()) {
             if (!lint.isSuppressed(LintCategory.REMOVAL)) {
                 if (sym.kind == MDL) {
-                    removalHandler.report(pos, "has.been.deprecated.for.removal.module", sym);
+                    removalHandler.report(pos, Warnings.HasBeenDeprecatedForRemovalModule(sym));
                 } else {
-                    removalHandler.report(pos, "has.been.deprecated.for.removal", sym, sym.location());
+                    removalHandler.report(pos, Warnings.HasBeenDeprecatedForRemoval(sym, sym.location()));
                 }
             }
         } else if (!lint.isSuppressed(LintCategory.DEPRECATION)) {
             if (sym.kind == MDL) {
-                deprecationHandler.report(pos, "has.been.deprecated.module", sym);
+                deprecationHandler.report(pos, Warnings.HasBeenDeprecatedModule(sym));
             } else {
-                deprecationHandler.report(pos, "has.been.deprecated", sym, sym.location());
+                deprecationHandler.report(pos, Warnings.HasBeenDeprecated(sym, sym.location()));
             }
         }
     }
@@ -247,22 +225,22 @@ public class Check {
      *  @param pos        Position to be used for error reporting.
      *  @param msg        A string describing the problem.
      */
-    public void warnUnchecked(DiagnosticPosition pos, String msg, Object... args) {
+    public void warnUnchecked(DiagnosticPosition pos, Warning warnKey) {
         if (!lint.isSuppressed(LintCategory.UNCHECKED))
-            uncheckedHandler.report(pos, msg, args);
+            uncheckedHandler.report(pos, warnKey);
     }
 
     /** Warn about unsafe vararg method decl.
      *  @param pos        Position to be used for error reporting.
      */
-    void warnUnsafeVararg(DiagnosticPosition pos, String key, Object... args) {
-        if (lint.isEnabled(LintCategory.VARARGS) && allowSimplifiedVarargs)
-            log.warning(LintCategory.VARARGS, pos, key, args);
+    void warnUnsafeVararg(DiagnosticPosition pos, Warning warnKey) {
+        if (lint.isEnabled(LintCategory.VARARGS) && Feature.SIMPLIFIED_VARARGS.allowedInSource(source))
+            log.warning(LintCategory.VARARGS, pos, warnKey);
     }
 
-    public void warnStatic(DiagnosticPosition pos, String msg, Object... args) {
+    public void warnStatic(DiagnosticPosition pos, Warning warnKey) {
         if (lint.isEnabled(LintCategory.STATIC))
-            log.warning(LintCategory.STATIC, pos, msg, args);
+            log.warning(LintCategory.STATIC, pos, warnKey);
     }
 
     /** Warn about division by integer constant zero.
@@ -814,9 +792,9 @@ public class Check {
                 t.isErroneous()) {
             return checkClassType(tree.clazz.pos(), t, true);
         } else {
-            if (tree.def != null && !allowDiamondWithAnonymousClassCreation) {
+            if (tree.def != null && !Feature.DIAMOND_WITH_ANONYMOUS_CLASS_CREATION.allowedInSource(source)) {
                 log.error(DiagnosticFlag.SOURCE_LEVEL, tree.clazz.pos(),
-                        Errors.CantApplyDiamond1(t, Fragments.DiamondAndAnonClassNotSupportedInSource(source.name)));
+                        Errors.CantApplyDiamond1(t, Feature.DIAMOND_WITH_ANONYMOUS_CLASS_CREATION.fragment(source.name)));
             }
             if (t.tsym.type.getTypeArguments().isEmpty()) {
                 log.error(tree.clazz.pos(),
@@ -906,7 +884,7 @@ public class Check {
 
     void checkVarargsMethodDecl(Env<AttrContext> env, JCMethodDecl tree) {
         MethodSymbol m = tree.sym;
-        if (!allowSimplifiedVarargs) return;
+        if (!Feature.SIMPLIFIED_VARARGS.allowedInSource(source)) return;
         boolean hasTrustMeAnno = m.attribute(syms.trustMeType.tsym) != null;
         Type varargElemType = null;
         if (m.isVarArgs()) {
@@ -914,7 +892,7 @@ public class Check {
         }
         if (hasTrustMeAnno && !isTrustMeAllowedOnMethod(m)) {
             if (varargElemType != null) {
-                JCDiagnostic msg = allowPrivateSafeVarargs ?
+                JCDiagnostic msg = Feature.PRIVATE_SAFE_VARARGS.allowedInSource(source) ?
                         diags.fragment(Fragments.VarargsTrustmeOnVirtualVarargs(m)) :
                         diags.fragment(Fragments.VarargsTrustmeOnVirtualVarargsFinalOnly(m));
                 log.error(tree,
@@ -927,14 +905,13 @@ public class Check {
             }
         } else if (hasTrustMeAnno && varargElemType != null &&
                             types.isReifiable(varargElemType)) {
-            warnUnsafeVararg(tree,
-                            "varargs.redundant.trustme.anno",
-                            syms.trustMeType.tsym,
-                            diags.fragment(Fragments.VarargsTrustmeOnReifiableVarargs(varargElemType)));
+            warnUnsafeVararg(tree, Warnings.VarargsRedundantTrustmeAnno(
+                                syms.trustMeType.tsym,
+                                diags.fragment(Fragments.VarargsTrustmeOnReifiableVarargs(varargElemType))));
         }
         else if (!hasTrustMeAnno && varargElemType != null &&
                 !types.isReifiable(varargElemType)) {
-            warnUnchecked(tree.params.head.pos(), "unchecked.varargs.non.reifiable.type", varargElemType);
+            warnUnchecked(tree.params.head.pos(), Warnings.UncheckedVarargsNonReifiableType(varargElemType));
         }
     }
     //where
@@ -942,18 +919,21 @@ public class Check {
             return (s.flags() & VARARGS) != 0 &&
                 (s.isConstructor() ||
                     (s.flags() & (STATIC | FINAL |
-                                  (allowPrivateSafeVarargs ? PRIVATE : 0) )) != 0);
+                                  (Feature.PRIVATE_SAFE_VARARGS.allowedInSource(source) ? PRIVATE : 0) )) != 0);
         }
 
     Type checkLocalVarType(DiagnosticPosition pos, Type t, Name name) {
-        //upward project the initializer type
-        t = types.upward(t, types.captures(t));
         //check that resulting type is not the null type
         if (t.hasTag(BOT)) {
             log.error(pos, Errors.CantInferLocalVarType(name, Fragments.LocalCantInferNull));
             return types.createErrorType(t);
+        } else if (t.hasTag(VOID)) {
+            log.error(pos, Errors.CantInferLocalVarType(name, Fragments.LocalCantInferVoid));
+            return types.createErrorType(t);
         }
-        return t;
+
+        //upward project the initializer type
+        return types.upward(t, types.captures(t));
     }
 
     Type checkMethod(final Type mtype,
@@ -1016,12 +996,10 @@ public class Check {
         if (useVarargs) {
             Type argtype = owntype.getParameterTypes().last();
             if (!types.isReifiable(argtype) &&
-                (!allowSimplifiedVarargs ||
+                (!Feature.SIMPLIFIED_VARARGS.allowedInSource(source) ||
                  sym.baseSymbol().attribute(syms.trustMeType.tsym) == null ||
                  !isTrustMeAllowedOnMethod(sym))) {
-                warnUnchecked(env.tree.pos(),
-                                  "unchecked.generic.array.creation",
-                                  argtype);
+                warnUnchecked(env.tree.pos(), Warnings.UncheckedGenericArrayCreation(argtype));
             }
             if ((sym.baseSymbol().flags() & SIGNATURE_POLYMORPHIC) == 0) {
                 TreeInfo.setVarargsElement(env.tree, types.elemtype(argtype));
@@ -1782,9 +1760,7 @@ public class Check {
             return;
         } else if (overrideWarner.hasNonSilentLint(LintCategory.UNCHECKED)) {
             warnUnchecked(TreeInfo.diagnosticPositionFor(m, tree),
-                    "override.unchecked.ret",
-                    uncheckedOverrides(m, other),
-                    mtres, otres);
+                    Warnings.OverrideUncheckedRet(uncheckedOverrides(m, other), mtres, otres));
         }
 
         // Error if overriding method throws an exception not reported
@@ -1800,9 +1776,7 @@ public class Check {
         }
         else if (unhandledUnerased.nonEmpty()) {
             warnUnchecked(TreeInfo.diagnosticPositionFor(m, tree),
-                          "override.unchecked.thrown",
-                         cannotOverride(m, other),
-                         unhandledUnerased.head);
+                          Warnings.OverrideUncheckedThrown(cannotOverride(m, other), unhandledUnerased.head));
             return;
         }
 
@@ -1997,8 +1971,8 @@ public class Check {
                          types.covariantReturnType(rt2, rt1, types.noWarnings)) ||
                          checkCommonOverriderIn(s1,s2,site);
                     if (!compat) {
-                        log.error(pos, Errors.TypesIncompatibleDiffRet(t1, t2, s2.name +
-                                "(" + types.memberType(t2, s2).getParameterTypes() + ")"));
+                        log.error(pos, Errors.TypesIncompatible(t1, t2,
+                                Fragments.IncompatibleDiffRet(s2.name, types.memberType(t2, s2).getParameterTypes())));
                         return s2;
                     }
                 } else if (checkNameClash((ClassSymbol)site.tsym, s1, s2) &&
@@ -2486,7 +2460,7 @@ public class Check {
                 if (m2 == m1) continue;
                 //if (i) the signature of 'sym' is not a subsignature of m1 (seen as
                 //a member of 'site') and (ii) m1 has the same erasure as m2, issue an error
-                if (!types.isSubSignature(sym.type, types.memberType(site, m2), allowStrictMethodClashCheck) &&
+                if (!types.isSubSignature(sym.type, types.memberType(site, m2), Feature.STRICT_METHOD_CLASH_CHECK.allowedInSource(source)) &&
                         types.hasSameArgs(m2.erasure(types), m1.erasure(types))) {
                     sym.flags_field |= CLASH;
                     if (m1 == sym) {
@@ -2531,7 +2505,7 @@ public class Check {
         for (Symbol s : types.membersClosure(site, true).getSymbolsByName(sym.name, cf)) {
             //if (i) the signature of 'sym' is not a subsignature of m1 (seen as
             //a member of 'site') and (ii) 'sym' has the same erasure as m1, issue an error
-            if (!types.isSubSignature(sym.type, types.memberType(site, s), allowStrictMethodClashCheck)) {
+            if (!types.isSubSignature(sym.type, types.memberType(site, s), Feature.STRICT_METHOD_CLASH_CHECK.allowedInSource(source))) {
                 if (types.hasSameArgs(s.erasure(types), sym.erasure(types))) {
                     log.error(pos,
                               Errors.NameClashSameErasureNoHide(sym, sym.location(), s, s.location()));
@@ -2584,20 +2558,22 @@ public class Check {
                         //strong semantics - issue an error if two sibling interfaces
                         //have two override-equivalent defaults - or if one is abstract
                         //and the other is default
-                        String errKey;
+                        Fragment diagKey;
                         Symbol s1 = defaults.first();
                         Symbol s2;
                         if (defaults.size() > 1) {
-                            errKey = "types.incompatible.unrelated.defaults";
                             s2 = defaults.toList().tail.head;
+                            diagKey = Fragments.IncompatibleUnrelatedDefaults(Kinds.kindName(site.tsym), site,
+                                    m.name, types.memberType(site, m).getParameterTypes(),
+                                    s1.location(), s2.location());
+
                         } else {
-                            errKey = "types.incompatible.abstract.default";
                             s2 = abstracts.first();
+                            diagKey = Fragments.IncompatibleAbstractDefault(Kinds.kindName(site.tsym), site,
+                                    m.name, types.memberType(site, m).getParameterTypes(),
+                                    s1.location(), s2.location());
                         }
-                        log.error(pos, errKey,
-                                Kinds.kindName(site.tsym), site,
-                                m.name, types.memberType(site, m).getParameterTypes(),
-                                s1.location(), s2.location());
+                        log.error(pos, Errors.TypesIncompatible(s1.location().type, s2.location().type, diagKey));
                         break;
                     }
                 }
@@ -2631,7 +2607,7 @@ public class Check {
     void checkPotentiallyAmbiguousOverloads(DiagnosticPosition pos, Type site,
             MethodSymbol msym1, MethodSymbol msym2) {
         if (msym1 != msym2 &&
-                allowDefaultMethods &&
+                Feature.DEFAULT_METHODS.allowedInSource(source) &&
                 lint.isEnabled(LintCategory.OVERLOADS) &&
                 (msym1.flags() & POTENTIALLY_AMBIGUOUS) == 0 &&
                 (msym2.flags() & POTENTIALLY_AMBIGUOUS) == 0) {
@@ -3256,10 +3232,10 @@ public class Check {
         missingDefaults = missingDefaults.reverse();
         if (missingDefaults.nonEmpty()) {
             isValid = false;
-            String key = (missingDefaults.size() > 1)
-                    ? "annotation.missing.default.value.1"
-                    : "annotation.missing.default.value";
-            log.error(a.pos(), key, a.type, missingDefaults);
+            Error errorKey = (missingDefaults.size() > 1)
+                    ? Errors.AnnotationMissingDefaultValue1(a.type, missingDefaults)
+                    : Errors.AnnotationMissingDefaultValue(a.type, missingDefaults);
+            log.error(a.pos(), errorKey);
         }
 
         return isValid && validateTargetAnnotationValue(a);
@@ -3483,6 +3459,7 @@ public class Check {
                      types.hasSameArgs(sym.type, byName.type) ||
                      types.hasSameArgs(types.erasure(sym.type), types.erasure(byName.type)))) {
                 if ((sym.flags() & VARARGS) != (byName.flags() & VARARGS)) {
+                    sym.flags_field |= CLASH;
                     varargsDuplicateError(pos, sym, byName);
                     return true;
                 } else if (sym.kind == MTH && !types.hasSameArgs(sym.type, byName.type, false)) {
@@ -3554,18 +3531,19 @@ public class Check {
                                       Scope staticallyImportedSoFar, Scope topLevelScope,
                                       Symbol sym, boolean staticImport) {
         Filter<Symbol> duplicates = candidate -> candidate != sym && !candidate.type.isErroneous();
-        Symbol clashing = ordinallyImportedSoFar.findFirst(sym.name, duplicates);
-        if (clashing == null && !staticImport) {
-            clashing = staticallyImportedSoFar.findFirst(sym.name, duplicates);
+        Symbol ordinaryClashing = ordinallyImportedSoFar.findFirst(sym.name, duplicates);
+        Symbol staticClashing = null;
+        if (ordinaryClashing == null && !staticImport) {
+            staticClashing = staticallyImportedSoFar.findFirst(sym.name, duplicates);
         }
-        if (clashing != null) {
-            if (staticImport)
-                log.error(pos, Errors.AlreadyDefinedStaticSingleImport(clashing));
+        if (ordinaryClashing != null || staticClashing != null) {
+            if (ordinaryClashing != null)
+                log.error(pos, Errors.AlreadyDefinedSingleImport(ordinaryClashing));
             else
-                log.error(pos, Errors.AlreadyDefinedSingleImport(clashing));
+                log.error(pos, Errors.AlreadyDefinedStaticSingleImport(staticClashing));
             return false;
         }
-        clashing = topLevelScope.findFirst(sym.name, duplicates);
+        Symbol clashing = topLevelScope.findFirst(sym.name, duplicates);
         if (clashing != null) {
             log.error(pos, Errors.AlreadyDefinedThisUnit(clashing));
             return false;
@@ -3622,14 +3600,14 @@ public class Check {
             if (warned) return; // suppress redundant diagnostics
             switch (lint) {
                 case UNCHECKED:
-                    Check.this.warnUnchecked(pos(), "prob.found.req", diags.fragment(uncheckedKey), found, expected);
+                    Check.this.warnUnchecked(pos(), Warnings.ProbFoundReq(diags.fragment(uncheckedKey), found, expected));
                     break;
                 case VARARGS:
                     if (method != null &&
                             method.attribute(syms.trustMeType.tsym) != null &&
                             isTrustMeAllowedOnMethod(method) &&
                             !types.isReifiable(method.type.getParameterTypes().last())) {
-                        Check.this.warnUnsafeVararg(pos(), "varargs.unsafe.use.varargs.param", method.params.last());
+                        Check.this.warnUnsafeVararg(pos(), Warnings.VarargsUnsafeUseVarargsParam(method.params.last()));
                     }
                     break;
                 default:
@@ -3918,6 +3896,8 @@ public class Check {
                     todo = todo.tail;
                     if (current == whatPackage.modle)
                         return ; //OK
+                    if ((current.flags() & Flags.AUTOMATIC_MODULE) != 0)
+                        continue; //for automatic modules, don't look into their dependencies
                     for (RequiresDirective req : current.requires) {
                         if (req.isTransitive()) {
                             todo = todo.prepend(req.module);

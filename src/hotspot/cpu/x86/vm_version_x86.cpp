@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,12 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "asm/macroAssembler.hpp"
 #include "asm/macroAssembler.inline.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
-#include "prims/jvm.h"
 #include "runtime/java.hpp"
 #include "runtime/os.hpp"
 #include "runtime/stubCodeGenerator.hpp"
@@ -628,19 +628,32 @@ void VM_Version::get_processor_features() {
   if (UseSSE < 1)
     _features &= ~CPU_SSE;
 
+  //since AVX instructions is slower than SSE in some ZX cpus, force USEAVX=0.
+  if (is_zx() && ((cpu_family() == 6) || (cpu_family() == 7))) {
+    UseAVX = 0;
+  }
+
   // first try initial setting and detect what we can support
+  int use_avx_limit = 0;
   if (UseAVX > 0) {
     if (UseAVX > 2 && supports_evex()) {
-      UseAVX = 3;
+      use_avx_limit = 3;
     } else if (UseAVX > 1 && supports_avx2()) {
-      UseAVX = 2;
+      use_avx_limit = 2;
     } else if (UseAVX > 0 && supports_avx()) {
-      UseAVX = 1;
+      use_avx_limit = 1;
     } else {
-      UseAVX = 0;
+      use_avx_limit = 0;
     }
+  }
+  if (FLAG_IS_DEFAULT(UseAVX)) {
+    FLAG_SET_DEFAULT(UseAVX, use_avx_limit);
+  } else if (UseAVX > use_avx_limit) {
+    warning("UseAVX=%d is not supported on this CPU, setting it to UseAVX=%d", (int) UseAVX, use_avx_limit);
+    FLAG_SET_DEFAULT(UseAVX, use_avx_limit);
   } else if (UseAVX < 0) {
-    UseAVX = 0;
+    warning("UseAVX=%d is not valid, setting it to UseAVX=0", (int) UseAVX);
+    FLAG_SET_DEFAULT(UseAVX, 0);
   }
 
   if (UseAVX < 3) {
@@ -710,16 +723,29 @@ void VM_Version::get_processor_features() {
   // UseSSE is set to the smaller of what hardware supports and what
   // the command line requires.  I.e., you cannot set UseSSE to 2 on
   // older Pentiums which do not support it.
-  if (UseSSE > 4) UseSSE=4;
-  if (UseSSE < 0) UseSSE=0;
-  if (!supports_sse4_1()) // Drop to 3 if no SSE4 support
-    UseSSE = MIN2((intx)3,UseSSE);
-  if (!supports_sse3()) // Drop to 2 if no SSE3 support
-    UseSSE = MIN2((intx)2,UseSSE);
-  if (!supports_sse2()) // Drop to 1 if no SSE2 support
-    UseSSE = MIN2((intx)1,UseSSE);
-  if (!supports_sse ()) // Drop to 0 if no SSE  support
-    UseSSE = 0;
+  int use_sse_limit = 0;
+  if (UseSSE > 0) {
+    if (UseSSE > 3 && supports_sse4_1()) {
+      use_sse_limit = 4;
+    } else if (UseSSE > 2 && supports_sse3()) {
+      use_sse_limit = 3;
+    } else if (UseSSE > 1 && supports_sse2()) {
+      use_sse_limit = 2;
+    } else if (UseSSE > 0 && supports_sse()) {
+      use_sse_limit = 1;
+    } else {
+      use_sse_limit = 0;
+    }
+  }
+  if (FLAG_IS_DEFAULT(UseSSE)) {
+    FLAG_SET_DEFAULT(UseSSE, use_sse_limit);
+  } else if (UseSSE > use_sse_limit) {
+    warning("UseSSE=%d is not supported on this CPU, setting it to UseSSE=%d", (int) UseSSE, use_sse_limit);
+    FLAG_SET_DEFAULT(UseSSE, use_sse_limit);
+  } else if (UseSSE < 0) {
+    warning("UseSSE=%d is not valid, setting it to UseSSE=0", (int) UseSSE);
+    FLAG_SET_DEFAULT(UseSSE, 0);
+  }
 
   // Use AES instructions if available.
   if (supports_aes()) {
@@ -861,7 +887,7 @@ void VM_Version::get_processor_features() {
     FLAG_SET_DEFAULT(UseSHA256Intrinsics, false);
   }
 
-  if (UseSHA) {
+  if (UseSHA && supports_avx2() && supports_bmi2()) {
     if (FLAG_IS_DEFAULT(UseSHA512Intrinsics)) {
       FLAG_SET_DEFAULT(UseSHA512Intrinsics, true);
     }
@@ -944,7 +970,7 @@ void VM_Version::get_processor_features() {
     }
   }
 #endif
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   if (MaxVectorSize > 0) {
     if (!is_power_of_2(MaxVectorSize)) {
       warning("MaxVectorSize must be a power of 2");
@@ -996,7 +1022,7 @@ void VM_Version::get_processor_features() {
     }
 #endif // COMPILER2 && ASSERT
   }
-#endif // COMPILER2 || INCLUDE_JVMCI
+#endif // COMPILER2_OR_JVMCI
 
 #ifdef COMPILER2
 #ifdef _LP64
@@ -1056,6 +1082,66 @@ void VM_Version::get_processor_features() {
   // UseXmmLoadAndClearUpper == false --> movlpd(xmm, mem)
   // UseXmmRegToRegMoveAll == true  --> movaps(xmm, xmm), movapd(xmm, xmm).
   // UseXmmRegToRegMoveAll == false --> movss(xmm, xmm),  movsd(xmm, xmm).
+
+
+  if (is_zx()) { // ZX cpus specific settings
+    if (FLAG_IS_DEFAULT(UseStoreImmI16)) {
+      UseStoreImmI16 = false; // don't use it on ZX cpus
+    }
+    if ((cpu_family() == 6) || (cpu_family() == 7)) {
+      if (FLAG_IS_DEFAULT(UseAddressNop)) {
+        // Use it on all ZX cpus
+        UseAddressNop = true;
+      }
+    }
+    if (FLAG_IS_DEFAULT(UseXmmLoadAndClearUpper)) {
+      UseXmmLoadAndClearUpper = true; // use movsd on all ZX cpus
+    }
+    if (FLAG_IS_DEFAULT(UseXmmRegToRegMoveAll)) {
+      if (supports_sse3()) {
+        UseXmmRegToRegMoveAll = true; // use movaps, movapd on new ZX cpus
+      } else {
+        UseXmmRegToRegMoveAll = false;
+      }
+    }
+    if (((cpu_family() == 6) || (cpu_family() == 7)) && supports_sse3()) { // new ZX cpus
+#ifdef COMPILER2
+      if (FLAG_IS_DEFAULT(MaxLoopPad)) {
+        // For new ZX cpus do the next optimization:
+        // don't align the beginning of a loop if there are enough instructions
+        // left (NumberOfLoopInstrToAlign defined in c2_globals.hpp)
+        // in current fetch line (OptoLoopAlignment) or the padding
+        // is big (> MaxLoopPad).
+        // Set MaxLoopPad to 11 for new ZX cpus to reduce number of
+        // generated NOP instructions. 11 is the largest size of one
+        // address NOP instruction '0F 1F' (see Assembler::nop(i)).
+        MaxLoopPad = 11;
+      }
+#endif // COMPILER2
+      if (FLAG_IS_DEFAULT(UseXMMForArrayCopy)) {
+        UseXMMForArrayCopy = true; // use SSE2 movq on new ZX cpus
+      }
+      if (supports_sse4_2()) { // new ZX cpus
+        if (FLAG_IS_DEFAULT(UseUnalignedLoadStores)) {
+          UseUnalignedLoadStores = true; // use movdqu on newest ZX cpus
+        }
+      }
+      if (supports_sse4_2()) {
+        if (FLAG_IS_DEFAULT(UseSSE42Intrinsics)) {
+          FLAG_SET_DEFAULT(UseSSE42Intrinsics, true);
+        }
+      } else {
+        if (UseSSE42Intrinsics && !FLAG_IS_DEFAULT(UseAESIntrinsics)) {
+          warning("SSE4.2 intrinsics require SSE4.2 instructions or higher. Intrinsics will be disabled.");
+        }
+        FLAG_SET_DEFAULT(UseSSE42Intrinsics, false);
+      }
+    }
+
+    if (FLAG_IS_DEFAULT(AllocatePrefetchInstr) && supports_3dnow_prefetch()) {
+      FLAG_SET_DEFAULT(AllocatePrefetchInstr, 3);
+    }
+  }
 
   if( is_amd() ) { // AMD cpus specific settings
     if( supports_sse2() && FLAG_IS_DEFAULT(UseAddressNop) ) {
@@ -1348,6 +1434,14 @@ void VM_Version::get_processor_features() {
     }
 #ifdef COMPILER2
     if (FLAG_IS_DEFAULT(UseFPUForSpilling) && supports_sse4_2()) {
+      FLAG_SET_DEFAULT(UseFPUForSpilling, true);
+    }
+#endif
+  }
+
+  if (is_zx() && ((cpu_family() == 6) || (cpu_family() == 7)) && supports_sse4_2()) {
+#ifdef COMPILER2
+    if (FLAG_IS_DEFAULT(UseFPUForSpilling)) {
       FLAG_SET_DEFAULT(UseFPUForSpilling, true);
     }
 #endif

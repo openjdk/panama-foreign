@@ -27,10 +27,12 @@
  * @summary Test Collections.binarySearch() with a null comparator
  */
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class BinarySearchNullComparator {
-    public static void main(String args[]) throws Exception {
+    public static void main(String[] args) throws Exception {
         List list = Arrays.asList(new String[] {"I", "Love", "You"});
 
         int result = Collections.binarySearch(list, "You", null);

@@ -40,6 +40,7 @@
 #include "oops/oop.inline.hpp"
 #include "runtime/init.hpp"
 #include "runtime/thread.inline.hpp"
+#include "runtime/threadSMR.hpp"
 #include "services/heapDumper.hpp"
 #include "utilities/align.hpp"
 
@@ -235,13 +236,13 @@ void CollectedHeap::collect_as_vm_thread(GCCause::Cause cause) {
 
 void CollectedHeap::set_barrier_set(BarrierSet* barrier_set) {
   _barrier_set = barrier_set;
-  oopDesc::set_bs(_barrier_set);
+  BarrierSet::set_bs(barrier_set);
 }
 
 void CollectedHeap::pre_initialize() {
   // Used for ReduceInitialCardMarks (when COMPILER2 is used);
   // otherwise remains unused.
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   _defer_initial_card_mark = is_server_compilation_mode_vm() &&  ReduceInitialCardMarks && can_elide_tlab_store_barriers()
                              && (DeferInitialCardMark || card_mark_must_follow_store());
 #else
@@ -313,7 +314,7 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(Klass* klass, Thread* thread, s
     return NULL;
   }
 
-  AllocTracer::send_allocation_in_new_tlab_event(klass, new_tlab_size * HeapWordSize, size * HeapWordSize);
+  AllocTracer::send_allocation_in_new_tlab(klass, obj, new_tlab_size * HeapWordSize, size * HeapWordSize, thread);
 
   if (ZeroTLAB) {
     // ..and clear it.
@@ -540,12 +541,13 @@ void CollectedHeap::ensure_parsability(bool retire_tlabs) {
   const bool deferred = _defer_initial_card_mark;
   // The main thread starts allocating via a TLAB even before it
   // has added itself to the threads list at vm boot-up.
-  assert(!use_tlab || Threads::first() != NULL,
+  JavaThreadIteratorWithHandle jtiwh;
+  assert(!use_tlab || jtiwh.length() > 0,
          "Attempt to fill tlabs before main thread has been added"
          " to threads list is doomed to failure!");
-  for (JavaThread *thread = Threads::first(); thread; thread = thread->next()) {
+  for (; JavaThread *thread = jtiwh.next(); ) {
      if (use_tlab) thread->tlab().make_parsable(retire_tlabs);
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
      // The deferred store barriers must all have been flushed to the
      // card-table (or other remembered set structure) before GC starts
      // processing the card-table (or other remembered set).
@@ -608,4 +610,8 @@ void CollectedHeap::initialize_reserved_region(HeapWord *start, HeapWord *end) {
   _reserved.set_word_size(0);
   _reserved.set_start(start);
   _reserved.set_end(end);
+}
+
+void CollectedHeap::post_initialize() {
+  initialize_serviceability();
 }

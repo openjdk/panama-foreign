@@ -117,14 +117,19 @@ public class HtmlDoclet extends AbstractDoclet {
             SourceToHTMLConverter.convertRoot(configuration,
                 docEnv, DocPaths.SOURCE_OUTPUT);
         }
-
-        if (configuration.topFile.isEmpty()) {
+        // Modules with no documented classes may be specified on the
+        // command line to specify a service provider, allow these.
+        if (configuration.getSpecifiedModuleElements().isEmpty() &&
+                configuration.topFile.isEmpty()) {
             messages.error("doclet.No_Non_Deprecated_Classes_To_Document");
             return;
         }
         boolean nodeprecated = configuration.nodeprecated;
         performCopy(configuration.helpfile);
         performCopy(configuration.stylesheetfile);
+        for (String stylesheet : configuration.additionalStylesheets) {
+            performCopy(stylesheet);
+        }
         // do early to reduce memory footprint
         if (configuration.classuse) {
             ClassUseWriter.generate(configuration, classtree);

@@ -40,6 +40,7 @@
 // This class represents a Klass* in the HotSpot virtual machine
 // whose Klass part in an InstanceKlass.
 
+
 // ------------------------------------------------------------------
 // ciInstanceKlass::ciInstanceKlass
 //
@@ -63,6 +64,22 @@ ciInstanceKlass::ciInstanceKlass(Klass* k) :
   _nonstatic_fields = NULL; // initialized lazily by compute_nonstatic_fields:
   _has_injected_fields = -1;
   _implementor = NULL; // we will fill these lazily
+
+  // Ensure that the metadata wrapped by the ciMetadata is kept alive by GC.
+  // This is primarily useful for metadata which is considered as weak roots
+  // by the GC but need to be strong roots if reachable from a current compilation.
+  // InstanceKlass are created for both weak and strong metadata.  Ensuring this metadata
+  // alive covers the cases where there are weak roots without performance cost.
+  oop holder = ik->klass_holder_phantom();
+  if (ik->is_anonymous()) {
+    // Though ciInstanceKlass records class loader oop, it's not enough to keep
+    // VM anonymous classes alive (loader == NULL). Klass holder should be used instead.
+    // It is enough to record a ciObject, since cached elements are never removed
+    // during ciObjectFactory lifetime. ciObjectFactory itself is created for
+    // every compilation and lives for the whole duration of the compilation.
+    assert(holder != NULL, "holder of anonymous class is the mirror which is never null");
+    (void)CURRENT_ENV->get_object(holder);
+  }
 
   Thread *thread = Thread::current();
   if (ciObjectFactory::is_initialized()) {

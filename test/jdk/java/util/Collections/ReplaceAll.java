@@ -21,19 +21,23 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4323074
  * @summary Basic test for new replaceAll algorithm
  */
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Vector;
 
 public class ReplaceAll {
     static final int SIZE = 20;
 
     public static void main(String[] args) throws Exception {
-        List a[] = {new ArrayList(), new LinkedList(), new Vector()};
+        List[] a = {new ArrayList(), new LinkedList(), new Vector()};
 
         for (int i=0; i<a.length; i++) {
             List lst = a[i];

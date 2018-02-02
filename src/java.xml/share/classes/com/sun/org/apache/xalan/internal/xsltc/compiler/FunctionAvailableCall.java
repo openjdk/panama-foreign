@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
- * @LastModified: Nov 2017
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -37,6 +36,7 @@ import java.util.List;
 /**
  * @author G. Todd Miller
  * @author Santiago Pericas-Geertsen
+ * @LastModified: Nov 2017
  */
 final class FunctionAvailableCall extends FunctionCall {
 
@@ -97,7 +97,6 @@ final class FunctionAvailableCall extends FunctionCall {
      * the specified method is found in the specifed class.
      */
     private boolean hasMethods() {
-        LiteralExpr arg = (LiteralExpr)_arg;
 
         // Get the class name from the namespace uri
         String className = getClassNameFromUri(_namespaceOfFunct);
@@ -110,7 +109,7 @@ final class FunctionAvailableCall extends FunctionCall {
           int lastDotIndex = functionName.lastIndexOf('.');
           if (lastDotIndex > 0) {
             methodName = functionName.substring(lastDotIndex+1);
-            if (className != null && !className.equals(""))
+            if (className != null && className.length() != 0)
               className = className + "." + functionName.substring(0, lastDotIndex);
             else
               className = functionName.substring(0, lastDotIndex);

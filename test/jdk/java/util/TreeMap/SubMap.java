@@ -27,10 +27,14 @@
  * @summary The firstKey and lastKey
  */
 
-import java.util.*;
+import java.util.NoSuchElementException;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class SubMap {
-    public static void main(String args[]) throws Exception {
+    public static void main(String[] args) throws Exception {
         SortedMap m = new TreeMap();
         m.put(new Integer(1), new Integer(1));
         m.put(new Integer(2), new Integer(2));

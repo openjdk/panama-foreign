@@ -29,7 +29,13 @@
  * @key randomness
  */
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Random;
 
 public class CheckedListBash {
     static Random rnd = new Random();
@@ -209,15 +215,14 @@ public class CheckedListBash {
     }
 
     static void AddRandoms(List s, int n) {
-        for (int i=0; i<n; i++) {
-            int r = rnd.nextInt() % n;
-            Integer e = new Integer(r < 0 ? -r : r);
+        for (int i = 0; i < n; i++) {
+            Integer e = rnd.nextInt(n);
 
             int preSize = s.size();
             if (!s.add(e))
                 fail("Add failed.");
             int postSize = s.size();
-            if (postSize-preSize != 1)
+            if (postSize - preSize != 1)
                 fail("Add didn't increase size by 1.");
         }
     }

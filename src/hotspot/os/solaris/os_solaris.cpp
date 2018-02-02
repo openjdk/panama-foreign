@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 // no precompiled headers
+#include "jvm.h"
 #include "classfile/classLoader.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -31,7 +32,6 @@
 #include "compiler/compileBroker.hpp"
 #include "compiler/disassembler.hpp"
 #include "interpreter/interpreter.hpp"
-#include "jvm_solaris.h"
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
@@ -39,7 +39,6 @@
 #include "os_share_solaris.hpp"
 #include "os_solaris.inline.hpp"
 #include "prims/jniFastGetField.hpp"
-#include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/atomic.hpp"
@@ -201,17 +200,21 @@ static inline stack_t get_stack_info() {
   return st;
 }
 
-address os::current_stack_base() {
+bool os::is_primordial_thread(void) {
   int r = thr_main();
   guarantee(r == 0 || r == 1, "CR6501650 or CR6493689");
-  bool is_primordial_thread = r;
+  return r == 1;
+}
+
+address os::current_stack_base() {
+  bool _is_primordial_thread = is_primordial_thread();
 
   // Workaround 4352906, avoid calls to thr_stksegment by
   // thr_main after the first one (it looks like we trash
   // some data, causing the value for ss_sp to be incorrect).
-  if (!is_primordial_thread || os::Solaris::_main_stack_base == NULL) {
+  if (!_is_primordial_thread || os::Solaris::_main_stack_base == NULL) {
     stack_t st = get_stack_info();
-    if (is_primordial_thread) {
+    if (_is_primordial_thread) {
       // cache initial value of stack base
       os::Solaris::_main_stack_base = (address)st.ss_sp;
     }
@@ -225,9 +228,7 @@ address os::current_stack_base() {
 size_t os::current_stack_size() {
   size_t size;
 
-  int r = thr_main();
-  guarantee(r == 0 || r == 1, "CR6501650 or CR6493689");
-  if (!r) {
+  if (!is_primordial_thread()) {
     size = get_stack_info().ss_size;
   } else {
     struct rlimit limits;
@@ -291,6 +292,14 @@ void os::Solaris::initialize_system_info() {
 }
 
 int os::active_processor_count() {
+  // User has overridden the number of active processors
+  if (ActiveProcessorCount > 0) {
+    log_trace(os)("active_processor_count: "
+                  "active processor count set by user : %d",
+                  ActiveProcessorCount);
+    return ActiveProcessorCount;
+  }
+
   int online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
   pid_t pid = getpid();
   psetid_t pset = PS_NONE;
@@ -1095,9 +1104,7 @@ void _handle_uncaught_cxx_exception() {
 
 // First crack at OS-specific initialization, from inside the new thread.
 void os::initialize_thread(Thread* thr) {
-  int r = thr_main();
-  guarantee(r == 0 || r == 1, "CR6501650 or CR6493689");
-  if (r) {
+  if (is_primordial_thread()) {
     JavaThread* jt = (JavaThread *)thr;
     assert(jt != NULL, "Sanity check");
     size_t stack_size;
@@ -2055,7 +2062,7 @@ void* os::user_handler() {
   return CAST_FROM_FN_PTR(void*, UserHandler);
 }
 
-struct timespec PosixSemaphore::create_timespec(unsigned int sec, int nsec) {
+static struct timespec create_semaphore_timespec(unsigned int sec, int nsec) {
   struct timespec ts;
   unpackTime(&ts, false, (sec * NANOSECS_PER_SEC) + nsec);
 
@@ -2093,7 +2100,7 @@ static int Sigexit = 0;
 static jint *pending_signals = NULL;
 static int *preinstalled_sigs = NULL;
 static struct sigaction *chainedsigactions = NULL;
-static sema_t sig_sem;
+static Semaphore* sig_sem = NULL;
 typedef int (*version_getting_t)();
 version_getting_t os::Solaris::get_libjsig_version = NULL;
 
@@ -2108,6 +2115,7 @@ void os::Solaris::init_signal_mem() {
   Sigexit = Maxsignum+1;
   assert(Maxsignum >0, "Unable to obtain max signal number");
 
+  // Initialize signal structures
   // pending_signals has one int per signal
   // The additional signal is for SIGEXIT - exit signal to signal_thread
   pending_signals = (jint *)os::malloc(sizeof(jint) * (Sigexit+1), mtInternal);
@@ -2125,21 +2133,22 @@ void os::Solaris::init_signal_mem() {
 }
 
 void os::signal_init_pd() {
-  int ret;
-
-  ret = ::sema_init(&sig_sem, 0, NULL, NULL);
-  assert(ret == 0, "sema_init() failed");
+  // Initialize signal semaphore
+  sig_sem = new Semaphore();
 }
 
-void os::signal_notify(int signal_number) {
-  int ret;
-
-  Atomic::inc(&pending_signals[signal_number]);
-  ret = ::sema_post(&sig_sem);
-  assert(ret == 0, "sema_post() failed");
+void os::signal_notify(int sig) {
+  if (sig_sem != NULL) {
+    Atomic::inc(&pending_signals[sig]);
+    sig_sem->signal();
+  } else {
+    // Signal thread is not created with ReduceSignalUsage and signal_init_pd
+    // initialization isn't called.
+    assert(ReduceSignalUsage, "signal semaphore should be created");
+  }
 }
 
-static int check_pending_signals(bool wait_for_signal) {
+static int check_pending_signals() {
   int ret;
   while (true) {
     for (int i = 0; i < Sigexit + 1; i++) {
@@ -2148,19 +2157,13 @@ static int check_pending_signals(bool wait_for_signal) {
         return i;
       }
     }
-    if (!wait_for_signal) {
-      return -1;
-    }
     JavaThread *thread = JavaThread::current();
     ThreadBlockInVM tbivm(thread);
 
     bool threadIsSuspended;
     do {
       thread->set_suspend_equivalent();
-      // cleared by handle_special_suspend_equivalent_condition() or java_suspend_self()
-      while ((ret = ::sema_wait(&sig_sem)) == EINTR)
-        ;
-      assert(ret == 0, "sema_wait() failed");
+      sig_sem->wait();
 
       // were we externally suspended while we were waiting?
       threadIsSuspended = thread->handle_special_suspend_equivalent_condition();
@@ -2169,8 +2172,7 @@ static int check_pending_signals(bool wait_for_signal) {
         // another thread suspended us. We don't want to continue running
         // while suspended because that would surprise the thread that
         // suspended us.
-        ret = ::sema_post(&sig_sem);
-        assert(ret == 0, "sema_post() failed");
+        sig_sem->signal();
 
         thread->java_suspend_self();
       }
@@ -2178,22 +2180,14 @@ static int check_pending_signals(bool wait_for_signal) {
   }
 }
 
-int os::signal_lookup() {
-  return check_pending_signals(false);
-}
-
 int os::signal_wait() {
-  return check_pending_signals(true);
+  return check_pending_signals();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Virtual Memory
 
 static int page_size = -1;
-
-// The mmap MAP_ALIGN flag is supported on Solaris 9 and later.  init_2() will
-// clear this var if support is not available.
-static bool has_map_align = true;
 
 int os::vm_page_size() {
   assert(page_size != -1, "must call os::init");
@@ -2561,7 +2555,7 @@ char* os::Solaris::anon_mmap(char* requested_addr, size_t bytes,
 
   if (fixed) {
     flags |= MAP_FIXED;
-  } else if (has_map_align && (alignment_hint > (size_t) vm_page_size())) {
+  } else if (alignment_hint > (size_t) vm_page_size()) {
     flags |= MAP_ALIGN;
     addr = (char*) alignment_hint;
   }
@@ -2580,6 +2574,17 @@ char* os::pd_reserve_memory(size_t bytes, char* requested_addr,
   guarantee(requested_addr == NULL || requested_addr == addr,
             "OS failed to return requested mmap address.");
   return addr;
+}
+
+char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr, int file_desc) {
+  assert(file_desc >= 0, "file_desc is not valid");
+  char* result = pd_attempt_reserve_memory_at(bytes, requested_addr);
+  if (result != NULL) {
+    if (replace_existing_mapping_with_file_mapping(result, bytes, file_desc) == NULL) {
+      vm_exit_during_initialization(err_msg("Error in mapping Java heap at the given filesystem directory"));
+    }
+  }
+  return result;
 }
 
 // Reserve memory at an arbitrary address, only if that area is
@@ -3585,7 +3590,7 @@ static bool do_suspend(OSThread* osthread) {
 
   // managed to send the signal and switch to SUSPEND_REQUEST, now wait for SUSPENDED
   while (true) {
-    if (sr_semaphore.timedwait(0, 2000 * NANOSECS_PER_MILLISEC)) {
+    if (sr_semaphore.timedwait(create_semaphore_timespec(0, 2000 * NANOSECS_PER_MILLISEC))) {
       break;
     } else {
       // timeout
@@ -3619,7 +3624,7 @@ static void do_resume(OSThread* osthread) {
 
   while (true) {
     if (sr_notify(osthread) == 0) {
-      if (sr_semaphore.timedwait(0, 2 * NANOSECS_PER_MILLISEC)) {
+      if (sr_semaphore.timedwait(create_semaphore_timespec(0, 2 * NANOSECS_PER_MILLISEC))) {
         if (osthread->sr.is_running()) {
           return;
         }
@@ -4200,6 +4205,7 @@ void os::init(void) {
     dladdr1_func = CAST_TO_FN_PTR(dladdr1_func_type, dlsym(hdl, "dladdr1"));
   }
 
+  // main_thread points to the thread that created/loaded the JVM.
   main_thread = thr_self();
 
   // dynamic lookup of functions that may not be available in our lowest
@@ -4222,28 +4228,6 @@ extern "C" {
 jint os::init_2(void) {
   // try to enable extended file IO ASAP, see 6431278
   os::Solaris::try_enable_extended_io();
-
-  // Allocate a single page and mark it as readable for safepoint polling.  Also
-  // use this first mmap call to check support for MAP_ALIGN.
-  address polling_page = (address)Solaris::mmap_chunk((char*)page_size,
-                                                      page_size,
-                                                      MAP_PRIVATE | MAP_ALIGN,
-                                                      PROT_READ);
-  if (polling_page == NULL) {
-    has_map_align = false;
-    polling_page = (address)Solaris::mmap_chunk(NULL, page_size, MAP_PRIVATE,
-                                                PROT_READ);
-  }
-
-  os::set_polling_page(polling_page);
-  log_info(os)("SafePoint Polling address: " INTPTR_FORMAT, p2i(polling_page));
-
-  if (!UseMembar) {
-    address mem_serialize_page = (address)Solaris::mmap_chunk(NULL, page_size, MAP_PRIVATE, PROT_READ | PROT_WRITE);
-    guarantee(mem_serialize_page != NULL, "mmap Failed for memory serialize page");
-    os::set_memory_serialize_page(mem_serialize_page);
-    log_info(os)("Memory Serialize Page address: " INTPTR_FORMAT, p2i(mem_serialize_page));
-  }
 
   // Check and sets minimum stack sizes against command line options
   if (Posix::set_minimum_stack_sizes() == JNI_ERR) {

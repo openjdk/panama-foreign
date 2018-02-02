@@ -28,6 +28,7 @@
 #include "runtime/mutex.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/osThread.hpp"
+#include "runtime/safepointMechanism.inline.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/events.hpp"
 #include "utilities/macros.hpp"
@@ -394,7 +395,7 @@ int Monitor::TrySpin(Thread * const Self) {
       jint rv = Self->rng[0];
       for (int k = Delay; --k >= 0;) {
         rv = MarsagliaXORV(rv);
-        if ((flgs & 4) == 0 && SafepointSynchronize::do_call_back()) return 0;
+        if ((flgs & 4) == 0 && SafepointMechanism::poll(Self)) return 0;
       }
       Self->rng[0] = rv;
     } else {
@@ -466,7 +467,7 @@ void Monitor::ILock(Thread * Self) {
   OrderAccess::fence();
 
   // Optional optimization ... try barging on the inner lock
-  if ((NativeMonitorFlags & 32) && Atomic::cmpxchg(ESelf, &_OnDeck, (ParkEvent*)NULL) == NULL) {
+  if ((NativeMonitorFlags & 32) && Atomic::replace_if_null(ESelf, &_OnDeck)) {
     goto OnDeck_LOOP;
   }
 
@@ -573,7 +574,7 @@ void Monitor::IUnlock(bool RelaxAssert) {
   // Unlike a normal lock, however, the exiting thread "locks" OnDeck,
   // picks a successor and marks that thread as OnDeck.  That successor
   // thread will then clear OnDeck once it eventually acquires the outer lock.
-  if (Atomic::cmpxchg((ParkEvent*)_LBIT, &_OnDeck, (ParkEvent*)NULL) != NULL) {
+  if (!Atomic::replace_if_null((ParkEvent*)_LBIT, &_OnDeck)) {
     return;
   }
 

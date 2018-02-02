@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
- * @LastModified: Sep 2017
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -61,6 +60,8 @@ import org.xml.sax.SAXException;
 /**
  * Standard XSLT functions. All standard functions expect the current node
  * and the DOM as their last two arguments.
+ *
+ * @LastModified: Sep 2017
  */
 public final class BasisLibrary {
 
@@ -1424,8 +1425,8 @@ public final class BasisLibrary {
      * This method should only be invoked if the name attribute is an AVT
      */
     public static void checkAttribQName(String name) {
-        final int firstOccur = name.indexOf(":");
-        final int lastOccur = name.lastIndexOf(":");
+        final int firstOccur = name.indexOf(':');
+        final int lastOccur = name.lastIndexOf(':');
         final String localName = name.substring(lastOccur + 1);
 
         if (firstOccur > 0) {

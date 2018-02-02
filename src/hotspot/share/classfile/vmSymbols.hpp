@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
 #define SHARE_VM_CLASSFILE_VMSYMBOLS_HPP
 
 #include "classfile/moduleEntry.hpp"
-#include "classfile/vmSymbols_ext.hpp"
 #include "oops/symbol.hpp"
 #include "memory/iterator.hpp"
 #include "trace/traceMacros.hpp"
@@ -253,7 +252,6 @@
   template(compiledLambdaForm_name,                   "<compiledLambdaForm>")  /*fake name*/      \
   template(star_name,                                 "*") /*not really a name*/                  \
   template(invoke_name,                               "invoke")                                   \
-  template(override_name,                             "override")                                 \
   template(parameterTypes_name,                       "parameterTypes")                           \
   template(returnType_name,                           "returnType")                               \
   template(signature_name,                            "signature")                                \
@@ -267,7 +265,6 @@
   template(parameter_annotations_name,                "parameterAnnotations")                     \
   template(annotation_default_name,                   "annotationDefault")                        \
   template(reflect_ConstantPool,                      "jdk/internal/reflect/ConstantPool")        \
-  template(ConstantPool_name,                         "constantPoolOop")                          \
   template(reflect_UnsafeStaticFieldAccessorImpl,     "jdk/internal/reflect/UnsafeStaticFieldAccessorImpl")\
   template(base_name,                                 "base")                                     \
   /* Type Annotations (JDK 8 and above) */                                                        \
@@ -308,6 +305,7 @@
   /* internal up-calls made only by the JVM, via class sun.invoke.MethodHandleNatives: */         \
   template(findMethodHandleType_name,                 "findMethodHandleType")                     \
   template(findMethodHandleType_signature,       "(Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodType;") \
+  template(invokeExact_name,                          "invokeExact")                              \
   template(linkMethodHandleConstant_name,             "linkMethodHandleConstant")                 \
   template(linkMethodHandleConstant_signature, "(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;") \
   template(linkMethod_name,                           "linkMethod")                               \
@@ -344,8 +342,6 @@
   template(stillborn_name,                            "stillborn")                                \
   template(group_name,                                "group")                                    \
   template(daemon_name,                               "daemon")                                   \
-  template(eetop_name,                                "eetop")                                    \
-  template(thread_status_name,                        "threadStatus")                             \
   template(run_method_name,                           "run")                                      \
   template(exit_method_name,                          "exit")                                     \
   template(add_method_name,                           "add")                                      \
@@ -379,34 +375,21 @@
   template(fillInStackTrace_name,                     "fillInStackTrace")                         \
   template(getCause_name,                             "getCause")                                 \
   template(initCause_name,                            "initCause")                                \
-  template(depth_name,                                "depth")                                    \
   template(setProperty_name,                          "setProperty")                              \
   template(getProperty_name,                          "getProperty")                              \
   template(context_name,                              "context")                                  \
-  template(privilegedContext_name,                    "privilegedContext")                        \
   template(contextClassLoader_name,                   "contextClassLoader")                       \
   template(inheritedAccessControlContext_name,        "inheritedAccessControlContext")            \
-  template(isPrivileged_name,                         "isPrivileged")                             \
-  template(isAuthorized_name,                         "isAuthorized")                             \
   template(getClassContext_name,                      "getClassContext")                          \
   template(wait_name,                                 "wait")                                     \
   template(checkPackageAccess_name,                   "checkPackageAccess")                       \
-  template(stackSize_name,                            "stackSize")                                \
-  template(thread_id_name,                            "tid")                                      \
   template(newInstance0_name,                         "newInstance0")                             \
-  template(limit_name,                                "limit")                                    \
-  template(member_name,                               "member")                                   \
   template(forName_name,                              "forName")                                  \
   template(forName0_name,                             "forName0")                                 \
   template(isJavaIdentifierStart_name,                "isJavaIdentifierStart")                    \
   template(isJavaIdentifierPart_name,                 "isJavaIdentifierPart")                     \
-  template(exclusive_owner_thread_name,               "exclusiveOwnerThread")                     \
-  template(park_blocker_name,                         "parkBlocker")                              \
-  template(park_event_name,                           "nativeParkEventPointer")                   \
   template(cache_field_name,                          "cache")                                    \
   template(value_name,                                "value")                                    \
-  template(hash_name,                                 "hash")                                     \
-  template(coder_name,                                "coder")                                    \
   template(compact_strings_name,                      "COMPACT_STRINGS")                          \
   template(numberOfLeadingZeros_name,                 "numberOfLeadingZeros")                     \
   template(numberOfTrailingZeros_name,                "numberOfTrailingZeros")                    \
@@ -423,30 +406,19 @@
   template(method_name,                               "method")                                   \
   template(vmindex_name,                              "vmindex")                                  \
   template(vmcount_name,                              "vmcount")                                  \
-  template(vmentry_name,                              "vmentry")                                  \
   template(addr_name,                                 "addr")                                     \
   template(snippet_name,                              "snippet")                                  \
   template(flags_name,                                "flags")                                    \
-  template(rtype_name,                                "rtype")                                    \
-  template(ptypes_name,                               "ptypes")                                   \
-  template(form_name,                                 "form")                                     \
   template(basicType_name,                            "basicType")                                \
   template(append_name,                               "append")                                   \
   template(klass_name,                                "klass")                                    \
   template(array_klass_name,                          "array_klass")                              \
-  template(declaringClass_name,                       "declaringClass")                           \
-  template(memberName_name,                           "memberName")                               \
   template(mid_name,                                  "mid")                                      \
   template(cpref_name,                                "cpref")                                    \
   template(version_name,                              "version")                                  \
-  template(bci_name,                                  "bci")                                      \
   template(methodName_name,                           "methodName")                               \
   template(fileName_name,                             "fileName")                                 \
   template(lineNumber_name,                           "lineNumber")                               \
-  template(monitors_name,                             "monitors")                                 \
-  template(locals_name,                               "locals")                                   \
-  template(operands_name,                             "operands")                                 \
-  template(mode_name,                                 "mode")                                     \
   template(oop_size_name,                             "oop_size")                                 \
   template(static_oop_field_count_name,               "static_oop_field_count")                   \
   template(protection_domain_name,                    "protection_domain")                        \
@@ -454,9 +426,11 @@
   template(loader_data_name,                          "loader_data")                              \
   template(vmdependencies_name,                       "vmdependencies")                           \
   template(loader_name,                               "loader")                                   \
-  template(module_name,                               "module")                                   \
   template(getModule_name,                            "getModule")                                \
   template(input_stream_void_signature,               "(Ljava/io/InputStream;)V")                 \
+  template(input_stream_signature,                    "Ljava/io/InputStream;")                    \
+  template(print_stream_signature,                    "Ljava/io/PrintStream;")                    \
+  template(security_manager_signature,                "Ljava/lang/SecurityManager;")              \
   template(definePackage_name,                        "definePackage")                            \
   template(definePackage_signature,                   "(Ljava/lang/String;Ljava/lang/Module;)Ljava/lang/Package;") \
   template(defineOrCheckPackage_name,                 "defineOrCheckPackage")                     \
@@ -505,6 +479,7 @@
   template(short_signature,                           "S")                                        \
   template(bool_signature,                            "Z")                                        \
   template(void_signature,                            "V")                                        \
+  template(bool_array_signature,                      "[Z")                                       \
   template(byte_array_signature,                      "[B")                                       \
   template(char_array_signature,                      "[C")                                       \
   template(int_array_signature,                       "[I")                                       \
@@ -559,6 +534,7 @@
   template(object_array_signature,                    "[Ljava/lang/Object;")                                      \
   template(class_signature,                           "Ljava/lang/Class;")                                        \
   template(string_signature,                          "Ljava/lang/String;")                                       \
+  template(string_array_signature,                    "[Ljava/lang/String;")                                      \
   template(reference_signature,                       "Ljava/lang/ref/Reference;")                                \
   template(sun_misc_Cleaner_signature,                "Lsun/misc/Cleaner;")                                       \
   template(executable_signature,                      "Ljava/lang/reflect/Executable;")                           \
@@ -584,12 +560,6 @@
                                                                                                                   \
   /* used by ClassFormatError when class name is not known yet */                                                 \
   template(unknown_class_name,                        "<Unknown>")                                                \
-                                                                                                                  \
-  /* used to identify class loaders handling parallel class loading */                                            \
-  template(parallelCapable_name,                      "parallelLockMap")                                          \
-                                                                                                                  \
-  /* used to return a class loader's unnamed module */                                                            \
-  template(unnamedModule_name,                        "unnamedModule")                                            \
                                                                                                                   \
   /* JVM monitoring and management support */                                                                     \
   template(java_lang_StackTraceElement_array,          "[Ljava/lang/StackTraceElement;")                          \
@@ -679,8 +649,12 @@
   /* trace signatures */                                                                                          \
   TRACE_TEMPLATES(template)                                                                                       \
                                                                                                                   \
-  /* extensions */                                                                                                \
-  VM_SYMBOLS_DO_EXT(template, do_alias)                                                                           \
+  /* cds */                                                                                                       \
+  template(jdk_internal_loader_ClassLoaders,       "jdk/internal/loader/ClassLoaders")                            \
+  template(jdk_vm_cds_SharedClassInfo,             "jdk/vm/cds/SharedClassInfo")                                  \
+  template(url_void_signature,                     "(Ljava/net/URL;)V")                                           \
+  template(toFileURL_name,                         "toFileURL")                                                   \
+  template(toFileURL_signature,                    "(Ljava/lang/String;)Ljava/net/URL;")                          \
                                                                                                                   \
   /*end*/
 
@@ -999,8 +973,8 @@
    do_name(     montgomerySquare_name,                             "implMontgomerySquare")                              \
    do_signature(montgomerySquare_signature,                        "([I[IIJ[I)[I")                                      \
                                                                                                                         \
-  do_class(java_util_ArraysSupport, "java/util/ArraysSupport")                                                          \
-  do_intrinsic(_vectorizedMismatch, java_util_ArraysSupport, vectorizedMismatch_name, vectorizedMismatch_signature, F_S)\
+  do_class(jdk_internal_util_ArraysSupport, "jdk/internal/util/ArraysSupport")                                                          \
+  do_intrinsic(_vectorizedMismatch, jdk_internal_util_ArraysSupport, vectorizedMismatch_name, vectorizedMismatch_signature, F_S)\
    do_name(vectorizedMismatch_name, "vectorizedMismatch")                                                               \
    do_signature(vectorizedMismatch_signature, "(Ljava/lang/Object;JLjava/lang/Object;JII)I")                            \
                                                                                                                         \
@@ -1018,8 +992,8 @@
   do_class(com_sun_crypto_provider_cipherBlockChaining,            "com/sun/crypto/provider/CipherBlockChaining")       \
    do_intrinsic(_cipherBlockChaining_encryptAESCrypt, com_sun_crypto_provider_cipherBlockChaining, encrypt_name, byteArray_int_int_byteArray_int_signature, F_R)   \
    do_intrinsic(_cipherBlockChaining_decryptAESCrypt, com_sun_crypto_provider_cipherBlockChaining, decrypt_name, byteArray_int_int_byteArray_int_signature, F_R)   \
-   do_name(     encrypt_name,                                      "implEncrypt")                                           \
-   do_name(     decrypt_name,                                      "implDecrypt")                                           \
+   do_name(     encrypt_name,                                      "implEncrypt")                                       \
+   do_name(     decrypt_name,                                      "implDecrypt")                                       \
    do_signature(byteArray_int_int_byteArray_int_signature,         "([BII[BI)I")                                        \
                                                                                                                         \
   do_class(com_sun_crypto_provider_counterMode,      "com/sun/crypto/provider/CounterMode")                             \
@@ -1417,7 +1391,7 @@
                                                                                                                           \
   do_intrinsic(_invoke,                   java_lang_reflect_Method, invoke_name, object_object_array_object_signature, F_R) \
   /*   (symbols invoke_name and invoke_signature defined above) */                                                      \
-  /* the polymorphic MH intrinsics must be in compact order, with _invokeGeneric first and _linkToNative last */        \
+  /* the polymorphic MH intrinsics must be in compact order, with _invokeGeneric first and _linkToInterface last */     \
   do_intrinsic(_invokeGeneric,            java_lang_invoke_MethodHandle, invoke_name,           star_name, F_RN)        \
   do_intrinsic(_invokeBasic,              java_lang_invoke_MethodHandle, invokeBasic_name,      star_name, F_RN)        \
   do_intrinsic(_linkToVirtual,            java_lang_invoke_MethodHandle, linkToVirtual_name,    star_name, F_SN)        \

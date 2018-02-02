@@ -21,14 +21,15 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4189821
  * @summary HashMap's entry.toString threw a null pointer exc if the HashMap
  *          contained null keys or values.
  */
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ToString {
     public static void main(String[] args) throws Exception {

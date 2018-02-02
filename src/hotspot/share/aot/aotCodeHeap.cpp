@@ -167,6 +167,7 @@ void AOTLib::verify_config() {
   verify_flag(_config->_compactFields, CompactFields, "CompactFields");
   verify_flag(_config->_enableContended, EnableContended, "EnableContended");
   verify_flag(_config->_restrictContended, RestrictContended, "RestrictContended");
+  verify_flag(_config->_threadLocalHandshakes, ThreadLocalHandshakes, "ThreadLocalHandshakes");
 
   if (!TieredCompilation && _config->_tieredAOT) {
     handle_config_error("Shared file %s error: Expected to run with tiered compilation on", _name);
@@ -489,6 +490,8 @@ void AOTCodeHeap::link_stub_routines_symbols() {
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_unsafe_arraycopy", address, StubRoutines::_unsafe_arraycopy);
 
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_checkcast_arraycopy", address, StubRoutines::_checkcast_arraycopy);
+
+    SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_generic_arraycopy", address, StubRoutines::_generic_arraycopy);
 
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_aescrypt_encryptBlock", address, StubRoutines::_aescrypt_encryptBlock);
     SET_AOT_GLOBAL_SYMBOL_VALUE("_aot_stub_routines_aescrypt_decryptBlock", address, StubRoutines::_aescrypt_decryptBlock);

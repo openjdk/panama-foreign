@@ -35,9 +35,10 @@ import org.graalvm.compiler.graph.spi.CanonicalizerTool;
 import org.graalvm.compiler.lir.gen.ArithmeticLIRGeneratorTool;
 import org.graalvm.compiler.nodeinfo.NodeInfo;
 import org.graalvm.compiler.nodes.ConstantNode;
+import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.BinaryNode;
-import org.graalvm.compiler.nodes.calc.DivNode;
+import org.graalvm.compiler.nodes.calc.FloatDivNode;
 import org.graalvm.compiler.nodes.calc.MulNode;
 import org.graalvm.compiler.nodes.calc.SqrtNode;
 import org.graalvm.compiler.nodes.spi.ArithmeticLIRLowerable;
@@ -86,13 +87,13 @@ public final class BinaryMathIntrinsicNode extends BinaryNode implements Arithme
 
     @Override
     public Stamp foldStamp(Stamp stampX, Stamp stampY) {
-        return stamp();
+        return stamp(NodeView.DEFAULT);
     }
 
     protected BinaryMathIntrinsicNode(ValueNode forX, ValueNode forY, BinaryOperation op) {
         super(TYPE, StampFactory.forKind(JavaKind.Double), forX, forY);
-        assert forX.stamp() instanceof FloatStamp && PrimitiveStamp.getBits(forX.stamp()) == 64;
-        assert forY.stamp() instanceof FloatStamp && PrimitiveStamp.getBits(forY.stamp()) == 64;
+        assert forX.stamp(NodeView.DEFAULT) instanceof FloatStamp && PrimitiveStamp.getBits(forX.stamp(NodeView.DEFAULT)) == 64;
+        assert forY.stamp(NodeView.DEFAULT) instanceof FloatStamp && PrimitiveStamp.getBits(forY.stamp(NodeView.DEFAULT)) == 64;
         this.operation = op;
     }
 
@@ -118,6 +119,7 @@ public final class BinaryMathIntrinsicNode extends BinaryNode implements Arithme
 
     @Override
     public ValueNode canonical(CanonicalizerTool tool, ValueNode forX, ValueNode forY) {
+        NodeView view = NodeView.from(tool);
         ValueNode c = tryConstantFold(forX, forY, getOperation());
         if (c != null) {
             return c;
@@ -141,7 +143,7 @@ public final class BinaryMathIntrinsicNode extends BinaryNode implements Arithme
 
             // x**-1 = 1/x
             if (yValue == -1.0D) {
-                return new DivNode(ConstantNode.forDouble(1), x);
+                return new FloatDivNode(ConstantNode.forDouble(1), x);
             }
 
             // x**2 = x*x
@@ -150,8 +152,8 @@ public final class BinaryMathIntrinsicNode extends BinaryNode implements Arithme
             }
 
             // x**0.5 = sqrt(x)
-            if (yValue == 0.5D && x.stamp() instanceof FloatStamp && ((FloatStamp) x.stamp()).lowerBound() >= 0.0D) {
-                return new SqrtNode(x);
+            if (yValue == 0.5D && x.stamp(view) instanceof FloatStamp && ((FloatStamp) x.stamp(view)).lowerBound() >= 0.0D) {
+                return SqrtNode.create(x, view);
             }
         }
         return this;
