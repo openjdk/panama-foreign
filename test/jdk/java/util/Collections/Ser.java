@@ -21,15 +21,20 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4190323
  * @summary EMPTY_SET, EMPTY_LIST, and the collections returned by
  *          nCopies and singleton were spec'd to be serializable, but weren't.
  */
 
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class Ser {
     public static void main(String[] args) throws Exception {

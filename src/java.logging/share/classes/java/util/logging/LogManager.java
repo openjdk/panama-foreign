@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -388,15 +388,17 @@ public class LogManager {
                         // create root logger before reading primordial
                         // configuration - to ensure that it will be added
                         // before the global logger, and not after.
-                        owner.rootLogger = owner.new RootLogger();
+                        final Logger root = owner.rootLogger = owner.new RootLogger();
 
                         // Read configuration.
                         owner.readPrimordialConfiguration();
 
                         // Create and retain Logger for the root of the namespace.
-                        owner.addLogger(owner.rootLogger);
-                        if (!owner.rootLogger.isLevelInitialized()) {
-                            owner.rootLogger.setLevel(defaultLevel);
+                        owner.addLogger(root);
+
+                        // Initialize level if not yet initialized
+                        if (!root.isLevelInitialized()) {
+                            root.setLevel(defaultLevel);
                         }
 
                         // Adding the global Logger.
@@ -987,7 +989,8 @@ public class LogManager {
         }
     }
 
-    private List<Handler> createLoggerHandlers(final String name, final String handlersPropertyName)
+    private List<Handler> createLoggerHandlers(final String name,
+                                               final String handlersPropertyName)
     {
         String names[] = parseClassNames(handlersPropertyName);
         List<Handler> handlers = new ArrayList<>(names.length);
@@ -1190,7 +1193,7 @@ public class LogManager {
         }
         drainLoggerRefQueueBounded();
         LoggerContext cx = getUserContext();
-        if (cx.addLocalLogger(logger)) {
+        if (cx.addLocalLogger(logger) || forceLoadHandlers(logger)) {
             // Do we have a per logger handler too?
             // Note: this will add a 200ms penalty
             loadLoggerHandlers(logger, name, name + ".handlers");
@@ -1198,6 +1201,26 @@ public class LogManager {
         } else {
             return false;
         }
+    }
+
+
+    // Checks whether the given logger is a special logger
+    // that still requires handler initialization.
+    // This method will only return true for the root and
+    // global loggers and only if called by the thread that
+    // performs initialization of the LogManager, during that
+    // initialization. Must only be called by addLogger.
+    @SuppressWarnings("deprecation")
+    private boolean forceLoadHandlers(Logger logger) {
+        // Called just after reading the primordial configuration, in
+        // the same thread that reads it.
+        // The root and global logger would already be present in the context
+        // by this point, but we would not have called loadLoggerHandlers
+        // yet.
+        return (logger == rootLogger ||  logger == Logger.global)
+                && !initializationDone
+                && initializedCalled
+                && configurationLock.isHeldByCurrentThread();
     }
 
     // Private method to set a level on a logger.
@@ -1708,7 +1731,7 @@ public class LogManager {
          * @param k a property key in the configuration
          * @param previous the old configuration
          * @param next the new configuration (modified by this function)
-         * @param remappingFunction the mapping function.
+         * @param mappingFunction the mapping function.
          */
         static void merge(String k, Properties previous, Properties next,
                           BiFunction<String, String, String> mappingFunction) {

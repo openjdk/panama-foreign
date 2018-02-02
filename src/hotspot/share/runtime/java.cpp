@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "aot/aotLoader.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/stringTable.hpp"
@@ -49,7 +50,6 @@
 #include "oops/objArrayOop.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/symbol.hpp"
-#include "prims/jvm.h"
 #include "prims/jvmtiExport.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/biasedLocking.hpp"
@@ -356,6 +356,8 @@ void print_statistics() {
   if (PrintNMTStatistics) {
     MemTracker::final_report(tty);
   }
+
+  ThreadsSMRSupport::log_statistics();
 }
 
 #else // PRODUCT MODE STATISTICS
@@ -396,6 +398,8 @@ void print_statistics() {
   if (LogTouchedMethods && PrintTouchedMethodsAtExit) {
     Method::print_touched_methods(tty);
   }
+
+  ThreadsSMRSupport::log_statistics();
 }
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import static javax.lang.model.SourceVersion.*;
 /**
  * A simple visitor of program elements with default behavior
  * appropriate for the {@link SourceVersion#RELEASE_9 RELEASE_9}
- * source version.
+ * and {@link SourceVersion#RELEASE_10 RELEASE_10} source versions.
  *
  * Visit methods corresponding to {@code RELEASE_9} and earlier
  * language constructs call {@link #defaultAction defaultAction},
@@ -73,7 +73,7 @@ import static javax.lang.model.SourceVersion.*;
  * @since 9
  * @spec JPMS
  */
-@SupportedSourceVersion(RELEASE_9)
+@SupportedSourceVersion(RELEASE_10)
 public class SimpleElementVisitor9<R, P> extends SimpleElementVisitor8<R, P> {
     /**
      * Constructor for concrete subclasses; uses {@code null} for the
@@ -94,12 +94,14 @@ public class SimpleElementVisitor9<R, P> extends SimpleElementVisitor8<R, P> {
     }
 
     /**
-     * Visits a {@code ModuleElement} by calling {@code
+     * {@inheritDoc}
+     *
+     * @implSpec Visits a {@code ModuleElement} by calling {@code
      * defaultAction}.
      *
      * @param e the element to visit
      * @param p a visitor-specified parameter
-     * @return  the result of {@code defaultAction}
+     * @return  {@inheritDoc}
      */
     @Override
     public R visitModule(ModuleElement e, P p) {

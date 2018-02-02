@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -571,6 +571,18 @@ Node *RegionNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       return NULL;
     } else if (can_reshape) {   // Optimization phase - remove the node
       PhaseIterGVN *igvn = phase->is_IterGVN();
+      // Strip mined (inner) loop is going away, remove outer loop.
+      if (is_CountedLoop() &&
+          as_Loop()->is_strip_mined()) {
+        Node* outer_sfpt = as_CountedLoop()->outer_safepoint();
+        Node* outer_out = as_CountedLoop()->outer_loop_exit();
+        if (outer_sfpt != NULL && outer_out != NULL) {
+          Node* in = outer_sfpt->in(0);
+          igvn->replace_node(outer_out, in);
+          LoopNode* outer = as_CountedLoop()->outer_loop();
+          igvn->replace_input_of(outer, LoopNode::LoopBackControl, igvn->C->top());
+        }
+      }
       Node *parent_ctrl;
       if( cnt == 0 ) {
         assert( req() == 1, "no inputs expected" );
@@ -918,11 +930,18 @@ const Type* PhiNode::Value(PhaseGVN* phase) const {
         const TypeInt* stride_t = phase->type(stride)->isa_int();
         if (lo != NULL && hi != NULL && stride_t != NULL) { // Dying loops might have TOP here
           assert(stride_t->_hi >= stride_t->_lo, "bad stride type");
-          if (stride_t->_hi < 0) {          // Down-counter loop
-            swap(lo, hi);
-            return TypeInt::make(MIN2(lo->_lo, hi->_lo) , hi->_hi, 3);
-          } else if (stride_t->_lo >= 0) {
-            return TypeInt::make(lo->_lo, MAX2(lo->_hi, hi->_hi), 3);
+          BoolTest::mask bt = l->loopexit()->test_trip();
+          // If the loop exit condition is "not equal", the condition
+          // would not trigger if init > limit (if stride > 0) or if
+          // init < limit if (stride > 0) so we can't deduce bounds
+          // for the iv from the exit condition.
+          if (bt != BoolTest::ne) {
+            if (stride_t->_hi < 0) {          // Down-counter loop
+              swap(lo, hi);
+              return TypeInt::make(MIN2(lo->_lo, hi->_lo) , hi->_hi, 3);
+            } else if (stride_t->_lo >= 0) {
+              return TypeInt::make(lo->_lo, MAX2(lo->_hi, hi->_hi), 3);
+            }
           }
         }
       }
@@ -933,7 +952,7 @@ const Type* PhiNode::Value(PhaseGVN* phase) const {
       // before the special code for counted loop above has a chance
       // to run (that is as long as the type of the backedge's control
       // is top), we might end up with non monotonic types
-      return phase->type(in(LoopNode::EntryControl));
+      return phase->type(in(LoopNode::EntryControl))->filter_speculative(_type);
     }
   }
 
@@ -2354,7 +2373,7 @@ Node *NeverBranchNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if (can_reshape && !in(0)->is_Loop()) {
     // Dead code elimination can sometimes delete this projection so
     // if it's not there, there's nothing to do.
-    Node* fallthru = proj_out(0);
+    Node* fallthru = proj_out_or_null(0);
     if (fallthru != NULL) {
       phase->is_IterGVN()->replace_node(fallthru, in(0));
     }

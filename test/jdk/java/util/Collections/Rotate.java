@@ -21,14 +21,19 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4323074
  * @summary Basic test for new rotate algorithm
  * @key randomness
  */
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.Vector;
 
 public class Rotate {
     // Should have lots of distinct factors and be > ROTATE_THRESHOLD
@@ -37,7 +42,7 @@ public class Rotate {
     static Random rnd = new Random();
 
     public static void main(String[] args) throws Exception {
-        List a[] = {new ArrayList(), new LinkedList(), new Vector()};
+        List[] a = {new ArrayList(), new LinkedList(), new Vector()};
 
         for (int i=0; i<a.length; i++) {
             List lst = a[i];

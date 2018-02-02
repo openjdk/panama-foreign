@@ -33,6 +33,7 @@ import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.NodeInputList;
 import org.graalvm.compiler.nodes.ConstantNode;
 import org.graalvm.compiler.nodes.Invoke;
+import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.ParameterNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.StructuredGraph.AllowAssumptions;
@@ -43,7 +44,6 @@ import org.graalvm.compiler.phases.common.inlining.InliningUtil;
 import org.graalvm.compiler.phases.graph.FixedNodeProbabilityCache;
 import org.graalvm.compiler.phases.tiers.HighTierContext;
 
-import jdk.vm.ci.meta.Constant;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 
 /**
@@ -121,8 +121,8 @@ public class InlineableGraph implements Inlineable {
     }
 
     private static Stamp improvedStamp(ValueNode arg, ParameterNode param) {
-        Stamp joinedStamp = param.stamp().join(arg.stamp());
-        if (joinedStamp == null || joinedStamp.equals(param.stamp())) {
+        Stamp joinedStamp = param.stamp(NodeView.DEFAULT).join(arg.stamp(NodeView.DEFAULT));
+        if (joinedStamp == null || joinedStamp.equals(param.stamp(NodeView.DEFAULT))) {
             return null;
         }
         return joinedStamp;
@@ -159,11 +159,11 @@ public class InlineableGraph implements Inlineable {
             if (param.usages().isNotEmpty()) {
                 ValueNode arg = args.get(param.index());
                 if (arg.isConstant()) {
-                    Constant constant = arg.asConstant();
+                    ConstantNode constant = (ConstantNode) arg;
                     parameterUsages = trackParameterUsages(param, parameterUsages);
                     // collect param usages before replacing the param
                     param.replaceAtUsagesAndDelete(graph.unique(
-                                    ConstantNode.forConstant(arg.stamp(), constant, ((ConstantNode) arg).getStableDimension(), ((ConstantNode) arg).isDefaultStable(), context.getMetaAccess())));
+                                    ConstantNode.forConstant(arg.stamp(NodeView.DEFAULT), constant.getValue(), constant.getStableDimension(), constant.isDefaultStable(), context.getMetaAccess())));
                     // param-node gone, leaving a gap in the sequence given by param.index()
                 } else {
                     Stamp impro = improvedStamp(arg, param);

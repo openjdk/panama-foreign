@@ -21,14 +21,21 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4245809
  * @summary Basic test for LinkedHashSet.  (Based on SetBash)
  */
 
-import java.util.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Random;
+import java.util.Set;
 
 public class Basic {
     static Random rnd = new Random(666);
@@ -133,9 +140,8 @@ public class Basic {
     }
 
     static void AddRandoms(Set s, int n) throws Exception {
-        for (int i=0; i<n; i++) {
-            int r = rnd.nextInt() % n;
-            Integer e = new Integer(r < 0 ? -r : r);
+        for (int i = 0; i < n; i++) {
+            Integer e = rnd.nextInt(n);
 
             int preSize = s.size();
             boolean prePresent = s.contains(e);

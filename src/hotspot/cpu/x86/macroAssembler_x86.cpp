@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "asm/assembler.hpp"
 #include "asm/assembler.inline.hpp"
 #include "compiler/disassembler.hpp"
@@ -32,12 +33,13 @@
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "oops/klass.inline.hpp"
-#include "prims/jvm.h"
 #include "prims/methodHandles.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/objectMonitor.hpp"
 #include "runtime/os.hpp"
+#include "runtime/safepoint.hpp"
+#include "runtime/safepointMechanism.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.hpp"
@@ -3759,6 +3761,25 @@ void MacroAssembler::serialize_memory(Register thread, Register tmp) {
   movl(as_Address(ArrayAddress(page, index)), tmp);
 }
 
+#ifdef _LP64
+void MacroAssembler::safepoint_poll(Label& slow_path, Register thread_reg, Register temp_reg) {
+  if (SafepointMechanism::uses_thread_local_poll()) {
+    testb(Address(r15_thread, Thread::polling_page_offset()), SafepointMechanism::poll_bit());
+    jcc(Assembler::notZero, slow_path); // handshake bit set implies poll
+  } else {
+    cmp32(ExternalAddress(SafepointSynchronize::address_of_state()),
+        SafepointSynchronize::_not_synchronized);
+    jcc(Assembler::notEqual, slow_path);
+  }
+}
+#else
+void MacroAssembler::safepoint_poll(Label& slow_path) {
+  cmp32(ExternalAddress(SafepointSynchronize::address_of_state()),
+      SafepointSynchronize::_not_synchronized);
+  jcc(Assembler::notEqual, slow_path);
+}
+#endif
+
 // Calls to C land
 //
 // When entering C land, the rbp, & rsp of the last Java frame have to be recorded
@@ -5788,8 +5809,13 @@ void MacroAssembler::lookup_interface_method(Register recv_klass,
                                              RegisterOrConstant itable_index,
                                              Register method_result,
                                              Register scan_temp,
-                                             Label& L_no_such_interface) {
-  assert_different_registers(recv_klass, intf_klass, method_result, scan_temp);
+                                             Label& L_no_such_interface,
+                                             bool return_method) {
+  assert_different_registers(recv_klass, intf_klass, scan_temp);
+  assert_different_registers(method_result, intf_klass, scan_temp);
+  assert(recv_klass != method_result || !return_method,
+         "recv_klass can be destroyed when method isn't needed");
+
   assert(itable_index.is_constant() || itable_index.as_register() == method_result,
          "caller must use same register for non-constant itable index as for method");
 
@@ -5806,9 +5832,11 @@ void MacroAssembler::lookup_interface_method(Register recv_klass,
   // %%% Could store the aligned, prescaled offset in the klassoop.
   lea(scan_temp, Address(recv_klass, scan_temp, times_vte_scale, vtable_base));
 
-  // Adjust recv_klass by scaled itable_index, so we can free itable_index.
-  assert(itableMethodEntry::size() * wordSize == wordSize, "adjust the scaling in the code below");
-  lea(recv_klass, Address(recv_klass, itable_index, Address::times_ptr, itentry_off));
+  if (return_method) {
+    // Adjust recv_klass by scaled itable_index, so we can free itable_index.
+    assert(itableMethodEntry::size() * wordSize == wordSize, "adjust the scaling in the code below");
+    lea(recv_klass, Address(recv_klass, itable_index, Address::times_ptr, itentry_off));
+  }
 
   // for (scan = klass->itable(); scan->interface() != NULL; scan += scan_step) {
   //   if (scan->interface() == intf) {
@@ -5842,9 +5870,11 @@ void MacroAssembler::lookup_interface_method(Register recv_klass,
 
   bind(found_method);
 
-  // Got a hit.
-  movl(scan_temp, Address(scan_temp, itableOffsetEntry::offset_offset_in_bytes()));
-  movptr(method_result, Address(recv_klass, scan_temp, Address::times_1));
+  if (return_method) {
+    // Got a hit.
+    movl(scan_temp, Address(scan_temp, itableOffsetEntry::offset_offset_in_bytes()));
+    movptr(method_result, Address(recv_klass, scan_temp, Address::times_1));
+  }
 }
 
 
@@ -6609,6 +6639,13 @@ void MacroAssembler::restore_cpu_control_state_after_jni() {
   }
   // Clear upper bits of YMM registers to avoid SSE <-> AVX transition penalty.
   vzeroupper();
+  // Reset k1 to 0xffff.
+  if (VM_Version::supports_evex()) {
+    push(rcx);
+    movl(rcx, 0xffff);
+    kmovwl(k1, rcx);
+    pop(rcx);
+  }
 
 #ifndef _LP64
   // Either restore the x87 floating pointer control word after returning

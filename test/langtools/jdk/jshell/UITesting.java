@@ -41,6 +41,11 @@ import jdk.jshell.tool.JavaShellToolBuilder;
 
 public class UITesting {
 
+    protected static final String TAB = "\011";
+    protected static final String INTERRUPT = "\u0003";
+    protected static final String BELL = "\u0007";
+    protected static final String PROMPT = "\u0005";
+    protected static final String REDRAW_PROMPT = "\n\r" + PROMPT;
     private final boolean laxLineEndings;
 
     public UITesting() {
@@ -100,10 +105,10 @@ public class UITesting {
         runner.start();
 
         try {
-            waitOutput(out, "\u0005");
+            waitOutput(out, PROMPT);
             test.test(inputSink, out);
         } finally {
-            inputSink.write("\003\003/exit");
+            inputSink.write(INTERRUPT + INTERRUPT + "/exit");
 
             runner.join(1000);
             if (runner.isAlive()) {
@@ -130,8 +135,19 @@ public class UITesting {
     }
 
     protected void waitOutput(StringBuilder out, String expected) {
+        waitOutput(out, expected, null);
+    }
+
+    // Return true if expected is found, false if secondary is found,
+    // otherwise, time out with an IllegalStateException
+    protected boolean waitOutput(StringBuilder out, String expected, String secondary) {
         expected = expected.replaceAll("\n", laxLineEndings ? "\r?\n" : System.getProperty("line.separator"));
         Pattern expectedPattern = Pattern.compile(expected, Pattern.DOTALL);
+        Pattern secondaryPattern = null;
+        if (secondary != null) {
+            secondary = secondary.replaceAll("\n", laxLineEndings ? "\r?\n" : System.getProperty("line.separator"));
+            secondaryPattern = Pattern.compile(secondary, Pattern.DOTALL);
+        }
         synchronized (out) {
             long s = System.currentTimeMillis();
 
@@ -139,7 +155,14 @@ public class UITesting {
                 Matcher m = expectedPattern.matcher(out);
                 if (m.find()) {
                     out.delete(0, m.end());
-                    return ;
+                    return true;
+                }
+                if (secondaryPattern != null) {
+                    m = secondaryPattern.matcher(out);
+                    if (m.find()) {
+                        out.delete(0, m.end());
+                        return false;
+                    }
                 }
                 long e =  System.currentTimeMillis();
                 if ((e - s) > TIMEOUT) {
@@ -196,6 +219,10 @@ public class UITesting {
 
     protected String getResource(String key) {
         return resources.getString(key);
+    }
+
+    protected String resource(String key) {
+        return Pattern.quote(getResource(key).replaceAll("\t", "    "));
     }
 
     protected String getMessage(String key, Object... args) {

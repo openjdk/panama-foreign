@@ -143,6 +143,7 @@ char* GenCollectedHeap::allocate(size_t alignment,
 }
 
 void GenCollectedHeap::post_initialize() {
+  CollectedHeap::post_initialize();
   ref_processing_init();
   check_gen_kinds();
   DefNewGeneration* def_new_gen = (DefNewGeneration*)_young_gen;
@@ -151,13 +152,6 @@ void GenCollectedHeap::post_initialize() {
                                       _old_gen->capacity(),
                                       def_new_gen->from()->capacity());
   _gen_policy->initialize_gc_policy_counters();
-}
-
-void GenCollectedHeap::check_gen_kinds() {
-  assert(young_gen()->kind() == Generation::DefNew,
-         "Wrong youngest generation type");
-  assert(old_gen()->kind() == Generation::MarkSweepCompact,
-         "Wrong generation kind");
 }
 
 void GenCollectedHeap::ref_processing_init() {
@@ -277,7 +271,7 @@ void GenCollectedHeap::collect_generation(Generation* gen, bool full, size_t siz
   FormatBuffer<> title("Collect gen: %s", gen->short_name());
   GCTraceTime(Trace, gc, phases) t1(title);
   TraceCollectorStats tcs(gen->counters());
-  TraceMemoryManagerStats tmms(gen->kind(),gc_cause());
+  TraceMemoryManagerStats tmms(gen->gc_manager(), gc_cause());
 
   gen->stat_record()->invocations++;
   gen->stat_record()->accumulated_time.start();
@@ -984,7 +978,7 @@ void GenCollectedHeap::save_marks() {
 GenCollectedHeap* GenCollectedHeap::heap() {
   CollectedHeap* heap = Universe::heap();
   assert(heap != NULL, "Uninitialized access to GenCollectedHeap::heap()");
-  assert(heap->kind() == CollectedHeap::GenCollectedHeap ||
+  assert(heap->kind() == CollectedHeap::SerialHeap ||
          heap->kind() == CollectedHeap::CMSHeap, "Not a GenCollectedHeap");
   return (GenCollectedHeap*) heap;
 }
@@ -1067,11 +1061,11 @@ class GenGCEpilogueClosure: public GenCollectedHeap::GenClosure {
 };
 
 void GenCollectedHeap::gc_epilogue(bool full) {
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   assert(DerivedPointerTable::is_empty(), "derived pointer present");
   size_t actual_gap = pointer_delta((HeapWord*) (max_uintx-3), *(end_addr()));
   guarantee(is_client_compilation_mode_vm() || actual_gap > (size_t)FastAllocateSizeLimit, "inline allocation wraps");
-#endif /* COMPILER2 || INCLUDE_JVMCI */
+#endif // COMPILER2_OR_JVMCI
 
   resize_all_tlabs();
 

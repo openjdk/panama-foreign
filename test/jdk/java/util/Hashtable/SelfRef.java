@@ -21,7 +21,7 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4421469 6282555
  * @summary Hashtable's toString method should detect self-referential
@@ -29,8 +29,11 @@
  * @author Josh Bloch, Martin Buchholz
  */
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SelfRef {
     public static void main(String[] args) {

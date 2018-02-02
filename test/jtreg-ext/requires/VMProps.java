@@ -74,6 +74,7 @@ public class VMProps implements Callable<Map<String, String>> {
         map.put("vm.aot", vmAOT());
         // vm.cds is true if the VM is compiled with cds support.
         map.put("vm.cds", vmCDS());
+        map.put("vm.cds.custom.loaders", vmCDSForCustomLoaders());
         // vm.graal.enabled is true if Graal is used as JIT
         map.put("vm.graal.enabled", isGraalEnabled());
         map.put("docker.support", dockerSupport());
@@ -297,6 +298,19 @@ public class VMProps implements Callable<Map<String, String>> {
     }
 
     /**
+     * Check for CDS support for custom loaders.
+     *
+     * @return true if CDS is supported for customer loader by the VM to be tested.
+     */
+    protected String vmCDSForCustomLoaders() {
+        if (vmCDS().equals("true") && Platform.areCustomLoadersSupportedForCDS()) {
+            return "true";
+        } else {
+            return "false";
+        }
+    }
+
+    /**
      * Check if Graal is used as JIT compiler.
      *
      * @return true if Graal is used as JIT compiler.
@@ -347,7 +361,6 @@ public class VMProps implements Callable<Map<String, String>> {
             isSupported = checkDockerSupport();
         } catch (Exception e) {
             isSupported = false;
-            System.err.println("dockerSupport() threw exception: " + e);
         }
 
         return (isSupported) ? "true" : "false";

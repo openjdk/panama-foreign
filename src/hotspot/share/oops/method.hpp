@@ -271,7 +271,7 @@ class Method : public Metadata {
   int highest_osr_comp_level() const;
   void set_highest_osr_comp_level(int level);
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   // Count of times method was exited via exception while interpreting
   void interpreter_throwout_increment(TRAPS) {
     MethodCounters* mcs = get_method_counters(CHECK);
@@ -426,7 +426,7 @@ class Method : public Metadata {
       return (mcs == NULL) ? 0 : mcs->interpreter_invocation_count();
     }
   }
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   int increment_interpreter_invocation_count(TRAPS) {
     if (TieredCompilation) ShouldNotReachHere();
     MethodCounters* mcs = get_method_counters(CHECK_0);
@@ -698,6 +698,7 @@ class Method : public Metadata {
   static ByteSize from_interpreted_offset()      { return byte_offset_of(Method, _from_interpreted_entry ); }
   static ByteSize interpreter_entry_offset()     { return byte_offset_of(Method, _i2i_entry ); }
   static ByteSize signature_handler_offset()     { return in_ByteSize(sizeof(Method) + wordSize);      }
+  static ByteSize itable_index_offset()          { return byte_offset_of(Method, _vtable_index ); }
 
   // for code generation
   static int method_data_offset_in_bytes()       { return offset_of(Method, _method_data); }

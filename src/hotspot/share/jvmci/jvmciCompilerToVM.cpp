@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -749,8 +749,13 @@ C2V_VMENTRY(jobject, findUniqueConcreteMethod, (JNIEnv *, jobject, jobject jvmci
 C2V_END
 
 C2V_VMENTRY(jobject, getImplementor, (JNIEnv *, jobject, jobject jvmci_type))
-  InstanceKlass* klass = (InstanceKlass*) CompilerToVM::asKlass(jvmci_type);
-  oop implementor = CompilerToVM::get_jvmci_type(klass->implementor(), CHECK_NULL);
+  Klass* klass = CompilerToVM::asKlass(jvmci_type);
+  if (!klass->is_interface()) {
+    THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(),
+        err_msg("Expected interface type, got %s", klass->external_name()));
+  }
+  InstanceKlass* iklass = InstanceKlass::cast(klass);
+  oop implementor = CompilerToVM::get_jvmci_type(iklass->implementor(), CHECK_NULL);
   return JNIHandles::make_local(THREAD, implementor);
 C2V_END
 
@@ -761,6 +766,10 @@ C2V_END
 
 C2V_VMENTRY(jboolean, isCompilable,(JNIEnv *, jobject, jobject jvmci_method))
   methodHandle method = CompilerToVM::asMethod(jvmci_method);
+  // Skip redefined methods
+  if (method->is_old()) {
+    return false;
+  }
   return !method->is_not_compilable(CompLevel_full_optimization);
 C2V_END
 
@@ -985,8 +994,12 @@ C2V_VMENTRY(jboolean, hasFinalizableSubclass,(JNIEnv *, jobject, jobject jvmci_t
 C2V_END
 
 C2V_VMENTRY(jobject, getClassInitializer, (JNIEnv *, jobject, jobject jvmci_type))
-  InstanceKlass* klass = (InstanceKlass*) CompilerToVM::asKlass(jvmci_type);
-  oop result = CompilerToVM::get_jvmci_method(klass->class_initializer(), CHECK_NULL);
+  Klass* klass = CompilerToVM::asKlass(jvmci_type);
+  if (!klass->is_instance_klass()) {
+    return NULL;
+  }
+  InstanceKlass* iklass = InstanceKlass::cast(klass);
+  oop result = CompilerToVM::get_jvmci_method(iklass->class_initializer(), CHECK_NULL);
   return JNIHandles::make_local(THREAD, result);
 C2V_END
 
@@ -1000,7 +1013,7 @@ C2V_VMENTRY(jlong, getMaxCallTargetOffset, (JNIEnv*, jobject, jlong addr))
   return -1;
 C2V_END
 
-C2V_VMENTRY(void, setNotInlineableOrCompileable,(JNIEnv *, jobject,  jobject jvmci_method))
+C2V_VMENTRY(void, setNotInlinableOrCompilable,(JNIEnv *, jobject,  jobject jvmci_method))
   methodHandle method = CompilerToVM::asMethod(jvmci_method);
   method->set_not_c1_compilable();
   method->set_not_c2_compilable();
@@ -1018,7 +1031,7 @@ C2V_VMENTRY(jint, installCode, (JNIEnv *jniEnv, jobject, jobject target, jobject
   Handle installed_code_handle(THREAD, JNIHandles::resolve(installed_code));
   Handle speculation_log_handle(THREAD, JNIHandles::resolve(speculation_log));
 
-  JVMCICompiler* compiler = JVMCICompiler::instance(CHECK_JNI_ERR);
+  JVMCICompiler* compiler = JVMCICompiler::instance(true, CHECK_JNI_ERR);
 
   TraceTime install_time("installCode", JVMCICompiler::codeInstallTimer());
   bool is_immutable_PIC = HotSpotCompiledCode::isImmutablePIC(compiled_code_handle) > 0;
@@ -1039,7 +1052,7 @@ C2V_VMENTRY(jint, installCode, (JNIEnv *jniEnv, jobject, jobject target, jobject
   if (result != JVMCIEnv::ok) {
     assert(cb == NULL, "should be");
   } else {
-    if (!installed_code_handle.is_null()) {
+    if (installed_code_handle.not_null()) {
       assert(installed_code_handle->is_a(InstalledCode::klass()), "wrong type");
       nmethod::invalidate_installed_code(installed_code_handle, CHECK_0);
       {
@@ -1056,13 +1069,6 @@ C2V_VMENTRY(jint, installCode, (JNIEnv *jniEnv, jobject, jobject target, jobject
           HotSpotInstalledCode::set_size(installed_code_handle, cb->size());
           HotSpotInstalledCode::set_codeStart(installed_code_handle, (jlong) cb->code_begin());
           HotSpotInstalledCode::set_codeSize(installed_code_handle, cb->code_size());
-        }
-      }
-      nmethod* nm = cb->as_nmethod_or_null();
-      if (nm != NULL && installed_code_handle->is_scavengable()) {
-        assert(nm->detect_scavenge_root_oops(), "nm should be scavengable if installed_code is scavengable");
-        if (!UseG1GC) {
-          assert(nm->on_scavenge_root_list(), "nm should be on scavengable list");
         }
       }
     }
@@ -1143,7 +1149,7 @@ C2V_VMENTRY(jint, getMetadata, (JNIEnv *jniEnv, jobject, jobject target, jobject
 C2V_END
 
 C2V_VMENTRY(void, resetCompilationStatistics, (JNIEnv *jniEnv, jobject))
-  JVMCICompiler* compiler = JVMCICompiler::instance(CHECK);
+  JVMCICompiler* compiler = JVMCICompiler::instance(true, CHECK);
   CompilerStatistics* stats = compiler->stats();
   stats->_standard.reset();
   stats->_osr.reset();
@@ -1427,6 +1433,7 @@ C2V_VMENTRY(jobject, getNextStackFrame, (JNIEnv*, jobject compilerToVM, jobject 
               Deoptimization::reassign_fields(fst.current(), fst.register_map(), scope->objects(), realloc_failures, false);
 
               GrowableArray<ScopeValue*>* local_values = scope->locals();
+              assert(local_values != NULL, "NULL locals");
               typeArrayOop array_oop = oopFactory::new_boolArray(local_values->length(), CHECK_NULL);
               typeArrayHandle array(THREAD, array_oop);
               for (int i = 0; i < local_values->length(); i++) {
@@ -1654,7 +1661,6 @@ C2V_VMENTRY(void, materializeVirtualObjects, (JNIEnv*, jobject, jobject hs_frame
 
     GrowableArray<ScopeValue*>* scopeLocals = cvf->scope()->locals();
     StackValueCollection* locals = cvf->locals();
-
     if (locals != NULL) {
       for (int i2 = 0; i2 < locals->size(); i2++) {
         StackValue* var = locals->at(i2);
@@ -1663,6 +1669,27 @@ C2V_VMENTRY(void, materializeVirtualObjects, (JNIEnv*, jobject, jobject hs_frame
           val.l = (jobject) locals->at(i2)->get_obj()();
           cvf->update_local(T_OBJECT, i2, val);
         }
+      }
+    }
+
+    GrowableArray<ScopeValue*>* scopeExpressions = cvf->scope()->expressions();
+    StackValueCollection* expressions = cvf->expressions();
+    if (expressions != NULL) {
+      for (int i2 = 0; i2 < expressions->size(); i2++) {
+        StackValue* var = expressions->at(i2);
+        if (var->type() == T_OBJECT && scopeExpressions->at(i2)->is_object()) {
+          jvalue val;
+          val.l = (jobject) expressions->at(i2)->get_obj()();
+          cvf->update_stack(T_OBJECT, i2, val);
+        }
+      }
+    }
+
+    GrowableArray<MonitorValue*>* scopeMonitors = cvf->scope()->monitors();
+    GrowableArray<MonitorInfo*>* monitors = cvf->monitors();
+    if (monitors != NULL) {
+      for (int i2 = 0; i2 < monitors->length(); i2++) {
+        cvf->update_monitor(i2, monitors->at(i2));
       }
     }
   }
@@ -1697,7 +1724,7 @@ C2V_VMENTRY(void, writeDebugOutput, (JNIEnv*, jobject, jbyteArray bytes, jint of
   }
   while (length > 0) {
     jbyte* start = array->byte_at_addr(offset);
-    tty->write((char*) start, MIN2(length, O_BUFLEN));
+    tty->write((char*) start, MIN2(length, (jint)O_BUFLEN));
     length -= O_BUFLEN;
     offset += O_BUFLEN;
   }
@@ -1820,7 +1847,7 @@ JNINativeMethod CompilerToVM::methods[] = {
   {CC "getImplementor",                               CC "(" HS_RESOLVED_KLASS ")" HS_RESOLVED_KLASS,                                       FN_PTR(getImplementor)},
   {CC "getStackTraceElement",                         CC "(" HS_RESOLVED_METHOD "I)" STACK_TRACE_ELEMENT,                                   FN_PTR(getStackTraceElement)},
   {CC "methodIsIgnoredBySecurityStackWalk",           CC "(" HS_RESOLVED_METHOD ")Z",                                                       FN_PTR(methodIsIgnoredBySecurityStackWalk)},
-  {CC "setNotInlineableOrCompileable",                CC "(" HS_RESOLVED_METHOD ")V",                                                       FN_PTR(setNotInlineableOrCompileable)},
+  {CC "setNotInlinableOrCompilable",                  CC "(" HS_RESOLVED_METHOD ")V",                                                       FN_PTR(setNotInlinableOrCompilable)},
   {CC "isCompilable",                                 CC "(" HS_RESOLVED_METHOD ")Z",                                                       FN_PTR(isCompilable)},
   {CC "hasNeverInlineDirective",                      CC "(" HS_RESOLVED_METHOD ")Z",                                                       FN_PTR(hasNeverInlineDirective)},
   {CC "shouldInlineMethod",                           CC "(" HS_RESOLVED_METHOD ")Z",                                                       FN_PTR(shouldInlineMethod)},

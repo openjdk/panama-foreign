@@ -21,13 +21,16 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4163207
  * @summary AddAll was prepending instead of appending!
  */
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 public class AddAll {
     public static void main(String[] args) throws Exception {

@@ -21,14 +21,16 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug     4323074
  * @summary Basic test for newly public swap algorithm
  * @author  Josh Bloch
  */
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Swap {
     static final int SIZE = 100;

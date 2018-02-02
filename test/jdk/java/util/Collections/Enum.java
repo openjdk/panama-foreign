@@ -21,13 +21,15 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4323074
  * @summary Basic test for new Enumeration -> List converter
  */
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
 
 public class Enum {
     public static void main(String[] args) throws Exception {

@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/vmSymbols.hpp"
+#include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/markOop.hpp"
 #include "oops/oop.inline.hpp"
@@ -35,6 +36,7 @@
 #include "runtime/objectMonitor.inline.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/osThread.hpp"
+#include "runtime/safepointMechanism.inline.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
 #include "services/threadService.hpp"
@@ -241,6 +243,19 @@ static volatile int InitDone        = 0;
 // * See also http://blogs.sun.com/dave
 
 
+void* ObjectMonitor::operator new (size_t size) throw() {
+  return AllocateHeap(size, mtInternal);
+}
+void* ObjectMonitor::operator new[] (size_t size) throw() {
+  return operator new (size);
+}
+void ObjectMonitor::operator delete(void* p) {
+  FreeHeap(p);
+}
+void ObjectMonitor::operator delete[] (void *p) {
+  operator delete(p);
+}
+
 // -----------------------------------------------------------------------------
 // Enter support
 
@@ -406,7 +421,7 @@ void ObjectMonitor::enter(TRAPS) {
 int ObjectMonitor::TryLock(Thread * Self) {
   void * own = _owner;
   if (own != NULL) return 0;
-  if (Atomic::cmpxchg(Self, &_owner, (void*)NULL) == NULL) {
+  if (Atomic::replace_if_null(Self, &_owner)) {
     // Either guarantee _recursions == 0 or set _recursions = 0.
     assert(_recursions == 0, "invariant");
     assert(_owner == Self, "invariant");
@@ -514,7 +529,7 @@ void ObjectMonitor::EnterI(TRAPS) {
   if ((SyncFlags & 16) == 0 && nxt == NULL && _EntryList == NULL) {
     // Try to assume the role of responsible thread for the monitor.
     // CONSIDER:  ST vs CAS vs { if (Responsible==null) Responsible=Self }
-    Atomic::cmpxchg(Self, &_Responsible, (Thread*)NULL);
+    Atomic::replace_if_null(Self, &_Responsible);
   }
 
   // The lock might have been released while this thread was occupied queueing
@@ -538,7 +553,7 @@ void ObjectMonitor::EnterI(TRAPS) {
     assert(_owner != Self, "invariant");
 
     if ((SyncFlags & 2) && _Responsible == NULL) {
-      Atomic::cmpxchg(Self, &_Responsible, (Thread*)NULL);
+      Atomic::replace_if_null(Self, &_Responsible);
     }
 
     // park self
@@ -992,7 +1007,7 @@ void ObjectMonitor::exit(bool not_suspended, TRAPS) {
       // to reacquire the lock the responsibility for ensuring succession
       // falls to the new owner.
       //
-      if (Atomic::cmpxchg(THREAD, &_owner, (void*)NULL) != NULL) {
+      if (!Atomic::replace_if_null(THREAD, &_owner)) {
         return;
       }
       TEVENT(Exit - Reacquired);
@@ -1017,7 +1032,7 @@ void ObjectMonitor::exit(bool not_suspended, TRAPS) {
         // B.  If the elements forming the EntryList|cxq are TSM
         //     we could simply unpark() the lead thread and return
         //     without having set _succ.
-        if (Atomic::cmpxchg(THREAD, &_owner, (void*)NULL) != NULL) {
+        if (!Atomic::replace_if_null(THREAD, &_owner)) {
           TEVENT(Inflated exit - reacquired succeeded);
           return;
         }
@@ -1282,7 +1297,7 @@ void ObjectMonitor::ExitEpilog(Thread * Self, ObjectWaiter * Wakee) {
   OrderAccess::release_store(&_owner, (void*)NULL);
   OrderAccess::fence();                               // ST _owner vs LD in unpark()
 
-  if (SafepointSynchronize::do_call_back()) {
+  if (SafepointMechanism::poll(Self)) {
     TEVENT(unpark before SAFEPOINT);
   }
 
@@ -1699,7 +1714,7 @@ void ObjectMonitor::INotify(Thread * Self) {
         ObjectWaiter * tail = _cxq;
         if (tail == NULL) {
           iterator->_next = NULL;
-          if (Atomic::cmpxchg(iterator, &_cxq, (ObjectWaiter*)NULL) == NULL) {
+          if (Atomic::replace_if_null(iterator, &_cxq)) {
             break;
           }
         } else {
@@ -1936,7 +1951,7 @@ int ObjectMonitor::TrySpin(Thread * Self) {
     // This is in keeping with the "no loitering in runtime" rule.
     // We periodically check to see if there's a safepoint pending.
     if ((ctr & 0xFF) == 0) {
-      if (SafepointSynchronize::do_call_back()) {
+      if (SafepointMechanism::poll(Self)) {
         TEVENT(Spin: safepoint);
         goto Abort;           // abrupt spin egress
       }
@@ -2137,6 +2152,7 @@ ObjectWaiter::ObjectWaiter(Thread* thread) {
   _next     = NULL;
   _prev     = NULL;
   _notified = 0;
+  _notifier_tid = 0;
   TState    = TS_RUN;
   _thread   = thread;
   _event    = thread->_ParkEvent;
