@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import static javax.lang.model.SourceVersion.*;
 /**
  * A skeletal visitor of program elements with default behavior
  * appropriate for the {@link SourceVersion#RELEASE_9 RELEASE_9}
- * source version.
+ * and {@link SourceVersion#RELEASE_10 RELEASE_10} source versions.
  *
  * <p> <b>WARNING:</b> The {@code ElementVisitor} interface
  * implemented by this class may have methods added to it in the
@@ -65,7 +65,7 @@ import static javax.lang.model.SourceVersion.*;
  * @since 9
  * @spec JPMS
  */
-@SupportedSourceVersion(RELEASE_9)
+@SupportedSourceVersion(RELEASE_10)
 public abstract class AbstractElementVisitor9<R, P> extends AbstractElementVisitor8<R, P> {
     /**
      * Constructor for concrete subclasses to call.
@@ -75,12 +75,14 @@ public abstract class AbstractElementVisitor9<R, P> extends AbstractElementVisit
     }
 
     /**
-     * Visits a {@code ModuleElement} in a manner defined by a
+     * {@inheritDoc}
+     *
+     * @implSpec Visits a {@code ModuleElement} in a manner defined by a
      * subclass.
      *
      * @param t  {@inheritDoc}
      * @param p  {@inheritDoc}
-     * @return the result of the visit as defined by a subclass
+     * @return   {@inheritDoc}
      */
     @Override
     public abstract R visitModule(ModuleElement t, P p);

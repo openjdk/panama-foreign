@@ -22,6 +22,7 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "asm/codeBuffer.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "code/codeCache.hpp"
@@ -37,11 +38,11 @@
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
-#include "prims/jvm.h"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/reflection.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "runtime/threadSMR.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/macros.hpp"
@@ -598,12 +599,13 @@ JRT_ENTRY(jint, JVMCIRuntime::identity_hash_code(JavaThread* thread, oopDesc* ob
 JRT_END
 
 JRT_ENTRY(jboolean, JVMCIRuntime::thread_is_interrupted(JavaThread* thread, oopDesc* receiver, jboolean clear_interrupted))
-  // Ensure that the C++ Thread and OSThread structures aren't freed before we operate.
-  // This locking requires thread_in_vm which is why this method cannot be JRT_LEAF.
   Handle receiverHandle(thread, receiver);
-  MutexLockerEx ml(thread->threadObj() == (void*)receiver ? NULL : Threads_lock);
+  // A nested ThreadsListHandle may require the Threads_lock which
+  // requires thread_in_vm which is why this method cannot be JRT_LEAF.
+  ThreadsListHandle tlh;
+
   JavaThread* receiverThread = java_lang_Thread::thread(receiverHandle());
-  if (receiverThread == NULL) {
+  if (receiverThread == NULL || (EnableThreadSMRExtraValidityChecks && !tlh.includes(receiverThread))) {
     // The other thread may exit during this process, which is ok so return false.
     return JNI_FALSE;
   } else {
@@ -611,7 +613,7 @@ JRT_ENTRY(jboolean, JVMCIRuntime::thread_is_interrupted(JavaThread* thread, oopD
   }
 JRT_END
 
-JRT_ENTRY(jint, JVMCIRuntime::test_deoptimize_call_int(JavaThread* thread, int value))
+JRT_ENTRY(int, JVMCIRuntime::test_deoptimize_call_int(JavaThread* thread, int value))
   deopt_caller();
   return value;
 JRT_END
@@ -821,28 +823,37 @@ void JVMCIRuntime::shutdown(TRAPS) {
 }
 
 CompLevel JVMCIRuntime::adjust_comp_level_inner(const methodHandle& method, bool is_osr, CompLevel level, JavaThread* thread) {
-  JVMCICompiler* compiler = JVMCICompiler::instance(thread);
+  JVMCICompiler* compiler = JVMCICompiler::instance(false, thread);
   if (compiler != NULL && compiler->is_bootstrapping()) {
     return level;
   }
-  if (!is_HotSpotJVMCIRuntime_initialized() || !_comp_level_adjustment) {
+  if (!is_HotSpotJVMCIRuntime_initialized() || _comp_level_adjustment == JVMCIRuntime::none) {
     // JVMCI cannot participate in compilation scheduling until
     // JVMCI is initialized and indicates it wants to participate.
     return level;
   }
 
 #define CHECK_RETURN THREAD); \
-if (HAS_PENDING_EXCEPTION) { \
-  Handle exception(THREAD, PENDING_EXCEPTION); \
-  CLEAR_PENDING_EXCEPTION; \
-\
-  java_lang_Throwable::java_printStackTrace(exception, THREAD); \
   if (HAS_PENDING_EXCEPTION) { \
+    Handle exception(THREAD, PENDING_EXCEPTION); \
     CLEAR_PENDING_EXCEPTION; \
+  \
+    if (exception->is_a(SystemDictionary::ThreadDeath_klass())) { \
+      /* In the special case of ThreadDeath, we need to reset the */ \
+      /* pending async exception so that it is propagated.        */ \
+      thread->set_pending_async_exception(exception()); \
+      return level; \
+    } \
+    tty->print("Uncaught exception while adjusting compilation level: "); \
+    java_lang_Throwable::print(exception(), tty); \
+    tty->cr(); \
+    java_lang_Throwable::print_stack_trace(exception, tty); \
+    if (HAS_PENDING_EXCEPTION) { \
+      CLEAR_PENDING_EXCEPTION; \
+    } \
+    return level; \
   } \
-  return level; \
-} \
-(void)(0
+  (void)(0
 
 
   Thread* THREAD = thread;

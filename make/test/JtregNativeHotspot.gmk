@@ -44,6 +44,7 @@ $(eval $(call IncludeCustomExtension, test/JtregNativeHotspot.gmk))
 # Add more directories here when needed.
 BUILD_HOTSPOT_JTREG_NATIVE_SRC += \
     $(TOPDIR)/test/hotspot/jtreg/gc/g1/TestJNIWeakG1 \
+    $(TOPDIR)/test/hotspot/jtreg/gc/stress/TestJNIBlockFullGC \
     $(TOPDIR)/test/hotspot/jtreg/gc/stress/gclocker \
     $(TOPDIR)/test/hotspot/jtreg/gc/cslocker \
     $(TOPDIR)/test/hotspot/jtreg/native_sanity \
@@ -60,9 +61,12 @@ BUILD_HOTSPOT_JTREG_NATIVE_SRC += \
     $(TOPDIR)/test/hotspot/jtreg/runtime/SameObject \
     $(TOPDIR)/test/hotspot/jtreg/runtime/BoolReturn \
     $(TOPDIR)/test/hotspot/jtreg/runtime/noClassDefFoundMsg \
+    $(TOPDIR)/test/hotspot/jtreg/runtime/handshake \
     $(TOPDIR)/test/hotspot/jtreg/runtime/RedefineTests \
     $(TOPDIR)/test/hotspot/jtreg/compiler/floatingpoint/ \
     $(TOPDIR)/test/hotspot/jtreg/compiler/calls \
+    $(TOPDIR)/test/hotspot/jtreg/compiler/runtime/criticalnatives/lookup \
+    $(TOPDIR)/test/hotspot/jtreg/compiler/runtime/criticalnatives/argumentcorruption \
     $(TOPDIR)/test/hotspot/jtreg/serviceability/jvmti/GetOwnedMonitorInfo \
     $(TOPDIR)/test/hotspot/jtreg/serviceability/jvmti/GetNamedModule \
     $(TOPDIR)/test/hotspot/jtreg/serviceability/jvmti/IsModifiableModule \
@@ -76,6 +80,7 @@ BUILD_HOTSPOT_JTREG_NATIVE_SRC += \
     $(TOPDIR)/test/hotspot/jtreg/serviceability/jvmti/ModuleAwareAgents/ClassLoadPrepare \
     $(TOPDIR)/test/hotspot/jtreg/serviceability/jvmti/ModuleAwareAgents/ThreadStart \
     $(TOPDIR)/test/hotspot/jtreg/serviceability/jvmti/StartPhase/AllowedFunctions \
+    $(TOPDIR)/test/hotspot/jtreg/serviceability/dcmd/jvmti/AttachFailed \
     #
 
 # Add conditional directories here when needed.
@@ -106,6 +111,11 @@ ifeq ($(TOOLCHAIN_TYPE), solstudio)
     BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libMAAThreadStart := -lc
     BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libAllowedFunctions := -lc
     BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libRedefineDoubleDelete := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libHandshakeTransitionTest := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libHasNoEntryPoint := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libReturnError := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LIBS_libCNLookUp := -lc
+    BUILD_HOTSPOT_JTREG_LIBRARIES_LDFLAGS_libTestCheckedEnsureLocalCapacity := -lc
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), linux)

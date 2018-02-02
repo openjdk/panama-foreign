@@ -29,6 +29,7 @@ import java.util.*;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Attribute.TypeCompound;
+import com.sun.tools.javac.code.Source.Feature;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.tree.*;
@@ -94,8 +95,8 @@ public class TransTypes extends TreeTranslator {
         make = TreeMaker.instance(context);
         resolve = Resolve.instance(context);
         Source source = Source.instance(context);
-        allowInterfaceBridges = source.allowDefaultMethods();
-        allowGraphInference = source.allowGraphInference();
+        allowInterfaceBridges = Feature.DEFAULT_METHODS.allowedInSource(source);
+        allowGraphInference = Feature.GRAPH_INFERENCE.allowedInSource(source);
         annotate = Annotate.instance(context);
         attr = Attr.instance(context);
     }
@@ -253,8 +254,7 @@ public class TransTypes extends TreeTranslator {
                    boolean hypothetical,
                    ListBuffer<JCTree> bridges) {
         make.at(pos);
-        Type origType = types.memberType(origin.type, meth);
-        Type origErasure = erasure(origType);
+        Type implTypeErasure = erasure(impl.type);
 
         // Create a bridge method symbol and a bridge definition without a body.
         Type bridgeType = meth.erasure(types);
@@ -281,7 +281,7 @@ public class TransTypes extends TreeTranslator {
                 : make.Super(types.supertype(origin.type).tsym.erasure(types), origin);
 
             // The type returned from the original method.
-            Type calltype = erasure(impl.type.getReturnType());
+            Type calltype = implTypeErasure.getReturnType();
 
             // Construct a call of  this.impl(params), or super.impl(params),
             // casting params and possibly results as needed.
@@ -289,9 +289,9 @@ public class TransTypes extends TreeTranslator {
                 make.Apply(
                            null,
                            make.Select(receiver, impl).setType(calltype),
-                           translateArgs(make.Idents(md.params), origErasure.getParameterTypes(), null))
+                           translateArgs(make.Idents(md.params), implTypeErasure.getParameterTypes(), null))
                 .setType(calltype);
-            JCStatement stat = (origErasure.getReturnType().hasTag(VOID))
+            JCStatement stat = (implTypeErasure.getReturnType().hasTag(VOID))
                 ? make.Exec(call)
                 : make.Return(coerce(call, bridgeType.getReturnType()));
             md.body = make.Block(0, List.of(stat));
@@ -788,7 +788,7 @@ public class TransTypes extends TreeTranslator {
             JCTypeCast typeCast = newExpression.hasTag(Tag.TYPECAST)
                 ? (JCTypeCast) newExpression
                 : null;
-            tree.expr = typeCast != null && types.isSameType(typeCast.type, originalTarget, true)
+            tree.expr = typeCast != null && types.isSameType(typeCast.type, originalTarget)
                 ? typeCast.expr
                 : newExpression;
         }

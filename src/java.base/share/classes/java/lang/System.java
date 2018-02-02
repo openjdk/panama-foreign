@@ -63,8 +63,8 @@ import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.HotSpotIntrinsicCandidate;
-import jdk.internal.misc.JavaLangAccess;;
-import jdk.internal.misc.SharedSecrets;;
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.VM;
 import jdk.internal.logger.LoggerFinderLoader;
 import jdk.internal.logger.LazyLoggers;
@@ -550,8 +550,10 @@ public final class System {
      * System properties. The following properties are guaranteed to be defined:
      * <dl>
      * <dt>java.version         <dd>Java version number
+     * <dt>java.version.date    <dd>Java version date
      * <dt>java.vendor          <dd>Java vendor specific string
      * <dt>java.vendor.url      <dd>Java vendor URL
+     * <dt>java.vendor.version  <dd>Java vendor version
      * <dt>java.home            <dd>Java installation directory
      * <dt>java.class.version   <dd>Java class version number
      * <dt>java.class.path      <dd>Java classpath
@@ -591,12 +593,18 @@ public final class System {
      * </thead>
      * <tbody>
      * <tr><th scope="row"><code>java.version</code></th>
-     *     <td>Java Runtime Environment version which may be interpreted
+     *     <td>Java Runtime Environment version, which may be interpreted
      *     as a {@link Runtime.Version}</td></tr>
+     * <tr><th scope="row"><code>java.version.date</code></th>
+     *     <td>Java Runtime Environment version date, in ISO-8601 YYYY-MM-DD
+     *     format, which may be interpreted as a {@link
+     *     java.time.LocalDate}</td></tr>
      * <tr><th scope="row"><code>java.vendor</code></th>
      *     <td>Java Runtime Environment vendor</td></tr>
      * <tr><th scope="row"><code>java.vendor.url</code></th>
      *     <td>Java vendor URL</td></tr>
+     * <tr><th scope="row"><code>java.vendor.version</code></th>
+     *     <td>Java vendor version</td></tr>
      * <tr><th scope="row"><code>java.home</code></th>
      *     <td>Java installation directory</td></tr>
      * <tr><th scope="row"><code>java.vm.specification.version</code></th>
@@ -623,7 +631,8 @@ public final class System {
      * <tr><th scope="row"><code>java.class.version</code></th>
      *     <td>Java class format version number</td></tr>
      * <tr><th scope="row"><code>java.class.path</code></th>
-     *     <td>Java class path</td></tr>
+     *     <td>Java class path  (refer to
+     *        {@link ClassLoader#getSystemClassLoader()} for details)</td></tr>
      * <tr><th scope="row"><code>java.library.path</code></th>
      *     <td>List of paths to search when loading libraries</td></tr>
      * <tr><th scope="row"><code>java.io.tmpdir</code></th>
@@ -2109,9 +2118,6 @@ public final class System {
             public void registerShutdownHook(int slot, boolean registerShutdownInProgress, Runnable hook) {
                 Shutdown.add(slot, registerShutdownInProgress, hook);
             }
-            public String newStringUnsafe(char[] chars) {
-                return new String(chars, true);
-            }
             public Thread newThreadWithAcc(Runnable target, AccessControlContext acc) {
                 return new Thread(target, acc);
             }
@@ -2187,6 +2193,15 @@ public final class System {
             public Stream<ModuleLayer> layers(ClassLoader loader) {
                 return ModuleLayer.layers(loader);
             }
+
+            public String newStringUTF8NoRepl(byte[] bytes, int off, int len) {
+                return StringCoding.newStringUTF8NoRepl(bytes, off, len);
+            }
+
+            public byte[] getBytesUTF8NoRepl(String s) {
+                return StringCoding.getBytesUTF8NoRepl(s);
+            }
+
         });
     }
 }

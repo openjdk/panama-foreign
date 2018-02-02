@@ -238,8 +238,7 @@ bool ObjectSynchronizer::quick_enter(oop obj, Thread * Self,
     // and last are the inflated Java Monitor (ObjectMonitor) checks.
     lock->set_displaced_header(markOopDesc::unused_mark());
 
-    if (owner == NULL &&
-        Atomic::cmpxchg(Self, &(m->_owner), (void*)NULL) == NULL) {
+    if (owner == NULL && Atomic::replace_if_null(Self, &(m->_owner))) {
       assert(m->_recursions == 0, "invariant");
       assert(m->_owner == Self, "invariant");
       return true;
@@ -894,7 +893,7 @@ ObjectSynchronizer::LockOwnership ObjectSynchronizer::query_lock_ownership
 }
 
 // FIXME: jvmti should call this
-JavaThread* ObjectSynchronizer::get_lock_owner(Handle h_obj, bool doLock) {
+JavaThread* ObjectSynchronizer::get_lock_owner(ThreadsList * t_list, Handle h_obj) {
   if (UseBiasedLocking) {
     if (SafepointSynchronize::is_at_safepoint()) {
       BiasedLocking::revoke_at_safepoint(h_obj);
@@ -923,7 +922,7 @@ JavaThread* ObjectSynchronizer::get_lock_owner(Handle h_obj, bool doLock) {
 
   if (owner != NULL) {
     // owning_thread_from_monitor_owner() may also return NULL here
-    return Threads::owning_thread_from_monitor_owner(owner, doLock);
+    return Threads::owning_thread_from_monitor_owner(t_list, owner);
   }
 
   // Unlocked case, header in place

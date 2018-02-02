@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,7 +118,7 @@ public class MultiReleaseJar {
         checkResult(r, false,
                 "Error: unknown option: -multi-release",
                 "Usage: jdeps <options> <path",
-                "use -h, -?, -help, or --help"
+                "use --help"
         );
 
         r = run("jdeps -v -R -cp Version.jar --multi-release 9 test/Main.class");
@@ -240,17 +240,26 @@ public class MultiReleaseJar {
         cmds[0] = cmdPath.resolve(cmds[0]).toString();
         ProcessBuilder pb = new ProcessBuilder(cmds);
         pb.directory(mrjar.toFile());
-        Process p = pb.start();
-        p.waitFor(10, TimeUnit.SECONDS);
-        String out;
-        try (InputStream is = p.getInputStream()) {
-            out = new String(is.readAllBytes());
+        Process p = null;
+        try {
+            p = pb.start();
+            p.waitFor();
+
+            String out;
+            try (InputStream is = p.getInputStream()) {
+                out = new String(is.readAllBytes());
+            }
+            String err;
+            try (InputStream is = p.getErrorStream()) {
+                err = new String(is.readAllBytes());
+            }
+            return new Result(cmd, p.exitValue(), out, err);
+        } catch (Throwable t) {
+            if (p != null) {
+                p.destroyForcibly().waitFor();
+            }
+            throw t;
         }
-        String err;
-        try (InputStream is = p.getErrorStream()) {
-            err = new String(is.readAllBytes());
-        }
-        return new Result(cmd, p.exitValue(), out, err);
     }
 
     void checkResult(Result r) throws Exception {

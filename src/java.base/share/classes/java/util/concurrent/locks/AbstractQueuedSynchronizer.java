@@ -505,7 +505,7 @@ public abstract class AbstractQueuedSynchronizer
          *
          * @return the predecessor of this node
          */
-        final Node predecessor() throws NullPointerException {
+        final Node predecessor() {
             Node p = prev;
             if (p == null)
                 throw new NullPointerException();
@@ -800,7 +800,9 @@ public abstract class AbstractQueuedSynchronizer
 
         // predNext is the apparent node to unsplice. CASes below will
         // fail if not, in which case, we lost race vs another cancel
-        // or signal, so no further action is necessary.
+        // or signal, so no further action is necessary, although with
+        // a possibility that a cancelled node may transiently remain
+        // reachable.
         Node predNext = pred.next;
 
         // Can use unconditional write instead of CAS here.
@@ -902,8 +904,8 @@ public abstract class AbstractQueuedSynchronizer
      * @return {@code true} if interrupted while waiting
      */
     final boolean acquireQueued(final Node node, int arg) {
+        boolean interrupted = false;
         try {
-            boolean interrupted = false;
             for (;;) {
                 final Node p = node.predecessor();
                 if (p == head && tryAcquire(arg)) {
@@ -911,12 +913,13 @@ public abstract class AbstractQueuedSynchronizer
                     p.next = null; // help GC
                     return interrupted;
                 }
-                if (shouldParkAfterFailedAcquire(p, node) &&
-                    parkAndCheckInterrupt())
-                    interrupted = true;
+                if (shouldParkAfterFailedAcquire(p, node))
+                    interrupted |= parkAndCheckInterrupt();
             }
         } catch (Throwable t) {
             cancelAcquire(node);
+            if (interrupted)
+                selfInterrupt();
             throw t;
         }
     }
@@ -990,8 +993,8 @@ public abstract class AbstractQueuedSynchronizer
      */
     private void doAcquireShared(int arg) {
         final Node node = addWaiter(Node.SHARED);
+        boolean interrupted = false;
         try {
-            boolean interrupted = false;
             for (;;) {
                 final Node p = node.predecessor();
                 if (p == head) {
@@ -999,18 +1002,18 @@ public abstract class AbstractQueuedSynchronizer
                     if (r >= 0) {
                         setHeadAndPropagate(node, r);
                         p.next = null; // help GC
-                        if (interrupted)
-                            selfInterrupt();
                         return;
                     }
                 }
-                if (shouldParkAfterFailedAcquire(p, node) &&
-                    parkAndCheckInterrupt())
-                    interrupted = true;
+                if (shouldParkAfterFailedAcquire(p, node))
+                    interrupted |= parkAndCheckInterrupt();
             }
         } catch (Throwable t) {
             cancelAcquire(node);
             throw t;
+        } finally {
+            if (interrupted)
+                selfInterrupt();
         }
     }
 
@@ -1391,13 +1394,13 @@ public abstract class AbstractQueuedSynchronizer
      * at any time, a {@code true} return does not guarantee that any
      * other thread will ever acquire.
      *
-     * <p>In this implementation, this operation returns in
-     * constant time.
-     *
      * @return {@code true} if there may be other threads waiting to acquire
      */
     public final boolean hasQueuedThreads() {
-        return head != tail;
+        for (Node p = tail, h = head; p != h && p != null; p = p.prev)
+            if (p.waitStatus <= 0)
+                return true;
+        return false;
     }
 
     /**
@@ -1546,16 +1549,20 @@ public abstract class AbstractQueuedSynchronizer
      * @since 1.7
      */
     public final boolean hasQueuedPredecessors() {
-        // The correctness of this depends on head being initialized
-        // before tail and on head.next being accurate if the current
-        // thread is first in queue.
-        Node t = tail; // Read fields in reverse initialization order
-        Node h = head;
-        Node s;
-        return h != t &&
-            ((s = h.next) == null || s.thread != Thread.currentThread());
+        Node h, s;
+        if ((h = head) != null) {
+            if ((s = h.next) == null || s.waitStatus > 0) {
+                s = null; // traverse in case of concurrent cancellation
+                for (Node p = tail; p != h && p != null; p = p.prev) {
+                    if (p.waitStatus <= 0)
+                        s = p;
+                }
+            }
+            if (s != null && s.thread != Thread.currentThread())
+                return true;
+        }
+        return false;
     }
-
 
     // Instrumentation and monitoring methods
 

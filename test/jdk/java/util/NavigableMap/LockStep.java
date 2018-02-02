@@ -32,10 +32,35 @@
  * @key randomness
  */
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
-import static java.util.Collections.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+
+import static java.util.Collections.reverseOrder;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
 
 @SuppressWarnings("unchecked")
 public class LockStep {
@@ -848,11 +873,11 @@ public class LockStep {
     }
     interface Fun {void f() throws Throwable;}
     static void THROWS(Class<? extends Throwable> k, Fun... fs) {
-          for (Fun f : fs)
-              try { f.f(); fail("Expected " + k.getName() + " not thrown"); }
-              catch (Throwable t) {
-                  if (k.isAssignableFrom(t.getClass())) pass();
-                  else unexpected(t);}}
+        for (Fun f : fs)
+            try { f.f(); fail("Expected " + k.getName() + " not thrown"); }
+            catch (Throwable t) {
+                if (k.isAssignableFrom(t.getClass())) pass();
+                else unexpected(t);}}
     static byte[] serializedForm(Object obj) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

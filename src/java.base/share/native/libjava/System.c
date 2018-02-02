@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,14 +108,16 @@ Java_java_lang_System_identityHashCode(JNIEnv *env, jobject this, jobject x)
         (*env)->DeleteLocalRef(env, jkey);                            \
     } else ((void) 0)
 
-#ifndef VENDOR /* Third party may overwrite this. */
+/* Third party may overwrite these values. */
+#ifndef VENDOR
 #define VENDOR "Oracle Corporation"
+#endif
+#ifndef VENDOR_URL
 #define VENDOR_URL "http://java.oracle.com/"
+#endif
+#ifndef VENDOR_URL_BUG
 #define VENDOR_URL_BUG "http://bugreport.java.com/bugreport/"
 #endif
-
-#define JAVA_MAX_SUPPORTED_VERSION 53
-#define JAVA_MAX_SUPPORTED_MINOR_VERSION 0
 
 #ifdef JAVA_SPECIFICATION_VENDOR /* Third party may NOT overwrite this. */
   #error "ERROR: No override of JAVA_SPECIFICATION_VENDOR is allowed"
@@ -186,6 +188,9 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     jobject ret = NULL;
     jstring jVMVal = NULL;
 
+    if ((*env)->EnsureLocalCapacity(env, 50) < 0) {
+        return NULL;
+    }
     sprops = GetJavaProperties(env);
     CHECK_NULL_RETURN(sprops, NULL);
 
@@ -219,8 +224,8 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     PUTPROP(props, "java.vendor.url", VENDOR_URL);
     PUTPROP(props, "java.vendor.url.bug", VENDOR_URL_BUG);
 
-    jio_snprintf(buf, sizeof(buf), "%d.%d", JAVA_MAX_SUPPORTED_VERSION,
-                                            JAVA_MAX_SUPPORTED_MINOR_VERSION);
+    jio_snprintf(buf, sizeof(buf), "%d.%d", JVM_CLASSFILE_MAJOR_VERSION,
+                                            JVM_CLASSFILE_MINOR_VERSION);
     PUTPROP(props, "java.class.version", buf);
 
     if (sprops->awt_toolkit) {

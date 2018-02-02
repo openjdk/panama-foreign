@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2015 SAP SE. All rights reserved.
+ * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2018 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,27 +34,32 @@
 #include "runtime/basicLock.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/os.hpp"
-#include "runtime/stubRoutines.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
 #include "utilities/align.hpp"
 
 
 void C1_MacroAssembler::inline_cache_check(Register receiver, Register iCache) {
   const Register temp_reg = R12_scratch2;
+  Label Lmiss;
+
   verify_oop(receiver);
+  MacroAssembler::null_check(receiver, oopDesc::klass_offset_in_bytes(), &Lmiss);
   load_klass(temp_reg, receiver);
-  if (TrapBasedICMissChecks) {
+
+  if (TrapBasedICMissChecks && TrapBasedNullChecks) {
     trap_ic_miss_check(temp_reg, iCache);
   } else {
-    Label L;
+    Label Lok;
     cmpd(CCR0, temp_reg, iCache);
-    beq(CCR0, L);
+    beq(CCR0, Lok);
+    bind(Lmiss);
     //load_const_optimized(temp_reg, SharedRuntime::get_ic_miss_stub(), R0);
     calculate_address_from_global_toc(temp_reg, SharedRuntime::get_ic_miss_stub(), true, true, false);
     mtctr(temp_reg);
     bctr();
     align(32, 12);
-    bind(L);
+    bind(Lok);
   }
 }
 

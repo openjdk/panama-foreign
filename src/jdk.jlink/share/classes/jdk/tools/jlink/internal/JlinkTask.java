@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
  */
 package jdk.tools.jlink.internal;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -42,8 +43,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -87,7 +86,7 @@ public class JlinkTask {
     private static final Option<?>[] recognizedOptions = {
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.help = true;
-        }, "--help", "-h"),
+        }, "--help", "-h", "-?"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             // if used multiple times, the last one wins!
             // So, clear previous values, if any.
@@ -230,7 +229,8 @@ public class JlinkTask {
         try {
             List<String> remaining = optionsHelper.handleOptions(this, args);
             if (remaining.size() > 0 && !options.suggestProviders) {
-                throw taskHelper.newBadArgs("err.orphan.arguments", toString(remaining))
+                throw taskHelper.newBadArgs("err.orphan.arguments",
+                                            remaining.stream().collect(Collectors.joining(" ")))
                                 .showUsage(true);
             }
             if (options.help) {
@@ -421,16 +421,42 @@ public class JlinkTask {
      * the observable modules to those in the transitive closure of
      * the modules specified in {@code limitMods} plus other modules
      * specified in the {@code roots} set.
+     *
+     * @throws IllegalArgumentException if java.base module is present
+     * but its descriptor has no version
      */
     public static ModuleFinder newModuleFinder(List<Path> paths,
                                                Set<String> limitMods,
                                                Set<String> roots)
     {
         if (Objects.requireNonNull(paths).isEmpty()) {
-             throw new IllegalArgumentException("Empty module path");
+             throw new IllegalArgumentException(taskHelper.getMessage("err.empty.module.path"));
         }
+
         Path[] entries = paths.toArray(new Path[0]);
-        ModuleFinder finder = ModulePath.of(Runtime.version(), true, entries);
+        Runtime.Version version = Runtime.version();
+        ModuleFinder finder = ModulePath.of(version, true, entries);
+
+        if (finder.find("java.base").isPresent()) {
+            // use the version of java.base module, if present, as
+            // the release version for multi-release JAR files
+            ModuleDescriptor.Version v = finder.find("java.base").get()
+                .descriptor().version().orElseThrow(() ->
+                    new IllegalArgumentException("No version in java.base descriptor")
+                );
+
+            // java.base version is different than the current runtime version
+            version = Runtime.Version.parse(v.toString());
+            if (Runtime.version().feature() != version.feature() ||
+                Runtime.version().interim() != version.interim())
+            {
+                // jlink version and java.base version do not match.
+                // We do not (yet) support this mode.
+                throw new IllegalArgumentException(taskHelper.getMessage("err.jlink.version.mismatch",
+                    Runtime.version().feature(), Runtime.version().interim(),
+                    version.feature(), version.interim()));
+            }
+        }
 
         // if limitmods is specified then limit the universe
         if (limitMods != null && !limitMods.isEmpty()) {
@@ -632,9 +658,12 @@ public class JlinkTask {
         throws BadArgs
     {
         if (args.size() > 1) {
-            throw taskHelper.newBadArgs("err.orphan.argument",
-                                        toString(args.subList(1, args.size())))
-                            .showUsage(true);
+            List<String> arguments = args.get(0).startsWith("-")
+                                        ? args
+                                        : args.subList(1, args.size());
+            throw taskHelper.newBadArgs("err.invalid.arg.for.option",
+                                        "--suggest-providers",
+                                        arguments.stream().collect(Collectors.joining(" ")));
         }
 
         if (options.bindServices) {
@@ -687,17 +716,12 @@ public class JlinkTask {
                  .forEach(names::remove);
             if (!names.isEmpty()) {
                 log.println(taskHelper.getMessage("warn.provider.notfound",
-                                                  toString(names)));
+                    names.stream().sorted().collect(Collectors.joining(","))));
             }
 
             String msg = String.format("%n%s:", taskHelper.getMessage("suggested.providers.header"));
             printProviders(log, msg, mrefs, uses);
         }
-    }
-
-    private static String toString(Collection<String> collection) {
-        return collection.stream().sorted()
-                         .collect(Collectors.joining(","));
     }
 
     private String getSaveOpts() {
@@ -744,6 +768,7 @@ public class JlinkTask {
         final ByteOrder order;
         final Path packagedModulesPath;
         final boolean ignoreSigning;
+        final Runtime.Version version;
         final Set<Archive> archives;
 
         ImageHelper(Configuration cf,
@@ -754,6 +779,17 @@ public class JlinkTask {
             this.order = order;
             this.packagedModulesPath = packagedModulesPath;
             this.ignoreSigning = ignoreSigning;
+
+            // use the version of java.base module, if present, as
+            // the release version for multi-release JAR files
+            this.version = cf.findModule("java.base")
+                .map(ResolvedModule::reference)
+                .map(ModuleReference::descriptor)
+                .flatMap(ModuleDescriptor::version)
+                .map(ModuleDescriptor.Version::toString)
+                .map(Runtime.Version::parse)
+                .orElse(Runtime.version());
+
             this.archives = modsPaths.entrySet().stream()
                                 .map(e -> newArchive(e.getKey(), e.getValue()))
                                 .collect(Collectors.toSet());
@@ -763,7 +799,7 @@ public class JlinkTask {
             if (path.toString().endsWith(".jmod")) {
                 return new JmodArchive(module, path);
             } else if (path.toString().endsWith(".jar")) {
-                ModularJarArchive modularJarArchive = new ModularJarArchive(module, path);
+                ModularJarArchive modularJarArchive = new ModularJarArchive(module, path, version);
 
                 Stream<Archive.Entry> signatures = modularJarArchive.entries().filter((entry) -> {
                     String name = entry.name().toUpperCase(Locale.ENGLISH);
@@ -787,10 +823,26 @@ public class JlinkTask {
 
                 return modularJarArchive;
             } else if (Files.isDirectory(path)) {
-                return new DirArchive(path);
+                Path modInfoPath = path.resolve("module-info.class");
+                if (Files.isRegularFile(modInfoPath)) {
+                    return new DirArchive(path, findModuleName(modInfoPath));
+                } else {
+                    throw new IllegalArgumentException(
+                        taskHelper.getMessage("err.not.a.module.directory", path));
+                }
             } else {
                 throw new IllegalArgumentException(
                     taskHelper.getMessage("err.not.modular.format", module, path));
+            }
+        }
+
+        private static String findModuleName(Path modInfoPath) {
+            try (BufferedInputStream bis = new BufferedInputStream(
+                    Files.newInputStream(modInfoPath))) {
+                return ModuleDescriptor.read(bis).name();
+            } catch (IOException exp) {
+                throw new IllegalArgumentException(taskHelper.getMessage(
+                    "err.cannot.read.module.info", modInfoPath), exp);
             }
         }
 

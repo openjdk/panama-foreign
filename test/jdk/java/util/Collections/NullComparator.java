@@ -21,13 +21,16 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4224271
  * @summary A null Comparator is now specified to indicate natural ordering.
  */
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class NullComparator {
     public static void main(String[] args) throws Exception {
@@ -37,7 +40,7 @@ public class NullComparator {
         List sorted = new ArrayList(list);
         Collections.shuffle(list);
 
-        Object a[] = list.toArray();
+        Object[] a = list.toArray();
         Arrays.sort(a, null);
         if (!Arrays.asList(a).equals(sorted))
             throw new Exception("Arrays.sort");

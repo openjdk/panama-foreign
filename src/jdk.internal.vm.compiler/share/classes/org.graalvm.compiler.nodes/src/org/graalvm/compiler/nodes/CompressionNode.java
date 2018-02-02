@@ -68,7 +68,7 @@ public abstract class CompressionNode extends UnaryNode implements ConvertNode, 
 
     @Override
     public Stamp foldStamp(Stamp newStamp) {
-        assert newStamp.isCompatible(getValue().stamp());
+        assert newStamp.isCompatible(getValue().stamp(NodeView.DEFAULT));
         return mkStamp(newStamp);
     }
 
@@ -122,9 +122,10 @@ public abstract class CompressionNode extends UnaryNode implements ConvertNode, 
                 // We always want uncompressed constants
                 return this;
             }
-            int stableDimension = ((ConstantNode) forValue).getStableDimension();
-            boolean isDefaultStable = ((ConstantNode) forValue).isDefaultStable();
-            return ConstantNode.forConstant(stamp(), convert(forValue.asConstant(), tool.getConstantReflection()), stableDimension, isDefaultStable, tool.getMetaAccess());
+
+            ConstantNode constant = (ConstantNode) forValue;
+            return ConstantNode.forConstant(stamp(NodeView.DEFAULT), convert(constant.getValue(), tool.getConstantReflection()), constant.getStableDimension(), constant.isDefaultStable(),
+                            tool.getMetaAccess());
         } else if (forValue instanceof CompressionNode) {
             CompressionNode other = (CompressionNode) forValue;
             if (op != other.op && encoding.equals(other.encoding)) {
@@ -136,22 +137,22 @@ public abstract class CompressionNode extends UnaryNode implements ConvertNode, 
 
     @Override
     public void generate(NodeLIRBuilderTool gen) {
-        LIRGeneratorTool hsGen = gen.getLIRGeneratorTool();
         boolean nonNull;
-        if (getValue().stamp() instanceof AbstractObjectStamp) {
-            nonNull = StampTool.isPointerNonNull(getValue().stamp());
+        if (value.stamp(NodeView.DEFAULT) instanceof AbstractObjectStamp) {
+            nonNull = StampTool.isPointerNonNull(value.stamp(NodeView.DEFAULT));
         } else {
             // metaspace pointers are never null
             nonNull = true;
         }
 
+        LIRGeneratorTool tool = gen.getLIRGeneratorTool();
         Value result;
         switch (op) {
             case Compress:
-                result = hsGen.emitCompress(gen.operand(getValue()), encoding, nonNull);
+                result = tool.emitCompress(gen.operand(value), encoding, nonNull);
                 break;
             case Uncompress:
-                result = hsGen.emitUncompress(gen.operand(getValue()), encoding, nonNull);
+                result = tool.emitUncompress(gen.operand(value), encoding, nonNull);
                 break;
             default:
                 throw GraalError.shouldNotReachHere();

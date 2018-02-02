@@ -26,6 +26,7 @@
 #include <sys/types.h>
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "asm/assembler.hpp"
 #include "asm/assembler.inline.hpp"
 #include "interpreter/interpreter.hpp"
@@ -38,7 +39,6 @@
 #include "opto/compile.hpp"
 #include "opto/intrinsicnode.hpp"
 #include "opto/node.hpp"
-#include "prims/jvm.h"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/icache.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -287,6 +287,40 @@ void MacroAssembler::serialize_memory(Register thread, Register tmp) {
   dsb(Assembler::SY);
 }
 
+void MacroAssembler::safepoint_poll(Label& slow_path) {
+  if (SafepointMechanism::uses_thread_local_poll()) {
+    ldr(rscratch1, Address(rthread, Thread::polling_page_offset()));
+    tbnz(rscratch1, exact_log2(SafepointMechanism::poll_bit()), slow_path);
+  } else {
+    unsigned long offset;
+    adrp(rscratch1, ExternalAddress(SafepointSynchronize::address_of_state()), offset);
+    ldrw(rscratch1, Address(rscratch1, offset));
+    assert(SafepointSynchronize::_not_synchronized == 0, "rewrite this code");
+    cbnz(rscratch1, slow_path);
+  }
+}
+
+// Just like safepoint_poll, but use an acquiring load for thread-
+// local polling.
+//
+// We need an acquire here to ensure that any subsequent load of the
+// global SafepointSynchronize::_state flag is ordered after this load
+// of the local Thread::_polling page.  We don't want this poll to
+// return false (i.e. not safepointing) and a later poll of the global
+// SafepointSynchronize::_state spuriously to return true.
+//
+// This is to avoid a race when we're in a native->Java transition
+// racing the code which wakes up from a safepoint.
+//
+void MacroAssembler::safepoint_poll_acquire(Label& slow_path) {
+  if (SafepointMechanism::uses_thread_local_poll()) {
+    lea(rscratch1, Address(rthread, Thread::polling_page_offset()));
+    ldar(rscratch1, rscratch1);
+    tbnz(rscratch1, exact_log2(SafepointMechanism::poll_bit()), slow_path);
+  } else {
+    safepoint_poll(slow_path);
+  }
+}
 
 void MacroAssembler::reset_last_Java_frame(bool clear_fp) {
   // we must set sp to zero to clear frame
@@ -767,7 +801,7 @@ address MacroAssembler::emit_trampoline_stub(int insts_call_instruction_offset,
   assert(is_NativeCallTrampolineStub_at(stub_start_addr), "doesn't look like a trampoline");
 
   end_a_stub();
-  return stub;
+  return stub_start_addr;
 }
 
 address MacroAssembler::ic_call(address entry, jint method_index) {
@@ -929,8 +963,12 @@ void MacroAssembler::lookup_interface_method(Register recv_klass,
                                              RegisterOrConstant itable_index,
                                              Register method_result,
                                              Register scan_temp,
-                                             Label& L_no_such_interface) {
-  assert_different_registers(recv_klass, intf_klass, method_result, scan_temp);
+                                             Label& L_no_such_interface,
+                         bool return_method) {
+  assert_different_registers(recv_klass, intf_klass, scan_temp);
+  assert_different_registers(method_result, intf_klass, scan_temp);
+  assert(recv_klass != method_result || !return_method,
+     "recv_klass can be destroyed when method isn't needed");
   assert(itable_index.is_constant() || itable_index.as_register() == method_result,
          "caller must use same register for non-constant itable index as for method");
 
@@ -948,12 +986,14 @@ void MacroAssembler::lookup_interface_method(Register recv_klass,
   lea(scan_temp, Address(recv_klass, scan_temp, Address::lsl(3)));
   add(scan_temp, scan_temp, vtable_base);
 
-  // Adjust recv_klass by scaled itable_index, so we can free itable_index.
-  assert(itableMethodEntry::size() * wordSize == wordSize, "adjust the scaling in the code below");
-  // lea(recv_klass, Address(recv_klass, itable_index, Address::times_ptr, itentry_off));
-  lea(recv_klass, Address(recv_klass, itable_index, Address::lsl(3)));
-  if (itentry_off)
-    add(recv_klass, recv_klass, itentry_off);
+  if (return_method) {
+    // Adjust recv_klass by scaled itable_index, so we can free itable_index.
+    assert(itableMethodEntry::size() * wordSize == wordSize, "adjust the scaling in the code below");
+    // lea(recv_klass, Address(recv_klass, itable_index, Address::times_ptr, itentry_off));
+    lea(recv_klass, Address(recv_klass, itable_index, Address::lsl(3)));
+    if (itentry_off)
+      add(recv_klass, recv_klass, itentry_off);
+  }
 
   // for (scan = klass->itable(); scan->interface() != NULL; scan += scan_step) {
   //   if (scan->interface() == intf) {
@@ -987,8 +1027,10 @@ void MacroAssembler::lookup_interface_method(Register recv_klass,
   bind(found_method);
 
   // Got a hit.
-  ldr(scan_temp, Address(scan_temp, itableOffsetEntry::offset_offset_in_bytes()));
-  ldr(method_result, Address(recv_klass, scan_temp));
+  if (return_method) {
+    ldrw(scan_temp, Address(scan_temp, itableOffsetEntry::offset_offset_in_bytes()));
+    ldr(method_result, Address(recv_klass, scan_temp, Address::uxtw(0)));
+  }
 }
 
 // virtual method calling
@@ -1007,7 +1049,8 @@ void MacroAssembler::lookup_virtual_method(Register recv_klass,
     ldr(method_result, Address(method_result, vtable_offset_in_bytes));
   } else {
     vtable_offset_in_bytes += vtable_index.as_constant() * wordSize;
-    ldr(method_result, Address(recv_klass, vtable_offset_in_bytes));
+    ldr(method_result,
+        form_address(rscratch1, recv_klass, vtable_offset_in_bytes, 0));
   }
 }
 
@@ -2929,6 +2972,105 @@ void MacroAssembler::update_word_crc32(Register crc, Register v, Register tmp,
   eor(crc, crc, tmp);
 }
 
+void MacroAssembler::kernel_crc32_using_crc32(Register crc, Register buf,
+        Register len, Register tmp0, Register tmp1, Register tmp2,
+        Register tmp3) {
+    Label CRC_by64_loop, CRC_by4_loop, CRC_by1_loop, CRC_less64, CRC_by64_pre, CRC_by32_loop, CRC_less32, L_exit;
+    assert_different_registers(crc, buf, len, tmp0, tmp1, tmp2, tmp3);
+
+    mvnw(crc, crc);
+
+    subs(len, len, 128);
+    br(Assembler::GE, CRC_by64_pre);
+  BIND(CRC_less64);
+    adds(len, len, 128-32);
+    br(Assembler::GE, CRC_by32_loop);
+  BIND(CRC_less32);
+    adds(len, len, 32-4);
+    br(Assembler::GE, CRC_by4_loop);
+    adds(len, len, 4);
+    br(Assembler::GT, CRC_by1_loop);
+    b(L_exit);
+
+  BIND(CRC_by32_loop);
+    ldp(tmp0, tmp1, Address(post(buf, 16)));
+    subs(len, len, 32);
+    crc32x(crc, crc, tmp0);
+    ldr(tmp2, Address(post(buf, 8)));
+    crc32x(crc, crc, tmp1);
+    ldr(tmp3, Address(post(buf, 8)));
+    crc32x(crc, crc, tmp2);
+    crc32x(crc, crc, tmp3);
+    br(Assembler::GE, CRC_by32_loop);
+    cmn(len, 32);
+    br(Assembler::NE, CRC_less32);
+    b(L_exit);
+
+  BIND(CRC_by4_loop);
+    ldrw(tmp0, Address(post(buf, 4)));
+    subs(len, len, 4);
+    crc32w(crc, crc, tmp0);
+    br(Assembler::GE, CRC_by4_loop);
+    adds(len, len, 4);
+    br(Assembler::LE, L_exit);
+  BIND(CRC_by1_loop);
+    ldrb(tmp0, Address(post(buf, 1)));
+    subs(len, len, 1);
+    crc32b(crc, crc, tmp0);
+    br(Assembler::GT, CRC_by1_loop);
+    b(L_exit);
+
+  BIND(CRC_by64_pre);
+    sub(buf, buf, 8);
+    ldp(tmp0, tmp1, Address(buf, 8));
+    crc32x(crc, crc, tmp0);
+    ldr(tmp2, Address(buf, 24));
+    crc32x(crc, crc, tmp1);
+    ldr(tmp3, Address(buf, 32));
+    crc32x(crc, crc, tmp2);
+    ldr(tmp0, Address(buf, 40));
+    crc32x(crc, crc, tmp3);
+    ldr(tmp1, Address(buf, 48));
+    crc32x(crc, crc, tmp0);
+    ldr(tmp2, Address(buf, 56));
+    crc32x(crc, crc, tmp1);
+    ldr(tmp3, Address(pre(buf, 64)));
+
+    b(CRC_by64_loop);
+
+    align(CodeEntryAlignment);
+  BIND(CRC_by64_loop);
+    subs(len, len, 64);
+    crc32x(crc, crc, tmp2);
+    ldr(tmp0, Address(buf, 8));
+    crc32x(crc, crc, tmp3);
+    ldr(tmp1, Address(buf, 16));
+    crc32x(crc, crc, tmp0);
+    ldr(tmp2, Address(buf, 24));
+    crc32x(crc, crc, tmp1);
+    ldr(tmp3, Address(buf, 32));
+    crc32x(crc, crc, tmp2);
+    ldr(tmp0, Address(buf, 40));
+    crc32x(crc, crc, tmp3);
+    ldr(tmp1, Address(buf, 48));
+    crc32x(crc, crc, tmp0);
+    ldr(tmp2, Address(buf, 56));
+    crc32x(crc, crc, tmp1);
+    ldr(tmp3, Address(pre(buf, 64)));
+    br(Assembler::GE, CRC_by64_loop);
+
+    // post-loop
+    crc32x(crc, crc, tmp2);
+    crc32x(crc, crc, tmp3);
+
+    sub(len, len, 64);
+    add(buf, buf, 8);
+    cmn(len, 128);
+    br(Assembler::NE, CRC_less64);
+  BIND(L_exit);
+    mvnw(crc, crc);
+}
+
 /**
  * @param crc   register containing existing CRC (32-bit)
  * @param buf   register pointing to input byte buffer (byte*)
@@ -2942,57 +3084,12 @@ void MacroAssembler::kernel_crc32(Register crc, Register buf, Register len,
   Label L_by16, L_by16_loop, L_by4, L_by4_loop, L_by1, L_by1_loop, L_exit;
   unsigned long offset;
 
-    ornw(crc, zr, crc);
-
   if (UseCRC32) {
-    Label CRC_by64_loop, CRC_by4_loop, CRC_by1_loop;
-
-      subs(len, len, 64);
-      br(Assembler::GE, CRC_by64_loop);
-      adds(len, len, 64-4);
-      br(Assembler::GE, CRC_by4_loop);
-      adds(len, len, 4);
-      br(Assembler::GT, CRC_by1_loop);
-      b(L_exit);
-
-    BIND(CRC_by4_loop);
-      ldrw(tmp, Address(post(buf, 4)));
-      subs(len, len, 4);
-      crc32w(crc, crc, tmp);
-      br(Assembler::GE, CRC_by4_loop);
-      adds(len, len, 4);
-      br(Assembler::LE, L_exit);
-    BIND(CRC_by1_loop);
-      ldrb(tmp, Address(post(buf, 1)));
-      subs(len, len, 1);
-      crc32b(crc, crc, tmp);
-      br(Assembler::GT, CRC_by1_loop);
-      b(L_exit);
-
-      align(CodeEntryAlignment);
-    BIND(CRC_by64_loop);
-      subs(len, len, 64);
-      ldp(tmp, tmp3, Address(post(buf, 16)));
-      crc32x(crc, crc, tmp);
-      crc32x(crc, crc, tmp3);
-      ldp(tmp, tmp3, Address(post(buf, 16)));
-      crc32x(crc, crc, tmp);
-      crc32x(crc, crc, tmp3);
-      ldp(tmp, tmp3, Address(post(buf, 16)));
-      crc32x(crc, crc, tmp);
-      crc32x(crc, crc, tmp3);
-      ldp(tmp, tmp3, Address(post(buf, 16)));
-      crc32x(crc, crc, tmp);
-      crc32x(crc, crc, tmp3);
-      br(Assembler::GE, CRC_by64_loop);
-      adds(len, len, 64-4);
-      br(Assembler::GE, CRC_by4_loop);
-      adds(len, len, 4);
-      br(Assembler::GT, CRC_by1_loop);
-    BIND(L_exit);
-      ornw(crc, zr, crc);
+      kernel_crc32_using_crc32(crc, buf, len, table0, table1, table2, table3);
       return;
   }
+
+    mvnw(crc, crc);
 
     adrp(table0, ExternalAddress(StubRoutines::crc_table_addr()), offset);
     if (offset) add(table0, table0, offset);
@@ -3171,7 +3268,103 @@ void MacroAssembler::kernel_crc32(Register crc, Register buf, Register len,
     adds(len, len, 4);
     br(Assembler::GT, L_by1_loop);
   BIND(L_exit);
-    ornw(crc, zr, crc);
+    mvnw(crc, crc);
+}
+
+void MacroAssembler::kernel_crc32c_using_crc32c(Register crc, Register buf,
+        Register len, Register tmp0, Register tmp1, Register tmp2,
+        Register tmp3) {
+    Label CRC_by64_loop, CRC_by4_loop, CRC_by1_loop, CRC_less64, CRC_by64_pre, CRC_by32_loop, CRC_less32, L_exit;
+    assert_different_registers(crc, buf, len, tmp0, tmp1, tmp2, tmp3);
+
+    subs(len, len, 128);
+    br(Assembler::GE, CRC_by64_pre);
+  BIND(CRC_less64);
+    adds(len, len, 128-32);
+    br(Assembler::GE, CRC_by32_loop);
+  BIND(CRC_less32);
+    adds(len, len, 32-4);
+    br(Assembler::GE, CRC_by4_loop);
+    adds(len, len, 4);
+    br(Assembler::GT, CRC_by1_loop);
+    b(L_exit);
+
+  BIND(CRC_by32_loop);
+    ldp(tmp0, tmp1, Address(post(buf, 16)));
+    subs(len, len, 32);
+    crc32cx(crc, crc, tmp0);
+    ldr(tmp2, Address(post(buf, 8)));
+    crc32cx(crc, crc, tmp1);
+    ldr(tmp3, Address(post(buf, 8)));
+    crc32cx(crc, crc, tmp2);
+    crc32cx(crc, crc, tmp3);
+    br(Assembler::GE, CRC_by32_loop);
+    cmn(len, 32);
+    br(Assembler::NE, CRC_less32);
+    b(L_exit);
+
+  BIND(CRC_by4_loop);
+    ldrw(tmp0, Address(post(buf, 4)));
+    subs(len, len, 4);
+    crc32cw(crc, crc, tmp0);
+    br(Assembler::GE, CRC_by4_loop);
+    adds(len, len, 4);
+    br(Assembler::LE, L_exit);
+  BIND(CRC_by1_loop);
+    ldrb(tmp0, Address(post(buf, 1)));
+    subs(len, len, 1);
+    crc32cb(crc, crc, tmp0);
+    br(Assembler::GT, CRC_by1_loop);
+    b(L_exit);
+
+  BIND(CRC_by64_pre);
+    sub(buf, buf, 8);
+    ldp(tmp0, tmp1, Address(buf, 8));
+    crc32cx(crc, crc, tmp0);
+    ldr(tmp2, Address(buf, 24));
+    crc32cx(crc, crc, tmp1);
+    ldr(tmp3, Address(buf, 32));
+    crc32cx(crc, crc, tmp2);
+    ldr(tmp0, Address(buf, 40));
+    crc32cx(crc, crc, tmp3);
+    ldr(tmp1, Address(buf, 48));
+    crc32cx(crc, crc, tmp0);
+    ldr(tmp2, Address(buf, 56));
+    crc32cx(crc, crc, tmp1);
+    ldr(tmp3, Address(pre(buf, 64)));
+
+    b(CRC_by64_loop);
+
+    align(CodeEntryAlignment);
+  BIND(CRC_by64_loop);
+    subs(len, len, 64);
+    crc32cx(crc, crc, tmp2);
+    ldr(tmp0, Address(buf, 8));
+    crc32cx(crc, crc, tmp3);
+    ldr(tmp1, Address(buf, 16));
+    crc32cx(crc, crc, tmp0);
+    ldr(tmp2, Address(buf, 24));
+    crc32cx(crc, crc, tmp1);
+    ldr(tmp3, Address(buf, 32));
+    crc32cx(crc, crc, tmp2);
+    ldr(tmp0, Address(buf, 40));
+    crc32cx(crc, crc, tmp3);
+    ldr(tmp1, Address(buf, 48));
+    crc32cx(crc, crc, tmp0);
+    ldr(tmp2, Address(buf, 56));
+    crc32cx(crc, crc, tmp1);
+    ldr(tmp3, Address(pre(buf, 64)));
+    br(Assembler::GE, CRC_by64_loop);
+
+    // post-loop
+    crc32cx(crc, crc, tmp2);
+    crc32cx(crc, crc, tmp3);
+
+    sub(len, len, 64);
+    add(buf, buf, 8);
+    cmn(len, 128);
+    br(Assembler::NE, CRC_less64);
+  BIND(L_exit);
 }
 
 /**
@@ -3184,54 +3377,9 @@ void MacroAssembler::kernel_crc32(Register crc, Register buf, Register len,
 void MacroAssembler::kernel_crc32c(Register crc, Register buf, Register len,
         Register table0, Register table1, Register table2, Register table3,
         Register tmp, Register tmp2, Register tmp3) {
-  Label L_exit;
-  Label CRC_by64_loop, CRC_by4_loop, CRC_by1_loop;
-
-    subs(len, len, 64);
-    br(Assembler::GE, CRC_by64_loop);
-    adds(len, len, 64-4);
-    br(Assembler::GE, CRC_by4_loop);
-    adds(len, len, 4);
-    br(Assembler::GT, CRC_by1_loop);
-    b(L_exit);
-
-  BIND(CRC_by4_loop);
-    ldrw(tmp, Address(post(buf, 4)));
-    subs(len, len, 4);
-    crc32cw(crc, crc, tmp);
-    br(Assembler::GE, CRC_by4_loop);
-    adds(len, len, 4);
-    br(Assembler::LE, L_exit);
-  BIND(CRC_by1_loop);
-    ldrb(tmp, Address(post(buf, 1)));
-    subs(len, len, 1);
-    crc32cb(crc, crc, tmp);
-    br(Assembler::GT, CRC_by1_loop);
-    b(L_exit);
-
-    align(CodeEntryAlignment);
-  BIND(CRC_by64_loop);
-    subs(len, len, 64);
-    ldp(tmp, tmp3, Address(post(buf, 16)));
-    crc32cx(crc, crc, tmp);
-    crc32cx(crc, crc, tmp3);
-    ldp(tmp, tmp3, Address(post(buf, 16)));
-    crc32cx(crc, crc, tmp);
-    crc32cx(crc, crc, tmp3);
-    ldp(tmp, tmp3, Address(post(buf, 16)));
-    crc32cx(crc, crc, tmp);
-    crc32cx(crc, crc, tmp3);
-    ldp(tmp, tmp3, Address(post(buf, 16)));
-    crc32cx(crc, crc, tmp);
-    crc32cx(crc, crc, tmp3);
-    br(Assembler::GE, CRC_by64_loop);
-    adds(len, len, 64-4);
-    br(Assembler::GE, CRC_by4_loop);
-    adds(len, len, 4);
-    br(Assembler::GT, CRC_by1_loop);
-  BIND(L_exit);
-    return;
+  kernel_crc32c_using_crc32c(crc, buf, len, table0, table1, table2, table3);
 }
+
 
 SkipIfEqual::SkipIfEqual(
     MacroAssembler* masm, const bool* flag_addr, bool value) {
@@ -3603,13 +3751,16 @@ void  MacroAssembler::decode_klass_not_null(Register r) {
 }
 
 void  MacroAssembler::set_narrow_oop(Register dst, jobject obj) {
-  assert (UseCompressedOops, "should only be used for compressed oops");
-  assert (Universe::heap() != NULL, "java heap should be initialized");
-  assert (oop_recorder() != NULL, "this assembler needs an OopRecorder");
-
+#ifdef ASSERT
+  {
+    ThreadInVMfromUnknown tiv;
+    assert (UseCompressedOops, "should only be used for compressed oops");
+    assert (Universe::heap() != NULL, "java heap should be initialized");
+    assert (oop_recorder() != NULL, "this assembler needs an OopRecorder");
+    assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "should be real oop");
+  }
+#endif
   int oop_index = oop_recorder()->find_index(obj);
-  assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "should be real oop");
-
   InstructionMark im(this);
   RelocationHolder rspec = oop_Relocation::spec(oop_index);
   code_section()->relocate(inst_mark(), rspec);
@@ -3867,8 +4018,13 @@ void MacroAssembler::movoop(Register dst, jobject obj, bool immediate) {
   if (obj == NULL) {
     oop_index = oop_recorder()->allocate_oop_index(obj);
   } else {
+#ifdef ASSERT
+    {
+      ThreadInVMfromUnknown tiv;
+      assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "should be real oop");
+    }
+#endif
     oop_index = oop_recorder()->find_index(obj);
-    assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "should be real oop");
   }
   RelocationHolder rspec = oop_Relocation::spec(oop_index);
   if (! immediate) {
@@ -3891,8 +4047,13 @@ void MacroAssembler::mov_metadata(Register dst, Metadata* obj) {
 }
 
 Address MacroAssembler::constant_oop_address(jobject obj) {
-  assert(oop_recorder() != NULL, "this assembler needs an OopRecorder");
-  assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "not an oop");
+#ifdef ASSERT
+  {
+    ThreadInVMfromUnknown tiv;
+    assert(oop_recorder() != NULL, "this assembler needs an OopRecorder");
+    assert(Universe::heap()->is_in_reserved(JNIHandles::resolve(obj)), "not an oop");
+  }
+#endif
   int oop_index = oop_recorder()->find_index(obj);
   return Address((address)obj, oop_Relocation::spec(oop_index));
 }
@@ -4231,15 +4392,26 @@ void MacroAssembler::bang_stack_size(Register size, Register tmp) {
 }
 
 
-address MacroAssembler::read_polling_page(Register r, address page, relocInfo::relocType rtype) {
-  unsigned long off;
-  adrp(r, Address(page, rtype), off);
-  InstructionMark im(this);
-  code_section()->relocate(inst_mark(), rtype);
-  ldrw(zr, Address(r, off));
-  return inst_mark();
+// Move the address of the polling page into dest.
+void MacroAssembler::get_polling_page(Register dest, address page, relocInfo::relocType rtype) {
+  if (SafepointMechanism::uses_thread_local_poll()) {
+    ldr(dest, Address(rthread, Thread::polling_page_offset()));
+  } else {
+    unsigned long off;
+    adrp(dest, Address(page, rtype), off);
+    assert(off == 0, "polling page must be page aligned");
+  }
 }
 
+// Move the address of the polling page into r, then read the polling
+// page.
+address MacroAssembler::read_polling_page(Register r, address page, relocInfo::relocType rtype) {
+  get_polling_page(r, page, rtype);
+  return read_polling_page(r, rtype);
+}
+
+// Read the polling page.  The address of the polling page must
+// already be in r.
 address MacroAssembler::read_polling_page(Register r, relocInfo::relocType rtype) {
   InstructionMark im(this);
   code_section()->relocate(inst_mark(), rtype);

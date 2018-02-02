@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2602,13 +2602,13 @@ Node* GraphKit::make_snippet_call(const TypeFunc* call_type, uint nargs, ciMachi
     } else {
       ciType* ptype = mt->ptype_at(i - dbl_slot_cnt);
       if (ptype->is_vector()) {
-        int vec_size = ptype->vector_size();
+        uint vec_size = ptype->vector_size();
         Node* adr = basic_plus_adr(arg, 0x10);
         const TypePtr* adr_type = adr->bottom_type()->is_ptr();
         Node* mem = memory(adr_type);
         arg = gvn().transform(LoadVectorNode::make(0, NULL, mem, adr, adr_type, vec_size, T_LONG));
 
-        int max_vlen = MAX2(C->max_vector_size(), vec_size * 8); // FIXME
+        uint max_vlen = MAX2(C->max_vector_size(), vec_size * 8); // FIXME
         C->set_max_vector_size(max_vlen);
       }
     }
@@ -2652,13 +2652,13 @@ Node* GraphKit::make_snippet_call(const TypeFunc* call_type, uint nargs, ciMachi
   } else {
     ret = gvn().transform(new ProjNode(call, TypeFunc::Parms));
     if (mt->rtype()->is_vector()) {
-      int vec_size = mt->rtype()->vector_size();
+      uint vec_size = mt->rtype()->vector_size();
       VBoxNode* vbox = VBoxNode::make(this, TypeVect::make(T_LONG, vec_size), argument(0), ret);
       Node *n = gvn().transform(vbox);
       set_predefined_output_for_runtime_call(vbox);
       ret = gvn().transform(new ProjNode(n, TypeFunc::Parms));
 
-      int max_vlen = MAX2(C->max_vector_size(), vec_size * 8); // FIXME
+      uint max_vlen = MAX2(C->max_vector_size(), vec_size * 8); // FIXME
       C->set_max_vector_size(max_vlen);
     }
   }
@@ -3916,7 +3916,7 @@ AllocateNode* InitializeNode::allocation() {
 
 // Trace Allocate -> Proj[Parm] -> Initialize
 InitializeNode* AllocateNode::initialization() {
-  ProjNode* rawoop = proj_out(AllocateNode::RawAddress);
+  ProjNode* rawoop = proj_out_or_null(AllocateNode::RawAddress);
   if (rawoop == NULL)  return NULL;
   for (DUIterator_Fast imax, i = rawoop->fast_outs(imax); i < imax; i++) {
     Node* init = rawoop->fast_out(i);

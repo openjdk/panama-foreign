@@ -23,12 +23,12 @@
  */
 
 #include "precompiled.hpp"
-#include "gc/g1/concurrentG1Refine.hpp"
 #include "gc/g1/concurrentMarkThread.inline.hpp"
 #include "gc/g1/g1Analytics.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/g1CollectionSet.hpp"
 #include "gc/g1/g1ConcurrentMark.hpp"
+#include "gc/g1/g1ConcurrentRefine.hpp"
 #include "gc/g1/g1DefaultPolicy.hpp"
 #include "gc/g1/g1HotCardCache.hpp"
 #include "gc/g1/g1IHOPControl.hpp"
@@ -52,7 +52,7 @@ G1DefaultPolicy::G1DefaultPolicy(STWGCTimer* gc_timer) :
   _analytics(new G1Analytics(&_predictor)),
   _mmu_tracker(new G1MMUTrackerQueue(GCPauseIntervalMillis / 1000.0, MaxGCPauseMillis / 1000.0)),
   _ihop_control(create_ihop_control(&_predictor)),
-  _policy_counters(new GCPolicyCounters("GarbageFirst", 1, 3)),
+  _policy_counters(new GCPolicyCounters("GarbageFirst", 1, 2)),
   _young_list_fixed_length(0),
   _short_lived_surv_rate_group(new SurvRateGroup()),
   _survivor_surv_rate_group(new SurvRateGroup()),
@@ -745,7 +745,7 @@ void G1DefaultPolicy::record_collection_pause_end(double pause_time_ms, size_t c
   } else {
     update_rs_time_goal_ms -= scan_hcc_time_ms;
   }
-  _g1->concurrent_g1_refine()->adjust(average_time_ms(G1GCPhaseTimes::UpdateRS) - scan_hcc_time_ms,
+  _g1->concurrent_refine()->adjust(average_time_ms(G1GCPhaseTimes::UpdateRS) - scan_hcc_time_ms,
                                       phase_times()->sum_thread_work_items(G1GCPhaseTimes::UpdateRS),
                                       update_rs_time_goal_ms);
 
