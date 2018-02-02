@@ -70,6 +70,8 @@ cd $IDEA_OUTPUT; IDEA_OUTPUT=`pwd`
 MAKE_DIR="$SCRIPT_DIR/../make"
 IDEA_MAKE="$MAKE_DIR/idea"
 IDEA_TEMPLATE="$IDEA_MAKE/template"
+RUN_JEXTRACT_TEMPLATE="$IDEA_TEMPLATE/runConfigurations/jextract.xml"
+IDEA_RUN_JEXTRACT="$IDEA_OUTPUT/runConfigurations/jextract.xml"
 
 cp -r "$IDEA_TEMPLATE"/* "$IDEA_OUTPUT"
 
@@ -212,6 +214,38 @@ do
     printf "%s\n" "$line" >> $IDEA_MISC
   fi
 done < "$MISC_TEMPLATE"
+
+### generate jextract run config
+
+ALTERNATE_JRE="    <option name=\"ALTERNATIVE_JRE_PATH\" value=\"####/images/jdk\" />"
+
+addAltJreDir() {
+  DIR=`dirname $SPEC`
+  mn="`echo "$ALTERNATE_JRE" | sed -e s@"\(.*\)####\(.*\)"@"\1$DIR\2"@`"
+  printf "%s\n" "$mn" >> $IDEA_RUN_JEXTRACT
+}
+
+rm -f $IDEA_RUN_JEXTRACT
+
+while IFS= read -r line
+
+do
+
+  if echo "$line" | egrep "^ .* <env name=\"LD_LIBRARY_PATH\"" > /dev/null ; then
+
+    addClangLib
+
+  elif echo "$line" | egrep "^ .*<option name=\"ALTERNATIVE_JRE_PATH\"" > /dev/null ; then
+
+    addAltJreDir
+
+  else
+
+    printf "%s\n" "$line" >> $IDEA_RUN_JEXTRACT
+
+  fi
+
+done < "$RUN_JEXTRACT_TEMPLATE"
 
 ### Compile the custom Logger
 

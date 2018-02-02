@@ -5,7 +5,7 @@
 #include "interpreter/interpreterRuntime.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
-#include "prims/jvm.h"
+#include "include/jvm.h"
 #include "prims/nativeInvoker.hpp"
 #include "runtime/javaCalls.hpp"
 #include "logging/log.hpp"
