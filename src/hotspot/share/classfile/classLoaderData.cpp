@@ -63,6 +63,7 @@
 #include "memory/metaspaceShared.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "oops/access.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/atomic.hpp"
@@ -75,9 +76,6 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/ostream.hpp"
-#if INCLUDE_ALL_GCS
-#include "gc/g1/g1SATBCardTableModRefBS.hpp"
-#endif // INCLUDE_ALL_GCS
 #if INCLUDE_TRACE
 #include "trace/tracing.hpp"
 #endif
@@ -574,9 +572,9 @@ void ClassLoaderData::unload() {
     ls.cr();
   }
 
-  // In some rare cases items added to this list will not be freed elsewhere.
-  // To keep it simple, just free everything in it here.
-  free_deallocate_list();
+  // Some items on the _deallocate_list need to free their C heap structures
+  // if they are not already on the _klasses list.
+  unload_deallocate_list();
 
   // Clean up global class iterator for compiler
   static_klass_iterator.adjust_saved_class(this);
@@ -604,40 +602,27 @@ ModuleEntryTable* ClassLoaderData::modules() {
 
 const int _boot_loader_dictionary_size    = 1009;
 const int _default_loader_dictionary_size = 107;
-const int _prime_array_size         = 8;                       // array of primes for system dictionary size
-const int _average_depth_goal       = 3;                       // goal for lookup length
-const int _primelist[_prime_array_size] = {107, 1009, 2017, 4049, 5051, 10103, 20201, 40423};
-
-// Calculate a "good" dictionary size based
-// on predicted or current loaded classes count.
-static int calculate_dictionary_size(int classcount) {
-  int newsize = _primelist[0];
-  if (classcount > 0 && !DumpSharedSpaces) {
-    int index = 0;
-    int desiredsize = classcount/_average_depth_goal;
-    for (newsize = _primelist[index]; index < _prime_array_size -1;
-         newsize = _primelist[++index]) {
-      if (desiredsize <=  newsize) {
-        break;
-      }
-    }
-  }
-  return newsize;
-}
 
 Dictionary* ClassLoaderData::create_dictionary() {
   assert(!is_anonymous(), "anonymous class loader data do not have a dictionary");
   int size;
+  bool resizable = false;
   if (_the_null_class_loader_data == NULL) {
     size = _boot_loader_dictionary_size;
+    resizable = true;
   } else if (class_loader()->is_a(SystemDictionary::reflect_DelegatingClassLoader_klass())) {
     size = 1;  // there's only one class in relection class loader and no initiated classes
   } else if (is_system_class_loader_data()) {
-    size = calculate_dictionary_size(PredictedLoadedClassCount);
+    size = _boot_loader_dictionary_size;
+    resizable = true;
   } else {
     size = _default_loader_dictionary_size;
+    resizable = true;
   }
-  return new Dictionary(this, size);
+  if (!DynamicallyResizeSystemDictionaries || DumpSharedSpaces || UseSharedSpaces) {
+    resizable = false;
+  }
+  return new Dictionary(this, size, resizable);
 }
 
 // Unloading support
@@ -768,21 +753,13 @@ OopHandle ClassLoaderData::add_handle(Handle h) {
 }
 
 void ClassLoaderData::remove_handle(OopHandle h) {
+  assert(!is_unloading(), "Do not remove a handle for a CLD that is unloading");
   oop* ptr = h.ptr_raw();
   if (ptr != NULL) {
     assert(_handles.contains(ptr), "Got unexpected handle " PTR_FORMAT, p2i(ptr));
-#if INCLUDE_ALL_GCS
-    // This barrier is used by G1 to remember the old oop values, so
-    // that we don't forget any objects that were live at the snapshot at
-    // the beginning.
-    if (UseG1GC) {
-      oop obj = *ptr;
-      if (obj != NULL) {
-        G1SATBCardTableModRefBS::enqueue(obj);
-      }
-    }
-#endif
-    *ptr = NULL;
+    // This root is not walked in safepoints, and hence requires an appropriate
+    // decorator that e.g. maintains the SATB invariant in SATB collectors.
+    RootAccess<IN_CONCURRENT_ROOT>::oop_store(ptr, oop(NULL));
   }
 }
 
@@ -812,6 +789,7 @@ void ClassLoaderData::add_to_deallocate_list(Metadata* m) {
 void ClassLoaderData::free_deallocate_list() {
   // Don't need lock, at safepoint
   assert(SafepointSynchronize::is_at_safepoint(), "only called at safepoint");
+  assert(!is_unloading(), "only called for ClassLoaderData that are not unloading");
   if (_deallocate_list == NULL) {
     return;
   }
@@ -837,6 +815,36 @@ void ClassLoaderData::free_deallocate_list() {
       assert(!m->is_klass() || !((InstanceKlass*)m)->is_scratch_class(),
              "scratch classes on this list should be dead");
       // Also should assert that other metadata on the list was found in handles.
+    }
+  }
+}
+
+// This is distinct from free_deallocate_list.  For class loader data that are
+// unloading, this frees the C heap memory for items on the list, and unlinks
+// scratch or error classes so that unloading events aren't triggered for these
+// classes. The metadata is removed with the unloading metaspace.
+// There isn't C heap memory allocated for methods, so nothing is done for them.
+void ClassLoaderData::unload_deallocate_list() {
+  // Don't need lock, at safepoint
+  assert(SafepointSynchronize::is_at_safepoint(), "only called at safepoint");
+  assert(is_unloading(), "only called for ClassLoaderData that are unloading");
+  if (_deallocate_list == NULL) {
+    return;
+  }
+  // Go backwards because this removes entries that are freed.
+  for (int i = _deallocate_list->length() - 1; i >= 0; i--) {
+    Metadata* m = _deallocate_list->at(i);
+    assert (!m->on_stack(), "wouldn't be unloading if this were so");
+    _deallocate_list->remove_at(i);
+    if (m->is_constantPool()) {
+      ((ConstantPool*)m)->release_C_heap_structures();
+    } else if (m->is_klass()) {
+      InstanceKlass* ik = (InstanceKlass*)m;
+      // also releases ik->constants() C heap memory
+      InstanceKlass::release_C_heap_structures(ik);
+      // Remove the class so unloading events aren't triggered for
+      // this class (scratch or error class) in do_unloading().
+      remove_class(ik);
     }
   }
 }
@@ -1323,6 +1331,19 @@ void ClassLoaderDataGraph::purge() {
     Metaspace::purge();
     set_metaspace_oom(false);
   }
+}
+
+int ClassLoaderDataGraph::resize_if_needed() {
+  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint!");
+  int resized = 0;
+  if (Dictionary::does_any_dictionary_needs_resizing()) {
+    FOR_ALL_DICTIONARY(cld) {
+      if (cld->dictionary()->resize_if_needed()) {
+        resized++;
+      }
+    }
+  }
+  return resized;
 }
 
 void ClassLoaderDataGraph::post_class_unload_events() {

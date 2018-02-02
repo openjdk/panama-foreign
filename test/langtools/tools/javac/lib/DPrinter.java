@@ -1028,6 +1028,12 @@ public class DPrinter {
             return visitInlineTag(node, null);
         }
 
+        @Override
+        public Void visitDocType(DocTypeTree node, Void aVoid) {
+            printLimitedEscapedString("body", node.getText());
+            return visitTree(node, null);
+        }
+
         public Void visitEndElement(EndElementTree node, Void p) {
             printName("name", node.getName());
             return visitTree(node, null);
@@ -1227,7 +1233,6 @@ public class DPrinter {
         public Void visitMethodSymbol(MethodSymbol sym, Void ignore) {
             // code
             printList("params", sym.params);
-            printList("savedParameterNames", sym.savedParameterNames);
             return visitSymbol(sym, null);
         }
 

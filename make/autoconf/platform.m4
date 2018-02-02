@@ -388,13 +388,6 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
     OPENJDK_$1_CPU_JLI="amd64"
   fi
 
-  if test "x$OPENJDK_$1_OS" = xmacosx; then
-      OPENJDK_$1_OS_EXPORT_DIR=macosx
-  else
-      OPENJDK_$1_OS_EXPORT_DIR=${OPENJDK_$1_OS_TYPE}
-  fi
-  AC_SUBST(OPENJDK_$1_OS_EXPORT_DIR)
-
   # The new version string in JDK 9 also defined new naming of OS and ARCH for bundles
   # Macosx is osx and x86_64 is x64
   if test "x$OPENJDK_$1_OS" = xmacosx; then
@@ -485,6 +478,14 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
   fi
   AC_SUBST(HOTSPOT_$1_CPU_DEFINE)
 
+  # For historical reasons, the OS include directories have odd names.
+  OPENJDK_$1_OS_INCLUDE_SUBDIR="$OPENJDK_TARGET_OS"
+  if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
+    OPENJDK_$1_OS_INCLUDE_SUBDIR="win32"
+  elif test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
+    OPENJDK_$1_OS_INCLUDE_SUBDIR="darwin"
+  fi
+  AC_SUBST(OPENJDK_$1_OS_INCLUDE_SUBDIR)
 ])
 
 AC_DEFUN([PLATFORM_SET_RELEASE_FILE_OS_VALUES],

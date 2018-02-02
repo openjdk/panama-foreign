@@ -29,9 +29,12 @@
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/gcCause.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
+#include "utilities/growableArray.hpp"
 
 class CLDClosure;
 class GenCollectorPolicy;
+class GCMemoryManager;
+class MemoryPool;
 class OopsInGenClosure;
 class outputStream;
 class StrongRootsScope;
@@ -39,13 +42,15 @@ class ThreadClosure;
 class WorkGang;
 
 class CMSHeap : public GenCollectedHeap {
+
+protected:
+  virtual void check_gen_kinds();
+
 public:
   CMSHeap(GenCollectorPolicy *policy);
 
   // Returns JNI_OK on success
   virtual jint initialize();
-
-  virtual void check_gen_kinds();
 
   // Convenience function to be used in situations where the heap type can be
   // asserted to be this type.
@@ -70,10 +75,6 @@ public:
   // supports. Caller does not hold the Heap_lock on entry.
   void collect(GCCause::Cause cause);
 
-  bool is_in_closed_subset(const void* p) const {
-    return is_in_reserved(p);
-  }
-
   bool card_mark_must_follow_store() const {
     return true;
   }
@@ -81,6 +82,9 @@ public:
   void stop();
   void safepoint_synchronize_begin();
   void safepoint_synchronize_end();
+
+  virtual GrowableArray<GCMemoryManager*> memory_managers();
+  virtual GrowableArray<MemoryPool*> memory_pools();
 
   // If "young_gen_as_roots" is false, younger generations are
   // not scanned as roots; in this case, the caller must be arranging to
@@ -94,11 +98,18 @@ public:
                          OopsInGenClosure* root_closure,
                          CLDClosure* cld_closure);
 
+  GCMemoryManager* old_manager() const { return _old_manager; }
+
 private:
   WorkGang* _workers;
+  MemoryPool* _eden_pool;
+  MemoryPool* _survivor_pool;
+  MemoryPool* _old_pool;
 
   virtual void gc_prologue(bool full);
   virtual void gc_epilogue(bool full);
+
+  virtual void initialize_serviceability();
 
   // Accessor for memory state verification support
   NOT_PRODUCT(

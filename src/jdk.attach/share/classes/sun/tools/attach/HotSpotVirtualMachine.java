@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,18 +86,27 @@ public abstract class HotSpotVirtualMachine extends VirtualMachine {
     private void loadAgentLibrary(String agentLibrary, boolean isAbsolute, String options)
         throws AgentLoadException, AgentInitializationException, IOException
     {
+        if (agentLibrary == null) {
+            throw new NullPointerException("agentLibrary cannot be null");
+        }
+
+        String msgPrefix = "return code: ";
         InputStream in = execute("load",
                                  agentLibrary,
                                  isAbsolute ? "true" : "false",
                                  options);
-        try {
-            int result = readInt(in);
-            if (result != 0) {
-                throw new AgentInitializationException("Agent_OnAttach failed", result);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+            String result = reader.readLine();
+            if (result == null) {
+                throw new AgentLoadException("Target VM did not respond");
+            } else if (result.startsWith(msgPrefix)) {
+                int retCode = Integer.parseInt(result.substring(msgPrefix.length()));
+                if (retCode != 0) {
+                    throw new AgentInitializationException("Agent_OnAttach failed", retCode);
+                }
+            } else {
+                throw new AgentLoadException(result);
             }
-        } finally {
-            in.close();
-
         }
     }
 
@@ -126,6 +135,10 @@ public abstract class HotSpotVirtualMachine extends VirtualMachine {
     public void loadAgent(String agent, String options)
         throws AgentLoadException, AgentInitializationException, IOException
     {
+        if (agent == null) {
+            throw new NullPointerException("agent cannot be null");
+        }
+
         String args = agent;
         if (options != null) {
             args = args + "=" + options;

@@ -165,6 +165,8 @@ public class GraalHotSpotVMConfig extends HotSpotVMConfigAccess {
     public final boolean usePopCountInstruction = getFlag("UsePopCountInstruction", Boolean.class);
     public final boolean useAESIntrinsics = getFlag("UseAESIntrinsics", Boolean.class);
     public final boolean useCRC32Intrinsics = getFlag("UseCRC32Intrinsics", Boolean.class);
+    public final boolean useCRC32CIntrinsics = isJDK8 ? false : getFlag("UseCRC32CIntrinsics", Boolean.class);
+    public final boolean threadLocalHandshakes = getFlag("ThreadLocalHandshakes", Boolean.class, false);
 
     private final boolean useMultiplyToLenIntrinsic = getFlag("UseMultiplyToLenIntrinsic", Boolean.class);
     private final boolean useSHA1Intrinsics = getFlag("UseSHA1Intrinsics", Boolean.class);
@@ -280,14 +282,19 @@ public class GraalHotSpotVMConfig extends HotSpotVMConfigAccess {
         }
         if (offset == -1) {
             try {
-                offset = getFieldOffset(name, Integer.class, "OopHandle");
+                offset = getFieldOffset(name, Integer.class, "jobject");
                 isHandle = true;
             } catch (JVMCIError e) {
-
+                try {
+                    // JDK-8186777
+                    offset = getFieldOffset(name, Integer.class, "OopHandle");
+                    isHandle = true;
+                } catch (JVMCIError e2) {
+                }
             }
         }
         if (offset == -1) {
-            throw new JVMCIError("cannot get offset of field " + name + " with type oop or OopHandle");
+            throw new JVMCIError("cannot get offset of field " + name + " with type oop, jobject or OopHandle");
         }
         classMirrorOffset = offset;
         classMirrorIsHandle = isHandle;
@@ -589,6 +596,7 @@ public class GraalHotSpotVMConfig extends HotSpotVMConfigAccess {
     public final int basicLockSize = getFieldValue("CompilerToVM::Data::sizeof_BasicLock", Integer.class, "int");
     public final int basicLockDisplacedHeaderOffset = getFieldOffset("BasicLock::_displaced_header", Integer.class, "markOop");
 
+    public final int threadPollingPageOffset = getFieldOffset("Thread::_polling_page", Integer.class, "address", -1);
     public final int threadAllocatedBytesOffset = getFieldOffset("Thread::_allocated_bytes", Integer.class, "jlong");
 
     public final int tlabRefillWasteIncrement = getFlag("TLABWasteIncrement", Integer.class);
@@ -647,6 +655,8 @@ public class GraalHotSpotVMConfig extends HotSpotVMConfigAccess {
     public final boolean inlineContiguousAllocationSupported = getFieldValue("CompilerToVM::Data::_supports_inline_contig_alloc", Boolean.class);
     public final long heapEndAddress = getFieldValue("CompilerToVM::Data::_heap_end_addr", Long.class, "HeapWord**");
     public final long heapTopAddress = getFieldValue("CompilerToVM::Data::_heap_top_addr", Long.class, isJDK8 ? "HeapWord**" : "HeapWord* volatile*");
+
+    public final boolean cmsIncrementalMode = getFlag("CMSIncrementalMode", Boolean.class, false);
 
     public final long inlineCacheMissStub = getFieldValue("CompilerToVM::Data::SharedRuntime_ic_miss_stub", Long.class, "address");
     public final long handleWrongMethodStub = getFieldValue("CompilerToVM::Data::SharedRuntime_handle_wrong_method_stub", Long.class, "address");

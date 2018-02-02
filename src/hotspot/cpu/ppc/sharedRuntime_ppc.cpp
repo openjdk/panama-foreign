@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2017 SAP SE. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2018 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -214,6 +214,7 @@ OopMap* RegisterSaver::push_frame_reg_args_and_save_live_registers(MacroAssemble
   // StackFrameStream construction (needed for deoptimization; see
   // compiledVFrame::create_stack_value).
   // If return_pc_adjustment != 0 adjust the return pc by return_pc_adjustment.
+  // Updated return pc is returned in R31 (if not return_pc_is_pre_saved).
 
   int i;
   int offset;
@@ -233,16 +234,17 @@ OopMap* RegisterSaver::push_frame_reg_args_and_save_live_registers(MacroAssemble
 
   BLOCK_COMMENT("push_frame_reg_args_and_save_live_registers {");
 
-  // Save r31 in the last slot of the not yet pushed frame so that we
-  // can use it as scratch reg.
-  __ std(R31, -reg_size, R1_SP);
+  // Save some registers in the last slots of the not yet pushed frame so that we
+  // can use them as scratch regs.
+  __ std(R31, -  reg_size, R1_SP);
+  __ std(R30, -2*reg_size, R1_SP);
   assert(-reg_size == register_save_offset - frame_size_in_bytes + ((regstosave_num-1)*reg_size),
          "consistency check");
 
   // save the flags
   // Do the save_LR_CR by hand and adjust the return pc if requested.
-  __ mfcr(R31);
-  __ std(R31, _abi(cr), R1_SP);
+  __ mfcr(R30);
+  __ std(R30, _abi(cr), R1_SP);
   switch (return_pc_location) {
     case return_pc_is_lr: __ mflr(R31); break;
     case return_pc_is_pre_saved: assert(return_pc_adjustment == 0, "unsupported"); break;
@@ -257,7 +259,7 @@ OopMap* RegisterSaver::push_frame_reg_args_and_save_live_registers(MacroAssemble
   }
 
   // push a new frame
-  __ push_frame(frame_size_in_bytes, R31);
+  __ push_frame(frame_size_in_bytes, R30);
 
   // save all registers (ints and floats)
   offset = register_save_offset;
@@ -267,7 +269,7 @@ OopMap* RegisterSaver::push_frame_reg_args_and_save_live_registers(MacroAssemble
 
     switch (reg_type) {
       case RegisterSaver::int_reg: {
-        if (reg_num != 31) { // We spilled R31 right at the beginning.
+        if (reg_num < 30) { // We spilled R30-31 right at the beginning.
           __ std(as_Register(reg_num), offset, R1_SP);
         }
         break;
@@ -278,8 +280,8 @@ OopMap* RegisterSaver::push_frame_reg_args_and_save_live_registers(MacroAssemble
       }
       case RegisterSaver::special_reg: {
         if (reg_num == SR_CTR_SpecialRegisterEnumValue) {
-          __ mfctr(R31);
-          __ std(R31, offset, R1_SP);
+          __ mfctr(R30);
+          __ std(R30, offset, R1_SP);
         } else {
           Unimplemented();
         }
@@ -1186,7 +1188,7 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
   // Argument is valid and klass is as expected, continue.
 
   // Extract method from inline cache, verified entry point needs it.
-  __ ld(R19_method, CompiledICHolder::holder_method_offset(), ic);
+  __ ld(R19_method, CompiledICHolder::holder_metadata_offset(), ic);
   assert(R19_method == ic, "the inline cache register is dead here");
 
   __ ld(code, method_(code));
@@ -1469,8 +1471,31 @@ static void save_or_restore_arguments(MacroAssembler* masm,
   }
   // Save or restore single word registers.
   for (int i = 0; i < total_in_args; i++) {
-    // PPC64: pass ints as longs: must only deal with floats here.
-    if (in_regs[i].first()->is_FloatRegister()) {
+    if (in_regs[i].first()->is_Register()) {
+      int offset = slot * VMRegImpl::stack_slot_size;
+      // Value lives in an input register. Save it on stack.
+      switch (in_sig_bt[i]) {
+        case T_BOOLEAN:
+        case T_CHAR:
+        case T_BYTE:
+        case T_SHORT:
+        case T_INT:
+          if (map != NULL) {
+            __ stw(in_regs[i].first()->as_Register(), offset, R1_SP);
+          } else {
+            __ lwa(in_regs[i].first()->as_Register(), offset, R1_SP);
+          }
+          slot++;
+          assert(slot <= stack_slots, "overflow (after INT or smaller stack slot)");
+          break;
+        case T_ARRAY:
+        case T_LONG:
+          // handled above
+          break;
+        case T_OBJECT:
+        default: ShouldNotReachHere();
+      }
+    } else if (in_regs[i].first()->is_FloatRegister()) {
       if (in_sig_bt[i] == T_FLOAT) {
         int offset = slot * VMRegImpl::stack_slot_size;
         slot++;
@@ -1887,8 +1912,8 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   // - *_slot_offset Indicates offset from SP in number of stack slots.
   // - *_offset      Indicates offset from SP in bytes.
 
-  int stack_slots = c_calling_convention(out_sig_bt, out_regs, out_regs2, total_c_args) // 1+2)
-                  + SharedRuntime::out_preserve_stack_slots(); // See c_calling_convention.
+  int stack_slots = c_calling_convention(out_sig_bt, out_regs, out_regs2, total_c_args) + // 1+2)
+                    SharedRuntime::out_preserve_stack_slots(); // See c_calling_convention.
 
   // Now the space for the inbound oop handle area.
   int total_save_slots = num_java_iarg_registers * VMRegImpl::slots_per_word;
@@ -2019,7 +2044,8 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   OopMap    *oop_map  = new OopMap(stack_slots * 2, 0 /* arg_slots*/);
 
   if (is_critical_native) {
-    check_needs_gc_for_critical_native(masm, stack_slots, total_in_args, oop_handle_slot_offset, oop_maps, in_regs, in_sig_bt, r_temp_1);
+    check_needs_gc_for_critical_native(masm, stack_slots, total_in_args, oop_handle_slot_offset,
+                                       oop_maps, in_regs, in_sig_bt, r_temp_1);
   }
 
   // Move arguments from register/stack to register/stack.
@@ -2341,23 +2367,14 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     Register sync_state      = r_temp_5;
     Register suspend_flags   = r_temp_6;
 
-    __ load_const(sync_state_addr, SafepointSynchronize::address_of_state(), /*temp*/ sync_state);
+    // No synchronization in progress nor yet synchronized
+    // (cmp-br-isync on one path, release (same as acquire on PPC64) on the other path).
+    __ safepoint_poll(sync, sync_state);
 
-    // TODO: PPC port assert(4 == SafepointSynchronize::sz_state(), "unexpected field size");
-    __ lwz(sync_state, 0, sync_state_addr);
-
+    // Not suspended.
     // TODO: PPC port assert(4 == Thread::sz_suspend_flags(), "unexpected field size");
     __ lwz(suspend_flags, thread_(suspend_flags));
-
-    __ acquire();
-
-    Label do_safepoint;
-    // No synchronization in progress nor yet synchronized.
-    __ cmpwi(CCR0, sync_state, SafepointSynchronize::_not_synchronized);
-    // Not suspended.
     __ cmpwi(CCR1, suspend_flags, 0);
-
-    __ bne(CCR0, sync);
     __ beq(CCR1, no_block);
 
     // Block. Save any potential method result value before the operation and
@@ -2365,6 +2382,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     // lets us share the oopMap we used when we went native rather than create
     // a distinct one for this pc.
     __ bind(sync);
+    __ isync();
 
     address entry_point = is_critical_native
       ? CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans_and_transition)
@@ -2387,7 +2405,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
 
   // Transition from _thread_in_native_trans to _thread_in_Java.
   __ li(R0, _thread_in_Java);
-  __ release();
+  __ lwsync(); // Acquire safepoint and suspend state, release thread state.
   // TODO: PPC port assert(4 == JavaThread::sz_thread_state(), "unexpected field size");
   __ stw(R0, thread_(thread_state));
   __ bind(after_transition);
@@ -3070,7 +3088,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
     return_pc_location = RegisterSaver::return_pc_is_thread_saved_exception_pc;
   }
 
-  // Save registers, fpu state, and flags.
+  // Save registers, fpu state, and flags. Set R31 = return pc.
   map = RegisterSaver::push_frame_reg_args_and_save_live_registers(masm,
                                                                    &frame_size_in_bytes,
                                                                    /*generate_oop_map=*/ true,
@@ -3119,6 +3137,19 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
   // No exception case.
   __ BIND(noException);
 
+  if (SafepointMechanism::uses_thread_local_poll() && !cause_return) {
+    Label no_adjust;
+    // If our stashed return pc was modified by the runtime we avoid touching it
+    __ ld(R0, frame_size_in_bytes + _abi(lr), R1_SP);
+    __ cmpd(CCR0, R0, R31);
+    __ bne(CCR0, no_adjust);
+
+    // Adjust return pc forward to step over the safepoint poll instruction
+    __ addi(R31, R31, 4);
+    __ std(R31, frame_size_in_bytes + _abi(lr), R1_SP);
+
+    __ bind(no_adjust);
+  }
 
   // Normal exit, restore registers and exit.
   RegisterSaver::restore_live_registers_and_pop_frame(masm,

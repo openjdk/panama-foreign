@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -173,6 +173,7 @@ class GCTimer;
   do_klass(VolatileCallSite_klass,                      java_lang_invoke_VolatileCallSite,         Pre                 ) \
   /* Note: MethodHandle must be first, and VolatileCallSite last in group */                                             \
                                                                                                                          \
+  do_klass(AssertionStatusDirectives_klass,             java_lang_AssertionStatusDirectives,       Pre                 ) \
   do_klass(StringBuffer_klass,                          java_lang_StringBuffer,                    Pre                 ) \
   do_klass(StringBuilder_klass,                         java_lang_StringBuilder,                   Pre                 ) \
   do_klass(internal_Unsafe_klass,                       jdk_internal_misc_Unsafe,                  Pre                 ) \
@@ -384,7 +385,7 @@ public:
 
 public:
   // Sharing support.
-  static void reorder_dictionary_for_sharing();
+  static void reorder_dictionary_for_sharing() NOT_CDS_RETURN;
   static void combine_shared_dictionaries();
   static size_t count_bytes_for_buckets();
   static size_t count_bytes_for_table();
@@ -532,6 +533,11 @@ public:
                                            Klass* accessing_klass,
                                            TRAPS);
 
+  // find a java.lang.Class object for a given signature
+  static Handle    find_field_handle_type(Symbol* signature,
+                                          Klass* accessing_klass,
+                                          TRAPS);
+
   // ask Java to compute a java.lang.invoke.MethodHandle object for a given CP entry
   static Handle    link_method_handle_constant(Klass* caller,
                                                int ref_kind, //e.g., JVM_REF_invokeVirtual
@@ -649,17 +655,20 @@ public:
   static bool is_platform_class_loader(oop class_loader);
   static void clear_invoke_method_table();
 
+  // Returns TRUE if the method is a non-public member of class java.lang.Object.
+  static bool is_nonpublic_Object_method(Method* m) {
+    assert(m != NULL, "Unexpected NULL Method*");
+    return !m->is_public() && m->method_holder() == SystemDictionary::Object_klass();
+  }
+
 protected:
   static InstanceKlass* find_shared_class(Symbol* class_name);
 
   // Setup link to hierarchy
   static void add_to_hierarchy(InstanceKlass* k, TRAPS);
 
-  // We pass in the hashtable index so we can calculate it outside of
-  // the SystemDictionary_lock.
-
   // Basic find on loaded classes
-  static InstanceKlass* find_class(int index, unsigned int hash,
+  static InstanceKlass* find_class(unsigned int hash,
                                    Symbol* name, Dictionary* dictionary);
   static InstanceKlass* find_class(Symbol* class_name, ClassLoaderData* loader_data);
 
@@ -685,10 +694,10 @@ protected:
   static void initialize_preloaded_classes(TRAPS);
 
   // Class loader constraints
-  static void check_constraints(int index, unsigned int hash,
+  static void check_constraints(unsigned int hash,
                                 InstanceKlass* k, Handle loader,
                                 bool defining, TRAPS);
-  static void update_dictionary(int d_index, unsigned int d_hash,
+  static void update_dictionary(unsigned int d_hash,
                                 int p_index, unsigned int p_hash,
                                 InstanceKlass* k, Handle loader,
                                 TRAPS);

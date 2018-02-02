@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "asm/codeBuffer.hpp"
 #include "memory/resourceArea.hpp"
+#include "oops/access.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/timerTrace.hpp"
@@ -61,12 +62,11 @@ address StubRoutines::_verify_oop_subroutine_entry              = NULL;
 address StubRoutines::_atomic_xchg_entry                        = NULL;
 address StubRoutines::_atomic_xchg_long_entry                   = NULL;
 address StubRoutines::_atomic_store_entry                       = NULL;
-address StubRoutines::_atomic_store_ptr_entry                   = NULL;
 address StubRoutines::_atomic_cmpxchg_entry                     = NULL;
 address StubRoutines::_atomic_cmpxchg_byte_entry                = NULL;
 address StubRoutines::_atomic_cmpxchg_long_entry                = NULL;
 address StubRoutines::_atomic_add_entry                         = NULL;
-address StubRoutines::_atomic_add_ptr_entry                     = NULL;
+address StubRoutines::_atomic_add_long_entry                    = NULL;
 address StubRoutines::_fence_entry                              = NULL;
 address StubRoutines::_d2i_wrapper                              = NULL;
 address StubRoutines::_d2l_wrapper                              = NULL;
@@ -377,19 +377,6 @@ void stubRoutines_init2() { StubRoutines::initialize2(); }
 // Default versions of arraycopy functions
 //
 
-static void gen_arraycopy_barrier_pre(oop* dest, size_t count, bool dest_uninitialized) {
-    assert(count != 0, "count should be non-zero");
-    assert(count <= (size_t)max_intx, "count too large");
-    BarrierSet* bs = Universe::heap()->barrier_set();
-    bs->write_ref_array_pre(dest, (int)count, dest_uninitialized);
-}
-
-static void gen_arraycopy_barrier(oop* dest, size_t count) {
-    assert(count != 0, "count should be non-zero");
-    BarrierSet* bs = Universe::heap()->barrier_set();
-    bs->write_ref_array((HeapWord*)dest, count);
-}
-
 JRT_LEAF(void, StubRoutines::jbyte_copy(jbyte* src, jbyte* dest, size_t count))
 #ifndef PRODUCT
   SharedRuntime::_jbyte_array_copy_ctr++;      // Slow-path byte array copy
@@ -423,9 +410,7 @@ JRT_LEAF(void, StubRoutines::oop_copy(oop* src, oop* dest, size_t count))
   SharedRuntime::_oop_array_copy_ctr++;        // Slow-path oop array copy
 #endif // !PRODUCT
   assert(count != 0, "count should be non-zero");
-  gen_arraycopy_barrier_pre(dest, count, /*dest_uninitialized*/false);
-  Copy::conjoint_oops_atomic(src, dest, count);
-  gen_arraycopy_barrier(dest, count);
+  HeapAccess<>::oop_arraycopy(NULL, NULL, (HeapWord*)src, (HeapWord*)dest, count);
 JRT_END
 
 JRT_LEAF(void, StubRoutines::oop_copy_uninit(oop* src, oop* dest, size_t count))
@@ -433,9 +418,7 @@ JRT_LEAF(void, StubRoutines::oop_copy_uninit(oop* src, oop* dest, size_t count))
   SharedRuntime::_oop_array_copy_ctr++;        // Slow-path oop array copy
 #endif // !PRODUCT
   assert(count != 0, "count should be non-zero");
-  gen_arraycopy_barrier_pre(dest, count, /*dest_uninitialized*/true);
-  Copy::conjoint_oops_atomic(src, dest, count);
-  gen_arraycopy_barrier(dest, count);
+  HeapAccess<ARRAYCOPY_DEST_NOT_INITIALIZED>::oop_arraycopy(NULL, NULL, (HeapWord*)src, (HeapWord*)dest, count);
 JRT_END
 
 JRT_LEAF(void, StubRoutines::arrayof_jbyte_copy(HeapWord* src, HeapWord* dest, size_t count))
@@ -471,9 +454,7 @@ JRT_LEAF(void, StubRoutines::arrayof_oop_copy(HeapWord* src, HeapWord* dest, siz
   SharedRuntime::_oop_array_copy_ctr++;        // Slow-path oop array copy
 #endif // !PRODUCT
   assert(count != 0, "count should be non-zero");
-  gen_arraycopy_barrier_pre((oop *) dest, count, /*dest_uninitialized*/false);
-  Copy::arrayof_conjoint_oops(src, dest, count);
-  gen_arraycopy_barrier((oop *) dest, count);
+  HeapAccess<ARRAYCOPY_ARRAYOF>::oop_arraycopy(NULL, NULL, src, dest, count);
 JRT_END
 
 JRT_LEAF(void, StubRoutines::arrayof_oop_copy_uninit(HeapWord* src, HeapWord* dest, size_t count))
@@ -481,9 +462,7 @@ JRT_LEAF(void, StubRoutines::arrayof_oop_copy_uninit(HeapWord* src, HeapWord* de
   SharedRuntime::_oop_array_copy_ctr++;        // Slow-path oop array copy
 #endif // !PRODUCT
   assert(count != 0, "count should be non-zero");
-  gen_arraycopy_barrier_pre((oop *) dest, count, /*dest_uninitialized*/true);
-  Copy::arrayof_conjoint_oops(src, dest, count);
-  gen_arraycopy_barrier((oop *) dest, count);
+  HeapAccess<ARRAYCOPY_ARRAYOF | ARRAYCOPY_DEST_NOT_INITIALIZED>::oop_arraycopy(NULL, NULL, src, dest, count);
 JRT_END
 
 address StubRoutines::select_fill_function(BasicType t, bool aligned, const char* &name) {

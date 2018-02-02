@@ -30,13 +30,22 @@
  * @key randomness
  */
 
-import java.util.*;
-import java.util.function.Supplier;
-import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.Supplier;
 
 import static org.testng.Assert.fail;
-import static org.testng.Assert.assertTrue;
 
 public class CheckedMapBash {
     static final Random rnd = new Random();

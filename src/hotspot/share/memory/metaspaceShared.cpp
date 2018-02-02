@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "classfile/classListParser.hpp"
 #include "classfile/classLoaderExt.hpp"
 #include "classfile/dictionary.hpp"
@@ -55,7 +56,6 @@
 #include "oops/objArrayOop.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/typeArrayKlass.hpp"
-#include "prims/jvm.h"
 #include "prims/jvmtiRedefineClasses.hpp"
 #include "runtime/timerTrace.hpp"
 #include "runtime/os.hpp"
@@ -1627,14 +1627,16 @@ int MetaspaceShared::preload_classes(const char* class_list_path, TRAPS) {
           log_trace(cds)("Shared spaces preloaded: %s", klass->external_name());
         }
 
-        InstanceKlass* ik = InstanceKlass::cast(klass);
+        if (klass->is_instance_klass()) {
+          InstanceKlass* ik = InstanceKlass::cast(klass);
 
-        // Link the class to cause the bytecodes to be rewritten and the
-        // cpcache to be created. The linking is done as soon as classes
-        // are loaded in order that the related data structures (klass and
-        // cpCache) are located together.
-        try_link_class(ik, THREAD);
-        guarantee(!HAS_PENDING_EXCEPTION, "exception in link_class");
+          // Link the class to cause the bytecodes to be rewritten and the
+          // cpcache to be created. The linking is done as soon as classes
+          // are loaded in order that the related data structures (klass and
+          // cpCache) are located together.
+          try_link_class(ik, THREAD);
+          guarantee(!HAS_PENDING_EXCEPTION, "exception in link_class");
+        }
 
         class_count++;
       }

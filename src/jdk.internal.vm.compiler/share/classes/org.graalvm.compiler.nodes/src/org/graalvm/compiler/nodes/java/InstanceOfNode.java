@@ -36,6 +36,7 @@ import org.graalvm.compiler.nodeinfo.NodeInfo;
 import org.graalvm.compiler.nodes.LogicConstantNode;
 import org.graalvm.compiler.nodes.LogicNegationNode;
 import org.graalvm.compiler.nodes.LogicNode;
+import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.UnaryOpLogicNode;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.IsNullNode;
@@ -49,6 +50,8 @@ import org.graalvm.compiler.nodes.type.StampTool;
 import jdk.vm.ci.meta.JavaTypeProfile;
 import jdk.vm.ci.meta.TriState;
 
+import java.util.Objects;
+
 /**
  * The {@code InstanceOfNode} represents an instanceof test.
  */
@@ -56,7 +59,7 @@ import jdk.vm.ci.meta.TriState;
 public class InstanceOfNode extends UnaryOpLogicNode implements Lowerable, Virtualizable {
     public static final NodeClass<InstanceOfNode> TYPE = NodeClass.create(InstanceOfNode.class);
 
-    protected final ObjectStamp checkedStamp;
+    private ObjectStamp checkedStamp;
 
     private JavaTypeProfile profile;
     @OptionalInput(Anchor) protected AnchoringNode anchor;
@@ -90,7 +93,7 @@ public class InstanceOfNode extends UnaryOpLogicNode implements Lowerable, Virtu
     }
 
     public static LogicNode createHelper(ObjectStamp checkedStamp, ValueNode object, JavaTypeProfile profile, AnchoringNode anchor) {
-        LogicNode synonym = findSynonym(checkedStamp, object);
+        LogicNode synonym = findSynonym(checkedStamp, object, NodeView.DEFAULT);
         if (synonym != null) {
             return synonym;
         } else {
@@ -105,7 +108,8 @@ public class InstanceOfNode extends UnaryOpLogicNode implements Lowerable, Virtu
 
     @Override
     public ValueNode canonical(CanonicalizerTool tool, ValueNode forValue) {
-        LogicNode synonym = findSynonym(checkedStamp, forValue);
+        NodeView view = NodeView.from(tool);
+        LogicNode synonym = findSynonym(checkedStamp, forValue, view);
         if (synonym != null) {
             return synonym;
         } else {
@@ -113,8 +117,8 @@ public class InstanceOfNode extends UnaryOpLogicNode implements Lowerable, Virtu
         }
     }
 
-    public static LogicNode findSynonym(ObjectStamp checkedStamp, ValueNode object) {
-        ObjectStamp inputStamp = (ObjectStamp) object.stamp();
+    public static LogicNode findSynonym(ObjectStamp checkedStamp, ValueNode object, NodeView view) {
+        ObjectStamp inputStamp = (ObjectStamp) object.stamp(view);
         ObjectStamp joinedStamp = (ObjectStamp) checkedStamp.join(inputStamp);
 
         if (joinedStamp.isEmpty()) {
@@ -126,7 +130,9 @@ public class InstanceOfNode extends UnaryOpLogicNode implements Lowerable, Virtu
                 // The check will always succeed, the union of the two stamps is equal to the
                 // checked stamp.
                 return LogicConstantNode.tautology();
-            } else if (checkedStamp.type().equals(meetStamp.type()) && checkedStamp.isExactType() == meetStamp.isExactType() && checkedStamp.alwaysNull() == meetStamp.alwaysNull()) {
+            } else if (checkedStamp.alwaysNull()) {
+                return IsNullNode.create(object);
+            } else if (Objects.equals(checkedStamp.type(), meetStamp.type()) && checkedStamp.isExactType() == meetStamp.isExactType() && checkedStamp.alwaysNull() == meetStamp.alwaysNull()) {
                 assert checkedStamp.nonNull() != inputStamp.nonNull();
                 // The only difference makes the null-ness of the value => simplify the check.
                 if (checkedStamp.nonNull()) {
@@ -135,8 +141,8 @@ public class InstanceOfNode extends UnaryOpLogicNode implements Lowerable, Virtu
                     return IsNullNode.create(object);
                 }
             }
+            assert checkedStamp.type() != null;
         }
-
         return null;
     }
 
@@ -154,7 +160,7 @@ public class InstanceOfNode extends UnaryOpLogicNode implements Lowerable, Virtu
     @Override
     public void virtualize(VirtualizerTool tool) {
         ValueNode alias = tool.getAlias(getValue());
-        TriState fold = tryFold(alias.stamp());
+        TriState fold = tryFold(alias.stamp(NodeView.DEFAULT));
         if (fold != TriState.UNKNOWN) {
             tool.replaceWithValue(LogicConstantNode.forBoolean(fold.isTrue(), graph()));
         }
@@ -203,5 +209,14 @@ public class InstanceOfNode extends UnaryOpLogicNode implements Lowerable, Virtu
 
     public AnchoringNode getAnchor() {
         return anchor;
+    }
+
+    public ObjectStamp getCheckedStamp() {
+        return checkedStamp;
+    }
+
+    public void strengthenCheckedStamp(ObjectStamp newCheckedStamp) {
+        assert this.checkedStamp.join(newCheckedStamp).equals(newCheckedStamp) : "stamp can only improve";
+        this.checkedStamp = newCheckedStamp;
     }
 }

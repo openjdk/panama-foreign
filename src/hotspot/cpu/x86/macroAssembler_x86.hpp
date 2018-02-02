@@ -544,7 +544,8 @@ class MacroAssembler: public Assembler {
                                RegisterOrConstant itable_index,
                                Register method_result,
                                Register scan_temp,
-                               Label& no_such_interface);
+                               Label& no_such_interface,
+                               bool return_method = true);
 
   // virtual method calling
   void lookup_virtual_method(Register recv_klass,
@@ -655,6 +656,12 @@ class MacroAssembler: public Assembler {
 
   // Support for serializing memory accesses between threads
   void serialize_memory(Register thread, Register tmp);
+
+#ifdef _LP64
+  void safepoint_poll(Label& slow_path, Register thread_reg, Register temp_reg);
+#else
+  void safepoint_poll(Label& slow_path);
+#endif
 
   void verify_tlab();
 

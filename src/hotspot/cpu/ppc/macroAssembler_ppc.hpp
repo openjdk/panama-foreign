@@ -519,7 +519,8 @@ class MacroAssembler: public Assembler {
                                RegisterOrConstant itable_index,
                                Register method_result,
                                Register temp_reg, Register temp2_reg,
-                               Label& no_such_interface);
+                               Label& no_such_interface,
+                               bool return_method = true);
 
   // virtual method calling
   void lookup_virtual_method(Register recv_klass,
@@ -646,6 +647,9 @@ class MacroAssembler: public Assembler {
 
   // Support for serializing memory accesses between threads
   void serialize_memory(Register thread, Register tmp1, Register tmp2);
+
+  // Check if safepoint requested and if so branch
+  void safepoint_poll(Label& slow_path, Register temp_reg);
 
   // GC barrier support.
   void card_write_barrier_post(Register Rstore_addr, Register Rnew_val, Register Rtmp);
@@ -976,6 +980,8 @@ class SkipIfEqualZero : public StackObj {
  public:
    // 'Temp' is a temp register that this object can use (and trash).
    explicit SkipIfEqualZero(MacroAssembler*, Register temp, const bool* flag_addr);
+   static void skip_to_label_if_equal_zero(MacroAssembler*, Register temp,
+                                           const bool* flag_addr, Label& label);
    ~SkipIfEqualZero();
 };
 

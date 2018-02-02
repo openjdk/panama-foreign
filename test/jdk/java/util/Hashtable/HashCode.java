@@ -21,14 +21,15 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4559052
  * @summary Hashtable's hashCode method always returns zero(!)
  * @author Josh Bloch
  */
 
-import java.util.*;
+import java.util.Hashtable;
+import java.util.Map;
 
 public class HashCode {
     public static void main(String[] args) throws Exception {

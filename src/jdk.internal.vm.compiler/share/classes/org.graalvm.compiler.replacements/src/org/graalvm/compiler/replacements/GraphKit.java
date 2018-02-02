@@ -50,6 +50,7 @@ import org.graalvm.compiler.nodes.InvokeWithExceptionNode;
 import org.graalvm.compiler.nodes.KillingBeginNode;
 import org.graalvm.compiler.nodes.LogicNode;
 import org.graalvm.compiler.nodes.MergeNode;
+import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.FloatingNode;
@@ -75,7 +76,6 @@ import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.JavaType;
 import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
-import jdk.vm.ci.meta.ResolvedJavaType;
 import jdk.vm.ci.meta.Signature;
 
 /**
@@ -252,6 +252,10 @@ public class GraphKit implements GraphBuilderTool {
         return new MethodCallTargetNode(invokeKind, targetMethod, args, returnStamp, null);
     }
 
+    protected final JavaKind asKind(JavaType type) {
+        return wordTypes != null ? wordTypes.asKind(type) : type.getJavaKind();
+    }
+
     /**
      * Determines if a given set of arguments is compatible with the signature of a given method.
      *
@@ -267,15 +271,13 @@ public class GraphKit implements GraphBuilderTool {
         }
         int argIndex = 0;
         if (!isStatic) {
-            ResolvedJavaType expectedType = method.getDeclaringClass();
-            JavaKind expected = wordTypes == null ? expectedType.getJavaKind() : wordTypes.asKind(expectedType);
-            JavaKind actual = args[argIndex++].stamp().getStackKind();
+            JavaKind expected = asKind(method.getDeclaringClass());
+            JavaKind actual = args[argIndex++].stamp(NodeView.DEFAULT).getStackKind();
             assert expected == actual : graph + ": wrong kind of value for receiver argument of call to " + method + " [" + actual + " != " + expected + "]";
         }
         for (int i = 0; i != signature.getParameterCount(false); i++) {
-            JavaType expectedType = signature.getParameterType(i, method.getDeclaringClass());
-            JavaKind expected = wordTypes == null ? expectedType.getJavaKind().getStackKind() : wordTypes.asKind(expectedType).getStackKind();
-            JavaKind actual = args[argIndex++].stamp().getStackKind();
+            JavaKind expected = asKind(signature.getParameterType(i, method.getDeclaringClass())).getStackKind();
+            JavaKind actual = args[argIndex++].stamp(NodeView.DEFAULT).getStackKind();
             if (expected != actual) {
                 throw new AssertionError(graph + ": wrong kind of value for argument " + i + " of call to " + method + " [" + actual + " != " + expected + "]");
             }

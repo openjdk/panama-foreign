@@ -286,7 +286,7 @@ AC_DEFUN_ONCE([TOOLCHAIN_PRE_DETECTION],
     if test "x$XCODE_VERSION_OUTPUT" != x; then
       # For Xcode, we set the Xcode version as TOOLCHAIN_VERSION
       TOOLCHAIN_VERSION=`$ECHO $XCODE_VERSION_OUTPUT | $CUT -f 2 -d ' '`
-      TOOLCHAIN_DESCRIPTION="$TOOLCHAIN_DESCRIPTION from Xcode"
+      TOOLCHAIN_DESCRIPTION="$TOOLCHAIN_DESCRIPTION from Xcode $TOOLCHAIN_VERSION"
     else
       # Currently we do not define this for other toolchains. This might change as the need arise.
       TOOLCHAIN_VERSION=
@@ -628,6 +628,10 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETECT_TOOLCHAIN_EXTRA],
   if test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
     BASIC_PATH_PROGS(LIPO, lipo)
     BASIC_FIXUP_EXECUTABLE(LIPO)
+    BASIC_REQUIRE_PROGS(OTOOL, otool)
+    BASIC_FIXUP_EXECUTABLE(OTOOL)
+    BASIC_REQUIRE_PROGS(INSTALL_NAME_TOOL, install_name_tool)
+    BASIC_FIXUP_EXECUTABLE(INSTALL_NAME_TOOL)
   fi
 
   if test "x$TOOLCHAIN_TYPE" = xmicrosoft; then

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -510,6 +510,28 @@ public class LambdaToMethod extends TreeTranslator {
         }
     }
 
+    /**
+     * Translate instance creation expressions with implicit enclosing instances
+     * @param tree
+     */
+    @Override
+    public void visitNewClass(JCNewClass tree) {
+        if (context == null || !analyzer.lambdaNewClassFilter(context, tree)) {
+            super.visitNewClass(tree);
+        } else {
+            int prevPos = make.pos;
+            try {
+                make.at(tree);
+
+                LambdaTranslationContext lambdaContext = (LambdaTranslationContext) context;
+                tree = lambdaContext.translate(tree);
+                super.visitNewClass(tree);
+            } finally {
+                make.at(prevPos);
+            }
+        }
+    }
+
     @Override
     public void visitVarDef(JCVariableDecl tree) {
         LambdaTranslationContext lambdaContext = (LambdaTranslationContext)context;
@@ -984,6 +1006,7 @@ public class LambdaToMethod extends TreeTranslator {
                 //create the instance creation expression
                 //note that method reference syntax does not allow an explicit
                 //enclosing class (so the enclosing class is null)
+                // but this may need to be patched up later with the proxy for the outer this
                 JCNewClass newClass = make.NewClass(null,
                         List.nil(),
                         make.Type(tree.getQualifierExpression().type),
@@ -1387,7 +1410,7 @@ public class LambdaToMethod extends TreeTranslator {
                 super.visitLambda(tree);
                 context.complete();
                 if (dumpLambdaToMethodStats) {
-                    log.note(tree, statKey, context.needsAltMetafactory(), context.translatedSym);
+                    log.note(tree, diags.noteKey(statKey, context.needsAltMetafactory(), context.translatedSym));
                 }
                 return context;
             }
@@ -2129,6 +2152,21 @@ public class LambdaToMethod extends TreeTranslator {
                 return null;
             }
 
+            /* Translate away naked new instance creation expressions with implicit enclosing instances,
+               anchoring them to synthetic parameters that stand proxy for the qualified outer this handle.
+            */
+            public JCNewClass translate(JCNewClass newClass) {
+                Assert.check(newClass.clazz.type.tsym.hasOuterInstance() && newClass.encl == null);
+                Map<Symbol, Symbol> m = translatedSymbols.get(LambdaSymbolKind.CAPTURED_OUTER_THIS);
+                final Type enclosingType = newClass.clazz.type.getEnclosingType();
+                if (m.containsKey(enclosingType.tsym)) {
+                      Symbol tSym = m.get(enclosingType.tsym);
+                      JCExpression encl = make.Ident(tSym).setType(enclosingType);
+                      newClass.encl = encl;
+                }
+                return newClass;
+            }
+
             /**
              * The translatedSym is not complete/accurate until the analysis is
              * finished.  Once the analysis is finished, the translatedSym is
@@ -2269,17 +2307,22 @@ public class LambdaToMethod extends TreeTranslator {
 
             /**
              * Erasure destroys the implementation parameter subtype
-             * relationship for intersection types
+             * relationship for intersection types.
+             * Have similar problems for union types too.
              */
-            boolean interfaceParameterIsIntersectionType() {
+            boolean interfaceParameterIsIntersectionOrUnionType() {
                 List<Type> tl = tree.getDescriptorType(types).getParameterTypes();
                 for (; tl.nonEmpty(); tl = tl.tail) {
                     Type pt = tl.head;
-                    if (pt.getKind() == TypeKind.TYPEVAR) {
-                        TypeVar tv = (TypeVar) pt;
-                        if (tv.bound.getKind() == TypeKind.INTERSECTION) {
+                    switch (pt.getKind()) {
+                        case INTERSECTION:
+                        case UNION:
                             return true;
-                        }
+                        case TYPEVAR:
+                            TypeVar tv = (TypeVar) pt;
+                            if (tv.bound.getKind() == TypeKind.INTERSECTION) {
+                                return true;
+                            }
                     }
                 }
                 return false;
@@ -2290,7 +2333,7 @@ public class LambdaToMethod extends TreeTranslator {
              * (i.e. var args need to be expanded or "super" is used)
              */
             final boolean needsConversionToLambda() {
-                return interfaceParameterIsIntersectionType() ||
+                return interfaceParameterIsIntersectionOrUnionType() ||
                         isSuper ||
                         needsVarArgsConversion() ||
                         isArrayOp() ||

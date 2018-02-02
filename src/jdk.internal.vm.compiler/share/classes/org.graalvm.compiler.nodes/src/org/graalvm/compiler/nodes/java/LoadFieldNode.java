@@ -25,7 +25,6 @@ package org.graalvm.compiler.nodes.java;
 import static org.graalvm.compiler.graph.iterators.NodePredicates.isNotA;
 import static org.graalvm.compiler.nodeinfo.NodeCycles.CYCLES_2;
 
-import jdk.vm.ci.meta.ConstantReflectionProvider;
 import org.graalvm.compiler.core.common.spi.ConstantFieldProvider;
 import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.core.common.type.StampFactory;
@@ -37,6 +36,7 @@ import org.graalvm.compiler.nodeinfo.NodeCycles;
 import org.graalvm.compiler.nodeinfo.NodeInfo;
 import org.graalvm.compiler.nodes.ConstantNode;
 import org.graalvm.compiler.nodes.DeoptimizeNode;
+import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.PhiNode;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.ValuePhiNode;
@@ -47,15 +47,16 @@ import org.graalvm.compiler.nodes.type.StampTool;
 import org.graalvm.compiler.nodes.util.ConstantFoldUtil;
 import org.graalvm.compiler.nodes.virtual.VirtualInstanceNode;
 import org.graalvm.compiler.nodes.virtual.VirtualObjectNode;
+import org.graalvm.compiler.options.OptionValues;
 
 import jdk.vm.ci.meta.Assumptions;
+import jdk.vm.ci.meta.ConstantReflectionProvider;
 import jdk.vm.ci.meta.DeoptimizationAction;
 import jdk.vm.ci.meta.DeoptimizationReason;
 import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.ResolvedJavaField;
-import org.graalvm.compiler.options.OptionValues;
 
 /**
  * The {@code LoadFieldNode} represents a read of a static or instance field.
@@ -98,7 +99,8 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
 
     @Override
     public ValueNode canonical(CanonicalizerTool tool, ValueNode forObject) {
-        if (tool.allUsagesAvailable() && hasNoUsages() && !isVolatile() && (isStatic() || StampTool.isPointerNonNull(forObject.stamp()))) {
+        NodeView view = NodeView.from(tool);
+        if (tool.allUsagesAvailable() && hasNoUsages() && !isVolatile() && (isStatic() || StampTool.isPointerNonNull(forObject.stamp(view)))) {
             return null;
         }
         return canonical(this, StampPair.create(stamp, uncheckedStamp), forObject, field, tool.getConstantFieldProvider(),
@@ -150,7 +152,7 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
     }
 
     public ConstantNode asConstant(CanonicalizerTool tool, JavaConstant constant) {
-        return ConstantFoldUtil.tryConstantFold(tool.getConstantFieldProvider(), tool.getConstantReflection(), tool.getMetaAccess(), field(), constant, getOptions());
+        return ConstantFoldUtil.tryConstantFold(tool.getConstantFieldProvider(), tool.getConstantReflection(), tool.getMetaAccess(), field(), constant, tool.getOptions());
     }
 
     private static PhiNode asPhi(ConstantFieldProvider constantFields, ConstantReflectionProvider constantReflection,
@@ -178,10 +180,10 @@ public final class LoadFieldNode extends AccessFieldNode implements Canonicaliza
             int fieldIndex = ((VirtualInstanceNode) alias).fieldIndex(field());
             if (fieldIndex != -1) {
                 ValueNode entry = tool.getEntry((VirtualObjectNode) alias, fieldIndex);
-                if (stamp.isCompatible(entry.stamp())) {
+                if (stamp.isCompatible(entry.stamp(NodeView.DEFAULT))) {
                     tool.replaceWith(entry);
                 } else {
-                    assert stamp().getStackKind() == JavaKind.Int && (entry.stamp().getStackKind() == JavaKind.Long || entry.getStackKind() == JavaKind.Double ||
+                    assert stamp(NodeView.DEFAULT).getStackKind() == JavaKind.Int && (entry.stamp(NodeView.DEFAULT).getStackKind() == JavaKind.Long || entry.getStackKind() == JavaKind.Double ||
                                     entry.getStackKind() == JavaKind.Illegal) : "Can only allow different stack kind two slot marker writes on one stot fields.";
                 }
             }

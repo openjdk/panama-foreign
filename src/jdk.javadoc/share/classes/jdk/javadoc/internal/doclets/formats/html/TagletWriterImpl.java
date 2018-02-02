@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.sun.source.doctree.IndexTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
+import jdk.javadoc.internal.doclets.formats.html.markup.Links;
 import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
@@ -105,7 +106,7 @@ public class TagletWriterImpl extends TagletWriter {
         }
         String desc = ch.getText(itt.getDescription());
 
-        String anchorName = htmlWriter.getName(tagText);
+        String anchorName = htmlWriter.links.getName(tagText);
         Content result = HtmlTree.A_ID(HtmlStyle.searchTagResult, anchorName, new StringContent(tagText));
         if (configuration.createindex && !tagText.isEmpty()) {
             SearchIndexItem si = new SearchIndexItem();
@@ -287,7 +288,7 @@ public class TagletWriterImpl extends TagletWriter {
                     ((ClassWriterImpl) htmlWriter).getTypeElement().getQualifiedName() + "." +
                     utils.getSimpleName(holder);
             DocLink link = constantsPath.fragment(whichConstant);
-            body.addContent(htmlWriter.getHyperLink(link,
+            body.addContent(htmlWriter.links.createLink(link,
                     new StringContent(configuration.getText("doclet.Constants_Summary"))));
         }
         if (utils.isClass(holder) && utils.isSerializable((TypeElement)holder)) {
@@ -297,7 +298,7 @@ public class TagletWriterImpl extends TagletWriter {
                 appendSeparatorIfNotEmpty(body);
                 DocPath serialPath = htmlWriter.pathToRoot.resolve(DocPaths.SERIALIZED_FORM);
                 DocLink link = serialPath.fragment(utils.getFullyQualifiedName(holder));
-                body.addContent(htmlWriter.getHyperLink(link,
+                body.addContent(htmlWriter.links.createLink(link,
                         new StringContent(configuration.getText("doclet.Serialized_Form"))));
             }
         }

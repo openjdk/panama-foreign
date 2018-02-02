@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,7 @@ import com.sun.source.util.TaskEvent;
 import com.sun.tools.javac.api.MultiTaskListener;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Scope.WriteableScope;
+import com.sun.tools.javac.code.Source.Feature;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.ClassType;
 import com.sun.tools.javac.code.Types;
@@ -81,7 +82,6 @@ import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
 import com.sun.tools.javac.util.Iterators;
 import com.sun.tools.javac.util.JCDiagnostic;
-import com.sun.tools.javac.util.JDK9Wrappers.Module;
 import com.sun.tools.javac.util.JavacMessages;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Log;
@@ -116,7 +116,6 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     private final boolean fatalErrors;
     private final boolean werror;
     private final boolean showResolveErrors;
-    private final boolean allowModules;
 
     private final JavacFiler filer;
     private final JavacMessager messager;
@@ -233,8 +232,6 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         initialCompleter = ClassFinder.instance(context).getCompleter();
         chk = Check.instance(context);
         initProcessorLoader();
-
-        allowModules = source.allowModules();
     }
 
     public void setProcessors(Iterable<? extends Processor> processors) {
@@ -269,7 +266,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                     : fileManager.getClassLoader(CLASS_PATH);
 
                 if (options.isSet("accessInternalAPI"))
-                    ModuleHelper.addExports(Module.getModule(getClass()), Module.getUnnamedModule(processorClassLoader));
+                    ModuleHelper.addExports(getClass().getModule(), processorClassLoader.getUnnamedModule());
 
                 if (processorClassLoader != null && processorClassLoader instanceof Closeable) {
                     compiler.closeables = compiler.closeables.prepend((Closeable) processorClassLoader);
@@ -770,7 +767,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
                 if (psi.processorIterator.hasNext()) {
                     ProcessorState ps = new ProcessorState(psi.processorIterator.next(),
-                                                           log, source, allowModules,
+                                                           log, source, Feature.MODULES.allowedInSource(source),
                                                            JavacProcessingEnvironment.this);
                     psi.procStateList.add(ps);
                     return ps;
@@ -837,7 +834,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
         for(TypeElement a  : annotationsPresent) {
             ModuleElement mod = elementUtils.getModuleOf(a);
-            String moduleSpec = allowModules && mod != null ? mod.getQualifiedName() + "/" : "";
+            String moduleSpec = Feature.MODULES.allowedInSource(source) && mod != null ? mod.getQualifiedName() + "/" : "";
             unmatchedAnnotations.put(moduleSpec + a.getQualifiedName().toString(),
                                      a);
         }

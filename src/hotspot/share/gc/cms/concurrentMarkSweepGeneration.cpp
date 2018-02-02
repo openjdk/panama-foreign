@@ -2296,7 +2296,7 @@ bool CMSCollector::verify_after_remark() {
   // way with the marking information used by GC.
   NoRefDiscovery no_discovery(ref_processor());
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   DerivedPointerTableDeactivate dpt_deact;
 #endif
 
@@ -2869,7 +2869,7 @@ void CMSCollector::checkpointRootsInitialWork() {
   print_eden_and_survivor_chunk_arrays();
 
   {
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
     DerivedPointerTableDeactivate dpt_deact;
 #endif
     if (CMSParallelInitialMarkEnabled) {
@@ -4171,7 +4171,7 @@ void CMSCollector::checkpointRootsFinalWork() {
   print_eden_and_survivor_chunk_arrays();
 
   {
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
     DerivedPointerTableDeactivate dpt_deact;
 #endif
 
@@ -8116,42 +8116,42 @@ size_t MarkDeadObjectsClosure::do_blk(HeapWord* addr) {
 }
 
 TraceCMSMemoryManagerStats::TraceCMSMemoryManagerStats(CMSCollector::CollectorState phase, GCCause::Cause cause): TraceMemoryManagerStats() {
-
+  GCMemoryManager* manager = CMSHeap::heap()->old_manager();
   switch (phase) {
     case CMSCollector::InitialMarking:
-      initialize(true  /* fullGC */ ,
-                 cause /* cause of the GC */,
-                 true  /* recordGCBeginTime */,
-                 true  /* recordPreGCUsage */,
-                 false /* recordPeakUsage */,
-                 false /* recordPostGCusage */,
-                 true  /* recordAccumulatedGCTime */,
-                 false /* recordGCEndTime */,
-                 false /* countCollection */  );
+      initialize(manager /* GC manager */ ,
+                 cause   /* cause of the GC */,
+                 true    /* recordGCBeginTime */,
+                 true    /* recordPreGCUsage */,
+                 false   /* recordPeakUsage */,
+                 false   /* recordPostGCusage */,
+                 true    /* recordAccumulatedGCTime */,
+                 false   /* recordGCEndTime */,
+                 false   /* countCollection */  );
       break;
 
     case CMSCollector::FinalMarking:
-      initialize(true  /* fullGC */ ,
-                 cause /* cause of the GC */,
-                 false /* recordGCBeginTime */,
-                 false /* recordPreGCUsage */,
-                 false /* recordPeakUsage */,
-                 false /* recordPostGCusage */,
-                 true  /* recordAccumulatedGCTime */,
-                 false /* recordGCEndTime */,
-                 false /* countCollection */  );
+      initialize(manager /* GC manager */ ,
+                 cause   /* cause of the GC */,
+                 false   /* recordGCBeginTime */,
+                 false   /* recordPreGCUsage */,
+                 false   /* recordPeakUsage */,
+                 false   /* recordPostGCusage */,
+                 true    /* recordAccumulatedGCTime */,
+                 false   /* recordGCEndTime */,
+                 false   /* countCollection */  );
       break;
 
     case CMSCollector::Sweeping:
-      initialize(true  /* fullGC */ ,
-                 cause /* cause of the GC */,
-                 false /* recordGCBeginTime */,
-                 false /* recordPreGCUsage */,
-                 true  /* recordPeakUsage */,
-                 true  /* recordPostGCusage */,
-                 false /* recordAccumulatedGCTime */,
-                 true  /* recordGCEndTime */,
-                 true  /* countCollection */  );
+      initialize(manager /* GC manager */ ,
+                 cause   /* cause of the GC */,
+                 false   /* recordGCBeginTime */,
+                 false   /* recordPreGCUsage */,
+                 true    /* recordPeakUsage */,
+                 true    /* recordPostGCusage */,
+                 false   /* recordAccumulatedGCTime */,
+                 true    /* recordGCEndTime */,
+                 true    /* countCollection */  );
       break;
 
     default:

@@ -216,7 +216,7 @@ class ConsoleIOContext extends IOContext {
                 int[] anchor = new int[] {-1};
                 List<Suggestion> suggestions;
                 List<String> doc;
-                boolean command = prefix.isEmpty() && text.trim().startsWith("/");
+                boolean command = prefix.isEmpty() && text.startsWith("/");
                 if (command) {
                     suggestions = repl.commandCompletionSuggestions(text, cursor, anchor);
                     doc = repl.commandDocumentation(text, cursor, true);
@@ -923,7 +923,7 @@ class ConsoleIOContext extends IOContext {
 
                             @Override
                             public void perform(ConsoleReader in) throws IOException {
-                                repl.processCompleteSource("import " + type + ";");
+                                repl.processSource("import " + type + ";");
                                 in.println("Imported: " + type);
                                 performToVar(in, stype);
                             }
@@ -1028,7 +1028,7 @@ class ConsoleIOContext extends IOContext {
 
                             @Override
                             public void perform(ConsoleReader in) throws IOException {
-                                repl.processCompleteSource("import " + type + ";");
+                                repl.processSource("import " + type + ";");
                                 in.println("Imported: " + type);
                                 performToMethod(in, stype, codeToCursor);
                             }
@@ -1052,7 +1052,7 @@ class ConsoleIOContext extends IOContext {
 
                         @Override
                         public void perform(ConsoleReader in) throws IOException {
-                            repl.processCompleteSource("import " + fqn + ";");
+                            repl.processSource("import " + fqn + ";");
                             in.println("Imported: " + fqn);
                             in.redrawLine();
                         }

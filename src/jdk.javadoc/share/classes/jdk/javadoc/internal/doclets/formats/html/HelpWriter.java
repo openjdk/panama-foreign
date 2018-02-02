@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,7 @@ public class HelpWriter extends HtmlDocletWriter {
 
     /**
      * Constructor to construct HelpWriter object.
+     * @param configuration the configuration
      * @param filename File to be generated.
      */
     public HelpWriter(HtmlConfiguration configuration,
@@ -66,6 +67,7 @@ public class HelpWriter extends HtmlDocletWriter {
      * will get generated if and only if "-helpfile" and "-nohelp" is not used
      * on the command line.
      *
+     * @param configuration the configuration
      * @throws DocFileIOException if there is a problem while generating the documentation
      */
     public static void generate(HtmlConfiguration configuration) throws DocFileIOException {
@@ -124,7 +126,7 @@ public class HelpWriter extends HtmlDocletWriter {
         }
         HtmlTree htmlTree;
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
-        ul.addStyle(HtmlStyle.blockList);
+        ul.setStyle(HtmlStyle.blockList);
         if (configuration.createoverview) {
             Content overviewHeading = HtmlTree.HEADING(HtmlConstants.CONTENT_HEADING,
                 contents.overviewLabel);
@@ -132,7 +134,7 @@ public class HelpWriter extends HtmlDocletWriter {
                     ? HtmlTree.SECTION(overviewHeading)
                     : HtmlTree.LI(HtmlStyle.blockList, overviewHeading);
             Content line3 = contents.getContent("doclet.Help_line_3",
-                    getHyperLink(DocPaths.overviewSummary(configuration.frames),
+                    links.createLink(DocPaths.overviewSummary(configuration.frames),
                     configuration.getText("doclet.Overview")));
             Content overviewPara = HtmlTree.P(line3);
             htmlTree.addContent(overviewPara);
@@ -282,7 +284,7 @@ public class HelpWriter extends HtmlDocletWriter {
                     ? HtmlTree.SECTION(treeHead)
                     : HtmlTree.LI(HtmlStyle.blockList, treeHead);
             Content line17 = contents.getContent("doclet.Help_line_17_with_tree_link",
-                    getHyperLink(DocPaths.OVERVIEW_TREE,
+                    links.createLink(DocPaths.OVERVIEW_TREE,
                     configuration.getText("doclet.Class_Hierarchy")),
                     HtmlTree.CODE(new StringContent("java.lang.Object")));
             Content treePara = HtmlTree.P(line17);
@@ -307,7 +309,7 @@ public class HelpWriter extends HtmlDocletWriter {
                     ? HtmlTree.SECTION(dHead)
                     : HtmlTree.LI(HtmlStyle.blockList, dHead);
             Content line20 = contents.getContent("doclet.Help_line_20_with_deprecated_api_link",
-                    getHyperLink(DocPaths.DEPRECATED_LIST,
+                    links.createLink(DocPaths.DEPRECATED_LIST,
                     configuration.getText("doclet.Deprecated_API")));
             Content dPara = HtmlTree.P(line20);
             htmlTree.addContent(dPara);
@@ -320,10 +322,10 @@ public class HelpWriter extends HtmlDocletWriter {
         if (configuration.createindex) {
             Content indexlink;
             if (configuration.splitindex) {
-                indexlink = getHyperLink(DocPaths.INDEX_FILES.resolve(DocPaths.indexN(1)),
+                indexlink = links.createLink(DocPaths.INDEX_FILES.resolve(DocPaths.indexN(1)),
                         configuration.getText("doclet.Index"));
             } else {
-                indexlink = getHyperLink(DocPaths.INDEX_ALL,
+                indexlink = links.createLink(DocPaths.INDEX_ALL,
                         configuration.getText("doclet.Index"));
             }
             Content indexHead = HtmlTree.HEADING(HtmlConstants.CONTENT_HEADING,
@@ -377,7 +379,7 @@ public class HelpWriter extends HtmlDocletWriter {
                 ? HtmlTree.SECTION(allclassesHead)
                 : HtmlTree.LI(HtmlStyle.blockList, allclassesHead);
         Content line27 = contents.getContent("doclet.Help_line_27",
-                getHyperLink(DocPaths.AllClasses(configuration.frames),
+                links.createLink(DocPaths.AllClasses(configuration.frames),
                 resources.getText("doclet.All_Classes")));
         Content allclassesPara = HtmlTree.P(line27);
         htmlTree.addContent(allclassesPara);
@@ -405,7 +407,7 @@ public class HelpWriter extends HtmlDocletWriter {
                 ? HtmlTree.SECTION(constHead)
                 : HtmlTree.LI(HtmlStyle.blockList, constHead);
         Content line29 = contents.getContent("doclet.Help_line_29",
-                getHyperLink(DocPaths.CONSTANT_VALUES,
+                links.createLink(DocPaths.CONSTANT_VALUES,
                 resources.getText("doclet.Constants_Summary")));
         Content constPara = HtmlTree.P(line29);
         htmlTree.addContent(constPara);

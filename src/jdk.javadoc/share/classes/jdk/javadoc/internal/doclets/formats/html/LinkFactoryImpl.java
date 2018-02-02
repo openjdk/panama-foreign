@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,11 +92,12 @@ public class LinkFactoryImpl extends LinkFactory {
                 DocPath filename = getPath(classLinkInfo);
                 if (linkInfo.linkToSelf ||
                                 !(DocPath.forName(utils, typeElement)).equals(m_writer.filename)) {
-                        link.addContent(m_writer.getHyperLink(
+                        link.addContent(m_writer.links.createLink(
                                 filename.fragment(classLinkInfo.where),
-                            label,
-                            classLinkInfo.isStrong, classLinkInfo.styleName,
-                            title, classLinkInfo.target));
+                                label,
+                                classLinkInfo.isStrong,
+                                title,
+                                classLinkInfo.target));
                         if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {
                             link.addContent(getTypeParameterLinks(linkInfo));
                         }
@@ -106,8 +107,7 @@ public class LinkFactoryImpl extends LinkFactory {
         } else {
             Content crossLink = m_writer.getCrossClassLink(
                 typeElement.getQualifiedName().toString(), classLinkInfo.where,
-                label, classLinkInfo.isStrong, classLinkInfo.styleName,
-                true);
+                label, classLinkInfo.isStrong, true);
             if (crossLink != null) {
                 link.addContent(crossLink);
                 if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {

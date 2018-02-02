@@ -313,7 +313,7 @@ AC_DEFUN_ONCE([FLAGS_SETUP_INIT_FLAGS],
         -D\"JDK_COMPONENT=\$(PRODUCT_NAME) \$(JDK_RC_PLATFORM_NAME) binary\" \
         -D\"JDK_VER=\$(VERSION_NUMBER)\" \
         -D\"JDK_COPYRIGHT=Copyright \xA9 $COPYRIGHT_YEAR\" \
-        -D\"JDK_NAME=\$(PRODUCT_NAME) \$(JDK_RC_PLATFORM_NAME) \$(VERSION_MAJOR)\" \
+        -D\"JDK_NAME=\$(PRODUCT_NAME) \$(JDK_RC_PLATFORM_NAME) \$(VERSION_FEATURE)\" \
         -D\"JDK_FVER=\$(subst .,\$(COMMA),\$(VERSION_NUMBER_FOUR_POSITIONS))\""
 
     JVM_RCFLAGS="$JVM_RCFLAGS \
@@ -1162,11 +1162,11 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
   # Setup some hard coded includes
   $2COMMON_CCXXFLAGS_JDK="[$]$2COMMON_CCXXFLAGS_JDK \
       -I\$(SUPPORT_OUTPUTDIR)/modules_include/java.base \
-      -I${TOPDIR}/src/java.base/share/native/include \
-      -I${TOPDIR}/src/java.base/$OPENJDK_$1_OS/native/include \
-      -I${TOPDIR}/src/java.base/$OPENJDK_$1_OS_TYPE/native/include \
+      -I\$(SUPPORT_OUTPUTDIR)/modules_include/java.base/\$(OPENJDK_TARGET_OS_INCLUDE_SUBDIR) \
       -I${TOPDIR}/src/java.base/share/native/libjava \
-      -I${TOPDIR}/src/java.base/$OPENJDK_$1_OS_TYPE/native/libjava"
+      -I${TOPDIR}/src/java.base/$OPENJDK_$1_OS_TYPE/native/libjava \
+      -I${TOPDIR}/src/hotspot/share/include \
+      -I${TOPDIR}/src/hotspot/os/${HOTSPOT_$1_OS_TYPE}/include"
 
   # The shared libraries are compiled using the picflag.
   $2CFLAGS_JDKLIB="[$]$2COMMON_CCXXFLAGS_JDK \
