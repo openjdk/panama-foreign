@@ -76,7 +76,8 @@ jdk_lang = \
     jdk/internal/jimage \
     jdk/internal/math \
     jdk/modules \
-    vm
+    vm \
+    :jdk_nicl
 
 # All of the java.util package
 jdk_util = \
