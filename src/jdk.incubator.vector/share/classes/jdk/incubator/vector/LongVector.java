@@ -28,6 +28,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
+import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
 public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,S> {
@@ -214,84 +215,6 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
-    public LongVector<S> addExact(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> Math.addExact(a, b));
-    }
-
-    public LongVector<S> addExact(Vector<Long,S> o, Mask<Long,S> m) {
-        return bOp(o, m, (i, a, b) -> Math.addExact(a, b));
-    }
-
-    public LongVector<S> decrementExact() {
-        return uOp((i, a) -> Math.decrementExact(a));
-    }
-
-    public LongVector<S> decrementExact(Vector<Long,S> o, Mask<Long,S> m) {
-        return uOp(m, (i, a) -> Math.decrementExact(a));
-    }
-
-    public LongVector<S> incrementExact(Vector<Long,S> o) {
-        return uOp((i, a) -> Math.incrementExact(a));
-    }
-
-    public LongVector<S> incrementExact(Vector<Long,S> o, Mask<Long,S> m) {
-        return uOp(m, (i, a) -> Math.incrementExact(a));
-    }
-
-    public LongVector<S> multiplyExact(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> Math.multiplyExact(a, b));
-    }
-
-    public LongVector<S> multiplyExact(Vector<Long,S> o, Mask<Long, S> m) {
-        return bOp(o, m, (i, a, b) -> Math.multiplyExact(a, b));
-    }
-
-    public LongVector<S> negateExact() {
-        return uOp((i, a) -> Math.negateExact(a));
-    }
-
-    public LongVector<S> negateExact(Mask<Long, S> m) {
-        return uOp(m, (i, a) -> Math.negateExact(a));
-    }
-
-    public LongVector<S> subtractExtract(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> Math.subtractExact(a, b));
-    }
-
-    public LongVector<S> subtractExtract(Vector<Long,S> o, Mask<Long,S> m) {
-        return bOp(o, m, (i, a, b) -> Math.subtractExact(a, b));
-    }
-    /*
-    // @@@ Shape specific
-    // long,int-> long : S, S / 2 -> S
-    // Long512Vector, Int256Vector -> Long512Vector
-
-    public LongVector<S> multiplyExact(Vector<Long,S> o) {
-        throw new UnsupportedOperationException("multiplyExact not supported on Float");
-    }
-
-    public LongVector<S> multiplyExact(Vector<Long,S> o, Mask<Long, S> m) {
-        throw new UnsupportedOperationException("multiplyExact not supported on Float");
-    }
-
-    // @@@ Shape specific
-    // long->int
-    // Long512Vector -> Int256Vector
-
-    public Vector<Integer, Shapes.S128Bit> toIntExact() {
-        throw new UnsupportedOperationException("toIntExact not implemented.");
-    }
-
-    // Top 64 of 128 bits
-
-    public LongVector<S> multiplyHigh(Vector<Long,S> o) {
-        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
-    }
-
-    public LongVector<S> multiplyHigh(Vector<Long,S> o, Mask<Long, S> m) {
-        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
-    }
-    */
 
     public LongVector<S> and(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) (a & b));
@@ -501,6 +424,11 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
 
         public LongVector<S> single(long e) {
             return op(i -> i == 0 ? e : (long) 0);
+        }
+
+        public LongVector<S> random() {
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            return op(i -> (long) r.nextInt());
         }
 
         public LongVector<S> scalars(long... es) {

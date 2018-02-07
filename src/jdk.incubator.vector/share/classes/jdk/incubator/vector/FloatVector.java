@@ -252,30 +252,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
         return uOp(m, (i, a) -> (float) Math.tanh((double) a));
     }
 
-    public FloatVector<S> toDegrees() {
-        return uOp((i, a) -> (float) Math.toDegrees((double) a));
-    }
-
-    public FloatVector<S> toDegrees(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.toDegrees((double) a));
-    }
-
-    public FloatVector<S> toRadians() {
-        return uOp((i, a) -> (float) Math.toRadians((double) a));
-    }
-
-    public FloatVector<S> toRadians(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.toRadians((double) a));
-    }
-
-    public FloatVector<S> ulp() {
-        return uOp((i, a) -> (float) Math.ulp((double) a));
-    }
-
-    public FloatVector<S> ulp(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.ulp((double) a));
-    }
-
     public FloatVector<S> sin() {
         return uOp((i, a) -> (float) Math.sin((double) a));
     }
@@ -348,22 +324,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
         return uOp(m, (i, a) -> (float) Math.cbrt((double) a));
     }
 
-    public FloatVector<S> ceil() {
-        return uOp((i, a) -> (float) Math.ceil((double) a));
-    }
-
-    public FloatVector<S> ceil(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.ceil((double) a));
-    }
-
-    public FloatVector<S> copySign(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) Math.copySign((double) a, (double) b));
-    }
-
-    public FloatVector<S> copySign(Vector<Float,S> o, Mask<Float,S> m) {
-        return bOp(o, m, (i, a, b) -> (float) Math.copySign((double) a, (double) b));
-    }
-
     public FloatVector<S> log() {
         return uOp((i, a) -> (float) Math.log((double) a));
     }
@@ -388,73 +348,12 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
         return uOp(m, (i, a) -> (float) Math.log1p((double) a));
     }
 
-    public FloatVector<S> nextAfter(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) Math.nextAfter((double) a, (double) b));
-    }
-
-    public FloatVector<S> nextAfter(Vector<Float,S> o, Mask<Float,S> m) {
-        return bOp(o, m, (i, a, b) -> (float) Math.nextAfter((double) a, (double) b));
-    }
-
-    public FloatVector<S> nextDown() {
-        return uOp((i, a) -> (float) Math.nextDown((double) a));
-    }
-
-    public FloatVector<S> nextDown(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.nextDown((double) a));
-    }
-
-    public FloatVector<S> nextUp() {
-        return uOp((i, a) -> (float) Math.nextUp((double) a));
-    }
-
-    public FloatVector<S> nextUp(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.nextUp((double) a));
-    }
-
     public FloatVector<S> pow(Vector<Float,S> o) {
         return bOp(o, (i, a, b) -> (float) Math.pow((double) a, (double) b));
     }
 
     public FloatVector<S> pow(Vector<Float,S> o, Mask<Float,S> m) {
         return bOp(o, m, (i, a, b) -> (float) Math.pow((double) a, (double) b));
-    }
-
-    public FloatVector<S> random() {
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        return uOp((i, a) -> r.nextFloat());
-    }
-
-    public FloatVector<S> rint() {
-        return uOp((i, a) -> (float) Math.rint((double) a));
-    }
-
-    public FloatVector<S> rint(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.rint((double) a));
-    }
-
-    public FloatVector<S> round() {
-        return uOp((i, a) -> (float) Math.round((double) a));
-    }
-
-    public FloatVector<S> round(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.round((double) a));
-    }
-
-    public FloatVector<S> scalb(Vector<Integer, S> o) {
-        throw  new UnsupportedOperationException("Scalb not implemented yet.");
-    }
-
-    public FloatVector<S> scalb(Vector<Integer, S> o, Mask<Float,S> m) {
-        throw  new UnsupportedOperationException("Scalb not implemented yet.");
-    }
-
-    public FloatVector<S> signum() {
-        return uOp((i, a) -> (float) Math.signum((double) a));
-    }
-
-    public FloatVector<S> signum(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.signum((double) a));
     }
 
     public FloatVector<S> exp() {
@@ -473,14 +372,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
         return uOp(m, (i, a) -> (float) Math.expm1((double) a));
     }
 
-    public FloatVector<S> floor() {
-        return uOp((i, a) -> (float) Math.floor((double) a));
-    }
-
-    public FloatVector<S> floor(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.floor((double) a));
-    }
-
     public FloatVector<S> fma(Vector<Float,S> o1, Vector<Float,S> o2) {
         return tOp(o1, o2, (i, a, b, c) -> Math.fma(a, b, c));
     }
@@ -489,28 +380,12 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
         return tOp(o1, o2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
-    public FloatVector<S> getExponent() {
-        return uOp((i, a) -> (float) Math.getExponent((double) a));
-    }
-
-    public FloatVector<S> getExponent(Mask<Float,S> m) {
-        return uOp(m, (i, a) -> (float) Math.getExponent((double) a));
-    }
-
     public FloatVector<S> hypot(Vector<Float,S> o) {
         return bOp(o, (i, a, b) -> (float) Math.hypot((double) a, (double) b));
     }
 
     public FloatVector<S> hypot(Vector<Float,S> o, Mask<Float,S> m) {
         return bOp(o, m, (i, a, b) -> (float) Math.hypot((double) a, (double) b));
-    }
-
-    public FloatVector<S> IEEEremainder(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) Math.IEEEremainder((double) a, (double) b));
-    }
-
-    public FloatVector<S> IEEEremainder(Vector<Float,S> o, Mask<Float,S> m) {
-        return bOp(o, m, (i, a, b) -> (float) Math.IEEEremainder((double) a, (double) b));
     }
 
 
@@ -646,6 +521,11 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
         public FloatVector<S> single(float e) {
             return op(i -> i == 0 ? e : (float) 0);
+        }
+
+        public FloatVector<S> random() {
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            return op(i -> r.nextFloat());
         }
 
         public FloatVector<S> scalars(float... es) {

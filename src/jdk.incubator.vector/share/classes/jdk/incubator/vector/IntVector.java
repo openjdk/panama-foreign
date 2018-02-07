@@ -28,6 +28,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
 public abstract class IntVector<S extends Vector.Shape> implements Vector<Integer,S> {
@@ -225,65 +226,6 @@ public abstract class IntVector<S extends Vector.Shape> implements Vector<Intege
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
-    public IntVector<S> addExact(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> Math.addExact(a, b));
-    }
-
-    public IntVector<S> addExact(Vector<Integer,S> o, Mask<Integer,S> m) {
-        return bOp(o, m, (i, a, b) -> Math.addExact(a, b));
-    }
-
-    public IntVector<S> decrementExact() {
-        return uOp((i, a) -> Math.decrementExact(a));
-    }
-
-    public IntVector<S> decrementExact(Vector<Integer,S> o, Mask<Integer,S> m) {
-        return uOp(m, (i, a) -> Math.decrementExact(a));
-    }
-
-    public IntVector<S> incrementExact(Vector<Integer,S> o) {
-        return uOp((i, a) -> Math.incrementExact(a));
-    }
-
-    public IntVector<S> incrementExact(Vector<Integer,S> o, Mask<Integer,S> m) {
-        return uOp(m, (i, a) -> Math.incrementExact(a));
-    }
-
-    public IntVector<S> multiplyExact(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> Math.multiplyExact(a, b));
-    }
-
-    public IntVector<S> multiplyExact(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> Math.multiplyExact(a, b));
-    }
-
-    public IntVector<S> negateExact() {
-        return uOp((i, a) -> Math.negateExact(a));
-    }
-
-    public IntVector<S> negateExact(Mask<Integer, S> m) {
-        return uOp(m, (i, a) -> Math.negateExact(a));
-    }
-
-    public IntVector<S> subtractExtract(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> Math.subtractExact(a, b));
-    }
-
-    public IntVector<S> subtractExtract(Vector<Integer,S> o, Mask<Integer,S> m) {
-        return bOp(o, m, (i, a, b) -> Math.subtractExact(a, b));
-    }
-    // @@@ Shape specific
-    // Int256Vector -> Long512Vector
-    /*
-
-    public IntVector<S> multiplyFull(Vector<Integer,S> o) {
-        throw new UnsupportedOperationException("multiplyFull not supported on Float");
-    }
-
-    public IntVector<S> multiplyFull(Vector<Integer,S> o, Mask<Integer, S> m) {
-        throw new UnsupportedOperationException("multiplyFull not supported on Float");
-    }
-    */
 
     @HotSpotIntrinsicCandidate
     public IntVector<S> and(Vector<Integer,S> o) {
@@ -506,6 +448,11 @@ public abstract class IntVector<S extends Vector.Shape> implements Vector<Intege
 
         public IntVector<S> single(int e) {
             return op(i -> i == 0 ? e : (int) 0);
+        }
+
+        public IntVector<S> random() {
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            return op(i -> (int) r.nextInt());
         }
 
         public IntVector<S> scalars(int... es) {

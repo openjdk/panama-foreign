@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.HotSpotIntrinsicCandidate;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
 public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,S> {
@@ -422,6 +423,11 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
 
         public ByteVector<S> single(byte e) {
             return op(i -> i == 0 ? e : (byte) 0);
+        }
+
+        public ByteVector<S> random() {
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            return op(i -> (byte) r.nextInt());
         }
 
         public ByteVector<S> scalars(byte... es) {

@@ -249,30 +249,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return uOp(m, (i, a) -> (double) Math.tanh((double) a));
     }
 
-    public DoubleVector<S> toDegrees() {
-        return uOp((i, a) -> (double) Math.toDegrees((double) a));
-    }
-
-    public DoubleVector<S> toDegrees(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.toDegrees((double) a));
-    }
-
-    public DoubleVector<S> toRadians() {
-        return uOp((i, a) -> (double) Math.toRadians((double) a));
-    }
-
-    public DoubleVector<S> toRadians(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.toRadians((double) a));
-    }
-
-    public DoubleVector<S> ulp() {
-        return uOp((i, a) -> (double) Math.ulp((double) a));
-    }
-
-    public DoubleVector<S> ulp(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.ulp((double) a));
-    }
-
     public DoubleVector<S> sin() {
         return uOp((i, a) -> (double) Math.sin((double) a));
     }
@@ -345,22 +321,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return uOp(m, (i, a) -> (double) Math.cbrt((double) a));
     }
 
-    public DoubleVector<S> ceil() {
-        return uOp((i, a) -> (double) Math.ceil((double) a));
-    }
-
-    public DoubleVector<S> ceil(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.ceil((double) a));
-    }
-
-    public DoubleVector<S> copySign(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) Math.copySign((double) a, (double) b));
-    }
-
-    public DoubleVector<S> copySign(Vector<Double,S> o, Mask<Double,S> m) {
-        return bOp(o, m, (i, a, b) -> (double) Math.copySign((double) a, (double) b));
-    }
-
     public DoubleVector<S> log() {
         return uOp((i, a) -> (double) Math.log((double) a));
     }
@@ -385,73 +345,12 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return uOp(m, (i, a) -> (double) Math.log1p((double) a));
     }
 
-    public DoubleVector<S> nextAfter(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) Math.nextAfter((double) a, (double) b));
-    }
-
-    public DoubleVector<S> nextAfter(Vector<Double,S> o, Mask<Double,S> m) {
-        return bOp(o, m, (i, a, b) -> (double) Math.nextAfter((double) a, (double) b));
-    }
-
-    public DoubleVector<S> nextDown() {
-        return uOp((i, a) -> (double) Math.nextDown((double) a));
-    }
-
-    public DoubleVector<S> nextDown(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.nextDown((double) a));
-    }
-
-    public DoubleVector<S> nextUp() {
-        return uOp((i, a) -> (double) Math.nextUp((double) a));
-    }
-
-    public DoubleVector<S> nextUp(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.nextUp((double) a));
-    }
-
     public DoubleVector<S> pow(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) Math.pow((double) a, (double) b));
     }
 
     public DoubleVector<S> pow(Vector<Double,S> o, Mask<Double,S> m) {
         return bOp(o, m, (i, a, b) -> (double) Math.pow((double) a, (double) b));
-    }
-
-    public DoubleVector<S> random() {
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        return uOp((i, a) -> r.nextDouble());
-    }
-
-    public DoubleVector<S> rint() {
-        return uOp((i, a) -> (double) Math.rint((double) a));
-    }
-
-    public DoubleVector<S> rint(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.rint((double) a));
-    }
-
-    public DoubleVector<S> round() {
-        return uOp((i, a) -> (double) Math.round((double) a));
-    }
-
-    public DoubleVector<S> round(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.round((double) a));
-    }
-
-    public DoubleVector<S> scalb(Vector<Integer, S> o) {
-        throw  new UnsupportedOperationException("Scalb not implemented yet.");
-    }
-
-    public DoubleVector<S> scalb(Vector<Integer, S> o, Mask<Double,S> m) {
-        throw  new UnsupportedOperationException("Scalb not implemented yet.");
-    }
-
-    public DoubleVector<S> signum() {
-        return uOp((i, a) -> (double) Math.signum((double) a));
-    }
-
-    public DoubleVector<S> signum(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.signum((double) a));
     }
 
     public DoubleVector<S> exp() {
@@ -470,14 +369,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return uOp(m, (i, a) -> (double) Math.expm1((double) a));
     }
 
-    public DoubleVector<S> floor() {
-        return uOp((i, a) -> (double) Math.floor((double) a));
-    }
-
-    public DoubleVector<S> floor(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.floor((double) a));
-    }
-
     public DoubleVector<S> fma(Vector<Double,S> o1, Vector<Double,S> o2) {
         return tOp(o1, o2, (i, a, b, c) -> Math.fma(a, b, c));
     }
@@ -486,28 +377,12 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return tOp(o1, o2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
-    public DoubleVector<S> getExponent() {
-        return uOp((i, a) -> (double) Math.getExponent((double) a));
-    }
-
-    public DoubleVector<S> getExponent(Mask<Double,S> m) {
-        return uOp(m, (i, a) -> (double) Math.getExponent((double) a));
-    }
-
     public DoubleVector<S> hypot(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) Math.hypot((double) a, (double) b));
     }
 
     public DoubleVector<S> hypot(Vector<Double,S> o, Mask<Double,S> m) {
         return bOp(o, m, (i, a, b) -> (double) Math.hypot((double) a, (double) b));
-    }
-
-    public DoubleVector<S> IEEEremainder(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) Math.IEEEremainder((double) a, (double) b));
-    }
-
-    public DoubleVector<S> IEEEremainder(Vector<Double,S> o, Mask<Double,S> m) {
-        return bOp(o, m, (i, a, b) -> (double) Math.IEEEremainder((double) a, (double) b));
     }
 
 
@@ -642,6 +517,11 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
         public DoubleVector<S> single(double e) {
             return op(i -> i == 0 ? e : (double) 0);
+        }
+
+        public DoubleVector<S> random() {
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            return op(i -> r.nextDouble());
         }
 
         public DoubleVector<S> scalars(double... es) {

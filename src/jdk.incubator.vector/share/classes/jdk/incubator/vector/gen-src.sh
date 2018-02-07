@@ -73,6 +73,9 @@ do
     < X-Vector.java.template \
     > $abstractvectortype.java
 
+  java $SPP -nel $args \
+    < X-VectorHelper.java.template \
+    > ${abstractvectortype}Helper.java
 
   for bits in 64 128 256 512
   do

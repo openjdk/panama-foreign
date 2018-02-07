@@ -30,9 +30,7 @@ import java.nio.ByteBuffer;
 #if[!byte]
 import java.nio.$Type$Buffer;
 #end[!byte]
-#if[FP]
 import java.util.concurrent.ThreadLocalRandom;
-#end[FP]
 
 @SuppressWarnings("cast")
 public abstract class $abstractvectortype$<S extends Vector.Shape> implements Vector<$Boxtype$,S> {
@@ -291,102 +289,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
-#if[intOrlong]
-    public $abstractvectortype$<S> addExact(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> Math.addExact(a, b));
-    }
-
-    public $abstractvectortype$<S> addExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return bOp(o, m, (i, a, b) -> Math.addExact(a, b));
-    }
-
-    public $abstractvectortype$<S> decrementExact() {
-        return uOp((i, a) -> Math.decrementExact(a));
-    }
-
-    public $abstractvectortype$<S> decrementExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> Math.decrementExact(a));
-    }
-
-    public $abstractvectortype$<S> incrementExact(Vector<$Boxtype$,S> o) {
-        return uOp((i, a) -> Math.incrementExact(a));
-    }
-
-    public $abstractvectortype$<S> incrementExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> Math.incrementExact(a));
-    }
-
-    public $abstractvectortype$<S> multiplyExact(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> Math.multiplyExact(a, b));
-    }
-
-    public $abstractvectortype$<S> multiplyExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> Math.multiplyExact(a, b));
-    }
-
-    public $abstractvectortype$<S> negateExact() {
-        return uOp((i, a) -> Math.negateExact(a));
-    }
-
-    public $abstractvectortype$<S> negateExact(Mask<$Boxtype$, S> m) {
-        return uOp(m, (i, a) -> Math.negateExact(a));
-    }
-
-    public $abstractvectortype$<S> subtractExtract(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> Math.subtractExact(a, b));
-    }
-
-    public $abstractvectortype$<S> subtractExtract(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return bOp(o, m, (i, a, b) -> Math.subtractExact(a, b));
-    }
-#end[intOrlong]
-#if[int]
-    // @@@ Shape specific
-    // Int256Vector -> Long512Vector
-    /*
-
-    public $abstractvectortype$<S> multiplyFull(Vector<$Boxtype$,S> o) {
-        throw new UnsupportedOperationException("multiplyFull not supported on Float");
-    }
-
-    public $abstractvectortype$<S> multiplyFull(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        throw new UnsupportedOperationException("multiplyFull not supported on Float");
-    }
-    */
-#end[int]
-#if[long]
-    /*
-    // @@@ Shape specific
-    // long,int-> long : S, S / 2 -> S
-    // Long512Vector, Int256Vector -> Long512Vector
-
-    public $abstractvectortype$<S> multiplyExact(Vector<$Boxtype$,S> o) {
-        throw new UnsupportedOperationException("multiplyExact not supported on Float");
-    }
-
-    public $abstractvectortype$<S> multiplyExact(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        throw new UnsupportedOperationException("multiplyExact not supported on Float");
-    }
-
-    // @@@ Shape specific
-    // long->int
-    // Long512Vector -> Int256Vector
-
-    public Vector<Integer, Shapes.S128Bit> toIntExact() {
-        throw new UnsupportedOperationException("toIntExact not implemented.");
-    }
-
-    // Top 64 of 128 bits
-
-    public $abstractvectortype$<S> multiplyHigh(Vector<$Boxtype$,S> o) {
-        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
-    }
-
-    public $abstractvectortype$<S> multiplyHigh(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
-    }
-    */
-#end[long]
 #if[FP]
     public $abstractvectortype$<S> sqrt() {
         return uOp((i, a) -> ($type$) Math.sqrt((double) a));
@@ -410,30 +312,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public $abstractvectortype$<S> tanh(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.tanh((double) a));
-    }
-
-    public $abstractvectortype$<S> toDegrees() {
-        return uOp((i, a) -> ($type$) Math.toDegrees((double) a));
-    }
-
-    public $abstractvectortype$<S> toDegrees(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.toDegrees((double) a));
-    }
-
-    public $abstractvectortype$<S> toRadians() {
-        return uOp((i, a) -> ($type$) Math.toRadians((double) a));
-    }
-
-    public $abstractvectortype$<S> toRadians(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.toRadians((double) a));
-    }
-
-    public $abstractvectortype$<S> ulp() {
-        return uOp((i, a) -> ($type$) Math.ulp((double) a));
-    }
-
-    public $abstractvectortype$<S> ulp(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.ulp((double) a));
     }
 
     public $abstractvectortype$<S> sin() {
@@ -508,22 +386,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return uOp(m, (i, a) -> ($type$) Math.cbrt((double) a));
     }
 
-    public $abstractvectortype$<S> ceil() {
-        return uOp((i, a) -> ($type$) Math.ceil((double) a));
-    }
-
-    public $abstractvectortype$<S> ceil(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.ceil((double) a));
-    }
-
-    public $abstractvectortype$<S> copySign(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) Math.copySign((double) a, (double) b));
-    }
-
-    public $abstractvectortype$<S> copySign(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) Math.copySign((double) a, (double) b));
-    }
-
     public $abstractvectortype$<S> log() {
         return uOp((i, a) -> ($type$) Math.log((double) a));
     }
@@ -548,73 +410,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return uOp(m, (i, a) -> ($type$) Math.log1p((double) a));
     }
 
-    public $abstractvectortype$<S> nextAfter(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) Math.nextAfter((double) a, (double) b));
-    }
-
-    public $abstractvectortype$<S> nextAfter(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) Math.nextAfter((double) a, (double) b));
-    }
-
-    public $abstractvectortype$<S> nextDown() {
-        return uOp((i, a) -> ($type$) Math.nextDown((double) a));
-    }
-
-    public $abstractvectortype$<S> nextDown(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.nextDown((double) a));
-    }
-
-    public $abstractvectortype$<S> nextUp() {
-        return uOp((i, a) -> ($type$) Math.nextUp((double) a));
-    }
-
-    public $abstractvectortype$<S> nextUp(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.nextUp((double) a));
-    }
-
     public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
     }
 
     public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
-    }
-
-    public $abstractvectortype$<S> random() {
-        ThreadLocalRandom r = ThreadLocalRandom.current();
-        return uOp((i, a) -> r.next$Boxtype$());
-    }
-
-    public $abstractvectortype$<S> rint() {
-        return uOp((i, a) -> ($type$) Math.rint((double) a));
-    }
-
-    public $abstractvectortype$<S> rint(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.rint((double) a));
-    }
-
-    public $abstractvectortype$<S> round() {
-        return uOp((i, a) -> ($type$) Math.round((double) a));
-    }
-
-    public $abstractvectortype$<S> round(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.round((double) a));
-    }
-
-    public $abstractvectortype$<S> scalb(Vector<Integer, S> o) {
-        throw  new UnsupportedOperationException("Scalb not implemented yet.");
-    }
-
-    public $abstractvectortype$<S> scalb(Vector<Integer, S> o, Mask<$Boxtype$,S> m) {
-        throw  new UnsupportedOperationException("Scalb not implemented yet.");
-    }
-
-    public $abstractvectortype$<S> signum() {
-        return uOp((i, a) -> ($type$) Math.signum((double) a));
-    }
-
-    public $abstractvectortype$<S> signum(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.signum((double) a));
     }
 
     public $abstractvectortype$<S> exp() {
@@ -633,14 +434,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return uOp(m, (i, a) -> ($type$) Math.expm1((double) a));
     }
 
-    public $abstractvectortype$<S> floor() {
-        return uOp((i, a) -> ($type$) Math.floor((double) a));
-    }
-
-    public $abstractvectortype$<S> floor(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.floor((double) a));
-    }
-
     public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2) {
         return tOp(o1, o2, (i, a, b, c) -> Math.fma(a, b, c));
     }
@@ -649,28 +442,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return tOp(o1, o2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
-    public $abstractvectortype$<S> getExponent() {
-        return uOp((i, a) -> ($type$) Math.getExponent((double) a));
-    }
-
-    public $abstractvectortype$<S> getExponent(Mask<$Boxtype$,S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.getExponent((double) a));
-    }
-
     public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
     }
 
     public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
-    }
-
-    public $abstractvectortype$<S> IEEEremainder(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) Math.IEEEremainder((double) a, (double) b));
-    }
-
-    public $abstractvectortype$<S> IEEEremainder(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) Math.IEEEremainder((double) a, (double) b));
     }
 #end[FP]
 
@@ -941,6 +718,25 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         public $abstractvectortype$<S> single($type$ e) {
             return op(i -> i == 0 ? e : ($type$) 0);
         }
+
+#if[intOrLong]
+        public $abstractvectortype$<S> random() {
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            return op(i -> r.next$Type$());
+        }
+#else[intOrLong]
+#if[FP]
+        public $abstractvectortype$<S> random() {
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            return op(i -> r.next$Type$());
+        }
+#else[FP]
+        public $abstractvectortype$<S> random() {
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            return op(i -> ($type$) r.nextInt());
+        }
+#end[FP]
+#end[intOrLong]
 
         public $abstractvectortype$<S> scalars($type$... es) {
             return op(i -> es[i]);

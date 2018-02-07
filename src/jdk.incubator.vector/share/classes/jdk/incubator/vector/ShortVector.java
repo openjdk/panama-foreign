@@ -28,6 +28,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
 
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
+import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
 public abstract class ShortVector<S extends Vector.Shape> implements Vector<Short,S> {
@@ -423,6 +424,11 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
 
         public ShortVector<S> single(short e) {
             return op(i -> i == 0 ? e : (short) 0);
+        }
+
+        public ShortVector<S> random() {
+            ThreadLocalRandom r = ThreadLocalRandom.current();
+            return op(i -> (short) r.nextInt());
         }
 
         public ShortVector<S> scalars(short... es) {
