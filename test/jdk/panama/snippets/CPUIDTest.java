@@ -24,7 +24,7 @@
 
 /*
  * @test
- * @modules jdk.internal.vm.ci
+ * @modules jdk.internal.vm.ci/jdk.vm.ci.panama.amd64
  * @run main/othervm panama.snippets.CPUIDTest
  */
 

@@ -113,11 +113,11 @@ extern "C" {
   void JNICALL JVM_RegisterMethodHandleMethods(JNIEnv *env, jclass unsafecls);
   void JNICALL JVM_RegisterPerfMethods(JNIEnv *env, jclass perfclass);
   void JNICALL JVM_RegisterWhiteBoxMethods(JNIEnv *env, jclass wbclass);
-  void JNICALL JVM_RegisterMachineCodeSnippetMethods(JNIEnv *env, jclass csclass);
   void JNICALL JVM_RegisterVectorMethods(JNIEnv *env, jclass cls);
 #if INCLUDE_JVMCI
   jobject  JNICALL JVM_GetJVMCIRuntime(JNIEnv *env, jclass c);
   void     JNICALL JVM_RegisterJVMCINatives(JNIEnv *env, jclass compilerToVMClass);
+  void     JNICALL JVM_RegisterMachineCodeSnippetMethods(JNIEnv *env, jclass csclass);
 #endif
 }
 
@@ -129,13 +129,13 @@ static JNINativeMethod lookup_special_native_methods[] = {
   { CC"Java_java_lang_invoke_MethodHandleNatives_registerNatives", NULL, FN_PTR(JVM_RegisterMethodHandleMethods) },
   { CC"Java_jdk_internal_perf_Perf_registerNatives",               NULL, FN_PTR(JVM_RegisterPerfMethods)         },
   { CC"Java_sun_hotspot_WhiteBox_registerNatives",                 NULL, FN_PTR(JVM_RegisterWhiteBoxMethods)     },
-  { CC"Java_jdk_vm_ci_panama_MachineCodeSnippet_registerNatives",  NULL, FN_PTR(JVM_RegisterMachineCodeSnippetMethods) },
   { CC"Java_java_lang_Long2_registerNatives",                      NULL, FN_PTR(JVM_RegisterVectorMethods)       },
   { CC"Java_java_lang_Long4_registerNatives",                      NULL, FN_PTR(JVM_RegisterVectorMethods)       },
   { CC"Java_java_lang_Long8_registerNatives",                      NULL, FN_PTR(JVM_RegisterVectorMethods)       },
 #if INCLUDE_JVMCI
   { CC"Java_jdk_vm_ci_runtime_JVMCI_initializeRuntime",            NULL, FN_PTR(JVM_GetJVMCIRuntime)             },
   { CC"Java_jdk_vm_ci_hotspot_CompilerToVM_registerNatives",       NULL, FN_PTR(JVM_RegisterJVMCINatives)        },
+  { CC"Java_jdk_vm_ci_panama_MachineCodeSnippet_registerNatives",  NULL, FN_PTR(JVM_RegisterMachineCodeSnippetMethods) },
 #endif
 #if INCLUDE_TRACE
   { CC"Java_jdk_jfr_internal_JVM_registerNatives",                 NULL, TRACE_REGISTER_NATIVES                  },

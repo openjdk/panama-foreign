@@ -24,7 +24,10 @@
 /*
  * @test
  * @compile VectorUtils.java VectorizedHashCode.java MachineCodeSnippetSamples.java
- * @modules jdk.internal.vm.ci
+ * @modules jdk.internal.vm.ci/jdk.vm.ci.amd64
+ *          jdk.internal.vm.ci/jdk.vm.ci.code
+ *          jdk.internal.vm.ci/jdk.vm.ci.panama
+ *          jdk.internal.vm.ci/jdk.vm.ci.panama.amd64
  *          java.base/jdk.internal.misc
  * @run main/othervm panama.snippets.MachineCodeSnippetSamples
  */
