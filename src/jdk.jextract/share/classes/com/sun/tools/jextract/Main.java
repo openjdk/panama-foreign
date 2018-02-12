@@ -160,6 +160,10 @@ public final class Main {
             options.valuesOf("C").forEach(p -> ctx.clangArgs.add((String) p));
         }
 
+        if (options.has("l")) {
+            options.valuesOf("l").forEach(p -> ctx.libraries.add((String) p));
+        }
+
         targetPackage = options.has("t") ? (String) options.valueOf("t") : "";
         if (!targetPackage.isEmpty()) {
             Validators.validPackageName(targetPackage);

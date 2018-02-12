@@ -50,6 +50,8 @@ public class Context {
     final List<String> clangArgs;
     // The set of source header files
     final Set<Path>  sources;
+    // The list of libraries
+    final List<String> libraries;
 
     //
     final static String defaultPkg = "jextract.dump";
@@ -61,6 +63,7 @@ public class Context {
         headerMap = new HashMap<>();
         clangArgs = new ArrayList<>();
         sources = new TreeSet<>();
+        libraries = new ArrayList<>();
     }
 
     // used only for jtreg testing
@@ -237,6 +240,7 @@ public class Context {
             }
 
             HeaderFile hf = headerMap.computeIfAbsent(path, p -> getHeaderFile(p, null));
+            hf.useLibraries(libraries);
             hf.useCodeFactory(fn.apply(hf));
             logger.info(() -> "Parsing header file " + path);
 

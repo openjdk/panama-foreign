@@ -66,6 +66,19 @@ public class AsmCodeFactory extends CodeFactory {
                 "Ljava/nicl/metadata/Header;", true);
         av.visit("path", owner.path.toAbsolutePath().toString());
         av.visitEnd();
+        if (owner.libraries != null && !owner.libraries.isEmpty()) {
+            AnnotationVisitor deps = global_cw.visitAnnotation(
+                "Ljava/nicl/metadata/LibraryDependencies;", true);
+            AnnotationVisitor libraries = deps.visitArray("value");
+            for (String lib : owner.libraries) {
+                AnnotationVisitor dep = libraries.visitAnnotation(null,
+                    "Ljava/nicl/metadata/LibraryDependency;");
+                dep.visit("name", lib);
+                dep.visitEnd();
+            }
+            libraries.visitEnd();
+            deps.visitEnd();
+        }
     }
 
     private void handleException(Exception ex) {

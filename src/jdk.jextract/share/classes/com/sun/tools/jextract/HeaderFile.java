@@ -30,6 +30,7 @@ import jdk.internal.clang.TypeKind;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import java.util.List;
 
 /**
  * This class represent a native code header file
@@ -42,6 +43,7 @@ public final class HeaderFile {
     // The top header file cause this file to be parsed
     HeaderFile main;
     CodeFactory cf;
+    List<String> libraries;
 
     private final AtomicInteger serialNo;
     final Logger logger = Logger.getLogger(getClass().getPackage().getName());
@@ -53,6 +55,10 @@ public final class HeaderFile {
         dict = TypeDictionary.of(pkgName);
         serialNo = new AtomicInteger();
         this.main = main == null ? this : main;
+    }
+
+    void useLibraries(List<String> libraries) {
+        this.libraries = libraries;
     }
 
     /**
