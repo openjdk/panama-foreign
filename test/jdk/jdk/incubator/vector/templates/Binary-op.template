@@ -1,0 +1,23 @@
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void [[TEST]]$vectorteststype$() {
+        $type$[] a = new $type$[SIZE];
+        $type$[] b = new $type$[SIZE];
+        $type$[] c = new $type$[SIZE];
+
+        // Data Initialization.
+        init_arr1(a);
+        init_arr2(b);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
+            av.[[TEST]](bv).intoArray(c, i);
+        }
+
+        // Checking.
+        for (int i = 0; i < a.length; i++) {
+            Assert.assertEquals(($type$)[[TEST]](a[i], b[i]), c[i], "at index #" + i);
+        }
+    }
+

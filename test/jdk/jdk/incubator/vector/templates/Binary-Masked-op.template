@@ -1,0 +1,44 @@
+    @org.testng.annotations.Test(invocationCount = 10)
+    static void [[TEST]]Masked$vectorteststype$() {
+        $type$[] a = new $type$[SIZE];
+        $type$[] b = new $type$[SIZE];
+        $type$[] c = new $type$[SIZE];
+        $type$[] d = new $type$[SIZE];
+        $type$[] e = new $type$[SIZE];
+        boolean[] mask = new boolean[species.length()];
+        
+        // Data Initialization.
+        init_mask(mask, species.length());
+        init_arr1(a);
+        init_arr2(b);
+
+        Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> pMask = species.constantMask(mask);
+        Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> tMask = species.trueMask();
+        Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> fMask = species.falseMask();
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
+            av.[[TEST]](bv, tMask).intoArray(c, i);
+            av.[[TEST]](bv, fMask).intoArray(d, i);
+            av.[[TEST]](bv, pMask).intoArray(e, i);
+        }
+
+        // Checking.
+        for (int i = 0; i < a.length; i++) {
+            $type$ c_res = ($type$)([[TEST]](a[i], b[i]));
+            $type$ d_res = ($type$) a[i];
+            $type$ e_res;
+            if (mask[i%species.length()] == false) {
+              e_res = d_res;
+            } else {
+              e_res = c_res;
+            }
+
+            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
+            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
+            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
+        }
+    }
+
