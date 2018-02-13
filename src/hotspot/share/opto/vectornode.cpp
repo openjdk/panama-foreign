@@ -246,6 +246,29 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   }
 }
 
+int VectorNode::replicate_opcode(BasicType bt) {
+  switch(bt) {
+    case T_BOOLEAN:
+    case T_BYTE:
+      return Op_ReplicateB;
+    case T_SHORT:
+    case T_CHAR:
+      return Op_ReplicateS;
+    case T_INT:
+      return Op_ReplicateI;
+    case T_LONG:
+      return Op_ReplicateL;
+    case T_FLOAT:
+      return Op_ReplicateF;
+    case T_DOUBLE:
+      return Op_ReplicateD;
+    default:
+      break;
+  }
+
+  return 0;
+}
+
 // Also used to check if the code generator
 // supports the vector operation.
 bool VectorNode::implemented(int opc, uint vlen, BasicType bt) {
@@ -253,7 +276,7 @@ bool VectorNode::implemented(int opc, uint vlen, BasicType bt) {
       (vlen > 1) && is_power_of_2(vlen) &&
       Matcher::vector_size_supported(bt, vlen)) {
     int vopc = VectorNode::opcode(opc, bt);
-    return vopc > 0 && Matcher::match_rule_supported_vector(vopc, vlen);
+    return vopc > 0 && Matcher::match_rule_supported_vector(vopc, vlen, bt);
   }
   return false;
 }
@@ -630,6 +653,30 @@ ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, Basi
   default:
     fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
     return NULL;
+  }
+}
+
+Node* ReductionNode::make_reduction_input(PhaseGVN& gvn, int opc, BasicType bt) {
+  int vopc = opcode(opc, bt);
+  guarantee(vopc != opc, "Vector reduction for '%s' is not implemented", NodeClassNames[opc]);
+
+  switch (vopc) {
+    case Op_AddReductionVI: // fallthrough
+    case Op_AddReductionVL: // fallthrough
+    case Op_AddReductionVF: // fallthrough
+    case Op_AddReductionVD:
+      return gvn.zerocon(bt);
+    case Op_MulReductionVI:
+      return gvn.makecon(TypeInt::ONE);
+    case Op_MulReductionVL:
+      return gvn.makecon(TypeLong::ONE);
+    case Op_MulReductionVF:
+      return gvn.makecon(TypeF::ONE);
+    case Op_MulReductionVD:
+      return gvn.makecon(TypeD::ONE);
+    default:
+      fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
+      return NULL;
   }
 }
 

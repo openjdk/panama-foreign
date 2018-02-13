@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
+import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -799,6 +800,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
                 ((long bits) -> SPECIES.op(i -> (short)bits)));
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Short512Mask trueMask() {
@@ -807,6 +809,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
                                                      (z -> Short512Mask.TRUE_MASK));
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Short512Mask falseMask() {

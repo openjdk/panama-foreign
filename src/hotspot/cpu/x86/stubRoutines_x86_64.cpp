@@ -46,3 +46,6 @@ address StubRoutines::x86::_vector_float_sign_mask = NULL;
 address StubRoutines::x86::_vector_float_sign_flip = NULL;
 address StubRoutines::x86::_vector_double_sign_mask = NULL;
 address StubRoutines::x86::_vector_double_sign_flip = NULL;
+address StubRoutines::x86::_vector_all_bits_set = NULL;
+address StubRoutines::x86::_vector_byte_bitset = NULL;
+address StubRoutines::x86::_vector_long_perm_mask = NULL;

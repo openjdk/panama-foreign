@@ -4181,7 +4181,7 @@ bool MatchRule::is_vector() const {
     "ReplicateB","ReplicateS","ReplicateI","ReplicateL","ReplicateF","ReplicateD",
     "LoadVector","StoreVector",
     "VectorLoadMask", "VectorStoreMask", "VectorBlend",
-    "VectorZeroExtend", "VectorMaskWrapper", "VectorMaskCmp",
+    "VectorMaskWrapper", "VectorMaskCmp",
     "ConvertVF2VD", "VectorReinterpret",
     "FmaVD", "FmaVF",
     // Next are not supported currently.

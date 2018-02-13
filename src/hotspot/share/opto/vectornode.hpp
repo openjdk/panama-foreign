@@ -67,6 +67,7 @@ class VectorNode : public TypeNode {
   static VectorNode* make(int opc, Node* n1, Node* n2, Node* n3, uint vlen, BasicType bt);
 
   static int  opcode(int opc, BasicType bt);
+  static int replicate_opcode(BasicType bt);
   static bool implemented(int opc, uint vlen, BasicType bt);
   static bool is_shift(Node* n);
   static bool is_invariant_vector(Node* n);
@@ -133,6 +134,7 @@ class ReductionNode : public Node {
   static ReductionNode* make(int opc, Node *ctrl, Node* in1, Node* in2, BasicType bt);
   static int  opcode(int opc, BasicType bt);
   static bool implemented(int opc, uint vlen, BasicType bt);
+  static Node* make_reduction_input(PhaseGVN& gvn, int opc, BasicType bt);
 };
 
 //------------------------------AddReductionVINode--------------------------------------
@@ -985,18 +987,6 @@ public:
   Node* vec1() const { return in(1); }
   Node* vec2() const { return in(2); }
   Node* vec_mask() const { return in(3); }
-};
-
-class VectorZeroExtendNode : public VectorNode {
- public:
-  VectorZeroExtendNode(Node* vec1, const TypeVect* from_type, const TypeVect* cast_type)
-    : VectorNode(vec1, cast_type) {
-    BasicType fromBt = from_type->element_basic_type();
-    BasicType toBt = cast_type->element_basic_type();
-    assert(is_subword_type(fromBt) && !is_signed_subword_type(fromBt), "zero cast only applies to unsigned");
-  }
-
-  virtual int Opcode() const;
 };
 
 class VectorLoadMaskNode : public VectorNode {

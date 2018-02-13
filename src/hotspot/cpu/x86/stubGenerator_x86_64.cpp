@@ -992,6 +992,40 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
+  address generate_vector_custom_i32(const char *stub_name, Assembler::AvxVectorLen len,
+                                     int32_t val0, int32_t val1, int32_t val2, int32_t val3,
+                                     int32_t val4 = 0, int32_t val5 = 0, int32_t val6 = 0, int32_t val7 = 0,
+                                     int32_t val8 = 0, int32_t val9 = 0, int32_t val10 = 0, int32_t val11 = 0,
+                                     int32_t val12 = 0, int32_t val13 = 0, int32_t val14 = 0, int32_t val15 = 0) {
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", stub_name);
+    address start = __ pc();
+
+    assert(len != Assembler::AVX_NoVec, "vector len must be specified");
+    __ emit_data(val0, relocInfo::none, 0);
+    __ emit_data(val1, relocInfo::none, 0);
+    __ emit_data(val2, relocInfo::none, 0);
+    __ emit_data(val3, relocInfo::none, 0);
+    if (len >= Assembler::AVX_256bit) {
+      __ emit_data(val4, relocInfo::none, 0);
+      __ emit_data(val5, relocInfo::none, 0);
+      __ emit_data(val6, relocInfo::none, 0);
+      __ emit_data(val7, relocInfo::none, 0);
+      if (len >= Assembler::AVX_512bit) {
+        __ emit_data(val8, relocInfo::none, 0);
+        __ emit_data(val9, relocInfo::none, 0);
+        __ emit_data(val10, relocInfo::none, 0);
+        __ emit_data(val11, relocInfo::none, 0);
+        __ emit_data(val12, relocInfo::none, 0);
+        __ emit_data(val13, relocInfo::none, 0);
+        __ emit_data(val14, relocInfo::none, 0);
+        __ emit_data(val15, relocInfo::none, 0);
+      }
+    }
+
+    return start;
+  }
+
   // Non-destructive plausibility checks for oops
   //
   // Arguments:
@@ -5165,6 +5199,10 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::x86::_vector_float_sign_flip = generate_vector_fp_mask("vector_float_sign_flip", 0x8000000080000000);
     StubRoutines::x86::_vector_double_sign_mask = generate_vector_fp_mask("vector_double_sign_mask", 0x7FFFFFFFFFFFFFFF);
     StubRoutines::x86::_vector_double_sign_flip = generate_vector_fp_mask("vector_double_sign_flip", 0x8000000000000000);
+    StubRoutines::x86::_vector_all_bits_set = generate_vector_fp_mask("vector_all_bits_set", 0xFFFFFFFFFFFFFFFF);
+    StubRoutines::x86::_vector_byte_bitset = generate_vector_fp_mask("vector_byte_bitset", 0x0101010101010101);
+    StubRoutines::x86::_vector_long_perm_mask = generate_vector_custom_i32("vector_long_perm_mask", Assembler::AVX_512bit,
+                                                                           0, 2, 4, 6, 8, 10, 12, 14);
 
     // support for verify_oop (must happen after universe_init)
     StubRoutines::_verify_oop_subroutine_entry = generate_verify_oop();

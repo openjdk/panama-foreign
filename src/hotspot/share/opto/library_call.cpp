@@ -344,7 +344,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_load_vector_op(const TypeInstPtr* box_type, BasicType type, int num_elem, bool is_mask_variant);
   bool inline_store_vector_op(const TypeInstPtr* box_type, BasicType bt, int num_elem, bool is_mask_variant);
   bool inline_bin_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem, bool is_mask_variant);
-  bool inline_un_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
+  bool inline_un_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem, bool is_mask_variant);
   bool inline_vector_cmp(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id);
   bool inline_vector_blend(const TypeInstPtr* box_type, BasicType type, int num_elem);
   bool inline_vector_addAll(const TypeInstPtr* box_type, int op, BasicType type, int num_elem);
@@ -7008,54 +7008,72 @@ static bool is_vector_store(vmIntrinsics::ID id) {
   }
 }
 
-static bool is_vector_mask_make(vmIntrinsics::ID id) {
+static bool is_vector_mask_make_true(vmIntrinsics::ID id) {
   switch (id) {
-  case vmIntrinsics::_VectorConstantMask:
   case vmIntrinsics::_VectorTrueMaskFloat64:
-  case vmIntrinsics::_VectorFalseMaskFloat64:
   case vmIntrinsics::_VectorTrueMaskFloat128:
-  case vmIntrinsics::_VectorFalseMaskFloat128:
   case vmIntrinsics::_VectorTrueMaskFloat256:
-  case vmIntrinsics::_VectorFalseMaskFloat256:
   case vmIntrinsics::_VectorTrueMaskFloat512:
-  case vmIntrinsics::_VectorFalseMaskFloat512:
   case vmIntrinsics::_VectorTrueMaskDouble64:
-  case vmIntrinsics::_VectorFalseMaskDouble64:
   case vmIntrinsics::_VectorTrueMaskDouble128:
-  case vmIntrinsics::_VectorFalseMaskDouble128:
   case vmIntrinsics::_VectorTrueMaskDouble256:
-  case vmIntrinsics::_VectorFalseMaskDouble256:
   case vmIntrinsics::_VectorTrueMaskDouble512:
-  case vmIntrinsics::_VectorFalseMaskDouble512:
   case vmIntrinsics::_VectorTrueMaskInt64:
-  case vmIntrinsics::_VectorFalseMaskInt64:
   case vmIntrinsics::_VectorTrueMaskInt128:
-  case vmIntrinsics::_VectorFalseMaskInt128:
   case vmIntrinsics::_VectorTrueMaskInt256:
-  case vmIntrinsics::_VectorFalseMaskInt256:
   case vmIntrinsics::_VectorTrueMaskInt512:
-  case vmIntrinsics::_VectorFalseMaskInt512:
+  case vmIntrinsics::_VectorTrueMaskLong64:
+  case vmIntrinsics::_VectorTrueMaskLong128:
+  case vmIntrinsics::_VectorTrueMaskLong256:
+  case vmIntrinsics::_VectorTrueMaskLong512:
+  case vmIntrinsics::_VectorTrueMaskByte64:
+  case vmIntrinsics::_VectorTrueMaskByte128:
+  case vmIntrinsics::_VectorTrueMaskByte256:
+  case vmIntrinsics::_VectorTrueMaskByte512:
+  case vmIntrinsics::_VectorTrueMaskShort64:
+  case vmIntrinsics::_VectorTrueMaskShort128:
+  case vmIntrinsics::_VectorTrueMaskShort256:
+  case vmIntrinsics::_VectorTrueMaskShort512:
     return true;
   default:
     return false;
   }
 }
 
-static bool is_vector_mask_make_true(vmIntrinsics::ID id) {
+static bool is_vector_mask_make_false(vmIntrinsics::ID id) {
   switch (id) {
-  case vmIntrinsics::_VectorTrueMaskFloat128:
-  case vmIntrinsics::_VectorTrueMaskFloat256:
-  case vmIntrinsics::_VectorTrueMaskFloat512:
-  case vmIntrinsics::_VectorTrueMaskDouble128:
-  case vmIntrinsics::_VectorTrueMaskDouble256:
-  case vmIntrinsics::_VectorTrueMaskDouble512:
-  case vmIntrinsics::_VectorTrueMaskInt128:
-  case vmIntrinsics::_VectorTrueMaskInt256:
-  case vmIntrinsics::_VectorTrueMaskInt512:
+  case vmIntrinsics::_VectorFalseMaskFloat64:
+  case vmIntrinsics::_VectorFalseMaskFloat128:
+  case vmIntrinsics::_VectorFalseMaskFloat256:
+  case vmIntrinsics::_VectorFalseMaskFloat512:
+  case vmIntrinsics::_VectorFalseMaskDouble64:
+  case vmIntrinsics::_VectorFalseMaskDouble128:
+  case vmIntrinsics::_VectorFalseMaskDouble256:
+  case vmIntrinsics::_VectorFalseMaskDouble512:
+  case vmIntrinsics::_VectorFalseMaskInt64:
+  case vmIntrinsics::_VectorFalseMaskInt128:
+  case vmIntrinsics::_VectorFalseMaskInt256:
+  case vmIntrinsics::_VectorFalseMaskInt512:
+  case vmIntrinsics::_VectorFalseMaskLong64:
+  case vmIntrinsics::_VectorFalseMaskLong128:
+  case vmIntrinsics::_VectorFalseMaskLong256:
+  case vmIntrinsics::_VectorFalseMaskLong512:
+  case vmIntrinsics::_VectorFalseMaskByte64:
+  case vmIntrinsics::_VectorFalseMaskByte128:
+  case vmIntrinsics::_VectorFalseMaskByte256:
+  case vmIntrinsics::_VectorFalseMaskByte512:
+  case vmIntrinsics::_VectorFalseMaskShort64:
+  case vmIntrinsics::_VectorFalseMaskShort128:
+  case vmIntrinsics::_VectorFalseMaskShort256:
+  case vmIntrinsics::_VectorFalseMaskShort512:
     return true;
   default:
     return false;
   }
+}
+
+static bool is_vector_mask_make(vmIntrinsics::ID id) {
+  return is_vector_mask_make_false(id) || is_vector_mask_make_true(id);
 }
 
 static bool is_vector_mask_op(vmIntrinsics::ID id) {
@@ -7479,17 +7497,68 @@ Node* LibraryCallKit::get_vector_shift_operand(Node* operand, int shift_op, Basi
   }
 }
 
-Node* LibraryCallKit::addMasking(Node* vin_select_true, Node* vin_select_false, const TypeInstPtr* in_box_type, Node* unwrapped_mask_arg,
-                                 BasicType type, int num_elem) {
-  if (!Matcher::match_rule_supported(Op_VectorBlend)) {
+enum VectorMaskUseType {
+  VecMaskUseLoad,
+  VecMaskUseStore,
+  VecMaskUseAll,
+  VecMaskNotUsed
+};
+
+static bool arch_supports_vector(int op, int num_elem, BasicType type, VectorMaskUseType mask_use_type) {
+  // Check that the operation is valid.
+  if (op <= 0) {
 #ifndef PRODUCT
     if (DebugVectorApi) {
-      tty->print_cr("Failed adding mask logic to operation because VectorBlend not supported.");
+      tty->print_cr("Rejected intrinsification because no valid vector op could be extracted");
     }
 #endif
-    return NULL;
+    return false;
   }
 
+  // Check that architecture supports this op-size-type combination.
+  if (!Matcher::match_rule_supported_vector(op, num_elem, type)) {
+#ifndef PRODUCT
+    if (DebugVectorApi) {
+      tty->print_cr("Rejected vector op (%s,%s,%d) because architecture does not support it",
+                    NodeClassNames[op], type2name(type), num_elem);
+    }
+#endif
+    return false;
+  } else {
+    assert(Matcher::match_rule_supported(op), "must be supported");
+  }
+
+  // Check whether mask unboxing is supported.
+  if (mask_use_type == VecMaskUseAll || mask_use_type == VecMaskUseLoad) {
+    if (!Matcher::match_rule_supported_vector(Op_VectorLoadMask, num_elem, type)) {
+    #ifndef PRODUCT
+        if (DebugVectorApi) {
+          tty->print_cr("Rejected vector mask loading (%s,%s,%d) because architecture does not support it",
+                        NodeClassNames[Op_VectorLoadMask], type2name(type), num_elem);
+        }
+    #endif
+        return false;
+      }
+  }
+
+  // Check whether mask boxing is supported.
+  if (mask_use_type == VecMaskUseAll || mask_use_type == VecMaskUseStore) {
+    if (!Matcher::match_rule_supported_vector(Op_VectorStoreMask, num_elem, type)) {
+    #ifndef PRODUCT
+        if (DebugVectorApi) {
+          tty->print_cr("Rejected vector mask storing (%s,%s,%d) because architecture does not support it",
+                        NodeClassNames[Op_VectorStoreMask], type2name(type), num_elem);
+        }
+    #endif
+        return false;
+      }
+  }
+
+  return true;
+}
+
+Node* LibraryCallKit::addMasking(Node* vin_select_true, Node* vin_select_false, const TypeInstPtr* in_box_type, Node* unwrapped_mask_arg,
+                                 BasicType type, int num_elem) {
   const TypeInstPtr* mask_box_type = TypeInstPtr::make(TypePtr::NotNull,
                                                        get_exact_klass_for_vector_box(in_box_type->klass(),
                                                                                       type, num_elem,
@@ -7520,12 +7589,7 @@ bool LibraryCallKit::inline_bin_vector_op(const TypeInstPtr* box_type, int op, B
   }
 #endif
 
-  if (!Matcher::match_rule_supported(op) && !Matcher::match_rule_supported_vector(op, num_elem)) {
-#ifndef PRODUCT
-    if (DebugVectorApi) {
-      tty->print_cr("Rejected vector op (%s,%d) because architecture does not support it", NodeClassNames[op], num_elem);
-    }
-#endif
+  if (!arch_supports_vector(op, num_elem, type, is_mask_variant ? VecMaskUseLoad : VecMaskNotUsed)) {
     return false;
   }
 
@@ -7561,7 +7625,8 @@ bool LibraryCallKit::inline_bin_vector_op(const TypeInstPtr* box_type, int op, B
   return true;
 }
 
-bool LibraryCallKit::inline_un_vector_op(const TypeInstPtr* box_type, int op, BasicType type, int num_elem) {
+bool LibraryCallKit::inline_un_vector_op(const TypeInstPtr* box_type, int op, BasicType type,
+                                         int num_elem, bool is_mask_variant) {
   assert(op != 0, "Operation should be valid");
 
 #ifndef PRODUCT
@@ -7570,12 +7635,7 @@ bool LibraryCallKit::inline_un_vector_op(const TypeInstPtr* box_type, int op, Ba
   }
 #endif
 
-  if (!Matcher::match_rule_supported(op) && !Matcher::match_rule_supported_vector(op, num_elem)) {
-#ifndef PRODUCT
-    if (DebugVectorApi) {
-      tty->print_cr("Rejected vector op (%s,%d) because architecture does not support it", NodeClassNames[op], num_elem);
-    }
-#endif
+  if (!arch_supports_vector(op, num_elem, type, is_mask_variant ? VecMaskUseLoad : VecMaskNotUsed)) {
     return false;
   }
 
@@ -7618,6 +7678,10 @@ bool LibraryCallKit::inline_vector_cmp(const TypeInstPtr* box_type, BasicType ty
   }
 #endif
 
+  if (!arch_supports_vector(Op_VectorMaskCmp, num_elem, type, VecMaskUseStore)) {
+    return false;
+  }
+
   BoolTest::mask comp = BoolTest::eq;
   switch (id) {
     case vmIntrinsics::_VectorEqualFloat:
@@ -7635,15 +7699,6 @@ bool LibraryCallKit::inline_vector_cmp(const TypeInstPtr* box_type, BasicType ty
     default:
       assert(false, "Unknown mask predicate");
       break;
-  }
-
-  if (!Matcher::match_rule_supported(Op_VectorMaskCmp) && !Matcher::match_rule_supported_vector(Op_VectorMaskCmp, num_elem)) {
-#ifndef PRODUCT
-    if (DebugVectorApi) {
-      tty->print_cr("Rejected vector comparison because architecture does not support it");
-    }
-#endif
-    return false;
   }
 
 #ifndef PRODUCT
@@ -7672,12 +7727,13 @@ bool LibraryCallKit::inline_vector_cmp(const TypeInstPtr* box_type, BasicType ty
 }
 
 bool LibraryCallKit::inline_vector_blend(const TypeInstPtr* box_type, BasicType type, int num_elem) {
-  if (!Matcher::match_rule_supported(Op_VectorBlend) && !Matcher::match_rule_supported_vector(Op_VectorBlend, num_elem)) {
 #ifndef PRODUCT
-    if (DebugVectorApi) {
-      tty->print_cr("Rejected vector blend because architecture does not support it");
-    }
+  if (DebugVectorApi) {
+    tty->print_cr("Trying to intrinsify vector blend.");
+  }
 #endif
+
+  if (!arch_supports_vector(Op_VectorBlend, num_elem, type, VecMaskUseLoad)) {
     return false;
   }
 
@@ -7718,12 +7774,7 @@ bool LibraryCallKit::inline_vector_addAll(const TypeInstPtr* box_type, int op, B
   }
 #endif
 
-  if (!Matcher::match_rule_supported(op) && !Matcher::match_rule_supported_vector(op, num_elem)) {
-#ifndef PRODUCT
-    if (DebugVectorApi) {
-      tty->print_cr("Rejected vector op (%s,%d) because architecture does not support it", NodeClassNames[op], num_elem);
-    }
-#endif
+  if (!arch_supports_vector(op, num_elem, type, VecMaskNotUsed)) {
     return false;
   }
 
@@ -7762,12 +7813,7 @@ bool LibraryCallKit::inline_vector_mulAll(const TypeInstPtr* box_type, int op, B
   }
 #endif
 
-  if (!Matcher::match_rule_supported(op) && !Matcher::match_rule_supported_vector(op, num_elem)) {
-#ifndef PRODUCT
-    if (DebugVectorApi) {
-      tty->print_cr("Rejected vector op (%s,%d) because architecture does not support it", NodeClassNames[op], num_elem);
-    }
-#endif
+  if (!arch_supports_vector(op, num_elem, type, VecMaskNotUsed)) {
     return false;
   }
 
@@ -7800,13 +7846,17 @@ bool LibraryCallKit::inline_vector_mulAll(const TypeInstPtr* box_type, int op, B
 }
 
 bool LibraryCallKit::inline_vector_make_mask(const TypeInstPtr* box_type, BasicType bt, int num_elem, vmIntrinsics::ID id) {
-  if (id == vmIntrinsics::_VectorConstantMask) {
+  bt = getMaskBasicType(bt);
+  if (!arch_supports_vector(VectorNode::replicate_opcode(bt), num_elem, bt, VecMaskUseStore)) {
     return false;
   }
 
   bool is_true_mask = is_vector_mask_make_true(id);
-
-  bt = getMaskBasicType(bt);
+#ifdef ASSERT
+  if (!is_true_mask) {
+    assert(is_vector_mask_make_false(id), "must be false mask");
+  }
+#endif
 
   Node* input = NULL;
   if (is_true_mask) {
@@ -7824,11 +7874,11 @@ bool LibraryCallKit::inline_vector_make_mask(const TypeInstPtr* box_type, BasicT
 }
 
 bool LibraryCallKit::inline_vector_mask_test(const TypeInstPtr* box_type, BasicType type, int num_elem, vmIntrinsics::ID id) {
-  if (!Matcher::match_rule_supported(Op_VectorTest) && !Matcher::match_rule_supported_vector(Op_VectorTest, num_elem)) {
+  type = getMaskBasicType(type);
+  if (!arch_supports_vector(Op_VectorTest, num_elem, type, VecMaskUseLoad)) {
     return false;
   }
 
-  type = getMaskBasicType(type);
   Node* opd1 = getVectorInput(argument(0), box_type, type, num_elem);
   if (opd1 == NULL) {
     return false;
@@ -7869,6 +7919,10 @@ bool LibraryCallKit::inline_vector_mask_op(const TypeInstPtr* box_type, BasicTyp
       tty->print_cr("Vector Mask NOT is not yet supported due to missing backend implementation");
     }
 #endif
+    return false;
+  } else if (id == vmIntrinsics::_VectorMaskAnd && !arch_supports_vector(Op_AndV, num_elem, type, VecMaskUseAll)) {
+    return false;
+  } else if (id == vmIntrinsics::_VectorMaskOr && !arch_supports_vector(Op_OrV, num_elem, type, VecMaskUseAll)) {
     return false;
   }
 
@@ -8171,7 +8225,7 @@ bool LibraryCallKit::inline_vector_operation(vmIntrinsics::ID id) {
       generated = inline_bin_vector_op(box_type, op, type, num_elem, is_mask_variant);
     } else if ( is_un_vector_op(id) ) {
       int op = get_op_from_intrinsic(id);
-      generated = inline_un_vector_op(box_type, op, type, num_elem);
+      generated = inline_un_vector_op(box_type, op, type, num_elem, is_mask_variant);
     } else {
       fatal("Needs Intrinsic suppport for this operation %s", vmIntrinsics::name_at(id));
     }
@@ -8466,12 +8520,13 @@ bool LibraryCallKit::inline_vector_binary_operation() {
   int num_elem = vlen->get_con();
   int opc = get_opc(opr->get_con(), elem_bt);
   int sopc = VectorNode::opcode(opc, elem_bt); // get_node_id(opr->get_con(), elem_bt);
-  if (sopc > 0 && !Matcher::match_rule_supported(sopc) &&
-      !Matcher::match_rule_supported_vector(sopc, num_elem)) {
-    return false; // not supported
-  }
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
+
+  // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
+  if (!arch_supports_vector(sopc, num_elem, elem_bt, vbox_klass->is_vectormask() ? VecMaskUseAll : VecMaskNotUsed)) {
+    return false; // not supported
+  }
 
   Node* opd1 = unbox_vector(argument(4), vbox_type, elem_bt, num_elem);
   Node* opd2 = unbox_vector(argument(5), vbox_type, elem_bt, num_elem);
@@ -8508,6 +8563,14 @@ bool LibraryCallKit::inline_vector_broadcast_coerced() {
   }
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
+  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
+
+  // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
+  if (!arch_supports_vector(VectorNode::replicate_opcode(elem_bt), num_elem, elem_bt,
+                            vbox_klass->is_vectormask() ? VecMaskUseStore : VecMaskNotUsed)) {
+    return false; // not supported
+  }
 
   Node* bits = argument(3); // long
 
@@ -8539,9 +8602,6 @@ bool LibraryCallKit::inline_vector_broadcast_coerced() {
 
   Node* broadcast = VectorNode::scalar2vector(elem, num_elem, Type::get_const_basic_type(elem_bt));
   broadcast = gvn().transform(broadcast);
-
-  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
-  const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
   Node* box = wrapWithVectorBox(broadcast, vbox_type);
   setVectorOutput(box);
 
@@ -8574,6 +8634,11 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
   }
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
+
+  // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
+  if (!arch_supports_vector(is_store ? Op_StoreVector : Op_LoadVector, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false; // not supported
+  }
 
   Node* arr = argument(3);
   Node* idx = argument(4);
@@ -8632,10 +8697,12 @@ bool LibraryCallKit::inline_vector_reduction() {
 
   int opc  = get_opc(opr->get_con(), elem_bt);
   int sopc = ReductionNode::opcode(opc, elem_bt);
-  if (sopc > 0 && !Matcher::match_rule_supported(sopc) &&
-      !Matcher::match_rule_supported_vector(sopc, num_elem)) {
-    return false; // not supported
+
+  // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
+  if (!arch_supports_vector(sopc, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false;
   }
+
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
@@ -8643,7 +8710,9 @@ bool LibraryCallKit::inline_vector_reduction() {
   if (opd == NULL) {
     return false; // operand unboxing failed
   }
-  Node* rn = gvn().transform(ReductionNode::make(opc, NULL, zerocon(elem_bt), opd, elem_bt));
+
+  Node* init = ReductionNode::make_reduction_input(_gvn, opc, elem_bt);
+  Node* rn = gvn().transform(ReductionNode::make(opc, NULL, init, opd, elem_bt));
 
   Node* bits = NULL;
   switch (elem_bt) {
@@ -8691,13 +8760,12 @@ bool LibraryCallKit::inline_vector_test() {
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   Assembler::Condition booltest = (Assembler::Condition)cond->get_con();
-
-  if (!Matcher::match_rule_supported(Op_VectorTest) && !Matcher::match_rule_supported_vector(Op_VectorTest, num_elem)) {
-    return false;
-  }
-
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
+
+  if (!arch_supports_vector(Op_VectorTest, num_elem, elem_bt, vbox_klass->is_vectormask() ? VecMaskUseLoad : VecMaskNotUsed)) {
+    return false;
+  }
 
   Node* opd1 = unbox_vector(argument(4), vbox_type, elem_bt, num_elem);
   Node* opd2 = unbox_vector(argument(5), vbox_type, elem_bt, num_elem);

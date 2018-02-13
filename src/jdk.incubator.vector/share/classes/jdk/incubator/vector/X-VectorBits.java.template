@@ -27,12 +27,7 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-#if[FP]
 import jdk.internal.HotSpotIntrinsicCandidate;
-#end[FP]
-#if[int]
-import jdk.internal.HotSpotIntrinsicCandidate;
-#end[int]
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -944,12 +939,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         }
 #end[BITWISE]
 
-#if[FP]
         @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-        @HotSpotIntrinsicCandidate
-#end[int]
         @Override
         @ForceInline
         public $masktype$ trueMask() {
@@ -958,12 +948,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                                                      (z -> $masktype$.TRUE_MASK));
         }
 
-#if[FP]
         @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-        @HotSpotIntrinsicCandidate
-#end[int]
         @Override
         @ForceInline
         public $masktype$ falseMask() {

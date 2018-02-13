@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
+import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -799,6 +800,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
                 ((long bits) -> SPECIES.op(i -> (byte)bits)));
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Byte64Mask trueMask() {
@@ -807,6 +809,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
                                                      (z -> Byte64Mask.TRUE_MASK));
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Byte64Mask falseMask() {

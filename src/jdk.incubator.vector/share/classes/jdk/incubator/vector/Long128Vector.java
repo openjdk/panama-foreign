@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
+import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -824,6 +825,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
                 ((long bits) -> SPECIES.op(i -> (long)bits)));
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Long128Mask trueMask() {
@@ -832,6 +834,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
                                                      (z -> Long128Mask.TRUE_MASK));
         }
 
+        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Long128Mask falseMask() {

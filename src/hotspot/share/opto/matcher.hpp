@@ -309,8 +309,8 @@ public:
   static const bool match_rule_supported(int opcode);
 
   // identify extra cases that we might want to provide match rules for
-  // e.g. Op_ vector nodes and other intrinsics while guarding with vlen
-  static const bool match_rule_supported_vector(int opcode, int vlen);
+  // e.g. Op_ vector nodes and other intrinsics while guarding with vlen and basic type
+  static const bool match_rule_supported_vector(int opcode, int vlen, BasicType bt);
 
   // Some microarchitectures have mask registers used on vectors
   static const bool has_predicated_vectors(void);

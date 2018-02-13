@@ -600,6 +600,10 @@ inline bool is_reference_type(BasicType t) {
   return (t == T_OBJECT || t == T_ARRAY);
 }
 
+inline bool is_integral_type(BasicType t) {
+  return is_subword_type(t) || t == T_INT || t == T_LONG;
+}
+
 // Convert a char from a classfile signature to a BasicType
 inline BasicType char2type(char c) {
   switch( c ) {

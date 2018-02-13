@@ -186,7 +186,6 @@ public interface Vector<E, S extends Vector.Shape> {
         Vector<E, S> fromByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
 
         //Mask and shuffle constructions
-        @HotSpotIntrinsicCandidate
         Mask<E, S> constantMask(boolean... bits);
 
         Mask<E, S> trueMask();

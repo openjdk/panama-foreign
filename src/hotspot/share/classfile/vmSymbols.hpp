@@ -1521,6 +1521,18 @@
    do_signature(vector_make_mask_int128_sig, "()Ljdk/incubator/vector/Int128Vector$Int128Mask;")                                               \
    do_signature(vector_make_mask_int256_sig, "()Ljdk/incubator/vector/Int256Vector$Int256Mask;")                                               \
    do_signature(vector_make_mask_int512_sig, "()Ljdk/incubator/vector/Int512Vector$Int512Mask;")                                               \
+   do_signature(vector_make_mask_long64_sig, "()Ljdk/incubator/vector/Long64Vector$Long64Mask;")                                               \
+   do_signature(vector_make_mask_long128_sig, "()Ljdk/incubator/vector/Long128Vector$Long128Mask;")                                            \
+   do_signature(vector_make_mask_long256_sig, "()Ljdk/incubator/vector/Long256Vector$Long256Mask;")                                            \
+   do_signature(vector_make_mask_long512_sig, "()Ljdk/incubator/vector/Long512Vector$Long512Mask;")                                            \
+   do_signature(vector_make_mask_byte64_sig, "()Ljdk/incubator/vector/Byte64Vector$Byte64Mask;")                                               \
+   do_signature(vector_make_mask_byte128_sig, "()Ljdk/incubator/vector/Byte128Vector$Byte128Mask;")                                            \
+   do_signature(vector_make_mask_byte256_sig, "()Ljdk/incubator/vector/Byte256Vector$Byte256Mask;")                                            \
+   do_signature(vector_make_mask_byte512_sig, "()Ljdk/incubator/vector/Byte512Vector$Byte512Mask;")                                            \
+   do_signature(vector_make_mask_short64_sig, "()Ljdk/incubator/vector/Short64Vector$Short64Mask;")                                            \
+   do_signature(vector_make_mask_short128_sig, "()Ljdk/incubator/vector/Short128Vector$Short128Mask;")                                         \
+   do_signature(vector_make_mask_short256_sig, "()Ljdk/incubator/vector/Short256Vector$Short256Mask;")                                         \
+   do_signature(vector_make_mask_short512_sig, "()Ljdk/incubator/vector/Short512Vector$Short512Mask;")                                         \
    do_signature(vector_bop_mask_sig, "(Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/Vector$Mask;")                                 \
    do_signature(vector_mask_rebracket_sig, "(Ljava/lang/Class;)Ljdk/incubator/vector/Vector$Mask;")                                            \
    do_signature(vector_cast_sig, "(Ljava/lang/Class;)Ljdk/incubator/vector/Vector;")                                                           \
@@ -1551,8 +1563,7 @@
    do_name(not_method_name, "not")                                                                                                             \
    do_name(xor_method_name, "xor")                                                                                                             \
    do_name(neg_method_name, "neg")                                                                                                             \
-   /* _VectorConstantMask should be first one in list as it is used as marker for beginning of Vector API methods */                                 \
-   do_intrinsic(_VectorConstantMask, jdk_incubator_vector_VectorSpecies, constant_mask_name, vector_constant_mask_sig, F_R)                    \
+   /* _VectorMaskAllTrue should be first one in list as it is used as marker for beginning of Vector API methods */                            \
    do_intrinsic(_VectorMaskAllTrue, jdk_incubator_vector_VectorMask, all_true_name, void_boolean_signature, F_R)                               \
    do_intrinsic(_VectorMaskAnyTrue, jdk_incubator_vector_VectorMask, any_true_name, void_boolean_signature, F_R)                               \
    do_intrinsic(_VectorMaskRebracket, jdk_incubator_vector_VectorMask, rebracket_method_name, vector_mask_rebracket_sig, F_R)                  \
@@ -1590,6 +1601,30 @@
    do_intrinsic(_VectorFalseMaskInt256, jdk_incubator_vector_Int256Vector_Int256Species, false_mask_name, vector_make_mask_int256_sig, F_R)           \
    do_intrinsic(_VectorTrueMaskInt512, jdk_incubator_vector_Int512Vector_Int512Species, true_mask_name, vector_make_mask_int512_sig, F_R)             \
    do_intrinsic(_VectorFalseMaskInt512, jdk_incubator_vector_Int512Vector_Int512Species, false_mask_name, vector_make_mask_int512_sig, F_R)           \
+   do_intrinsic(_VectorTrueMaskLong64, jdk_incubator_vector_Long64Vector_Long64Species, true_mask_name, vector_make_mask_long64_sig, F_R)             \
+   do_intrinsic(_VectorFalseMaskLong64, jdk_incubator_vector_Long64Vector_Long64Species, false_mask_name, vector_make_mask_long64_sig, F_R)           \
+   do_intrinsic(_VectorTrueMaskLong128, jdk_incubator_vector_Long128Vector_Long128Species, true_mask_name, vector_make_mask_long128_sig, F_R)         \
+   do_intrinsic(_VectorFalseMaskLong128, jdk_incubator_vector_Long128Vector_Long128Species, false_mask_name, vector_make_mask_long128_sig, F_R)       \
+   do_intrinsic(_VectorTrueMaskLong256, jdk_incubator_vector_Long256Vector_Long256Species, true_mask_name, vector_make_mask_long256_sig, F_R)         \
+   do_intrinsic(_VectorFalseMaskLong256, jdk_incubator_vector_Long256Vector_Long256Species, false_mask_name, vector_make_mask_long256_sig, F_R)       \
+   do_intrinsic(_VectorTrueMaskLong512, jdk_incubator_vector_Long512Vector_Long512Species, true_mask_name, vector_make_mask_long512_sig, F_R)         \
+   do_intrinsic(_VectorFalseMaskLong512, jdk_incubator_vector_Long512Vector_Long512Species, false_mask_name, vector_make_mask_long512_sig, F_R)       \
+   do_intrinsic(_VectorTrueMaskByte64, jdk_incubator_vector_Byte64Vector_Byte64Species, true_mask_name, vector_make_mask_byte64_sig, F_R)             \
+   do_intrinsic(_VectorFalseMaskByte64, jdk_incubator_vector_Byte64Vector_Byte64Species, false_mask_name, vector_make_mask_byte64_sig, F_R)           \
+   do_intrinsic(_VectorTrueMaskByte128, jdk_incubator_vector_Byte128Vector_Byte128Species, true_mask_name, vector_make_mask_byte128_sig, F_R)         \
+   do_intrinsic(_VectorFalseMaskByte128, jdk_incubator_vector_Byte128Vector_Byte128Species, false_mask_name, vector_make_mask_byte128_sig, F_R)       \
+   do_intrinsic(_VectorTrueMaskByte256, jdk_incubator_vector_Byte256Vector_Byte256Species, true_mask_name, vector_make_mask_byte256_sig, F_R)         \
+   do_intrinsic(_VectorFalseMaskByte256, jdk_incubator_vector_Byte256Vector_Byte256Species, false_mask_name, vector_make_mask_byte256_sig, F_R)       \
+   do_intrinsic(_VectorTrueMaskByte512, jdk_incubator_vector_Byte512Vector_Byte512Species, true_mask_name, vector_make_mask_byte512_sig, F_R)         \
+   do_intrinsic(_VectorFalseMaskByte512, jdk_incubator_vector_Byte512Vector_Byte512Species, false_mask_name, vector_make_mask_byte512_sig, F_R)       \
+   do_intrinsic(_VectorTrueMaskShort64, jdk_incubator_vector_Short64Vector_Short64Species, true_mask_name, vector_make_mask_short64_sig, F_R)         \
+   do_intrinsic(_VectorFalseMaskShort64, jdk_incubator_vector_Short64Vector_Short64Species, false_mask_name, vector_make_mask_short64_sig, F_R)       \
+   do_intrinsic(_VectorTrueMaskShort128, jdk_incubator_vector_Short128Vector_Short128Species, true_mask_name, vector_make_mask_short128_sig, F_R)     \
+   do_intrinsic(_VectorFalseMaskShort128, jdk_incubator_vector_Short128Vector_Short128Species, false_mask_name, vector_make_mask_short128_sig, F_R)   \
+   do_intrinsic(_VectorTrueMaskShort256, jdk_incubator_vector_Short256Vector_Short256Species, true_mask_name, vector_make_mask_short256_sig, F_R)     \
+   do_intrinsic(_VectorFalseMaskShort256, jdk_incubator_vector_Short256Vector_Short256Species, false_mask_name, vector_make_mask_short256_sig, F_R)   \
+   do_intrinsic(_VectorTrueMaskShort512, jdk_incubator_vector_Short512Vector_Short512Species, true_mask_name, vector_make_mask_short512_sig, F_R)     \
+   do_intrinsic(_VectorFalseMaskShort512, jdk_incubator_vector_Short512Vector_Short512Species, false_mask_name, vector_make_mask_short512_sig, F_R)   \
    do_intrinsic(_VectorBlendLong, jdk_incubator_vector_LongVector, blend_method_name, vector_long_blend_sig, F_R)                              \
    do_intrinsic(_VectorBlendByte, jdk_incubator_vector_ByteVector, blend_method_name, vector_byte_blend_sig, F_R)                              \
    do_intrinsic(_VectorBlendShort, jdk_incubator_vector_ShortVector, blend_method_name, vector_short_blend_sig, F_R)                           \
@@ -1858,7 +1893,7 @@ class vmIntrinsics: AllStatic {
 
     ID_LIMIT,
     LAST_COMPILER_INLINE = _VectorAddFloat,
-    FIRST_VECTOR_API     = _VectorConstantMask,
+    FIRST_VECTOR_API     = _VectorMaskAllTrue,
     LAST_VECTOR_API      = _VectorAddFloat,
     FIRST_MH_SIG_POLY    = _invokeGeneric,
     FIRST_MH_STATIC      = _linkToVirtual,
