@@ -3094,8 +3094,7 @@ void PhaseMacroExpand::expand_vectorunbox_node(VectorUnboxNode* vunbox) {
   assert(tinst != NULL, "obj is null");
   assert(tinst->klass()->is_loaded(), "obj is not loaded");
   ciInstanceKlass* from_kls = tinst->klass()->as_instance_klass();
-  assert(from_kls->is_vectorapi_vector(), "expecting it to be Vector API class");
-  BasicType bt = from_kls->vectorapi_vector_bt();
+  BasicType bt = vunbox->vect_type()->element_basic_type();
   BasicType masktype = bt;
 
   const char* field_name = "vec";

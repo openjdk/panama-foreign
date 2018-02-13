@@ -211,7 +211,8 @@ module java.base {
     exports jdk.internal.vm.annotation to
         jdk.unsupported,
         jdk.internal.vm.ci,
-        jdk.incubator.httpclient;
+        jdk.incubator.httpclient,
+        jdk.incubator.vector;
     exports jdk.internal.util.jar to
         jdk.jartool;
     exports sun.net to

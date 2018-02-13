@@ -26,18 +26,23 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
 #if[FP]
 import jdk.internal.HotSpotIntrinsicCandidate;
 #end[FP]
 #if[int]
 import jdk.internal.HotSpotIntrinsicCandidate;
 #end[int]
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     static final $Type$$bits$Species SPECIES = new $Type$$bits$Species();
 
     static final $vectortype$ ZERO = new $vectortype$();
+
+    static final int LENGTH = SPECIES.length();
 
     $type$[] vec;
 
@@ -49,6 +54,8 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         vec = v;
     }
 
+    @Override
+    public int length() { return LENGTH; }
 
     // Unary operator
 
@@ -125,6 +132,151 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             v = f.apply(i, v, vec[i]);
         }
         return v;
+    }
+
+    // Binary operations
+
+    @Override
+    @ForceInline
+    public $vectortype$ add(Vector<$Boxtype$,Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+        return ($vectortype$) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ADD, $vectortype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ sub(Vector<$Boxtype$,Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+        return ($vectortype$) VectorIntrinsics.binaryOp(
+            VECTOR_OP_SUB, $vectortype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a - b)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ mul(Vector<$Boxtype$,Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+        return ($vectortype$) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a * b)));
+    }
+
+
+    @Override
+    @ForceInline
+    public $vectortype$ div(Vector<$Boxtype$,Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+        return ($vectortype$) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, $vectortype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a / b)));
+    }
+
+#if[BITWISE]
+    @Override
+    @ForceInline
+    public $vectortype$ and(Vector<$Boxtype$,Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+        return ($vectortype$) VectorIntrinsics.binaryOp(
+            VECTOR_OP_AND, $vectortype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a & b)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ or(Vector<$Boxtype$,Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+        return ($vectortype$) VectorIntrinsics.binaryOp(
+            VECTOR_OP_OR, $vectortype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ xor(Vector<$Boxtype$,Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+        return ($vectortype$) VectorIntrinsics.binaryOp(
+            VECTOR_OP_XOR, $vectortype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a ^ b)));
+    }
+#end[BITWISE]
+
+    // Type specific horizontal reductions
+
+#if[intOrlong]
+    @Override
+    @ForceInline
+    public $type$ addAll() {
+        return ($type$) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_ADD, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public $type$ mulAll() {
+        return ($type$) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a * b)));
+    }
+#end[intOrlong]
+#if[FP]
+    @Override
+    @ForceInline
+    public $type$ addAll() {
+        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_ADD, $vectortype$.class, $type$.class, LENGTH,
+                                this,
+                                v -> {
+                                    $type$ r = v.rOp(($type$) 0, (i, a, b) -> ($type$) (a + b));
+                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
+                                });
+        return $Type$.$bitstype$BitsTo$Fptype$(bits);
+    }
+
+    @Override
+    @ForceInline
+    public $type$ mulAll() {
+        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
+                                this,
+                                v -> {
+                                    $type$ r = v.rOp(($type$) 0, (i, a, b) -> ($type$) (a * b));
+                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
+                                });
+        return $Type$.$bitstype$BitsTo$Fptype$(bits);
+    }
+#end[FP]
+
+    // Memory operations
+
+    @Override
+    @ForceInline
+    public void intoArray($type$[] a, int ix) {
+        Objects.requireNonNull(a);
+        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            Objects.checkFromIndexSize(ix, LENGTH, a.length);
+        }
+        VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx, v) -> v.forEach((i, a_) -> (($type$[])arr)[idx + i] = a_));
     }
 
     //
@@ -368,6 +520,62 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             }
             return new $vectortype$(res);
         }
+
+        // Unary operations
+
+        //Mask<E, S> not();
+
+        // Binary operations
+
+        @Override
+        @ForceInline
+        public $masktype$ and(Mask<$Boxtype$,Shapes.$shape$> o) {
+            Objects.requireNonNull(o);
+            $masktype$ m = ($masktype$)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, $masktype$.class, $bitstype$.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        @Override
+        @ForceInline
+        public $masktype$ or(Mask<$Boxtype$,Shapes.$shape$> o) {
+            Objects.requireNonNull(o);
+            $masktype$ m = ($masktype$)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, $masktype$.class, $bitstype$.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        // Reductions
+
+        @Override
+        @ForceInline
+        public boolean anyTrue() {
+            return VectorIntrinsics.test(COND_notZero, $masktype$.class, $bitstype$.class, LENGTH,
+                                         this, this,
+                                         (m1, m2) -> super.anyTrue());
+        }
+
+        @Override
+        @ForceInline
+        public boolean allTrue() {
+            return VectorIntrinsics.test(COND_carrySet, $masktype$.class, $bitstype$.class, LENGTH,
+                                         this, trueMask(),
+                                         (m1, m2) -> super.allTrue());
+        }
+
+        // Helpers
+
+        @ForceInline
+        static $masktype$ trueMask() {
+            return $masktype$.trueMask();
+        }
+
+        @ForceInline
+        static $masktype$ falseMask() {
+            return $masktype$.falseMask();
+        }
     }
 
     // Species
@@ -441,15 +649,48 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         // Factories
 
         @Override
-        public $vectortype$ zero() {
-            return ZERO;
-        }
-
-        @Override
         public $masktype$ constantMask(boolean... bits) {
             return new $masktype$(bits);
         }
 
+
+#if[FP]
+        @Override
+        @ForceInline
+        public $vectortype$ zero() {
+            return VectorIntrinsics.broadcastCoerced($vectortype$.class, $type$.class, LENGTH,
+                                                     $Type$.$type$To$Bitstype$Bits(0.0f),
+                                                     (z -> ZERO));
+        }
+
+        @Override
+        @ForceInline
+        public $vectortype$ broadcast($type$ e) {
+            return VectorIntrinsics.broadcastCoerced(
+                $vectortype$.class, $type$.class, LENGTH,
+                $Type$.$type$To$Bitstype$Bits(e),
+                ((long bits) -> SPECIES.op(i -> $Type$.$bitstype$BitsTo$Type$(($bitstype$)bits))));
+        }
+#end[FP]
+#if[BITWISE]
+        @Override
+        @ForceInline
+        public $vectortype$ zero() {
+            return VectorIntrinsics.broadcastCoerced($vectortype$.class, $type$.class, LENGTH,
+                                                     0,
+                                                     (z -> ZERO));
+        }
+
+        @Override
+        @ForceInline
+        public $vectortype$ broadcast($type$ e) {
+            return VectorIntrinsics.broadcastCoerced(
+                $vectortype$.class, $type$.class, LENGTH,
+                e,
+                ((long bits) -> SPECIES.op(i -> ($type$)bits)));
+        }
+#end[BITWISE]
+
 #if[FP]
         @HotSpotIntrinsicCandidate
 #end[FP]
@@ -457,8 +698,11 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @HotSpotIntrinsicCandidate
 #end[int]
         @Override
+        @ForceInline
         public $masktype$ trueMask() {
-            return $masktype$.TRUE_MASK;
+            return VectorIntrinsics.broadcastCoerced($masktype$.class, $bitstype$.class, LENGTH,
+                                                     ($bitstype$)-1,
+                                                     (z -> $masktype$.TRUE_MASK));
         }
 
 #if[FP]
@@ -468,8 +712,23 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @HotSpotIntrinsicCandidate
 #end[int]
         @Override
+        @ForceInline
         public $masktype$ falseMask() {
-            return $masktype$.FALSE_MASK;
+            return VectorIntrinsics.broadcastCoerced($masktype$.class, $bitstype$.class, LENGTH,
+                                                     0,
+                                                     (z -> $masktype$.FALSE_MASK));
+        }
+
+        @Override
+        @ForceInline
+        public $vectortype$ fromArray($type$[] a, int ix) {
+            Objects.requireNonNull(a);
+            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+                Objects.checkFromIndexSize(ix, LENGTH, a.length);
+            }
+            return ($vectortype$) VectorIntrinsics.load($vectortype$.class, $type$.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromArray(($type$[]) arr, idx));
         }
     }
 }

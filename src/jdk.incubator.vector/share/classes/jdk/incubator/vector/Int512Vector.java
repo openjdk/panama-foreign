@@ -26,13 +26,18 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Int512Vector extends IntVector<Shapes.S512Bit> {
     static final Int512Species SPECIES = new Int512Species();
 
     static final Int512Vector ZERO = new Int512Vector();
+
+    static final int LENGTH = SPECIES.length();
 
     int[] vec;
 
@@ -44,6 +49,8 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         vec = v;
     }
 
+    @Override
+    public int length() { return LENGTH; }
 
     // Unary operator
 
@@ -120,6 +127,120 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             v = f.apply(i, v, vec[i]);
         }
         return v;
+    }
+
+    // Binary operations
+
+    @Override
+    @ForceInline
+    public Int512Vector add(Vector<Integer,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Int512Vector v = (Int512Vector)o;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ADD, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2, (i, a, b) -> (int)(a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int512Vector sub(Vector<Integer,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Int512Vector v = (Int512Vector)o;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_SUB, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2, (i, a, b) -> (int)(a - b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int512Vector mul(Vector<Integer,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Int512Vector v = (Int512Vector)o;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MUL, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2, (i, a, b) -> (int)(a * b)));
+    }
+
+
+    @Override
+    @ForceInline
+    public Int512Vector div(Vector<Integer,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Int512Vector v = (Int512Vector)o;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2, (i, a, b) -> (int)(a / b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int512Vector and(Vector<Integer,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Int512Vector v = (Int512Vector)o;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_AND, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2, (i, a, b) -> (int)(a & b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int512Vector or(Vector<Integer,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Int512Vector v = (Int512Vector)o;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_OR, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2, (i, a, b) -> (int)(a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int512Vector xor(Vector<Integer,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Int512Vector v = (Int512Vector)o;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_XOR, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2, (i, a, b) -> (int)(a ^ b)));
+    }
+
+    // Type specific horizontal reductions
+
+    @Override
+    @ForceInline
+    public int addAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_ADD, Int512Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public int mulAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MUL, Int512Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a * b)));
+    }
+
+    // Memory operations
+
+    @Override
+    @ForceInline
+    public void intoArray(int[] a, int ix) {
+        Objects.requireNonNull(a);
+        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            Objects.checkFromIndexSize(ix, LENGTH, a.length);
+        }
+        VectorIntrinsics.store(Int512Vector.class, int.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((int[])arr)[idx + i] = a_));
     }
 
     //
@@ -352,6 +473,62 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             }
             return new Int512Vector(res);
         }
+
+        // Unary operations
+
+        //Mask<E, S> not();
+
+        // Binary operations
+
+        @Override
+        @ForceInline
+        public Int512Mask and(Mask<Integer,Shapes.S512Bit> o) {
+            Objects.requireNonNull(o);
+            Int512Mask m = (Int512Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Int512Mask.class, int.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        @Override
+        @ForceInline
+        public Int512Mask or(Mask<Integer,Shapes.S512Bit> o) {
+            Objects.requireNonNull(o);
+            Int512Mask m = (Int512Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Int512Mask.class, int.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        // Reductions
+
+        @Override
+        @ForceInline
+        public boolean anyTrue() {
+            return VectorIntrinsics.test(COND_notZero, Int512Mask.class, int.class, LENGTH,
+                                         this, this,
+                                         (m1, m2) -> super.anyTrue());
+        }
+
+        @Override
+        @ForceInline
+        public boolean allTrue() {
+            return VectorIntrinsics.test(COND_carrySet, Int512Mask.class, int.class, LENGTH,
+                                         this, trueMask(),
+                                         (m1, m2) -> super.allTrue());
+        }
+
+        // Helpers
+
+        @ForceInline
+        static Int512Mask trueMask() {
+            return Int512Mask.trueMask();
+        }
+
+        @ForceInline
+        static Int512Mask falseMask() {
+            return Int512Mask.falseMask();
+        }
     }
 
     // Species
@@ -425,25 +602,56 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         // Factories
 
         @Override
-        public Int512Vector zero() {
-            return ZERO;
-        }
-
-        @Override
         public Int512Mask constantMask(boolean... bits) {
             return new Int512Mask(bits);
         }
 
-        @HotSpotIntrinsicCandidate
+
         @Override
-        public Int512Mask trueMask() {
-            return Int512Mask.TRUE_MASK;
+        @ForceInline
+        public Int512Vector zero() {
+            return VectorIntrinsics.broadcastCoerced(Int512Vector.class, int.class, LENGTH,
+                                                     0,
+                                                     (z -> ZERO));
+        }
+
+        @Override
+        @ForceInline
+        public Int512Vector broadcast(int e) {
+            return VectorIntrinsics.broadcastCoerced(
+                Int512Vector.class, int.class, LENGTH,
+                e,
+                ((long bits) -> SPECIES.op(i -> (int)bits)));
         }
 
         @HotSpotIntrinsicCandidate
         @Override
+        @ForceInline
+        public Int512Mask trueMask() {
+            return VectorIntrinsics.broadcastCoerced(Int512Mask.class, int.class, LENGTH,
+                                                     (int)-1,
+                                                     (z -> Int512Mask.TRUE_MASK));
+        }
+
+        @HotSpotIntrinsicCandidate
+        @Override
+        @ForceInline
         public Int512Mask falseMask() {
-            return Int512Mask.FALSE_MASK;
+            return VectorIntrinsics.broadcastCoerced(Int512Mask.class, int.class, LENGTH,
+                                                     0,
+                                                     (z -> Int512Mask.FALSE_MASK));
+        }
+
+        @Override
+        @ForceInline
+        public Int512Vector fromArray(int[] a, int ix) {
+            Objects.requireNonNull(a);
+            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+                Objects.checkFromIndexSize(ix, LENGTH, a.length);
+            }
+            return (Int512Vector) VectorIntrinsics.load(Int512Vector.class, int.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromArray((int[]) arr, idx));
         }
     }
 }

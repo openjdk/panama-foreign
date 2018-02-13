@@ -26,13 +26,18 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     static final Double128Species SPECIES = new Double128Species();
 
     static final Double128Vector ZERO = new Double128Vector();
+
+    static final int LENGTH = SPECIES.length();
 
     double[] vec;
 
@@ -44,6 +49,8 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         vec = v;
     }
 
+    @Override
+    public int length() { return LENGTH; }
 
     // Unary operator
 
@@ -120,6 +127,96 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
             v = f.apply(i, v, vec[i]);
         }
         return v;
+    }
+
+    // Binary operations
+
+    @Override
+    @ForceInline
+    public Double128Vector add(Vector<Double,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+        return (Double128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ADD, Double128Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double128Vector)v1).bOp(v2, (i, a, b) -> (double)(a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public Double128Vector sub(Vector<Double,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+        return (Double128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_SUB, Double128Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double128Vector)v1).bOp(v2, (i, a, b) -> (double)(a - b)));
+    }
+
+    @Override
+    @ForceInline
+    public Double128Vector mul(Vector<Double,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+        return (Double128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MUL, Double128Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double128Vector)v1).bOp(v2, (i, a, b) -> (double)(a * b)));
+    }
+
+
+    @Override
+    @ForceInline
+    public Double128Vector div(Vector<Double,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+        return (Double128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Double128Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double128Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
+    }
+
+
+    // Type specific horizontal reductions
+
+    @Override
+    @ForceInline
+    public double addAll() {
+        long bits = (long) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_ADD, Double128Vector.class, double.class, LENGTH,
+                                this,
+                                v -> {
+                                    double r = v.rOp((double) 0, (i, a, b) -> (double) (a + b));
+                                    return (long)Double.doubleToLongBits(r);
+                                });
+        return Double.longBitsToDouble(bits);
+    }
+
+    @Override
+    @ForceInline
+    public double mulAll() {
+        long bits = (long) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MUL, Double128Vector.class, double.class, LENGTH,
+                                this,
+                                v -> {
+                                    double r = v.rOp((double) 0, (i, a, b) -> (double) (a * b));
+                                    return (long)Double.doubleToLongBits(r);
+                                });
+        return Double.longBitsToDouble(bits);
+    }
+
+    // Memory operations
+
+    @Override
+    @ForceInline
+    public void intoArray(double[] a, int ix) {
+        Objects.requireNonNull(a);
+        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            Objects.checkFromIndexSize(ix, LENGTH, a.length);
+        }
+        VectorIntrinsics.store(Double128Vector.class, double.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((double[])arr)[idx + i] = a_));
     }
 
     //
@@ -352,6 +449,62 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
             }
             return new Double128Vector(res);
         }
+
+        // Unary operations
+
+        //Mask<E, S> not();
+
+        // Binary operations
+
+        @Override
+        @ForceInline
+        public Double128Mask and(Mask<Double,Shapes.S128Bit> o) {
+            Objects.requireNonNull(o);
+            Double128Mask m = (Double128Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Double128Mask.class, long.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        @Override
+        @ForceInline
+        public Double128Mask or(Mask<Double,Shapes.S128Bit> o) {
+            Objects.requireNonNull(o);
+            Double128Mask m = (Double128Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Double128Mask.class, long.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        // Reductions
+
+        @Override
+        @ForceInline
+        public boolean anyTrue() {
+            return VectorIntrinsics.test(COND_notZero, Double128Mask.class, long.class, LENGTH,
+                                         this, this,
+                                         (m1, m2) -> super.anyTrue());
+        }
+
+        @Override
+        @ForceInline
+        public boolean allTrue() {
+            return VectorIntrinsics.test(COND_carrySet, Double128Mask.class, long.class, LENGTH,
+                                         this, trueMask(),
+                                         (m1, m2) -> super.allTrue());
+        }
+
+        // Helpers
+
+        @ForceInline
+        static Double128Mask trueMask() {
+            return Double128Mask.trueMask();
+        }
+
+        @ForceInline
+        static Double128Mask falseMask() {
+            return Double128Mask.falseMask();
+        }
     }
 
     // Species
@@ -425,25 +578,56 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         // Factories
 
         @Override
-        public Double128Vector zero() {
-            return ZERO;
-        }
-
-        @Override
         public Double128Mask constantMask(boolean... bits) {
             return new Double128Mask(bits);
         }
 
-        @HotSpotIntrinsicCandidate
+
         @Override
-        public Double128Mask trueMask() {
-            return Double128Mask.TRUE_MASK;
+        @ForceInline
+        public Double128Vector zero() {
+            return VectorIntrinsics.broadcastCoerced(Double128Vector.class, double.class, LENGTH,
+                                                     Double.doubleToLongBits(0.0f),
+                                                     (z -> ZERO));
+        }
+
+        @Override
+        @ForceInline
+        public Double128Vector broadcast(double e) {
+            return VectorIntrinsics.broadcastCoerced(
+                Double128Vector.class, double.class, LENGTH,
+                Double.doubleToLongBits(e),
+                ((long bits) -> SPECIES.op(i -> Double.longBitsToDouble((long)bits))));
         }
 
         @HotSpotIntrinsicCandidate
         @Override
+        @ForceInline
+        public Double128Mask trueMask() {
+            return VectorIntrinsics.broadcastCoerced(Double128Mask.class, long.class, LENGTH,
+                                                     (long)-1,
+                                                     (z -> Double128Mask.TRUE_MASK));
+        }
+
+        @HotSpotIntrinsicCandidate
+        @Override
+        @ForceInline
         public Double128Mask falseMask() {
-            return Double128Mask.FALSE_MASK;
+            return VectorIntrinsics.broadcastCoerced(Double128Mask.class, long.class, LENGTH,
+                                                     0,
+                                                     (z -> Double128Mask.FALSE_MASK));
+        }
+
+        @Override
+        @ForceInline
+        public Double128Vector fromArray(double[] a, int ix) {
+            Objects.requireNonNull(a);
+            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+                Objects.checkFromIndexSize(ix, LENGTH, a.length);
+            }
+            return (Double128Vector) VectorIntrinsics.load(Double128Vector.class, double.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromArray((double[]) arr, idx));
         }
     }
 }

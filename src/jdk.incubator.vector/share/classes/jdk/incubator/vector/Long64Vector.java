@@ -26,12 +26,17 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Long64Vector extends LongVector<Shapes.S64Bit> {
     static final Long64Species SPECIES = new Long64Species();
 
     static final Long64Vector ZERO = new Long64Vector();
+
+    static final int LENGTH = SPECIES.length();
 
     long[] vec;
 
@@ -43,6 +48,8 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         vec = v;
     }
 
+    @Override
+    public int length() { return LENGTH; }
 
     // Unary operator
 
@@ -119,6 +126,120 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             v = f.apply(i, v, vec[i]);
         }
         return v;
+    }
+
+    // Binary operations
+
+    @Override
+    @ForceInline
+    public Long64Vector add(Vector<Long,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Long64Vector v = (Long64Vector)o;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ADD, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector sub(Vector<Long,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Long64Vector v = (Long64Vector)o;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_SUB, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a - b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector mul(Vector<Long,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Long64Vector v = (Long64Vector)o;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MUL, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
+    }
+
+
+    @Override
+    @ForceInline
+    public Long64Vector div(Vector<Long,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Long64Vector v = (Long64Vector)o;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a / b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector and(Vector<Long,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Long64Vector v = (Long64Vector)o;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_AND, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a & b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector or(Vector<Long,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Long64Vector v = (Long64Vector)o;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_OR, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector xor(Vector<Long,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Long64Vector v = (Long64Vector)o;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_XOR, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a ^ b)));
+    }
+
+    // Type specific horizontal reductions
+
+    @Override
+    @ForceInline
+    public long addAll() {
+        return (long) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_ADD, Long64Vector.class, long.class, LENGTH,
+            this,
+            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public long mulAll() {
+        return (long) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MUL, Long64Vector.class, long.class, LENGTH,
+            this,
+            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a * b)));
+    }
+
+    // Memory operations
+
+    @Override
+    @ForceInline
+    public void intoArray(long[] a, int ix) {
+        Objects.requireNonNull(a);
+        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            Objects.checkFromIndexSize(ix, LENGTH, a.length);
+        }
+        VectorIntrinsics.store(Long64Vector.class, long.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((long[])arr)[idx + i] = a_));
     }
 
     //
@@ -351,6 +472,62 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             }
             return new Long64Vector(res);
         }
+
+        // Unary operations
+
+        //Mask<E, S> not();
+
+        // Binary operations
+
+        @Override
+        @ForceInline
+        public Long64Mask and(Mask<Long,Shapes.S64Bit> o) {
+            Objects.requireNonNull(o);
+            Long64Mask m = (Long64Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Long64Mask.class, long.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        @Override
+        @ForceInline
+        public Long64Mask or(Mask<Long,Shapes.S64Bit> o) {
+            Objects.requireNonNull(o);
+            Long64Mask m = (Long64Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Long64Mask.class, long.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        // Reductions
+
+        @Override
+        @ForceInline
+        public boolean anyTrue() {
+            return VectorIntrinsics.test(COND_notZero, Long64Mask.class, long.class, LENGTH,
+                                         this, this,
+                                         (m1, m2) -> super.anyTrue());
+        }
+
+        @Override
+        @ForceInline
+        public boolean allTrue() {
+            return VectorIntrinsics.test(COND_carrySet, Long64Mask.class, long.class, LENGTH,
+                                         this, trueMask(),
+                                         (m1, m2) -> super.allTrue());
+        }
+
+        // Helpers
+
+        @ForceInline
+        static Long64Mask trueMask() {
+            return Long64Mask.trueMask();
+        }
+
+        @ForceInline
+        static Long64Mask falseMask() {
+            return Long64Mask.falseMask();
+        }
     }
 
     // Species
@@ -424,23 +601,54 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         // Factories
 
         @Override
-        public Long64Vector zero() {
-            return ZERO;
-        }
-
-        @Override
         public Long64Mask constantMask(boolean... bits) {
             return new Long64Mask(bits);
         }
 
+
         @Override
-        public Long64Mask trueMask() {
-            return Long64Mask.TRUE_MASK;
+        @ForceInline
+        public Long64Vector zero() {
+            return VectorIntrinsics.broadcastCoerced(Long64Vector.class, long.class, LENGTH,
+                                                     0,
+                                                     (z -> ZERO));
         }
 
         @Override
+        @ForceInline
+        public Long64Vector broadcast(long e) {
+            return VectorIntrinsics.broadcastCoerced(
+                Long64Vector.class, long.class, LENGTH,
+                e,
+                ((long bits) -> SPECIES.op(i -> (long)bits)));
+        }
+
+        @Override
+        @ForceInline
+        public Long64Mask trueMask() {
+            return VectorIntrinsics.broadcastCoerced(Long64Mask.class, long.class, LENGTH,
+                                                     (long)-1,
+                                                     (z -> Long64Mask.TRUE_MASK));
+        }
+
+        @Override
+        @ForceInline
         public Long64Mask falseMask() {
-            return Long64Mask.FALSE_MASK;
+            return VectorIntrinsics.broadcastCoerced(Long64Mask.class, long.class, LENGTH,
+                                                     0,
+                                                     (z -> Long64Mask.FALSE_MASK));
+        }
+
+        @Override
+        @ForceInline
+        public Long64Vector fromArray(long[] a, int ix) {
+            Objects.requireNonNull(a);
+            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+                Objects.checkFromIndexSize(ix, LENGTH, a.length);
+            }
+            return (Long64Vector) VectorIntrinsics.load(Long64Vector.class, long.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromArray((long[]) arr, idx));
         }
     }
 }

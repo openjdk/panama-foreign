@@ -172,6 +172,10 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
       return UseVectorApiIntrinsics;
   }
 
+  if (id >= vmIntrinsics::_VectorBinOp && id <= vmIntrinsics::_VectorTest) {
+    return UseVectorApiGeneralizedIntrinsics;
+  }
+
   // Only Object.hashCode and Object.clone intrinsics implement also a virtual
   // dispatch because calling both methods is expensive but both methods are
   // frequently overridden. All other intrinsics implement only a non-virtual

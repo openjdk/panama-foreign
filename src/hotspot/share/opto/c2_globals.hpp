@@ -725,6 +725,9 @@
   product(bool, UseVectorApiIntrinsics, true,                               \
           "Enables intrinsification of Vector API")                         \
                                                                             \
+  product(bool, UseVectorApiGeneralizedIntrinsics, true,                    \
+          "Enables intrinsification of Vector API")                         \
+                                                                            \
   notproduct(bool, DebugVectorApi, false,                                   \
           "Enables printing of debug messages for Vector API")              \
                                                                             \

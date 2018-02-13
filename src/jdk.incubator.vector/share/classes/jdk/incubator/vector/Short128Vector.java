@@ -26,12 +26,17 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Short128Vector extends ShortVector<Shapes.S128Bit> {
     static final Short128Species SPECIES = new Short128Species();
 
     static final Short128Vector ZERO = new Short128Vector();
+
+    static final int LENGTH = SPECIES.length();
 
     short[] vec;
 
@@ -43,6 +48,8 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         vec = v;
     }
 
+    @Override
+    public int length() { return LENGTH; }
 
     // Unary operator
 
@@ -119,6 +126,103 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             v = f.apply(i, v, vec[i]);
         }
         return v;
+    }
+
+    // Binary operations
+
+    @Override
+    @ForceInline
+    public Short128Vector add(Vector<Short,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+        return (Short128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ADD, Short128Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Vector sub(Vector<Short,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+        return (Short128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_SUB, Short128Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a - b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Vector mul(Vector<Short,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+        return (Short128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MUL, Short128Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a * b)));
+    }
+
+
+    @Override
+    @ForceInline
+    public Short128Vector div(Vector<Short,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+        return (Short128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Short128Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a / b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Vector and(Vector<Short,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+        return (Short128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_AND, Short128Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a & b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Vector or(Vector<Short,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+        return (Short128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_OR, Short128Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Vector xor(Vector<Short,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+        return (Short128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_XOR, Short128Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a ^ b)));
+    }
+
+    // Type specific horizontal reductions
+
+
+    // Memory operations
+
+    @Override
+    @ForceInline
+    public void intoArray(short[] a, int ix) {
+        Objects.requireNonNull(a);
+        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            Objects.checkFromIndexSize(ix, LENGTH, a.length);
+        }
+        VectorIntrinsics.store(Short128Vector.class, short.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((short[])arr)[idx + i] = a_));
     }
 
     //
@@ -344,6 +448,62 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             }
             return new Short128Vector(res);
         }
+
+        // Unary operations
+
+        //Mask<E, S> not();
+
+        // Binary operations
+
+        @Override
+        @ForceInline
+        public Short128Mask and(Mask<Short,Shapes.S128Bit> o) {
+            Objects.requireNonNull(o);
+            Short128Mask m = (Short128Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Short128Mask.class, short.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        @Override
+        @ForceInline
+        public Short128Mask or(Mask<Short,Shapes.S128Bit> o) {
+            Objects.requireNonNull(o);
+            Short128Mask m = (Short128Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Short128Mask.class, short.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        // Reductions
+
+        @Override
+        @ForceInline
+        public boolean anyTrue() {
+            return VectorIntrinsics.test(COND_notZero, Short128Mask.class, short.class, LENGTH,
+                                         this, this,
+                                         (m1, m2) -> super.anyTrue());
+        }
+
+        @Override
+        @ForceInline
+        public boolean allTrue() {
+            return VectorIntrinsics.test(COND_carrySet, Short128Mask.class, short.class, LENGTH,
+                                         this, trueMask(),
+                                         (m1, m2) -> super.allTrue());
+        }
+
+        // Helpers
+
+        @ForceInline
+        static Short128Mask trueMask() {
+            return Short128Mask.trueMask();
+        }
+
+        @ForceInline
+        static Short128Mask falseMask() {
+            return Short128Mask.falseMask();
+        }
     }
 
     // Species
@@ -417,23 +577,54 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         // Factories
 
         @Override
-        public Short128Vector zero() {
-            return ZERO;
-        }
-
-        @Override
         public Short128Mask constantMask(boolean... bits) {
             return new Short128Mask(bits);
         }
 
+
         @Override
-        public Short128Mask trueMask() {
-            return Short128Mask.TRUE_MASK;
+        @ForceInline
+        public Short128Vector zero() {
+            return VectorIntrinsics.broadcastCoerced(Short128Vector.class, short.class, LENGTH,
+                                                     0,
+                                                     (z -> ZERO));
         }
 
         @Override
+        @ForceInline
+        public Short128Vector broadcast(short e) {
+            return VectorIntrinsics.broadcastCoerced(
+                Short128Vector.class, short.class, LENGTH,
+                e,
+                ((long bits) -> SPECIES.op(i -> (short)bits)));
+        }
+
+        @Override
+        @ForceInline
+        public Short128Mask trueMask() {
+            return VectorIntrinsics.broadcastCoerced(Short128Mask.class, short.class, LENGTH,
+                                                     (short)-1,
+                                                     (z -> Short128Mask.TRUE_MASK));
+        }
+
+        @Override
+        @ForceInline
         public Short128Mask falseMask() {
-            return Short128Mask.FALSE_MASK;
+            return VectorIntrinsics.broadcastCoerced(Short128Mask.class, short.class, LENGTH,
+                                                     0,
+                                                     (z -> Short128Mask.FALSE_MASK));
+        }
+
+        @Override
+        @ForceInline
+        public Short128Vector fromArray(short[] a, int ix) {
+            Objects.requireNonNull(a);
+            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+                Objects.checkFromIndexSize(ix, LENGTH, a.length);
+            }
+            return (Short128Vector) VectorIntrinsics.load(Short128Vector.class, short.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromArray((short[]) arr, idx));
         }
     }
 }

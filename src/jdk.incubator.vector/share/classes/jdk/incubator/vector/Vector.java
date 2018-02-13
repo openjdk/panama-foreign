@@ -38,7 +38,6 @@ public interface Vector<E, S extends Vector.Shape> {
 
     default S shape() { return species().shape(); }
 
-    @HotSpotIntrinsicCandidate
     default int length() { return species().length(); }
 
     default int bitSize() { return species().bitSize(); }

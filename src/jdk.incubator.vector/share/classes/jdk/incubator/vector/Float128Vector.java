@@ -26,13 +26,18 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     static final Float128Species SPECIES = new Float128Species();
 
     static final Float128Vector ZERO = new Float128Vector();
+
+    static final int LENGTH = SPECIES.length();
 
     float[] vec;
 
@@ -44,6 +49,8 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         vec = v;
     }
 
+    @Override
+    public int length() { return LENGTH; }
 
     // Unary operator
 
@@ -120,6 +127,96 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
             v = f.apply(i, v, vec[i]);
         }
         return v;
+    }
+
+    // Binary operations
+
+    @Override
+    @ForceInline
+    public Float128Vector add(Vector<Float,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Float128Vector v = (Float128Vector)o;
+        return (Float128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ADD, Float128Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float128Vector)v1).bOp(v2, (i, a, b) -> (float)(a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public Float128Vector sub(Vector<Float,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Float128Vector v = (Float128Vector)o;
+        return (Float128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_SUB, Float128Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float128Vector)v1).bOp(v2, (i, a, b) -> (float)(a - b)));
+    }
+
+    @Override
+    @ForceInline
+    public Float128Vector mul(Vector<Float,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Float128Vector v = (Float128Vector)o;
+        return (Float128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MUL, Float128Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float128Vector)v1).bOp(v2, (i, a, b) -> (float)(a * b)));
+    }
+
+
+    @Override
+    @ForceInline
+    public Float128Vector div(Vector<Float,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Float128Vector v = (Float128Vector)o;
+        return (Float128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Float128Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float128Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
+    }
+
+
+    // Type specific horizontal reductions
+
+    @Override
+    @ForceInline
+    public float addAll() {
+        int bits = (int) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_ADD, Float128Vector.class, float.class, LENGTH,
+                                this,
+                                v -> {
+                                    float r = v.rOp((float) 0, (i, a, b) -> (float) (a + b));
+                                    return (long)Float.floatToIntBits(r);
+                                });
+        return Float.intBitsToFloat(bits);
+    }
+
+    @Override
+    @ForceInline
+    public float mulAll() {
+        int bits = (int) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MUL, Float128Vector.class, float.class, LENGTH,
+                                this,
+                                v -> {
+                                    float r = v.rOp((float) 0, (i, a, b) -> (float) (a * b));
+                                    return (long)Float.floatToIntBits(r);
+                                });
+        return Float.intBitsToFloat(bits);
+    }
+
+    // Memory operations
+
+    @Override
+    @ForceInline
+    public void intoArray(float[] a, int ix) {
+        Objects.requireNonNull(a);
+        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            Objects.checkFromIndexSize(ix, LENGTH, a.length);
+        }
+        VectorIntrinsics.store(Float128Vector.class, float.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((float[])arr)[idx + i] = a_));
     }
 
     //
@@ -352,6 +449,62 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
             }
             return new Float128Vector(res);
         }
+
+        // Unary operations
+
+        //Mask<E, S> not();
+
+        // Binary operations
+
+        @Override
+        @ForceInline
+        public Float128Mask and(Mask<Float,Shapes.S128Bit> o) {
+            Objects.requireNonNull(o);
+            Float128Mask m = (Float128Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Float128Mask.class, int.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        @Override
+        @ForceInline
+        public Float128Mask or(Mask<Float,Shapes.S128Bit> o) {
+            Objects.requireNonNull(o);
+            Float128Mask m = (Float128Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Float128Mask.class, int.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        // Reductions
+
+        @Override
+        @ForceInline
+        public boolean anyTrue() {
+            return VectorIntrinsics.test(COND_notZero, Float128Mask.class, int.class, LENGTH,
+                                         this, this,
+                                         (m1, m2) -> super.anyTrue());
+        }
+
+        @Override
+        @ForceInline
+        public boolean allTrue() {
+            return VectorIntrinsics.test(COND_carrySet, Float128Mask.class, int.class, LENGTH,
+                                         this, trueMask(),
+                                         (m1, m2) -> super.allTrue());
+        }
+
+        // Helpers
+
+        @ForceInline
+        static Float128Mask trueMask() {
+            return Float128Mask.trueMask();
+        }
+
+        @ForceInline
+        static Float128Mask falseMask() {
+            return Float128Mask.falseMask();
+        }
     }
 
     // Species
@@ -425,25 +578,56 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         // Factories
 
         @Override
-        public Float128Vector zero() {
-            return ZERO;
-        }
-
-        @Override
         public Float128Mask constantMask(boolean... bits) {
             return new Float128Mask(bits);
         }
 
-        @HotSpotIntrinsicCandidate
+
         @Override
-        public Float128Mask trueMask() {
-            return Float128Mask.TRUE_MASK;
+        @ForceInline
+        public Float128Vector zero() {
+            return VectorIntrinsics.broadcastCoerced(Float128Vector.class, float.class, LENGTH,
+                                                     Float.floatToIntBits(0.0f),
+                                                     (z -> ZERO));
+        }
+
+        @Override
+        @ForceInline
+        public Float128Vector broadcast(float e) {
+            return VectorIntrinsics.broadcastCoerced(
+                Float128Vector.class, float.class, LENGTH,
+                Float.floatToIntBits(e),
+                ((long bits) -> SPECIES.op(i -> Float.intBitsToFloat((int)bits))));
         }
 
         @HotSpotIntrinsicCandidate
         @Override
+        @ForceInline
+        public Float128Mask trueMask() {
+            return VectorIntrinsics.broadcastCoerced(Float128Mask.class, int.class, LENGTH,
+                                                     (int)-1,
+                                                     (z -> Float128Mask.TRUE_MASK));
+        }
+
+        @HotSpotIntrinsicCandidate
+        @Override
+        @ForceInline
         public Float128Mask falseMask() {
-            return Float128Mask.FALSE_MASK;
+            return VectorIntrinsics.broadcastCoerced(Float128Mask.class, int.class, LENGTH,
+                                                     0,
+                                                     (z -> Float128Mask.FALSE_MASK));
+        }
+
+        @Override
+        @ForceInline
+        public Float128Vector fromArray(float[] a, int ix) {
+            Objects.requireNonNull(a);
+            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+                Objects.checkFromIndexSize(ix, LENGTH, a.length);
+            }
+            return (Float128Vector) VectorIntrinsics.load(Float128Vector.class, float.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromArray((float[]) arr, idx));
         }
     }
 }

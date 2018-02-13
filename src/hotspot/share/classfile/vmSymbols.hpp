@@ -79,6 +79,7 @@
   template(java_lang_Integer_IntegerCache,            "java/lang/Integer$IntegerCache")           \
   template(java_lang_Long,                            "java/lang/Long")                           \
   template(java_lang_Long_LongCache,                  "java/lang/Long$LongCache")                 \
+  template(jdk_incubator_vector_VectorIntrinsics,        "jdk/incubator/vector/VectorIntrinsics")         \
   template(jdk_incubator_vector_Vector,                  "jdk/incubator/vector/Vector")                   \
   template(jdk_incubator_vector_VectorSpecies,           "jdk/incubator/vector/Vector$Species")           \
   template(jdk_incubator_vector_VectorMask,              "jdk/incubator/vector/Vector$Mask")              \
@@ -483,7 +484,6 @@
   template(bitCount_name,                             "bitCount")                                 \
   template(profile_name,                              "profile")                                  \
   template(equals_name,                               "equals")                                   \
-  template(length_name,                               "length")                                   \
   template(target_name,                               "target")                                   \
   template(toString_name,                             "toString")                                 \
   template(values_name,                               "values")                                   \
@@ -1437,7 +1437,32 @@
   do_intrinsic(_getAndSetObject,          jdk_internal_misc_Unsafe,     getAndSetObject_name, getAndSetObject_signature,  F_R)\
    do_name(     getAndSetObject_name,                                   "getAndSetObject")                                    \
    do_signature(getAndSetObject_signature,                              "(Ljava/lang/Object;JLjava/lang/Object;)Ljava/lang/Object;" ) \
-                                                                                                                               \
+                                                                                                                                               \
+  do_intrinsic(_VectorBinOp, jdk_incubator_vector_VectorIntrinsics, vector_binary_op_name, vector_intrinsic_bin_op_sig, F_S)                   \
+   do_signature(vector_intrinsic_bin_op_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;") \
+   do_name(vector_binary_op_name,            "binaryOp")                                                                                       \
+                                                                                                                                               \
+  do_intrinsic(_VectorBroadcastCoerced, jdk_incubator_vector_VectorIntrinsics, vector_broadcast_coerced_name, vector_broadcast_coerced_sig, F_S) \
+   do_signature(vector_broadcast_coerced_sig, "(Ljava/lang/Class;Ljava/lang/Class;IJLjava/util/function/LongFunction;)Ljava/lang/Object;") \
+   do_name(vector_broadcast_coerced_name, "broadcastCoerced")                                                                                  \
+                                                                                                                                               \
+                                                                                                                                               \
+  do_intrinsic(_VectorLoadOp, jdk_incubator_vector_VectorIntrinsics, vector_load_op_name, vector_load_op_sig, F_S)                             \
+   do_signature(vector_load_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;ILjava/util/function/BiFunction;)Ljdk/incubator/vector/Vector;") \
+   do_name(vector_load_op_name,     "load")                                                                                                  \
+                                                                                                                                               \
+  do_intrinsic(_VectorStoreOp, jdk_incubator_vector_VectorIntrinsics, vector_store_op_name, vector_store_op_sig, F_S)                          \
+   do_signature(vector_store_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;ILjdk/incubator/vector/Vector;Ljdk/incubator/vector/VectorIntrinsics$StoreVectorOperation;)V") \
+   do_name(vector_store_op_name,     "store")                                                                                                 \
+                                                                                                                                               \
+  do_intrinsic(_VectorReductionCoerced, jdk_incubator_vector_VectorIntrinsics, vector_reduction_coerced_name, vector_reduction_coerced_sig, F_S) \
+   do_signature(vector_reduction_coerced_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjdk/incubator/vector/Vector;Ljava/util/function/Function;)J") \
+   do_name(vector_reduction_coerced_name, "reductionCoerced")                                                                                  \
+                                                                                                                                               \
+  do_intrinsic(_VectorTest, jdk_incubator_vector_VectorIntrinsics, vector_test_name, vector_test_sig, F_S)                                     \
+   do_signature(vector_test_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Z") \
+   do_name(vector_test_name, "test")                                                                                                           \
+                                                                                                                                               \
    /* Vector API intrinsification support */                                                                                                   \
    do_signature(vector_cmp_sig, "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/Vector$Mask;")                                           \
    do_signature(vector_long_blend_sig, "(Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/LongVector;")   \
@@ -1522,8 +1547,7 @@
    do_name(not_method_name, "not")                                                                                                             \
    do_name(xor_method_name, "xor")                                                                                                             \
    do_name(neg_method_name, "neg")                                                                                                             \
-   /* _VectorLength should be first one in list as it is used as marker for beginning of Vector API methods */                                 \
-   do_intrinsic(_VectorLength, jdk_incubator_vector_Vector, length_name, void_int_signature, F_R)                                              \
+   /* _VectorConstantMask should be first one in list as it is used as marker for beginning of Vector API methods */                                 \
    do_intrinsic(_VectorConstantMask, jdk_incubator_vector_VectorSpecies, constant_mask_name, vector_constant_mask_sig, F_R)                    \
    do_intrinsic(_VectorMaskAllTrue, jdk_incubator_vector_VectorMask, all_true_name, void_boolean_signature, F_R)                               \
    do_intrinsic(_VectorMaskAnyTrue, jdk_incubator_vector_VectorMask, any_true_name, void_boolean_signature, F_R)                               \
@@ -1830,7 +1854,7 @@ class vmIntrinsics: AllStatic {
 
     ID_LIMIT,
     LAST_COMPILER_INLINE = _VectorAddFloat,
-    FIRST_VECTOR_API     = _VectorLength,
+    FIRST_VECTOR_API     = _VectorConstantMask,
     LAST_VECTOR_API      = _VectorAddFloat,
     FIRST_MH_SIG_POLY    = _invokeGeneric,
     FIRST_MH_STATIC      = _linkToVirtual,

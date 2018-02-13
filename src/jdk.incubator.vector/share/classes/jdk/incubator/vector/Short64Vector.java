@@ -26,12 +26,17 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     static final Short64Species SPECIES = new Short64Species();
 
     static final Short64Vector ZERO = new Short64Vector();
+
+    static final int LENGTH = SPECIES.length();
 
     short[] vec;
 
@@ -43,6 +48,8 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         vec = v;
     }
 
+    @Override
+    public int length() { return LENGTH; }
 
     // Unary operator
 
@@ -119,6 +126,103 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
             v = f.apply(i, v, vec[i]);
         }
         return v;
+    }
+
+    // Binary operations
+
+    @Override
+    @ForceInline
+    public Short64Vector add(Vector<Short,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+        return (Short64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ADD, Short64Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short)(a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Vector sub(Vector<Short,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+        return (Short64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_SUB, Short64Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short)(a - b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Vector mul(Vector<Short,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+        return (Short64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MUL, Short64Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short)(a * b)));
+    }
+
+
+    @Override
+    @ForceInline
+    public Short64Vector div(Vector<Short,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+        return (Short64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Short64Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short)(a / b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Vector and(Vector<Short,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+        return (Short64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_AND, Short64Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short)(a & b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Vector or(Vector<Short,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+        return (Short64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_OR, Short64Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short)(a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Vector xor(Vector<Short,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+        return (Short64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_XOR, Short64Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short)(a ^ b)));
+    }
+
+    // Type specific horizontal reductions
+
+
+    // Memory operations
+
+    @Override
+    @ForceInline
+    public void intoArray(short[] a, int ix) {
+        Objects.requireNonNull(a);
+        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            Objects.checkFromIndexSize(ix, LENGTH, a.length);
+        }
+        VectorIntrinsics.store(Short64Vector.class, short.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((short[])arr)[idx + i] = a_));
     }
 
     //
@@ -344,6 +448,62 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
             }
             return new Short64Vector(res);
         }
+
+        // Unary operations
+
+        //Mask<E, S> not();
+
+        // Binary operations
+
+        @Override
+        @ForceInline
+        public Short64Mask and(Mask<Short,Shapes.S64Bit> o) {
+            Objects.requireNonNull(o);
+            Short64Mask m = (Short64Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Short64Mask.class, short.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        @Override
+        @ForceInline
+        public Short64Mask or(Mask<Short,Shapes.S64Bit> o) {
+            Objects.requireNonNull(o);
+            Short64Mask m = (Short64Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Short64Mask.class, short.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        // Reductions
+
+        @Override
+        @ForceInline
+        public boolean anyTrue() {
+            return VectorIntrinsics.test(COND_notZero, Short64Mask.class, short.class, LENGTH,
+                                         this, this,
+                                         (m1, m2) -> super.anyTrue());
+        }
+
+        @Override
+        @ForceInline
+        public boolean allTrue() {
+            return VectorIntrinsics.test(COND_carrySet, Short64Mask.class, short.class, LENGTH,
+                                         this, trueMask(),
+                                         (m1, m2) -> super.allTrue());
+        }
+
+        // Helpers
+
+        @ForceInline
+        static Short64Mask trueMask() {
+            return Short64Mask.trueMask();
+        }
+
+        @ForceInline
+        static Short64Mask falseMask() {
+            return Short64Mask.falseMask();
+        }
     }
 
     // Species
@@ -417,23 +577,54 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         // Factories
 
         @Override
-        public Short64Vector zero() {
-            return ZERO;
-        }
-
-        @Override
         public Short64Mask constantMask(boolean... bits) {
             return new Short64Mask(bits);
         }
 
+
         @Override
-        public Short64Mask trueMask() {
-            return Short64Mask.TRUE_MASK;
+        @ForceInline
+        public Short64Vector zero() {
+            return VectorIntrinsics.broadcastCoerced(Short64Vector.class, short.class, LENGTH,
+                                                     0,
+                                                     (z -> ZERO));
         }
 
         @Override
+        @ForceInline
+        public Short64Vector broadcast(short e) {
+            return VectorIntrinsics.broadcastCoerced(
+                Short64Vector.class, short.class, LENGTH,
+                e,
+                ((long bits) -> SPECIES.op(i -> (short)bits)));
+        }
+
+        @Override
+        @ForceInline
+        public Short64Mask trueMask() {
+            return VectorIntrinsics.broadcastCoerced(Short64Mask.class, short.class, LENGTH,
+                                                     (short)-1,
+                                                     (z -> Short64Mask.TRUE_MASK));
+        }
+
+        @Override
+        @ForceInline
         public Short64Mask falseMask() {
-            return Short64Mask.FALSE_MASK;
+            return VectorIntrinsics.broadcastCoerced(Short64Mask.class, short.class, LENGTH,
+                                                     0,
+                                                     (z -> Short64Mask.FALSE_MASK));
+        }
+
+        @Override
+        @ForceInline
+        public Short64Vector fromArray(short[] a, int ix) {
+            Objects.requireNonNull(a);
+            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+                Objects.checkFromIndexSize(ix, LENGTH, a.length);
+            }
+            return (Short64Vector) VectorIntrinsics.load(Short64Vector.class, short.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromArray((short[]) arr, idx));
         }
     }
 }

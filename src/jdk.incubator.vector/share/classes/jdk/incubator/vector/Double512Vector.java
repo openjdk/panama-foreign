@@ -26,13 +26,18 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
+import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
 final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     static final Double512Species SPECIES = new Double512Species();
 
     static final Double512Vector ZERO = new Double512Vector();
+
+    static final int LENGTH = SPECIES.length();
 
     double[] vec;
 
@@ -44,6 +49,8 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         vec = v;
     }
 
+    @Override
+    public int length() { return LENGTH; }
 
     // Unary operator
 
@@ -120,6 +127,96 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             v = f.apply(i, v, vec[i]);
         }
         return v;
+    }
+
+    // Binary operations
+
+    @Override
+    @ForceInline
+    public Double512Vector add(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ADD, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Vector sub(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_SUB, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a - b)));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Vector mul(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MUL, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a * b)));
+    }
+
+
+    @Override
+    @ForceInline
+    public Double512Vector div(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
+    }
+
+
+    // Type specific horizontal reductions
+
+    @Override
+    @ForceInline
+    public double addAll() {
+        long bits = (long) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_ADD, Double512Vector.class, double.class, LENGTH,
+                                this,
+                                v -> {
+                                    double r = v.rOp((double) 0, (i, a, b) -> (double) (a + b));
+                                    return (long)Double.doubleToLongBits(r);
+                                });
+        return Double.longBitsToDouble(bits);
+    }
+
+    @Override
+    @ForceInline
+    public double mulAll() {
+        long bits = (long) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MUL, Double512Vector.class, double.class, LENGTH,
+                                this,
+                                v -> {
+                                    double r = v.rOp((double) 0, (i, a, b) -> (double) (a * b));
+                                    return (long)Double.doubleToLongBits(r);
+                                });
+        return Double.longBitsToDouble(bits);
+    }
+
+    // Memory operations
+
+    @Override
+    @ForceInline
+    public void intoArray(double[] a, int ix) {
+        Objects.requireNonNull(a);
+        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            Objects.checkFromIndexSize(ix, LENGTH, a.length);
+        }
+        VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((double[])arr)[idx + i] = a_));
     }
 
     //
@@ -352,6 +449,62 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             }
             return new Double512Vector(res);
         }
+
+        // Unary operations
+
+        //Mask<E, S> not();
+
+        // Binary operations
+
+        @Override
+        @ForceInline
+        public Double512Mask and(Mask<Double,Shapes.S512Bit> o) {
+            Objects.requireNonNull(o);
+            Double512Mask m = (Double512Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Double512Mask.class, long.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        @Override
+        @ForceInline
+        public Double512Mask or(Mask<Double,Shapes.S512Bit> o) {
+            Objects.requireNonNull(o);
+            Double512Mask m = (Double512Mask)o;
+            return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Double512Mask.class, long.class, LENGTH,
+                                             this, m,
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+        }
+
+        // Reductions
+
+        @Override
+        @ForceInline
+        public boolean anyTrue() {
+            return VectorIntrinsics.test(COND_notZero, Double512Mask.class, long.class, LENGTH,
+                                         this, this,
+                                         (m1, m2) -> super.anyTrue());
+        }
+
+        @Override
+        @ForceInline
+        public boolean allTrue() {
+            return VectorIntrinsics.test(COND_carrySet, Double512Mask.class, long.class, LENGTH,
+                                         this, trueMask(),
+                                         (m1, m2) -> super.allTrue());
+        }
+
+        // Helpers
+
+        @ForceInline
+        static Double512Mask trueMask() {
+            return Double512Mask.trueMask();
+        }
+
+        @ForceInline
+        static Double512Mask falseMask() {
+            return Double512Mask.falseMask();
+        }
     }
 
     // Species
@@ -425,25 +578,56 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         // Factories
 
         @Override
-        public Double512Vector zero() {
-            return ZERO;
-        }
-
-        @Override
         public Double512Mask constantMask(boolean... bits) {
             return new Double512Mask(bits);
         }
 
-        @HotSpotIntrinsicCandidate
+
         @Override
-        public Double512Mask trueMask() {
-            return Double512Mask.TRUE_MASK;
+        @ForceInline
+        public Double512Vector zero() {
+            return VectorIntrinsics.broadcastCoerced(Double512Vector.class, double.class, LENGTH,
+                                                     Double.doubleToLongBits(0.0f),
+                                                     (z -> ZERO));
+        }
+
+        @Override
+        @ForceInline
+        public Double512Vector broadcast(double e) {
+            return VectorIntrinsics.broadcastCoerced(
+                Double512Vector.class, double.class, LENGTH,
+                Double.doubleToLongBits(e),
+                ((long bits) -> SPECIES.op(i -> Double.longBitsToDouble((long)bits))));
         }
 
         @HotSpotIntrinsicCandidate
         @Override
+        @ForceInline
+        public Double512Mask trueMask() {
+            return VectorIntrinsics.broadcastCoerced(Double512Mask.class, long.class, LENGTH,
+                                                     (long)-1,
+                                                     (z -> Double512Mask.TRUE_MASK));
+        }
+
+        @HotSpotIntrinsicCandidate
+        @Override
+        @ForceInline
         public Double512Mask falseMask() {
-            return Double512Mask.FALSE_MASK;
+            return VectorIntrinsics.broadcastCoerced(Double512Mask.class, long.class, LENGTH,
+                                                     0,
+                                                     (z -> Double512Mask.FALSE_MASK));
+        }
+
+        @Override
+        @ForceInline
+        public Double512Vector fromArray(double[] a, int ix) {
+            Objects.requireNonNull(a);
+            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+                Objects.checkFromIndexSize(ix, LENGTH, a.length);
+            }
+            return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromArray((double[]) arr, idx));
         }
     }
 }

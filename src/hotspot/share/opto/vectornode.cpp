@@ -643,8 +643,12 @@ bool ReductionNode::implemented(int opc, uint vlen, BasicType bt) {
 }
 
 Node* VectorUnboxNode::Identity(PhaseGVN *phase) {
-  if (obj()->uncast()->is_VectorBox()) {
-    return obj()->uncast()->as_VectorBox()->vector_val();
+  Node* n = obj()->uncast();
+  if (n->is_Proj() && n->as_Proj()->_con == TypeFunc::Parms) {
+    n = n->in(0);
+  }
+  if (n->is_VectorBox()) {
+    return n->as_VectorBox()->vector_val();
   }
   return this;
 }
