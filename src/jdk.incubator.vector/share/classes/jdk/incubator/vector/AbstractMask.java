@@ -27,20 +27,27 @@ package jdk.incubator.vector;
 import java.util.Arrays;
 
 abstract class AbstractMask<E, S extends Vector.Shape> implements Vector.Mask<E, S> {
-    final boolean[] bits;
+    private final boolean[] bits; // Don't access directly, use getBits() instead.
+
+    /*package-private*/
+    boolean[] getBits() {
+        return VectorIntrinsics.maybeRebox(this).bits;
+    }
 
     AbstractMask(boolean[] bits) {
-        if (bits.length != species().length())
+        if (bits.length != species().length()) {
             throw new ArrayIndexOutOfBoundsException("Boolean array must be the same length as the masked vector");
+        }
 
         this.bits = bits.clone();
     }
 
     AbstractMask(boolean val) {
-        this.bits = new boolean[species().length()];
-        for (int i = 0; i < this.bits.length; i++) {
-            this.bits[i] = val;
+        boolean[] bits = new boolean[species().length()];
+        for (int i = 0; i < bits.length; i++) {
+            bits[i] = val;
         }
+        this.bits = bits;
     }
 
     // Unary operator
@@ -61,18 +68,19 @@ abstract class AbstractMask<E, S extends Vector.Shape> implements Vector.Mask<E,
 
     @Override
     public String toString() {
-        return Arrays.toString(bits);
+        return Arrays.toString(getBits());
     }
 
     @Override
     public boolean getElement(int i) {
-        return bits[i];
+        return getBits()[i];
     }
 
     @Override
     public long toLong() {
         long res = 0;
         long set = 1;
+        boolean[] bits = getBits();
         for (int i = 0; i < species().length(); i++) {
             res = bits[i] ? res | set : res;
             set = set << 1;
@@ -82,12 +90,12 @@ abstract class AbstractMask<E, S extends Vector.Shape> implements Vector.Mask<E,
 
     @Override
     public boolean[] toArray() {
-        return bits.clone();
+        return getBits().clone();
     }
 
     @Override
     public boolean anyTrue() {
-        for (boolean i : bits) {
+        for (boolean i : getBits()) {
             if (i) return true;
         }
         return false;
@@ -95,7 +103,7 @@ abstract class AbstractMask<E, S extends Vector.Shape> implements Vector.Mask<E,
 
     @Override
     public boolean allTrue() {
-        for (boolean i : bits) {
+        for (boolean i : getBits()) {
             if (!i) return false;
         }
         return true;
@@ -104,7 +112,7 @@ abstract class AbstractMask<E, S extends Vector.Shape> implements Vector.Mask<E,
     @Override
     public int trueCount() {
         int c = 0;
-        for (boolean i : bits) {
+        for (boolean i : getBits()) {
             if (i) c++;
         }
         return c;
@@ -129,6 +137,7 @@ abstract class AbstractMask<E, S extends Vector.Shape> implements Vector.Mask<E,
     @SuppressWarnings("unchecked")
     public <Z> Vector<Z, S> toVector(Class<Z> e) {
         Vector.Species<Z, S> species = Vector.speciesInstance(e, species().shape());
+        boolean[] bits = getBits();
         if (e == Float.class) {
             float[] ar = new float[species().length()];
             for (int i = 0; i < species().length(); i++) {
@@ -180,6 +189,6 @@ abstract class AbstractMask<E, S extends Vector.Shape> implements Vector.Mask<E,
     public <F, Z extends Vector.Shape>
     Vector.Mask<F, Z> reshape(Class<F> type, Z shape) {
         Vector.Species<F, Z> species = Vector.speciesInstance(type, shape);
-        return species.constantMask(Arrays.copyOf(bits, species.length()));
+        return species.constantMask(Arrays.copyOf(getBits(), species.length()));
     }
 }

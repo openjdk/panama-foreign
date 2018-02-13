@@ -364,9 +364,9 @@ class LibraryCallKit : public GraphKit {
   bool inline_vector_mem_operation(bool is_store);
   bool inline_vector_reduction();
   bool inline_vector_test();
-
-  Node* box_vector(Node* in, const TypeInstPtr* box_type, BasicType bt, int num_elem);
-  Node* unbox_vector(Node* in, const TypeInstPtr* box_type, BasicType bt, int num_elem);
+  
+  Node* box_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
+  Node* unbox_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
 
   void clear_upper_avx() {
 #ifdef X86
@@ -925,7 +925,7 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     return inline_vector_reduction();
   case vmIntrinsics::_VectorTest:
     return inline_vector_test();
-
+    
   default:
     // If you get here, it may be that someone has added a new intrinsic
     // to the list in vmSymbols.hpp without implementing it here.
@@ -7375,21 +7375,6 @@ const TypeInstPtr* LibraryCallKit::get_return_box_type(ciKlass** exact_kls_ptr, 
   return box_type;
 }
 
-static Node* unwrapCast(Node* in) {
-  return in->uncast();
-}
-
-static Node* unwrapVectorBox(Node* in) {
-  // If projection, get to the source of it.
-  if ( in->is_Proj() ) {
-    in = in->in(0);
-  }
-  if ( in->is_VectorBox() ) {
-    return in->as_VectorBox()->vector_val();
-  }
-  return in;
-}
-
 static BasicType getMaskBasicType(BasicType use_type) {
   if (use_type == T_FLOAT) {
     return T_INT;
@@ -7401,76 +7386,13 @@ static BasicType getMaskBasicType(BasicType use_type) {
   return use_type;
 }
 
-Node* LibraryCallKit::unboxVectorObj(Node* in, const TypeInstPtr* box_type, BasicType type, int num_elem) {
-  if (type == T_VOID || num_elem < 0) {
-    return NULL;
-  }
-
-  assert (!in->is_Vector() && !in->is_LoadVector(), "Should not be unboxing a vector");
-  assert(box_type->klass()->is_vectorapi_vector(), "Must be Vector API Vector");
-  if (box_type->klass()->is_vectormask()) {
-    assert(getMaskBasicType(box_type->klass()->vectorapi_vector_bt()) == type, "type must be consistent");
-  } else {
-    assert(box_type->klass()->vectorapi_vector_bt() == type, "type must be consistent");
-  }
-  assert(box_type->klass()->vectorapi_vector_size() == num_elem, "length must be consistent");
-
+Node* LibraryCallKit::getVectorInput(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem) {
   // Determine the type object from graph. If type cannot be determined, create a cast.
   const TypeInstPtr* gvn_box_type = _gvn.type(in)->isa_instptr();
-  if ( Type::cmp(gvn_box_type, box_type) != 0 ) {
-    const Type* cast_type = TypeOopPtr::make_from_klass(box_type->klass());
-    in = _gvn.transform(new CheckCastPPNode(control(), in, cast_type));
-#ifndef PRODUCT
-    if (DebugVectorApi) {
-      tty->print_cr("Created a checkcastpp node while creating VectorUnbox because incoming type was not as expected");
-      cast_type->dump();
-      tty->print_cr("");
-      in->dump(1);
-    }
-#endif
+  if (gvn_box_type->klass() != vbox_type->klass() || gvn_box_type->maybe_null()) {
+    in = _gvn.transform(new CheckCastPPNode(control(), in, vbox_type));
   }
-
-  const TypeVect* vec_type = TypeVect::make(type, num_elem);
-  Node* unbox = new VectorUnboxNode(C, vec_type, in, merged_memory());
-  unbox->set_req(0, control());
-  return _gvn.transform(unbox);
-}
-
-Node* LibraryCallKit::getVectorInput(Node* in, const TypeInstPtr* box_type, BasicType bt, int num_elem) {
-  if (in->is_Call()) {
-    in = in->as_Call()->proj_out(TypeFunc::Parms);
-  }
-  assert(!in->is_Multi(), "not expecting a multinode");
-
-  // Try to get the value from VectorBox.
-  Node* opd = unwrapVectorBox(unwrapCast(in));
-  if (opd->is_Vector() || opd->is_LoadVector()) {
-    const TypeVect* vec_type = opd->bottom_type()->is_vect();
-    if (bt != vec_type->element_basic_type() || num_elem != (int)vec_type->length()) {
-      assert(false, "Does this actually happen? %s %d - %s %d", type2name(bt), num_elem,
-             type2name(vec_type->element_basic_type()), vec_type->length());
-      return NULL;
-    }
-    return opd;
-  }
-
-  // Seems value was not found - so all we have is the object. Create a VectorUnbox node for it.
-  return unboxVectorObj(in, box_type, bt, num_elem);
-}
-
-static const char* array_type_string(BasicType type) {
-  switch (type) {
-    case T_BOOLEAN: return "[Z";
-    case T_CHAR:    return "[C";
-    case T_FLOAT:   return "[F";
-    case T_DOUBLE:  return "[D";
-    case T_BYTE:    return "[B";
-    case T_SHORT:   return "[S";
-    case T_INT:     return "[I";
-    case T_LONG:    return "[J";
-    default: ShouldNotReachHere();
-  }
-  return NULL;
+  return unbox_vector(in, vbox_type, bt, num_elem);
 }
 
 Node* LibraryCallKit::wrapWithVectorBox(Node* vector, const TypeInstPtr* box_type) {
@@ -7483,74 +7405,7 @@ Node* LibraryCallKit::wrapWithVectorBox(Node* vector, const TypeInstPtr* box_typ
   } else {
     assert(false, "Input for vector box needs to be a vector node");
   }
-
-  ciInstanceKlass* box_klass = box_type->klass()->as_instance_klass();
-  BasicType bt = vect_type->element_basic_type();
-  int num_elem = vect_type->length();
-  bool is_mask = box_klass->is_vectormask();
-  assert(!is_mask || vect_type->element_basic_type() == getMaskBasicType(bt), "consistent vector element type expected");
-
-  Node* mask_store = NULL;
-  if (is_mask && bt != T_BOOLEAN) {
-    mask_store = _gvn.transform(new VectorStoreMaskNode(vector, bt, num_elem));
-    // Although type of mask depends on its definition, in terms of storage everything is stored in boolean array.
-    bt = T_BOOLEAN;
-    assert(mask_store->as_Vector()->bottom_type()->is_vect()->element_basic_type() == bt,
-           "must be consistent with mask representation");
-  }
-
-  // Generate the allocate for the Vector/Mask object.
-  const TypeKlassPtr* klass_type = box_type->as_klass_type();
-  Node* klass_node = makecon(klass_type);
-  Node* obj = _gvn.transform(new_instance(klass_node));
-
-  // Generate array allocation for the field which holds the values.
-  const TypeKlassPtr* array_klass = TypeKlassPtr::make(ciTypeArrayKlass::make(bt));
-  assert(num_elem > 0, "positive number of array elements expected");
-  Node* arr = new_array(makecon(array_klass), intcon(num_elem), 1);
-
-  // Store the allocated array into object.
-  ciField* field = box_klass->get_field_by_name(ciSymbol::make(is_mask ? "bits" : "vec"),
-    ciSymbol::make(array_type_string(bt)), false);
-  assert(field != NULL, "undefined field");
-  assert(!field->is_volatile(), "not defined for volatile fields");
-  int offset = field->offset_in_bytes();
-  Node* vec_field = basic_plus_adr(obj, offset);
-  Node* field_store = _gvn.transform(store_oop_to_object(control(),
-                                                         obj,
-                                                         vec_field,
-                                                         vec_field->bottom_type()->is_ptr(),
-                                                         arr,
-                                                         TypeOopPtr::make_from_klass(field->type()->as_klass()),
-                                                         T_OBJECT,
-                                                         MemNode::release));
-
-  // Store the vector value into the array.
-  Node* arr_adr = array_element_address(arr, intcon(0), bt);
-  const TypePtr* arr_adr_type = arr_adr->bottom_type()->is_ptr();
-  Node* arr_mem = memory(arr_adr);
-  // TODO When passing "arr_mem" as memory dependency, it can happen that memory ordering is
-  // not correct. So instead, for now pass "field_store" to make it explicitly ordered after it.
-  Node* vstore = _gvn.transform(StoreVectorNode::make(-1,
-                                                      control(),
-                                                      field_store,
-                                                      arr_adr,
-                                                      arr_adr_type,
-                                                      mask_store != NULL ? mask_store : vector,
-                                                      num_elem));
-  set_memory(vstore, arr_adr_type);
-
-  Node* vbox = new VectorBoxNode(C, box_type, vect_type, vector, obj);
-  vbox->set_req(TypeFunc::Memory, merged_memory());
-  vbox->set_req(TypeFunc::Control, control());
-  vbox->set_req(VectorBoxNode::ArrayAlloc, arr);
-  vbox->set_req(VectorBoxNode::FieldStore, field_store);
-  vbox->set_req(VectorBoxNode::VectorStore, vstore);
-  vbox = _gvn.transform(vbox);
-
-  set_all_memory_call(vbox, false);
-  set_control(_gvn.transform(new ProjNode(vbox, TypeFunc::Control)));
-  return _gvn.transform(new ProjNode(vbox, VectorBoxNode::VecBox));
+  return box_vector(vector, box_type, vect_type->element_basic_type(), vect_type->length());
 }
 
 static Node* gen_replicate(BasicType bt, int num_elem, Node* con) {
@@ -8433,8 +8288,8 @@ bool LibraryCallKit::inline_store_vector_op(const TypeInstPtr* box_type, BasicTy
     return false;
   }
 
-  if (vector->is_VectorBox()) {
-    vector = vector->as_VectorBox()->vector_val();
+  if (vector->Opcode() == Op_VectorBox) {
+    vector = vector->in(2);
     assert(vector->is_Vector() || vector->is_LoadVector(), "Vector Box must hide a vector");
   }
 
@@ -8567,8 +8422,18 @@ static int get_opc(jint op, BasicType bt) {
 
 Node* LibraryCallKit::box_vector(Node* vector, const TypeInstPtr* vbox_type,
                                  BasicType elem_bt, int num_elem) {
-  // FIXME: materialize allocations lazily
-  return wrapWithVectorBox(vector, vbox_type);
+
+  const TypeVect* vec_type = TypeVect::make(elem_bt, num_elem);
+
+  VectorBoxAllocateNode* alloc = new VectorBoxAllocateNode(C, vbox_type);
+  set_edges_for_java_call(alloc, /*must_throw=*/false, /*separate_io_proj=*/true);
+  make_slow_call_ex(alloc, env()->Throwable_klass(), /*separate_io_proj=*/true);
+  set_i_o(_gvn.transform( new ProjNode(alloc, TypeFunc::I_O) ));
+  set_all_memory(_gvn.transform( new ProjNode(alloc, TypeFunc::Memory) ));
+  Node* ret = _gvn.transform(new ProjNode(alloc, TypeFunc::Parms));
+
+  VectorBoxNode* vbox = new VectorBoxNode(C, ret, vector, vbox_type, vec_type);
+  return _gvn.transform(vbox);
 }
 
 Node* LibraryCallKit::unbox_vector(Node* v, const TypeInstPtr* vbox_type, BasicType elem_bt, int num_elem) {

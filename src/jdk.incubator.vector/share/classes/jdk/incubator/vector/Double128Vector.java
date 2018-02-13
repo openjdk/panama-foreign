@@ -39,7 +39,11 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     static final int LENGTH = SPECIES.length();
 
-    double[] vec;
+    private final double[] vec; // Don't access directly, use getElements() instead.
+
+    private double[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
 
     Double128Vector() {
         vec = new double[SPECIES.length()];
@@ -56,6 +60,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     Double128Vector uOp(FUnOp f) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length(); i++) {
             res[i] = f.apply(i, vec[i]);
@@ -65,10 +70,11 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     Double128Vector uOp(Mask<Double, Shapes.S128Bit> o, FUnOp f) {
+        double[] vec = getElements();
         double[] res = new double[length()];
-        Double128Mask m = (Double128Mask) o;
+        boolean[] mbits = ((Double128Mask)o).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Double128Vector(res);
     }
@@ -78,9 +84,10 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     @Override
     Double128Vector bOp(Vector<Double, Shapes.S128Bit> o, FBinOp f) {
         double[] res = new double[length()];
-        Double128Vector v = (Double128Vector) o;
+        double[] vec1 = this.getElements();
+        double[] vec2 = ((Double128Vector)o).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Double128Vector(res);
     }
@@ -88,10 +95,11 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     @Override
     Double128Vector bOp(Vector<Double, Shapes.S128Bit> o1, Mask<Double, Shapes.S128Bit> o2, FBinOp f) {
         double[] res = new double[length()];
-        Double128Vector v = (Double128Vector) o1;
-        Double128Mask m = (Double128Mask) o2;
+        double[] vec1 = this.getElements();
+        double[] vec2 = ((Double128Vector)o1).getElements();
+        boolean[] mbits = ((Double128Mask)o2).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
         }
         return new Double128Vector(res);
     }
@@ -101,10 +109,11 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     @Override
     Double128Vector tOp(Vector<Double, Shapes.S128Bit> o1, Vector<Double, Shapes.S128Bit> o2, FTriOp f) {
         double[] res = new double[length()];
-        Double128Vector v1 = (Double128Vector) o1;
-        Double128Vector v2 = (Double128Vector) o2;
+        double[] vec1 = this.getElements();
+        double[] vec2 = ((Double128Vector)o1).getElements();
+        double[] vec3 = ((Double128Vector)o2).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v1.vec[i], v2.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
         return new Double128Vector(res);
     }
@@ -112,17 +121,19 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     @Override
     Double128Vector tOp(Vector<Double, Shapes.S128Bit> o1, Vector<Double, Shapes.S128Bit> o2, Mask<Double, Shapes.S128Bit> o3, FTriOp f) {
         double[] res = new double[length()];
-        Double128Vector v1 = (Double128Vector) o1;
-        Double128Vector v2 = (Double128Vector) o2;
-        Double128Mask m = (Double128Mask) o3;
+        double[] vec1 = getElements();
+        double[] vec2 = ((Double128Vector)o1).getElements();
+        double[] vec3 = ((Double128Vector)o2).getElements();
+        boolean[] mbits = ((Double128Mask)o3).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
         }
         return new Double128Vector(res);
     }
 
     @Override
     double rOp(double v, FBinOp f) {
+        double[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -223,7 +234,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     public String toString() {
-        return Arrays.toString(vec);
+        return Arrays.toString(getElements());
     }
 
     @Override
@@ -232,7 +243,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         if (o == null || this.getClass() != o.getClass()) return false;
 
         Double128Vector that = (Double128Vector) o;
-        return Arrays.equals(vec, that.vec);
+        return Arrays.equals(this.getElements(), that.getElements());
     }
 
     @Override
@@ -244,10 +255,11 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     Double128Mask bTest(Vector<Double, Shapes.S128Bit> o, FBinTest f) {
-        Double128Vector v = (Double128Vector) o;
+        double[] vec1 = getElements();
+        double[] vec2 = ((Double128Vector)o).getElements();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec[i], v.vec[i]);
+            bits[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Double128Mask(bits);
     }
@@ -256,6 +268,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     void forEach(FUnCon f) {
+        double[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             f.apply(i, vec[i]);
         }
@@ -263,13 +276,14 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     void forEach(Mask<Double, Shapes.S128Bit> o, FUnCon f) {
-        Double128Mask m = (Double128Mask) o;
+        boolean[] mbits = ((Double128Mask)o).getBits();
         forEach((i, a) -> {
-            if (m.bits[i]) { f.apply(i, a); }
+            if (mbits[i]) { f.apply(i, a); }
         });
     }
 
     Long128Vector toBits() {
+        double[] vec = getElements();
         long[] res = new long[this.species().length()];
         for(int i = 0; i < this.species().length(); i++){
             res[i] = Double.doubleToLongBits(vec[i]);
@@ -280,6 +294,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     public Double128Vector rotateEL(int j) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length(); i++){
             res[j + i % length()] = vec[i];
@@ -289,6 +304,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     public Double128Vector rotateER(int j) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length(); i++){
             int z = i - j;
@@ -303,6 +319,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     public Double128Vector shiftEL(int j) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length() - j; i++) {
             res[i] = vec[i + j];
@@ -312,6 +329,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     public Double128Vector shiftER(int j) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length() - j; i++){
             res[i + j] = vec[i];
@@ -323,13 +341,14 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     public Double128Vector shuffle(Vector<Double, Shapes.S128Bit> o, Shuffle<Double, Shapes.S128Bit> s) {
         Double128Vector v = (Double128Vector) o;
         return uOp((i, a) -> {
+            double[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
                 //from o
-                return v.vec[e - length()];
+                return v.getElements()[e - length()];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
@@ -339,6 +358,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     @Override
     public Double128Vector swizzle(Shuffle<Double, Shapes.S128Bit> s) {
         return uOp((i, a) -> {
+            double[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 return vec[e];
@@ -358,6 +378,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
         int limit = Math.min(species.length(), length());
 
+        double[] vec = getElements();
         if (type == Byte.class) {
             for (int i = 0; i < limit; i++){
                 bb.put(i, (byte) vec[i]);
@@ -393,6 +414,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     public double get(int i) {
+        double[] vec = getElements();
         return vec[i];
     }
 
@@ -420,6 +442,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         @Override
         Double128Mask uOp(MUnOp f) {
             boolean[] res = new boolean[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = f.apply(i, bits[i]);
             }
@@ -429,9 +452,10 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         @Override
         Double128Mask bOp(Mask<Double, Shapes.S128Bit> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
-            Double128Mask m = (Double128Mask) o;
+            boolean[] bits = getBits();
+            boolean[] mbits = ((Double128Mask)o).getBits();
             for (int i = 0; i < species().length(); i++) {
-                res[i] = f.apply(i, bits[i], m.bits[i]);
+                res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new Double128Mask(res);
         }
@@ -444,6 +468,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         @Override
         public Double128Vector toVector() {
             double[] res = new double[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = (double) (bits[i] ? -1 : 0);
             }
@@ -566,9 +591,9 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         @Override
         Double128Vector op(Mask<Double, Shapes.S128Bit> o, FOp f) {
             double[] res = new double[length()];
-            Double128Mask m = (Double128Mask) o;
+            boolean[] mbits = ((Double128Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
-                if (m.bits[i]) {
+                if (mbits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -579,7 +604,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
         @Override
         public Double128Mask constantMask(boolean... bits) {
-            return new Double128Mask(bits);
+            return new Double128Mask(bits.clone());
         }
 
 

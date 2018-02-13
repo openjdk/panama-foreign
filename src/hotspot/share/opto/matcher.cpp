@@ -421,7 +421,7 @@ static RegMask *init_input_masks( uint size, RegMask &ret_adr, RegMask &fp ) {
 void Matcher::init_first_stack_mask() {
 
   // Allocate storage for spill masks as masks for the appropriate load type.
-  RegMask *rms = (RegMask*)C->comp_arena()->Amalloc_D(sizeof(RegMask) * (3*6+5));
+  RegMask *rms = (RegMask*)C->comp_arena()->Amalloc_D(sizeof(RegMask) * (3*11));
 
   idealreg2spillmask  [Op_RegN] = &rms[0];
   idealreg2spillmask  [Op_RegI] = &rms[1];
@@ -449,6 +449,18 @@ void Matcher::init_first_stack_mask() {
   idealreg2spillmask  [Op_VecX] = &rms[20];
   idealreg2spillmask  [Op_VecY] = &rms[21];
   idealreg2spillmask  [Op_VecZ] = &rms[22];
+
+  idealreg2debugmask  [Op_VecS] = &rms[23];
+  idealreg2debugmask  [Op_VecD] = &rms[24];
+  idealreg2debugmask  [Op_VecX] = &rms[25];
+  idealreg2debugmask  [Op_VecY] = &rms[26];
+  idealreg2debugmask  [Op_VecZ] = &rms[27];
+
+  idealreg2mhdebugmask[Op_VecS] = &rms[28];
+  idealreg2mhdebugmask[Op_VecD] = &rms[29];
+  idealreg2mhdebugmask[Op_VecX] = &rms[30];
+  idealreg2mhdebugmask[Op_VecY] = &rms[31];
+  idealreg2mhdebugmask[Op_VecZ] = &rms[32];
 
   OptoReg::Name i;
 
@@ -578,12 +590,24 @@ void Matcher::init_first_stack_mask() {
   *idealreg2debugmask  [Op_RegD]= *idealreg2spillmask[Op_RegD];
   *idealreg2debugmask  [Op_RegP]= *idealreg2spillmask[Op_RegP];
 
+  *idealreg2debugmask  [Op_VecS]= *idealreg2spillmask[Op_VecS];
+  *idealreg2debugmask  [Op_VecD]= *idealreg2spillmask[Op_VecD];
+  *idealreg2debugmask  [Op_VecX]= *idealreg2spillmask[Op_VecX];
+  *idealreg2debugmask  [Op_VecY]= *idealreg2spillmask[Op_VecY];
+  *idealreg2debugmask  [Op_VecZ]= *idealreg2spillmask[Op_VecZ];
+
   *idealreg2mhdebugmask[Op_RegN]= *idealreg2spillmask[Op_RegN];
   *idealreg2mhdebugmask[Op_RegI]= *idealreg2spillmask[Op_RegI];
   *idealreg2mhdebugmask[Op_RegL]= *idealreg2spillmask[Op_RegL];
   *idealreg2mhdebugmask[Op_RegF]= *idealreg2spillmask[Op_RegF];
   *idealreg2mhdebugmask[Op_RegD]= *idealreg2spillmask[Op_RegD];
   *idealreg2mhdebugmask[Op_RegP]= *idealreg2spillmask[Op_RegP];
+
+  *idealreg2mhdebugmask[Op_VecS]= *idealreg2spillmask[Op_VecS];
+  *idealreg2mhdebugmask[Op_VecD]= *idealreg2spillmask[Op_VecD];
+  *idealreg2mhdebugmask[Op_VecX]= *idealreg2spillmask[Op_VecX];
+  *idealreg2mhdebugmask[Op_VecY]= *idealreg2spillmask[Op_VecY];
+  *idealreg2mhdebugmask[Op_VecZ]= *idealreg2spillmask[Op_VecZ];
 
   // Prevent stub compilations from attempting to reference
   // callee-saved registers from debug info
@@ -600,6 +624,11 @@ void Matcher::init_first_stack_mask() {
       idealreg2debugmask  [Op_RegF]->Remove(i); // masks
       idealreg2debugmask  [Op_RegD]->Remove(i);
       idealreg2debugmask  [Op_RegP]->Remove(i);
+      idealreg2debugmask  [Op_VecS]->Remove(i);
+      idealreg2debugmask  [Op_VecD]->Remove(i);
+      idealreg2debugmask  [Op_VecX]->Remove(i);
+      idealreg2debugmask  [Op_VecY]->Remove(i);
+      idealreg2debugmask  [Op_VecZ]->Remove(i);
 
       idealreg2mhdebugmask[Op_RegN]->Remove(i);
       idealreg2mhdebugmask[Op_RegI]->Remove(i);
@@ -607,6 +636,11 @@ void Matcher::init_first_stack_mask() {
       idealreg2mhdebugmask[Op_RegF]->Remove(i);
       idealreg2mhdebugmask[Op_RegD]->Remove(i);
       idealreg2mhdebugmask[Op_RegP]->Remove(i);
+      idealreg2mhdebugmask[Op_VecS]->Remove(i);
+      idealreg2mhdebugmask[Op_VecD]->Remove(i);
+      idealreg2mhdebugmask[Op_VecX]->Remove(i);
+      idealreg2mhdebugmask[Op_VecY]->Remove(i);
+      idealreg2mhdebugmask[Op_VecZ]->Remove(i);
     }
   }
 
@@ -619,6 +653,11 @@ void Matcher::init_first_stack_mask() {
   idealreg2mhdebugmask[Op_RegF]->SUBTRACT(save_mask);
   idealreg2mhdebugmask[Op_RegD]->SUBTRACT(save_mask);
   idealreg2mhdebugmask[Op_RegP]->SUBTRACT(save_mask);
+  idealreg2mhdebugmask[Op_VecS]->SUBTRACT(save_mask);
+  idealreg2mhdebugmask[Op_VecD]->SUBTRACT(save_mask);
+  idealreg2mhdebugmask[Op_VecX]->SUBTRACT(save_mask);
+  idealreg2mhdebugmask[Op_VecY]->SUBTRACT(save_mask);
+  idealreg2mhdebugmask[Op_VecZ]->SUBTRACT(save_mask);
 }
 
 //---------------------------is_save_on_entry----------------------------------

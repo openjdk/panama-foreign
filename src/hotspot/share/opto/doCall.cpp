@@ -189,6 +189,9 @@ CallGenerator* Compile::call_generator(ciMethod* callee, int vtable_index, bool 
           } else if (should_delay_boxing_inlining(callee, jvms)) {
             assert(!delayed_forbidden, "strange");
             return CallGenerator::for_boxing_late_inline(callee, cg);
+          } else if (should_delay_vector_reboxing_inlining(callee, jvms)) {
+            assert(!delayed_forbidden, "strange");
+            return CallGenerator::for_vector_reboxing_late_inline(callee, cg);
           } else if ((should_delay || AlwaysIncrementalInline) && !delayed_forbidden) {
             return CallGenerator::for_late_inline(callee, cg);
           }
@@ -384,6 +387,11 @@ bool Compile::should_delay_vector_inlining(ciMethod* call_method, JVMState* jvms
           call_method->intrinsic_id() <= vmIntrinsics::_VectorTest);
 }
 
+bool Compile::should_delay_vector_reboxing_inlining(ciMethod* call_method, JVMState* jvms) {
+  return UseVectorApiGeneralizedIntrinsics &&
+         call_method->intrinsic_id() == vmIntrinsics::_VectorRebox;
+}
+
 // uncommon-trap call-sites where callee is unloaded, uninitialized or will not link
 bool Parse::can_not_compile_call_site(ciMethod *dest_method, ciInstanceKlass* klass) {
   // Additional inputs to consider...
@@ -507,7 +515,7 @@ void Parse::do_call() {
     // The issue here is that mask creation needs specialized dispatch.
     if (UseVectorApiIntrinsics) {
       // For Vector API, we do not specialize in order to keep intrinsics dispatch logic simple.
-      if (receiver_node->is_VectorBox()) {
+      if (receiver_node->Opcode() == Op_VectorBox) {
         should_specialize = false;
       }
     }

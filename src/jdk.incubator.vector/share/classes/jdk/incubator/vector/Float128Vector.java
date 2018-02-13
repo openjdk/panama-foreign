@@ -39,7 +39,11 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     static final int LENGTH = SPECIES.length();
 
-    float[] vec;
+    private final float[] vec; // Don't access directly, use getElements() instead.
+
+    private float[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
 
     Float128Vector() {
         vec = new float[SPECIES.length()];
@@ -56,6 +60,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     Float128Vector uOp(FUnOp f) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++) {
             res[i] = f.apply(i, vec[i]);
@@ -65,10 +70,11 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     Float128Vector uOp(Mask<Float, Shapes.S128Bit> o, FUnOp f) {
+        float[] vec = getElements();
         float[] res = new float[length()];
-        Float128Mask m = (Float128Mask) o;
+        boolean[] mbits = ((Float128Mask)o).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Float128Vector(res);
     }
@@ -78,9 +84,10 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     @Override
     Float128Vector bOp(Vector<Float, Shapes.S128Bit> o, FBinOp f) {
         float[] res = new float[length()];
-        Float128Vector v = (Float128Vector) o;
+        float[] vec1 = this.getElements();
+        float[] vec2 = ((Float128Vector)o).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Float128Vector(res);
     }
@@ -88,10 +95,11 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     @Override
     Float128Vector bOp(Vector<Float, Shapes.S128Bit> o1, Mask<Float, Shapes.S128Bit> o2, FBinOp f) {
         float[] res = new float[length()];
-        Float128Vector v = (Float128Vector) o1;
-        Float128Mask m = (Float128Mask) o2;
+        float[] vec1 = this.getElements();
+        float[] vec2 = ((Float128Vector)o1).getElements();
+        boolean[] mbits = ((Float128Mask)o2).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
         }
         return new Float128Vector(res);
     }
@@ -101,10 +109,11 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     @Override
     Float128Vector tOp(Vector<Float, Shapes.S128Bit> o1, Vector<Float, Shapes.S128Bit> o2, FTriOp f) {
         float[] res = new float[length()];
-        Float128Vector v1 = (Float128Vector) o1;
-        Float128Vector v2 = (Float128Vector) o2;
+        float[] vec1 = this.getElements();
+        float[] vec2 = ((Float128Vector)o1).getElements();
+        float[] vec3 = ((Float128Vector)o2).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v1.vec[i], v2.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
         return new Float128Vector(res);
     }
@@ -112,17 +121,19 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     @Override
     Float128Vector tOp(Vector<Float, Shapes.S128Bit> o1, Vector<Float, Shapes.S128Bit> o2, Mask<Float, Shapes.S128Bit> o3, FTriOp f) {
         float[] res = new float[length()];
-        Float128Vector v1 = (Float128Vector) o1;
-        Float128Vector v2 = (Float128Vector) o2;
-        Float128Mask m = (Float128Mask) o3;
+        float[] vec1 = getElements();
+        float[] vec2 = ((Float128Vector)o1).getElements();
+        float[] vec3 = ((Float128Vector)o2).getElements();
+        boolean[] mbits = ((Float128Mask)o3).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
         }
         return new Float128Vector(res);
     }
 
     @Override
     float rOp(float v, FBinOp f) {
+        float[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -223,7 +234,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     public String toString() {
-        return Arrays.toString(vec);
+        return Arrays.toString(getElements());
     }
 
     @Override
@@ -232,7 +243,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         if (o == null || this.getClass() != o.getClass()) return false;
 
         Float128Vector that = (Float128Vector) o;
-        return Arrays.equals(vec, that.vec);
+        return Arrays.equals(this.getElements(), that.getElements());
     }
 
     @Override
@@ -244,10 +255,11 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     Float128Mask bTest(Vector<Float, Shapes.S128Bit> o, FBinTest f) {
-        Float128Vector v = (Float128Vector) o;
+        float[] vec1 = getElements();
+        float[] vec2 = ((Float128Vector)o).getElements();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec[i], v.vec[i]);
+            bits[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Float128Mask(bits);
     }
@@ -256,6 +268,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     void forEach(FUnCon f) {
+        float[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             f.apply(i, vec[i]);
         }
@@ -263,13 +276,14 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     void forEach(Mask<Float, Shapes.S128Bit> o, FUnCon f) {
-        Float128Mask m = (Float128Mask) o;
+        boolean[] mbits = ((Float128Mask)o).getBits();
         forEach((i, a) -> {
-            if (m.bits[i]) { f.apply(i, a); }
+            if (mbits[i]) { f.apply(i, a); }
         });
     }
 
     Int128Vector toBits() {
+        float[] vec = getElements();
         int[] res = new int[this.species().length()];
         for(int i = 0; i < this.species().length(); i++){
             res[i] = Float.floatToIntBits(vec[i]);
@@ -280,6 +294,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     public Float128Vector rotateEL(int j) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++){
             res[j + i % length()] = vec[i];
@@ -289,6 +304,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     public Float128Vector rotateER(int j) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++){
             int z = i - j;
@@ -303,6 +319,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     public Float128Vector shiftEL(int j) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length() - j; i++) {
             res[i] = vec[i + j];
@@ -312,6 +329,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     public Float128Vector shiftER(int j) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length() - j; i++){
             res[i + j] = vec[i];
@@ -323,13 +341,14 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     public Float128Vector shuffle(Vector<Float, Shapes.S128Bit> o, Shuffle<Float, Shapes.S128Bit> s) {
         Float128Vector v = (Float128Vector) o;
         return uOp((i, a) -> {
+            float[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
                 //from o
-                return v.vec[e - length()];
+                return v.getElements()[e - length()];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
@@ -339,6 +358,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     @Override
     public Float128Vector swizzle(Shuffle<Float, Shapes.S128Bit> s) {
         return uOp((i, a) -> {
+            float[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 return vec[e];
@@ -358,6 +378,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
         int limit = Math.min(species.length(), length());
 
+        float[] vec = getElements();
         if (type == Byte.class) {
             for (int i = 0; i < limit; i++){
                 bb.put(i, (byte) vec[i]);
@@ -393,6 +414,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
     @Override
     public float get(int i) {
+        float[] vec = getElements();
         return vec[i];
     }
 
@@ -420,6 +442,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         @Override
         Float128Mask uOp(MUnOp f) {
             boolean[] res = new boolean[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = f.apply(i, bits[i]);
             }
@@ -429,9 +452,10 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         @Override
         Float128Mask bOp(Mask<Float, Shapes.S128Bit> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
-            Float128Mask m = (Float128Mask) o;
+            boolean[] bits = getBits();
+            boolean[] mbits = ((Float128Mask)o).getBits();
             for (int i = 0; i < species().length(); i++) {
-                res[i] = f.apply(i, bits[i], m.bits[i]);
+                res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new Float128Mask(res);
         }
@@ -444,6 +468,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         @Override
         public Float128Vector toVector() {
             float[] res = new float[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = (float) (bits[i] ? -1 : 0);
             }
@@ -566,9 +591,9 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         @Override
         Float128Vector op(Mask<Float, Shapes.S128Bit> o, FOp f) {
             float[] res = new float[length()];
-            Float128Mask m = (Float128Mask) o;
+            boolean[] mbits = ((Float128Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
-                if (m.bits[i]) {
+                if (mbits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -579,7 +604,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
 
         @Override
         public Float128Mask constantMask(boolean... bits) {
-            return new Float128Mask(bits);
+            return new Float128Mask(bits.clone());
         }
 
 

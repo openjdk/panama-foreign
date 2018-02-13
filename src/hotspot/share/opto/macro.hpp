@@ -90,10 +90,6 @@ private:
   Node *value_from_mem(Node *mem, Node *ctl, BasicType ft, const Type *ftype, const TypeOopPtr *adr_t, AllocateNode *alloc);
   Node *value_from_mem_phi(Node *mem, BasicType ft, const Type *ftype, const TypeOopPtr *adr_t, AllocateNode *alloc, Node_Stack *value_phis, int level);
 
-  void vectorbox_remove_allocate(Node* allocate);
-  void eliminate_vectorbox_node(VectorBoxNode *vec_box, bool final);
-  void expand_vectorunbox_node(VectorUnboxNode* vunbox);
-
   bool eliminate_boxing_node(CallStaticJavaNode *boxing);
   bool eliminate_allocate_node(AllocateNode *alloc);
   bool can_eliminate_allocation(AllocateNode *alloc, GrowableArray <SafePointNode *>& safepoints);
@@ -214,7 +210,6 @@ public:
   }
   void eliminate_macro_nodes();
   bool expand_macro_nodes();
-  void expand_vbox_nodes();
 };
 
 #endif // SHARE_VM_OPTO_MACRO_HPP

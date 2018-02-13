@@ -38,7 +38,11 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     static final int LENGTH = SPECIES.length();
 
-    long[] vec;
+    private final long[] vec; // Don't access directly, use getElements() instead.
+
+    private long[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
 
     Long64Vector() {
         vec = new long[SPECIES.length()];
@@ -55,6 +59,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     Long64Vector uOp(FUnOp f) {
+        long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length(); i++) {
             res[i] = f.apply(i, vec[i]);
@@ -64,10 +69,11 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     Long64Vector uOp(Mask<Long, Shapes.S64Bit> o, FUnOp f) {
+        long[] vec = getElements();
         long[] res = new long[length()];
-        Long64Mask m = (Long64Mask) o;
+        boolean[] mbits = ((Long64Mask)o).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Long64Vector(res);
     }
@@ -77,9 +83,10 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     @Override
     Long64Vector bOp(Vector<Long, Shapes.S64Bit> o, FBinOp f) {
         long[] res = new long[length()];
-        Long64Vector v = (Long64Vector) o;
+        long[] vec1 = this.getElements();
+        long[] vec2 = ((Long64Vector)o).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Long64Vector(res);
     }
@@ -87,10 +94,11 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     @Override
     Long64Vector bOp(Vector<Long, Shapes.S64Bit> o1, Mask<Long, Shapes.S64Bit> o2, FBinOp f) {
         long[] res = new long[length()];
-        Long64Vector v = (Long64Vector) o1;
-        Long64Mask m = (Long64Mask) o2;
+        long[] vec1 = this.getElements();
+        long[] vec2 = ((Long64Vector)o1).getElements();
+        boolean[] mbits = ((Long64Mask)o2).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
         }
         return new Long64Vector(res);
     }
@@ -100,10 +108,11 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     @Override
     Long64Vector tOp(Vector<Long, Shapes.S64Bit> o1, Vector<Long, Shapes.S64Bit> o2, FTriOp f) {
         long[] res = new long[length()];
-        Long64Vector v1 = (Long64Vector) o1;
-        Long64Vector v2 = (Long64Vector) o2;
+        long[] vec1 = this.getElements();
+        long[] vec2 = ((Long64Vector)o1).getElements();
+        long[] vec3 = ((Long64Vector)o2).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v1.vec[i], v2.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
         return new Long64Vector(res);
     }
@@ -111,17 +120,19 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     @Override
     Long64Vector tOp(Vector<Long, Shapes.S64Bit> o1, Vector<Long, Shapes.S64Bit> o2, Mask<Long, Shapes.S64Bit> o3, FTriOp f) {
         long[] res = new long[length()];
-        Long64Vector v1 = (Long64Vector) o1;
-        Long64Vector v2 = (Long64Vector) o2;
-        Long64Mask m = (Long64Mask) o3;
+        long[] vec1 = getElements();
+        long[] vec2 = ((Long64Vector)o1).getElements();
+        long[] vec3 = ((Long64Vector)o2).getElements();
+        boolean[] mbits = ((Long64Mask)o3).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
         }
         return new Long64Vector(res);
     }
 
     @Override
     long rOp(long v, FBinOp f) {
+        long[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -246,7 +257,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     public String toString() {
-        return Arrays.toString(vec);
+        return Arrays.toString(getElements());
     }
 
     @Override
@@ -255,7 +266,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         if (o == null || this.getClass() != o.getClass()) return false;
 
         Long64Vector that = (Long64Vector) o;
-        return Arrays.equals(vec, that.vec);
+        return Arrays.equals(this.getElements(), that.getElements());
     }
 
     @Override
@@ -267,10 +278,11 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     Long64Mask bTest(Vector<Long, Shapes.S64Bit> o, FBinTest f) {
-        Long64Vector v = (Long64Vector) o;
+        long[] vec1 = getElements();
+        long[] vec2 = ((Long64Vector)o).getElements();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec[i], v.vec[i]);
+            bits[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Long64Mask(bits);
     }
@@ -279,6 +291,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     void forEach(FUnCon f) {
+        long[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             f.apply(i, vec[i]);
         }
@@ -286,14 +299,15 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     void forEach(Mask<Long, Shapes.S64Bit> o, FUnCon f) {
-        Long64Mask m = (Long64Mask) o;
+        boolean[] mbits = ((Long64Mask)o).getBits();
         forEach((i, a) -> {
-            if (m.bits[i]) { f.apply(i, a); }
+            if (mbits[i]) { f.apply(i, a); }
         });
     }
 
 
     Double64Vector toFP() {
+        long[] vec = getElements();
         double[] res = new double[this.species().length()];
         for(int i = 0; i < this.species().length(); i++){
             res[i] = Double.longBitsToDouble(vec[i]);
@@ -303,6 +317,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     public Long64Vector rotateEL(int j) {
+        long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length(); i++){
             res[j + i % length()] = vec[i];
@@ -312,6 +327,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     public Long64Vector rotateER(int j) {
+        long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length(); i++){
             int z = i - j;
@@ -326,6 +342,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     public Long64Vector shiftEL(int j) {
+        long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length() - j; i++) {
             res[i] = vec[i + j];
@@ -335,6 +352,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     public Long64Vector shiftER(int j) {
+        long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length() - j; i++){
             res[i + j] = vec[i];
@@ -346,13 +364,14 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     public Long64Vector shuffle(Vector<Long, Shapes.S64Bit> o, Shuffle<Long, Shapes.S64Bit> s) {
         Long64Vector v = (Long64Vector) o;
         return uOp((i, a) -> {
+            long[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
                 //from o
-                return v.vec[e - length()];
+                return v.getElements()[e - length()];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
@@ -362,6 +381,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     @Override
     public Long64Vector swizzle(Shuffle<Long, Shapes.S64Bit> s) {
         return uOp((i, a) -> {
+            long[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 return vec[e];
@@ -381,6 +401,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
         int limit = Math.min(species.length(), length());
 
+        long[] vec = getElements();
         if (type == Byte.class) {
             for (int i = 0; i < limit; i++){
                 bb.put(i, (byte) vec[i]);
@@ -416,6 +437,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     public long get(int i) {
+        long[] vec = getElements();
         return vec[i];
     }
 
@@ -443,6 +465,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         @Override
         Long64Mask uOp(MUnOp f) {
             boolean[] res = new boolean[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = f.apply(i, bits[i]);
             }
@@ -452,9 +475,10 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         @Override
         Long64Mask bOp(Mask<Long, Shapes.S64Bit> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
-            Long64Mask m = (Long64Mask) o;
+            boolean[] bits = getBits();
+            boolean[] mbits = ((Long64Mask)o).getBits();
             for (int i = 0; i < species().length(); i++) {
-                res[i] = f.apply(i, bits[i], m.bits[i]);
+                res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new Long64Mask(res);
         }
@@ -467,6 +491,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         @Override
         public Long64Vector toVector() {
             long[] res = new long[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = (long) (bits[i] ? -1 : 0);
             }
@@ -589,9 +614,9 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         @Override
         Long64Vector op(Mask<Long, Shapes.S64Bit> o, FOp f) {
             long[] res = new long[length()];
-            Long64Mask m = (Long64Mask) o;
+            boolean[] mbits = ((Long64Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
-                if (m.bits[i]) {
+                if (mbits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -602,7 +627,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
         @Override
         public Long64Mask constantMask(boolean... bits) {
-            return new Long64Mask(bits);
+            return new Long64Mask(bits.clone());
         }
 
 

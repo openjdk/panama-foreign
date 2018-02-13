@@ -1463,6 +1463,10 @@
    do_signature(vector_test_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Z") \
    do_name(vector_test_name, "test")                                                                                                           \
                                                                                                                                                \
+  do_intrinsic(_VectorRebox, jdk_incubator_vector_VectorIntrinsics, vector_rebox_name, vector_rebox_sig, F_S)                                                  \
+   do_alias(vector_rebox_sig, object_object_signature)                                                                                         \
+   do_name(vector_rebox_name, "maybeRebox")                                                                                                          \
+                                                                                                                                               \
    /* Vector API intrinsification support */                                                                                                   \
    do_signature(vector_cmp_sig, "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/Vector$Mask;")                                           \
    do_signature(vector_long_blend_sig, "(Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;)Ljdk/incubator/vector/LongVector;")   \

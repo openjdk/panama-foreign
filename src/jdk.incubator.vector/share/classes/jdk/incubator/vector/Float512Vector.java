@@ -39,7 +39,11 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     static final int LENGTH = SPECIES.length();
 
-    float[] vec;
+    private final float[] vec; // Don't access directly, use getElements() instead.
+
+    private float[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
 
     Float512Vector() {
         vec = new float[SPECIES.length()];
@@ -56,6 +60,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     Float512Vector uOp(FUnOp f) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++) {
             res[i] = f.apply(i, vec[i]);
@@ -65,10 +70,11 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     Float512Vector uOp(Mask<Float, Shapes.S512Bit> o, FUnOp f) {
+        float[] vec = getElements();
         float[] res = new float[length()];
-        Float512Mask m = (Float512Mask) o;
+        boolean[] mbits = ((Float512Mask)o).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Float512Vector(res);
     }
@@ -78,9 +84,10 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     Float512Vector bOp(Vector<Float, Shapes.S512Bit> o, FBinOp f) {
         float[] res = new float[length()];
-        Float512Vector v = (Float512Vector) o;
+        float[] vec1 = this.getElements();
+        float[] vec2 = ((Float512Vector)o).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Float512Vector(res);
     }
@@ -88,10 +95,11 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     Float512Vector bOp(Vector<Float, Shapes.S512Bit> o1, Mask<Float, Shapes.S512Bit> o2, FBinOp f) {
         float[] res = new float[length()];
-        Float512Vector v = (Float512Vector) o1;
-        Float512Mask m = (Float512Mask) o2;
+        float[] vec1 = this.getElements();
+        float[] vec2 = ((Float512Vector)o1).getElements();
+        boolean[] mbits = ((Float512Mask)o2).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
         }
         return new Float512Vector(res);
     }
@@ -101,10 +109,11 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     Float512Vector tOp(Vector<Float, Shapes.S512Bit> o1, Vector<Float, Shapes.S512Bit> o2, FTriOp f) {
         float[] res = new float[length()];
-        Float512Vector v1 = (Float512Vector) o1;
-        Float512Vector v2 = (Float512Vector) o2;
+        float[] vec1 = this.getElements();
+        float[] vec2 = ((Float512Vector)o1).getElements();
+        float[] vec3 = ((Float512Vector)o2).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v1.vec[i], v2.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
         return new Float512Vector(res);
     }
@@ -112,17 +121,19 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     Float512Vector tOp(Vector<Float, Shapes.S512Bit> o1, Vector<Float, Shapes.S512Bit> o2, Mask<Float, Shapes.S512Bit> o3, FTriOp f) {
         float[] res = new float[length()];
-        Float512Vector v1 = (Float512Vector) o1;
-        Float512Vector v2 = (Float512Vector) o2;
-        Float512Mask m = (Float512Mask) o3;
+        float[] vec1 = getElements();
+        float[] vec2 = ((Float512Vector)o1).getElements();
+        float[] vec3 = ((Float512Vector)o2).getElements();
+        boolean[] mbits = ((Float512Mask)o3).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
         }
         return new Float512Vector(res);
     }
 
     @Override
     float rOp(float v, FBinOp f) {
+        float[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -223,7 +234,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     public String toString() {
-        return Arrays.toString(vec);
+        return Arrays.toString(getElements());
     }
 
     @Override
@@ -232,7 +243,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         if (o == null || this.getClass() != o.getClass()) return false;
 
         Float512Vector that = (Float512Vector) o;
-        return Arrays.equals(vec, that.vec);
+        return Arrays.equals(this.getElements(), that.getElements());
     }
 
     @Override
@@ -244,10 +255,11 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     Float512Mask bTest(Vector<Float, Shapes.S512Bit> o, FBinTest f) {
-        Float512Vector v = (Float512Vector) o;
+        float[] vec1 = getElements();
+        float[] vec2 = ((Float512Vector)o).getElements();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec[i], v.vec[i]);
+            bits[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Float512Mask(bits);
     }
@@ -256,6 +268,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     void forEach(FUnCon f) {
+        float[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             f.apply(i, vec[i]);
         }
@@ -263,13 +276,14 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     void forEach(Mask<Float, Shapes.S512Bit> o, FUnCon f) {
-        Float512Mask m = (Float512Mask) o;
+        boolean[] mbits = ((Float512Mask)o).getBits();
         forEach((i, a) -> {
-            if (m.bits[i]) { f.apply(i, a); }
+            if (mbits[i]) { f.apply(i, a); }
         });
     }
 
     Int512Vector toBits() {
+        float[] vec = getElements();
         int[] res = new int[this.species().length()];
         for(int i = 0; i < this.species().length(); i++){
             res[i] = Float.floatToIntBits(vec[i]);
@@ -280,6 +294,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     public Float512Vector rotateEL(int j) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++){
             res[j + i % length()] = vec[i];
@@ -289,6 +304,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     public Float512Vector rotateER(int j) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++){
             int z = i - j;
@@ -303,6 +319,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     public Float512Vector shiftEL(int j) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length() - j; i++) {
             res[i] = vec[i + j];
@@ -312,6 +329,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     public Float512Vector shiftER(int j) {
+        float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length() - j; i++){
             res[i + j] = vec[i];
@@ -323,13 +341,14 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     public Float512Vector shuffle(Vector<Float, Shapes.S512Bit> o, Shuffle<Float, Shapes.S512Bit> s) {
         Float512Vector v = (Float512Vector) o;
         return uOp((i, a) -> {
+            float[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
                 //from o
-                return v.vec[e - length()];
+                return v.getElements()[e - length()];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
@@ -339,6 +358,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     public Float512Vector swizzle(Shuffle<Float, Shapes.S512Bit> s) {
         return uOp((i, a) -> {
+            float[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 return vec[e];
@@ -358,6 +378,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         int limit = Math.min(species.length(), length());
 
+        float[] vec = getElements();
         if (type == Byte.class) {
             for (int i = 0; i < limit; i++){
                 bb.put(i, (byte) vec[i]);
@@ -393,6 +414,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     public float get(int i) {
+        float[] vec = getElements();
         return vec[i];
     }
 
@@ -420,6 +442,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         Float512Mask uOp(MUnOp f) {
             boolean[] res = new boolean[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = f.apply(i, bits[i]);
             }
@@ -429,9 +452,10 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         Float512Mask bOp(Mask<Float, Shapes.S512Bit> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
-            Float512Mask m = (Float512Mask) o;
+            boolean[] bits = getBits();
+            boolean[] mbits = ((Float512Mask)o).getBits();
             for (int i = 0; i < species().length(); i++) {
-                res[i] = f.apply(i, bits[i], m.bits[i]);
+                res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new Float512Mask(res);
         }
@@ -444,6 +468,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         public Float512Vector toVector() {
             float[] res = new float[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = (float) (bits[i] ? -1 : 0);
             }
@@ -566,9 +591,9 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         Float512Vector op(Mask<Float, Shapes.S512Bit> o, FOp f) {
             float[] res = new float[length()];
-            Float512Mask m = (Float512Mask) o;
+            boolean[] mbits = ((Float512Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
-                if (m.bits[i]) {
+                if (mbits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -579,7 +604,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @Override
         public Float512Mask constantMask(boolean... bits) {
-            return new Float512Mask(bits);
+            return new Float512Mask(bits.clone());
         }
 
 

@@ -44,7 +44,11 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     static final int LENGTH = SPECIES.length();
 
-    $type$[] vec;
+    private final $type$[] vec; // Don't access directly, use getElements() instead.
+
+    private $type$[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
 
     $vectortype$() {
         vec = new $type$[SPECIES.length()];
@@ -61,6 +65,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     $vectortype$ uOp(FUnOp f) {
+        $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length(); i++) {
             res[i] = f.apply(i, vec[i]);
@@ -70,10 +75,11 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     $vectortype$ uOp(Mask<$Boxtype$, Shapes.$shape$> o, FUnOp f) {
+        $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
-        $masktype$ m = ($masktype$) o;
+        boolean[] mbits = (($masktype$)o).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new $vectortype$(res);
     }
@@ -83,9 +89,10 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     $vectortype$ bOp(Vector<$Boxtype$, Shapes.$shape$> o, FBinOp f) {
         $type$[] res = new $type$[length()];
-        $vectortype$ v = ($vectortype$) o;
+        $type$[] vec1 = this.getElements();
+        $type$[] vec2 = (($vectortype$)o).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new $vectortype$(res);
     }
@@ -93,10 +100,11 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     $vectortype$ bOp(Vector<$Boxtype$, Shapes.$shape$> o1, Mask<$Boxtype$, Shapes.$shape$> o2, FBinOp f) {
         $type$[] res = new $type$[length()];
-        $vectortype$ v = ($vectortype$) o1;
-        $masktype$ m = ($masktype$) o2;
+        $type$[] vec1 = this.getElements();
+        $type$[] vec2 = (($vectortype$)o1).getElements();
+        boolean[] mbits = (($masktype$)o2).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
         }
         return new $vectortype$(res);
     }
@@ -106,10 +114,11 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     $vectortype$ tOp(Vector<$Boxtype$, Shapes.$shape$> o1, Vector<$Boxtype$, Shapes.$shape$> o2, FTriOp f) {
         $type$[] res = new $type$[length()];
-        $vectortype$ v1 = ($vectortype$) o1;
-        $vectortype$ v2 = ($vectortype$) o2;
+        $type$[] vec1 = this.getElements();
+        $type$[] vec2 = (($vectortype$)o1).getElements();
+        $type$[] vec3 = (($vectortype$)o2).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v1.vec[i], v2.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
         return new $vectortype$(res);
     }
@@ -117,17 +126,19 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     $vectortype$ tOp(Vector<$Boxtype$, Shapes.$shape$> o1, Vector<$Boxtype$, Shapes.$shape$> o2, Mask<$Boxtype$, Shapes.$shape$> o3, FTriOp f) {
         $type$[] res = new $type$[length()];
-        $vectortype$ v1 = ($vectortype$) o1;
-        $vectortype$ v2 = ($vectortype$) o2;
-        $masktype$ m = ($masktype$) o3;
+        $type$[] vec1 = getElements();
+        $type$[] vec2 = (($vectortype$)o1).getElements();
+        $type$[] vec3 = (($vectortype$)o2).getElements();
+        boolean[] mbits = (($masktype$)o3).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
         }
         return new $vectortype$(res);
     }
 
     @Override
     $type$ rOp($type$ v, FBinOp f) {
+        $type$[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -283,7 +294,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     public String toString() {
-        return Arrays.toString(vec);
+        return Arrays.toString(getElements());
     }
 
     @Override
@@ -292,7 +303,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         if (o == null || this.getClass() != o.getClass()) return false;
 
         $vectortype$ that = ($vectortype$) o;
-        return Arrays.equals(vec, that.vec);
+        return Arrays.equals(this.getElements(), that.getElements());
     }
 
     @Override
@@ -304,10 +315,11 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     $masktype$ bTest(Vector<$Boxtype$, Shapes.$shape$> o, FBinTest f) {
-        $vectortype$ v = ($vectortype$) o;
+        $type$[] vec1 = getElements();
+        $type$[] vec2 = (($vectortype$)o).getElements();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec[i], v.vec[i]);
+            bits[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new $masktype$(bits);
     }
@@ -316,6 +328,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     void forEach(FUnCon f) {
+        $type$[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             f.apply(i, vec[i]);
         }
@@ -323,14 +336,15 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     void forEach(Mask<$Boxtype$, Shapes.$shape$> o, FUnCon f) {
-        $masktype$ m = ($masktype$) o;
+        boolean[] mbits = (($masktype$)o).getBits();
         forEach((i, a) -> {
-            if (m.bits[i]) { f.apply(i, a); }
+            if (mbits[i]) { f.apply(i, a); }
         });
     }
 
 #if[FP]
     $bitsvectortype$ toBits() {
+        $type$[] vec = getElements();
         $bitstype$[] res = new $bitstype$[this.species().length()];
         for(int i = 0; i < this.species().length(); i++){
             res[i] = $Type$.$type$To$Bitstype$Bits(vec[i]);
@@ -341,6 +355,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
 #if[intOrlong]
     $fpvectortype$ toFP() {
+        $type$[] vec = getElements();
         $fptype$[] res = new $fptype$[this.species().length()];
         for(int i = 0; i < this.species().length(); i++){
             res[i] = $Boxfptype$.$bitstype$BitsTo$Fptype$(vec[i]);
@@ -351,6 +366,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     public $vectortype$ rotateEL(int j) {
+        $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length(); i++){
             res[j + i % length()] = vec[i];
@@ -360,6 +376,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     public $vectortype$ rotateER(int j) {
+        $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length(); i++){
             int z = i - j;
@@ -374,6 +391,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     public $vectortype$ shiftEL(int j) {
+        $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length() - j; i++) {
             res[i] = vec[i + j];
@@ -383,6 +401,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     public $vectortype$ shiftER(int j) {
+        $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length() - j; i++){
             res[i + j] = vec[i];
@@ -394,13 +413,14 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     public $vectortype$ shuffle(Vector<$Boxtype$, Shapes.$shape$> o, Shuffle<$Boxtype$, Shapes.$shape$> s) {
         $vectortype$ v = ($vectortype$) o;
         return uOp((i, a) -> {
+            $type$[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
                 //from o
-                return v.vec[e - length()];
+                return v.getElements()[e - length()];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
@@ -410,6 +430,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     public $vectortype$ swizzle(Shuffle<$Boxtype$, Shapes.$shape$> s) {
         return uOp((i, a) -> {
+            $type$[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 return vec[e];
@@ -429,6 +450,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
         int limit = Math.min(species.length(), length());
 
+        $type$[] vec = getElements();
         if (type == Byte.class) {
             for (int i = 0; i < limit; i++){
                 bb.put(i, (byte) vec[i]);
@@ -464,6 +486,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     public $type$ get(int i) {
+        $type$[] vec = getElements();
         return vec[i];
     }
 
@@ -491,6 +514,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @Override
         $masktype$ uOp(MUnOp f) {
             boolean[] res = new boolean[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = f.apply(i, bits[i]);
             }
@@ -500,9 +524,10 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @Override
         $masktype$ bOp(Mask<$Boxtype$, Shapes.$shape$> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
-            $masktype$ m = ($masktype$) o;
+            boolean[] bits = getBits();
+            boolean[] mbits = (($masktype$)o).getBits();
             for (int i = 0; i < species().length(); i++) {
-                res[i] = f.apply(i, bits[i], m.bits[i]);
+                res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new $masktype$(res);
         }
@@ -515,6 +540,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @Override
         public $vectortype$ toVector() {
             $type$[] res = new $type$[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = ($type$) (bits[i] ? -1 : 0);
             }
@@ -637,9 +663,9 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @Override
         $vectortype$ op(Mask<$Boxtype$, Shapes.$shape$> o, FOp f) {
             $type$[] res = new $type$[length()];
-            $masktype$ m = ($masktype$) o;
+            boolean[] mbits = (($masktype$)o).getBits();
             for (int i = 0; i < length(); i++) {
-                if (m.bits[i]) {
+                if (mbits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -650,7 +676,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
         @Override
         public $masktype$ constantMask(boolean... bits) {
-            return new $masktype$(bits);
+            return new $masktype$(bits.clone());
         }
 
 

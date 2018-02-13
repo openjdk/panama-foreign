@@ -39,7 +39,11 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     static final int LENGTH = SPECIES.length();
 
-    double[] vec;
+    private final double[] vec; // Don't access directly, use getElements() instead.
+
+    private double[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
 
     Double256Vector() {
         vec = new double[SPECIES.length()];
@@ -56,6 +60,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     Double256Vector uOp(FUnOp f) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length(); i++) {
             res[i] = f.apply(i, vec[i]);
@@ -65,10 +70,11 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     Double256Vector uOp(Mask<Double, Shapes.S256Bit> o, FUnOp f) {
+        double[] vec = getElements();
         double[] res = new double[length()];
-        Double256Mask m = (Double256Mask) o;
+        boolean[] mbits = ((Double256Mask)o).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Double256Vector(res);
     }
@@ -78,9 +84,10 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     @Override
     Double256Vector bOp(Vector<Double, Shapes.S256Bit> o, FBinOp f) {
         double[] res = new double[length()];
-        Double256Vector v = (Double256Vector) o;
+        double[] vec1 = this.getElements();
+        double[] vec2 = ((Double256Vector)o).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Double256Vector(res);
     }
@@ -88,10 +95,11 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     @Override
     Double256Vector bOp(Vector<Double, Shapes.S256Bit> o1, Mask<Double, Shapes.S256Bit> o2, FBinOp f) {
         double[] res = new double[length()];
-        Double256Vector v = (Double256Vector) o1;
-        Double256Mask m = (Double256Mask) o2;
+        double[] vec1 = this.getElements();
+        double[] vec2 = ((Double256Vector)o1).getElements();
+        boolean[] mbits = ((Double256Mask)o2).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
         }
         return new Double256Vector(res);
     }
@@ -101,10 +109,11 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     @Override
     Double256Vector tOp(Vector<Double, Shapes.S256Bit> o1, Vector<Double, Shapes.S256Bit> o2, FTriOp f) {
         double[] res = new double[length()];
-        Double256Vector v1 = (Double256Vector) o1;
-        Double256Vector v2 = (Double256Vector) o2;
+        double[] vec1 = this.getElements();
+        double[] vec2 = ((Double256Vector)o1).getElements();
+        double[] vec3 = ((Double256Vector)o2).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v1.vec[i], v2.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
         return new Double256Vector(res);
     }
@@ -112,17 +121,19 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     @Override
     Double256Vector tOp(Vector<Double, Shapes.S256Bit> o1, Vector<Double, Shapes.S256Bit> o2, Mask<Double, Shapes.S256Bit> o3, FTriOp f) {
         double[] res = new double[length()];
-        Double256Vector v1 = (Double256Vector) o1;
-        Double256Vector v2 = (Double256Vector) o2;
-        Double256Mask m = (Double256Mask) o3;
+        double[] vec1 = getElements();
+        double[] vec2 = ((Double256Vector)o1).getElements();
+        double[] vec3 = ((Double256Vector)o2).getElements();
+        boolean[] mbits = ((Double256Mask)o3).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
         }
         return new Double256Vector(res);
     }
 
     @Override
     double rOp(double v, FBinOp f) {
+        double[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -223,7 +234,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     public String toString() {
-        return Arrays.toString(vec);
+        return Arrays.toString(getElements());
     }
 
     @Override
@@ -232,7 +243,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         if (o == null || this.getClass() != o.getClass()) return false;
 
         Double256Vector that = (Double256Vector) o;
-        return Arrays.equals(vec, that.vec);
+        return Arrays.equals(this.getElements(), that.getElements());
     }
 
     @Override
@@ -244,10 +255,11 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     Double256Mask bTest(Vector<Double, Shapes.S256Bit> o, FBinTest f) {
-        Double256Vector v = (Double256Vector) o;
+        double[] vec1 = getElements();
+        double[] vec2 = ((Double256Vector)o).getElements();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec[i], v.vec[i]);
+            bits[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Double256Mask(bits);
     }
@@ -256,6 +268,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     void forEach(FUnCon f) {
+        double[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             f.apply(i, vec[i]);
         }
@@ -263,13 +276,14 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     void forEach(Mask<Double, Shapes.S256Bit> o, FUnCon f) {
-        Double256Mask m = (Double256Mask) o;
+        boolean[] mbits = ((Double256Mask)o).getBits();
         forEach((i, a) -> {
-            if (m.bits[i]) { f.apply(i, a); }
+            if (mbits[i]) { f.apply(i, a); }
         });
     }
 
     Long256Vector toBits() {
+        double[] vec = getElements();
         long[] res = new long[this.species().length()];
         for(int i = 0; i < this.species().length(); i++){
             res[i] = Double.doubleToLongBits(vec[i]);
@@ -280,6 +294,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     public Double256Vector rotateEL(int j) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length(); i++){
             res[j + i % length()] = vec[i];
@@ -289,6 +304,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     public Double256Vector rotateER(int j) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length(); i++){
             int z = i - j;
@@ -303,6 +319,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     public Double256Vector shiftEL(int j) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length() - j; i++) {
             res[i] = vec[i + j];
@@ -312,6 +329,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     public Double256Vector shiftER(int j) {
+        double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length() - j; i++){
             res[i + j] = vec[i];
@@ -323,13 +341,14 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     public Double256Vector shuffle(Vector<Double, Shapes.S256Bit> o, Shuffle<Double, Shapes.S256Bit> s) {
         Double256Vector v = (Double256Vector) o;
         return uOp((i, a) -> {
+            double[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
                 //from o
-                return v.vec[e - length()];
+                return v.getElements()[e - length()];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
@@ -339,6 +358,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     @Override
     public Double256Vector swizzle(Shuffle<Double, Shapes.S256Bit> s) {
         return uOp((i, a) -> {
+            double[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 return vec[e];
@@ -358,6 +378,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
         int limit = Math.min(species.length(), length());
 
+        double[] vec = getElements();
         if (type == Byte.class) {
             for (int i = 0; i < limit; i++){
                 bb.put(i, (byte) vec[i]);
@@ -393,6 +414,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     public double get(int i) {
+        double[] vec = getElements();
         return vec[i];
     }
 
@@ -420,6 +442,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         @Override
         Double256Mask uOp(MUnOp f) {
             boolean[] res = new boolean[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = f.apply(i, bits[i]);
             }
@@ -429,9 +452,10 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         @Override
         Double256Mask bOp(Mask<Double, Shapes.S256Bit> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
-            Double256Mask m = (Double256Mask) o;
+            boolean[] bits = getBits();
+            boolean[] mbits = ((Double256Mask)o).getBits();
             for (int i = 0; i < species().length(); i++) {
-                res[i] = f.apply(i, bits[i], m.bits[i]);
+                res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new Double256Mask(res);
         }
@@ -444,6 +468,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         @Override
         public Double256Vector toVector() {
             double[] res = new double[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = (double) (bits[i] ? -1 : 0);
             }
@@ -566,9 +591,9 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         @Override
         Double256Vector op(Mask<Double, Shapes.S256Bit> o, FOp f) {
             double[] res = new double[length()];
-            Double256Mask m = (Double256Mask) o;
+            boolean[] mbits = ((Double256Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
-                if (m.bits[i]) {
+                if (mbits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -579,7 +604,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
         @Override
         public Double256Mask constantMask(boolean... bits) {
-            return new Double256Mask(bits);
+            return new Double256Mask(bits.clone());
         }
 
 

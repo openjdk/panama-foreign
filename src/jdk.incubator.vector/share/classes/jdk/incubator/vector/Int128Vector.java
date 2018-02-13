@@ -39,7 +39,11 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     static final int LENGTH = SPECIES.length();
 
-    int[] vec;
+    private final int[] vec; // Don't access directly, use getElements() instead.
+
+    private int[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
 
     Int128Vector() {
         vec = new int[SPECIES.length()];
@@ -56,6 +60,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     Int128Vector uOp(FUnOp f) {
+        int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length(); i++) {
             res[i] = f.apply(i, vec[i]);
@@ -65,10 +70,11 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     Int128Vector uOp(Mask<Integer, Shapes.S128Bit> o, FUnOp f) {
+        int[] vec = getElements();
         int[] res = new int[length()];
-        Int128Mask m = (Int128Mask) o;
+        boolean[] mbits = ((Int128Mask)o).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Int128Vector(res);
     }
@@ -78,9 +84,10 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
     @Override
     Int128Vector bOp(Vector<Integer, Shapes.S128Bit> o, FBinOp f) {
         int[] res = new int[length()];
-        Int128Vector v = (Int128Vector) o;
+        int[] vec1 = this.getElements();
+        int[] vec2 = ((Int128Vector)o).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Int128Vector(res);
     }
@@ -88,10 +95,11 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
     @Override
     Int128Vector bOp(Vector<Integer, Shapes.S128Bit> o1, Mask<Integer, Shapes.S128Bit> o2, FBinOp f) {
         int[] res = new int[length()];
-        Int128Vector v = (Int128Vector) o1;
-        Int128Mask m = (Int128Mask) o2;
+        int[] vec1 = this.getElements();
+        int[] vec2 = ((Int128Vector)o1).getElements();
+        boolean[] mbits = ((Int128Mask)o2).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
         }
         return new Int128Vector(res);
     }
@@ -101,10 +109,11 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
     @Override
     Int128Vector tOp(Vector<Integer, Shapes.S128Bit> o1, Vector<Integer, Shapes.S128Bit> o2, FTriOp f) {
         int[] res = new int[length()];
-        Int128Vector v1 = (Int128Vector) o1;
-        Int128Vector v2 = (Int128Vector) o2;
+        int[] vec1 = this.getElements();
+        int[] vec2 = ((Int128Vector)o1).getElements();
+        int[] vec3 = ((Int128Vector)o2).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v1.vec[i], v2.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
         return new Int128Vector(res);
     }
@@ -112,17 +121,19 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
     @Override
     Int128Vector tOp(Vector<Integer, Shapes.S128Bit> o1, Vector<Integer, Shapes.S128Bit> o2, Mask<Integer, Shapes.S128Bit> o3, FTriOp f) {
         int[] res = new int[length()];
-        Int128Vector v1 = (Int128Vector) o1;
-        Int128Vector v2 = (Int128Vector) o2;
-        Int128Mask m = (Int128Mask) o3;
+        int[] vec1 = getElements();
+        int[] vec2 = ((Int128Vector)o1).getElements();
+        int[] vec3 = ((Int128Vector)o2).getElements();
+        boolean[] mbits = ((Int128Mask)o3).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
         }
         return new Int128Vector(res);
     }
 
     @Override
     int rOp(int v, FBinOp f) {
+        int[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -247,7 +258,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     public String toString() {
-        return Arrays.toString(vec);
+        return Arrays.toString(getElements());
     }
 
     @Override
@@ -256,7 +267,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         if (o == null || this.getClass() != o.getClass()) return false;
 
         Int128Vector that = (Int128Vector) o;
-        return Arrays.equals(vec, that.vec);
+        return Arrays.equals(this.getElements(), that.getElements());
     }
 
     @Override
@@ -268,10 +279,11 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     Int128Mask bTest(Vector<Integer, Shapes.S128Bit> o, FBinTest f) {
-        Int128Vector v = (Int128Vector) o;
+        int[] vec1 = getElements();
+        int[] vec2 = ((Int128Vector)o).getElements();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec[i], v.vec[i]);
+            bits[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Int128Mask(bits);
     }
@@ -280,6 +292,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     void forEach(FUnCon f) {
+        int[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             f.apply(i, vec[i]);
         }
@@ -287,14 +300,15 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     void forEach(Mask<Integer, Shapes.S128Bit> o, FUnCon f) {
-        Int128Mask m = (Int128Mask) o;
+        boolean[] mbits = ((Int128Mask)o).getBits();
         forEach((i, a) -> {
-            if (m.bits[i]) { f.apply(i, a); }
+            if (mbits[i]) { f.apply(i, a); }
         });
     }
 
 
     Float128Vector toFP() {
+        int[] vec = getElements();
         float[] res = new float[this.species().length()];
         for(int i = 0; i < this.species().length(); i++){
             res[i] = Float.intBitsToFloat(vec[i]);
@@ -304,6 +318,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     public Int128Vector rotateEL(int j) {
+        int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length(); i++){
             res[j + i % length()] = vec[i];
@@ -313,6 +328,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     public Int128Vector rotateER(int j) {
+        int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length(); i++){
             int z = i - j;
@@ -327,6 +343,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     public Int128Vector shiftEL(int j) {
+        int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length() - j; i++) {
             res[i] = vec[i + j];
@@ -336,6 +353,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     public Int128Vector shiftER(int j) {
+        int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length() - j; i++){
             res[i + j] = vec[i];
@@ -347,13 +365,14 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
     public Int128Vector shuffle(Vector<Integer, Shapes.S128Bit> o, Shuffle<Integer, Shapes.S128Bit> s) {
         Int128Vector v = (Int128Vector) o;
         return uOp((i, a) -> {
+            int[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
                 //from o
-                return v.vec[e - length()];
+                return v.getElements()[e - length()];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
@@ -363,6 +382,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
     @Override
     public Int128Vector swizzle(Shuffle<Integer, Shapes.S128Bit> s) {
         return uOp((i, a) -> {
+            int[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 return vec[e];
@@ -382,6 +402,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
         int limit = Math.min(species.length(), length());
 
+        int[] vec = getElements();
         if (type == Byte.class) {
             for (int i = 0; i < limit; i++){
                 bb.put(i, (byte) vec[i]);
@@ -417,6 +438,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     public int get(int i) {
+        int[] vec = getElements();
         return vec[i];
     }
 
@@ -444,6 +466,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         @Override
         Int128Mask uOp(MUnOp f) {
             boolean[] res = new boolean[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = f.apply(i, bits[i]);
             }
@@ -453,9 +476,10 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         @Override
         Int128Mask bOp(Mask<Integer, Shapes.S128Bit> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
-            Int128Mask m = (Int128Mask) o;
+            boolean[] bits = getBits();
+            boolean[] mbits = ((Int128Mask)o).getBits();
             for (int i = 0; i < species().length(); i++) {
-                res[i] = f.apply(i, bits[i], m.bits[i]);
+                res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new Int128Mask(res);
         }
@@ -468,6 +492,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         @Override
         public Int128Vector toVector() {
             int[] res = new int[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = (int) (bits[i] ? -1 : 0);
             }
@@ -590,9 +615,9 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         @Override
         Int128Vector op(Mask<Integer, Shapes.S128Bit> o, FOp f) {
             int[] res = new int[length()];
-            Int128Mask m = (Int128Mask) o;
+            boolean[] mbits = ((Int128Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
-                if (m.bits[i]) {
+                if (mbits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -603,7 +628,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
         @Override
         public Int128Mask constantMask(boolean... bits) {
-            return new Int128Mask(bits);
+            return new Int128Mask(bits.clone());
         }
 
 

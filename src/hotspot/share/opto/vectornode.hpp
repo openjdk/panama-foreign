@@ -589,7 +589,6 @@ class StoreVectorNode : public StoreNode {
  public:
   StoreVectorNode(Node* c, Node* mem, Node* adr, const TypePtr* at, Node* val)
     : StoreNode(c, mem, adr, at, val, MemNode::unordered) {
-    assert(val->is_Vector() || val->is_LoadVector(), "sanity");
     init_class_id(Class_StoreVector);
   }
 
@@ -863,44 +862,45 @@ class ConvertVF2VDNode : public VectorNode {
   virtual int Opcode() const;
 };
 
-class VectorBoxNode : public CallNode {
+class VectorBoxNode : public Node {
  private:
   const TypeInstPtr* const _box_type;
+  const TypeVect*    const _vec_type;
  public:
   enum {
-    // Output:
-    RawAddress  = TypeFunc::Parms,    // the newly-allocated raw address
-    // Inputs:
-    VecBox      = TypeFunc::Parms,      // vector class for boxing value
-    VecVal      = TypeFunc::Parms + 1,  // Vector Value
-    ArrayAlloc  = TypeFunc::Parms + 2,  // Allocator for Array
-    FieldStore  = TypeFunc::Parms + 3,  // The store done to object field
-    VectorStore = TypeFunc::Parms + 4,  // The store done to array via vector store
-    ParmLimit
+     Box   = 1,
+     Value = 2
   };
-
-  VectorBoxNode(Compile* C, const TypeInstPtr* box_type, const TypeVect* vt, Node* vector, Node* box)
-    : CallNode(vec_box_type(box_type, vt), NULL, TypeRawPtr::BOTTOM), _box_type(box_type)
-   {
-     init_class_id(Class_VectorBox);
-     init_req(VecVal, vector);
-     init_req(VecBox, box);
-     assert(vector->is_Vector() || vector->is_LoadVector(), "VectorBox construction needs a vector value");
-     init_flags(Flag_is_macro);
+  VectorBoxNode(Compile* C, Node* box, Node* val,
+                const TypeInstPtr* box_type, const TypeVect* vt)
+    : Node(NULL, box, val), _box_type(box_type), _vec_type(vt) {
+    init_flags(Flag_is_macro);
     C->add_macro_node(this);
-   }
+  }
+
+  const  TypeInstPtr* box_type() const { assert(_box_type != NULL, ""); return _box_type; };
+  const  TypeVect*    vec_type() const { assert(_vec_type != NULL, ""); return _vec_type; };
 
   virtual int Opcode() const;
-  Node* vector_val() const { return in(VecVal); }
-  Node* box_obj() const { return in(VecBox); }
-
-  const  TypeInstPtr* box_type() const { assert(_box_type != NULL, "sanity"); return _box_type; };
+  virtual const Type *bottom_type() const { return _box_type; /* TypeInstPtr::BOTTOM? */ }
   virtual       uint  ideal_reg() const { return box_type()->ideal_reg(); }
   virtual       uint  size_of() const { return sizeof(*this); }
-  virtual       bool  is_CFG() const { return true; }
-  virtual       bool  guaranteed_safepoint()  { return false; }
 
-  static const TypeFunc* vec_box_type(const TypeInstPtr* box_type, const TypeVect* vt);
+  static const TypeFunc* vec_box_type(const TypeInstPtr* box_type);
+};
+
+class VectorBoxAllocateNode : public CallStaticJavaNode {
+ public:
+  VectorBoxAllocateNode(Compile* C, const TypeInstPtr* vbox_type)
+    : CallStaticJavaNode(C, VectorBoxNode::vec_box_type(vbox_type), NULL, NULL, -1) {
+    init_flags(Flag_is_macro);
+    C->add_macro_node(this);
+  }
+
+  virtual int Opcode() const;
+#ifndef PRODUCT
+  virtual void dump_spec(outputStream *st) const;
+#endif // PRODUCT
 };
 
 class VectorUnboxNode : public VectorNode {

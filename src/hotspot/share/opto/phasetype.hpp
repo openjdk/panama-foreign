@@ -31,6 +31,11 @@ enum CompilerPhaseType {
   PHASE_BEFORE_REMOVEUSELESS,
   PHASE_AFTER_PARSING,
   PHASE_ITER_GVN1,
+  PHASE_EXPAND_VUNBOX,
+  PHASE_SCALARIZE_VBOX,
+  PHASE_INLINE_VECTOR_REBOX,
+  PHASE_EXPAND_VBOX,
+  PHASE_ELIMINATE_VBOX_ALLOC,
   PHASE_PHASEIDEAL_BEFORE_EA,
   PHASE_ITER_GVN_BEFORE_EA,
   PHASE_ITER_GVN_AFTER_EA,
@@ -67,6 +72,11 @@ class CompilerPhaseTypeHelper {
       case PHASE_BEFORE_REMOVEUSELESS:       return "Before RemoveUseless";
       case PHASE_AFTER_PARSING:              return "After Parsing";
       case PHASE_ITER_GVN1:                  return "Iter GVN 1";
+      case PHASE_EXPAND_VUNBOX:              return "Expand VectorUnbox";
+      case PHASE_SCALARIZE_VBOX:             return "Scalarize VectorBox";
+      case PHASE_INLINE_VECTOR_REBOX:        return "Inline Vector Rebox Calls";
+      case PHASE_EXPAND_VBOX:                return "Expand VectorBox";
+      case PHASE_ELIMINATE_VBOX_ALLOC:       return "Eliminate VectorBoxAllocate";
       case PHASE_PHASEIDEAL_BEFORE_EA:       return "PhaseIdealLoop before EA";
       case PHASE_ITER_GVN_BEFORE_EA:         return "Iter GVN before EA";
       case PHASE_ITER_GVN_AFTER_EA:          return "Iter GVN after EA";

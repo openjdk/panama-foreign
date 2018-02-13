@@ -38,7 +38,11 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     static final int LENGTH = SPECIES.length();
 
-    short[] vec;
+    private final short[] vec; // Don't access directly, use getElements() instead.
+
+    private short[] getElements() {
+        return VectorIntrinsics.maybeRebox(this).vec;
+    }
 
     Short64Vector() {
         vec = new short[SPECIES.length()];
@@ -55,6 +59,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     Short64Vector uOp(FUnOp f) {
+        short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length(); i++) {
             res[i] = f.apply(i, vec[i]);
@@ -64,10 +69,11 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     Short64Vector uOp(Mask<Short, Shapes.S64Bit> o, FUnOp f) {
+        short[] vec = getElements();
         short[] res = new short[length()];
-        Short64Mask m = (Short64Mask) o;
+        boolean[] mbits = ((Short64Mask)o).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec[i]) : vec[i];
         }
         return new Short64Vector(res);
     }
@@ -77,9 +83,10 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     @Override
     Short64Vector bOp(Vector<Short, Shapes.S64Bit> o, FBinOp f) {
         short[] res = new short[length()];
-        Short64Vector v = (Short64Vector) o;
+        short[] vec1 = this.getElements();
+        short[] vec2 = ((Short64Vector)o).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Short64Vector(res);
     }
@@ -87,10 +94,11 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     @Override
     Short64Vector bOp(Vector<Short, Shapes.S64Bit> o1, Mask<Short, Shapes.S64Bit> o2, FBinOp f) {
         short[] res = new short[length()];
-        Short64Vector v = (Short64Vector) o1;
-        Short64Mask m = (Short64Mask) o2;
+        short[] vec1 = this.getElements();
+        short[] vec2 = ((Short64Vector)o1).getElements();
+        boolean[] mbits = ((Short64Mask)o2).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i]) : vec1[i];
         }
         return new Short64Vector(res);
     }
@@ -100,10 +108,11 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     @Override
     Short64Vector tOp(Vector<Short, Shapes.S64Bit> o1, Vector<Short, Shapes.S64Bit> o2, FTriOp f) {
         short[] res = new short[length()];
-        Short64Vector v1 = (Short64Vector) o1;
-        Short64Vector v2 = (Short64Vector) o2;
+        short[] vec1 = this.getElements();
+        short[] vec2 = ((Short64Vector)o1).getElements();
+        short[] vec3 = ((Short64Vector)o2).getElements();
         for (int i = 0; i < length(); i++) {
-            res[i] = f.apply(i, vec[i], v1.vec[i], v2.vec[i]);
+            res[i] = f.apply(i, vec1[i], vec2[i], vec3[i]);
         }
         return new Short64Vector(res);
     }
@@ -111,17 +120,19 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     @Override
     Short64Vector tOp(Vector<Short, Shapes.S64Bit> o1, Vector<Short, Shapes.S64Bit> o2, Mask<Short, Shapes.S64Bit> o3, FTriOp f) {
         short[] res = new short[length()];
-        Short64Vector v1 = (Short64Vector) o1;
-        Short64Vector v2 = (Short64Vector) o2;
-        Short64Mask m = (Short64Mask) o3;
+        short[] vec1 = getElements();
+        short[] vec2 = ((Short64Vector)o1).getElements();
+        short[] vec3 = ((Short64Vector)o2).getElements();
+        boolean[] mbits = ((Short64Mask)o3).getBits();
         for (int i = 0; i < length(); i++) {
-            res[i] = m.bits[i] ? f.apply(i, vec[i], v1.vec[i], v2.vec[i]) : vec[i];
+            res[i] = mbits[i] ? f.apply(i, vec1[i], vec2[i], vec3[i]) : vec1[i];
         }
         return new Short64Vector(res);
     }
 
     @Override
     short rOp(short v, FBinOp f) {
+        short[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             v = f.apply(i, v, vec[i]);
         }
@@ -229,7 +240,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     public String toString() {
-        return Arrays.toString(vec);
+        return Arrays.toString(getElements());
     }
 
     @Override
@@ -238,7 +249,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         if (o == null || this.getClass() != o.getClass()) return false;
 
         Short64Vector that = (Short64Vector) o;
-        return Arrays.equals(vec, that.vec);
+        return Arrays.equals(this.getElements(), that.getElements());
     }
 
     @Override
@@ -250,10 +261,11 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     Short64Mask bTest(Vector<Short, Shapes.S64Bit> o, FBinTest f) {
-        Short64Vector v = (Short64Vector) o;
+        short[] vec1 = getElements();
+        short[] vec2 = ((Short64Vector)o).getElements();
         boolean[] bits = new boolean[length()];
         for (int i = 0; i < length(); i++){
-            bits[i] = f.apply(i, vec[i], v.vec[i]);
+            bits[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Short64Mask(bits);
     }
@@ -262,6 +274,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     void forEach(FUnCon f) {
+        short[] vec = getElements();
         for (int i = 0; i < length(); i++) {
             f.apply(i, vec[i]);
         }
@@ -269,9 +282,9 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     void forEach(Mask<Short, Shapes.S64Bit> o, FUnCon f) {
-        Short64Mask m = (Short64Mask) o;
+        boolean[] mbits = ((Short64Mask)o).getBits();
         forEach((i, a) -> {
-            if (m.bits[i]) { f.apply(i, a); }
+            if (mbits[i]) { f.apply(i, a); }
         });
     }
 
@@ -279,6 +292,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     public Short64Vector rotateEL(int j) {
+        short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length(); i++){
             res[j + i % length()] = vec[i];
@@ -288,6 +302,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     public Short64Vector rotateER(int j) {
+        short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length(); i++){
             int z = i - j;
@@ -302,6 +317,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     public Short64Vector shiftEL(int j) {
+        short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length() - j; i++) {
             res[i] = vec[i + j];
@@ -311,6 +327,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     public Short64Vector shiftER(int j) {
+        short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length() - j; i++){
             res[i + j] = vec[i];
@@ -322,13 +339,14 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     public Short64Vector shuffle(Vector<Short, Shapes.S64Bit> o, Shuffle<Short, Shapes.S64Bit> s) {
         Short64Vector v = (Short64Vector) o;
         return uOp((i, a) -> {
+            short[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 //from this
                 return vec[e];
             } else if(e < length() * 2) {
                 //from o
-                return v.vec[e - length()];
+                return v.getElements()[e - length()];
             } else {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
@@ -338,6 +356,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     @Override
     public Short64Vector swizzle(Shuffle<Short, Shapes.S64Bit> s) {
         return uOp((i, a) -> {
+            short[] vec = this.getElements();
             int e = s.getElement(i);
             if(e >= 0 && e < length()) {
                 return vec[e];
@@ -357,6 +376,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
         int limit = Math.min(species.length(), length());
 
+        short[] vec = getElements();
         if (type == Byte.class) {
             for (int i = 0; i < limit; i++){
                 bb.put(i, (byte) vec[i]);
@@ -392,6 +412,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     public short get(int i) {
+        short[] vec = getElements();
         return vec[i];
     }
 
@@ -419,6 +440,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         @Override
         Short64Mask uOp(MUnOp f) {
             boolean[] res = new boolean[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = f.apply(i, bits[i]);
             }
@@ -428,9 +450,10 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         @Override
         Short64Mask bOp(Mask<Short, Shapes.S64Bit> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
-            Short64Mask m = (Short64Mask) o;
+            boolean[] bits = getBits();
+            boolean[] mbits = ((Short64Mask)o).getBits();
             for (int i = 0; i < species().length(); i++) {
-                res[i] = f.apply(i, bits[i], m.bits[i]);
+                res[i] = f.apply(i, bits[i], mbits[i]);
             }
             return new Short64Mask(res);
         }
@@ -443,6 +466,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         @Override
         public Short64Vector toVector() {
             short[] res = new short[species().length()];
+            boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
                 res[i] = (short) (bits[i] ? -1 : 0);
             }
@@ -565,9 +589,9 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         @Override
         Short64Vector op(Mask<Short, Shapes.S64Bit> o, FOp f) {
             short[] res = new short[length()];
-            Short64Mask m = (Short64Mask) o;
+            boolean[] mbits = ((Short64Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
-                if (m.bits[i]) {
+                if (mbits[i]) {
                     res[i] = f.apply(i);
                 }
             }
@@ -578,7 +602,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
         @Override
         public Short64Mask constantMask(boolean... bits) {
-            return new Short64Mask(bits);
+            return new Short64Mask(bits.clone());
         }
 
 

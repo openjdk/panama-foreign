@@ -24,6 +24,7 @@
 #include "precompiled.hpp"
 #include "memory/allocation.inline.hpp"
 #include "opto/connode.hpp"
+#include "opto/cfgnode.hpp"
 #include "opto/vectornode.hpp"
 
 //------------------------------VectorNode--------------------------------------
@@ -642,25 +643,23 @@ bool ReductionNode::implemented(int opc, uint vlen, BasicType bt) {
   return false;
 }
 
+#ifndef PRODUCT
+void VectorBoxAllocateNode::dump_spec(outputStream *st) const {
+  CallStaticJavaNode::dump_spec(st);
+}
+#endif // PRODUCT
+
 Node* VectorUnboxNode::Identity(PhaseGVN *phase) {
   Node* n = obj()->uncast();
-  if (n->is_Proj() && n->as_Proj()->_con == TypeFunc::Parms) {
-    n = n->in(0);
-  }
-  if (n->is_VectorBox()) {
-    return n->as_VectorBox()->vector_val();
+  if (n->Opcode() == Op_VectorBox) {
+    return n->in(VectorBoxNode::Value);
   }
   return this;
 }
 
-const TypeFunc* VectorBoxNode::vec_box_type(const TypeInstPtr* box_type, const TypeVect* vt) {
-  const Type** fields = TypeTuple::fields(5);
-  fields[VecBox] = TypeInstPtr::NOTNULL;
-  fields[VecVal] = vt;
-  fields[ArrayAlloc] = TypeInstPtr::NOTNULL;
-  fields[FieldStore] = Type::MEMORY;
-  fields[VectorStore] = Type::MEMORY;
-  const TypeTuple *domain = TypeTuple::make(ParmLimit, fields);
+const TypeFunc* VectorBoxNode::vec_box_type(const TypeInstPtr* box_type) {
+  const Type** fields = TypeTuple::fields(0);
+  const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms, fields);
 
   fields = TypeTuple::fields(1);
   fields[TypeFunc::Parms+0] = box_type;

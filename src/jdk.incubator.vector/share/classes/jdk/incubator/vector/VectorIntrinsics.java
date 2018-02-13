@@ -102,4 +102,11 @@ import java.util.function.*;
                             BiFunction<V, V, Boolean> defaultImpl) {
         return defaultImpl.apply(v1, v2);
     }
+
+    /* ============================================================================ */
+
+    @HotSpotIntrinsicCandidate
+    static <V> V maybeRebox(V v) {
+        return v;
+    }
 }
