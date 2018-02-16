@@ -1,12 +1,12 @@
 package jdk.incubator.vector;
 
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
 
+import java.util.Objects;
 import java.util.function.*;
 
 /*non-public*/ class VectorIntrinsics {
-    static final boolean VECTOR_ACCESS_OOB_CHECK = !"false".equals(System.getProperty("jdk.incubator.vector.VECTOR_ACCESS_OOB_CHECK")); // by default, true
-
     static final int VECTOR_OP_ADD = 0;
     static final int VECTOR_OP_SUB = 1;
     static final int VECTOR_OP_MUL = 2;
@@ -108,5 +108,19 @@ import java.util.function.*;
     @HotSpotIntrinsicCandidate
     static <V> V maybeRebox(V v) {
         return v;
+    }
+
+    /* ============================================================================ */
+
+    static final int VECTOR_ACCESS_OOB_CHECK = Integer.getInteger("jdk.incubator.vector.VECTOR_ACCESS_OOB_CHECK", 2);
+
+    @ForceInline
+    static int checkIndex(int ix, int length, int vlen) {
+        switch (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            case 0: return ix; // no range check
+            case 1: return Objects.checkFromIndexSize(ix, vlen, length);
+            case 2: return Objects.checkIndex(ix, length - (vlen - 1));
+            default: throw new InternalError();
+        }
     }
 }

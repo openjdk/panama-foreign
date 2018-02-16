@@ -228,9 +228,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     @ForceInline
     public void intoArray(byte[] a, int ix) {
         Objects.requireNonNull(a);
-        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-            Objects.checkFromIndexSize(ix, LENGTH, a.length);
-        }
+        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Byte512Vector.class, byte.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((byte[])arr)[idx + i] = a_));
@@ -643,9 +641,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         @ForceInline
         public Byte512Vector fromArray(byte[] a, int ix) {
             Objects.requireNonNull(a);
-            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-                Objects.checkFromIndexSize(ix, LENGTH, a.length);
-            }
+            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
             return (Byte512Vector) VectorIntrinsics.load(Byte512Vector.class, byte.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((byte[]) arr, idx));

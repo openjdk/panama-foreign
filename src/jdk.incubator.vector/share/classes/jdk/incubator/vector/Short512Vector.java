@@ -228,9 +228,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
     @ForceInline
     public void intoArray(short[] a, int ix) {
         Objects.requireNonNull(a);
-        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-            Objects.checkFromIndexSize(ix, LENGTH, a.length);
-        }
+        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Short512Vector.class, short.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((short[])arr)[idx + i] = a_));
@@ -643,9 +641,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         @ForceInline
         public Short512Vector fromArray(short[] a, int ix) {
             Objects.requireNonNull(a);
-            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-                Objects.checkFromIndexSize(ix, LENGTH, a.length);
-            }
+            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
             return (Short512Vector) VectorIntrinsics.load(Short512Vector.class, short.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((short[]) arr, idx));

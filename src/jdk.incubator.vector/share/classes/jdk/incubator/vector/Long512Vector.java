@@ -245,9 +245,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
     @ForceInline
     public void intoArray(long[] a, int ix) {
         Objects.requireNonNull(a);
-        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-            Objects.checkFromIndexSize(ix, LENGTH, a.length);
-        }
+        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Long512Vector.class, long.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((long[])arr)[idx + i] = a_));
@@ -668,9 +666,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         @ForceInline
         public Long512Vector fromArray(long[] a, int ix) {
             Objects.requireNonNull(a);
-            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-                Objects.checkFromIndexSize(ix, LENGTH, a.length);
-            }
+            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
             return (Long512Vector) VectorIntrinsics.load(Long512Vector.class, long.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((long[]) arr, idx));

@@ -222,9 +222,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     @ForceInline
     public void intoArray(double[] a, int ix) {
         Objects.requireNonNull(a);
-        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-            Objects.checkFromIndexSize(ix, LENGTH, a.length);
-        }
+        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Double128Vector.class, double.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((double[])arr)[idx + i] = a_));
@@ -647,9 +645,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         @ForceInline
         public Double128Vector fromArray(double[] a, int ix) {
             Objects.requireNonNull(a);
-            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-                Objects.checkFromIndexSize(ix, LENGTH, a.length);
-            }
+            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
             return (Double128Vector) VectorIntrinsics.load(Double128Vector.class, double.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((double[]) arr, idx));

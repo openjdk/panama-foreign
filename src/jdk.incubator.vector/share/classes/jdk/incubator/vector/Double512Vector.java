@@ -222,9 +222,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     @ForceInline
     public void intoArray(double[] a, int ix) {
         Objects.requireNonNull(a);
-        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-            Objects.checkFromIndexSize(ix, LENGTH, a.length);
-        }
+        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((double[])arr)[idx + i] = a_));
@@ -647,9 +645,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         @ForceInline
         public Double512Vector fromArray(double[] a, int ix) {
             Objects.requireNonNull(a);
-            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-                Objects.checkFromIndexSize(ix, LENGTH, a.length);
-            }
+            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
             return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((double[]) arr, idx));

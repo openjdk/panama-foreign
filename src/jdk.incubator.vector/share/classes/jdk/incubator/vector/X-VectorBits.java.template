@@ -282,9 +282,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @ForceInline
     public void intoArray($type$[] a, int ix) {
         Objects.requireNonNull(a);
-        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-            Objects.checkFromIndexSize(ix, LENGTH, a.length);
-        }
+        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> (($type$[])arr)[idx + i] = a_));
@@ -749,9 +747,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @ForceInline
         public $vectortype$ fromArray($type$[] a, int ix) {
             Objects.requireNonNull(a);
-            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-                Objects.checkFromIndexSize(ix, LENGTH, a.length);
-            }
+            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
             return ($vectortype$) VectorIntrinsics.load($vectortype$.class, $type$.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray(($type$[]) arr, idx));

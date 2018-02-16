@@ -228,9 +228,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     @ForceInline
     public void intoArray(byte[] a, int ix) {
         Objects.requireNonNull(a);
-        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-            Objects.checkFromIndexSize(ix, LENGTH, a.length);
-        }
+        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Byte64Vector.class, byte.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((byte[])arr)[idx + i] = a_));
@@ -643,9 +641,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         @ForceInline
         public Byte64Vector fromArray(byte[] a, int ix) {
             Objects.requireNonNull(a);
-            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-                Objects.checkFromIndexSize(ix, LENGTH, a.length);
-            }
+            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
             return (Byte64Vector) VectorIntrinsics.load(Byte64Vector.class, byte.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((byte[]) arr, idx));

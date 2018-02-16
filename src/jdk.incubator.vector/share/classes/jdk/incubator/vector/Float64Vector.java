@@ -222,9 +222,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     @ForceInline
     public void intoArray(float[] a, int ix) {
         Objects.requireNonNull(a);
-        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-            Objects.checkFromIndexSize(ix, LENGTH, a.length);
-        }
+        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Float64Vector.class, float.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((float[])arr)[idx + i] = a_));
@@ -647,9 +645,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
         @ForceInline
         public Float64Vector fromArray(float[] a, int ix) {
             Objects.requireNonNull(a);
-            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-                Objects.checkFromIndexSize(ix, LENGTH, a.length);
-            }
+            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
             return (Float64Vector) VectorIntrinsics.load(Float64Vector.class, float.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((float[]) arr, idx));

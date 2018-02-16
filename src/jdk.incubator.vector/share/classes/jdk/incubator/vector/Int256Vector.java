@@ -246,9 +246,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     @ForceInline
     public void intoArray(int[] a, int ix) {
         Objects.requireNonNull(a);
-        if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-            Objects.checkFromIndexSize(ix, LENGTH, a.length);
-        }
+        ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Int256Vector.class, int.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((int[])arr)[idx + i] = a_));
@@ -671,9 +669,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         @ForceInline
         public Int256Vector fromArray(int[] a, int ix) {
             Objects.requireNonNull(a);
-            if (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
-                Objects.checkFromIndexSize(ix, LENGTH, a.length);
-            }
+            ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
             return (Int256Vector) VectorIntrinsics.load(Int256Vector.class, int.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((int[]) arr, idx));
