@@ -27,13 +27,18 @@ import jdk.internal.org.objectweb.asm.Type;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.io.File;
 import java.nicl.Library;
+import java.nicl.NativeLibrary;
 import java.nicl.metadata.LibraryDependencies;
-import java.nicl.metadata.LibraryDependency;
 import java.nicl.metadata.NativeType;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.Optional;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -145,43 +150,59 @@ public class NativeLibraryImpl {
     }
 
     public static Library loadLibrary(String name) {
+        assert name.indexOf(File.separatorChar) == -1;
         return loadLibrary(name, false);
     }
 
-    public static Library loadLibraryFile(String name) {
-        return loadLibrary(name, true);
+    public static Library load(String path) {
+        assert new File(path).isAbsolute();
+        return loadLibrary(path, true);
     }
 
-    private static Library loadLibrary(LibraryDependency dep) {
-        if (dep.isAbsolute()) {
-            return loadLibraryFile(dep.name());
+    // return the absolute path of the library of given name by searching
+    // in the given array of paths.
+    private static Optional<Path> findLibraryPath(Path[] paths, String libName) {
+         return Arrays.stream(paths).
+              map(p -> p.resolve(System.mapLibraryName(libName))).
+              filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
+    }
+
+    private static Library[] loadLibraries(LibraryDependencies deps) {
+        String[] pathStrs = deps.paths();
+        if (pathStrs == null || pathStrs.length == 0) {
+            return Arrays.stream(deps.names()).map(
+                NativeLibrary::loadLibrary).toArray(Library[]::new);
         } else {
-            return loadLibrary(dep.name());
+            Path[] paths = Arrays.stream(pathStrs).map(Paths::get).toArray(Path[]::new);
+            return Arrays.stream(deps.names()).map(libName -> {
+                Optional<Path> absPath = findLibraryPath(paths, libName);
+                return absPath.isPresent() ?
+                    NativeLibrary.load(absPath.get().toString()) :
+                    NativeLibrary.loadLibrary(libName);
+            }).toArray(Library[]::new);
         }
     }
 
-    private static LibraryDependency[] getLibraryDependenciesForClass(Class<?> c) {
+    private static LibraryDependencies getLibraryDependenciesForClass(Class<?> c) {
         if (c.isAnnotationPresent(LibraryDependencies.class)) {
-            return c.getAnnotation(LibraryDependencies.class).value();
-        } else if (c.isAnnotationPresent(LibraryDependency.class)) {
-            return new LibraryDependency[] { c.getAnnotation(LibraryDependency.class) };
+            return c.getAnnotation(LibraryDependencies.class);
         } else {
             return null;
         }
     }
 
     private static SymbolLookup getSymbolLookupForClass(Class<?> c) {
-        LibraryDependency[] deps = getLibraryDependenciesForClass(c);
+        LibraryDependencies deps = getLibraryDependenciesForClass(c);
 
         Library[] libs;
 
         if (deps == null) {
-            // FIXME: Require @LibraryDependency on all relevant classes
-            //System.err.println("WARNING: No @LibraryDependency annotation on class " + c.getName());
-            //throw new IllegalArgumentException("No @LibraryDependency annotation on class " + c.getName());
+            // FIXME: Require @LibraryDependencies on all relevant classes
+            // System.err.println("WARNING: No @LibraryDependencies annotation on class " + c.getName());
+            // throw new IllegalArgumentException("No @LibraryDependencies annotation on class " + c.getName());
             libs = new Library[] { getDefaultLibrary() };
         } else {
-            libs = Arrays.stream(deps).map(NativeLibraryImpl::loadLibrary).toArray(Library[]::new);
+            libs = loadLibraries(deps);
         }
 
         return new SymbolLookup(libs);

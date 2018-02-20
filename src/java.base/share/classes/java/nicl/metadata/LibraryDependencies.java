@@ -28,5 +28,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Retention(RUNTIME)
 public @interface LibraryDependencies {
-    LibraryDependency[] value();
+    String[] names();
+    String[] paths() default {};
 }

@@ -69,14 +69,18 @@ public class AsmCodeFactory extends CodeFactory {
         if (owner.libraries != null && !owner.libraries.isEmpty()) {
             AnnotationVisitor deps = global_cw.visitAnnotation(
                 "Ljava/nicl/metadata/LibraryDependencies;", true);
-            AnnotationVisitor libraries = deps.visitArray("value");
-            for (String lib : owner.libraries) {
-                AnnotationVisitor dep = libraries.visitAnnotation(null,
-                    "Ljava/nicl/metadata/LibraryDependency;");
-                dep.visit("name", lib);
-                dep.visitEnd();
+            AnnotationVisitor libNames = deps.visitArray("names");
+            for (String name : owner.libraries) {
+                libNames.visit(null, name);
             }
-            libraries.visitEnd();
+            libNames.visitEnd();
+            if (owner.libraryPaths != null && !owner.libraryPaths.isEmpty()) {
+                AnnotationVisitor libPaths = deps.visitArray("paths");
+                for (String path : owner.libraryPaths) {
+                    libPaths.visit(null, path);
+                }
+                libPaths.visitEnd();
+            }
             deps.visitEnd();
         }
     }

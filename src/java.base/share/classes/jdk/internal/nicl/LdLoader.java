@@ -37,12 +37,16 @@ public class LdLoader extends LibraryLoader {
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.nicl.LdLoader.DEBUG"));
 
+    // copy of ClassLoader.usr_paths field
     private final String[] usr_paths;
 
     // preloaded/built-in library
     private final UnixLibrary defaultLibrary;
 
-    private String[] getUserClassPath() {
+    private String[] getUserLibraryPaths() {
+        // ClassLoader.usr_paths is initialized from "java.library.path" System property.
+        // FIXME: we should define and use a private API rather than reading a
+        // private static non-final lazily initialized field from ClassLoader.
         return AccessController.doPrivileged((PrivilegedAction<String[]>)() -> {
             try {
                 Field f = ClassLoader.class.getDeclaredField("usr_paths");
@@ -55,7 +59,7 @@ public class LdLoader extends LibraryLoader {
     }
 
     public LdLoader() {
-        this.usr_paths = getUserClassPath();
+        this.usr_paths = getUserLibraryPaths();
         this.defaultLibrary = new UnixLibrary(null);
     }
 
@@ -86,8 +90,10 @@ public class LdLoader extends LibraryLoader {
                 }
 
                 throw new UnsatisfiedLinkError("Can't load library: " + libPath);
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
+            } catch (RuntimeException re) {
+                throw re;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -106,7 +112,10 @@ public class LdLoader extends LibraryLoader {
             String libPath = usr_path + File.separator + name;
             try {
                 return tryLoadLibrary(libPath);
-            } catch (UnsatisfiedLinkError e) {
+            } catch (RuntimeException | UnsatisfiedLinkError e) {
+                if (DEBUG) {
+                    System.err.println(e);
+                }
                 // ignore and try next path
             }
         }

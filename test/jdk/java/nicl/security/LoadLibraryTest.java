@@ -39,9 +39,9 @@ public class LoadLibraryTest {
     }
 
     @Test
-    public void testLoadLibraryFile() {
+    public void testLoad() {
         checkSecurityException(() -> {
-            NativeLibrary.loadLibraryFile("/usr/lib/mylibrary.so");
+            NativeLibrary.load("/usr/lib/mylibrary.so");
         });
     }
 

@@ -31,7 +31,7 @@ import java.nicl.metadata.*;
 
 public class Hello {
     @Header(path="dummy")
-    @LibraryDependencies(value = { @LibraryDependency(name="hello") })
+    @LibraryDependencies(names = { "hello" })
     static interface hello {
         @C(file="dummy", line=1, column=1, USR="c:@F@func")
         @NativeType(layout="()I", ctype="dummy", size=1)

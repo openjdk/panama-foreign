@@ -44,6 +44,7 @@ public final class HeaderFile {
     HeaderFile main;
     CodeFactory cf;
     List<String> libraries;
+    List<String> libraryPaths;
 
     private final AtomicInteger serialNo;
     final Logger logger = Logger.getLogger(getClass().getPackage().getName());
@@ -57,8 +58,9 @@ public final class HeaderFile {
         this.main = main == null ? this : main;
     }
 
-    void useLibraries(List<String> libraries) {
+    void useLibraries(List<String> libraries, List<String> libraryPaths) {
         this.libraries = libraries;
+        this.libraryPaths = libraryPaths;
     }
 
     /**

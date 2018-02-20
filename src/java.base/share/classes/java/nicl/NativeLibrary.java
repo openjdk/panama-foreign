@@ -33,6 +33,7 @@ import jdk.internal.nicl.types.LayoutTypeImpl;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.nicl.types.LayoutType;
+import java.util.Objects;
 
 public final class NativeLibrary {
     private static final Errno ERRNO = Errno.platformHasErrno() ? new Errno() : null;
@@ -124,24 +125,68 @@ public final class NativeLibrary {
         return lookupNativeMethod(new Library[] { lib }, symbolName, methodType, isVarArgs);
     }
 
-    public static Library loadLibrary(String name) {
+    /**
+     * Loads the native library specified by the <code>libname</code>
+     * argument.  The <code>libname</code> argument must not contain any platform
+     * specific prefix, file extension or path.
+     *
+     * Otherwise, the libname argument is loaded from a system library
+     * location and mapped to a native library image in an implementation-
+     * dependent manner.
+     * <p>
+     *
+     * @param      libname   the name of the library.
+     * @exception  SecurityException  if a security manager exists and its
+     *             <code>checkLink</code> method doesn't allow
+     *             loading of the specified dynamic library
+     * @exception  UnsatisfiedLinkError if either the libname argument
+     *             contains a file path, the native library is not statically
+     *             linked with the VM,  or the library cannot be mapped to a
+     *             native library image by the host system.
+     * @exception  NullPointerException if <code>libname</code> is
+     *             <code>null</code>
+     * @see        java.lang.SecurityManager#checkLink(java.lang.String)
+     */
+    public static Library loadLibrary(String filename) {
+        Objects.requireNonNull(filename);
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkLink(name);
+            security.checkLink(filename);
         }
-        return NativeLibraryImpl.loadLibrary(name);
+        if (filename.indexOf(File.separatorChar) != -1) {
+            throw new UnsatisfiedLinkError(
+                "Directory separator should not appear in library name: " + filename);
+        }
+        return NativeLibraryImpl.loadLibrary(filename);
     }
 
-    public static Library loadLibraryFile(String name) {
+    /**
+     * Loads the native library specified by the filename argument.  The filename
+     * argument must be an absolute path name.
+     *
+     * @param      filename   the file to load.
+     * @exception  SecurityException  if a security manager exists and its
+     *             <code>checkLink</code> method doesn't allow
+     *             loading of the specified dynamic library
+     * @exception  UnsatisfiedLinkError  if either the filename is not an
+     *             absolute path name, the native library is not statically
+     *             linked with the VM, or the library cannot be mapped to
+     *             a native library image by the host system.
+     * @exception  NullPointerException if <code>filename</code> is
+     *             <code>null</code>
+     * @see        java.lang.SecurityManager#checkLink(java.lang.String)
+     */
+    public static Library load(String filename) {
+        Objects.requireNonNull(filename);
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkLink(name);
+            security.checkLink(filename);
         }
-        if (!(new File(name).isAbsolute())) {
+        if (!(new File(filename).isAbsolute())) {
             throw new UnsatisfiedLinkError(
-                "Expecting an absolute path of the library: " + name);
+                "Expecting an absolute path of the library: " + filename);
         }
-        return NativeLibraryImpl.loadLibraryFile(name);
+        return NativeLibraryImpl.load(filename);
     }
 
     public static Library getDefaultLibrary() {

@@ -27,6 +27,7 @@ import jdk.internal.joptsimple.OptionParser;
 import jdk.internal.joptsimple.OptionSet;
 import jdk.internal.joptsimple.util.KeyValuePair;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -104,7 +105,7 @@ public final class Main {
         logger.addHandler(log);
     }
 
-    private void printHelpAndExit(OptionParser parser) {
+    private void printHelp(OptionParser parser) {
         try {
             parser.printHelpOn(System.err);
         } catch (IOException ex) {
@@ -112,13 +113,15 @@ public final class Main {
                 ex.printStackTrace(System.err);
             }
         }
-        System.exit(1);
     }
 
-    public void run(String[] args) {
+    public int run(String[] args) {
         OptionParser parser = new OptionParser();
         parser.accepts("dry-run", format("help.dry_run"));
         parser.accepts("I", format("help.I")).withRequiredArg();
+        // FIXME: -L not yet implemented. This 'jextract time'
+        // option is expected to specify paths to load shared libraries
+        // to check & warn missing symbols.
         parser.accepts("L", format("help.L")).withRequiredArg();
         parser.accepts("l", format("help.l")).withRequiredArg();
         parser.accepts("o", format("help.o")).withRequiredArg();
@@ -128,6 +131,7 @@ public final class Main {
         parser.accepts("help", format("help.h")).forHelp();
         parser.accepts("C", format("help.C")).withRequiredArg();
         parser.accepts("log", format("help.log")).withRequiredArg();
+        parser.accepts("rpath", format("help.rpath")).withRequiredArg();
         parser.accepts("?", format("help.h")).forHelp();
         parser.nonOptions(format("help.non.option"));
 
@@ -139,11 +143,13 @@ public final class Main {
              if (Main.DEBUG) {
                  oe.printStackTrace(System.err);
              }
-             printHelpAndExit(parser);
+             printHelp(parser);
+             return 1;
         }
 
         if (args.length == 0 || options.has("h") || options.has("?") || options.has("help")) {
-             printHelpAndExit(parser);
+             printHelp(parser);
+             return 1;
         }
 
         if (options.has("log")) {
@@ -161,7 +167,25 @@ public final class Main {
         }
 
         if (options.has("l")) {
-            options.valuesOf("l").forEach(p -> ctx.libraries.add((String) p));
+            try {
+                options.valuesOf("l").forEach(p -> {
+                    String lib = (String)p;
+                    if (lib.indexOf(File.separatorChar) != -1) {
+                        throw new IllegalArgumentException(format("l.name.should.not.be.path", lib));
+                    }
+                    ctx.libraries.add(lib);
+                });
+            } catch (IllegalArgumentException iae) {
+                System.err.println(iae.getMessage());
+                if (Main.DEBUG) {
+                    iae.printStackTrace(System.err);
+                }
+                return 1;
+            }
+        }
+
+        if (options.has("rpath")) {
+            options.valuesOf("rpath").forEach(p -> ctx.libraryPaths.add((String) p));
         }
 
         targetPackage = options.has("t") ? (String) options.valueOf("t") : "";
@@ -181,11 +205,11 @@ public final class Main {
             if (Main.DEBUG) {
                 re.printStackTrace(System.err);
             }
-            System.exit(2);
+            return 2;
         }
 
         if (options.has("dry-run")) {
-            System.exit(0);
+            return 0;
         }
 
         String outputName = options.has("o")? (String)options.valueOf("o") :
@@ -198,14 +222,16 @@ public final class Main {
             if (Main.DEBUG) {
                 ex.printStackTrace(System.err);
             }
-            System.exit(3);
+            return 3;
         }
+
+        return 0;
     }
 
     public static void main(String... args) {
         Main instance = new Main(Context.getInstance());
 
-        instance.run(args);
+        System.exit(instance.run(args));
     }
 
 }
