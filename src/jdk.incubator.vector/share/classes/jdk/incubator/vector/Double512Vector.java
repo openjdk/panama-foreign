@@ -210,7 +210,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
                                 VECTOR_OP_MUL, Double512Vector.class, double.class, LENGTH,
                                 this,
                                 v -> {
-                                    double r = v.rOp((double) 0, (i, a, b) -> (double) (a * b));
+                                    double r = v.rOp((double) 1, (i, a, b) -> (double) (a * b));
                                     return (long)Double.doubleToLongBits(r);
                                 });
         return Double.longBitsToDouble(bits);
@@ -486,7 +486,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             Double512Mask m = (Double512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Double512Mask.class, long.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -496,7 +496,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             Double512Mask m = (Double512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Double512Mask.class, long.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -513,20 +513,8 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Double512Mask.class, long.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Double512Mask trueMask() {
-            return Double512Mask.trueMask();
-        }
-
-        @ForceInline
-        static Double512Mask falseMask() {
-            return Double512Mask.falseMask();
         }
     }
 

@@ -484,7 +484,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             Byte128Mask m = (Byte128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Byte128Mask.class, byte.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -494,7 +494,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             Byte128Mask m = (Byte128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Byte128Mask.class, byte.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -511,20 +511,8 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Byte128Mask.class, byte.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Byte128Mask trueMask() {
-            return Byte128Mask.trueMask();
-        }
-
-        @ForceInline
-        static Byte128Mask falseMask() {
-            return Byte128Mask.falseMask();
         }
     }
 

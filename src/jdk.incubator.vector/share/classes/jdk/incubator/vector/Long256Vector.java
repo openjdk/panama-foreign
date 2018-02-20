@@ -236,7 +236,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Long256Vector.class, long.class, LENGTH,
             this,
-            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a * b)));
+            v -> (long) v.rOp((long) 1, (i, a, b) -> (long) (a * b)));
     }
 
     // Memory operations
@@ -509,7 +509,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             Long256Mask m = (Long256Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Long256Mask.class, long.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -519,7 +519,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             Long256Mask m = (Long256Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Long256Mask.class, long.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -536,20 +536,8 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Long256Mask.class, long.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Long256Mask trueMask() {
-            return Long256Mask.trueMask();
-        }
-
-        @ForceInline
-        static Long256Mask falseMask() {
-            return Long256Mask.falseMask();
         }
     }
 

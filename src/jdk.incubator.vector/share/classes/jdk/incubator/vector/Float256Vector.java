@@ -210,7 +210,7 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
                                 VECTOR_OP_MUL, Float256Vector.class, float.class, LENGTH,
                                 this,
                                 v -> {
-                                    float r = v.rOp((float) 0, (i, a, b) -> (float) (a * b));
+                                    float r = v.rOp((float) 1, (i, a, b) -> (float) (a * b));
                                     return (long)Float.floatToIntBits(r);
                                 });
         return Float.intBitsToFloat(bits);
@@ -486,7 +486,7 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             Float256Mask m = (Float256Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Float256Mask.class, int.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -496,7 +496,7 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             Float256Mask m = (Float256Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Float256Mask.class, int.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -513,20 +513,8 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Float256Mask.class, int.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Float256Mask trueMask() {
-            return Float256Mask.trueMask();
-        }
-
-        @ForceInline
-        static Float256Mask falseMask() {
-            return Float256Mask.falseMask();
         }
     }
 

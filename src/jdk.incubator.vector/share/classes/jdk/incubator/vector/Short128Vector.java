@@ -484,7 +484,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             Short128Mask m = (Short128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Short128Mask.class, short.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -494,7 +494,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             Short128Mask m = (Short128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Short128Mask.class, short.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -511,20 +511,8 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Short128Mask.class, short.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Short128Mask trueMask() {
-            return Short128Mask.trueMask();
-        }
-
-        @ForceInline
-        static Short128Mask falseMask() {
-            return Short128Mask.falseMask();
         }
     }
 

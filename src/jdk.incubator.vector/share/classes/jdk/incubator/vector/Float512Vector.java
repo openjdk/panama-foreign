@@ -210,7 +210,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                                 VECTOR_OP_MUL, Float512Vector.class, float.class, LENGTH,
                                 this,
                                 v -> {
-                                    float r = v.rOp((float) 0, (i, a, b) -> (float) (a * b));
+                                    float r = v.rOp((float) 1, (i, a, b) -> (float) (a * b));
                                     return (long)Float.floatToIntBits(r);
                                 });
         return Float.intBitsToFloat(bits);
@@ -486,7 +486,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             Float512Mask m = (Float512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Float512Mask.class, int.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -496,7 +496,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             Float512Mask m = (Float512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Float512Mask.class, int.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -513,20 +513,8 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Float512Mask.class, int.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Float512Mask trueMask() {
-            return Float512Mask.trueMask();
-        }
-
-        @ForceInline
-        static Float512Mask falseMask() {
-            return Float512Mask.falseMask();
         }
     }
 

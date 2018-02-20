@@ -245,7 +245,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
             this,
-            v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a * b)));
+            v -> (long) v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b)));
     }
 #end[intOrlong]
 #if[FP]
@@ -269,7 +269,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                                 VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
                                 this,
                                 v -> {
-                                    $type$ r = v.rOp(($type$) 0, (i, a, b) -> ($type$) (a * b));
+                                    $type$ r = v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b));
                                     return (long)$Type$.$type$To$Bitstype$Bits(r);
                                 });
         return $Type$.$bitstype$BitsTo$Fptype$(bits);
@@ -558,7 +558,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             $masktype$ m = ($masktype$)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, $masktype$.class, $bitstype$.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -568,7 +568,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             $masktype$ m = ($masktype$)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, $masktype$.class, $bitstype$.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -585,20 +585,8 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, $masktype$.class, $bitstype$.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static $masktype$ trueMask() {
-            return $masktype$.trueMask();
-        }
-
-        @ForceInline
-        static $masktype$ falseMask() {
-            return $masktype$.falseMask();
         }
     }
 

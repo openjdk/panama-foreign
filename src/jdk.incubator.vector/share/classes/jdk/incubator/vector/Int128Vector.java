@@ -237,7 +237,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Int128Vector.class, int.class, LENGTH,
             this,
-            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a * b)));
+            v -> (long) v.rOp((int) 1, (i, a, b) -> (int) (a * b)));
     }
 
     // Memory operations
@@ -510,7 +510,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
             Int128Mask m = (Int128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Int128Mask.class, int.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -520,7 +520,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
             Int128Mask m = (Int128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Int128Mask.class, int.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -537,20 +537,8 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Int128Mask.class, int.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Int128Mask trueMask() {
-            return Int128Mask.trueMask();
-        }
-
-        @ForceInline
-        static Int128Mask falseMask() {
-            return Int128Mask.falseMask();
         }
     }
 

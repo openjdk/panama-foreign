@@ -484,7 +484,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
             Short64Mask m = (Short64Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Short64Mask.class, short.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -494,7 +494,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
             Short64Mask m = (Short64Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Short64Mask.class, short.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -511,20 +511,8 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Short64Mask.class, short.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Short64Mask trueMask() {
-            return Short64Mask.trueMask();
-        }
-
-        @ForceInline
-        static Short64Mask falseMask() {
-            return Short64Mask.falseMask();
         }
     }
 

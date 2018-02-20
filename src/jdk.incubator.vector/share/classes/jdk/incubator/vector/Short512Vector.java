@@ -484,7 +484,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
             Short512Mask m = (Short512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Short512Mask.class, short.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -494,7 +494,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
             Short512Mask m = (Short512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Short512Mask.class, short.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -511,20 +511,8 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Short512Mask.class, short.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Short512Mask trueMask() {
-            return Short512Mask.trueMask();
-        }
-
-        @ForceInline
-        static Short512Mask falseMask() {
-            return Short512Mask.falseMask();
         }
     }
 

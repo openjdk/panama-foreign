@@ -210,7 +210,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
                                 VECTOR_OP_MUL, Double128Vector.class, double.class, LENGTH,
                                 this,
                                 v -> {
-                                    double r = v.rOp((double) 0, (i, a, b) -> (double) (a * b));
+                                    double r = v.rOp((double) 1, (i, a, b) -> (double) (a * b));
                                     return (long)Double.doubleToLongBits(r);
                                 });
         return Double.longBitsToDouble(bits);
@@ -486,7 +486,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
             Double128Mask m = (Double128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Double128Mask.class, long.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -496,7 +496,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
             Double128Mask m = (Double128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Double128Mask.class, long.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -513,20 +513,8 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Double128Mask.class, long.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Double128Mask trueMask() {
-            return Double128Mask.trueMask();
-        }
-
-        @ForceInline
-        static Double128Mask falseMask() {
-            return Double128Mask.falseMask();
         }
     }
 

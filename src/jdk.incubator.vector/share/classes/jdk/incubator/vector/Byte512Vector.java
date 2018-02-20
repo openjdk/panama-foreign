@@ -484,7 +484,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             Byte512Mask m = (Byte512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Byte512Mask.class, byte.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -494,7 +494,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             Byte512Mask m = (Byte512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Byte512Mask.class, byte.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -511,20 +511,8 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Byte512Mask.class, byte.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Byte512Mask trueMask() {
-            return Byte512Mask.trueMask();
-        }
-
-        @ForceInline
-        static Byte512Mask falseMask() {
-            return Byte512Mask.falseMask();
         }
     }
 

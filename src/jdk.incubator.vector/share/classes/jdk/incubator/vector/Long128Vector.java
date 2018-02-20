@@ -236,7 +236,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Long128Vector.class, long.class, LENGTH,
             this,
-            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a * b)));
+            v -> (long) v.rOp((long) 1, (i, a, b) -> (long) (a * b)));
     }
 
     // Memory operations
@@ -509,7 +509,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             Long128Mask m = (Long128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Long128Mask.class, long.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a & b));
         }
 
         @Override
@@ -519,7 +519,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             Long128Mask m = (Long128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Long128Mask.class, long.class, LENGTH,
                                              this, m,
-                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a && b));
+                                             (m1, m2) -> m1.bOp(m2, (i, a, b) -> a | b));
         }
 
         // Reductions
@@ -536,20 +536,8 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Long128Mask.class, long.class, LENGTH,
-                                         this, trueMask(),
+                                         this, species().trueMask(),
                                          (m1, m2) -> super.allTrue());
-        }
-
-        // Helpers
-
-        @ForceInline
-        static Long128Mask trueMask() {
-            return Long128Mask.trueMask();
-        }
-
-        @ForceInline
-        static Long128Mask falseMask() {
-            return Long128Mask.falseMask();
         }
     }
 
