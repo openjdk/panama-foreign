@@ -343,23 +343,60 @@ public abstract class IntVector<S extends Vector.Shape> implements Vector<Intege
 
     public abstract IntVector<S> floorMod(int o, Mask<Integer, S> m);
 
+    // logical shift left
+    public IntVector<S> shiftL(Vector<Integer,S> o) {
+        return bOp(o, (i, a, b) -> (int) (a << b));
+    }
+
     @HotSpotIntrinsicCandidate
     public IntVector<S> shiftL(int s) {
         return uOp((i, a) -> (int) (a << s));
     }
 
+    public IntVector<S> shiftL(Vector<Integer,S> o, Mask<Integer, S> m) {
+        return bOp(o, m, (i, a, b) -> (int) (a << b));
+    }
+
+    public IntVector<S> shiftL(int s, Mask<Integer, S> m) {
+        return uOp(m, (i, a) -> (int) (a << s));
+    }
+
     // logical, or unsigned, shift right
+    public IntVector<S> shiftR(Vector<Integer,S> o) {
+        return bOp(o, (i, a, b) -> (int) (a >>> b));
+    }
+
     @HotSpotIntrinsicCandidate
     public IntVector<S> shiftR(int s) {
         return uOp((i, a) -> (int) (a >>> s));
     }
 
+    public IntVector<S> shiftR(Vector<Integer,S> o, Mask<Integer, S> m) {
+        return bOp(o, m, (i, a, b) -> (int) (a >>> b));
+    }
+
+    public IntVector<S> shiftR(int s, Mask<Integer, S> m) {
+        return uOp(m, (i, a) -> (int) (a >>> s));
+    }
+
     // arithmetic, or signed, shift right
+    public IntVector<S> ashiftR(Vector<Integer,S> o) {
+        return bOp(o, (i, a, b) -> (int) (a >> b));
+    }
+
     @HotSpotIntrinsicCandidate
     public IntVector<S> aShiftR(int s) {
         return uOp((i, a) -> (int) (a >> s));
     }
 
+    public IntVector<S> ashiftR(Vector<Integer,S> o, Mask<Integer, S> m) {
+        return bOp(o, m, (i, a, b) -> (int) (a >> b));
+    }
+
+    public IntVector<S> aShiftR(int s, Mask<Integer, S> m) {
+        return uOp(m, (i, a) -> (int) (a >> s));
+    }
+    
     public IntVector<S> rotateL(int j) {
         return uOp((i, a) -> (int) Integer.rotateLeft(a, j));
     }

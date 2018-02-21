@@ -596,6 +596,11 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> floorMod($type$ o, Mask<$Boxtype$, S> m);
 
+    // logical shift left
+    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a << b));
+    }
+
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
@@ -603,7 +608,19 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return uOp((i, a) -> ($type$) (a << s));
     }
 
+    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a << b));
+    }
+
+    public $abstractvectortype$<S> shiftL(int s, Mask<$Boxtype$, S> m) {
+        return uOp(m, (i, a) -> ($type$) (a << s));
+    }
+
     // logical, or unsigned, shift right
+    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a >>> b));
+    }
+
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
@@ -611,12 +628,32 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return uOp((i, a) -> ($type$) (a >>> s));
     }
 
+    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a >>> b));
+    }
+
+    public $abstractvectortype$<S> shiftR(int s, Mask<$Boxtype$, S> m) {
+        return uOp(m, (i, a) -> ($type$) (a >>> s));
+    }
+
     // arithmetic, or signed, shift right
+    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a >> b));
+    }
+
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
     public $abstractvectortype$<S> aShiftR(int s) {
         return uOp((i, a) -> ($type$) (a >> s));
+    }
+
+    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a >> b));
+    }
+
+    public $abstractvectortype$<S> aShiftR(int s, Mask<$Boxtype$, S> m) {
+        return uOp(m, (i, a) -> ($type$) (a >> s));
     }
 
     public $abstractvectortype$<S> rotateL(int j) {
