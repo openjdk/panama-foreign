@@ -139,6 +139,196 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         return v;
     }
 
+    // Binary operations with scalars
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> add(short o) {
+        return add(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> add(short o, Mask<Short,Shapes.S128Bit> m) {
+        return add(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> addSaturate(short o) {
+        return addSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> addSaturate(short o, Mask<Short,Shapes.S128Bit> m) {
+        return addSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> sub(short o) {
+        return sub(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> sub(short o, Mask<Short,Shapes.S128Bit> m) {
+        return sub(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> subSaturate(short o) {
+        return subSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> subSaturate(short o, Mask<Short,Shapes.S128Bit> m) {
+        return subSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> mul(short o) {
+        return mul(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> mul(short o, Mask<Short,Shapes.S128Bit> m) {
+        return mul(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> div(short o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> div(short o, Mask<Short,Shapes.S128Bit> m) {
+        return div(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> min(short o) {
+        return min(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> max(short o) {
+        return max(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Short, Shapes.S128Bit> equal(short o) {
+        return equal(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Short, Shapes.S128Bit> notEqual(short o) {
+        return notEqual(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Short, Shapes.S128Bit> lessThan(short o) {
+        return lessThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Short, Shapes.S128Bit> lessThanEq(short o) {
+        return lessThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Short, Shapes.S128Bit> greaterThan(short o) {
+        return greaterThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Short, Shapes.S128Bit> greaterThanEq(short o) {
+        return greaterThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> blend(short o, Mask<Short,Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast(o), m);
+    }
+
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> and(short o) {
+        return and(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> and(short o, Mask<Short,Shapes.S128Bit> m) {
+        return and(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> or(short o) {
+        return or(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> or(short o, Mask<Short,Shapes.S128Bit> m) {
+        return or(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> xor(short o) {
+        return xor(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> xor(short o, Mask<Short,Shapes.S128Bit> m) {
+        return xor(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> floorDiv(short o) {
+        return floorDiv(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> floorDiv(short o, Mask<Short,Shapes.S128Bit> m) {
+        return floorDiv(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> floorMod(short o) {
+        return floorMod(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ShortVector<Shapes.S128Bit> floorMod(short o, Mask<Short,Shapes.S128Bit> m) {
+        return floorMod(SPECIES.broadcast(o), m);
+    }
+
+
     // Binary operations
 
     @Override

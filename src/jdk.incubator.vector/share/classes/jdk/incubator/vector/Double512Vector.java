@@ -140,6 +140,184 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         return v;
     }
 
+    // Binary operations with scalars
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> add(double o) {
+        return add(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> add(double o, Mask<Double,Shapes.S512Bit> m) {
+        return add(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> addSaturate(double o) {
+        return addSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> addSaturate(double o, Mask<Double,Shapes.S512Bit> m) {
+        return addSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> sub(double o) {
+        return sub(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> sub(double o, Mask<Double,Shapes.S512Bit> m) {
+        return sub(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> subSaturate(double o) {
+        return subSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> subSaturate(double o, Mask<Double,Shapes.S512Bit> m) {
+        return subSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> mul(double o) {
+        return mul(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> mul(double o, Mask<Double,Shapes.S512Bit> m) {
+        return mul(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> div(double o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> div(double o, Mask<Double,Shapes.S512Bit> m) {
+        return div(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> min(double o) {
+        return min(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> max(double o) {
+        return max(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Double, Shapes.S512Bit> equal(double o) {
+        return equal(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Double, Shapes.S512Bit> notEqual(double o) {
+        return notEqual(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Double, Shapes.S512Bit> lessThan(double o) {
+        return lessThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Double, Shapes.S512Bit> lessThanEq(double o) {
+        return lessThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Double, Shapes.S512Bit> greaterThan(double o) {
+        return greaterThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Double, Shapes.S512Bit> greaterThanEq(double o) {
+        return greaterThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> blend(double o, Mask<Double,Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> atan2(double o) {
+        return atan2(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> atan2(double o, Mask<Double,Shapes.S512Bit> m) {
+        return atan2(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> pow(double o) {
+        return pow(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> pow(double o, Mask<Double,Shapes.S512Bit> m) {
+        return pow(SPECIES.broadcast(o), m);
+    }
+    
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> fma(double o1, double o2) {
+        return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> fma(double o1, double o2, Mask<Double,Shapes.S512Bit> m) {
+        return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> hypot(double o) {
+        return hypot(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> hypot(double o, Mask<Double,Shapes.S512Bit> m) {
+        return hypot(SPECIES.broadcast(o), m);
+    }
+
+
+
     // Binary operations
 
     @Override

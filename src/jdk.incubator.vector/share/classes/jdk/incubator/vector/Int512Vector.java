@@ -140,6 +140,196 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         return v;
     }
 
+    // Binary operations with scalars
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> add(int o) {
+        return add(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> add(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return add(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> addSaturate(int o) {
+        return addSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> addSaturate(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return addSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> sub(int o) {
+        return sub(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> sub(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return sub(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> subSaturate(int o) {
+        return subSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> subSaturate(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return subSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> mul(int o) {
+        return mul(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> mul(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return mul(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> div(int o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> div(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return div(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> min(int o) {
+        return min(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> max(int o) {
+        return max(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Integer, Shapes.S512Bit> equal(int o) {
+        return equal(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Integer, Shapes.S512Bit> notEqual(int o) {
+        return notEqual(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Integer, Shapes.S512Bit> lessThan(int o) {
+        return lessThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Integer, Shapes.S512Bit> lessThanEq(int o) {
+        return lessThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Integer, Shapes.S512Bit> greaterThan(int o) {
+        return greaterThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Integer, Shapes.S512Bit> greaterThanEq(int o) {
+        return greaterThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> blend(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast(o), m);
+    }
+
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> and(int o) {
+        return and(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> and(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return and(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> or(int o) {
+        return or(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> or(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return or(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> xor(int o) {
+        return xor(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> xor(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return xor(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> floorDiv(int o) {
+        return floorDiv(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> floorDiv(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return floorDiv(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> floorMod(int o) {
+        return floorMod(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public IntVector<Shapes.S512Bit> floorMod(int o, Mask<Integer,Shapes.S512Bit> m) {
+        return floorMod(SPECIES.broadcast(o), m);
+    }
+
+
     // Binary operations
 
     @Override

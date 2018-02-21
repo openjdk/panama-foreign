@@ -95,21 +95,29 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return bOp(o, (i, a, b) -> (double) (a + b));
     }
 
+    public abstract DoubleVector<S> add(double o);
+
     @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> add(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a + b));
     }
 
+    public abstract DoubleVector<S> add(double o, Mask<Double, S> m);
+
     @Override
     public DoubleVector<S> addSaturate(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
+    public abstract DoubleVector<S> addSaturate(double o);
+
     @Override
     public DoubleVector<S> addSaturate(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
+
+    public abstract DoubleVector<S> addSaturate(double o, Mask<Double, S> m);
 
     @HotSpotIntrinsicCandidate
     @Override
@@ -117,21 +125,29 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return bOp(o, (i, a, b) -> (double) (a - b));
     }
 
+    public abstract DoubleVector<S> sub(double o);
+
     @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> sub(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a - b));
     }
 
+    public abstract DoubleVector<S> sub(double o, Mask<Double, S> m);
+
     @Override
     public DoubleVector<S> subSaturate(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) ((a >= Double.MIN_VALUE || Double.MIN_VALUE + b > a) ? Double.MAX_VALUE : a - b));
     }
 
+    public abstract DoubleVector<S> subSaturate(double o);
+
     @Override
     public DoubleVector<S> subSaturate(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) ((a >= Double.MIN_VALUE || Double.MIN_VALUE + b > a) ? Double.MAX_VALUE : a - b));
     }
+
+    public abstract DoubleVector<S> subSaturate(double o, Mask<Double, S> m);
 
     @HotSpotIntrinsicCandidate
     @Override
@@ -139,11 +155,15 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return bOp(o, (i, a, b) -> (double) (a * b));
     }
 
+    public abstract DoubleVector<S> mul(double o);
+
     @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> mul(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a * b));
     }
+
+    public abstract DoubleVector<S> mul(double o, Mask<Double, S> m);
 
     @HotSpotIntrinsicCandidate
     @Override
@@ -151,11 +171,15 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return bOp(o, (i, a, b) -> (double) (a / b));
     }
 
+    public abstract DoubleVector<S> div(double o);
+
     @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> div(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a / b));
     }
+
+    public abstract DoubleVector<S> div(double o, Mask<Double, S> m);
 
     @HotSpotIntrinsicCandidate
     @Override
@@ -184,46 +208,64 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return bOp(o, (i, a, b) -> (a <= b) ? a : b);
     }
 
+    public abstract DoubleVector<S> min(double o);
+
     @Override
     public DoubleVector<S> max(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (a >= b) ? a : b);
     }
+
+    public abstract DoubleVector<S> max(double o);
 
     @Override
     public Mask<Double, S> equal(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a == b);
     }
 
+    public abstract Mask<Double, S> equal(double o);
+
     @Override
     public Mask<Double, S> notEqual(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a != b);
     }
+
+    public abstract Mask<Double, S> notEqual(double o);
 
     @Override
     public Mask<Double, S> lessThan(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a < b);
     }
 
+    public abstract Mask<Double, S> lessThan(double o);
+
     @Override
     public Mask<Double, S> lessThanEq(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a <= b);
     }
+
+    public abstract Mask<Double, S> lessThanEq(double o);
 
     @Override
     public Mask<Double, S> greaterThan(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a > b);
     }
 
+    public abstract Mask<Double, S> greaterThan(double o);
+
     @Override
     public Mask<Double, S> greaterThanEq(Vector<Double,S> o) {
         return bTest(o, (i, a, b) -> a >= b);
     }
+
+    public abstract Mask<Double, S> greaterThanEq(double o);
 
     @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> blend(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
+
+    public abstract DoubleVector<S> blend(double o, Mask<Double, S> m);
 
     public DoubleVector<S> sqrt() {
         return uOp((i, a) -> (double) Math.sqrt((double) a));
@@ -309,9 +351,13 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return bOp(o, (i, a, b) -> (double) Math.atan2((double) a, (double) b));
     }
 
+    public abstract DoubleVector<S> atan2(double o);
+
     public DoubleVector<S> atan2(Vector<Double,S> o, Mask<Double,S> m) {
         return bOp(o, m, (i, a, b) -> (double) Math.atan2((double) a, (double) b));
     }
+
+    public abstract DoubleVector<S> atan2(double o, Mask<Double,S> m);
 
     public DoubleVector<S> cbrt() {
         return uOp((i, a) -> (double) Math.cbrt((double) a));
@@ -349,9 +395,13 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return bOp(o, (i, a, b) -> (double) Math.pow((double) a, (double) b));
     }
 
+    public abstract DoubleVector<S> pow(double o);
+
     public DoubleVector<S> pow(Vector<Double,S> o, Mask<Double,S> m) {
         return bOp(o, m, (i, a, b) -> (double) Math.pow((double) a, (double) b));
     }
+
+    public abstract DoubleVector<S> pow(double o, Mask<Double,S> m);
 
     public DoubleVector<S> exp() {
         return uOp((i, a) -> (double) Math.exp((double) a));
@@ -373,17 +423,25 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return tOp(o1, o2, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
+    public abstract DoubleVector<S> fma(double o1, double o2);
+
     public DoubleVector<S> fma(Vector<Double,S> o1, Vector<Double,S> o2, Mask<Double,S> m) {
         return tOp(o1, o2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
+
+    public abstract DoubleVector<S> fma(double o1, double o2, Mask<Double,S> m);
 
     public DoubleVector<S> hypot(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) Math.hypot((double) a, (double) b));
     }
 
+    public abstract DoubleVector<S> hypot(double o);
+
     public DoubleVector<S> hypot(Vector<Double,S> o, Mask<Double,S> m) {
         return bOp(o, m, (i, a, b) -> (double) Math.hypot((double) a, (double) b));
     }
+
+    public abstract DoubleVector<S> hypot(double o, Mask<Double,S> m);
 
 
     @Override

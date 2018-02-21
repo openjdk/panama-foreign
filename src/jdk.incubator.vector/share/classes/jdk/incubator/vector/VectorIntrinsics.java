@@ -60,7 +60,7 @@ import java.util.function.*;
     /* ============================================================================ */
 
     @HotSpotIntrinsicCandidate
-    static <V> V binaryOp(int oprId, Class<V> vectorClass, Class<?> elementType, int vlen,
+    static <V> V binaryOp(int oprId, Class<? extends V> vectorClass, Class<?> elementType, int vlen,
                           V v1, V v2, /*Vector.Mask<E,S> m,*/
                           BiFunction<V,V,V> defaultImpl) {
         return defaultImpl.apply(v1, v2);

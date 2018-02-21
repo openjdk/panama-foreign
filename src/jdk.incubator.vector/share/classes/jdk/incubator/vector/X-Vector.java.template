@@ -102,6 +102,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a + b));
     }
 
+    public abstract $abstractvectortype$<S> add($type$ o);
+
 #if[FP]
     @HotSpotIntrinsicCandidate
 #end[FP]
@@ -113,15 +115,21 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, m, (i, a, b) -> ($type$) (a + b));
     }
 
+    public abstract $abstractvectortype$<S> add($type$ o, Mask<$Boxtype$, S> m);
+
     @Override
     public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
+    public abstract $abstractvectortype$<S> addSaturate($type$ o);
+
     @Override
     public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
+
+    public abstract $abstractvectortype$<S> addSaturate($type$ o, Mask<$Boxtype$, S> m);
 
 #if[FP]
     @HotSpotIntrinsicCandidate
@@ -134,6 +142,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a - b));
     }
 
+    public abstract $abstractvectortype$<S> sub($type$ o);
+
 #if[FP]
     @HotSpotIntrinsicCandidate
 #end[FP]
@@ -145,15 +155,21 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, m, (i, a, b) -> ($type$) (a - b));
     }
 
+    public abstract $abstractvectortype$<S> sub($type$ o, Mask<$Boxtype$, S> m);
+
     @Override
     public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
     }
 
+    public abstract $abstractvectortype$<S> subSaturate($type$ o);
+
     @Override
     public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
     }
+
+    public abstract $abstractvectortype$<S> subSaturate($type$ o, Mask<$Boxtype$, S> m);
 
 #if[FP]
     @HotSpotIntrinsicCandidate
@@ -166,6 +182,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a * b));
     }
 
+    public abstract $abstractvectortype$<S> mul($type$ o);
+
 #if[FP]
     @HotSpotIntrinsicCandidate
 #end[FP]
@@ -177,6 +195,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, m, (i, a, b) -> ($type$) (a * b));
     }
 
+    public abstract $abstractvectortype$<S> mul($type$ o, Mask<$Boxtype$, S> m);
+
 #if[FP]
     @HotSpotIntrinsicCandidate
 #end[FP]
@@ -185,6 +205,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a / b));
     }
 
+    public abstract $abstractvectortype$<S> div($type$ o);
+
 #if[FP]
     @HotSpotIntrinsicCandidate
 #end[FP]
@@ -192,6 +214,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
     public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a / b));
     }
+
+    public abstract $abstractvectortype$<S> div($type$ o, Mask<$Boxtype$, S> m);
 
 #if[FP]
     @HotSpotIntrinsicCandidate
@@ -230,10 +254,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> (a <= b) ? a : b);
     }
 
+    public abstract $abstractvectortype$<S> min($type$ o);
+
     @Override
     public $abstractvectortype$<S> max(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> (a >= b) ? a : b);
     }
+
+    public abstract $abstractvectortype$<S> max($type$ o);
 
 #if[float]
     @HotSpotIntrinsicCandidate
@@ -246,10 +274,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bTest(o, (i, a, b) -> a == b);
     }
 
+    public abstract Mask<$Boxtype$, S> equal($type$ o);
+
     @Override
     public Mask<$Boxtype$, S> notEqual(Vector<$Boxtype$,S> o) {
         return bTest(o, (i, a, b) -> a != b);
     }
+
+    public abstract Mask<$Boxtype$, S> notEqual($type$ o);
 
 #if[float]
     @HotSpotIntrinsicCandidate
@@ -262,10 +294,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bTest(o, (i, a, b) -> a < b);
     }
 
+    public abstract Mask<$Boxtype$, S> lessThan($type$ o);
+
     @Override
     public Mask<$Boxtype$, S> lessThanEq(Vector<$Boxtype$,S> o) {
         return bTest(o, (i, a, b) -> a <= b);
     }
+
+    public abstract Mask<$Boxtype$, S> lessThanEq($type$ o);
 
 #if[float]
     @HotSpotIntrinsicCandidate
@@ -278,16 +314,22 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bTest(o, (i, a, b) -> a > b);
     }
 
+    public abstract Mask<$Boxtype$, S> greaterThan($type$ o);
+
     @Override
     public Mask<$Boxtype$, S> greaterThanEq(Vector<$Boxtype$,S> o) {
         return bTest(o, (i, a, b) -> a >= b);
     }
+
+    public abstract Mask<$Boxtype$, S> greaterThanEq($type$ o);
 
     @HotSpotIntrinsicCandidate
     @Override
     public $abstractvectortype$<S> blend(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
+
+    public abstract $abstractvectortype$<S> blend($type$ o, Mask<$Boxtype$, S> m);
 
 #if[FP]
     public $abstractvectortype$<S> sqrt() {
@@ -374,9 +416,13 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
     }
 
+    public abstract $abstractvectortype$<S> atan2($type$ o);
+
     public $abstractvectortype$<S> atan2(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
     }
+
+    public abstract $abstractvectortype$<S> atan2($type$ o, Mask<$Boxtype$,S> m);
 
     public $abstractvectortype$<S> cbrt() {
         return uOp((i, a) -> ($type$) Math.cbrt((double) a));
@@ -414,9 +460,13 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
     }
 
+    public abstract $abstractvectortype$<S> pow($type$ o);
+
     public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
     }
+
+    public abstract $abstractvectortype$<S> pow($type$ o, Mask<$Boxtype$,S> m);
 
     public $abstractvectortype$<S> exp() {
         return uOp((i, a) -> ($type$) Math.exp((double) a));
@@ -438,17 +488,25 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return tOp(o1, o2, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
+    public abstract $abstractvectortype$<S> fma($type$ o1, $type$ o2);
+
     public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2, Mask<$Boxtype$,S> m) {
         return tOp(o1, o2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
+
+    public abstract $abstractvectortype$<S> fma($type$ o1, $type$ o2, Mask<$Boxtype$,S> m);
 
     public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
     }
 
+    public abstract $abstractvectortype$<S> hypot($type$ o);
+
     public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
     }
+
+    public abstract $abstractvectortype$<S> hypot($type$ o, Mask<$Boxtype$,S> m);
 #end[FP]
 
 #if[BITWISE]
@@ -459,12 +517,16 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a & b));
     }
 
+    public abstract $abstractvectortype$<S> and($type$ o);
+
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
     public $abstractvectortype$<S> and(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a & b));
     }
+
+    public abstract $abstractvectortype$<S> and($type$ o, Mask<$Boxtype$, S> m);
 
 #if[int]
     @HotSpotIntrinsicCandidate
@@ -473,12 +535,16 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a | b));
     }
 
+    public abstract $abstractvectortype$<S> or($type$ o);
+
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
     public $abstractvectortype$<S> or(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a | b));
     }
+
+    public abstract $abstractvectortype$<S> or($type$ o, Mask<$Boxtype$, S> m);
 
 #if[int]
     @HotSpotIntrinsicCandidate
@@ -487,12 +553,16 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a ^ b));
     }
 
+    public abstract $abstractvectortype$<S> xor($type$ o);
+
 #if[int]
     @HotSpotIntrinsicCandidate
 #end[int]
     public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a ^ b));
     }
+
+    public abstract $abstractvectortype$<S> xor($type$ o, Mask<$Boxtype$, S> m);
 
     public $abstractvectortype$<S> not() {
         return uOp((i, a) -> ($type$) (~a));
@@ -506,17 +576,25 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a / b));
     }
 
+    public abstract $abstractvectortype$<S> floorDiv($type$ o);
+
     public $abstractvectortype$<S> floorDiv(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a / b));
     }
+
+    public abstract $abstractvectortype$<S> floorDiv($type$ o, Mask<$Boxtype$, S> m);
 
     public $abstractvectortype$<S> floorMod(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a % b));
     }
 
+    public abstract $abstractvectortype$<S> floorMod($type$ o);
+
     public $abstractvectortype$<S> floorMod(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a % b));
     }
+
+    public abstract $abstractvectortype$<S> floorMod($type$ o, Mask<$Boxtype$, S> m);
 
 #if[int]
     @HotSpotIntrinsicCandidate

@@ -93,60 +93,84 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
         return bOp(o, (i, a, b) -> (byte) (a + b));
     }
 
+    public abstract ByteVector<S> add(byte o);
+
     @Override
     public ByteVector<S> add(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a + b));
     }
+
+    public abstract ByteVector<S> add(byte o, Mask<Byte, S> m);
 
     @Override
     public ByteVector<S> addSaturate(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (byte) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
+    public abstract ByteVector<S> addSaturate(byte o);
+
     @Override
     public ByteVector<S> addSaturate(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
+
+    public abstract ByteVector<S> addSaturate(byte o, Mask<Byte, S> m);
 
     @Override
     public ByteVector<S> sub(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (byte) (a - b));
     }
 
+    public abstract ByteVector<S> sub(byte o);
+
     @Override
     public ByteVector<S> sub(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a - b));
     }
+
+    public abstract ByteVector<S> sub(byte o, Mask<Byte, S> m);
 
     @Override
     public ByteVector<S> subSaturate(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (byte) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
     }
 
+    public abstract ByteVector<S> subSaturate(byte o);
+
     @Override
     public ByteVector<S> subSaturate(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
     }
+
+    public abstract ByteVector<S> subSaturate(byte o, Mask<Byte, S> m);
 
     @Override
     public ByteVector<S> mul(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (byte) (a * b));
     }
 
+    public abstract ByteVector<S> mul(byte o);
+
     @Override
     public ByteVector<S> mul(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a * b));
     }
+
+    public abstract ByteVector<S> mul(byte o, Mask<Byte, S> m);
 
     @Override
     public ByteVector<S> div(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (byte) (a / b));
     }
 
+    public abstract ByteVector<S> div(byte o);
+
     @Override
     public ByteVector<S> div(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a / b));
     }
+
+    public abstract ByteVector<S> div(byte o, Mask<Byte, S> m);
 
     @Override
     public ByteVector<S> neg() {
@@ -173,40 +197,56 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
         return bOp(o, (i, a, b) -> (a <= b) ? a : b);
     }
 
+    public abstract ByteVector<S> min(byte o);
+
     @Override
     public ByteVector<S> max(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (a >= b) ? a : b);
     }
+
+    public abstract ByteVector<S> max(byte o);
 
     @Override
     public Mask<Byte, S> equal(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a == b);
     }
 
+    public abstract Mask<Byte, S> equal(byte o);
+
     @Override
     public Mask<Byte, S> notEqual(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a != b);
     }
+
+    public abstract Mask<Byte, S> notEqual(byte o);
 
     @Override
     public Mask<Byte, S> lessThan(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a < b);
     }
 
+    public abstract Mask<Byte, S> lessThan(byte o);
+
     @Override
     public Mask<Byte, S> lessThanEq(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a <= b);
     }
+
+    public abstract Mask<Byte, S> lessThanEq(byte o);
 
     @Override
     public Mask<Byte, S> greaterThan(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a > b);
     }
 
+    public abstract Mask<Byte, S> greaterThan(byte o);
+
     @Override
     public Mask<Byte, S> greaterThanEq(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a >= b);
     }
+
+    public abstract Mask<Byte, S> greaterThanEq(byte o);
 
     @HotSpotIntrinsicCandidate
     @Override
@@ -214,30 +254,44 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
+    public abstract ByteVector<S> blend(byte o, Mask<Byte, S> m);
+
 
     public ByteVector<S> and(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (byte) (a & b));
     }
 
+    public abstract ByteVector<S> and(byte o);
+
     public ByteVector<S> and(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a & b));
     }
+
+    public abstract ByteVector<S> and(byte o, Mask<Byte, S> m);
 
     public ByteVector<S> or(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (byte) (a | b));
     }
 
+    public abstract ByteVector<S> or(byte o);
+
     public ByteVector<S> or(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a | b));
     }
+
+    public abstract ByteVector<S> or(byte o, Mask<Byte, S> m);
 
     public ByteVector<S> xor(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (byte) (a ^ b));
     }
 
+    public abstract ByteVector<S> xor(byte o);
+
     public ByteVector<S> xor(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a ^ b));
     }
+
+    public abstract ByteVector<S> xor(byte o, Mask<Byte, S> m);
 
     public ByteVector<S> not() {
         return uOp((i, a) -> (byte) (~a));
@@ -251,17 +305,25 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
         return bOp(o, (i, a, b) -> (byte) (a / b));
     }
 
+    public abstract ByteVector<S> floorDiv(byte o);
+
     public ByteVector<S> floorDiv(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a / b));
     }
+
+    public abstract ByteVector<S> floorDiv(byte o, Mask<Byte, S> m);
 
     public ByteVector<S> floorMod(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (byte) (a % b));
     }
 
+    public abstract ByteVector<S> floorMod(byte o);
+
     public ByteVector<S> floorMod(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a % b));
     }
+
+    public abstract ByteVector<S> floorMod(byte o, Mask<Byte, S> m);
 
     public ByteVector<S> shiftL(int s) {
         return uOp((i, a) -> (byte) (a << s));

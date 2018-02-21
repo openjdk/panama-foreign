@@ -94,60 +94,84 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
         return bOp(o, (i, a, b) -> (long) (a + b));
     }
 
+    public abstract LongVector<S> add(long o);
+
     @Override
     public LongVector<S> add(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a + b));
     }
+
+    public abstract LongVector<S> add(long o, Mask<Long, S> m);
 
     @Override
     public LongVector<S> addSaturate(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
+    public abstract LongVector<S> addSaturate(long o);
+
     @Override
     public LongVector<S> addSaturate(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
+
+    public abstract LongVector<S> addSaturate(long o, Mask<Long, S> m);
 
     @Override
     public LongVector<S> sub(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) (a - b));
     }
 
+    public abstract LongVector<S> sub(long o);
+
     @Override
     public LongVector<S> sub(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a - b));
     }
+
+    public abstract LongVector<S> sub(long o, Mask<Long, S> m);
 
     @Override
     public LongVector<S> subSaturate(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) ((a >= Long.MIN_VALUE || Long.MIN_VALUE + b > a) ? Long.MAX_VALUE : a - b));
     }
 
+    public abstract LongVector<S> subSaturate(long o);
+
     @Override
     public LongVector<S> subSaturate(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) ((a >= Long.MIN_VALUE || Long.MIN_VALUE + b > a) ? Long.MAX_VALUE : a - b));
     }
+
+    public abstract LongVector<S> subSaturate(long o, Mask<Long, S> m);
 
     @Override
     public LongVector<S> mul(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) (a * b));
     }
 
+    public abstract LongVector<S> mul(long o);
+
     @Override
     public LongVector<S> mul(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a * b));
     }
+
+    public abstract LongVector<S> mul(long o, Mask<Long, S> m);
 
     @Override
     public LongVector<S> div(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) (a / b));
     }
 
+    public abstract LongVector<S> div(long o);
+
     @Override
     public LongVector<S> div(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a / b));
     }
+
+    public abstract LongVector<S> div(long o, Mask<Long, S> m);
 
     @Override
     public LongVector<S> neg() {
@@ -174,40 +198,56 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
         return bOp(o, (i, a, b) -> (a <= b) ? a : b);
     }
 
+    public abstract LongVector<S> min(long o);
+
     @Override
     public LongVector<S> max(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (a >= b) ? a : b);
     }
+
+    public abstract LongVector<S> max(long o);
 
     @Override
     public Mask<Long, S> equal(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a == b);
     }
 
+    public abstract Mask<Long, S> equal(long o);
+
     @Override
     public Mask<Long, S> notEqual(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a != b);
     }
+
+    public abstract Mask<Long, S> notEqual(long o);
 
     @Override
     public Mask<Long, S> lessThan(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a < b);
     }
 
+    public abstract Mask<Long, S> lessThan(long o);
+
     @Override
     public Mask<Long, S> lessThanEq(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a <= b);
     }
+
+    public abstract Mask<Long, S> lessThanEq(long o);
 
     @Override
     public Mask<Long, S> greaterThan(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a > b);
     }
 
+    public abstract Mask<Long, S> greaterThan(long o);
+
     @Override
     public Mask<Long, S> greaterThanEq(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a >= b);
     }
+
+    public abstract Mask<Long, S> greaterThanEq(long o);
 
     @HotSpotIntrinsicCandidate
     @Override
@@ -215,30 +255,44 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
+    public abstract LongVector<S> blend(long o, Mask<Long, S> m);
+
 
     public LongVector<S> and(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) (a & b));
     }
 
+    public abstract LongVector<S> and(long o);
+
     public LongVector<S> and(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a & b));
     }
+
+    public abstract LongVector<S> and(long o, Mask<Long, S> m);
 
     public LongVector<S> or(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) (a | b));
     }
 
+    public abstract LongVector<S> or(long o);
+
     public LongVector<S> or(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a | b));
     }
+
+    public abstract LongVector<S> or(long o, Mask<Long, S> m);
 
     public LongVector<S> xor(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) (a ^ b));
     }
 
+    public abstract LongVector<S> xor(long o);
+
     public LongVector<S> xor(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a ^ b));
     }
+
+    public abstract LongVector<S> xor(long o, Mask<Long, S> m);
 
     public LongVector<S> not() {
         return uOp((i, a) -> (long) (~a));
@@ -252,17 +306,25 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
         return bOp(o, (i, a, b) -> (long) (a / b));
     }
 
+    public abstract LongVector<S> floorDiv(long o);
+
     public LongVector<S> floorDiv(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a / b));
     }
+
+    public abstract LongVector<S> floorDiv(long o, Mask<Long, S> m);
 
     public LongVector<S> floorMod(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (long) (a % b));
     }
 
+    public abstract LongVector<S> floorMod(long o);
+
     public LongVector<S> floorMod(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a % b));
     }
+
+    public abstract LongVector<S> floorMod(long o, Mask<Long, S> m);
 
     public LongVector<S> shiftL(int s) {
         return uOp((i, a) -> (long) (a << s));

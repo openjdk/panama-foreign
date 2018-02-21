@@ -140,6 +140,184 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         return v;
     }
 
+    // Binary operations with scalars
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> add(float o) {
+        return add(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> add(float o, Mask<Float,Shapes.S256Bit> m) {
+        return add(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> addSaturate(float o) {
+        return addSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> addSaturate(float o, Mask<Float,Shapes.S256Bit> m) {
+        return addSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> sub(float o) {
+        return sub(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> sub(float o, Mask<Float,Shapes.S256Bit> m) {
+        return sub(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> subSaturate(float o) {
+        return subSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> subSaturate(float o, Mask<Float,Shapes.S256Bit> m) {
+        return subSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> mul(float o) {
+        return mul(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> mul(float o, Mask<Float,Shapes.S256Bit> m) {
+        return mul(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> div(float o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> div(float o, Mask<Float,Shapes.S256Bit> m) {
+        return div(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> min(float o) {
+        return min(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> max(float o) {
+        return max(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Float, Shapes.S256Bit> equal(float o) {
+        return equal(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Float, Shapes.S256Bit> notEqual(float o) {
+        return notEqual(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Float, Shapes.S256Bit> lessThan(float o) {
+        return lessThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Float, Shapes.S256Bit> lessThanEq(float o) {
+        return lessThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Float, Shapes.S256Bit> greaterThan(float o) {
+        return greaterThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Float, Shapes.S256Bit> greaterThanEq(float o) {
+        return greaterThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> blend(float o, Mask<Float,Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> atan2(float o) {
+        return atan2(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> atan2(float o, Mask<Float,Shapes.S256Bit> m) {
+        return atan2(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> pow(float o) {
+        return pow(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> pow(float o, Mask<Float,Shapes.S256Bit> m) {
+        return pow(SPECIES.broadcast(o), m);
+    }
+    
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> fma(float o1, float o2) {
+        return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> fma(float o1, float o2, Mask<Float,Shapes.S256Bit> m) {
+        return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> hypot(float o) {
+        return hypot(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> hypot(float o, Mask<Float,Shapes.S256Bit> m) {
+        return hypot(SPECIES.broadcast(o), m);
+    }
+
+
+
     // Binary operations
 
     @Override

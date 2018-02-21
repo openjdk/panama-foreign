@@ -139,6 +139,196 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         return v;
     }
 
+    // Binary operations with scalars
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> add(long o) {
+        return add(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> add(long o, Mask<Long,Shapes.S256Bit> m) {
+        return add(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> addSaturate(long o) {
+        return addSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> addSaturate(long o, Mask<Long,Shapes.S256Bit> m) {
+        return addSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> sub(long o) {
+        return sub(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> sub(long o, Mask<Long,Shapes.S256Bit> m) {
+        return sub(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> subSaturate(long o) {
+        return subSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> subSaturate(long o, Mask<Long,Shapes.S256Bit> m) {
+        return subSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> mul(long o) {
+        return mul(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> mul(long o, Mask<Long,Shapes.S256Bit> m) {
+        return mul(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> div(long o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> div(long o, Mask<Long,Shapes.S256Bit> m) {
+        return div(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> min(long o) {
+        return min(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> max(long o) {
+        return max(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Long, Shapes.S256Bit> equal(long o) {
+        return equal(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Long, Shapes.S256Bit> notEqual(long o) {
+        return notEqual(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Long, Shapes.S256Bit> lessThan(long o) {
+        return lessThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Long, Shapes.S256Bit> lessThanEq(long o) {
+        return lessThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Long, Shapes.S256Bit> greaterThan(long o) {
+        return greaterThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Long, Shapes.S256Bit> greaterThanEq(long o) {
+        return greaterThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> blend(long o, Mask<Long,Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast(o), m);
+    }
+
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> and(long o) {
+        return and(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> and(long o, Mask<Long,Shapes.S256Bit> m) {
+        return and(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> or(long o) {
+        return or(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> or(long o, Mask<Long,Shapes.S256Bit> m) {
+        return or(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> xor(long o) {
+        return xor(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> xor(long o, Mask<Long,Shapes.S256Bit> m) {
+        return xor(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> floorDiv(long o) {
+        return floorDiv(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> floorDiv(long o, Mask<Long,Shapes.S256Bit> m) {
+        return floorDiv(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> floorMod(long o) {
+        return floorMod(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public LongVector<Shapes.S256Bit> floorMod(long o, Mask<Long,Shapes.S256Bit> m) {
+        return floorMod(SPECIES.broadcast(o), m);
+    }
+
+
     // Binary operations
 
     @Override

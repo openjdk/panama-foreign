@@ -139,6 +139,196 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         return v;
     }
 
+    // Binary operations with scalars
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> add(byte o) {
+        return add(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> add(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return add(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> addSaturate(byte o) {
+        return addSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> addSaturate(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return addSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> sub(byte o) {
+        return sub(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> sub(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return sub(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> subSaturate(byte o) {
+        return subSaturate(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> subSaturate(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return subSaturate(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> mul(byte o) {
+        return mul(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> mul(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return mul(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> div(byte o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> div(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return div(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> min(byte o) {
+        return min(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> max(byte o) {
+        return max(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Byte, Shapes.S128Bit> equal(byte o) {
+        return equal(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Byte, Shapes.S128Bit> notEqual(byte o) {
+        return notEqual(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Byte, Shapes.S128Bit> lessThan(byte o) {
+        return lessThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Byte, Shapes.S128Bit> lessThanEq(byte o) {
+        return lessThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Byte, Shapes.S128Bit> greaterThan(byte o) {
+        return greaterThan(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public Mask<Byte, Shapes.S128Bit> greaterThanEq(byte o) {
+        return greaterThanEq(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> blend(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast(o), m);
+    }
+
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> and(byte o) {
+        return and(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> and(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return and(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> or(byte o) {
+        return or(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> or(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return or(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> xor(byte o) {
+        return xor(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> xor(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return xor(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> floorDiv(byte o) {
+        return floorDiv(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> floorDiv(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return floorDiv(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> floorMod(byte o) {
+        return floorMod(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public ByteVector<Shapes.S128Bit> floorMod(byte o, Mask<Byte,Shapes.S128Bit> m) {
+        return floorMod(SPECIES.broadcast(o), m);
+    }
+
+
     // Binary operations
 
     @Override

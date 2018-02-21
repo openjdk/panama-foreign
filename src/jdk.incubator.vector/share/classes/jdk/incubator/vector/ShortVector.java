@@ -94,60 +94,84 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
         return bOp(o, (i, a, b) -> (short) (a + b));
     }
 
+    public abstract ShortVector<S> add(short o);
+
     @Override
     public ShortVector<S> add(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a + b));
     }
+
+    public abstract ShortVector<S> add(short o, Mask<Short, S> m);
 
     @Override
     public ShortVector<S> addSaturate(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (short) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
+    public abstract ShortVector<S> addSaturate(short o);
+
     @Override
     public ShortVector<S> addSaturate(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
+
+    public abstract ShortVector<S> addSaturate(short o, Mask<Short, S> m);
 
     @Override
     public ShortVector<S> sub(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (short) (a - b));
     }
 
+    public abstract ShortVector<S> sub(short o);
+
     @Override
     public ShortVector<S> sub(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a - b));
     }
+
+    public abstract ShortVector<S> sub(short o, Mask<Short, S> m);
 
     @Override
     public ShortVector<S> subSaturate(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (short) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
     }
 
+    public abstract ShortVector<S> subSaturate(short o);
+
     @Override
     public ShortVector<S> subSaturate(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
     }
+
+    public abstract ShortVector<S> subSaturate(short o, Mask<Short, S> m);
 
     @Override
     public ShortVector<S> mul(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (short) (a * b));
     }
 
+    public abstract ShortVector<S> mul(short o);
+
     @Override
     public ShortVector<S> mul(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a * b));
     }
+
+    public abstract ShortVector<S> mul(short o, Mask<Short, S> m);
 
     @Override
     public ShortVector<S> div(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (short) (a / b));
     }
 
+    public abstract ShortVector<S> div(short o);
+
     @Override
     public ShortVector<S> div(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a / b));
     }
+
+    public abstract ShortVector<S> div(short o, Mask<Short, S> m);
 
     @Override
     public ShortVector<S> neg() {
@@ -174,40 +198,56 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
         return bOp(o, (i, a, b) -> (a <= b) ? a : b);
     }
 
+    public abstract ShortVector<S> min(short o);
+
     @Override
     public ShortVector<S> max(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (a >= b) ? a : b);
     }
+
+    public abstract ShortVector<S> max(short o);
 
     @Override
     public Mask<Short, S> equal(Vector<Short,S> o) {
         return bTest(o, (i, a, b) -> a == b);
     }
 
+    public abstract Mask<Short, S> equal(short o);
+
     @Override
     public Mask<Short, S> notEqual(Vector<Short,S> o) {
         return bTest(o, (i, a, b) -> a != b);
     }
+
+    public abstract Mask<Short, S> notEqual(short o);
 
     @Override
     public Mask<Short, S> lessThan(Vector<Short,S> o) {
         return bTest(o, (i, a, b) -> a < b);
     }
 
+    public abstract Mask<Short, S> lessThan(short o);
+
     @Override
     public Mask<Short, S> lessThanEq(Vector<Short,S> o) {
         return bTest(o, (i, a, b) -> a <= b);
     }
+
+    public abstract Mask<Short, S> lessThanEq(short o);
 
     @Override
     public Mask<Short, S> greaterThan(Vector<Short,S> o) {
         return bTest(o, (i, a, b) -> a > b);
     }
 
+    public abstract Mask<Short, S> greaterThan(short o);
+
     @Override
     public Mask<Short, S> greaterThanEq(Vector<Short,S> o) {
         return bTest(o, (i, a, b) -> a >= b);
     }
+
+    public abstract Mask<Short, S> greaterThanEq(short o);
 
     @HotSpotIntrinsicCandidate
     @Override
@@ -215,30 +255,44 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
+    public abstract ShortVector<S> blend(short o, Mask<Short, S> m);
+
 
     public ShortVector<S> and(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (short) (a & b));
     }
 
+    public abstract ShortVector<S> and(short o);
+
     public ShortVector<S> and(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a & b));
     }
+
+    public abstract ShortVector<S> and(short o, Mask<Short, S> m);
 
     public ShortVector<S> or(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (short) (a | b));
     }
 
+    public abstract ShortVector<S> or(short o);
+
     public ShortVector<S> or(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a | b));
     }
+
+    public abstract ShortVector<S> or(short o, Mask<Short, S> m);
 
     public ShortVector<S> xor(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (short) (a ^ b));
     }
 
+    public abstract ShortVector<S> xor(short o);
+
     public ShortVector<S> xor(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a ^ b));
     }
+
+    public abstract ShortVector<S> xor(short o, Mask<Short, S> m);
 
     public ShortVector<S> not() {
         return uOp((i, a) -> (short) (~a));
@@ -252,17 +306,25 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
         return bOp(o, (i, a, b) -> (short) (a / b));
     }
 
+    public abstract ShortVector<S> floorDiv(short o);
+
     public ShortVector<S> floorDiv(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a / b));
     }
+
+    public abstract ShortVector<S> floorDiv(short o, Mask<Short, S> m);
 
     public ShortVector<S> floorMod(Vector<Short,S> o) {
         return bOp(o, (i, a, b) -> (short) (a % b));
     }
 
+    public abstract ShortVector<S> floorMod(short o);
+
     public ShortVector<S> floorMod(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a % b));
     }
+
+    public abstract ShortVector<S> floorMod(short o, Mask<Short, S> m);
 
     public ShortVector<S> shiftL(int s) {
         return uOp((i, a) -> (short) (a << s));
