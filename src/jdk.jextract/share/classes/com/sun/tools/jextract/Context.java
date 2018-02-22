@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nicl.Library;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -35,6 +36,7 @@ import java.util.function.Function;
 import java.util.jar.JarOutputStream;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
+import jdk.internal.nicl.NativeLibraryImpl;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -50,12 +52,20 @@ public class Context {
     final List<String> clangArgs;
     // The set of source header files
     final Set<Path>  sources;
-    // The list of libraries
-    final List<String> libraries;
+    // The list of library names
+    final List<String> libraryNames;
     // The list of library paths
     final List<String> libraryPaths;
+    // The list of library paths for link checks
+    final List<String> linkCheckPaths;
 
-    //
+    // check if a symbol is found in any of the libraries or not.
+    public static interface SymbolChecker {
+        public boolean lookup(String name);
+    }
+
+    SymbolChecker symChecker;
+
     final static String defaultPkg = "jextract.dump";
     private static Context instance = new Context();
     public final Logger logger = Logger.getLogger(getClass().getPackage().getName());
@@ -65,8 +75,9 @@ public class Context {
         headerMap = new HashMap<>();
         clangArgs = new ArrayList<>();
         sources = new TreeSet<>();
-        libraries = new ArrayList<>();
+        libraryNames = new ArrayList<>();
         libraryPaths = new ArrayList<>();
+        linkCheckPaths = new ArrayList<>();
     }
 
     // used only for jtreg testing
@@ -186,7 +197,7 @@ public class Context {
         }
 
         final Context.Entity e = whatis(header);
-        return new HeaderFile(header, e.pkg, e.entity, main);
+        return new HeaderFile(header, e.pkg, e.entity, main, symChecker);
     }
 
     void processCursor(Cursor c, HeaderFile main, Function<HeaderFile, CodeFactory> fn) {
@@ -236,6 +247,33 @@ public class Context {
     }
 
     public void parse(Function<HeaderFile, CodeFactory> fn) {
+        if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
+            Library[] libs = NativeLibraryImpl.loadLibraries(
+                linkCheckPaths.toArray(new String[0]),
+                libraryNames.toArray(new String[0]));
+
+            // check if the given symbol is found in any of the libraries or not.
+            // If not found, warn the user for the missing symbol.
+            symChecker = name -> {
+                if (Main.DEBUG) {
+                    System.err.println("Searching symbol: " + name);
+                }
+                return (Arrays.stream(libs).filter(lib -> {
+                        try {
+                            lib.lookup(name);
+                            if (Main.DEBUG) {
+                                System.err.println("Found symbol: " + name);
+                            }
+                            return true;
+                        } catch (NoSuchMethodException nsme) {
+                            return false;
+                        }
+                    }).findFirst().isPresent());
+            };
+        } else {
+            symChecker = null;
+        }
+
         sources.forEach(path -> {
             if (headerMap.containsKey(path)) {
                 logger.info(() -> path.toString() + " seen earlier via #include");
@@ -243,7 +281,7 @@ public class Context {
             }
 
             HeaderFile hf = headerMap.computeIfAbsent(path, p -> getHeaderFile(p, null));
-            hf.useLibraries(libraries, libraryPaths);
+            hf.useLibraries(libraryNames, libraryPaths);
             hf.useCodeFactory(fn.apply(hf));
             logger.info(() -> "Parsing header file " + path);
 

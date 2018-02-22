@@ -167,20 +167,24 @@ public class NativeLibraryImpl {
               filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
     }
 
-    private static Library[] loadLibraries(LibraryDependencies deps) {
-        String[] pathStrs = deps.paths();
+    // used by jextract tool to load libraries for symbol checks.
+    public static Library[] loadLibraries(String[] pathStrs, String[] names) {
         if (pathStrs == null || pathStrs.length == 0) {
-            return Arrays.stream(deps.names()).map(
+            return Arrays.stream(names).map(
                 NativeLibrary::loadLibrary).toArray(Library[]::new);
         } else {
             Path[] paths = Arrays.stream(pathStrs).map(Paths::get).toArray(Path[]::new);
-            return Arrays.stream(deps.names()).map(libName -> {
+            return Arrays.stream(names).map(libName -> {
                 Optional<Path> absPath = findLibraryPath(paths, libName);
                 return absPath.isPresent() ?
                     NativeLibrary.load(absPath.get().toString()) :
                     NativeLibrary.loadLibrary(libName);
             }).toArray(Library[]::new);
         }
+    }
+
+    private static Library[] loadLibraries(LibraryDependencies deps) {
+        return loadLibraries(deps.paths(), deps.names());
     }
 
     private static LibraryDependencies getLibraryDependenciesForClass(Class<?> c) {

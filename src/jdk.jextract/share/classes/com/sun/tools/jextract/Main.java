@@ -119,9 +119,8 @@ public final class Main {
         OptionParser parser = new OptionParser();
         parser.accepts("dry-run", format("help.dry_run"));
         parser.accepts("I", format("help.I")).withRequiredArg();
-        // FIXME: -L not yet implemented. This 'jextract time'
         // option is expected to specify paths to load shared libraries
-        // to check & warn missing symbols.
+        // to check & warn missing symbols during jextract session.
         parser.accepts("L", format("help.L")).withRequiredArg();
         parser.accepts("l", format("help.l")).withRequiredArg();
         parser.accepts("o", format("help.o")).withRequiredArg();
@@ -173,7 +172,7 @@ public final class Main {
                     if (lib.indexOf(File.separatorChar) != -1) {
                         throw new IllegalArgumentException(format("l.name.should.not.be.path", lib));
                     }
-                    ctx.libraries.add(lib);
+                    ctx.libraryNames.add(lib);
                 });
             } catch (IllegalArgumentException iae) {
                 System.err.println(iae.getMessage());
@@ -185,7 +184,21 @@ public final class Main {
         }
 
         if (options.has("rpath")) {
-            options.valuesOf("rpath").forEach(p -> ctx.libraryPaths.add((String) p));
+            // "rpath" with no "l" option!
+            if (options.has("l")) {
+                options.valuesOf("rpath").forEach(p -> ctx.libraryPaths.add((String) p));
+            } else {
+                System.err.println(format("warn.rpath.without.l"));
+            }
+        }
+
+        if (options.has("L")) {
+            // "L" with no "l" option!
+            if (options.has("l")) {
+                options.valuesOf("L").forEach(p -> ctx.linkCheckPaths.add((String) p));
+            } else {
+                System.err.println(format("warn.L.without.l"));
+            }
         }
 
         targetPackage = options.has("t") ? (String) options.valueOf("t") : "";

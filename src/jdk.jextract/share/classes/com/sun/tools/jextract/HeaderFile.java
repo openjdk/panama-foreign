@@ -47,15 +47,18 @@ public final class HeaderFile {
     List<String> libraryPaths;
 
     private final AtomicInteger serialNo;
+    private final Context.SymbolChecker symChecker;
+
     final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
-    HeaderFile(Path path, String pkgName, String clsName, HeaderFile main) {
+    HeaderFile(Path path, String pkgName, String clsName, HeaderFile main, Context.SymbolChecker symChecker) {
         this.path = path;
         this.pkgName = pkgName;
         this.clsName = clsName;
         dict = TypeDictionary.of(pkgName);
         serialNo = new AtomicInteger();
         this.main = main == null ? this : main;
+        this.symChecker = symChecker;
     }
 
     void useLibraries(List<String> libraries, List<String> libraryPaths) {
@@ -92,6 +95,15 @@ public final class HeaderFile {
     void processCursor(Cursor c, HeaderFile main, boolean isBuiltIn) {
         if (c.isDeclaration()) {
             Type t = c.type();
+            if (symChecker != null) {
+                if (t.kind() == TypeKind.FunctionProto ||
+                    t.kind() == TypeKind.FunctionNoProto) {
+                    String name = c.spelling();
+                    if (!symChecker.lookup(name)) {
+                        System.err.println(Main.format("warn.symbol.not.found", name));
+                    }
+                }
+            }
             JType jt = dict.computeIfAbsent(t, type -> {
                 logger.fine(() -> "PH: Compute type for " + type.spelling());
                 return define(type);
