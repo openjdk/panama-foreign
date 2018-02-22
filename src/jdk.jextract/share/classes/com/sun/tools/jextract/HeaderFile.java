@@ -76,7 +76,7 @@ public final class HeaderFile {
             logger.config(() -> "CodeFactory had been initialized for " + path);
             // Diagnosis code
             if (Main.DEBUG) {
-                new Throwable().printStackTrace(System.err);
+                new Throwable().printStackTrace(Context.getInstance().err);
             }
         } else {
             this.cf = cf;
@@ -100,7 +100,7 @@ public final class HeaderFile {
                     t.kind() == TypeKind.FunctionNoProto) {
                     String name = c.spelling();
                     if (!symChecker.lookup(name)) {
-                        System.err.println(Main.format("warn.symbol.not.found", name));
+                        Context.getInstance().err.println(Main.format("warn.symbol.not.found", name));
                     }
                 }
             }

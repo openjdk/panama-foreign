@@ -86,9 +86,9 @@ public class AsmCodeFactory extends CodeFactory {
     }
 
     private void handleException(Exception ex) {
-        System.err.println(Main.format("cannot.write.class.file", owner.pkgName + "." + owner.clsName, ex));
+        Context.getInstance().err.println(Main.format("cannot.write.class.file", owner.pkgName + "." + owner.clsName, ex));
         if (Main.DEBUG) {
-            ex.printStackTrace(System.err);
+            ex.printStackTrace(Context.getInstance().err);
         }
     }
 
@@ -497,7 +497,7 @@ public class AsmCodeFactory extends CodeFactory {
         } else {
             logger.warning(() -> "Should have JType2 in addType");
             if (Main.DEBUG) {
-                new Throwable().printStackTrace(System.err);
+                new Throwable().printStackTrace(Context.getInstance().err);
             }
         }
         if (cursor == null) {

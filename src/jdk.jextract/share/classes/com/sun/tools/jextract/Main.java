@@ -29,6 +29,7 @@ import jdk.internal.joptsimple.util.KeyValuePair;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,6 +40,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.spi.ToolProvider;
 
 public final class Main {
     public static final boolean DEBUG = Boolean.getBoolean("jextract.debug");
@@ -107,10 +109,10 @@ public final class Main {
 
     private void printHelp(OptionParser parser) {
         try {
-            parser.printHelpOn(System.err);
+            parser.printHelpOn(ctx.err);
         } catch (IOException ex) {
             if (Main.DEBUG) {
-                ex.printStackTrace(System.err);
+                ex.printStackTrace(ctx.err);
             }
         }
     }
@@ -138,9 +140,9 @@ public final class Main {
         try {
              options = parser.parse(args);
         } catch (OptionException oe) {
-             System.err.println(oe.getMessage());
+             ctx.err.println(oe.getMessage());
              if (Main.DEBUG) {
-                 oe.printStackTrace(System.err);
+                 oe.printStackTrace(ctx.err);
              }
              printHelp(parser);
              return 1;
@@ -148,7 +150,7 @@ public final class Main {
 
         if (args.length == 0 || options.has("h") || options.has("?") || options.has("help")) {
              printHelp(parser);
-             return 1;
+             return args.length == 0? 1 : 0;
         }
 
         if (options.has("log")) {
@@ -175,9 +177,9 @@ public final class Main {
                     ctx.libraryNames.add(lib);
                 });
             } catch (IllegalArgumentException iae) {
-                System.err.println(iae.getMessage());
+                ctx.err.println(iae.getMessage());
                 if (Main.DEBUG) {
-                    iae.printStackTrace(System.err);
+                    iae.printStackTrace(ctx.err);
                 }
                 return 1;
             }
@@ -188,7 +190,7 @@ public final class Main {
             if (options.has("l")) {
                 options.valuesOf("rpath").forEach(p -> ctx.libraryPaths.add((String) p));
             } else {
-                System.err.println(format("warn.rpath.without.l"));
+                ctx.err.println(format("warn.rpath.without.l"));
             }
         }
 
@@ -197,7 +199,7 @@ public final class Main {
             if (options.has("l")) {
                 options.valuesOf("L").forEach(p -> ctx.linkCheckPaths.add((String) p));
             } else {
-                System.err.println(format("warn.L.without.l"));
+                ctx.err.println(format("warn.L.without.l"));
             }
         }
 
@@ -214,9 +216,9 @@ public final class Main {
             options.nonOptionArguments().stream().forEach(this::processHeader);
             ctx.parse(AsmCodeFactory::new);
         } catch (RuntimeException re) {
-            System.err.println(re.getMessage());
+            ctx.err.println(re.getMessage());
             if (Main.DEBUG) {
-                re.printStackTrace(System.err);
+                re.printStackTrace(ctx.err);
             }
             return 2;
         }
@@ -231,9 +233,9 @@ public final class Main {
         try {
             ctx.collectJarFile(jar, targetPackage);
         } catch (IOException ex) {
-            System.err.println(format("cannot.write.jar.file", jar, ex));
+            ctx.err.println(format("cannot.write.jar.file", jar, ex));
             if (Main.DEBUG) {
-                ex.printStackTrace(System.err);
+                ex.printStackTrace(ctx.err);
             }
             return 3;
         }
@@ -242,9 +244,30 @@ public final class Main {
     }
 
     public static void main(String... args) {
-        Main instance = new Main(Context.getInstance());
+        Main instance = new Main(Context.newInstance());
 
         System.exit(instance.run(args));
     }
 
+    public static class JextractToolProvider implements ToolProvider {
+        @Override
+        public String name() {
+            return "jextract";
+        }
+
+        @Override
+        public int run(PrintWriter out, PrintWriter err, String... args) {
+            // defensive check to throw security exception early.
+            // Note that the successful run of jextract under security
+            // manager would require far more permissions like loading
+            // library (clang), file system access etc.
+            if (System.getSecurityManager() != null) {
+                System.getSecurityManager().
+                    checkPermission(new RuntimePermission("jextract"));
+            }
+
+            Main instance = new Main(Context.newInstance(out, err));
+            return instance.run(args);
+        }
+    }
 }

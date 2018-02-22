@@ -26,6 +26,7 @@ import jdk.internal.clang.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nicl.Library;
@@ -59,6 +60,9 @@ public class Context {
     // The list of library paths for link checks
     final List<String> linkCheckPaths;
 
+    final PrintWriter out;
+    final PrintWriter err;
+
     // check if a symbol is found in any of the libraries or not.
     public static interface SymbolChecker {
         public boolean lookup(String name);
@@ -67,25 +71,31 @@ public class Context {
     SymbolChecker symChecker;
 
     final static String defaultPkg = "jextract.dump";
-    private static Context instance = new Context();
+    private static Context instance;
     public final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
-    private Context() {
-        pkgMap = new HashMap<>();
-        headerMap = new HashMap<>();
-        clangArgs = new ArrayList<>();
-        sources = new TreeSet<>();
-        libraryNames = new ArrayList<>();
-        libraryPaths = new ArrayList<>();
-        linkCheckPaths = new ArrayList<>();
+    private Context(PrintWriter out, PrintWriter err) {
+        this.pkgMap = new HashMap<>();
+        this.headerMap = new HashMap<>();
+        this.clangArgs = new ArrayList<>();
+        this.sources = new TreeSet<>();
+        this.libraryNames = new ArrayList<>();
+        this.libraryPaths = new ArrayList<>();
+        this.linkCheckPaths = new ArrayList<>();
+        this.out = out;
+        this.err = err;
     }
 
-    // used only for jtreg testing
+    // used by jtreg tests
     public static Context newInstance() {
-        return instance = new Context();
+        return newInstance(new PrintWriter(System.out, true), new PrintWriter(System.err, true));
     }
 
-    public static Context getInstance() {
+    static Context newInstance(PrintWriter out, PrintWriter err) {
+        return instance = new Context(out, err);
+    }
+
+    static Context getInstance() {
         return instance;
     }
 
@@ -256,13 +266,13 @@ public class Context {
             // If not found, warn the user for the missing symbol.
             symChecker = name -> {
                 if (Main.DEBUG) {
-                    System.err.println("Searching symbol: " + name);
+                    err.println("Searching symbol: " + name);
                 }
                 return (Arrays.stream(libs).filter(lib -> {
                         try {
                             lib.lookup(name);
                             if (Main.DEBUG) {
-                                System.err.println("Found symbol: " + name);
+                                err.println("Found symbol: " + name);
                             }
                             return true;
                         } catch (NoSuchMethodException nsme) {
@@ -288,7 +298,7 @@ public class Context {
             Index index = LibClang.createIndex();
             Cursor tuCursor = index.parse(path.toString(),
                     d -> {
-                        System.err.println(d);
+                        err.println(d);
                         if (d.severity() >  Diagnostic.CXDiagnostic_Warning) {
                             throw new RuntimeException(d.toString());
                         }

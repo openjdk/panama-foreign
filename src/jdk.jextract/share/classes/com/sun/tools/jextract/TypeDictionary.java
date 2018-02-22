@@ -122,7 +122,7 @@ public final class TypeDictionary {
                     String name = e.getName();
                     if (! name.endsWith(".class")) {
                         // Should not have file not class files
-                        System.err.println("Warning: unexpected file " + name);
+                        Context.getInstance().err.println("Warning: unexpected file " + name);
                     }
                     name = name.substring(0, name.length() - 6);
                     byte[] buf = new byte[4096];
@@ -134,7 +134,7 @@ public final class TypeDictionary {
                     bytecodes.put(name.replace(File.separatorChar, '.'), bos.toByteArray());
                 }
             } catch (IOException ioe) {
-                System.err.println("Failed to load types from jar file: " + jar.toString());
+                Context.getInstance().err.println("Failed to load types from jar file: " + jar.toString());
             }
         }
 
