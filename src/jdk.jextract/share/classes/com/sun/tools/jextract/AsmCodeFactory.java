@@ -660,9 +660,9 @@ public class AsmCodeFactory extends CodeFactory {
 
         logger.fine(() -> "Adding macro " + macroName);
 
-        long tu = cursor.getTranslationUnit();
+        TranslationUnit tu = cursor.getTranslationUnit();
         SourceRange range = cursor.getExtent();
-        String[] tokens = Index.tokenize(tu, range);
+        String[] tokens = tu.tokens(range);
 
         for (String token : tokens) {
             logger.finest(() -> "TOKEN: " + token);

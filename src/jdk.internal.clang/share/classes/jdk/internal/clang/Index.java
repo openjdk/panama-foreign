@@ -41,12 +41,10 @@ public class Index {
     native void disposeIndex(long ptr);
     // parseTranslationUnit, return pointer(CXTranslationUnit)
     native long parseFile(long ptr, String file, boolean detailedPreprocessorRecord, String... args);
-    native void disposeTranslationUnit(long tu);
-
-    native Cursor getTranslationUnitCursor(long tu);
-    native Diagnostic[] getTranslationUnitDiagnostics(long tu);
-
-    public static native String[] tokenize(long translationUnit, SourceRange range);
+    static native void disposeTranslationUnit(long tu);
+    static native Cursor getTranslationUnitCursor(long tu);
+    static native Diagnostic[] getTranslationUnitDiagnostics(long tu);
+    static native String[] tokenize(long translationUnit, SourceRange range);
 
     public Cursor parse(String file, Consumer<Diagnostic> eh, boolean detailedPreprocessorRecord, String... args) {
         long tu = parseFile(ptr, file, detailedPreprocessorRecord, args);

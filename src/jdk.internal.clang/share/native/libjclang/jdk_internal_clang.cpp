@@ -491,7 +491,7 @@ JNIEXPORT jint JNICALL Java_jdk_internal_clang_Cursor_getBitFieldWidth
     return clang_getFieldDeclBitWidth(*ptr);
 }
 
-JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Cursor_getTranslationUnit
+JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Cursor_getTranslationUnit0
   (JNIEnv *env, jobject _self) {
     CXCursor *ptr = (CXCursor*) J2P(env, _self);
     return (jlong) clang_Cursor_getTranslationUnit(*ptr);

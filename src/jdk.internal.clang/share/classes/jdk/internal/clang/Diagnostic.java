@@ -57,7 +57,7 @@ public class Diagnostic {
      */
     public static final int CXDiagnostic_Fatal   = 4;
 
-    public Diagnostic(long ptr) {
+    Diagnostic(long ptr) {
         this.ptr = ptr;
     }
 

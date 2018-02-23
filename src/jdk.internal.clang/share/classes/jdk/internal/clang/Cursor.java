@@ -88,7 +88,10 @@ public class Cursor extends StructType {
     public native boolean isBitField();
     public native int getBitFieldWidth();
 
-    public native long getTranslationUnit();
+    native long getTranslationUnit0();
+    public final TranslationUnit getTranslationUnit() {
+        return new TranslationUnit(getTranslationUnit0());
+    }
 
     public native String getMangling();
 
