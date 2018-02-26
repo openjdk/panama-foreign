@@ -50,42 +50,33 @@ import static java.nio.file.StandardOpenOption.READ;
  * A dictionary that find Java type for a given native type.
  * Each instance of TypeDictionary presents types for a given java package.
  */
-public final class TypeDictionary {
-    // package name to TypeDictionary
-    final static Map<String, TypeDictionary> tdMap;
-    final Logger logger = Logger.getLogger(getClass().getPackage().getName());
-
-    final String pkgName;
+final class TypeDictionary {
+    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private Context ctx;
+    private final String pkgName;
     // clang.Type.spelling() to java type
-    final Map<String, JType> typeMap;
-
-    static {
-        tdMap = new HashMap<>();
-    }
-
-    final AtomicInteger serialNo;
+    private final Map<String, JType> typeMap;
+    private final AtomicInteger serialNo;
 
     private int serialNo() {
         return serialNo.incrementAndGet();
     }
 
-    private TypeDictionary(String pkg) {
-        pkgName = pkg;
-        typeMap = new HashMap<>();
-        serialNo = new AtomicInteger();
+    TypeDictionary(Context ctx, String pkg) {
+        this.ctx = ctx;
+        this.pkgName = pkg;
+        this.typeMap = new HashMap<>();
+        this.serialNo = new AtomicInteger();
     }
 
-    public static TypeDictionary of(String pkg) {
-        return tdMap.computeIfAbsent(pkg, TypeDictionary::new);
-    }
 /*
-    public static boolean addType(Type t, Class<?> cls) {
+    public static boolean addType(Context ctx, Type t, Class<?> cls) {
         if (cls.isAnnotation() || cls.isArray()) {
             throw new IllegalArgumentException();
         }
 
         String pkg = cls.getPackage().getName();
-        TypeDictionary dict = TypeDictionary.of(pkg);
+        TypeDictionary dict = ctx.typeDictionaryFor(pkg);
 
         String type = t.spelling();
         return dict.addWithClass(type, cls);
@@ -109,9 +100,11 @@ public final class TypeDictionary {
 */
 
     static class JarClassStreamer extends ClassLoader {
+        private final Context ctx;
         private final HashMap<String, byte[]> bytecodes = new HashMap<>();
 
-        JarClassStreamer(Path jar) {
+        JarClassStreamer(Context ctx, Path jar) {
+            this.ctx = ctx;
             try (JarInputStream jis = new JarInputStream(Files.newInputStream(jar, READ))) {
                 // List all classes in the jar
                 for (JarEntry e = jis.getNextJarEntry(); e != null; e = jis.getNextJarEntry()) {
@@ -122,7 +115,7 @@ public final class TypeDictionary {
                     String name = e.getName();
                     if (! name.endsWith(".class")) {
                         // Should not have file not class files
-                        Context.getInstance().err.println("Warning: unexpected file " + name);
+                        ctx.err.println("Warning: unexpected file " + name);
                     }
                     name = name.substring(0, name.length() - 6);
                     byte[] buf = new byte[4096];
@@ -134,7 +127,7 @@ public final class TypeDictionary {
                     bytecodes.put(name.replace(File.separatorChar, '.'), bos.toByteArray());
                 }
             } catch (IOException ioe) {
-                Context.getInstance().err.println("Failed to load types from jar file: " + jar.toString());
+                ctx.err.println("Failed to load types from jar file: " + jar.toString());
             }
         }
 
@@ -147,11 +140,11 @@ public final class TypeDictionary {
         }
     }
 
-    public static void loadJar(Path jar) {
-        JarClassStreamer cl = new JarClassStreamer(jar);
+    void loadJar(Path jar) {
+        JarClassStreamer cl = new JarClassStreamer(ctx, jar);
         cl.stream().forEach(cls -> {
             Package pkg = cls.getPackage();
-            TypeDictionary dict = TypeDictionary.of(pkg.getName());
+            TypeDictionary dict = ctx.typeDictionaryFor(pkg.getName());
             NativeType nt = cls.getAnnotation(NativeType.class);
             dict.typeMap.putIfAbsent(nt.ctype(), JType.of(cls));
         });
@@ -217,7 +210,7 @@ public final class TypeDictionary {
      * @param t
      * @return
      */
-    public final JType get(Type t) {
+    final JType get(Type t) {
         JType jt;
 
         switch(t.kind()) {
@@ -277,7 +270,7 @@ public final class TypeDictionary {
         return jt;
     }
 
-    public final JType computeIfAbsent(Type t, Function<Type, JType> fn) {
+    final JType computeIfAbsent(Type t, Function<Type, JType> fn) {
         JType jt = get(t);
         if (jt != null) {
             return jt;
@@ -297,7 +290,7 @@ public final class TypeDictionary {
      * @return
      * @throws com.sun.tools.jextract.TypeDictionary.NotDeclaredException
      */
-    public final JType lookup(Type t) throws NotDeclaredException {
+    final JType lookup(Type t) throws NotDeclaredException {
         JType jt = get(t);
         if (jt == null && t.kind() != TypeKind.Pointer) {
             // Pointer type need to check with pointee type, as the declaration
@@ -308,7 +301,7 @@ public final class TypeDictionary {
                 logger.fine(() -> Printer.Stringifier(p -> p.dumpType(t)));
                 throw new NotDeclaredException(t);
             }
-            jt = Context.getInstance().getJType(t.getDeclarationCursor());
+            jt = ctx.getJType(t.getDeclarationCursor());
         }
         return jt;
     }

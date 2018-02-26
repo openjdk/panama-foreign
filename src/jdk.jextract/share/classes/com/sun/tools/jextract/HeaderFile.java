@@ -28,6 +28,7 @@ import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.List;
@@ -36,34 +37,40 @@ import java.util.List;
  * This class represent a native code header file
  */
 public final class HeaderFile {
+    private final Context ctx;
     final Path path;
     final String pkgName;
     final String clsName;
-    final TypeDictionary dict;
+    private final TypeDictionary dict;
     // The top header file cause this file to be parsed
-    HeaderFile main;
-    CodeFactory cf;
-    List<String> libraries;
-    List<String> libraryPaths;
+    private HeaderFile main;
+    private CodeFactory cf;
+    List<String> libraries; // immutable
+    List<String> libraryPaths; // immutable
 
     private final AtomicInteger serialNo;
     private final Context.SymbolChecker symChecker;
 
-    final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
-    HeaderFile(Path path, String pkgName, String clsName, HeaderFile main, Context.SymbolChecker symChecker) {
+    HeaderFile(Context ctx, Path path, String pkgName, String clsName, HeaderFile main, Context.SymbolChecker symChecker) {
+        this.ctx = ctx;
         this.path = path;
         this.pkgName = pkgName;
         this.clsName = clsName;
-        dict = TypeDictionary.of(pkgName);
+        dict = ctx.typeDictionaryFor(pkgName);
         serialNo = new AtomicInteger();
         this.main = main == null ? this : main;
         this.symChecker = symChecker;
     }
 
     void useLibraries(List<String> libraries, List<String> libraryPaths) {
-        this.libraries = libraries;
-        this.libraryPaths = libraryPaths;
+        this.libraries = Collections.unmodifiableList(libraries);
+        this.libraryPaths = Collections.unmodifiableList(libraryPaths);
+    }
+
+    CodeFactory getCodeFactory() {
+        return cf;
     }
 
     /**
@@ -76,7 +83,7 @@ public final class HeaderFile {
             logger.config(() -> "CodeFactory had been initialized for " + path);
             // Diagnosis code
             if (Main.DEBUG) {
-                new Throwable().printStackTrace(Context.getInstance().err);
+                new Throwable().printStackTrace(ctx.err);
             }
         } else {
             this.cf = cf;
@@ -100,7 +107,7 @@ public final class HeaderFile {
                     t.kind() == TypeKind.FunctionNoProto) {
                     String name = c.spelling();
                     if (!symChecker.lookup(name)) {
-                        Context.getInstance().err.println(Main.format("warn.symbol.not.found", name));
+                        ctx.err.println(Main.format("warn.symbol.not.found", name));
                     }
                 }
             }

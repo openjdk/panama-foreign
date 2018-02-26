@@ -41,20 +41,22 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
  * Scan a header file and generate classes for entities defined in that header
  * file.
  */
-public class AsmCodeFactory extends CodeFactory {
-    final ClassWriter global_cw;
-    final String internal_name;
-    final HeaderFile owner;
-    final Map<String, byte[]> types;
-    final HashSet<String> handledMacros = new HashSet<>();
-    final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+final class AsmCodeFactory extends CodeFactory {
+    private final Context ctx;
+    private final ClassWriter global_cw;
+    private final String internal_name;
+    private final HeaderFile owner;
+    private final Map<String, byte[]> types;
+    private final HashSet<String> handledMacros = new HashSet<>();
+    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
-    public AsmCodeFactory(HeaderFile header) {
+    AsmCodeFactory(Context ctx, HeaderFile header) {
+        this.ctx = ctx;
         logger.info(() -> "Instantiate AsmCodeFactory for " + header.path);
-        owner = header;
-        internal_name = Utils.toInternalName(owner.pkgName, owner.clsName);
-        global_cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        types = new HashMap<>();
+        this.owner = header;
+        this.internal_name = Utils.toInternalName(owner.pkgName, owner.clsName);
+        this.global_cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+        this.types = new HashMap<>();
         init();
     }
 
@@ -86,9 +88,9 @@ public class AsmCodeFactory extends CodeFactory {
     }
 
     private void handleException(Exception ex) {
-        Context.getInstance().err.println(Main.format("cannot.write.class.file", owner.pkgName + "." + owner.clsName, ex));
+        ctx.err.println(Main.format("cannot.write.class.file", owner.pkgName + "." + owner.clsName, ex));
         if (Main.DEBUG) {
-            ex.printStackTrace(Context.getInstance().err);
+            ex.printStackTrace(ctx.err);
         }
     }
 
@@ -497,7 +499,7 @@ public class AsmCodeFactory extends CodeFactory {
         } else {
             logger.warning(() -> "Should have JType2 in addType");
             if (Main.DEBUG) {
-                new Throwable().printStackTrace(Context.getInstance().err);
+                new Throwable().printStackTrace(ctx.err);
             }
         }
         if (cursor == null) {
@@ -745,12 +747,11 @@ public class AsmCodeFactory extends CodeFactory {
     public static void main(String[] args) throws IOException {
         final Path file = Paths.get(args[1]);
         final String pkg = args[0];
-        Context ctx = Context.getInstance();
+        Context ctx = new Context();
         ctx.usePackageForFolder(file, pkg);
         ctx.usePackageForFolder(Paths.get("/usr/include"), "system");
-        ctx.sources.add(file);
-        ctx.parse(AsmCodeFactory::new);
+        ctx.addSource(file);
+        ctx.parse();
         ctx.collectJarFile(Paths.get(args[2]), pkg);
     }
-
 }

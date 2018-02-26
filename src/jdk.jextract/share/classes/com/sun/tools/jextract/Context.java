@@ -44,37 +44,39 @@ import static java.nio.file.StandardOpenOption.*;
 /**
  * The setup for the tool execution
  */
-public class Context {
+public final class Context {
+    // package name to TypeDictionary
+    private final Map<String, TypeDictionary> tdMap;
     // The folder path mapping to package name
     private final Map<Path, String> pkgMap;
     // The header file parsed
     private final Map<Path, HeaderFile> headerMap;
     // The args for parsing C
-    final List<String> clangArgs;
+    private final List<String> clangArgs;
     // The set of source header files
-    final Set<Path>  sources;
+    private final Set<Path>  sources;
     // The list of library names
-    final List<String> libraryNames;
+    private final List<String> libraryNames;
     // The list of library paths
-    final List<String> libraryPaths;
+    private final List<String> libraryPaths;
     // The list of library paths for link checks
-    final List<String> linkCheckPaths;
+    private final List<String> linkCheckPaths;
 
     final PrintWriter out;
     final PrintWriter err;
 
     // check if a symbol is found in any of the libraries or not.
-    public static interface SymbolChecker {
+    static interface SymbolChecker {
         public boolean lookup(String name);
     }
 
-    SymbolChecker symChecker;
+    private SymbolChecker symChecker;
 
-    final static String defaultPkg = "jextract.dump";
-    private static Context instance;
-    public final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private final static String defaultPkg = "jextract.dump";
+    final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
-    private Context(PrintWriter out, PrintWriter err) {
+    public Context(PrintWriter out, PrintWriter err) {
+        this.tdMap = new HashMap<>();
         this.pkgMap = new HashMap<>();
         this.headerMap = new HashMap<>();
         this.clangArgs = new ArrayList<>();
@@ -86,21 +88,32 @@ public class Context {
         this.err = err;
     }
 
-    // used by jtreg tests
-    public static Context newInstance() {
-        return newInstance(new PrintWriter(System.out, true), new PrintWriter(System.err, true));
+    public Context() {
+        this(new PrintWriter(System.out, true), new PrintWriter(System.err, true));
     }
 
-    static Context newInstance(PrintWriter out, PrintWriter err) {
-        return instance = new Context(out, err);
+    TypeDictionary typeDictionaryFor(String pkg) {
+        return tdMap.computeIfAbsent(pkg, p->new TypeDictionary(this, p));
     }
 
-    static Context getInstance() {
-        return instance;
+    void addClangArg(String arg) {
+        clangArgs.add(arg);
     }
 
     public void addSource(Path path) {
         sources.add(path);
+    }
+
+    void addLibraryName(String name) {
+        libraryNames.add(name);
+    }
+
+    void addLibraryPath(String path) {
+        libraryPaths.add(path);
+    }
+
+    void addLinkCheckPath(String path) {
+        linkCheckPaths.add(path);
     }
 
     /**
@@ -129,9 +142,9 @@ public class Context {
         }
     }
 
-    public static class Entity {
-        public final String pkg;
-        public final String entity;
+    static class Entity {
+        final String pkg;
+        final String entity;
 
         Entity(String pkg, String entity) {
             this.pkg = pkg;
@@ -149,7 +162,7 @@ public class Context {
      * @return The Entity
      * @see Context::usePackageForFolder(Path, String)
      */
-    public Entity whatis(Path origin) {
+    Entity whatis(Path origin) {
         // normalize to absolute path
         origin = origin.toAbsolutePath();
         String filename = null;
@@ -207,7 +220,7 @@ public class Context {
         }
 
         final Context.Entity e = whatis(header);
-        return new HeaderFile(header, e.pkg, e.entity, main, symChecker);
+        return new HeaderFile(this, header, e.pkg, e.entity, main, symChecker);
     }
 
     void processCursor(Cursor c, HeaderFile main, Function<HeaderFile, CodeFactory> fn) {
@@ -254,6 +267,10 @@ public class Context {
         }
 
         header.processCursor(c, main, isBuiltIn);
+    }
+
+    public void parse() {
+        parse(header -> new AsmCodeFactory(this, header));
     }
 
     public void parse(Function<HeaderFile, CodeFactory> fn) {
@@ -318,7 +335,7 @@ public class Context {
         final Map<String, List<CodeFactory>> mapPkgCf = new HashMap<>();
         // Build the pkg to CodeFactory map
         headerMap.values().forEach(header -> {
-            CodeFactory cf = header.cf;
+            CodeFactory cf = header.getCodeFactory();
             String pkg = header.pkgName;
             logger.config(() -> "File " + header + " is in package: " + pkg);
             if (cf == null) {
@@ -376,7 +393,7 @@ public class Context {
         }
     }
 
-    public void collectJarFile(final Path jar, String... pkgs) throws IOException {
+    void collectJarFile(final Path jar, String... pkgs) throws IOException {
         logger.info(() -> "Collecting jar file " + jar);
         try (OutputStream os = Files.newOutputStream(jar, CREATE, TRUNCATE_EXISTING, WRITE);
              JarOutputStream jo = new JarOutputStream(os)) {
@@ -413,7 +430,7 @@ public class Context {
      * @param c The cursor define or declare the type.
      * @return
      */
-    public JType getJType(final Cursor c) {
+    JType getJType(final Cursor c) {
         if (c.isInvalid()) {
             throw new IllegalArgumentException();
         }

@@ -93,7 +93,7 @@ public final class Main {
         }
         p = p.toAbsolutePath();
         ctx.usePackageForFolder(p.getParent(), targetPackage);
-        ctx.sources.add(p);
+        ctx.addSource(p);
     }
 
     private void setupLogging(Level level) {
@@ -160,11 +160,11 @@ public final class Main {
         }
 
         if (options.has("I")) {
-            options.valuesOf("I").forEach(p -> ctx.clangArgs.add("-I" + p));
+            options.valuesOf("I").forEach(p -> ctx.addClangArg("-I" + p));
         }
 
         if (options.has("C")) {
-            options.valuesOf("C").forEach(p -> ctx.clangArgs.add((String) p));
+            options.valuesOf("C").forEach(p -> ctx.addClangArg((String) p));
         }
 
         if (options.has("l")) {
@@ -174,7 +174,7 @@ public final class Main {
                     if (lib.indexOf(File.separatorChar) != -1) {
                         throw new IllegalArgumentException(format("l.name.should.not.be.path", lib));
                     }
-                    ctx.libraryNames.add(lib);
+                    ctx.addLibraryName(lib);
                 });
             } catch (IllegalArgumentException iae) {
                 ctx.err.println(iae.getMessage());
@@ -188,7 +188,7 @@ public final class Main {
         if (options.has("rpath")) {
             // "rpath" with no "l" option!
             if (options.has("l")) {
-                options.valuesOf("rpath").forEach(p -> ctx.libraryPaths.add((String) p));
+                options.valuesOf("rpath").forEach(p -> ctx.addLibraryPath((String) p));
             } else {
                 ctx.err.println(format("warn.rpath.without.l"));
             }
@@ -197,7 +197,7 @@ public final class Main {
         if (options.has("L")) {
             // "L" with no "l" option!
             if (options.has("l")) {
-                options.valuesOf("L").forEach(p -> ctx.linkCheckPaths.add((String) p));
+                options.valuesOf("L").forEach(p -> ctx.addLinkCheckPath((String) p));
             } else {
                 ctx.err.println(format("warn.L.without.l"));
             }
@@ -214,7 +214,7 @@ public final class Main {
 
         try {
             options.nonOptionArguments().stream().forEach(this::processHeader);
-            ctx.parse(AsmCodeFactory::new);
+            ctx.parse();
         } catch (RuntimeException re) {
             ctx.err.println(re.getMessage());
             if (Main.DEBUG) {
@@ -244,7 +244,7 @@ public final class Main {
     }
 
     public static void main(String... args) {
-        Main instance = new Main(Context.newInstance());
+        Main instance = new Main(new Context());
 
         System.exit(instance.run(args));
     }
@@ -266,7 +266,7 @@ public final class Main {
                     checkPermission(new RuntimePermission("jextract"));
             }
 
-            Main instance = new Main(Context.newInstance(out, err));
+            Main instance = new Main(new Context(out, err));
             return instance.run(args);
         }
     }

@@ -61,7 +61,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import com.sun.tools.jextract.*;
+import com.sun.tools.jextract.Context;
 
 /*
  * @test
@@ -86,7 +86,7 @@ public class Runner {
     private Object[][] clz_data;
 
     public Runner(Path nativeSrc, String pkg, Path[] javaSrcFiles) {
-        ctx = Context.newInstance();
+        this.ctx = new Context();
         this.nativeSrc = nativeSrc;
         this.pkg = pkg;
         this.javaSrcFiles = javaSrcFiles;
@@ -99,7 +99,7 @@ public class Runner {
         Path p = nativeSrc.toAbsolutePath();
         ctx.usePackageForFolder(p.getParent(), pkg);
         ctx.addSource(p);
-        ctx.parse(AsmCodeFactory::new);
+        ctx.parse();
         return ctx.collectClasses(pkg);
     }
 
