@@ -355,6 +355,15 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             v1 -> v1.uOp((i, a) -> (float) Math.sqrt((double) a)));
     }
 
+    @Override
+    @ForceInline
+    public Float64Vector exp() {
+        return (Float64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXP, Float64Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float64Vector)v1).uOp((i, a) -> (float) Math.exp((double) a)));
+    }
+
     // Binary operations
 
     @Override

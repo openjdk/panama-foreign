@@ -402,6 +402,15 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> v1.uOp((i, a) -> ($type$) Math.sqrt((double) a)));
     }
+
+    @Override
+    @ForceInline
+    public $vectortype$ exp() {
+        return ($vectortype$) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXP, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.exp((double) a)));
+    }
 #end[FP]
 
 #if[BITWISE]

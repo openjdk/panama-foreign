@@ -45,6 +45,15 @@
 #include "opto/runtime.hpp"
 #endif
 
+#ifdef __VECTOR_API_MATH_INTRINSICS_COMMON
+// Vector API SVML routines written in assembly
+extern "C"
+{
+  float __svml_expf4_ha_l9(float a);
+  float __svml_expf8_ha_l9(float a);
+}
+#endif
+
 // Declaration and definition of StubGenerator (no .hpp file).
 // For a more detailed description of the stub routine structure
 // see the comment in stubRoutines.hpp
@@ -5204,6 +5213,16 @@ class StubGenerator: public StubCodeGenerator {
     if (UseVectorizedMismatchIntrinsic) {
       StubRoutines::_vectorizedMismatch = generate_vectorizedMismatch();
     }
+
+#ifdef __VECTOR_API_MATH_INTRINSICS_COMMON
+    if (UseVectorApiIntrinsics) {
+      if (UseAVX >= 2) {
+        StubRoutines::_vector_float64_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_l9);
+        StubRoutines::_vector_float128_exp = CAST_FROM_FN_PTR(address, __svml_expf4_ha_l9);
+        StubRoutines::_vector_float256_exp = CAST_FROM_FN_PTR(address, __svml_expf8_ha_l9);
+      }
+    }
+#endif
   }
 
  public:

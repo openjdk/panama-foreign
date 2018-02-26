@@ -174,6 +174,11 @@ address StubRoutines::_safefetchN_entry                  = NULL;
 address StubRoutines::_safefetchN_fault_pc               = NULL;
 address StubRoutines::_safefetchN_continuation_pc        = NULL;
 
+address StubRoutines::_vector_float64_exp                = NULL;
+address StubRoutines::_vector_float128_exp               = NULL;
+address StubRoutines::_vector_float256_exp               = NULL;
+address StubRoutines::_vector_float512_exp               = NULL;
+
 // Initialization
 //
 // Note: to break cycle with universe initialization, stubs are generated in two phases.

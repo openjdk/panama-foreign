@@ -885,6 +885,14 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
   return stk_args;
 }
 
+int SharedRuntime::vector_calling_convention(VMRegPair *regs,
+                                             uint num_bits,
+                                             uint total_args_passed) {
+  assert(!Matcher::supports_vector_calling_convention(), "not implemented");
+  Unimplemented();
+  return 0;
+}
+
 // On 64 bit we will store integer like items to the stack as
 // 64 bits items (sparc abi) even though java would only store
 // 32bits for a parameter. On 32bit it will simply be 32 bits

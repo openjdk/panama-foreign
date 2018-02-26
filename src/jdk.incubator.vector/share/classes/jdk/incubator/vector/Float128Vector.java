@@ -355,6 +355,15 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
             v1 -> v1.uOp((i, a) -> (float) Math.sqrt((double) a)));
     }
 
+    @Override
+    @ForceInline
+    public Float128Vector exp() {
+        return (Float128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXP, Float128Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float128Vector)v1).uOp((i, a) -> (float) Math.exp((double) a)));
+    }
+
     // Binary operations
 
     @Override

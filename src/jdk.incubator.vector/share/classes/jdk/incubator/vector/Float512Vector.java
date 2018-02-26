@@ -355,6 +355,15 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             v1 -> v1.uOp((i, a) -> (float) Math.sqrt((double) a)));
     }
 
+    @Override
+    @ForceInline
+    public Float512Vector exp() {
+        return (Float512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXP, Float512Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.exp((double) a)));
+    }
+
     // Binary operations
 
     @Override

@@ -355,6 +355,15 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             v1 -> v1.uOp((i, a) -> (double) Math.sqrt((double) a)));
     }
 
+    @Override
+    @ForceInline
+    public Double256Vector exp() {
+        return (Double256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXP, Double256Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.exp((double) a)));
+    }
+
     // Binary operations
 
     @Override

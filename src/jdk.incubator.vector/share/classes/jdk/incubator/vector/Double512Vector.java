@@ -355,6 +355,15 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             v1 -> v1.uOp((i, a) -> (double) Math.sqrt((double) a)));
     }
 
+    @Override
+    @ForceInline
+    public Double512Vector exp() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXP, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.exp((double) a)));
+    }
+
     // Binary operations
 
     @Override

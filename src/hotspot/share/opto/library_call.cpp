@@ -347,6 +347,7 @@ class LibraryCallKit : public GraphKit {
   Node* box_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
   Node* unbox_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
   Node* shift_count(Node* cnt, int shift_op, BasicType bt, int num_elem);
+  Node* gen_call_to_svml(int vector_api_op_id, BasicType bt, int num_elem, Node* opd1, Node* opd2);
   void set_vector_result(Node* result, bool set_res = true);
 
   void clear_upper_avx() {
@@ -6999,7 +7000,28 @@ enum {
   // Broadcast int
   OP_LSHIFT  = 14,
   OP_RSHIFT  = 15,
-  OP_URSHIFT = 16
+  OP_URSHIFT = 16,
+  // Vector Math Library
+  OP_TAN = 101,
+  OP_SVML_START = OP_TAN,
+  OP_TANH = 102,
+  OP_SIN = 103,
+  OP_SINH = 104,
+  OP_COS = 105,
+  OP_COSH = 106,
+  OP_ASIN = 107,
+  OP_ACOS = 108,
+  OP_ATAN = 109,
+  OP_ATAN2 = 110,
+  OP_CBRT = 111,
+  OP_LOG = 112,
+  OP_LOG10 = 113,
+  OP_LOG1P = 114,
+  OP_POW = 115,
+  OP_EXP = 116,
+  OP_EXPM1 = 117,
+  OP_HYPOT = 118,
+  OP_SVML_END = OP_HYPOT,
 };
 
 static int get_opc(jint op, BasicType bt) {
@@ -7163,6 +7185,7 @@ static int get_opc(jint op, BasicType bt) {
         case T_LONG: return Op_LShiftL;
         default: fatal("LSHIFT: %s", type2name(bt));
       }
+      break;
     }
     case OP_RSHIFT: {
       switch (bt) {
@@ -7172,6 +7195,7 @@ static int get_opc(jint op, BasicType bt) {
         case T_LONG: return Op_RShiftL;
         default: fatal("RSHIFT: %s", type2name(bt));
       }
+      break;
     }
     case OP_URSHIFT: {
       switch (bt) {
@@ -7181,7 +7205,27 @@ static int get_opc(jint op, BasicType bt) {
         case T_LONG: return Op_URShiftL;
         default: fatal("URSHIFT: %s", type2name(bt));
       }
+      break;
     }
+    case OP_TAN:
+    case OP_TANH:
+    case OP_SIN:
+    case OP_SINH:
+    case OP_COS:
+    case OP_COSH:
+    case OP_ASIN:
+    case OP_ACOS:
+    case OP_ATAN:
+    case OP_ATAN2:
+    case OP_CBRT:
+    case OP_LOG:
+    case OP_LOG10:
+    case OP_LOG1P:
+    case OP_POW:
+    case OP_EXP:
+    case OP_EXPM1:
+    case OP_HYPOT:
+      return Op_CallLeafVector;
     default: fatal("unknown op: %d", op);
   }
   return 0; // Unimplemented
@@ -7247,9 +7291,13 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   int opc = get_opc(opr->get_con(), elem_bt);
-  int sopc = VectorNode::opcode(opc, elem_bt); // get_node_id(opr->get_con(), elem_bt);
+  int sopc = opc != Op_CallLeafVector ? VectorNode::opcode(opc, elem_bt) : Op_CallLeafVector;
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
+
+  if (opc == Op_CallLeafVector && !Matcher::supports_vector_calling_convention()) {
+    return false;
+  }
 
   // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
   if (!arch_supports_vector(sopc, num_elem, elem_bt, vbox_klass->is_vectormask() ? VecMaskUseAll : VecMaskNotUsed, n)) {
@@ -7283,17 +7331,24 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   }
 
   Node* operation = NULL;
-  switch (n) {
-    case 1:
-    case 2: {
-      operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, num_elem, elem_bt));
-      break;
+  if (sopc == Op_CallLeafVector) {
+    operation = gen_call_to_svml(opr->get_con(), elem_bt, num_elem, opd1, opd2);
+    if (operation == NULL) {
+      return false;
     }
-    case 3: {
-      operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, opd3, num_elem, elem_bt));
-      break;
+  } else {
+    switch (n) {
+      case 1:
+      case 2: {
+        operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, num_elem, elem_bt));
+        break;
+      }
+      case 3: {
+        operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, opd3, num_elem, elem_bt));
+        break;
+      }
+      default: fatal("unsupported arity: %d", n);
     }
-    default: fatal("unsupported arity: %d", n);
   }
   // Wrap it up in VectorBox to keep object type information.
   operation = box_vector(operation, vbox_type, elem_bt, num_elem);
@@ -7707,6 +7762,66 @@ Node* LibraryCallKit::shift_count(Node* cnt, int shift_op, BasicType bt, int num
     }
     return VectorNode::shift_count(shift_op, maskedcnt, num_elem, bt);
   }
+}
+
+static void get_svml_address(int op, int bits, BasicType bt, const char** name_ptr, address* addr_ptr) {
+  assert(name_ptr != NULL, "unexpected");
+  assert(addr_ptr != NULL, "unexpected");
+
+  // Since the addresses are resolved at runtime, using switch instead of table - otherwise might get NULL addresses.
+  if (bt == T_FLOAT) {
+    switch(op) {
+      case OP_EXP: {
+          switch(bits) {
+            case 64: *name_ptr = "vector_float64_exp"; *addr_ptr = StubRoutines::vector_float64_exp(); break;
+            case 128: *name_ptr = "vector_float128_exp"; *addr_ptr = StubRoutines::vector_float128_exp(); break;
+            case 256: *name_ptr = "vector_float256_exp"; *addr_ptr = StubRoutines::vector_float256_exp(); break;
+            case 512: *name_ptr = "vector_float512_exp"; *addr_ptr = StubRoutines::vector_float512_exp(); break;
+            default: Unimplemented(); break;
+          }
+        }
+        break;
+      default:
+        *name_ptr = "invalid";
+        *addr_ptr = NULL;
+        break;
+    }
+  } else {
+    assert(bt == T_DOUBLE, "must be FP type only");
+    switch(op) {
+      default:
+        *name_ptr = "invalid";
+        *addr_ptr = NULL;
+        break;
+    }
+  }
+}
+
+Node* LibraryCallKit::gen_call_to_svml(int vector_api_op_id, BasicType bt, int num_elem, Node* opd1, Node* opd2) {
+  assert(vector_api_op_id >= OP_SVML_START && vector_api_op_id <= OP_SVML_END, "need valid op id");
+  assert(opd1 != NULL, "must not be null");
+  const TypeVect* vt = TypeVect::make(bt, num_elem);
+  const TypeFunc* call_type = OptoRuntime::Math_Vector_Vector_Type(opd2 != NULL ? 2 : 1, vt, vt);
+  const char* name = NULL;
+  address addr = NULL;
+
+  // Get address for svml method.
+  get_svml_address(vector_api_op_id, vt->length_in_bytes() * BitsPerByte, bt, &name, &addr);
+
+  if (addr == NULL) {
+    tty->print_cr("Failed to generate call to %s", name);
+    return NULL;
+  }
+
+  assert(name != NULL, "name must not be null");
+  Node* operation = make_runtime_call(RC_VECTOR,
+                                      call_type,
+                                      addr,
+                                      name,
+                                      TypePtr::BOTTOM,
+                                      opd1,
+                                      opd2);
+  return _gvn.transform(new ProjNode(_gvn.transform(operation), TypeFunc::Parms));
 }
 
 //  static

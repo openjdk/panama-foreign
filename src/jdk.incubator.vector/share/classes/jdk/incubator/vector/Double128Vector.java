@@ -355,6 +355,15 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
             v1 -> v1.uOp((i, a) -> (double) Math.sqrt((double) a)));
     }
 
+    @Override
+    @ForceInline
+    public Double128Vector exp() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXP, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.exp((double) a)));
+    }
+
     // Binary operations
 
     @Override

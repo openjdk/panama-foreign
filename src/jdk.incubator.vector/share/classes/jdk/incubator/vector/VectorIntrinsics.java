@@ -53,6 +53,26 @@ import java.util.function.*;
     static final int VECTOR_OP_RSHIFT  = 15;
     static final int VECTOR_OP_URSHIFT = 16;
 
+    // Math routines
+    static final int VECTOR_OP_TAN = 101;
+    static final int VECTOR_OP_TANH = 102;
+    static final int VECTOR_OP_SIN = 103;
+    static final int VECTOR_OP_SINH = 104;
+    static final int VECTOR_OP_COS = 105;
+    static final int VECTOR_OP_COSH = 106;
+    static final int VECTOR_OP_ASIN = 107;
+    static final int VECTOR_OP_ACOS = 108;
+    static final int VECTOR_OP_ATAN = 109;
+    static final int VECTOR_OP_ATAN2 = 110;
+    static final int VECTOR_OP_CBRT = 111;
+    static final int VECTOR_OP_LOG = 112;
+    static final int VECTOR_OP_LOG10 = 113;
+    static final int VECTOR_OP_LOG1P = 114;
+    static final int VECTOR_OP_POW = 115;
+    static final int VECTOR_OP_EXP = 116;
+    static final int VECTOR_OP_EXPM1 = 117;
+    static final int VECTOR_OP_HYPOT = 118;
+
     // Copied from open/src/hotspot/cpu/x86/assembler_x86.hpp
     // enum Condition { // The x86 condition codes used for conditional jumps/moves.
     static final int COND_zero          = 0x4;

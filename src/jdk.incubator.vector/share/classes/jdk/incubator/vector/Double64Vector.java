@@ -355,6 +355,15 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             v1 -> v1.uOp((i, a) -> (double) Math.sqrt((double) a)));
     }
 
+    @Override
+    @ForceInline
+    public Double64Vector exp() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXP, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.exp((double) a)));
+    }
+
     // Binary operations
 
     @Override

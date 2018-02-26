@@ -226,6 +226,12 @@ class StubRoutines: AllStatic {
   static address _safefetchN_fault_pc;
   static address _safefetchN_continuation_pc;
 
+  // Vector Math Routines
+  static address _vector_float64_exp;
+  static address _vector_float128_exp;
+  static address _vector_float256_exp;
+  static address _vector_float512_exp;
+
  public:
   // Initialization/Testing
   static void    initialize1();                            // must happen before universe::genesis
@@ -384,6 +390,11 @@ class StubRoutines: AllStatic {
   static address select_fill_function(BasicType t, bool aligned, const char* &name);
 
   static address zero_aligned_words()  { return _zero_aligned_words; }
+
+  static address vector_float64_exp()   { return _vector_float64_exp; }
+  static address vector_float128_exp()  { return _vector_float128_exp; }
+  static address vector_float256_exp()  { return _vector_float256_exp; }
+  static address vector_float512_exp()  { return _vector_float512_exp; }
 
   static double  intrinsic_log10(double d) {
     assert(_intrinsic_log10 != NULL, "must be defined");
