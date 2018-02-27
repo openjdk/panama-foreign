@@ -32,6 +32,7 @@ import java.nicl.metadata.LibraryDependencies;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.spi.ToolProvider;
 import org.testng.annotations.Test;
 
@@ -222,7 +223,11 @@ public class JextractToolProviderTest {
 	Path helloH = getInputFilePath("hello.h");
         Path rpathDir = getInputFilePath("libs");
         String warning = "WARNING: -rpath option specified without any -l option";
-        checkSuccess(warning, "-rpath", rpathDir.toString(), "-o", helloJar.toString(), helloH.toString());
+        try {
+            checkSuccess(warning, "-rpath", rpathDir.toString(), "-o", helloJar.toString(), helloH.toString());
+        } finally {
+            deleteFile(helloJar);
+        }
     }
 
     @Test
@@ -264,6 +269,25 @@ public class JextractToolProviderTest {
             assertEquals(libDeps.paths()[0], rpathDir.toString());
         } finally {
             deleteFile(helloJar);
+        }
+    }
+
+    @Test
+    public void testUnionDeclaration() {
+        Path uniondeclJar = getOutputFilePath("uniondecl.jar");
+        deleteFile(uniondeclJar);
+	Path uniondeclH = getInputFilePath("uniondecl.h");
+        try {
+            checkSuccess(null, "-o", uniondeclJar.toString(), uniondeclH.toString());
+            Class<?> unionCls = loadClass(uniondeclJar, "uniondecl");
+            assertNotNull(unionCls);
+            boolean found = Arrays.stream(unionCls.getClasses()).
+                map(Class::getSimpleName).
+                filter(n -> n.equals("IntOrFloat")).
+                findFirst().isPresent();
+            assertTrue(found, "uniondecl.IntOrFloat not found");
+        } finally {
+            deleteFile(uniondeclJar);
         }
     }
 }

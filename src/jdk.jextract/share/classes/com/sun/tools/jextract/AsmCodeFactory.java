@@ -514,6 +514,7 @@ final class AsmCodeFactory extends CodeFactory {
             logger.fine(() -> "Process cursor " + cursor.spelling());
             switch (cursor.kind()) {
                 case StructDecl:
+                case UnionDecl:
                     createStruct(cursor);
                     break;
                 case FunctionDecl:
