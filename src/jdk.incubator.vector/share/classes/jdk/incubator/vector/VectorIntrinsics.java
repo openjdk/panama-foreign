@@ -1,12 +1,15 @@
 package jdk.incubator.vector;
 
 import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.util.Objects;
 import java.util.function.*;
 
 /*non-public*/ class VectorIntrinsics {
+    private static final Unsafe U = Unsafe.getUnsafe();
+
     static final int VECTOR_OP_ADD = 0;
     static final int VECTOR_OP_SUB = 1;
     static final int VECTOR_OP_MUL = 2;
@@ -107,6 +110,9 @@ import java.util.function.*;
 
     @HotSpotIntrinsicCandidate
     static <V> V maybeRebox(V v) {
+        // The fence is added here to avoid memory aliasing problems in C2 between scalar & vector accesses.
+        // TODO: move the fence generation into C2. Generate only when reboxing is taking place.
+        U.loadFence();
         return v;
     }
 
