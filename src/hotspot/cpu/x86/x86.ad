@@ -11382,6 +11382,7 @@ instruct vblendvpd4D(vecY dst, vecY src1, vecY src2, vecY mask) %{
 instruct vneg2I_reg(vecD dst, vecD src) %{
   predicate(UseSSE > 0 && n->as_Vector()->length() == 2);
   match(Set dst (NegVI  src));
+  effect(TEMP dst);
   format %{ "pxor   $dst,$dst\n\t"
             "psubd  $dst, $src\t! neg packed2I" %}
   ins_cost(150);
@@ -11395,6 +11396,7 @@ instruct vneg2I_reg(vecD dst, vecD src) %{
 instruct vneg4I_reg(vecX dst, vecX src) %{
   predicate(UseSSE > 0 && n->as_Vector()->length() == 4);
   match(Set dst (NegVI  src));
+  effect(TEMP dst);
   format %{ "pxor   $dst,$dst\n\t"
             "psubd  $dst, $src\t! neg packed4I" %}
   ins_cost(150);
