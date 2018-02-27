@@ -34,8 +34,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.jar.JarOutputStream;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import jdk.internal.nicl.NativeLibraryImpl;
 
@@ -61,16 +63,14 @@ public final class Context {
     private final List<String> libraryPaths;
     // The list of library paths for link checks
     private final List<String> linkCheckPaths;
+    // Symbol patterns to be excluded
+    private final List<Pattern> excludeSymbols;
 
     final PrintWriter out;
     final PrintWriter err;
 
-    // check if a symbol is found in any of the libraries or not.
-    static interface SymbolChecker {
-        public boolean lookup(String name);
-    }
-
-    private SymbolChecker symChecker;
+    private Predicate<String> symChecker;
+    private Predicate<String> symFilter;
 
     private final static String defaultPkg = "jextract.dump";
     final Logger logger = Logger.getLogger(getClass().getPackage().getName());
@@ -84,6 +84,7 @@ public final class Context {
         this.libraryNames = new ArrayList<>();
         this.libraryPaths = new ArrayList<>();
         this.linkCheckPaths = new ArrayList<>();
+        this.excludeSymbols = new ArrayList<>();
         this.out = out;
         this.err = err;
     }
@@ -114,6 +115,18 @@ public final class Context {
 
     void addLinkCheckPath(String path) {
         linkCheckPaths.add(path);
+    }
+
+    void addExcludeSymbols(String pattern) {
+        excludeSymbols.add(Pattern.compile(pattern));
+    }
+
+    boolean isSymbolFound(String name) {
+        return symChecker == null? true : symChecker.test(name);
+    }
+
+    boolean isSymbolExcluded(String name) {
+        return symFilter == null? false : symFilter.test(name);
     }
 
     /**
@@ -220,7 +233,7 @@ public final class Context {
         }
 
         final Context.Entity e = whatis(header);
-        return new HeaderFile(this, header, e.pkg, e.entity, main, symChecker);
+        return new HeaderFile(this, header, e.pkg, e.entity, main);
     }
 
     void processCursor(Cursor c, HeaderFile main, Function<HeaderFile, CodeFactory> fn) {
@@ -299,6 +312,16 @@ public final class Context {
             };
         } else {
             symChecker = null;
+        }
+
+        if (!excludeSymbols.isEmpty()) {
+            Pattern[] pats = excludeSymbols.toArray(new Pattern[0]);
+            symFilter = name -> {
+                return Arrays.stream(pats).filter(pat -> pat.matcher(name).matches()).
+                    findFirst().isPresent();
+            };
+        } else {
+            symFilter = null;
         }
 
         sources.forEach(path -> {

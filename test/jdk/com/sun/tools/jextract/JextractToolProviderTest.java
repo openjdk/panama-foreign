@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 
@@ -117,10 +118,9 @@ public class JextractToolProviderTest {
     private static Method findMethod(Class<?> cls, String name, Class<?>... argTypes) {
         try {
             return cls.getMethod(name, argTypes);
-        } catch (RuntimeException re) {
-            throw re;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.err.println(e);
+            return null;
         }
     }
 
@@ -288,6 +288,35 @@ public class JextractToolProviderTest {
             assertTrue(found, "uniondecl.IntOrFloat not found");
         } finally {
             deleteFile(uniondeclJar);
+        }
+    }
+
+    @Test
+    public void testExcludeSymbols() {
+        Path helloJar = getOutputFilePath("hello.jar");
+        deleteFile(helloJar);
+        Path helloH = getInputFilePath("hello.h");
+        checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass(helloJar, "hello");
+            // check a method for "void func()"
+            assertNotNull(findMethod(cls, "func", Object[].class));
+            // check a method for "void junk()"
+            assertNotNull(findMethod(cls, "junk", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+
+        // try with --exclude-symbols" this time.
+        checkSuccess(null, "--exclude-symbols", "junk", "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass(helloJar, "hello");
+            // check a method for "void func()"
+            assertNotNull(findMethod(cls, "func", Object[].class));
+            // check a method for "void junk()"
+            assertNull(findMethod(cls, "junk", Object[].class));
+        } finally {
+            deleteFile(helloJar);
         }
     }
 }

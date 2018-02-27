@@ -40,6 +40,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.regex.PatternSyntaxException;
 import java.util.spi.ToolProvider;
 
 public final class Main {
@@ -132,6 +133,7 @@ public final class Main {
         parser.accepts("help", format("help.h")).forHelp();
         parser.accepts("C", format("help.C")).withRequiredArg();
         parser.accepts("log", format("help.log")).withRequiredArg();
+        parser.accepts("exclude-symbols", format("help.exclude_symbols")).withRequiredArg();
         parser.accepts("rpath", format("help.rpath")).withRequiredArg();
         parser.accepts("?", format("help.h")).forHelp();
         parser.nonOptions(format("help.non.option"));
@@ -191,6 +193,14 @@ public final class Main {
                 options.valuesOf("rpath").forEach(p -> ctx.addLibraryPath((String) p));
             } else {
                 ctx.err.println(format("warn.rpath.without.l"));
+            }
+        }
+
+        if (options.has("exclude-symbols")) {
+            try {
+                options.valuesOf("exclude-symbols").forEach(sym -> ctx.addExcludeSymbols((String) sym));
+            } catch (PatternSyntaxException pse) {
+                ctx.err.println(format("exclude.symbols.pattern.error", pse.getMessage()));
             }
         }
 

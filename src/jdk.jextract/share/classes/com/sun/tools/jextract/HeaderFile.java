@@ -49,11 +49,10 @@ public final class HeaderFile {
     List<String> libraryPaths; // immutable
 
     private final AtomicInteger serialNo;
-    private final Context.SymbolChecker symChecker;
 
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
-    HeaderFile(Context ctx, Path path, String pkgName, String clsName, HeaderFile main, Context.SymbolChecker symChecker) {
+    HeaderFile(Context ctx, Path path, String pkgName, String clsName, HeaderFile main) {
         this.ctx = ctx;
         this.path = path;
         this.pkgName = pkgName;
@@ -61,7 +60,6 @@ public final class HeaderFile {
         dict = ctx.typeDictionaryFor(pkgName);
         serialNo = new AtomicInteger();
         this.main = main == null ? this : main;
-        this.symChecker = symChecker;
     }
 
     void useLibraries(List<String> libraries, List<String> libraryPaths) {
@@ -102,13 +100,16 @@ public final class HeaderFile {
     void processCursor(Cursor c, HeaderFile main, boolean isBuiltIn) {
         if (c.isDeclaration()) {
             Type t = c.type();
-            if (symChecker != null) {
-                if (t.kind() == TypeKind.FunctionProto ||
-                    t.kind() == TypeKind.FunctionNoProto) {
-                    String name = c.spelling();
-                    if (!symChecker.lookup(name)) {
-                        ctx.err.println(Main.format("warn.symbol.not.found", name));
-                    }
+            if (t.kind() == TypeKind.FunctionProto ||
+                t.kind() == TypeKind.FunctionNoProto) {
+                String name = c.spelling();
+
+                if (ctx.isSymbolExcluded(name)) {
+                    return;
+                }
+
+                if (!ctx.isSymbolFound(name)) {
+                    ctx.err.println(Main.format("warn.symbol.not.found", name));
                 }
             }
             JType jt = dict.computeIfAbsent(t, type -> {
