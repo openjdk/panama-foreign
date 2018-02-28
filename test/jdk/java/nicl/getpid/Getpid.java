@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,10 @@
 
 import java.nicl.NativeLibrary;
 
+/**
+ * @test
+ * @run main Getpid
+ */
 public class Getpid {
     public void testGetpid() {
         // Request an instance of unistd. This will magically weave an implementation
@@ -33,7 +37,14 @@ public class Getpid {
         // call getpid(), which will return the pid for the current JVM process
         int pid = unistd.getpid();
 
-        System.out.println("pid: " + pid);
+
+        int pidFromJApi = (int)ProcessHandle.current().pid();
+        if (pid != pidFromJApi) {
+            throw new AssertionError("process ids do not match: " + pid + " != " + pidFromJApi);
+        } else {
+            System.out.println("pid from unistd.h getpid() " + pid);
+            System.out.println("pid from ProcessHandle.pid() " + pidFromJApi);
+        }
     }
 
     public static void main(String[] args) {
