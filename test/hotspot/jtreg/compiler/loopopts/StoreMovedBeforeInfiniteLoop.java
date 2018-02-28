@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,21 +19,38 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ */
+
+/**
+ * @test
+ * @bug 8197563
+ * @summary assert(is_Loop()) crash in PhaseIdealLoop::try_move_store_before_loop()
+ *
+ * @run main/othervm -Xcomp -XX:-TieredCompilation -XX:CompileOnly=StoreMovedBeforeInfiniteLoop::test  StoreMovedBeforeInfiniteLoop
  *
  */
 
-#ifndef SHARE_VM_SERVICES_ALLOCATION_CONTEXT_SERVICE_HPP
-#define SHARE_VM_SERVICES_ALLOCATION_CONTEXT_SERVICE_HPP
+public class StoreMovedBeforeInfiniteLoop {
+    public static void main(String[] args) {
+        field = -1;
+        test(new Object());
+    }
 
-#include "utilities/exceptions.hpp"
+    static int field;
 
-class AllocationContextService: public AllStatic {
-public:
-  static inline bool should_notify();
-  static inline void notify(TRAPS);
-};
+    static int constant() {
+        return 65;
+    }
 
-bool AllocationContextService::should_notify() { return false; }
-void AllocationContextService::notify(TRAPS) { }
-
-#endif // SHARE_VM_SERVICES_ALLOCATION_CONTEXT_SERVICE_HPP
+    private static int test(Object o) {
+        do {
+            if (field <= 0) {
+                return -109;
+            }
+            do {
+                field = 4;
+            } while (constant() >= 0);
+        } while (o == null);
+        return -109;
+    }
+}
