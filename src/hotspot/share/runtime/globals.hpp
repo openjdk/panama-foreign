@@ -845,9 +845,6 @@ public:
   product(bool, FailOverToOldVerifier, true,                                \
           "Fail over to old verifier when split verifier fails")            \
                                                                             \
-  develop(bool, ShowSafepointMsgs, false,                                   \
-          "Show message about safepoint synchronization")                   \
-                                                                            \
   product(bool, SafepointTimeout, false,                                    \
           "Time out and warn or fail after SafepointTimeoutDelay "          \
           "milliseconds if failed to reach safepoint")                      \
@@ -1145,11 +1142,6 @@ public:
   diagnostic(bool, DynamicallyResizeSystemDictionaries, true,               \
           "Dynamically resize system dictionaries as needed")               \
                                                                             \
-  diagnostic(bool, UnsyncloadClass, false,                                  \
-          "Unstable: VM calls loadClass unsynchronized. Custom "            \
-          "class loader must call VM synchronized for findClass "           \
-          "and defineClass.")                                               \
-                                                                            \
   product(bool, AlwaysLockClassLoader, false,                               \
           "Require the VM to acquire the class loader lock before calling " \
           "loadClass() even for class loaders registering "                 \
@@ -1158,9 +1150,6 @@ public:
   product(bool, AllowParallelDefineClass, false,                            \
           "Allow parallel defineClass requests for class loaders "          \
           "registering as parallel capable")                                \
-                                                                            \
-  product(bool, MustCallLoadClassInternal, false,                           \
-          "Call loadClassInternal() rather than loadClass()")               \
                                                                             \
   product_pd(bool, DontYieldALot,                                           \
           "Throw away obvious excess yield calls")                          \
@@ -2014,9 +2003,6 @@ public:
                                                                             \
   product(bool, ZeroTLAB, false,                                            \
           "Zero out the newly created TLAB")                                \
-                                                                            \
-  product(bool, FastTLABRefill, false,                                      \
-          "(Deprecated) Use fast TLAB refill code")                         \
                                                                             \
   product(bool, TLABStats, true,                                            \
           "Provide more detailed and expensive TLAB statistics.")           \
