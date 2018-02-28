@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,34 +21,27 @@
  * questions.
  */
 
-/* @test
-   @bug 4116016
-   @summary Ensure that finalizers are not invoked more than once when on-exit
-            finalization is enabled and a finalizer invokes System.exit after
-            System.exit has already been invoked
-   @build FinExit
-   @run shell FinExit.sh
+/*
+ * @test
+ * @bug 8197439
+ * @summary Check anonymous class in anonymous class, where the nested one becomes
+ *          unresolvable with lambda conversion.
+ * @compile -XDfind=lambda -Werror AnonymousInAnonymous.java
  */
 
-
-public class FinExit {
-
-    boolean finalized = false;
-
-    public void finalize() {
-        if (finalized) {
-            System.out.println("2");
-        } else {
-            finalized = true;
-            System.out.println("1");
-            System.exit(0);
-        }
+public class AnonymousInAnonymous {
+    static void s(I1 i) {}
+    static {
+        s(
+            new I1() {
+                public I2 get() {
+                    return new I2() {
+                    };
+                }
+            });
     }
-
-    public static void main(String[] args) throws Exception {
-        System.runFinalizersOnExit(true);
-        Object o = new FinExit();
-        System.exit(0);
+    public static interface I1 {
+        public static class I2 { }
+        public I2 get();
     }
-
 }
