@@ -33,7 +33,7 @@ ifeq ($(ENABLE_LIBCLANG), yes)
       $(TOPDIR)/src/jdk.internal.clang/share/native/libjclang
 
   $(eval $(call SetupNativeCompilation,BUILD_LIBJCLANG, \
-      LIBRARY := jclang, \
+      NAME := jclang, \
       OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
       SRC := $(LIBJCLANG_SRC), \
       LANG := C++, \
