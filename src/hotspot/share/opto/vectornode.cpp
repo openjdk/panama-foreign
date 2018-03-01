@@ -72,7 +72,7 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_MulI:
     switch (bt) {
     case T_BOOLEAN:
-    case T_BYTE:   return 0;   // Unimplemented
+    case T_BYTE:   return Op_MulVB;
     case T_CHAR:
     case T_SHORT:  return Op_MulVS;
     case T_INT:    return Op_MulVI;
@@ -209,6 +209,7 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_SubVL:
   case Op_SubVF:
   case Op_SubVD:
+  case Op_MulVB:
   case Op_MulVS:
   case Op_MulVI:
   case Op_MulVL:
@@ -380,6 +381,7 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_SubVF: return new SubVFNode(n1, n2, vt);
   case Op_SubVD: return new SubVDNode(n1, n2, vt);
 
+  case Op_MulVB: return new MulVBNode(n1, n2, vt);
   case Op_MulVS: return new MulVSNode(n1, n2, vt);
   case Op_MulVI: return new MulVINode(n1, n2, vt);
   case Op_MulVL: return new MulVLNode(n1, n2, vt);

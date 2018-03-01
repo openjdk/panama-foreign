@@ -5203,6 +5203,7 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::x86::_vector_byte_bitset = generate_vector_fp_mask("vector_byte_bitset", 0x0101010101010101);
     StubRoutines::x86::_vector_long_perm_mask = generate_vector_custom_i32("vector_long_perm_mask", Assembler::AVX_512bit,
                                                                            0, 2, 4, 6, 8, 10, 12, 14);
+    StubRoutines::x86::_vector_byte_saturation_mask = generate_vector_fp_mask("vector_byte_saturation_mask", 0x00ff00ff00ff00ff);
 
     // support for verify_oop (must happen after universe_init)
     StubRoutines::_verify_oop_subroutine_entry = generate_verify_oop();

@@ -1068,7 +1068,6 @@ private:
   // these are private because users should be doing movflt/movdbl
 
   void movss(Address dst, XMMRegister src)     { Assembler::movss(dst, src); }
-  void movss(XMMRegister dst, XMMRegister src) { Assembler::movss(dst, src); }
   void movss(XMMRegister dst, Address src)     { Assembler::movss(dst, src); }
   void movss(XMMRegister dst, AddressLiteral src);
 
@@ -1126,6 +1125,7 @@ public:
   void movdqa(XMMRegister dst, XMMRegister src)   { Assembler::movdqa(dst, src); }
   void movdqa(XMMRegister dst, AddressLiteral src);
 
+  void movss(XMMRegister dst, XMMRegister src) { Assembler::movss(dst, src); }
   void movsd(XMMRegister dst, XMMRegister src) { Assembler::movsd(dst, src); }
   void movsd(Address dst, XMMRegister src)     { Assembler::movsd(dst, src); }
   void movsd(XMMRegister dst, Address src)     { Assembler::movsd(dst, src); }

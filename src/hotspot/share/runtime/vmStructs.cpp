@@ -1985,6 +1985,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_c2_type(SubVLNode, VectorNode)                                  \
   declare_c2_type(SubVFNode, VectorNode)                                  \
   declare_c2_type(SubVDNode, VectorNode)                                  \
+  declare_c2_type(MulVBNode, VectorNode)                                  \
   declare_c2_type(MulVSNode, VectorNode)                                  \
   declare_c2_type(MulVLNode, VectorNode)                                  \
   declare_c2_type(MulReductionVLNode, ReductionNode)                      \

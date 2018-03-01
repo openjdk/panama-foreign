@@ -225,6 +225,14 @@ class SubVDNode : public VectorNode {
   virtual int Opcode() const;
 };
 
+//------------------------------MulVBNode--------------------------------------
+// Vector multiply byte
+class MulVBNode : public VectorNode {
+ public:
+  MulVBNode(Node* in1, Node* in2, const TypeVect* vt) : VectorNode(in1, in2, vt) {}
+  virtual int Opcode() const;
+};
+
 //------------------------------MulVSNode--------------------------------------
 // Vector multiply short
 class MulVSNode : public VectorNode {
