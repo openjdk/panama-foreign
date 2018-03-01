@@ -38,6 +38,7 @@
 #include "opto/regalloc.hpp"
 #include "runtime/codeSnippet.hpp"
 #include "oops/objArrayOop.inline.hpp"
+#include "oops/typeArrayOop.inline.hpp"
 #endif // COMPILER2
 
 // TODO: class CodeSnippetBlob: public BufferBlob { ... };

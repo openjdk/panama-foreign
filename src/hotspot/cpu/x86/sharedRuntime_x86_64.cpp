@@ -41,6 +41,7 @@
 #include "utilities/align.hpp"
 #include "vm_version_x86.hpp"
 #include "vmreg_x86.inline.hpp"
+#include "oops/typeArrayOop.inline.hpp"
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
 #endif
