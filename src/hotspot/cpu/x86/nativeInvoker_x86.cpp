@@ -10,6 +10,7 @@
 #include "runtime/javaCalls.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
+#include "oops/arrayOop.inline.hpp"
 
 #define __ _masm->
 
