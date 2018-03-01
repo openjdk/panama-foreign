@@ -192,9 +192,7 @@ public interface Vector<E, S extends Vector.Shape> {
 
         Mask<E, S> falseMask();
 
-        default Shuffle<E, S> constantShuffle(int... ixs) {
-            return new GenericShuffle<>(this, ixs);
-        }
+        Shuffle<E, S> constantShuffle(int... ixs);
     }
 
 //    interface Shape<V extends Vector<?, ?> /*extends Vector<?, Shape<V>>*/> {
@@ -257,15 +255,15 @@ public interface Vector<E, S extends Vector.Shape> {
     }
 
     interface Shuffle<E, S extends Shape> {
-        default int length() {return getSpecies().length(); }
+        default int length() { return species().length(); }
 
         int[] toArray();
 
-        Species<E, S> getSpecies();
+        Species<E, S> species();
 
-        Vector<Integer, S> toVector();
+        IntVector.IntSpecies<S> intSpecies();
 
-        <E> Vector<E, S> toVector(Class<E> type);
+        IntVector<S> toVector();
 
         default int getElement(int i) { return toArray()[i]; }
     }

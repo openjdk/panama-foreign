@@ -696,6 +696,26 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         }
     }
 
+    // Shuffle
+
+    static final class Double512Shuffle extends AbstractShuffle<Double, Shapes.S512Bit> {
+        static final IntVector.IntSpecies<Shapes.S512Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S512Bit>) Vector.speciesInstance(Integer.class, Shapes.S_512_BIT);
+
+        public Double512Shuffle(int[] reorder) {
+            super(reorder);
+        }
+
+        @Override
+        public Double512Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public IntVector.IntSpecies<Shapes.S512Bit> intSpecies() {
+            return INT_SPECIES;
+        }
+    }
+
     // Species
 
     @Override
@@ -771,6 +791,10 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             return new Double512Mask(bits.clone());
         }
 
+        @Override
+        public Double512Shuffle constantShuffle(int... ixs) {
+            return new Double512Shuffle(ixs);
+        }
 
         @Override
         @ForceInline

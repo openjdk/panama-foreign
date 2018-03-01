@@ -376,7 +376,6 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
         return uOp(m, (i, a) -> (byte) (a >> s));
     }
 
-
     public ByteVector<S> rotateL(int j) {
         return uOp((i, a) -> (byte) Integer.rotateLeft(a, j));
     }

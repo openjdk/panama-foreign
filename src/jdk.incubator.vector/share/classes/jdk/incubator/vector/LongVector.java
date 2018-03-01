@@ -377,7 +377,6 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
         return uOp(m, (i, a) -> (long) (a >> s));
     }
 
-
     public LongVector<S> rotateL(int j) {
         return uOp((i, a) -> (long) Long.rotateLeft(a, j));
     }

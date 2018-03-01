@@ -707,6 +707,26 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         }
     }
 
+    // Shuffle
+
+    static final class Byte128Shuffle extends AbstractShuffle<Byte, Shapes.S128Bit> {
+        static final IntVector.IntSpecies<Shapes.S128Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S128Bit>) Vector.speciesInstance(Integer.class, Shapes.S_128_BIT);
+
+        public Byte128Shuffle(int[] reorder) {
+            super(reorder);
+        }
+
+        @Override
+        public Byte128Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public IntVector.IntSpecies<Shapes.S128Bit> intSpecies() {
+            return INT_SPECIES;
+        }
+    }
+
     // Species
 
     @Override
@@ -782,6 +802,10 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             return new Byte128Mask(bits.clone());
         }
 
+        @Override
+        public Byte128Shuffle constantShuffle(int... ixs) {
+            return new Byte128Shuffle(ixs);
+        }
 
         @Override
         @ForceInline

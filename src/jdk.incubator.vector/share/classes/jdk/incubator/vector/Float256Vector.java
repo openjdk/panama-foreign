@@ -696,6 +696,26 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         }
     }
 
+    // Shuffle
+
+    static final class Float256Shuffle extends AbstractShuffle<Float, Shapes.S256Bit> {
+        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S256Bit>) Vector.speciesInstance(Integer.class, Shapes.S_256_BIT);
+
+        public Float256Shuffle(int[] reorder) {
+            super(reorder);
+        }
+
+        @Override
+        public Float256Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public IntVector.IntSpecies<Shapes.S256Bit> intSpecies() {
+            return INT_SPECIES;
+        }
+    }
+
     // Species
 
     @Override
@@ -771,6 +791,10 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             return new Float256Mask(bits.clone());
         }
 
+        @Override
+        public Float256Shuffle constantShuffle(int... ixs) {
+            return new Float256Shuffle(ixs);
+        }
 
         @Override
         @ForceInline

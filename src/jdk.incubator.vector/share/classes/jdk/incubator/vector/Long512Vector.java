@@ -732,6 +732,26 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         }
     }
 
+    // Shuffle
+
+    static final class Long512Shuffle extends AbstractShuffle<Long, Shapes.S512Bit> {
+        static final IntVector.IntSpecies<Shapes.S512Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S512Bit>) Vector.speciesInstance(Integer.class, Shapes.S_512_BIT);
+
+        public Long512Shuffle(int[] reorder) {
+            super(reorder);
+        }
+
+        @Override
+        public Long512Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public IntVector.IntSpecies<Shapes.S512Bit> intSpecies() {
+            return INT_SPECIES;
+        }
+    }
+
     // Species
 
     @Override
@@ -807,6 +827,10 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             return new Long512Mask(bits.clone());
         }
 
+        @Override
+        public Long512Shuffle constantShuffle(int... ixs) {
+            return new Long512Shuffle(ixs);
+        }
 
         @Override
         @ForceInline

@@ -732,6 +732,26 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         }
     }
 
+    // Shuffle
+
+    static final class Long256Shuffle extends AbstractShuffle<Long, Shapes.S256Bit> {
+        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S256Bit>) Vector.speciesInstance(Integer.class, Shapes.S_256_BIT);
+
+        public Long256Shuffle(int[] reorder) {
+            super(reorder);
+        }
+
+        @Override
+        public Long256Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public IntVector.IntSpecies<Shapes.S256Bit> intSpecies() {
+            return INT_SPECIES;
+        }
+    }
+
     // Species
 
     @Override
@@ -807,6 +827,10 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             return new Long256Mask(bits.clone());
         }
 
+        @Override
+        public Long256Shuffle constantShuffle(int... ixs) {
+            return new Long256Shuffle(ixs);
+        }
 
         @Override
         @ForceInline

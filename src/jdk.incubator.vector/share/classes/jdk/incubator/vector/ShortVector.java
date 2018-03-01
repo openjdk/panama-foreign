@@ -377,7 +377,6 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
         return uOp(m, (i, a) -> (short) (a >> s));
     }
 
-
     public ShortVector<S> rotateL(int j) {
         return uOp((i, a) -> (short) Integer.rotateLeft(a, j));
     }

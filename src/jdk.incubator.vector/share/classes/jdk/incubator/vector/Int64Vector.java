@@ -732,6 +732,26 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         }
     }
 
+    // Shuffle
+
+    static final class Int64Shuffle extends AbstractShuffle<Integer, Shapes.S64Bit> {
+        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S64Bit>) Vector.speciesInstance(Integer.class, Shapes.S_64_BIT);
+
+        public Int64Shuffle(int[] reorder) {
+            super(reorder);
+        }
+
+        @Override
+        public Int64Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public IntVector.IntSpecies<Shapes.S64Bit> intSpecies() {
+            return INT_SPECIES;
+        }
+    }
+
     // Species
 
     @Override
@@ -807,6 +827,10 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
             return new Int64Mask(bits.clone());
         }
 
+        @Override
+        public Int64Shuffle constantShuffle(int... ixs) {
+            return new Int64Shuffle(ixs);
+        }
 
         @Override
         @ForceInline

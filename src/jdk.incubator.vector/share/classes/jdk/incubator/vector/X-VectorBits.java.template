@@ -826,6 +826,26 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         }
     }
 
+    // Shuffle
+
+    static final class $shuffletype$ extends AbstractShuffle<$Boxtype$, Shapes.$shape$> {
+        static final IntVector.IntSpecies<Shapes.$shape$> INT_SPECIES = (IntVector.IntSpecies<Shapes.$shape$>) Vector.speciesInstance(Integer.class, Shapes.$Shape$);
+
+        public $shuffletype$(int[] reorder) {
+            super(reorder);
+        }
+
+        @Override
+        public $Type$$bits$Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public IntVector.IntSpecies<Shapes.$shape$> intSpecies() {
+            return INT_SPECIES;
+        }
+    }
+
     // Species
 
     @Override
@@ -901,6 +921,10 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             return new $masktype$(bits.clone());
         }
 
+        @Override
+        public $shuffletype$ constantShuffle(int... ixs) {
+            return new $shuffletype$(ixs);
+        }
 
 #if[FP]
         @Override

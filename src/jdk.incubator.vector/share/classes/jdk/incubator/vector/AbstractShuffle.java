@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,39 +24,23 @@
  */
 package jdk.incubator.vector;
 
-final class GenericShuffle<E, S extends Vector.Shape> implements Vector.Shuffle<E, S> {
+import java.util.Arrays;
 
-    private final Vector.Species<E, S> s;
+abstract class AbstractShuffle<E, S extends Vector.Shape> implements Vector.Shuffle<E, S> {
     private final int[] reorder;
 
-    public GenericShuffle(Vector.Species<E, S> s, int[] reorder) {
-        this.s = s;
-        if (reorder.length != s.length())
-            throw new ArrayIndexOutOfBoundsException("Reorder array length must match species length");
-        this.reorder = reorder.clone();
+    public AbstractShuffle(int[] reorder) {
+        this.reorder = Arrays.copyOf(reorder, species().length());
     }
 
     @Override
     public int[] toArray() {
-        int[] ar = new int[getSpecies().length()];
-        System.arraycopy(reorder, 0, ar, 0, getSpecies().length());
-        return ar;
+        return reorder.clone();
     }
 
     @Override
-    public Vector.Species<E, S> getSpecies() {
-        return s;
-    }
-
-    @Override
-    public Vector<Integer, S> toVector() {
-        IntVector.IntSpecies<S> res = (IntVector.IntSpecies<S>) Vector.speciesInstance(Integer.class, s.shape());
-        return res.fromArray(reorder, 0);
-    }
-
-    @Override
-    public <E1> Vector<E1, S> toVector(Class<E1> type) {
-        return toVector().cast(type);
+    public IntVector<S> toVector() {
+        return intSpecies().fromArray(reorder, 0);
     }
 
     @Override

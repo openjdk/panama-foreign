@@ -396,7 +396,7 @@ public abstract class IntVector<S extends Vector.Shape> implements Vector<Intege
     public IntVector<S> aShiftR(int s, Mask<Integer, S> m) {
         return uOp(m, (i, a) -> (int) (a >> s));
     }
-    
+
     public IntVector<S> rotateL(int j) {
         return uOp((i, a) -> (int) Integer.rotateLeft(a, j));
     }

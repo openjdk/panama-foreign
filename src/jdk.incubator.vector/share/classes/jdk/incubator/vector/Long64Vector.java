@@ -732,6 +732,26 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         }
     }
 
+    // Shuffle
+
+    static final class Long64Shuffle extends AbstractShuffle<Long, Shapes.S64Bit> {
+        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S64Bit>) Vector.speciesInstance(Integer.class, Shapes.S_64_BIT);
+
+        public Long64Shuffle(int[] reorder) {
+            super(reorder);
+        }
+
+        @Override
+        public Long64Species species() {
+            return SPECIES;
+        }
+
+        @Override
+        public IntVector.IntSpecies<Shapes.S64Bit> intSpecies() {
+            return INT_SPECIES;
+        }
+    }
+
     // Species
 
     @Override
@@ -807,6 +827,10 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             return new Long64Mask(bits.clone());
         }
 
+        @Override
+        public Long64Shuffle constantShuffle(int... ixs) {
+            return new Long64Shuffle(ixs);
+        }
 
         @Override
         @ForceInline
