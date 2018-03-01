@@ -28,6 +28,7 @@
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
+#include "oops/typeArrayOop.inline.hpp"
 #include "runtime/stackValue.hpp"
 
 static BasicType klass2bt(InstanceKlass* ik) {
