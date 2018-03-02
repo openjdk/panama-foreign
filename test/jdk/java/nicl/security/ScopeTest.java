@@ -23,8 +23,8 @@
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import java.nicl.HeapScope;
-import java.nicl.NativeScope;
+
+import java.nicl.Scope;
 
 /**
  * @test
@@ -35,14 +35,14 @@ public class ScopeTest {
     @Test
     public void testNewHeapScope() {
         checkSecurityException(() -> {
-            new HeapScope();
+            Scope.newHeapScope();
         });
     }
 
     @Test
     public void testNewNativeScope() {
         checkSecurityException(() -> {
-            new NativeScope();
+            Scope.newNativeScope();
         });
     }
 

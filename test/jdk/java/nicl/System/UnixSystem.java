@@ -28,7 +28,6 @@
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nicl.*;
 import java.nicl.types.*;
 import java.nicl.metadata.*;
@@ -109,7 +108,7 @@ public class UnixSystem {
 
     private static String lowerAndSprintf(system i, String fmt, Object... args) {
         System.err.println("lowerAndSprintf fmt=" + fmt);
-        try (Scope scope = new NativeScope()) {
+        try (Scope scope = Scope.newNativeScope()) {
             long bufSize = 128;
 
             LayoutType<Byte> t = NativeLibrary.createLayout(byte.class);
@@ -133,7 +132,7 @@ public class UnixSystem {
         assertEquals("foo", lowerAndSprintf(i, "foo"));
         assertEquals("foo: 4711", lowerAndSprintf(i, "foo: %d", 4711));
         assertEquals("foo: 47 11", lowerAndSprintf(i, "foo: %d %d", 47, 11));
-        try (Scope scope = new NativeScope()) {
+        try (Scope scope = Scope.newNativeScope()) {
             assertEquals("foo: bar", lowerAndSprintf(i, "foo: %s", scope.toCString("bar")));
             assertEquals("foo: bar baz", lowerAndSprintf(i, "foo: %s %s", scope.toCString("bar"), scope.toCString("baz")));
         }
@@ -154,7 +153,7 @@ public class UnixSystem {
     private int getSizeUsingStat_Linux(String path) throws Exception {
         LinuxSystem i = NativeLibrary.bindRaw(LinuxSystem.class);
 
-        try (Scope scope = new NativeScope()) {
+        try (Scope scope = Scope.newNativeScope()) {
             LinuxSystem.stat s = scope.allocateStruct(NativeLibrary.createLayout(LinuxSystem.stat.class));
             Pointer<LinuxSystem.stat> p = s.ptr();
 
@@ -172,7 +171,7 @@ public class UnixSystem {
     private int getSizeUsingStat_MacOSX(String path) throws Exception {
         MacOSXSystem i = NativeLibrary.bindRaw(MacOSXSystem.class);
 
-        try (Scope scope = new NativeScope()) {
+        try (Scope scope = Scope.newNativeScope()) {
             MacOSXSystem.stat s = scope.allocateStruct(NativeLibrary.createLayout(MacOSXSystem.stat.class));
             Pointer<MacOSXSystem.stat> p = s.ptr();
 

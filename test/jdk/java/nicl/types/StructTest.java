@@ -138,7 +138,7 @@ public class StructTest {
     }
 
     public void test() {
-        try (Scope scope = new NativeScope()) {
+        try (Scope scope = Scope.newNativeScope()) {
             MyStruct s = scope.allocateStruct(NativeLibrary.createLayout(MyStruct.class));
             long size = TOTAL_SIZE;
             Pointer<Byte> p = scope.allocate(NativeLibrary.createLayout(byte.class), size);

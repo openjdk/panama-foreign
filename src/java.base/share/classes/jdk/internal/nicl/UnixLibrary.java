@@ -24,7 +24,6 @@ package jdk.internal.nicl;
 
 import java.nicl.Library;
 import java.nicl.LibrarySymbol;
-import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;

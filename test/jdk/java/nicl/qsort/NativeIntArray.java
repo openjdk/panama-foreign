@@ -22,9 +22,7 @@
  */
 
 
-import java.lang.reflect.Field;
 import java.nicl.NativeLibrary;
-import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
 import java.nicl.types.Reference;
@@ -34,7 +32,7 @@ public class NativeIntArray implements Iterable<Integer> {
     private static final int ELEM_SIZE = 4;
 
     private final int nelems;
-    private final Scope scope = new NativeScope();
+    private final Scope scope = Scope.newNativeScope();
     private final Pointer<Integer> base;
 
     public NativeIntArray(int nelems) {

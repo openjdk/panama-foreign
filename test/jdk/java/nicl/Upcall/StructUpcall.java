@@ -27,7 +27,6 @@
  */
 
 import java.nicl.NativeLibrary;
-import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
@@ -125,7 +124,7 @@ public class StructUpcall {
     public void test() {
         Index i = NativeLibrary.bindRaw(Index.class, NativeLibrary.loadLibrary("Upcall"));
 
-        try (Scope scope = new NativeScope()) {
+        try (Scope scope = Scope.newNativeScope()) {
             Reference<Index.MyStruct> s = scope.allocateStruct(NativeLibrary.createLayout(Index.MyStruct.class));
 
             Pointer<Byte> p1 = scope.allocate(NativeLibrary.createLayout(byte.class));

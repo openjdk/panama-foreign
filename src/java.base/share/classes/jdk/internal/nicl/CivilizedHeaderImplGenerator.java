@@ -26,7 +26,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.util.stream.Stream;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;

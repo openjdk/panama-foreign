@@ -26,7 +26,6 @@
  */
 
 import java.nicl.NativeLibrary;
-import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
@@ -128,7 +127,7 @@ public class CallbackSort {
     static class NativeIntArray implements Iterable<Integer> {
         private static final int ELEM_SIZE = 4;
 
-        private final Scope scope = new NativeScope();
+        private final Scope scope = Scope.newNativeScope();
 
         private final int nelems;
         private final Pointer<Integer> base;

@@ -26,6 +26,9 @@ import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Reference;
 import java.nicl.types.Resource;
+
+import jdk.internal.nicl.HeapScope;
+import jdk.internal.nicl.NativeScope;
 import jdk.internal.nicl.Util;
 
 public interface Scope extends AutoCloseable {
@@ -92,5 +95,13 @@ public interface Scope extends AutoCloseable {
         }
 
         return ptr;
+    }
+
+    static Scope newNativeScope() {
+        return new NativeScope();
+    }
+
+    static Scope newHeapScope() {
+        return new HeapScope();
     }
 }

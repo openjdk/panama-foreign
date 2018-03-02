@@ -25,7 +25,6 @@ package jdk.internal.nicl;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.nicl.Library;
-import java.nicl.NativeScope;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
 import java.security.AccessController;
