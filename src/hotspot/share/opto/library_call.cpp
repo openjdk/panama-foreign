@@ -8603,7 +8603,7 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
     default: fatal("unsupported arity: %d", n);
   }
 
-  Node* operation;
+  Node* operation = NULL;
   switch (n) {
     case 1:
     case 2: {
