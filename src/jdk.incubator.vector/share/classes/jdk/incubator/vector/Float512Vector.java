@@ -318,6 +318,35 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
 
 
+    // Unary operations
+
+    @Override
+    @ForceInline
+    public Float512Vector abs() {
+        return (Float512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Float512Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.abs(a)));
+    }
+
+    @Override
+    @ForceInline
+    public Float512Vector neg() {
+        return (Float512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NEG, Float512Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) -a));
+    }
+
+    @Override
+    @ForceInline
+    public Float512Vector sqrt() {
+        return (Float512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SQRT, Float512Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.sqrt((double) a)));
+    }
+
     // Binary operations
 
     @Override
@@ -365,6 +394,21 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
     }
 
+
+    // Ternary operations
+
+    @Override
+    @ForceInline
+    public Float512Vector fma(Vector<Float,Shapes.S512Bit> o1, Vector<Float,Shapes.S512Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Float512Vector v1 = (Float512Vector)o1;
+        Float512Vector v2 = (Float512Vector)o2;
+        return (Float512Vector) VectorIntrinsics.ternaryOp(
+            VECTOR_OP_FMA, Float512Vector.class, float.class, LENGTH,
+            this, v1, v2,
+            (w1, w2, w3) -> w1.tOp(w2, w3, (i, a, b, c) -> Math.fma(a, b, c)));
+    }
 
     // Type specific horizontal reductions
 

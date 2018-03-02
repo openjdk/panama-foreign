@@ -381,6 +381,39 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 #end[BITWISE]
 
 
+    // Unary operations
+
+#if[intOrFP]
+    @Override
+    @ForceInline
+    public $vectortype$ abs() {
+        return ($vectortype$) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.abs(a)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ neg() {
+        return ($vectortype$) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NEG, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) -a));
+    }
+#end[intOrFP]
+
+#if[FP]
+    @Override
+    @ForceInline
+    public $vectortype$ sqrt() {
+        return ($vectortype$) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SQRT, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.sqrt((double) a)));
+    }
+#end[FP]
+
     // Binary operations
 
     @Override
@@ -462,6 +495,23 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a ^ b)));
     }
 #end[BITWISE]
+
+    // Ternary operations
+
+#if[FP]
+    @Override
+    @ForceInline
+    public $vectortype$ fma(Vector<$Boxtype$,Shapes.$shape$> o1, Vector<$Boxtype$,Shapes.$shape$> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        $vectortype$ v1 = ($vectortype$)o1;
+        $vectortype$ v2 = ($vectortype$)o2;
+        return ($vectortype$) VectorIntrinsics.ternaryOp(
+            VECTOR_OP_FMA, $vectortype$.class, $type$.class, LENGTH,
+            this, v1, v2,
+            (w1, w2, w3) -> w1.tOp(w2, w3, (i, a, b, c) -> Math.fma(a, b, c)));
+    }
+#end[FP]
 
     // Type specific horizontal reductions
 

@@ -172,7 +172,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
       return UseVectorApiIntrinsics;
   }
 
-  if (id >= vmIntrinsics::_VectorBinOp && id <= vmIntrinsics::_VectorRebox) {
+  if (id >= vmIntrinsics::_VectorUnaryOp && id <= vmIntrinsics::_VectorRebox) {
     return UseVectorApiGeneralizedIntrinsics;
   }
 

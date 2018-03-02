@@ -1436,18 +1436,25 @@
    do_name(     getAndSetObject_name,                                   "getAndSetObject")                                    \
    do_signature(getAndSetObject_signature,                              "(Ljava/lang/Object;JLjava/lang/Object;)Ljava/lang/Object;" ) \
                                                                                                                                                \
-  do_intrinsic(_VectorBinOp, jdk_incubator_vector_VectorIntrinsics, vector_binary_op_name, vector_intrinsic_bin_op_sig, F_S)                   \
-   do_signature(vector_intrinsic_bin_op_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;") \
-   do_name(vector_binary_op_name,            "binaryOp")                                                                                       \
+  do_intrinsic(_VectorUnaryOp, jdk_incubator_vector_VectorIntrinsics, vector_unary_op_name, vector_unary_op_sig, F_S)                          \
+   do_signature(vector_unary_op_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;") \
+   do_name(vector_unary_op_name,     "unaryOp")                                                                                                \
+                                                                                                                                               \
+  do_intrinsic(_VectorBinaryOp, jdk_incubator_vector_VectorIntrinsics, vector_binary_op_name, vector_binary_op_sig, F_S)                          \
+   do_signature(vector_binary_op_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;") \
+   do_name(vector_binary_op_name,     "binaryOp")                                                                                              \
+                                                                                                                                               \
+  do_intrinsic(_VectorTernaryOp, jdk_incubator_vector_VectorIntrinsics, vector_ternary_op_name, vector_ternary_op_sig, F_S)                    \
+   do_signature(vector_ternary_op_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljdk/incubator/vector/VectorIntrinsics$TernaryOperation;)Ljava/lang/Object;") \
+   do_name(vector_ternary_op_name,     "ternaryOp")                                                                                            \
                                                                                                                                                \
   do_intrinsic(_VectorBroadcastCoerced, jdk_incubator_vector_VectorIntrinsics, vector_broadcast_coerced_name, vector_broadcast_coerced_sig, F_S) \
-   do_signature(vector_broadcast_coerced_sig, "(Ljava/lang/Class;Ljava/lang/Class;IJLjava/util/function/LongFunction;)Ljava/lang/Object;") \
+   do_signature(vector_broadcast_coerced_sig, "(Ljava/lang/Class;Ljava/lang/Class;IJLjava/util/function/LongFunction;)Ljava/lang/Object;")     \
    do_name(vector_broadcast_coerced_name, "broadcastCoerced")                                                                                  \
-                                                                                                                                               \
                                                                                                                                                \
   do_intrinsic(_VectorLoadOp, jdk_incubator_vector_VectorIntrinsics, vector_load_op_name, vector_load_op_sig, F_S)                             \
    do_signature(vector_load_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;ILjava/util/function/BiFunction;)Ljdk/incubator/vector/Vector;") \
-   do_name(vector_load_op_name,     "load")                                                                                                  \
+   do_name(vector_load_op_name,     "load")                                                                                                    \
                                                                                                                                                \
   do_intrinsic(_VectorStoreOp, jdk_incubator_vector_VectorIntrinsics, vector_store_op_name, vector_store_op_sig, F_S)                          \
    do_signature(vector_store_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;ILjdk/incubator/vector/Vector;Ljdk/incubator/vector/VectorIntrinsics$StoreVectorOperation;)V") \
@@ -1461,9 +1468,9 @@
    do_signature(vector_test_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Z") \
    do_name(vector_test_name, "test")                                                                                                           \
                                                                                                                                                \
-  do_intrinsic(_VectorRebox, jdk_incubator_vector_VectorIntrinsics, vector_rebox_name, vector_rebox_sig, F_S)                                                  \
+  do_intrinsic(_VectorRebox, jdk_incubator_vector_VectorIntrinsics, vector_rebox_name, vector_rebox_sig, F_S)                                  \
    do_alias(vector_rebox_sig, object_object_signature)                                                                                         \
-   do_name(vector_rebox_name, "maybeRebox")                                                                                                          \
+   do_name(vector_rebox_name, "maybeRebox")                                                                                                    \
                                                                                                                                                \
    /* Vector API intrinsification support */                                                                                                   \
    do_signature(vector_cmp_sig, "(Ljdk/incubator/vector/Vector;)Ljdk/incubator/vector/Vector$Mask;")                                           \

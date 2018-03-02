@@ -383,7 +383,7 @@ bool Compile::should_delay_boxing_inlining(ciMethod* call_method, JVMState* jvms
 
 bool Compile::should_delay_vector_inlining(ciMethod* call_method, JVMState* jvms) {
   return call_method->is_vector_method() ||
-         (call_method->intrinsic_id() >= vmIntrinsics::_VectorBinOp &&
+         (call_method->intrinsic_id() >= vmIntrinsics::_VectorUnaryOp &&
           call_method->intrinsic_id() <= vmIntrinsics::_VectorTest);
 }
 

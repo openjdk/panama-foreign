@@ -330,6 +330,27 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     }
 
 
+    // Unary operations
+
+    @Override
+    @ForceInline
+    public Int256Vector abs() {
+        return (Int256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Int256Vector.class, int.class, LENGTH,
+            this,
+            v1 -> ((Int256Vector)v1).uOp((i, a) -> (int) Math.abs(a)));
+    }
+
+    @Override
+    @ForceInline
+    public Int256Vector neg() {
+        return (Int256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NEG, Int256Vector.class, int.class, LENGTH,
+            this,
+            v1 -> ((Int256Vector)v1).uOp((i, a) -> (int) -a));
+    }
+
+
     // Binary operations
 
     @Override
@@ -409,6 +430,9 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> ((Int256Vector)v1).bOp(v2, (i, a, b) -> (int)(a ^ b)));
     }
+
+    // Ternary operations
+
 
     // Type specific horizontal reductions
 

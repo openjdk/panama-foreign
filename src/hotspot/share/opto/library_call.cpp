@@ -359,7 +359,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_profileBoolean();
   bool inline_isCompileConstant();
 
-  bool inline_vector_binary_operation();
+  bool inline_vector_nary_operation(int n);
   bool inline_vector_broadcast_coerced();
   bool inline_vector_mem_operation(bool is_store);
   bool inline_vector_reduction();
@@ -912,8 +912,12 @@ bool LibraryCallKit::try_to_inline(int predicate) {
   case vmIntrinsics::_fmaF:
     return inline_fma(intrinsic_id());
 
-  case vmIntrinsics::_VectorBinOp:
-    return inline_vector_binary_operation();
+  case vmIntrinsics::_VectorUnaryOp:
+    return inline_vector_nary_operation(1);
+  case vmIntrinsics::_VectorBinaryOp:
+    return inline_vector_nary_operation(2);
+  case vmIntrinsics::_VectorTernaryOp:
+    return inline_vector_nary_operation(3);
 
   case vmIntrinsics::_VectorBroadcastCoerced:
     return inline_vector_broadcast_coerced();
@@ -8380,13 +8384,20 @@ bool LibraryCallKit::inline_store_vector_op(const TypeInstPtr* box_type, BasicTy
 
 // Should be aligned with constants in jdk.incubator.vector.VectorIntrinsics.
 enum {
-  OP_ADD = 0,
-  OP_SUB = 1,
-  OP_MUL = 2,
-  OP_DIV = 3,
-  OP_AND = 4,
-  OP_OR  = 5,
-  OP_XOR = 6
+  // Unary
+  OP_ABS  = 0,
+  OP_NEG  = 1,
+  OP_SQRT = 2,
+  // Binary
+  OP_ADD  = 3,
+  OP_SUB  = 4,
+  OP_MUL  = 5,
+  OP_DIV  = 6,
+  OP_AND  = 7,
+  OP_OR   = 8,
+  OP_XOR  = 9,
+  // Ternary
+  OP_FMA  = 10
 };
 
 static int get_opc(jint op, BasicType bt) {
@@ -8439,6 +8450,28 @@ static int get_opc(jint op, BasicType bt) {
       }
       break;
     }
+    case OP_ABS: {
+      switch (bt) {
+        case T_BYTE:   // fall-through
+        case T_SHORT:  // fall-through
+        case T_INT:    return Op_AbsI;
+        case T_FLOAT:  return Op_AbsF;
+        case T_DOUBLE: return Op_AbsD;
+        default: fatal("ABS: %s", type2name(bt));
+      }
+      break;
+    }
+    case OP_NEG: {
+      switch (bt) {
+        case T_BYTE:   // fall-through
+        case T_SHORT:  // fall-through
+        case T_INT:    return Op_NegI;
+        case T_FLOAT:  return Op_NegF;
+        case T_DOUBLE: return Op_NegD;
+        default: fatal("NEG: %s", type2name(bt));
+      }
+      break;
+    }
     case OP_AND: {
       switch (bt) {
         case T_BYTE:   // fall-through
@@ -8466,6 +8499,22 @@ static int get_opc(jint op, BasicType bt) {
         case T_INT:    return Op_XorI;
         case T_LONG:   return Op_XorL;
         default: fatal("XOR: %s", type2name(bt));
+      }
+      break;
+    }
+    case OP_SQRT: {
+      switch (bt) {
+        case T_FLOAT:  return Op_SqrtF;
+        case T_DOUBLE: return Op_SqrtD;
+        default: fatal("SQRT: %s", type2name(bt));
+      }
+      break;
+    }
+    case OP_FMA: {
+      switch (bt) {
+        case T_FLOAT:  return Op_FmaF;
+        case T_DOUBLE: return Op_FmaD;
+        default: fatal("FMA: %s", type2name(bt));
       }
       break;
     }
@@ -8503,7 +8552,7 @@ Node* LibraryCallKit::unbox_vector(Node* v, const TypeInstPtr* vbox_type, BasicT
   return unbox;
 }
 
-bool LibraryCallKit::inline_vector_binary_operation() {
+bool LibraryCallKit::inline_vector_nary_operation(int n) {
   const TypeInt* opr              = gvn().type(argument(0))->is_int();
   const TypeInstPtr* vector_klass = gvn().type(argument(1))->is_instptr();
   const TypeInstPtr* elem_klass   = gvn().type(argument(2))->is_instptr();
@@ -8528,14 +8577,45 @@ bool LibraryCallKit::inline_vector_binary_operation() {
     return false; // not supported
   }
 
-  Node* opd1 = unbox_vector(argument(4), vbox_type, elem_bt, num_elem);
-  Node* opd2 = unbox_vector(argument(5), vbox_type, elem_bt, num_elem);
-  if (opd1 == NULL || opd2 == NULL) {
-    return false;
+  Node* opd1 = NULL; Node* opd2 = NULL; Node* opd3 = NULL;
+  switch (n) {
+    case 3: {
+      opd1 = unbox_vector(argument(6), vbox_type, elem_bt, num_elem);
+      if (opd1 == NULL) {
+        return false;
+      }
+      // fall-through
+    }
+    case 2: {
+      opd2 = unbox_vector(argument(5), vbox_type, elem_bt, num_elem);
+      if (opd2 == NULL) {
+        return false;
+      }
+      // fall-through
+    }
+    case 1: {
+      opd1 = unbox_vector(argument(4), vbox_type, elem_bt, num_elem);
+      if (opd1 == NULL) {
+        return false;
+      }
+      break;
+    }
+    default: fatal("unsupported arity: %d", n);
   }
-  Node* operation = VectorNode::make(sopc, opd1, opd2, num_elem, elem_bt);
-  operation = _gvn.transform(operation);
 
+  Node* operation;
+  switch (n) {
+    case 1:
+    case 2: {
+      operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, num_elem, elem_bt));
+      break;
+    }
+    case 3: {
+      operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, opd3, num_elem, elem_bt));
+      break;
+    }
+    default: fatal("unsupported arity: %d", n);
+  }
   // Wrap it up in VectorBox to keep object type information.
   operation = box_vector(operation, vbox_type, elem_bt, num_elem);
   setVectorOutput(operation);

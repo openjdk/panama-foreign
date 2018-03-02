@@ -330,6 +330,10 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
     }
 
 
+    // Unary operations
+
+
+
     // Binary operations
 
     @Override
@@ -409,6 +413,9 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             this, v,
             (v1, v2) -> ((Byte128Vector)v1).bOp(v2, (i, a, b) -> (byte)(a ^ b)));
     }
+
+    // Ternary operations
+
 
     // Type specific horizontal reductions
 

@@ -330,6 +330,10 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     }
 
 
+    // Unary operations
+
+
+
     // Binary operations
 
     @Override
@@ -409,6 +413,9 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             this, v,
             (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a ^ b)));
     }
+
+    // Ternary operations
+
 
     // Type specific horizontal reductions
 

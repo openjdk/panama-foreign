@@ -318,6 +318,35 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
 
 
+    // Unary operations
+
+    @Override
+    @ForceInline
+    public Double256Vector abs() {
+        return (Double256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Double256Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.abs(a)));
+    }
+
+    @Override
+    @ForceInline
+    public Double256Vector neg() {
+        return (Double256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NEG, Double256Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) -a));
+    }
+
+    @Override
+    @ForceInline
+    public Double256Vector sqrt() {
+        return (Double256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SQRT, Double256Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.sqrt((double) a)));
+    }
+
     // Binary operations
 
     @Override
@@ -365,6 +394,21 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             (v1, v2) -> ((Double256Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
     }
 
+
+    // Ternary operations
+
+    @Override
+    @ForceInline
+    public Double256Vector fma(Vector<Double,Shapes.S256Bit> o1, Vector<Double,Shapes.S256Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Double256Vector v1 = (Double256Vector)o1;
+        Double256Vector v2 = (Double256Vector)o2;
+        return (Double256Vector) VectorIntrinsics.ternaryOp(
+            VECTOR_OP_FMA, Double256Vector.class, double.class, LENGTH,
+            this, v1, v2,
+            (w1, w2, w3) -> w1.tOp(w2, w3, (i, a, b, c) -> Math.fma(a, b, c)));
+    }
 
     // Type specific horizontal reductions
 

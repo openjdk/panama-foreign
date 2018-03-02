@@ -330,6 +330,10 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     }
 
 
+    // Unary operations
+
+
+
     // Binary operations
 
     @Override
@@ -409,6 +413,9 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte)(a ^ b)));
     }
+
+    // Ternary operations
+
 
     // Type specific horizontal reductions
 

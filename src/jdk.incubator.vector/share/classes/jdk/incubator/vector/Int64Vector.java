@@ -330,6 +330,27 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     }
 
 
+    // Unary operations
+
+    @Override
+    @ForceInline
+    public Int64Vector abs() {
+        return (Int64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Int64Vector.class, int.class, LENGTH,
+            this,
+            v1 -> ((Int64Vector)v1).uOp((i, a) -> (int) Math.abs(a)));
+    }
+
+    @Override
+    @ForceInline
+    public Int64Vector neg() {
+        return (Int64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NEG, Int64Vector.class, int.class, LENGTH,
+            this,
+            v1 -> ((Int64Vector)v1).uOp((i, a) -> (int) -a));
+    }
+
+
     // Binary operations
 
     @Override
@@ -409,6 +430,9 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
             this, v,
             (v1, v2) -> ((Int64Vector)v1).bOp(v2, (i, a, b) -> (int)(a ^ b)));
     }
+
+    // Ternary operations
+
 
     // Type specific horizontal reductions
 

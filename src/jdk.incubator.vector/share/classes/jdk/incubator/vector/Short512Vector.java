@@ -330,6 +330,10 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
     }
 
 
+    // Unary operations
+
+
+
     // Binary operations
 
     @Override
@@ -409,6 +413,9 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> ((Short512Vector)v1).bOp(v2, (i, a, b) -> (short)(a ^ b)));
     }
+
+    // Ternary operations
+
 
     // Type specific horizontal reductions
 

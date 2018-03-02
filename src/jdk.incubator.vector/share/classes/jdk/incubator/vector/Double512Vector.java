@@ -318,6 +318,35 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
 
 
+    // Unary operations
+
+    @Override
+    @ForceInline
+    public Double512Vector abs() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.abs(a)));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Vector neg() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NEG, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) -a));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Vector sqrt() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SQRT, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.sqrt((double) a)));
+    }
+
     // Binary operations
 
     @Override
@@ -365,6 +394,21 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
     }
 
+
+    // Ternary operations
+
+    @Override
+    @ForceInline
+    public Double512Vector fma(Vector<Double,Shapes.S512Bit> o1, Vector<Double,Shapes.S512Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Double512Vector v1 = (Double512Vector)o1;
+        Double512Vector v2 = (Double512Vector)o2;
+        return (Double512Vector) VectorIntrinsics.ternaryOp(
+            VECTOR_OP_FMA, Double512Vector.class, double.class, LENGTH,
+            this, v1, v2,
+            (w1, w2, w3) -> w1.tOp(w2, w3, (i, a, b, c) -> Math.fma(a, b, c)));
+    }
 
     // Type specific horizontal reductions
 

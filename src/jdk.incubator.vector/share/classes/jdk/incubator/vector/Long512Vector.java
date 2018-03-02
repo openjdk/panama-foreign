@@ -330,6 +330,10 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
     }
 
 
+    // Unary operations
+
+
+
     // Binary operations
 
     @Override
@@ -409,6 +413,9 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> ((Long512Vector)v1).bOp(v2, (i, a, b) -> (long)(a ^ b)));
     }
+
+    // Ternary operations
+
 
     // Type specific horizontal reductions
 

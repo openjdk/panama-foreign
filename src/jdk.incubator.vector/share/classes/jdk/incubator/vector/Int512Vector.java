@@ -330,6 +330,27 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     }
 
 
+    // Unary operations
+
+    @Override
+    @ForceInline
+    public Int512Vector abs() {
+        return (Int512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Int512Vector.class, int.class, LENGTH,
+            this,
+            v1 -> ((Int512Vector)v1).uOp((i, a) -> (int) Math.abs(a)));
+    }
+
+    @Override
+    @ForceInline
+    public Int512Vector neg() {
+        return (Int512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NEG, Int512Vector.class, int.class, LENGTH,
+            this,
+            v1 -> ((Int512Vector)v1).uOp((i, a) -> (int) -a));
+    }
+
+
     // Binary operations
 
     @Override
@@ -409,6 +430,9 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> ((Int512Vector)v1).bOp(v2, (i, a, b) -> (int)(a ^ b)));
     }
+
+    // Ternary operations
+
 
     // Type specific horizontal reductions
 

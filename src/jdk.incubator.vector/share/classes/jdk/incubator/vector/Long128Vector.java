@@ -330,6 +330,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
 
+    // Unary operations
+
+
+
     // Binary operations
 
     @Override
@@ -409,6 +413,9 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             this, v,
             (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a ^ b)));
     }
+
+    // Ternary operations
+
 
     // Type specific horizontal reductions
 

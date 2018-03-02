@@ -318,6 +318,35 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
 
 
 
+    // Unary operations
+
+    @Override
+    @ForceInline
+    public Float64Vector abs() {
+        return (Float64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Float64Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float64Vector)v1).uOp((i, a) -> (float) Math.abs(a)));
+    }
+
+    @Override
+    @ForceInline
+    public Float64Vector neg() {
+        return (Float64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NEG, Float64Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float64Vector)v1).uOp((i, a) -> (float) -a));
+    }
+
+    @Override
+    @ForceInline
+    public Float64Vector sqrt() {
+        return (Float64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SQRT, Float64Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float64Vector)v1).uOp((i, a) -> (float) Math.sqrt((double) a)));
+    }
+
     // Binary operations
 
     @Override
@@ -365,6 +394,21 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             (v1, v2) -> ((Float64Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
     }
 
+
+    // Ternary operations
+
+    @Override
+    @ForceInline
+    public Float64Vector fma(Vector<Float,Shapes.S64Bit> o1, Vector<Float,Shapes.S64Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Float64Vector v1 = (Float64Vector)o1;
+        Float64Vector v2 = (Float64Vector)o2;
+        return (Float64Vector) VectorIntrinsics.ternaryOp(
+            VECTOR_OP_FMA, Float64Vector.class, float.class, LENGTH,
+            this, v1, v2,
+            (w1, w2, w3) -> w1.tOp(w2, w3, (i, a, b, c) -> Math.fma(a, b, c)));
+    }
 
     // Type specific horizontal reductions
 

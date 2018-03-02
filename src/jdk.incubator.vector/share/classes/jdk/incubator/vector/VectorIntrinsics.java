@@ -10,14 +10,23 @@ import java.util.function.*;
 /*non-public*/ class VectorIntrinsics {
     private static final Unsafe U = Unsafe.getUnsafe();
 
-    static final int VECTOR_OP_ADD = 0;
-    static final int VECTOR_OP_SUB = 1;
-    static final int VECTOR_OP_MUL = 2;
-    static final int VECTOR_OP_DIV = 3;
+    // Unary
+    static final int VECTOR_OP_ABS  = 0;
+    static final int VECTOR_OP_NEG  = 1;
+    static final int VECTOR_OP_SQRT = 2;
 
-    static final int VECTOR_OP_AND = 4;
-    static final int VECTOR_OP_OR  = 5;
-    static final int VECTOR_OP_XOR = 6;
+    // Binary
+    static final int VECTOR_OP_ADD  = 3;
+    static final int VECTOR_OP_SUB  = 4;
+    static final int VECTOR_OP_MUL  = 5;
+    static final int VECTOR_OP_DIV  = 6;
+
+    static final int VECTOR_OP_AND  = 7;
+    static final int VECTOR_OP_OR   = 8;
+    static final int VECTOR_OP_XOR  = 9;
+
+    // Ternary
+    static final int VECTOR_OP_FMA  = 10;
 
     // Copied from open/src/hotspot/cpu/x86/assembler_x86.hpp
     // enum Condition { // The x86 condition codes used for conditional jumps/moves.
@@ -63,10 +72,32 @@ import java.util.function.*;
     /* ============================================================================ */
 
     @HotSpotIntrinsicCandidate
+    static <V> V unaryOp(int oprId, Class<V> vectorClass, Class<?> elementType, int vlen,
+                         V v1, /*Vector.Mask<E,S> m,*/
+                         Function<V,V> defaultImpl) {
+        return defaultImpl.apply(v1);
+    }
+
+    /* ============================================================================ */
+
+    @HotSpotIntrinsicCandidate
     static <V> V binaryOp(int oprId, Class<? extends V> vectorClass, Class<?> elementType, int vlen,
                           V v1, V v2, /*Vector.Mask<E,S> m,*/
                           BiFunction<V,V,V> defaultImpl) {
         return defaultImpl.apply(v1, v2);
+    }
+
+    /* ============================================================================ */
+
+    interface TernaryOperation<V> {
+        V apply(V v1, V v2, V v3);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static <V> V ternaryOp(int oprId, Class<V> vectorClass, Class<?> elementType, int vlen,
+                           V v1, V v2, V v3, /*Vector.Mask<E,S> m,*/
+                           TernaryOperation<V> defaultImpl) {
+        return defaultImpl.apply(v1, v2, v3);
     }
 
     /* ============================================================================ */
