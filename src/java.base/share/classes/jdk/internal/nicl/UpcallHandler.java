@@ -144,11 +144,11 @@ public class UpcallHandler {
         private final Pointer<Long> vectorReturns;
 
         UpcallContext(Scope scope, long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
-            this.integers = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(integers, Constants.MAX_INTEGER_ARGUMENT_REGISTERS * Constants.INTEGER_REGISTER_SIZE, scope), 0, MemoryRegion.MODE_R);
-            this.vectors = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(vectors, Constants.MAX_VECTOR_ARGUMENT_REGISTERS * Constants.VECTOR_REGISTER_SIZE, scope), 0, MemoryRegion.MODE_R);
-            this.stack = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(stack, MAX_STACK_ARG_BYTES, scope), 0, MemoryRegion.MODE_R);
-            this.integerReturns = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(integerReturn, Constants.MAX_INTEGER_RETURN_REGISTERS * Constants.INTEGER_REGISTER_SIZE, scope), 0, MemoryRegion.MODE_W);
-            this.vectorReturns = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(vectorReturn, Constants.MAX_VECTOR_RETURN_REGISTERS * Constants.VECTOR_REGISTER_SIZE, scope), 0, MemoryRegion.MODE_W);
+            this.integers = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(integers, Constants.MAX_INTEGER_ARGUMENT_REGISTERS * Constants.INTEGER_REGISTER_SIZE, scope), 0, BoundedMemoryRegion.MODE_R);
+            this.vectors = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(vectors, Constants.MAX_VECTOR_ARGUMENT_REGISTERS * Constants.VECTOR_REGISTER_SIZE, scope), 0, BoundedMemoryRegion.MODE_R);
+            this.stack = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(stack, MAX_STACK_ARG_BYTES, scope), 0, BoundedMemoryRegion.MODE_R);
+            this.integerReturns = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(integerReturn, Constants.MAX_INTEGER_RETURN_REGISTERS * Constants.INTEGER_REGISTER_SIZE, scope), 0, BoundedMemoryRegion.MODE_W);
+            this.vectorReturns = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(vectorReturn, Constants.MAX_VECTOR_RETURN_REGISTERS * Constants.VECTOR_REGISTER_SIZE, scope), 0, BoundedMemoryRegion.MODE_W);
         }
 
         Pointer<Long> getPtr(Storage storage) {

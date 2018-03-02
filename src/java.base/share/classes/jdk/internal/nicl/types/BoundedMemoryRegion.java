@@ -25,10 +25,14 @@ package jdk.internal.nicl.types;
 import jdk.internal.misc.Unsafe;
 
 import java.nicl.Scope;
-import java.nicl.types.MemoryRegion;
 import java.security.AccessControlException;
 
-public class BoundedMemoryRegion implements MemoryRegion {
+public class BoundedMemoryRegion {
+
+    public static final int MODE_R  = (1 << 0);
+    public static final int MODE_W  = (1 << 1);
+    public static final int MODE_RW = MODE_R | MODE_W;
+
     public static final BoundedMemoryRegion EVERYTHING = new BoundedMemoryRegion(0, Long.MAX_VALUE); // FIXME: Not actually MAX_VALUE
     public static final BoundedMemoryRegion NOTHING = new BoundedMemoryRegion(0, 0);
     private static final Unsafe U = Unsafe.getUnsafe();
@@ -72,7 +76,6 @@ public class BoundedMemoryRegion implements MemoryRegion {
         this.scope = scope;
     }
 
-    @Override
     public long addr() throws UnsupportedOperationException {
         if (base != null) {
             throw new UnsupportedOperationException();
@@ -81,21 +84,18 @@ public class BoundedMemoryRegion implements MemoryRegion {
         return min;
     }
 
-    @Override
     public void checkAccess(int mode) {
         if ((this.mode & mode) == 0) {
             throw new AccessControlException("Access denied");
         }
     }
 
-    @Override
     public void checkAlive() {
         if (scope != null) {
             scope.checkAlive();
         }
     }
 
-    @Override
     public void checkBounds(long offset) {
         if (offset < 0 || offset >= length) {
             // FIXME: Objects.checkIndex(long, long) ?
@@ -119,7 +119,6 @@ public class BoundedMemoryRegion implements MemoryRegion {
         U.copyMemory(this.base, this.min + srcOffset, dst.base, dst.min + dstOffset, length);
     }
 
-    @Override
     public long getBits(long offset, long size, boolean isSigned) {
         checkAccess(MODE_R);
         checkRange(offset, size);
@@ -156,7 +155,6 @@ public class BoundedMemoryRegion implements MemoryRegion {
         return getBits(offset, size, true);
     }
 
-    @Override
     public void putBits(long offset, long size, long value) {
         checkAccess(MODE_R);
         checkRange(offset, size);
@@ -188,48 +186,38 @@ public class BoundedMemoryRegion implements MemoryRegion {
         }
     }
 
-
-    @Override
     public byte getByte(long offset) {
         return (byte)getBits(offset, 1);
     }
 
-    @Override
     public void putByte(long offset, byte value) {
         putBits(offset, 1, value);
     }
 
-    @Override
     public short getShort(long offset) {
         return (short)getBits(offset, 2);
     }
 
-    @Override
     public void putShort(long offset, short value) {
         putBits(offset, 2, value);
     }
 
-    @Override
     public int getInt(long offset) {
         return (int)getBits(offset, 4);
     }
 
-    @Override
     public void putInt(long offset, int value) {
         putBits(offset, 4, value);
     }
 
-    @Override
     public long getLong(long offset) {
         return getBits(offset, 8);
     }
 
-    @Override
     public void putLong(long offset, long value) {
         putBits(offset, 8, value);
     }
 
-    @Override
     public long getAddress(long offset) {
         if (base != null) {
             throw new UnsupportedOperationException();
@@ -239,7 +227,6 @@ public class BoundedMemoryRegion implements MemoryRegion {
         return U.getAddress(this.min + offset);
     }
 
-    @Override
     public void putAddress(long offset, long value) {
         if (base != null) {
             throw new UnsupportedOperationException();

@@ -23,7 +23,6 @@
 package jdk.internal.nicl.types;
 
 import java.nicl.types.LayoutType;
-import java.nicl.types.MemoryRegion;
 import java.nicl.types.Pointer;
 
 public class UncheckedPointer<T> extends BoundedPointer<T> {
@@ -32,14 +31,14 @@ public class UncheckedPointer<T> extends BoundedPointer<T> {
     }
 
     public UncheckedPointer(LayoutType<T> type, long offset) {
-        this(type, offset, MemoryRegion.MODE_RW);
+        this(type, offset, BoundedMemoryRegion.MODE_RW);
     }
 
     public UncheckedPointer(LayoutType<T> type, long offset, int mode) {
         this(type, BoundedMemoryRegion.EVERYTHING, offset, mode);
     }
 
-    public UncheckedPointer(LayoutType<T> type, MemoryRegion region, long offset, int mode) {
+    public UncheckedPointer(LayoutType<T> type, BoundedMemoryRegion region, long offset, int mode) {
         super(type, region, offset, mode);
     }
 

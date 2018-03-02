@@ -343,16 +343,16 @@ public final class Util {
 
     // Helper methods useful for playing with pointers into the Java heap and data copying
 
-    public static MemoryRegion createRegionForArrayElements(long[] arr) {
-        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(long[].class), arr.length * 8, MemoryRegion.MODE_RW);
+    public static BoundedMemoryRegion createRegionForArrayElements(long[] arr) {
+        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(long[].class), arr.length * 8, BoundedMemoryRegion.MODE_RW);
     }
 
-    public static MemoryRegion createRegionForArrayElements(byte[] arr) {
-        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(byte[].class), arr.length, MemoryRegion.MODE_RW);
+    public static BoundedMemoryRegion createRegionForArrayElements(byte[] arr) {
+        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(byte[].class), arr.length, BoundedMemoryRegion.MODE_RW);
     }
 
-    public static MemoryRegion createRegionForArrayElements(long[] arr, Scope scope) {
-        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(long[].class), arr.length * 8, MemoryRegion.MODE_RW, scope);
+    public static BoundedMemoryRegion createRegionForArrayElements(long[] arr, Scope scope) {
+        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(long[].class), arr.length * 8, BoundedMemoryRegion.MODE_RW, scope);
     }
 
     public static Pointer<Long> createArrayElementsPointer(long[] arr) {

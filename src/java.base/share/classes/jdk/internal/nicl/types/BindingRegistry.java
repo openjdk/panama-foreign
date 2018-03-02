@@ -24,7 +24,6 @@ package jdk.internal.nicl.types;
 
 import jdk.internal.nicl.Platform;
 
-import java.nicl.types.MemoryRegion;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -34,7 +33,7 @@ import java.lang.invoke.MethodType;
 public class BindingRegistry {
     @FunctionalInterface
     public interface N2J<T> {
-        T convert(MemoryRegion r);
+        T convert(BoundedMemoryRegion r);
 
         default <S> N2J<S> combine(java.util.function.Function<T, S> fn) {
             return r -> fn.apply(convert(r));
@@ -43,7 +42,7 @@ public class BindingRegistry {
 
     @FunctionalInterface
     public interface J2N<T> {
-        void convert(T o, MemoryRegion r);
+        void convert(T o, BoundedMemoryRegion r);
 
         default <S> J2N<S> combine(java.util.function.Function<S, T> fn) {
             return (o, r) -> convert(fn.apply(o), r);

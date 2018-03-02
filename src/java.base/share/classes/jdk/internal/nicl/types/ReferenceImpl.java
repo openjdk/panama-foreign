@@ -29,17 +29,17 @@ import java.nicl.types.*;
 import java.nicl.types.Pointer;
 
 class ReferenceImpl<T> implements Reference<T> {
-    private final MemoryRegion region;
+    private final BoundedMemoryRegion region;
     private final long offset;
 
     private final LayoutType<T> type;
     private final int mode;
 
-    ReferenceImpl(LayoutType<T> type, MemoryRegion region, long offset) {
-        this(type, region, offset, MemoryRegion.MODE_RW);
+    ReferenceImpl(LayoutType<T> type, BoundedMemoryRegion region, long offset) {
+        this(type, region, offset, BoundedMemoryRegion.MODE_RW);
     }
 
-    ReferenceImpl(LayoutType<T> type, MemoryRegion region, long offset, int mode) {
+    ReferenceImpl(LayoutType<T> type, BoundedMemoryRegion region, long offset, int mode) {
         this.region = region;
         this.offset = offset;
         this.type = type;
@@ -81,7 +81,7 @@ class ReferenceImpl<T> implements Reference<T> {
 
     @SuppressWarnings("unchecked")
     private T getInner() throws IllegalAccessException {
-        checkAccess(MemoryRegion.MODE_R);
+        checkAccess(BoundedMemoryRegion.MODE_R);
 
         Class<?> c = type.getCarrierType();
         if (c.isPrimitive()) {
@@ -128,7 +128,7 @@ class ReferenceImpl<T> implements Reference<T> {
     }
 
     private void setInner(T value) throws IllegalAccessException {
-        checkAccess(MemoryRegion.MODE_W);
+        checkAccess(BoundedMemoryRegion.MODE_W);
 
         Class<?> c = type.getCarrierType();
         if (c.isPrimitive()) {

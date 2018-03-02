@@ -42,21 +42,21 @@ public class BoundedPointer<T> implements Pointer<T> {
         return addr == 0;
     }
 
-    protected final MemoryRegion region;
+    protected final BoundedMemoryRegion region;
     protected final long offset;
 
     protected final LayoutType<T> type;
     protected final int mode;
 
-    public BoundedPointer(LayoutType<T> type, MemoryRegion region) {
+    public BoundedPointer(LayoutType<T> type, BoundedMemoryRegion region) {
         this(type, region, 0);
     }
 
-    public BoundedPointer(LayoutType<T> type, MemoryRegion region, long offset) {
-        this(type, region, offset, MemoryRegion.MODE_RW);
+    public BoundedPointer(LayoutType<T> type, BoundedMemoryRegion region, long offset) {
+        this(type, region, offset, BoundedMemoryRegion.MODE_RW);
     }
 
-    public BoundedPointer(LayoutType<T> type, MemoryRegion region, long offset, int mode) {
+    public BoundedPointer(LayoutType<T> type, BoundedMemoryRegion region, long offset, int mode) {
         this.region = region;
         this.offset = offset;
         this.type = type;
@@ -131,8 +131,8 @@ public class BoundedPointer<T> implements Pointer<T> {
     }
 
     public void copyTo(BoundedPointer<?> dst, long bytes) throws IllegalAccessException {
-        BoundedMemoryRegion srcRegion = (BoundedMemoryRegion)this.region;
-        BoundedMemoryRegion dstRegion = (BoundedMemoryRegion)dst.region;
+        BoundedMemoryRegion srcRegion = this.region;
+        BoundedMemoryRegion dstRegion = dst.region;
         srcRegion.copyTo(this.offset, dstRegion, dst.offset, bytes);
     }
 

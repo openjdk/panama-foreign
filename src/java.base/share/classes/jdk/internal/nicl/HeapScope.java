@@ -70,7 +70,7 @@ public class HeapScope implements Scope {
         }
 
         long[] arr = new long[(int)nElems];
-        return new BoundedMemoryRegion(arr, Unsafe.ARRAY_LONG_BASE_OFFSET, allocSize, MemoryRegion.MODE_RW, this);
+        return new BoundedMemoryRegion(arr, Unsafe.ARRAY_LONG_BASE_OFFSET, allocSize, BoundedMemoryRegion.MODE_RW, this);
     }
 
     @Override
