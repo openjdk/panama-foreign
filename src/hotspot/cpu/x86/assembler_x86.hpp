@@ -1470,6 +1470,9 @@ private:
   void evmovdquq(Address dst, XMMRegister src, int vector_len);
   void evmovdquq(XMMRegister dst, Address src, int vector_len);
   void evmovdquq(XMMRegister dst, XMMRegister src, int vector_len);
+  void evmovdquq(Address dst, KRegister mask, XMMRegister src, bool merge, int vector_len);
+  void evmovdquq(XMMRegister dst, KRegister mask, Address src, bool merge, int vector_len);
+  void evmovdquq(XMMRegister dst, KRegister mask, XMMRegister src, bool merge, int vector_len);
 
   // Move lower 64bit to high 64bit in 128bit register
   void movlhps(XMMRegister dst, XMMRegister src);
@@ -1625,6 +1628,7 @@ private:
   void evpcmpeqb(KRegister kdst, XMMRegister nds, Address src, int vector_len);
   void evpcmpeqb(KRegister kdst, KRegister mask, XMMRegister nds, Address src, int vector_len);
 
+  void vpcmpgtb(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpgtb(KRegister kdst, XMMRegister nds, Address src, int vector_len);
   void evpcmpgtb(KRegister kdst, KRegister mask, XMMRegister nds, Address src, int vector_len);
 
@@ -1637,6 +1641,8 @@ private:
   void evpcmpeqw(KRegister kdst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqw(KRegister kdst, XMMRegister nds, Address src, int vector_len);
 
+  void vpcmpgtw(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+
   void pcmpeqd(XMMRegister dst, XMMRegister src);
   void vpcmpeqd(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqd(KRegister kdst, KRegister mask, XMMRegister nds, XMMRegister src, int vector_len);
@@ -1646,6 +1652,8 @@ private:
   void vpcmpeqq(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqq(KRegister kdst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqq(KRegister kdst, XMMRegister nds, Address src, int vector_len);
+
+  void vpcmpgtq(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
   void pmovmskb(Register dst, XMMRegister src);
   void vpmovmskb(Register dst, XMMRegister src);
@@ -2204,8 +2212,7 @@ private:
                ComparisonPredicateFP comparison, int vector_len);
 
   // Vector integer compares
-  void vcmpgtd(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
-  void vcmpeqd(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  void vpcmpgtd(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpd(KRegister kdst, KRegister mask, XMMRegister nds, XMMRegister src,
                int comparison, int vector_len);
   void evpcmpd(KRegister kdst, KRegister mask, XMMRegister nds, Address src,

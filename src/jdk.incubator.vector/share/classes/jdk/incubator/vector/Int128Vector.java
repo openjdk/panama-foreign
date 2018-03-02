@@ -781,7 +781,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
     public <F> Vector<F, Shapes.S128Bit> rebracket(Species<F, Shapes.S128Bit> species) {
         Objects.requireNonNull(species);
         // TODO: check proper element type
-        // TODO: update to pass species as an argument and preferably
+        // TODO: update to pass the two species as an arguments and ideally
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Int128Vector.class, int.class, LENGTH,

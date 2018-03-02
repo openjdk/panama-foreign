@@ -522,6 +522,77 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     // Comparisons
 
+    @Override
+    @ForceInline
+    public Byte64Mask equal(Vector<Byte, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Byte64Vector v = (Byte64Vector)o;
+
+        return (Byte64Mask) VectorIntrinsics.compare(
+            BT_eq, Byte64Vector.class, Byte64Mask.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Mask notEqual(Vector<Byte, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Byte64Vector v = (Byte64Vector)o;
+
+        return (Byte64Mask) VectorIntrinsics.compare(
+            BT_ne, Byte64Vector.class, Byte64Mask.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Mask lessThan(Vector<Byte, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Byte64Vector v = (Byte64Vector)o;
+
+        return (Byte64Mask) VectorIntrinsics.compare(
+            BT_lt, Byte64Vector.class, Byte64Mask.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Mask lessThanEq(Vector<Byte, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Byte64Vector v = (Byte64Vector)o;
+
+        return (Byte64Mask) VectorIntrinsics.compare(
+            BT_le, Byte64Vector.class, Byte64Mask.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Mask greaterThan(Vector<Byte, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Byte64Vector v = (Byte64Vector)o;
+
+        return (Byte64Mask) VectorIntrinsics.compare(
+            BT_gt, Byte64Vector.class, Byte64Mask.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Mask greaterThanEq(Vector<Byte, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Byte64Vector v = (Byte64Vector)o;
+
+        return (Byte64Mask) VectorIntrinsics.compare(
+            BT_ge, Byte64Vector.class, Byte64Mask.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
+    }
 
     // Foreach
 
@@ -639,7 +710,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     public <F> Vector<F, Shapes.S64Bit> rebracket(Species<F, Shapes.S64Bit> species) {
         Objects.requireNonNull(species);
         // TODO: check proper element type
-        // TODO: update to pass species as an argument and preferably
+        // TODO: update to pass the two species as an arguments and ideally
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Byte64Vector.class, byte.class, LENGTH,

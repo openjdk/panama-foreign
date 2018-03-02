@@ -522,6 +522,77 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
     // Comparisons
 
+    @Override
+    @ForceInline
+    public Short512Mask equal(Vector<Short, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Short512Vector v = (Short512Vector)o;
+
+        return (Short512Mask) VectorIntrinsics.compare(
+            BT_eq, Short512Vector.class, Short512Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    }
+
+    @Override
+    @ForceInline
+    public Short512Mask notEqual(Vector<Short, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Short512Vector v = (Short512Vector)o;
+
+        return (Short512Mask) VectorIntrinsics.compare(
+            BT_ne, Short512Vector.class, Short512Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    }
+
+    @Override
+    @ForceInline
+    public Short512Mask lessThan(Vector<Short, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Short512Vector v = (Short512Vector)o;
+
+        return (Short512Mask) VectorIntrinsics.compare(
+            BT_lt, Short512Vector.class, Short512Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    }
+
+    @Override
+    @ForceInline
+    public Short512Mask lessThanEq(Vector<Short, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Short512Vector v = (Short512Vector)o;
+
+        return (Short512Mask) VectorIntrinsics.compare(
+            BT_le, Short512Vector.class, Short512Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    }
+
+    @Override
+    @ForceInline
+    public Short512Mask greaterThan(Vector<Short, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Short512Vector v = (Short512Vector)o;
+
+        return (Short512Mask) VectorIntrinsics.compare(
+            BT_gt, Short512Vector.class, Short512Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    }
+
+    @Override
+    @ForceInline
+    public Short512Mask greaterThanEq(Vector<Short, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Short512Vector v = (Short512Vector)o;
+
+        return (Short512Mask) VectorIntrinsics.compare(
+            BT_ge, Short512Vector.class, Short512Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
+    }
 
     // Foreach
 
@@ -639,7 +710,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
     public <F> Vector<F, Shapes.S512Bit> rebracket(Species<F, Shapes.S512Bit> species) {
         Objects.requireNonNull(species);
         // TODO: check proper element type
-        // TODO: update to pass species as an argument and preferably
+        // TODO: update to pass the two species as an arguments and ideally
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Short512Vector.class, short.class, LENGTH,

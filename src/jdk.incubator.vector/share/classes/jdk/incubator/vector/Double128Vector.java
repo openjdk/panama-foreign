@@ -521,6 +521,77 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     // Comparisons
 
+    @Override
+    @ForceInline
+    public Double128Mask equal(Vector<Double, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+
+        return (Double128Mask) VectorIntrinsics.compare(
+            BT_eq, Double128Vector.class, Double128Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    }
+
+    @Override
+    @ForceInline
+    public Double128Mask notEqual(Vector<Double, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+
+        return (Double128Mask) VectorIntrinsics.compare(
+            BT_ne, Double128Vector.class, Double128Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    }
+
+    @Override
+    @ForceInline
+    public Double128Mask lessThan(Vector<Double, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+
+        return (Double128Mask) VectorIntrinsics.compare(
+            BT_lt, Double128Vector.class, Double128Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    }
+
+    @Override
+    @ForceInline
+    public Double128Mask lessThanEq(Vector<Double, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+
+        return (Double128Mask) VectorIntrinsics.compare(
+            BT_le, Double128Vector.class, Double128Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    }
+
+    @Override
+    @ForceInline
+    public Double128Mask greaterThan(Vector<Double, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+
+        return (Double128Mask) VectorIntrinsics.compare(
+            BT_gt, Double128Vector.class, Double128Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    }
+
+    @Override
+    @ForceInline
+    public Double128Mask greaterThanEq(Vector<Double, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+
+        return (Double128Mask) VectorIntrinsics.compare(
+            BT_ge, Double128Vector.class, Double128Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
+    }
 
     // Foreach
 
@@ -646,7 +717,7 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     public <F> Vector<F, Shapes.S128Bit> rebracket(Species<F, Shapes.S128Bit> species) {
         Objects.requireNonNull(species);
         // TODO: check proper element type
-        // TODO: update to pass species as an argument and preferably
+        // TODO: update to pass the two species as an arguments and ideally
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Double128Vector.class, double.class, LENGTH,

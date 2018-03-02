@@ -61,6 +61,48 @@ public class Int128VectorTests {
         }
     }
 
+    static void init_5arr(int[] t1, int[] t2, int[] t3, int[] t4, int[] t5) {
+        assert(t1.length == t2.length && t2.length == t3.length && t3.length == t4.length && t4.length == t5.length);
+        int corner1 = Integer.MAX_VALUE;
+        int corner2 = Integer.MIN_VALUE;
+        int corner3 = corner2;
+        int corner4 = corner1;
+        int corner5 = 0;
+        int corner6 = 0;
+        int corner7 = 0;
+
+
+        for (int i = 0; i < t1.length; i++) {
+            t1[i] = (int)(i);
+            t2[i] = (int)(i+1);
+            t3[i] = (int)(i-2);
+            t4[i] = i%3 == 0 ? t1[i] : (i%3 == 1 ? t2[i] : t3[i]);
+            switch(i%7) {
+                case 0:
+                    t5[i] = corner1;
+                    break;
+                case 1:
+                    t5[i] = corner2;
+                    break;
+                case 2:
+                    t5[i] = corner3;
+                    break;
+                case 3:
+                    t5[i] = corner4;
+                    break;
+                case 4:
+                    t5[i] = corner5;
+                    break;
+                case 5:
+                    t5[i] = corner6;
+                    break;
+                default:
+                    t5[i] = corner7;
+                    break;
+            }
+        }
+    }
+
     interface FUnOp {
         int apply(int a);
     }
@@ -583,6 +625,1050 @@ public class Int128VectorTests {
         assertArraysEquals(a, b, r, Int128VectorTests::min);
     }
 
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanInt128VectorTests1() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = av.lessThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = av.lessThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = av.lessThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = av.lessThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = av.lessThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), a[i+j] < a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), a[i+j] < b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), a[i+j] < c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), a[i+j] < d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), a[i+j] < e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanInt128VectorTests2() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = bv.lessThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = bv.lessThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = bv.lessThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = bv.lessThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = bv.lessThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), b[i+j] < a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), b[i+j] < b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), b[i+j] < c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), b[i+j] < d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), b[i+j] < e[i+j]);
+            }
+        }
+    }
+
+    @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanInt128VectorTests3() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = cv.lessThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = cv.lessThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = cv.lessThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = cv.lessThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = cv.lessThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), c[i+j] < a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), c[i+j] < b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), c[i+j] < c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), c[i+j] < d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), c[i+j] < e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanInt128VectorTests4() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = dv.lessThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = dv.lessThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = dv.lessThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = dv.lessThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = dv.lessThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), d[i+j] < a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), d[i+j] < b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), d[i+j] < c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), d[i+j] < d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), d[i+j] < e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanInt128VectorTests5() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = ev.lessThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = ev.lessThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = ev.lessThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = ev.lessThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = ev.lessThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), e[i+j] < a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), e[i+j] < b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), e[i+j] < c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), e[i+j] < d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), e[i+j] < e[i+j]);
+            }
+        }
+    }
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanInt128VectorTests1() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = av.greaterThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = av.greaterThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = av.greaterThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = av.greaterThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = av.greaterThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), a[i+j] > a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), a[i+j] > b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), a[i+j] > c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), a[i+j] > d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), a[i+j] > e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanInt128VectorTests2() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = bv.greaterThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = bv.greaterThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = bv.greaterThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = bv.greaterThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = bv.greaterThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), b[i+j] > a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), b[i+j] > b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), b[i+j] > c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), b[i+j] > d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), b[i+j] > e[i+j]);
+            }
+        }
+    }
+
+    @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanInt128VectorTests3() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = cv.greaterThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = cv.greaterThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = cv.greaterThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = cv.greaterThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = cv.greaterThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), c[i+j] > a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), c[i+j] > b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), c[i+j] > c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), c[i+j] > d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), c[i+j] > e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanInt128VectorTests4() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = dv.greaterThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = dv.greaterThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = dv.greaterThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = dv.greaterThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = dv.greaterThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), d[i+j] > a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), d[i+j] > b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), d[i+j] > c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), d[i+j] > d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), d[i+j] > e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanInt128VectorTests5() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = ev.greaterThan(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = ev.greaterThan(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = ev.greaterThan(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = ev.greaterThan(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = ev.greaterThan(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), e[i+j] > a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), e[i+j] > b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), e[i+j] > c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), e[i+j] > d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), e[i+j] > e[i+j]);
+            }
+        }
+    }
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void equalInt128VectorTests1() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = av.equal(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = av.equal(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = av.equal(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = av.equal(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = av.equal(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), a[i+j] == a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), a[i+j] == b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), a[i+j] == c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), a[i+j] == d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), a[i+j] == e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void equalInt128VectorTests2() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = bv.equal(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = bv.equal(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = bv.equal(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = bv.equal(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = bv.equal(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), b[i+j] == a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), b[i+j] == b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), b[i+j] == c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), b[i+j] == d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), b[i+j] == e[i+j]);
+            }
+        }
+    }
+
+    @org.testng.annotations.Test(invocationCount = 10)
+    static void equalInt128VectorTests3() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = cv.equal(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = cv.equal(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = cv.equal(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = cv.equal(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = cv.equal(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), c[i+j] == a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), c[i+j] == b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), c[i+j] == c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), c[i+j] == d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), c[i+j] == e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void equalInt128VectorTests4() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = dv.equal(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = dv.equal(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = dv.equal(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = dv.equal(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = dv.equal(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), d[i+j] == a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), d[i+j] == b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), d[i+j] == c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), d[i+j] == d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), d[i+j] == e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void equalInt128VectorTests5() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = ev.equal(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = ev.equal(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = ev.equal(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = ev.equal(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = ev.equal(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), e[i+j] == a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), e[i+j] == b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), e[i+j] == c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), e[i+j] == d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), e[i+j] == e[i+j]);
+            }
+        }
+    }
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void notEqualInt128VectorTests1() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = av.notEqual(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = av.notEqual(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = av.notEqual(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = av.notEqual(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = av.notEqual(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), a[i+j] != a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), a[i+j] != b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), a[i+j] != c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), a[i+j] != d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), a[i+j] != e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void notEqualInt128VectorTests2() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = bv.notEqual(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = bv.notEqual(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = bv.notEqual(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = bv.notEqual(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = bv.notEqual(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), b[i+j] != a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), b[i+j] != b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), b[i+j] != c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), b[i+j] != d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), b[i+j] != e[i+j]);
+            }
+        }
+    }
+
+    @org.testng.annotations.Test(invocationCount = 10)
+    static void notEqualInt128VectorTests3() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = cv.notEqual(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = cv.notEqual(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = cv.notEqual(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = cv.notEqual(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = cv.notEqual(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), c[i+j] != a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), c[i+j] != b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), c[i+j] != c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), c[i+j] != d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), c[i+j] != e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void notEqualInt128VectorTests4() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = dv.notEqual(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = dv.notEqual(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = dv.notEqual(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = dv.notEqual(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = dv.notEqual(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), d[i+j] != a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), d[i+j] != b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), d[i+j] != c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), d[i+j] != d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), d[i+j] != e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void notEqualInt128VectorTests5() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = ev.notEqual(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = ev.notEqual(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = ev.notEqual(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = ev.notEqual(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = ev.notEqual(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), e[i+j] != a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), e[i+j] != b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), e[i+j] != c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), e[i+j] != d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), e[i+j] != e[i+j]);
+            }
+        }
+    }
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanEqInt128VectorTests1() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = av.lessThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = av.lessThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = av.lessThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = av.lessThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = av.lessThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), a[i+j] <= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), a[i+j] <= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), a[i+j] <= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), a[i+j] <= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), a[i+j] <= e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanEqInt128VectorTests2() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = bv.lessThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = bv.lessThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = bv.lessThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = bv.lessThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = bv.lessThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), b[i+j] <= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), b[i+j] <= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), b[i+j] <= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), b[i+j] <= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), b[i+j] <= e[i+j]);
+            }
+        }
+    }
+
+    @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanEqInt128VectorTests3() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = cv.lessThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = cv.lessThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = cv.lessThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = cv.lessThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = cv.lessThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), c[i+j] <= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), c[i+j] <= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), c[i+j] <= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), c[i+j] <= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), c[i+j] <= e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanEqInt128VectorTests4() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = dv.lessThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = dv.lessThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = dv.lessThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = dv.lessThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = dv.lessThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), d[i+j] <= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), d[i+j] <= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), d[i+j] <= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), d[i+j] <= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), d[i+j] <= e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void lessThanEqInt128VectorTests5() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = ev.lessThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = ev.lessThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = ev.lessThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = ev.lessThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = ev.lessThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), e[i+j] <= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), e[i+j] <= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), e[i+j] <= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), e[i+j] <= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), e[i+j] <= e[i+j]);
+            }
+        }
+    }
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanEqInt128VectorTests1() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = av.greaterThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = av.greaterThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = av.greaterThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = av.greaterThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = av.greaterThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), a[i+j] >= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), a[i+j] >= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), a[i+j] >= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), a[i+j] >= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), a[i+j] >= e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanEqInt128VectorTests2() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = bv.greaterThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = bv.greaterThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = bv.greaterThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = bv.greaterThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = bv.greaterThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), b[i+j] >= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), b[i+j] >= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), b[i+j] >= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), b[i+j] >= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), b[i+j] >= e[i+j]);
+            }
+        }
+    }
+
+    @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanEqInt128VectorTests3() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = cv.greaterThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = cv.greaterThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = cv.greaterThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = cv.greaterThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = cv.greaterThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), c[i+j] >= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), c[i+j] >= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), c[i+j] >= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), c[i+j] >= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), c[i+j] >= e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanEqInt128VectorTests4() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = dv.greaterThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = dv.greaterThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = dv.greaterThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = dv.greaterThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = dv.greaterThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), d[i+j] >= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), d[i+j] >= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), d[i+j] >= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), d[i+j] >= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), d[i+j] >= e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void greaterThanEqInt128VectorTests5() {
+        int[] a = new int[SIZE];
+        int[] b = new int[SIZE];
+        int[] c = new int[SIZE];
+        int[] d = new int[SIZE];
+        int[] e = new int[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            IntVector<Shapes.S128Bit> av = species.fromArray(a, i);
+            IntVector<Shapes.S128Bit> bv = species.fromArray(b, i);
+            IntVector<Shapes.S128Bit> cv = species.fromArray(c, i);
+            IntVector<Shapes.S128Bit> dv = species.fromArray(d, i);
+            IntVector<Shapes.S128Bit> ev = species.fromArray(e, i);
+            Vector.Mask<Integer, Shapes.S128Bit> mask1 = ev.greaterThanEq(av);
+            Vector.Mask<Integer, Shapes.S128Bit> mask2 = ev.greaterThanEq(bv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask3 = ev.greaterThanEq(cv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask4 = ev.greaterThanEq(dv);
+            Vector.Mask<Integer, Shapes.S128Bit> mask5 = ev.greaterThanEq(ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), e[i+j] >= a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), e[i+j] >= b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), e[i+j] >= c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), e[i+j] >= d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), e[i+j] >= e[i+j]);
+            }
+        }
+    }
 
     static int blend(int a, int b, boolean mask) {
         return mask ? b : a;

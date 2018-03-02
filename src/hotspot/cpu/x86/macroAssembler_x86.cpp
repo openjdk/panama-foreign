@@ -3602,6 +3602,16 @@ void MacroAssembler::evmovdqub(XMMRegister dst, KRegister mask, AddressLiteral s
   }
 }
 
+void MacroAssembler::evmovdquw(XMMRegister dst, KRegister mask, AddressLiteral src, bool merge,
+                               int vector_len, Register scratch_reg) {
+  if (reachable(src)) {
+    Assembler::evmovdquw(dst, mask, as_Address(src), merge, vector_len);
+  } else {
+    lea(scratch_reg, src);
+    Assembler::evmovdquw(dst, mask, Address(scratch_reg, 0), merge, vector_len);
+  }
+}
+
 void MacroAssembler::evmovdqul(XMMRegister dst, KRegister mask, AddressLiteral src, bool merge,
                                int vector_len, Register scratch_reg) {
   if (reachable(src)) {
@@ -3609,6 +3619,16 @@ void MacroAssembler::evmovdqul(XMMRegister dst, KRegister mask, AddressLiteral s
   } else {
     lea(scratch_reg, src);
     Assembler::evmovdqul(dst, mask, Address(scratch_reg, 0), merge, vector_len);
+  }
+}
+
+void MacroAssembler::evmovdquq(XMMRegister dst, KRegister mask, AddressLiteral src, bool merge,
+                               int vector_len, Register scratch_reg) {
+  if (reachable(src)) {
+    Assembler::evmovdquq(dst, mask, as_Address(src), merge, vector_len);
+  } else {
+    lea(scratch_reg, src);
+    Assembler::evmovdquq(dst, mask, Address(scratch_reg, 0), merge, vector_len);
   }
 }
 
@@ -4471,10 +4491,15 @@ void MacroAssembler::vpcmpeqb(XMMRegister dst, XMMRegister nds, XMMRegister src,
   int dst_enc = dst->encoding();
   int nds_enc = nds->encoding();
   int src_enc = src->encoding();
-  assert(dst_enc == nds_enc, "");
+
   if ((dst_enc < 16) && (src_enc < 16)) {
     Assembler::vpcmpeqb(dst, nds, src, vector_len);
-  } else if (src_enc < 16) {
+    return;
+  }
+
+  // The logic below assumes dst and nds are the same.
+  assert(dst_enc == nds_enc, "");
+  if (src_enc < 16) {
     subptr(rsp, 64);
     evmovdqul(Address(rsp, 0), xmm0, Assembler::AVX_512bit);
     evmovdqul(xmm0, dst, Assembler::AVX_512bit);
@@ -4509,10 +4534,15 @@ void MacroAssembler::vpcmpeqw(XMMRegister dst, XMMRegister nds, XMMRegister src,
   int dst_enc = dst->encoding();
   int nds_enc = nds->encoding();
   int src_enc = src->encoding();
-  assert(dst_enc == nds_enc, "");
+
   if ((dst_enc < 16) && (src_enc < 16)) {
     Assembler::vpcmpeqw(dst, nds, src, vector_len);
-  } else if (src_enc < 16) {
+    return;
+  }
+
+  // The logic below assumes dst and nds are the same.
+  assert(dst_enc == nds_enc, "");
+  if (src_enc < 16) {
     subptr(rsp, 64);
     evmovdqul(Address(rsp, 0), xmm0, Assembler::AVX_512bit);
     evmovdqul(xmm0, dst, Assembler::AVX_512bit);
@@ -5299,12 +5329,12 @@ void MacroAssembler::vnegatesd(XMMRegister dst, XMMRegister nds, AddressLiteral 
   }
 }
 
-void MacroAssembler::vxorpd(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len) {
+void MacroAssembler::vxorpd(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len, Register scratch_reg) {
   if (reachable(src)) {
     vxorpd(dst, nds, as_Address(src), vector_len);
   } else {
-    lea(rscratch1, src);
-    vxorpd(dst, nds, Address(rscratch1, 0), vector_len);
+    lea(scratch_reg, src);
+    vxorpd(dst, nds, Address(scratch_reg, 0), vector_len);
   }
 }
 
@@ -5314,6 +5344,20 @@ void MacroAssembler::vxorps(XMMRegister dst, XMMRegister nds, AddressLiteral src
   } else {
     lea(rscratch1, src);
     vxorps(dst, nds, Address(rscratch1, 0), vector_len);
+  }
+}
+
+void MacroAssembler::vpxor(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len, Register scratch_reg) {
+  if (UseAVX > 1 || (vector_len < 1)) {
+    if (reachable(src)) {
+      Assembler::vpxor(dst, nds, as_Address(src), vector_len);
+    } else {
+      lea(scratch_reg, src);
+      Assembler::vpxor(dst, nds, Address(scratch_reg, 0), vector_len);
+    }
+  }
+  else {
+    MacroAssembler::vxorpd(dst, nds, src, vector_len, scratch_reg);
   }
 }
 

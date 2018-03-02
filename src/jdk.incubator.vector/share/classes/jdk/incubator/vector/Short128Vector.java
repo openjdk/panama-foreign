@@ -522,6 +522,77 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
 
     // Comparisons
 
+    @Override
+    @ForceInline
+    public Short128Mask equal(Vector<Short, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+
+        return (Short128Mask) VectorIntrinsics.compare(
+            BT_eq, Short128Vector.class, Short128Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Mask notEqual(Vector<Short, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+
+        return (Short128Mask) VectorIntrinsics.compare(
+            BT_ne, Short128Vector.class, Short128Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Mask lessThan(Vector<Short, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+
+        return (Short128Mask) VectorIntrinsics.compare(
+            BT_lt, Short128Vector.class, Short128Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Mask lessThanEq(Vector<Short, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+
+        return (Short128Mask) VectorIntrinsics.compare(
+            BT_le, Short128Vector.class, Short128Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Mask greaterThan(Vector<Short, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+
+        return (Short128Mask) VectorIntrinsics.compare(
+            BT_gt, Short128Vector.class, Short128Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Mask greaterThanEq(Vector<Short, Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+
+        return (Short128Mask) VectorIntrinsics.compare(
+            BT_ge, Short128Vector.class, Short128Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
+    }
 
     // Foreach
 
@@ -639,7 +710,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
     public <F> Vector<F, Shapes.S128Bit> rebracket(Species<F, Shapes.S128Bit> species) {
         Objects.requireNonNull(species);
         // TODO: check proper element type
-        // TODO: update to pass species as an argument and preferably
+        // TODO: update to pass the two species as an arguments and ideally
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Short128Vector.class, short.class, LENGTH,

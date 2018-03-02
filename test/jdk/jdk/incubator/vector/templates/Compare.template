@@ -1,0 +1,174 @@
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void [[TEST]]$vectorteststype$1() {
+        $type$[] a = new $type$[SIZE];
+        $type$[] b = new $type$[SIZE];
+        $type$[] c = new $type$[SIZE];
+        $type$[] d = new $type$[SIZE];
+        $type$[] e = new $type$[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> cv = species.fromArray(c, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> dv = species.fromArray(d, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> ev = species.fromArray(e, i);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask1 = av.[[TEST]](av);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask2 = av.[[TEST]](bv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask3 = av.[[TEST]](cv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask4 = av.[[TEST]](dv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask5 = av.[[TEST]](ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), a[i+j] [[TEST_OP]] a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), a[i+j] [[TEST_OP]] b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), a[i+j] [[TEST_OP]] c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), a[i+j] [[TEST_OP]] d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), a[i+j] [[TEST_OP]] e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void [[TEST]]$vectorteststype$2() {
+        $type$[] a = new $type$[SIZE];
+        $type$[] b = new $type$[SIZE];
+        $type$[] c = new $type$[SIZE];
+        $type$[] d = new $type$[SIZE];
+        $type$[] e = new $type$[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> cv = species.fromArray(c, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> dv = species.fromArray(d, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> ev = species.fromArray(e, i);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask1 = bv.[[TEST]](av);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask2 = bv.[[TEST]](bv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask3 = bv.[[TEST]](cv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask4 = bv.[[TEST]](dv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask5 = bv.[[TEST]](ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), b[i+j] [[TEST_OP]] a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), b[i+j] [[TEST_OP]] b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), b[i+j] [[TEST_OP]] c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), b[i+j] [[TEST_OP]] d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), b[i+j] [[TEST_OP]] e[i+j]);
+            }
+        }
+    }
+
+    @org.testng.annotations.Test(invocationCount = 10)
+    static void [[TEST]]$vectorteststype$3() {
+        $type$[] a = new $type$[SIZE];
+        $type$[] b = new $type$[SIZE];
+        $type$[] c = new $type$[SIZE];
+        $type$[] d = new $type$[SIZE];
+        $type$[] e = new $type$[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> cv = species.fromArray(c, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> dv = species.fromArray(d, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> ev = species.fromArray(e, i);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask1 = cv.[[TEST]](av);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask2 = cv.[[TEST]](bv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask3 = cv.[[TEST]](cv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask4 = cv.[[TEST]](dv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask5 = cv.[[TEST]](ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), c[i+j] [[TEST_OP]] a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), c[i+j] [[TEST_OP]] b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), c[i+j] [[TEST_OP]] c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), c[i+j] [[TEST_OP]] d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), c[i+j] [[TEST_OP]] e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void [[TEST]]$vectorteststype$4() {
+        $type$[] a = new $type$[SIZE];
+        $type$[] b = new $type$[SIZE];
+        $type$[] c = new $type$[SIZE];
+        $type$[] d = new $type$[SIZE];
+        $type$[] e = new $type$[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> cv = species.fromArray(c, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> dv = species.fromArray(d, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> ev = species.fromArray(e, i);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask1 = dv.[[TEST]](av);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask2 = dv.[[TEST]](bv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask3 = dv.[[TEST]](cv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask4 = dv.[[TEST]](dv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask5 = dv.[[TEST]](ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), d[i+j] [[TEST_OP]] a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), d[i+j] [[TEST_OP]] b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), d[i+j] [[TEST_OP]] c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), d[i+j] [[TEST_OP]] d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), d[i+j] [[TEST_OP]] e[i+j]);
+            }
+        }
+    }
+
+   @org.testng.annotations.Test(invocationCount = 10)
+    static void [[TEST]]$vectorteststype$5() {
+        $type$[] a = new $type$[SIZE];
+        $type$[] b = new $type$[SIZE];
+        $type$[] c = new $type$[SIZE];
+        $type$[] d = new $type$[SIZE];
+        $type$[] e = new $type$[SIZE];
+
+        // Data Initialization.
+        init_5arr(a, b, c, d, e);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += species.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> cv = species.fromArray(c, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> dv = species.fromArray(d, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> ev = species.fromArray(e, i);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask1 = ev.[[TEST]](av);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask2 = ev.[[TEST]](bv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask3 = ev.[[TEST]](cv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask4 = ev.[[TEST]](dv);
+            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mask5 = ev.[[TEST]](ev);
+
+            // Check results as part of computation.
+            for (int j = 0; j < species.length(); j++) {
+                Assert.assertEquals(mask1.getElement(j), e[i+j] [[TEST_OP]] a[i+j]);
+                Assert.assertEquals(mask2.getElement(j), e[i+j] [[TEST_OP]] b[i+j]);
+                Assert.assertEquals(mask3.getElement(j), e[i+j] [[TEST_OP]] c[i+j]);
+                Assert.assertEquals(mask4.getElement(j), e[i+j] [[TEST_OP]] d[i+j]);
+                Assert.assertEquals(mask5.getElement(j), e[i+j] [[TEST_OP]] e[i+j]);
+            }
+        }
+    }

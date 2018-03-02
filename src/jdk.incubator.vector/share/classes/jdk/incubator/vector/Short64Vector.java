@@ -522,6 +522,77 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     // Comparisons
 
+    @Override
+    @ForceInline
+    public Short64Mask equal(Vector<Short, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+
+        return (Short64Mask) VectorIntrinsics.compare(
+            BT_eq, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Mask notEqual(Vector<Short, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+
+        return (Short64Mask) VectorIntrinsics.compare(
+            BT_ne, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Mask lessThan(Vector<Short, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+
+        return (Short64Mask) VectorIntrinsics.compare(
+            BT_lt, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Mask lessThanEq(Vector<Short, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+
+        return (Short64Mask) VectorIntrinsics.compare(
+            BT_le, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Mask greaterThan(Vector<Short, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+
+        return (Short64Mask) VectorIntrinsics.compare(
+            BT_gt, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Mask greaterThanEq(Vector<Short, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+
+        return (Short64Mask) VectorIntrinsics.compare(
+            BT_ge, Short64Vector.class, Short64Mask.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
+    }
 
     // Foreach
 
@@ -639,7 +710,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     public <F> Vector<F, Shapes.S64Bit> rebracket(Species<F, Shapes.S64Bit> species) {
         Objects.requireNonNull(species);
         // TODO: check proper element type
-        // TODO: update to pass species as an argument and preferably
+        // TODO: update to pass the two species as an arguments and ideally
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Short64Vector.class, short.class, LENGTH,

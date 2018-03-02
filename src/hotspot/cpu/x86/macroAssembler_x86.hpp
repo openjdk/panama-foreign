@@ -1112,6 +1112,13 @@ public:
   void evmovdqub(XMMRegister dst, XMMRegister src, bool merge, int vector_len) { Assembler::evmovdqub(dst, src, merge, vector_len); }
   void evmovdqub(XMMRegister dst, KRegister mask, Address src, bool merge, int vector_len) { Assembler::evmovdqub(dst, mask, src, merge, vector_len); }
   void evmovdqub(XMMRegister dst, KRegister mask, AddressLiteral src, bool merge, int vector_len, Register scratch_reg);
+
+  void evmovdquw(Address dst, XMMRegister src, bool merge, int vector_len) { Assembler::evmovdquw(dst, src, merge, vector_len); }
+  void evmovdquw(Address dst, KRegister mask, XMMRegister src, bool merge, int vector_len) { Assembler::evmovdquw(dst, mask, src, merge, vector_len); }
+  void evmovdquw(XMMRegister dst, Address src, bool merge, int vector_len) { Assembler::evmovdquw(dst, src, merge, vector_len); }
+  void evmovdquw(XMMRegister dst, KRegister mask, Address src, bool merge, int vector_len) { Assembler::evmovdquw(dst, mask, src, merge, vector_len); }
+  void evmovdquw(XMMRegister dst, KRegister mask, AddressLiteral src, bool merge, int vector_len, Register scratch_reg);
+
   void evmovdqul(Address dst, XMMRegister src, int vector_len) { Assembler::evmovdqul(dst, src, vector_len); }
   void evmovdqul(XMMRegister dst, Address src, int vector_len) { Assembler::evmovdqul(dst, src, vector_len); }
   void evmovdqul(XMMRegister dst, XMMRegister src, int vector_len) { Assembler::evmovdqul(dst, src, vector_len); }
@@ -1119,6 +1126,14 @@ public:
   void evmovdqul(XMMRegister dst, KRegister mask, Address src, bool merge, int vector_len) { Assembler::evmovdqul(dst, mask, src, merge, vector_len); }
   void evmovdqul(XMMRegister dst, KRegister mask, XMMRegister src, bool merge, int vector_len) { Assembler::evmovdqul(dst, mask, src, merge, vector_len); }
   void evmovdqul(XMMRegister dst, KRegister mask, AddressLiteral src, bool merge, int vector_len, Register scratch_reg);
+
+  void evmovdquq(Address dst, XMMRegister src, int vector_len) { Assembler::evmovdquq(dst, src, vector_len); }
+  void evmovdquq(XMMRegister dst, Address src, int vector_len) { Assembler::evmovdquq(dst, src, vector_len); }
+  void evmovdquq(XMMRegister dst, XMMRegister src, int vector_len) { Assembler::evmovdquq(dst, src, vector_len); }
+  void evmovdquq(Address dst, KRegister mask, XMMRegister src, bool merge, int vector_len) { Assembler::evmovdquq(dst, mask, src, merge, vector_len); }
+  void evmovdquq(XMMRegister dst, KRegister mask, Address src, bool merge, int vector_len) { Assembler::evmovdquq(dst, mask, src, merge, vector_len); }
+  void evmovdquq(XMMRegister dst, KRegister mask, XMMRegister src, bool merge, int vector_len) { Assembler::evmovdquq(dst, mask, src, merge, vector_len); }
+  void evmovdquq(XMMRegister dst, KRegister mask, AddressLiteral src, bool merge, int vector_len, Register scratch_reg);
 
   // Move Aligned Double Quadword
   void movdqa(XMMRegister dst, Address src)       { Assembler::movdqa(dst, src); }
@@ -1325,7 +1340,7 @@ public:
 
   void vxorpd(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len) { Assembler::vxorpd(dst, nds, src, vector_len); }
   void vxorpd(XMMRegister dst, XMMRegister nds, Address src, int vector_len) { Assembler::vxorpd(dst, nds, src, vector_len); }
-  void vxorpd(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len);
+  void vxorpd(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len, Register scratch_reg = rscratch1);
 
   void vxorps(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len) { Assembler::vxorps(dst, nds, src, vector_len); }
   void vxorps(XMMRegister dst, XMMRegister nds, Address src, int vector_len) { Assembler::vxorps(dst, nds, src, vector_len); }
@@ -1343,6 +1358,7 @@ public:
     else
       Assembler::vxorpd(dst, nds, src, vector_len);
   }
+  void vpxor(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len, Register scratch_reg);
 
   // Simple version for AVX2 256bit vectors
   void vpxor(XMMRegister dst, XMMRegister src) { Assembler::vpxor(dst, dst, src, true); }

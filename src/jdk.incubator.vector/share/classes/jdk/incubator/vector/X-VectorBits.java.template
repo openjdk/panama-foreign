@@ -703,7 +703,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     // Comparisons
 
-#if[intOrFloat]
     @Override
     @ForceInline
     public $masktype$ equal(Vector<$Boxtype$, Shapes.$shape$> o) {
@@ -775,7 +774,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
     }
-#end[intOrFloat]
 
     // Foreach
 

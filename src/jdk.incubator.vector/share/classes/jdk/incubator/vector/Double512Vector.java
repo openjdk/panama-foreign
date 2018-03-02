@@ -521,6 +521,77 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     // Comparisons
 
+    @Override
+    @ForceInline
+    public Double512Mask equal(Vector<Double, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+
+        return (Double512Mask) VectorIntrinsics.compare(
+            BT_eq, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Mask notEqual(Vector<Double, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+
+        return (Double512Mask) VectorIntrinsics.compare(
+            BT_ne, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Mask lessThan(Vector<Double, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+
+        return (Double512Mask) VectorIntrinsics.compare(
+            BT_lt, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Mask lessThanEq(Vector<Double, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+
+        return (Double512Mask) VectorIntrinsics.compare(
+            BT_le, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Mask greaterThan(Vector<Double, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+
+        return (Double512Mask) VectorIntrinsics.compare(
+            BT_gt, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Mask greaterThanEq(Vector<Double, Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+
+        return (Double512Mask) VectorIntrinsics.compare(
+            BT_ge, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
+    }
 
     // Foreach
 
@@ -646,7 +717,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     public <F> Vector<F, Shapes.S512Bit> rebracket(Species<F, Shapes.S512Bit> species) {
         Objects.requireNonNull(species);
         // TODO: check proper element type
-        // TODO: update to pass species as an argument and preferably
+        // TODO: update to pass the two species as an arguments and ideally
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Double512Vector.class, double.class, LENGTH,

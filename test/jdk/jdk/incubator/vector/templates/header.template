@@ -78,6 +78,59 @@ public class $vectorteststype$ {
         }
     }
 
+    static void init_5arr($type$[] t1, $type$[] t2, $type$[] t3, $type$[] t4, $type$[] t5) {
+        assert(t1.length == t2.length && t2.length == t3.length && t3.length == t4.length && t4.length == t5.length);
+#if[FP]
+        $type$ corner1 = $Wideboxtype$.MAX_VALUE;
+        $type$ corner2 = $Wideboxtype$.MIN_VALUE;
+        $type$ corner3 = $Wideboxtype$.NEGATIVE_INFINITY;
+        $type$ corner4 = $Wideboxtype$.POSITIVE_INFINITY;
+        $type$ corner5 = $Wideboxtype$.NaN;
+        $type$ corner6 = ($type$)0.0;
+        $type$ corner7 = ($type$)-0.0;
+#end[FP]
+#if[BITWISE]
+        $type$ corner1 = $Wideboxtype$.MAX_VALUE;
+        $type$ corner2 = $Wideboxtype$.MIN_VALUE;
+        $type$ corner3 = corner2;
+        $type$ corner4 = corner1;
+        $type$ corner5 = 0;
+        $type$ corner6 = 0;
+        $type$ corner7 = 0;
+#end[BITWISE]
+
+
+        for (int i = 0; i < t1.length; i++) {
+            t1[i] = ($type$)(i);
+            t2[i] = ($type$)(i+1);
+            t3[i] = ($type$)(i-2);
+            t4[i] = i%3 == 0 ? t1[i] : (i%3 == 1 ? t2[i] : t3[i]);
+            switch(i%7) {
+                case 0:
+                    t5[i] = corner1;
+                    break;
+                case 1:
+                    t5[i] = corner2;
+                    break;
+                case 2:
+                    t5[i] = corner3;
+                    break;
+                case 3:
+                    t5[i] = corner4;
+                    break;
+                case 4:
+                    t5[i] = corner5;
+                    break;
+                case 5:
+                    t5[i] = corner6;
+                    break;
+                default:
+                    t5[i] = corner7;
+                    break;
+            }
+        }
+    }
+
     interface FUnOp {
         $type$ apply($type$ a);
     }

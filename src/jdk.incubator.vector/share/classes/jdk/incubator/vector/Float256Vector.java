@@ -717,7 +717,7 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     public <F> Vector<F, Shapes.S256Bit> rebracket(Species<F, Shapes.S256Bit> species) {
         Objects.requireNonNull(species);
         // TODO: check proper element type
-        // TODO: update to pass species as an argument and preferably
+        // TODO: update to pass the two species as an arguments and ideally
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Float256Vector.class, float.class, LENGTH,

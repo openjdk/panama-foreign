@@ -33,6 +33,7 @@ binary="$TEMPLATE_FOLDER/Binary-op.template"
 binary_masked="$TEMPLATE_FOLDER/Binary-Masked-op.template"
 binary_scalar="$TEMPLATE_FOLDER/Binary-Scalar-op.template"
 blend="$TEMPLATE_FOLDER/Blend-op.template"
+compare_template="$TEMPLATE_FOLDER/Compare.template"
 
 function gen_op_tmpl { 
   template=$1
@@ -104,6 +105,14 @@ gen_binary_alu_op "xor" "a ^ b" $template_file "BITWISE"
 # Masked reductions.
 gen_binary_op "max" "Math.max(a, b)" $template_file
 gen_binary_op "min" "Math.min(a, b)" $template_file
+
+# Compares
+gen_op_tmpl $compare_template "lessThan" "<" $template_file
+gen_op_tmpl $compare_template "greaterThan" ">" $template_file
+gen_op_tmpl $compare_template "equal" "==" $template_file
+gen_op_tmpl $compare_template "notEqual" "!=" $template_file
+gen_op_tmpl $compare_template "lessThanEq" "<=" $template_file
+gen_op_tmpl $compare_template "greaterThanEq" ">=" $template_file
 
 # Blend.
 gen_op_tmpl $blend "blend" "" $template_file

@@ -7576,9 +7576,6 @@ bool LibraryCallKit::inline_vector_compare() {
     return false; // operand unboxing failed
   }
   BoolTest::mask pred = (BoolTest::mask)cond->get_con();
-  if (pred != BoolTest::eq && pred != BoolTest::lt && pred != BoolTest::gt) {
-    return false;
-  }
   const TypeVect* vt = TypeVect::make(mask_bt, num_elem);
   Node* operation = _gvn.transform(new VectorMaskCmpNode(pred, v1, v2, vt));
 
