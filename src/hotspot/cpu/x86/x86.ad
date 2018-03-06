@@ -1235,6 +1235,7 @@ const bool Matcher::match_rule_supported(int opcode) {
       if (!UsePopCountInstruction)
         ret_value = false;
       break;
+    case Op_MulVB:
     case Op_MulVI:
     case Op_MulVL:
       if ((UseSSE < 4) && (UseAVX < 1)) // only with SSE4_1 or AVX
@@ -7754,7 +7755,8 @@ instruct vmul16B_reg_avx(vecX dst, vecX src1, vecX src2, vecY tmp2, vecY tmp) %{
            "vpmullw    $tmp,$tmp2\n\t"
            "vmovdqu    $tmp2,[0x00ff00ff0x00ff00ff]\n\t"
            "vpand      $tmp,$tmp2\n\t"
-           "vpackuswb  $dst,$tmp\n\t! mul packed16B" %}
+           "vextracti128_high  $tmp2,$tmp\n\t"
+           "vpackuswb  $dst,$tmp, $tmp2\n\t! mul packed16B" %}
   ins_encode %{
   int vector_len = 1;
     __ vpmovsxbw($tmp$$XMMRegister, $src1$$XMMRegister, vector_len);
@@ -7762,7 +7764,8 @@ instruct vmul16B_reg_avx(vecX dst, vecX src1, vecX src2, vecY tmp2, vecY tmp) %{
     __ vpmullw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ vmovdqu($tmp2$$XMMRegister, ExternalAddress(vector_byte_saturationmask()));
     __ vpand($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ vpackuswb($dst$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0);
+    __ vextracti128_high($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ vpackuswb($dst$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, 0);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -7770,7 +7773,7 @@ instruct vmul16B_reg_avx(vecX dst, vecX src1, vecX src2, vecY tmp2, vecY tmp) %{
 instruct vmul32B_reg_avx(vecY dst, vecY src1, vecY src2, vecY tmp1, vecY tmp2, vecY tmp3) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 32);
   match(Set dst (MulVB src1 src2));
-  effect(TEMP tmp1, TEMP tmp2, TEMP tmp3);
+  effect(TEMP dst, TEMP tmp1, TEMP tmp2, TEMP tmp3);
   format %{"vextracti128_high  $tmp1,$src1\n\t"
            "vextracti128_high  $tmp3,$src2\n\t"
            "vpmovsxbw $tmp1,$tmp1\n\t"
@@ -7783,14 +7786,15 @@ instruct vmul32B_reg_avx(vecY dst, vecY src1, vecY src2, vecY tmp1, vecY tmp2, v
            "vpbroadcastd $tmp3, $tmp3\n\t"
            "vpand $tmp2,$tmp2,$tmp3\n\t"
            "vpand $tmp1,$tmp1,$tmp3\n\t"
-           "vpackuswb $dst,$tmp1,$tmp2\n\t! mul packed32B" %}
+           "vpackuswb $dst,$tmp2,$tmp1\n\t"
+           "vpermq $dst, $dst, 0xD8\t! mul packed32B" %}
   ins_encode %{
     int vector_len = 1;
     __ vextracti128_high($tmp1$$XMMRegister, $src1$$XMMRegister);
     __ vextracti128_high($tmp3$$XMMRegister, $src2$$XMMRegister);
     __ vpmovsxbw($tmp1$$XMMRegister, $tmp1$$XMMRegister, vector_len);
     __ vpmovsxbw($tmp3$$XMMRegister, $tmp3$$XMMRegister, vector_len);
-    __ vpmullw($tmp1$$XMMRegister, $tmp3$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpmullw($tmp1$$XMMRegister, $tmp1$$XMMRegister, $tmp3$$XMMRegister, vector_len);
     __ vpmovsxbw($tmp2$$XMMRegister, $src1$$XMMRegister, vector_len);
     __ vpmovsxbw($tmp3$$XMMRegister, $src2$$XMMRegister, vector_len);
     __ vpmullw($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
@@ -7798,7 +7802,8 @@ instruct vmul32B_reg_avx(vecY dst, vecY src1, vecY src2, vecY tmp1, vecY tmp2, v
     __ vpbroadcastd($tmp3$$XMMRegister, $tmp3$$XMMRegister);
     __ vpand($tmp1$$XMMRegister, $tmp1$$XMMRegister, $tmp3$$XMMRegister, vector_len);
     __ vpand($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
-    __ vpackuswb($dst$$XMMRegister, $tmp1$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpackuswb($dst$$XMMRegister, $tmp2$$XMMRegister, $tmp1$$XMMRegister, vector_len);
+    __ vpermq($dst$$XMMRegister, $dst$$XMMRegister, 0xD8, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -8196,7 +8201,7 @@ instruct vmul4I_mem(vecX dst, vecX src, memory mem) %{
 // Long vector mul
 
 instruct mul2L_reg(vecX dst, vecX src2, vecX tmp) %{
-  predicate(UseAVX == 0 && n->as_Vector()->length() == 2 && VM_Version::supports_sse4_1());
+  predicate(UseSSE > 3 && n->as_Vector()->length() == 2 && VM_Version::supports_sse4_1());
   match(Set dst (MulVL dst src2));
   effect(TEMP dst, TEMP tmp);
   format %{ "pshufd $tmp,$src2, 177\n\t"
@@ -8221,7 +8226,7 @@ instruct mul2L_reg(vecX dst, vecX src2, vecX tmp) %{
 %}
 
 instruct vmul2L_reg_avx(vecX dst, vecX src1, vecX src2, vecX tmp1, vecX tmp) %{
-  predicate(UseAVX == 1 && n->as_Vector()->length() == 2 && VM_Version::supports_avx());
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && VM_Version::supports_avx());
   match(Set dst (MulVL src1 src2));
   effect(TEMP tmp1, TEMP tmp);
   format %{ "vpshufd $tmp,$src2\n\t"
@@ -8267,7 +8272,7 @@ instruct vmul2L_mem(vecX dst, vecX src, memory mem) %{
 %}
 
 instruct vmul4L_reg_avx(vecY dst, vecY src1, vecY src2, vecY tmp, vecY tmp1,) %{
-  predicate(UseAVX == 2 && n->as_Vector()->length() == 4 && VM_Version::supports_avx2());
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && VM_Version::supports_avx2());
   match(Set dst (MulVL src1 src2));
   effect(TEMP tmp1, TEMP tmp);
   format %{ "vpshufd $tmp,$src2\n\t"
