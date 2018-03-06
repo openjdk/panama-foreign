@@ -27,7 +27,6 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -369,7 +368,6 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             (v1, v2) -> ((Long256Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
     }
 
-
     @Override
     @ForceInline
     public Long256Vector div(Vector<Long,Shapes.S256Bit> o) {
@@ -380,6 +378,8 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> ((Long256Vector)v1).bOp(v2, (i, a, b) -> (long)(a / b)));
     }
+
+
 
     @Override
     @ForceInline
@@ -412,6 +412,51 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             VECTOR_OP_XOR, Long256Vector.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> ((Long256Vector)v1).bOp(v2, (i, a, b) -> (long)(a ^ b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector and(Vector<Long,Shapes.S256Bit> v, Mask<Long, Shapes.S256Bit> m) {
+        return blend(and(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector or(Vector<Long,Shapes.S256Bit> v, Mask<Long, Shapes.S256Bit> m) {
+        return blend(or(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector xor(Vector<Long,Shapes.S256Bit> v, Mask<Long, Shapes.S256Bit> m) {
+        return blend(xor(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector shiftL(int s) {
+        return (Long256Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, Long256Vector.class, long.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (long) (a << i)));
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector shiftR(int s) {
+        return (Long256Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, Long256Vector.class, long.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (long) (a >>> i)));
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector aShiftR(int s) {
+        return (Long256Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, Long256Vector.class, long.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (long) (a >> i)));
     }
 
     // Ternary operations
@@ -449,6 +494,15 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
                                (arr, idx, v) -> v.forEach((i, a_) -> ((long[])arr)[idx + i] = a_));
     }
 
+    @Override
+    @ForceInline
+    public void intoArray(long[] a, int ax, Mask<Long, Shapes.S256Bit> m) {
+        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+        Long256Vector oldVal = SPECIES.fromArray(a, ax);
+        Long256Vector newVal = oldVal.blend(this, m);
+        newVal.intoArray(a, ax);
+    }
+
     //
 
     @Override
@@ -482,6 +536,9 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         }
         return new Long256Mask(bits);
     }
+
+    // Comparisons
+
 
     // Foreach
 
@@ -585,6 +642,33 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
         });
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector blend(Vector<Long, Shapes.S256Bit> o1, Mask<Long, Shapes.S256Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Long256Vector v = (Long256Vector)o1;
+        Long256Mask   m = (Long256Mask)o2;
+
+        return (Long256Vector) VectorIntrinsics.blend(
+            Long256Vector.class, Long256Mask.class, long.class, LENGTH,
+            this, v, m,
+            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public <F> Vector<F, Shapes.S256Bit> rebracket(Class<F> type) {
+        Objects.requireNonNull(type);
+        // TODO: check proper element type
+        return VectorIntrinsics.rebracket(
+            Long256Vector.class, long.class, LENGTH,
+            type, this,
+            (v, t) -> (Vector<F, Shapes.S256Bit>) v.reshape(t, v.shape())
+        );
     }
 
     @Override
@@ -692,6 +776,19 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
                 res[i] = (long) (bits[i] ? -1 : 0);
             }
             return new Long256Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <Z> Mask<Z, Shapes.S256Bit> rebracket(Class<Z> type) {
+            Objects.requireNonNull(type);
+            // TODO: check proper element type
+            return VectorIntrinsics.rebracket(
+                Long256Mask.class, long.class, LENGTH,
+                type, this,
+                (m, t) -> (Mask<Z, Shapes.S256Bit>)m.reshape(t, m.species().shape())
+            );
         }
 
         // Unary operations
@@ -856,7 +953,6 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
                 ((long bits) -> SPECIES.op(i -> (long)bits)));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Long256Mask trueMask() {
@@ -865,7 +961,6 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
                                                      (z -> Long256Mask.TRUE_MASK));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Long256Mask falseMask() {
@@ -882,6 +977,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             return (Long256Vector) VectorIntrinsics.load(Long256Vector.class, long.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((long[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Long256Vector fromArray(long[] a, int ax, Mask<Long, Shapes.S256Bit> m) {
+            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
         }
     }
 }

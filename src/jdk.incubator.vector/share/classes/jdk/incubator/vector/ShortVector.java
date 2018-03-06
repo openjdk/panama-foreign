@@ -249,7 +249,6 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
 
     public abstract Mask<Short, S> greaterThanEq(short o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public ShortVector<S> blend(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
@@ -478,12 +477,10 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
 
     // Type specific extractors
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(short[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(short[] a, int ax, Mask<Short, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -534,12 +531,10 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
             return op(i -> es[i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public ShortVector<S> fromArray(short[] a, int ax) {
             return op(i -> a[ax + i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public ShortVector<S> fromArray(short[] a, int ax, Mask<Short, S> m) {
             return op(m, i -> a[ax + i]);
         }

@@ -28,6 +28,11 @@ import java.util.function.*;
     // Ternary
     static final int VECTOR_OP_FMA  = 10;
 
+    // Broadcast int
+    static final int VECTOR_OP_LSHIFT  = 11;
+    static final int VECTOR_OP_RSHIFT  = 12;
+    static final int VECTOR_OP_URSHIFT = 13;
+
     // Copied from open/src/hotspot/cpu/x86/assembler_x86.hpp
     // enum Condition { // The x86 condition codes used for conditional jumps/moves.
     static final int COND_zero          = 0x4;
@@ -50,6 +55,17 @@ import java.util.function.*;
     static final int COND_positive      = 0x9;
     static final int COND_parity        = 0xa;
     static final int COND_noParity      = 0xb;
+
+
+    // enum BoolTest
+    static final int BT_eq = 0;
+    static final int BT_ne = 4;
+    static final int BT_le = 5;
+    static final int BT_ge = 7;
+    static final int BT_lt = 3;
+    static final int BT_gt = 1;
+    static final int BT_overflow = 2;
+    static final int BT_no_overflow = 6;
 
     /* ============================================================================ */
 
@@ -93,6 +109,7 @@ import java.util.function.*;
         V apply(V v1, V v2, V v3);
     }
 
+    @SuppressWarnings("unchecked")
     @HotSpotIntrinsicCandidate
     static <V> V ternaryOp(int oprId, Class<V> vectorClass, Class<?> elementType, int vlen,
                            V v1, V v2, V v3, /*Vector.Mask<E,S> m,*/
@@ -135,6 +152,71 @@ import java.util.function.*;
                             V v1, V v2,
                             BiFunction<V, V, Boolean> defaultImpl) {
         return defaultImpl.apply(v1, v2);
+    }
+
+    /* ============================================================================ */
+
+    interface VectorCompareOp<V,M> {
+        M apply(V v1, V v2);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static <V extends Vector<E,S>,
+            M extends Vector.Mask<E,S>,
+            S extends Vector.Shape, E>
+    M compare(int cond, Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int vlen,
+              V v1, V v2,
+              VectorCompareOp<V,M> defaultImpl) {
+        return defaultImpl.apply(v1, v2);
+    }
+
+    /* ============================================================================ */
+
+    interface VectorBlendOp<V extends Vector<E,S>,
+                            M extends Vector.Mask<E,S>,
+                            S extends Vector.Shape, E> {
+        V apply(V v1, V v2, M mask);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static
+    <V extends Vector<E,S>,
+     M extends Vector.Mask<E,S>,
+     S extends Vector.Shape, E>
+    V blend(Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int vlen,
+            V v1, V v2, M m,
+            VectorBlendOp<V,M,S,E> defaultImpl) {
+        return defaultImpl.apply(v1, v2, m);
+    }
+
+    /* ============================================================================ */
+
+    interface VectorBroadcastIntOp<V extends Vector<?,?>> {
+        V apply(V v, int i);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static
+    <V extends Vector<?,?>>
+    V broadcastInt(int opr, Class<V> vectorClass, Class<?> elementType, int vlen,
+                   V v, int i,
+                   VectorBroadcastIntOp<V> defaultImpl) {
+        return defaultImpl.apply(v, i);
+    }
+
+    /* ============================================================================ */
+
+    interface VectorRebracketOp<VT, VF> {
+        VT apply(VF v, Class<?> elementType);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static
+    <VT, VF>
+    VT rebracket(Class<VF> fromVectorClass, Class<?> fromElementType, int fromVLen,
+                 Class<?> toElementType, VF v,
+                 VectorRebracketOp<VT,VF> defaultImpl) {
+        return defaultImpl.apply(v, toElementType);
     }
 
     /* ============================================================================ */

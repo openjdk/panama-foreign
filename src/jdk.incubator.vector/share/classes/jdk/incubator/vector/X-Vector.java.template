@@ -91,12 +91,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     //
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> add(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a + b));
@@ -104,12 +98,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> add($type$ o);
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> add(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a + b));
@@ -131,12 +119,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> addSaturate($type$ o, Mask<$Boxtype$, S> m);
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a - b));
@@ -144,12 +126,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> sub($type$ o);
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a - b));
@@ -171,12 +147,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> subSaturate($type$ o, Mask<$Boxtype$, S> m);
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a * b));
@@ -184,12 +154,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> mul($type$ o);
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a * b));
@@ -197,9 +161,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> mul($type$ o, Mask<$Boxtype$, S> m);
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
     @Override
     public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a / b));
@@ -207,9 +168,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> div($type$ o);
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
     @Override
     public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a / b));
@@ -217,12 +175,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> div($type$ o, Mask<$Boxtype$, S> m);
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> neg() {
         return uOp((i, a) -> ($type$) (-a));
@@ -233,12 +185,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return uOp(m, (i, a) -> ($type$) (-a));
     }
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public $abstractvectortype$<S> abs() {
         return uOp((i, a) -> ($type$) Math.abs(a));
@@ -263,12 +209,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract $abstractvectortype$<S> max($type$ o);
 
-#if[float]
-    @HotSpotIntrinsicCandidate
-#end[float]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public Mask<$Boxtype$, S> equal(Vector<$Boxtype$,S> o) {
         return bTest(o, (i, a, b) -> a == b);
@@ -283,12 +223,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract Mask<$Boxtype$, S> notEqual($type$ o);
 
-#if[float]
-    @HotSpotIntrinsicCandidate
-#end[float]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public Mask<$Boxtype$, S> lessThan(Vector<$Boxtype$,S> o) {
         return bTest(o, (i, a, b) -> a < b);
@@ -303,12 +237,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract Mask<$Boxtype$, S> lessThanEq($type$ o);
 
-#if[float]
-    @HotSpotIntrinsicCandidate
-#end[float]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     @Override
     public Mask<$Boxtype$, S> greaterThan(Vector<$Boxtype$,S> o) {
         return bTest(o, (i, a, b) -> a > b);
@@ -323,7 +251,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     public abstract Mask<$Boxtype$, S> greaterThanEq($type$ o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public $abstractvectortype$<S> blend(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
@@ -510,54 +437,36 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 #end[FP]
 
 #if[BITWISE]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $abstractvectortype$<S> and(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a & b));
     }
 
     public abstract $abstractvectortype$<S> and($type$ o);
 
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $abstractvectortype$<S> and(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a & b));
     }
 
     public abstract $abstractvectortype$<S> and($type$ o, Mask<$Boxtype$, S> m);
 
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $abstractvectortype$<S> or(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a | b));
     }
 
     public abstract $abstractvectortype$<S> or($type$ o);
 
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $abstractvectortype$<S> or(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a | b));
     }
 
     public abstract $abstractvectortype$<S> or($type$ o, Mask<$Boxtype$, S> m);
 
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> o) {
         return bOp(o, (i, a, b) -> ($type$) (a ^ b));
     }
 
     public abstract $abstractvectortype$<S> xor($type$ o);
 
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a ^ b));
     }
@@ -601,9 +510,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a << b));
     }
 
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $abstractvectortype$<S> shiftL(int s) {
         return uOp((i, a) -> ($type$) (a << s));
     }
@@ -621,9 +527,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a >>> b));
     }
 
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $abstractvectortype$<S> shiftR(int s) {
         return uOp((i, a) -> ($type$) (a >>> s));
     }
@@ -641,9 +544,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return bOp(o, (i, a, b) -> ($type$) (a >> b));
     }
 
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $abstractvectortype$<S> aShiftR(int s) {
         return uOp((i, a) -> ($type$) (a >> s));
     }
@@ -711,12 +611,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     // Type specific horizontal reductions
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $type$ addAll() {
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a + b));
     }
@@ -725,12 +619,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a - b));
     }
 
-#if[FP]
-    @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-    @HotSpotIntrinsicCandidate
-#end[int]
     public $type$ mulAll() {
         return rOp(($type$) 1, (i, a, b) -> ($type$) (a * b));
     }
@@ -759,9 +647,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     // Type conversions
 
-#if[float]
-    @HotSpotIntrinsicCandidate
-#end[float]
     @Override
     public <F> Vector<F,S> cast(Class<F> type) {
         return cast(type, shape());
@@ -775,12 +660,10 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
     // Type specific extractors
 
-    @HotSpotIntrinsicCandidate
     public void intoArray($type$[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
-    @HotSpotIntrinsicCandidate
     public void intoArray($type$[] a, int ax, Mask<$Boxtype$, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -809,23 +692,11 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
 
         // Factories
 
-#if[FP]
-        @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-        @HotSpotIntrinsicCandidate
-#end[int]
         @Override
         public $abstractvectortype$<S> zero() {
             return op(i -> 0);
         }
 
-#if[FP]
-        @HotSpotIntrinsicCandidate
-#end[FP]
-#if[int]
-        @HotSpotIntrinsicCandidate
-#end[int]
         public $abstractvectortype$<S> broadcast($type$ e) {
             return op(i -> e);
         }
@@ -857,12 +728,10 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
             return op(i -> es[i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public $abstractvectortype$<S> fromArray($type$[] a, int ax) {
             return op(i -> a[ax + i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public $abstractvectortype$<S> fromArray($type$[] a, int ax, Mask<$Boxtype$, S> m) {
             return op(m, i -> a[ax + i]);
         }

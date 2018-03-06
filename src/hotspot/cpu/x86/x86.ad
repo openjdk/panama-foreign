@@ -2760,6 +2760,60 @@ instruct fmaF_reg(regF a, regF b, regF c) %{
 
 // ====================VECTOR INSTRUCTIONS=====================================
 
+// FIXME: eliminate VectorReinterpret nodes before matching
+
+instruct reinterpretS(vecS dst) %{
+  match(Set dst (VectorReinterpret dst));
+  ins_cost(125);
+  format %{ " # reinterpret $dst" %}
+  ins_encode %{
+    // empty
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretD(vecD dst) %{
+  match(Set dst (VectorReinterpret dst));
+  ins_cost(125);
+  format %{ " # reinterpret $dst" %}
+  ins_encode %{
+    // empty
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretX(vecX dst) %{
+  match(Set dst (VectorReinterpret dst));
+  ins_cost(125);
+  format %{ " # reinterpret $dst" %}
+  ins_encode %{
+    // empty
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretY(vecY dst) %{
+  match(Set dst (VectorReinterpret dst));
+  ins_cost(125);
+  format %{ " # reinterpret $dst" %}
+  ins_encode %{
+    // empty
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretZ(vecZ dst) %{
+  match(Set dst (VectorReinterpret dst));
+  ins_cost(125);
+  format %{ " # reinterpret $dst" %}
+  ins_encode %{
+    // empty
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// ==========
+
 // Load vectors (1 byte long)
 instruct loadV1(vecS dst, memory mem, rRegI tmp) %{
   predicate(n->as_LoadVector()->memory_size() == 1);
@@ -11011,7 +11065,9 @@ instruct vcvt8Fto8D_reg(vecZ dst, vecY src) %{
 %}
 
 instruct vcmpeq4F(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpeqps  $dst,$src1,$src2\t! packed4F" %}
   ins_encode %{
@@ -11023,7 +11079,9 @@ instruct vcmpeq4F(vecX dst, vecX src1, vecX src2) %{
 %}
 
 instruct vcmpeq8F(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 &&
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpeqps  $dst,$src1,$src2\t! packed8F" %}
   ins_encode %{
@@ -11035,11 +11093,13 @@ instruct vcmpeq8F(vecY dst, vecY src1, vecY src2) %{
 %}
 
 instruct vcmpeq16F(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP dst, TEMP scratch);
   format %{ "vcmpeqps  k2,$src1,$src2\n\t"
-           "vmovdqu8 $dst, k2{z}, 0xFFFFFFFFFF \t! cmpeq packed16F" %}
+            "vmovdqu8  $dst, k2{z}, 0xFFFFFFFFFF \t! cmpeq packed16F" %}
   ins_encode %{
     int vector_len = 2;
     Assembler::ComparisonPredicateFP cmp = Assembler::EQ_OQ;  // ordered non-signaling
@@ -11052,7 +11112,9 @@ instruct vcmpeq16F(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
 %}
 
 instruct vcmplt4F(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpltps  $dst,$src1,$src2\t! packed4F" %}
   ins_encode %{
@@ -11064,7 +11126,9 @@ instruct vcmplt4F(vecX dst, vecX src1, vecX src2) %{
 %}
 
 instruct vcmplt8F(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 &&
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpltps  $dst,$src1,$src2\t! packed8F" %}
   ins_encode %{
@@ -11076,11 +11140,13 @@ instruct vcmplt8F(vecY dst, vecY src1, vecY src2) %{
 %}
 
 instruct vcmplt16F(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP dst, TEMP scratch);
   format %{ "vcmpltps  k2,$src1,$src2\n\t"
-           "vmovdqu8 $dst, k2{z}, 0xFFFFFFFFFF \t! cmplt packed16F" %}
+            "vmovdqu8  $dst, k2{z}, 0xFFFFFFFFFF \t! cmplt packed16F" %}
   ins_encode %{
     int vector_len = 2;
     Assembler::ComparisonPredicateFP cmp = Assembler::LT_OQ; //ordered non-signaling
@@ -11093,7 +11159,9 @@ instruct vcmplt16F(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
 %}
 
 instruct vcmpgt4F(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 &&
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpltps  $dst,$src2,$src1\t! packed4F" %}
   ins_encode %{
@@ -11105,7 +11173,9 @@ instruct vcmpgt4F(vecX dst, vecX src1, vecX src2) %{
 %}
 
 instruct vcmpgt8F(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 &&
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpltps  $dst,$src2,$src1\t! packed8F" %}
   ins_encode %{
@@ -11117,11 +11187,13 @@ instruct vcmpgt8F(vecY dst, vecY src1, vecY src2) %{
 %}
 
 instruct vcmpgt16F(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP dst, TEMP scratch);
   format %{ "vcmpnleps  k2,$src1,$src2\n\t"
-           "vmovdqu8 $dst, k2{z}, 0xFFFFFFFFFF \t! cmpgt packed16F" %}
+            "vmovdqu8   $dst, k2{z}, 0xFFFFFFFFFF \t! cmpgt packed16F" %}
   ins_encode %{
     int vector_len = 2;
     Assembler::ComparisonPredicateFP cmp = Assembler::GT_OQ; // ordered non-signaling
@@ -11134,7 +11206,9 @@ instruct vcmpgt16F(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
 %}
 
 instruct vcmpeq4I(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && 
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpeqd  $dst,$src1,$src2\n\t! cmpeq packed4I" %}
   ins_encode %{
@@ -11145,7 +11219,9 @@ instruct vcmpeq4I(vecX dst, vecX src1, vecX src2) %{
 %}
 
 instruct vcmpeq8I(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq && n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && 
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() ==T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpeqd  $dst,$src1,$src2\n\t! cmpeq packed8I" %}
   ins_encode %{
@@ -11156,7 +11232,9 @@ instruct vcmpeq8I(vecY dst, vecY src1, vecY src2) %{
 %}
 
 instruct vcmpeq16I(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && 
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::eq &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP dst, TEMP scratch);
   format %{ "vpcmpeqd  k2,$src1,$src2\n\t"
@@ -11172,8 +11250,10 @@ instruct vcmpeq16I(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmplt4I(vecX dst, vecX src1, vecX src2, vecZ tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+instruct vcmplt4I(vecX dst, vecX src1, vecX src2, vecX tmp) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && 
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP tmp, TEMP dst);
   format %{ "vcmpgtd  $dst,$src1,$src2\n\t"
@@ -11189,7 +11269,9 @@ instruct vcmplt4I(vecX dst, vecX src1, vecX src2, vecZ tmp) %{
 %}
 
 instruct vcmplt8I(vecY dst, vecY src1, vecY src2, vecY tmp) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && 
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP tmp, TEMP dst);
   format %{ "vcmpgtd  $dst,$src1,$src2\n\t"
@@ -11205,11 +11287,13 @@ instruct vcmplt8I(vecY dst, vecY src1, vecY src2, vecY tmp) %{
 %}
 
 instruct vcmplt16I(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && 
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::lt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP dst, TEMP scratch);
   format %{ "vpcmpltd  k2,$src1,$src2\n\t"
-           "vmovdqu8 $dst, k2{z}, 0xFFFFFFFFFF \t! cmplt packed16I" %}
+            "vmovdqu8  $dst, k2{z}, 0xFFFFFFFFFF \t! cmplt packed16I" %}
   ins_encode %{
     int vector_len = 2;
     Assembler::ComparisonPredicate cmp = Assembler::lt;
@@ -11222,7 +11306,9 @@ instruct vcmplt16I(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
 %}
 
 instruct vcmpgt4I(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && 
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpgtd  $dst,$src1,$src2\t! cmpgt packed4I" %}
   ins_encode %{
@@ -11233,8 +11319,10 @@ instruct vcmpgt4I(vecX dst, vecX src1, vecX src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcmpgt8I(vecY dst, vecY src1, vecY src2, vecY tmp) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+instruct vcmpgt8I(vecY dst, vecY src1, vecY src2) %{
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && 
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   format %{ "vcmpgtd  $dst,$src1,$src2\t! cmpgt packed8I" %}
   ins_encode %{
@@ -11245,11 +11333,13 @@ instruct vcmpgt8I(vecY dst, vecY src1, vecY src2, vecY tmp) %{
 %}
 
 instruct vcmpgt16I(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt && n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && 
+            n->as_VectorMaskCmp()->get_predicate() == BoolTest::gt &&
+            n->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorMaskCmp src1 src2));
   effect(TEMP dst, TEMP scratch);
   format %{ "vpcmpnled  k2,$src1,$src2\n\t"
-           "vmovdqu8 $dst, k2{z}, 0xFFFFFFFFFF \t! cmpgt packed16I" %}
+            "vmovdqu8   $dst, k2{z}, 0xFFFFFFFFFF \t! cmpgt packed16I" %}
   ins_encode %{
     int vector_len = 2;
     Assembler::ComparisonPredicate cmp = Assembler::nle;

@@ -166,14 +166,9 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
     return false;
   }
 
-  // For Vector API, we skip the virtual check because implementation includes verifying proper intrinsification.
   if (id >= vmIntrinsics::FIRST_VECTOR_API && id <= vmIntrinsics::LAST_VECTOR_API) {
       // Assume true if enabled and allow implementation which will determine typing to figure out if supported.
       return UseVectorApiIntrinsics;
-  }
-
-  if (id >= vmIntrinsics::_VectorUnaryOp && id <= vmIntrinsics::_VectorRebox) {
-    return UseVectorApiGeneralizedIntrinsics;
   }
 
   // Only Object.hashCode and Object.clone intrinsics implement also a virtual

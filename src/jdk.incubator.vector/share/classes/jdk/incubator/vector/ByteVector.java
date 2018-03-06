@@ -248,7 +248,6 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
 
     public abstract Mask<Byte, S> greaterThanEq(byte o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public ByteVector<S> blend(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
@@ -477,12 +476,10 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
 
     // Type specific extractors
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(byte[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(byte[] a, int ax, Mask<Byte, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -533,12 +530,10 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
             return op(i -> es[i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public ByteVector<S> fromArray(byte[] a, int ax) {
             return op(i -> a[ax + i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public ByteVector<S> fromArray(byte[] a, int ax, Mask<Byte, S> m) {
             return op(m, i -> a[ax + i]);
         }

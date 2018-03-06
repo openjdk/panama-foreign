@@ -24,7 +24,6 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.Unsafe;
 
 import java.nio.ByteBuffer;
@@ -126,7 +125,6 @@ public interface Vector<E, S extends Vector.Shape> {
     }
 
     //Costless vector cast.  Bit-wise contents preserved
-    @HotSpotIntrinsicCandidate
     default <F> Vector<F, S> rebracket(Class<F> type) { return reshape(type, shape());}
 
     //Size-fixed semantic cast
@@ -209,10 +207,8 @@ public interface Vector<E, S extends Vector.Shape> {
 
         boolean[] toArray();
 
-        @HotSpotIntrinsicCandidate
         boolean anyTrue();
 
-        @HotSpotIntrinsicCandidate
         boolean allTrue();
 
         int trueCount();
@@ -221,13 +217,10 @@ public interface Vector<E, S extends Vector.Shape> {
         // numberOfLeadingZeros
         // numberOfTrailingZeros
 
-        @HotSpotIntrinsicCandidate
         Mask<E, S> and(Mask<E, S> o);
 
-        @HotSpotIntrinsicCandidate
         Mask<E, S> or(Mask<E, S> o);
 
-        @HotSpotIntrinsicCandidate
         Mask<E, S> not();
 
         Species<E, S> species();
@@ -241,7 +234,6 @@ public interface Vector<E, S extends Vector.Shape> {
         <F, Z extends Shape>
         Mask<F, Z> reshape(Class<F> type, Z shape);
 
-        @HotSpotIntrinsicCandidate
         default <Z>
         Mask<Z, S> rebracket(Class<Z> e) {
             return reshape(e, species().shape());

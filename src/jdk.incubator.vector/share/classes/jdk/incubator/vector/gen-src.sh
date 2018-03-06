@@ -38,7 +38,7 @@ do
       fptype=float
       Fptype=Float
       Boxfptype=Float
-      args="$args -KintOrlong -KintOrFP"
+      args="$args -KintOrlong -KintOrFP -KintOrFloat"
       ;;
     long)
       fptype=double
@@ -51,7 +51,7 @@ do
       bitstype=int
       Bitstype=Int
       Boxbitstype=Integer
-      args="$args -KintOrFP"
+      args="$args -KintOrFP -KintOrFloat"
       ;;
     double)
       kind=FP

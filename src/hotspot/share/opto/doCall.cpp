@@ -382,14 +382,11 @@ bool Compile::should_delay_boxing_inlining(ciMethod* call_method, JVMState* jvms
 }
 
 bool Compile::should_delay_vector_inlining(ciMethod* call_method, JVMState* jvms) {
-  return call_method->is_vector_method() ||
-         (call_method->intrinsic_id() >= vmIntrinsics::_VectorUnaryOp &&
-          call_method->intrinsic_id() <= vmIntrinsics::_VectorTest);
+  return UseVectorApiIntrinsics && call_method->is_vector_method();
 }
 
 bool Compile::should_delay_vector_reboxing_inlining(ciMethod* call_method, JVMState* jvms) {
-  return UseVectorApiGeneralizedIntrinsics &&
-         call_method->intrinsic_id() == vmIntrinsics::_VectorRebox;
+  return UseVectorApiIntrinsics && (call_method->intrinsic_id() == vmIntrinsics::_VectorRebox);
 }
 
 // uncommon-trap call-sites where callee is unloaded, uninitialized or will not link
@@ -508,32 +505,18 @@ void Parse::do_call() {
   ciKlass* speculative_receiver_type = NULL;
   if (is_virtual_or_interface) {
     Node* receiver_node             = stack(sp() - nargs);
-
-    bool should_specialize = true;
-
-    // TODO Instead of checking for is_VectorBox, maybe should check if intrinsifiable VectorApi class?
-    // The issue here is that mask creation needs specialized dispatch.
-    if (UseVectorApiIntrinsics) {
-      // For Vector API, we do not specialize in order to keep intrinsics dispatch logic simple.
-      if (receiver_node->Opcode() == Op_VectorBox) {
-        should_specialize = false;
-      }
-    }
-
-    if (should_specialize) {
-      const TypeOopPtr* receiver_type = _gvn.type(receiver_node)->isa_oopptr();
-      // call_does_dispatch and vtable_index are out-parameters.  They might be changed.
-      // For arrays, klass below is Object. When vtable calls are used,
-      // resolving the call with Object would allow an illegal call to
-      // finalize() on an array. We use holder instead: illegal calls to
-      // finalize() won't be compiled as vtable calls (IC call
-      // resolution will catch the illegal call) and the few legal calls
-      // on array types won't be either.
-      callee = C->optimize_virtual_call(method(), bci(), klass, holder, orig_callee,
-                                        receiver_type, is_virtual,
-                                        call_does_dispatch, vtable_index);  // out-parameters
-      speculative_receiver_type = receiver_type != NULL ? receiver_type->speculative_type() : NULL;
-    }
+    const TypeOopPtr* receiver_type = _gvn.type(receiver_node)->isa_oopptr();
+    // call_does_dispatch and vtable_index are out-parameters.  They might be changed.
+    // For arrays, klass below is Object. When vtable calls are used,
+    // resolving the call with Object would allow an illegal call to
+    // finalize() on an array. We use holder instead: illegal calls to
+    // finalize() won't be compiled as vtable calls (IC call
+    // resolution will catch the illegal call) and the few legal calls
+    // on array types won't be either.
+    callee = C->optimize_virtual_call(method(), bci(), klass, holder, orig_callee,
+                                      receiver_type, is_virtual,
+                                      call_does_dispatch, vtable_index);  // out-parameters
+    speculative_receiver_type = receiver_type != NULL ? receiver_type->speculative_type() : NULL;
   }
 
   // invoke-super-special

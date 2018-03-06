@@ -89,7 +89,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     //
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> add(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) (a + b));
@@ -97,7 +96,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     public abstract DoubleVector<S> add(double o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> add(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a + b));
@@ -119,7 +117,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     public abstract DoubleVector<S> addSaturate(double o, Mask<Double, S> m);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> sub(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) (a - b));
@@ -127,7 +124,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     public abstract DoubleVector<S> sub(double o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> sub(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a - b));
@@ -149,7 +145,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     public abstract DoubleVector<S> subSaturate(double o, Mask<Double, S> m);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> mul(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) (a * b));
@@ -157,7 +152,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     public abstract DoubleVector<S> mul(double o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> mul(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a * b));
@@ -165,7 +159,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     public abstract DoubleVector<S> mul(double o, Mask<Double, S> m);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> div(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) (a / b));
@@ -173,7 +166,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     public abstract DoubleVector<S> div(double o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> div(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a / b));
@@ -181,7 +173,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     public abstract DoubleVector<S> div(double o, Mask<Double, S> m);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> neg() {
         return uOp((i, a) -> (double) (-a));
@@ -192,7 +183,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return uOp(m, (i, a) -> (double) (-a));
     }
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> abs() {
         return uOp((i, a) -> (double) Math.abs(a));
@@ -259,7 +249,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     public abstract Mask<Double, S> greaterThanEq(double o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public DoubleVector<S> blend(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
@@ -490,7 +479,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     // Type specific horizontal reductions
 
-    @HotSpotIntrinsicCandidate
     public double addAll() {
         return rOp((double) 0, (i, a, b) -> (double) (a + b));
     }
@@ -499,7 +487,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
         return rOp((double) 0, (i, a, b) -> (double) (a - b));
     }
 
-    @HotSpotIntrinsicCandidate
     public double mulAll() {
         return rOp((double) 1, (i, a, b) -> (double) (a * b));
     }
@@ -528,12 +515,10 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
     // Type specific extractors
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(double[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(double[] a, int ax, Mask<Double, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -562,13 +547,11 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
 
         // Factories
 
-        @HotSpotIntrinsicCandidate
         @Override
         public DoubleVector<S> zero() {
             return op(i -> 0);
         }
 
-        @HotSpotIntrinsicCandidate
         public DoubleVector<S> broadcast(double e) {
             return op(i -> e);
         }
@@ -586,12 +569,10 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
             return op(i -> es[i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public DoubleVector<S> fromArray(double[] a, int ax) {
             return op(i -> a[ax + i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public DoubleVector<S> fromArray(double[] a, int ax, Mask<Double, S> m) {
             return op(m, i -> a[ax + i]);
         }

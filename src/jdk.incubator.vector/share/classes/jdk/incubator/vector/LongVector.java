@@ -249,7 +249,6 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
 
     public abstract Mask<Long, S> greaterThanEq(long o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public LongVector<S> blend(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
@@ -478,12 +477,10 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
 
     // Type specific extractors
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(long[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(long[] a, int ax, Mask<Long, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -534,12 +531,10 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
             return op(i -> es[i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public LongVector<S> fromArray(long[] a, int ax) {
             return op(i -> a[ax + i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public LongVector<S> fromArray(long[] a, int ax, Mask<Long, S> m) {
             return op(m, i -> a[ax + i]);
         }

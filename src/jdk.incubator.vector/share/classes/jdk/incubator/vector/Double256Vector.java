@@ -27,7 +27,6 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -291,7 +290,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     public DoubleVector<Shapes.S256Bit> pow(double o, Mask<Double,Shapes.S256Bit> m) {
         return pow(SPECIES.broadcast(o), m);
     }
-    
+
     @Override
     @ForceInline
     public DoubleVector<Shapes.S256Bit> fma(double o1, double o2) {
@@ -382,7 +381,6 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             (v1, v2) -> ((Double256Vector)v1).bOp(v2, (i, a, b) -> (double)(a * b)));
     }
 
-
     @Override
     @ForceInline
     public Double256Vector div(Vector<Double,Shapes.S256Bit> o) {
@@ -392,6 +390,34 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             VECTOR_OP_DIV, Double256Vector.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> ((Double256Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
+    }
+
+    @Override
+    @ForceInline
+    public Double256Vector add(Vector<Double,Shapes.S256Bit> v, Mask<Double, Shapes.S256Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a + b));
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Double256Vector sub(Vector<Double,Shapes.S256Bit> v, Mask<Double, Shapes.S256Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a - b));
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Double256Vector mul(Vector<Double,Shapes.S256Bit> v, Mask<Double, Shapes.S256Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a * b));
+        return blend(mul(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Double256Vector div(Vector<Double,Shapes.S256Bit> v, Mask<Double, Shapes.S256Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a / b));
+        return blend(div(v), m);
     }
 
 
@@ -450,6 +476,15 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
                                (arr, idx, v) -> v.forEach((i, a_) -> ((double[])arr)[idx + i] = a_));
     }
 
+    @Override
+    @ForceInline
+    public void intoArray(double[] a, int ax, Mask<Double, Shapes.S256Bit> m) {
+        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+        Double256Vector oldVal = SPECIES.fromArray(a, ax);
+        Double256Vector newVal = oldVal.blend(this, m);
+        newVal.intoArray(a, ax);
+    }
+
     //
 
     @Override
@@ -483,6 +518,9 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         }
         return new Double256Mask(bits);
     }
+
+    // Comparisons
+
 
     // Foreach
 
@@ -586,6 +624,33 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
         });
+    }
+
+    @Override
+    @ForceInline
+    public Double256Vector blend(Vector<Double, Shapes.S256Bit> o1, Mask<Double, Shapes.S256Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Double256Vector v = (Double256Vector)o1;
+        Double256Mask   m = (Double256Mask)o2;
+
+        return (Double256Vector) VectorIntrinsics.blend(
+            Double256Vector.class, Double256Mask.class, double.class, LENGTH,
+            this, v, m,
+            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public <F> Vector<F, Shapes.S256Bit> rebracket(Class<F> type) {
+        Objects.requireNonNull(type);
+        // TODO: check proper element type
+        return VectorIntrinsics.rebracket(
+            Double256Vector.class, double.class, LENGTH,
+            type, this,
+            (v, t) -> (Vector<F, Shapes.S256Bit>) v.reshape(t, v.shape())
+        );
     }
 
     @Override
@@ -693,6 +758,19 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
                 res[i] = (double) (bits[i] ? -1 : 0);
             }
             return new Double256Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <Z> Mask<Z, Shapes.S256Bit> rebracket(Class<Z> type) {
+            Objects.requireNonNull(type);
+            // TODO: check proper element type
+            return VectorIntrinsics.rebracket(
+                Double256Mask.class, double.class, LENGTH,
+                type, this,
+                (m, t) -> (Mask<Z, Shapes.S256Bit>)m.reshape(t, m.species().shape())
+            );
         }
 
         // Unary operations
@@ -857,7 +935,6 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
                 ((long bits) -> SPECIES.op(i -> Double.longBitsToDouble((long)bits))));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Double256Mask trueMask() {
@@ -866,7 +943,6 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
                                                      (z -> Double256Mask.TRUE_MASK));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Double256Mask falseMask() {
@@ -883,6 +959,12 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             return (Double256Vector) VectorIntrinsics.load(Double256Vector.class, double.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((double[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Double256Vector fromArray(double[] a, int ax, Mask<Double, Shapes.S256Bit> m) {
+            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
         }
     }
 }

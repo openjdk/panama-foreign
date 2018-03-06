@@ -27,7 +27,6 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -369,7 +368,6 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             (v1, v2) -> ((Short256Vector)v1).bOp(v2, (i, a, b) -> (short)(a * b)));
     }
 
-
     @Override
     @ForceInline
     public Short256Vector div(Vector<Short,Shapes.S256Bit> o) {
@@ -380,6 +378,8 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> ((Short256Vector)v1).bOp(v2, (i, a, b) -> (short)(a / b)));
     }
+
+
 
     @Override
     @ForceInline
@@ -414,6 +414,51 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             (v1, v2) -> ((Short256Vector)v1).bOp(v2, (i, a, b) -> (short)(a ^ b)));
     }
 
+    @Override
+    @ForceInline
+    public Short256Vector and(Vector<Short,Shapes.S256Bit> v, Mask<Short, Shapes.S256Bit> m) {
+        return blend(and(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Short256Vector or(Vector<Short,Shapes.S256Bit> v, Mask<Short, Shapes.S256Bit> m) {
+        return blend(or(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Short256Vector xor(Vector<Short,Shapes.S256Bit> v, Mask<Short, Shapes.S256Bit> m) {
+        return blend(xor(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Short256Vector shiftL(int s) {
+        return (Short256Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, Short256Vector.class, short.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (short) (a << i)));
+    }
+
+    @Override
+    @ForceInline
+    public Short256Vector shiftR(int s) {
+        return (Short256Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, Short256Vector.class, short.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (short) (a >>> i)));
+    }
+
+    @Override
+    @ForceInline
+    public Short256Vector aShiftR(int s) {
+        return (Short256Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, Short256Vector.class, short.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (short) (a >> i)));
+    }
+
     // Ternary operations
 
 
@@ -430,6 +475,15 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
         VectorIntrinsics.store(Short256Vector.class, short.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((short[])arr)[idx + i] = a_));
+    }
+
+    @Override
+    @ForceInline
+    public void intoArray(short[] a, int ax, Mask<Short, Shapes.S256Bit> m) {
+        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+        Short256Vector oldVal = SPECIES.fromArray(a, ax);
+        Short256Vector newVal = oldVal.blend(this, m);
+        newVal.intoArray(a, ax);
     }
 
     //
@@ -465,6 +519,9 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
         }
         return new Short256Mask(bits);
     }
+
+    // Comparisons
+
 
     // Foreach
 
@@ -560,6 +617,33 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
         });
+    }
+
+    @Override
+    @ForceInline
+    public Short256Vector blend(Vector<Short, Shapes.S256Bit> o1, Mask<Short, Shapes.S256Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Short256Vector v = (Short256Vector)o1;
+        Short256Mask   m = (Short256Mask)o2;
+
+        return (Short256Vector) VectorIntrinsics.blend(
+            Short256Vector.class, Short256Mask.class, short.class, LENGTH,
+            this, v, m,
+            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public <F> Vector<F, Shapes.S256Bit> rebracket(Class<F> type) {
+        Objects.requireNonNull(type);
+        // TODO: check proper element type
+        return VectorIntrinsics.rebracket(
+            Short256Vector.class, short.class, LENGTH,
+            type, this,
+            (v, t) -> (Vector<F, Shapes.S256Bit>) v.reshape(t, v.shape())
+        );
     }
 
     @Override
@@ -667,6 +751,19 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 res[i] = (short) (bits[i] ? -1 : 0);
             }
             return new Short256Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <Z> Mask<Z, Shapes.S256Bit> rebracket(Class<Z> type) {
+            Objects.requireNonNull(type);
+            // TODO: check proper element type
+            return VectorIntrinsics.rebracket(
+                Short256Mask.class, short.class, LENGTH,
+                type, this,
+                (m, t) -> (Mask<Z, Shapes.S256Bit>)m.reshape(t, m.species().shape())
+            );
         }
 
         // Unary operations
@@ -831,7 +928,6 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 ((long bits) -> SPECIES.op(i -> (short)bits)));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Short256Mask trueMask() {
@@ -840,7 +936,6 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                                                      (z -> Short256Mask.TRUE_MASK));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Short256Mask falseMask() {
@@ -857,6 +952,12 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             return (Short256Vector) VectorIntrinsics.load(Short256Vector.class, short.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((short[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Short256Vector fromArray(short[] a, int ax, Mask<Short, Shapes.S256Bit> m) {
+            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
         }
     }
 }

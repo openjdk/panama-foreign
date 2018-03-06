@@ -27,7 +27,6 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -291,7 +290,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     public FloatVector<Shapes.S64Bit> pow(float o, Mask<Float,Shapes.S64Bit> m) {
         return pow(SPECIES.broadcast(o), m);
     }
-    
+
     @Override
     @ForceInline
     public FloatVector<Shapes.S64Bit> fma(float o1, float o2) {
@@ -382,7 +381,6 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             (v1, v2) -> ((Float64Vector)v1).bOp(v2, (i, a, b) -> (float)(a * b)));
     }
 
-
     @Override
     @ForceInline
     public Float64Vector div(Vector<Float,Shapes.S64Bit> o) {
@@ -392,6 +390,34 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             VECTOR_OP_DIV, Float64Vector.class, float.class, LENGTH,
             this, v,
             (v1, v2) -> ((Float64Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
+    }
+
+    @Override
+    @ForceInline
+    public Float64Vector add(Vector<Float,Shapes.S64Bit> v, Mask<Float, Shapes.S64Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a + b));
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Float64Vector sub(Vector<Float,Shapes.S64Bit> v, Mask<Float, Shapes.S64Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a - b));
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Float64Vector mul(Vector<Float,Shapes.S64Bit> v, Mask<Float, Shapes.S64Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a * b));
+        return blend(mul(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Float64Vector div(Vector<Float,Shapes.S64Bit> v, Mask<Float, Shapes.S64Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a / b));
+        return blend(div(v), m);
     }
 
 
@@ -450,6 +476,15 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                                (arr, idx, v) -> v.forEach((i, a_) -> ((float[])arr)[idx + i] = a_));
     }
 
+    @Override
+    @ForceInline
+    public void intoArray(float[] a, int ax, Mask<Float, Shapes.S64Bit> m) {
+        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+        Float64Vector oldVal = SPECIES.fromArray(a, ax);
+        Float64Vector newVal = oldVal.blend(this, m);
+        newVal.intoArray(a, ax);
+    }
+
     //
 
     @Override
@@ -482,6 +517,80 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             bits[i] = f.apply(i, vec1[i], vec2[i]);
         }
         return new Float64Mask(bits);
+    }
+
+    // Comparisons
+
+    @Override
+    @ForceInline
+    public Float64Mask equal(Vector<Float, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Float64Vector v = (Float64Vector)o;
+
+        return (Float64Mask) VectorIntrinsics.compare(
+            BT_eq, Float64Vector.class, Float64Mask.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    }
+
+    @Override
+    @ForceInline
+    public Float64Mask notEqual(Vector<Float, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Float64Vector v = (Float64Vector)o;
+
+        return (Float64Mask) VectorIntrinsics.compare(
+            BT_ne, Float64Vector.class, Float64Mask.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    }
+
+    @Override
+    @ForceInline
+    public Float64Mask lessThan(Vector<Float, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Float64Vector v = (Float64Vector)o;
+
+        return (Float64Mask) VectorIntrinsics.compare(
+            BT_lt, Float64Vector.class, Float64Mask.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    }
+
+    @Override
+    @ForceInline
+    public Float64Mask lessThanEq(Vector<Float, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Float64Vector v = (Float64Vector)o;
+
+        return (Float64Mask) VectorIntrinsics.compare(
+            BT_le, Float64Vector.class, Float64Mask.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    }
+
+    @Override
+    @ForceInline
+    public Float64Mask greaterThan(Vector<Float, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Float64Vector v = (Float64Vector)o;
+
+        return (Float64Mask) VectorIntrinsics.compare(
+            BT_gt, Float64Vector.class, Float64Mask.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    }
+
+    @Override
+    @ForceInline
+    public Float64Mask greaterThanEq(Vector<Float, Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Float64Vector v = (Float64Vector)o;
+
+        return (Float64Mask) VectorIntrinsics.compare(
+            BT_ge, Float64Vector.class, Float64Mask.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
     }
 
     // Foreach
@@ -589,6 +698,33 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     }
 
     @Override
+    @ForceInline
+    public Float64Vector blend(Vector<Float, Shapes.S64Bit> o1, Mask<Float, Shapes.S64Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Float64Vector v = (Float64Vector)o1;
+        Float64Mask   m = (Float64Mask)o2;
+
+        return (Float64Vector) VectorIntrinsics.blend(
+            Float64Vector.class, Float64Mask.class, float.class, LENGTH,
+            this, v, m,
+            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public <F> Vector<F, Shapes.S64Bit> rebracket(Class<F> type) {
+        Objects.requireNonNull(type);
+        // TODO: check proper element type
+        return VectorIntrinsics.rebracket(
+            Float64Vector.class, float.class, LENGTH,
+            type, this,
+            (v, t) -> (Vector<F, Shapes.S64Bit>) v.reshape(t, v.shape())
+        );
+    }
+
+    @Override
     public <F, Z extends Shape> Vector<F, Z> cast(Class<F> type, Z shape) {
         Vector.Species<F,Z> species = Vector.speciesInstance(type, shape);
 
@@ -693,6 +829,19 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                 res[i] = (float) (bits[i] ? -1 : 0);
             }
             return new Float64Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <Z> Mask<Z, Shapes.S64Bit> rebracket(Class<Z> type) {
+            Objects.requireNonNull(type);
+            // TODO: check proper element type
+            return VectorIntrinsics.rebracket(
+                Float64Mask.class, float.class, LENGTH,
+                type, this,
+                (m, t) -> (Mask<Z, Shapes.S64Bit>)m.reshape(t, m.species().shape())
+            );
         }
 
         // Unary operations
@@ -857,7 +1006,6 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                 ((long bits) -> SPECIES.op(i -> Float.intBitsToFloat((int)bits))));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Float64Mask trueMask() {
@@ -866,7 +1014,6 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                                                      (z -> Float64Mask.TRUE_MASK));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Float64Mask falseMask() {
@@ -883,6 +1030,12 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             return (Float64Vector) VectorIntrinsics.load(Float64Vector.class, float.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((float[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Float64Vector fromArray(float[] a, int ax, Mask<Float, Shapes.S64Bit> m) {
+            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
         }
     }
 }

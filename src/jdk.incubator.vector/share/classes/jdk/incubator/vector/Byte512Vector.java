@@ -27,7 +27,6 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -369,7 +368,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte)(a * b)));
     }
 
-
     @Override
     @ForceInline
     public Byte512Vector div(Vector<Byte,Shapes.S512Bit> o) {
@@ -380,6 +378,8 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte)(a / b)));
     }
+
+
 
     @Override
     @ForceInline
@@ -414,6 +414,51 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte)(a ^ b)));
     }
 
+    @Override
+    @ForceInline
+    public Byte512Vector and(Vector<Byte,Shapes.S512Bit> v, Mask<Byte, Shapes.S512Bit> m) {
+        return blend(and(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Byte512Vector or(Vector<Byte,Shapes.S512Bit> v, Mask<Byte, Shapes.S512Bit> m) {
+        return blend(or(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Byte512Vector xor(Vector<Byte,Shapes.S512Bit> v, Mask<Byte, Shapes.S512Bit> m) {
+        return blend(xor(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Byte512Vector shiftL(int s) {
+        return (Byte512Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, Byte512Vector.class, byte.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (byte) (a << i)));
+    }
+
+    @Override
+    @ForceInline
+    public Byte512Vector shiftR(int s) {
+        return (Byte512Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, Byte512Vector.class, byte.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (byte) (a >>> i)));
+    }
+
+    @Override
+    @ForceInline
+    public Byte512Vector aShiftR(int s) {
+        return (Byte512Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, Byte512Vector.class, byte.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (byte) (a >> i)));
+    }
+
     // Ternary operations
 
 
@@ -430,6 +475,15 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         VectorIntrinsics.store(Byte512Vector.class, byte.class, LENGTH,
                                a, ix, this,
                                (arr, idx, v) -> v.forEach((i, a_) -> ((byte[])arr)[idx + i] = a_));
+    }
+
+    @Override
+    @ForceInline
+    public void intoArray(byte[] a, int ax, Mask<Byte, Shapes.S512Bit> m) {
+        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+        Byte512Vector oldVal = SPECIES.fromArray(a, ax);
+        Byte512Vector newVal = oldVal.blend(this, m);
+        newVal.intoArray(a, ax);
     }
 
     //
@@ -465,6 +519,9 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         }
         return new Byte512Mask(bits);
     }
+
+    // Comparisons
+
 
     // Foreach
 
@@ -560,6 +617,33 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
         });
+    }
+
+    @Override
+    @ForceInline
+    public Byte512Vector blend(Vector<Byte, Shapes.S512Bit> o1, Mask<Byte, Shapes.S512Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Byte512Vector v = (Byte512Vector)o1;
+        Byte512Mask   m = (Byte512Mask)o2;
+
+        return (Byte512Vector) VectorIntrinsics.blend(
+            Byte512Vector.class, Byte512Mask.class, byte.class, LENGTH,
+            this, v, m,
+            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public <F> Vector<F, Shapes.S512Bit> rebracket(Class<F> type) {
+        Objects.requireNonNull(type);
+        // TODO: check proper element type
+        return VectorIntrinsics.rebracket(
+            Byte512Vector.class, byte.class, LENGTH,
+            type, this,
+            (v, t) -> (Vector<F, Shapes.S512Bit>) v.reshape(t, v.shape())
+        );
     }
 
     @Override
@@ -667,6 +751,19 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
                 res[i] = (byte) (bits[i] ? -1 : 0);
             }
             return new Byte512Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <Z> Mask<Z, Shapes.S512Bit> rebracket(Class<Z> type) {
+            Objects.requireNonNull(type);
+            // TODO: check proper element type
+            return VectorIntrinsics.rebracket(
+                Byte512Mask.class, byte.class, LENGTH,
+                type, this,
+                (m, t) -> (Mask<Z, Shapes.S512Bit>)m.reshape(t, m.species().shape())
+            );
         }
 
         // Unary operations
@@ -831,7 +928,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
                 ((long bits) -> SPECIES.op(i -> (byte)bits)));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Byte512Mask trueMask() {
@@ -840,7 +936,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
                                                      (z -> Byte512Mask.TRUE_MASK));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Byte512Mask falseMask() {
@@ -857,6 +952,12 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             return (Byte512Vector) VectorIntrinsics.load(Byte512Vector.class, byte.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((byte[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Byte512Vector fromArray(byte[] a, int ax, Mask<Byte, Shapes.S512Bit> m) {
+            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
         }
     }
 }

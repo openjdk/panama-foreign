@@ -27,7 +27,6 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -369,7 +368,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
     }
 
-
     @Override
     @ForceInline
     public Long64Vector div(Vector<Long,Shapes.S64Bit> o) {
@@ -380,6 +378,8 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             this, v,
             (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a / b)));
     }
+
+
 
     @Override
     @ForceInline
@@ -412,6 +412,51 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             VECTOR_OP_XOR, Long64Vector.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a ^ b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector and(Vector<Long,Shapes.S64Bit> v, Mask<Long, Shapes.S64Bit> m) {
+        return blend(and(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector or(Vector<Long,Shapes.S64Bit> v, Mask<Long, Shapes.S64Bit> m) {
+        return blend(or(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector xor(Vector<Long,Shapes.S64Bit> v, Mask<Long, Shapes.S64Bit> m) {
+        return blend(xor(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector shiftL(int s) {
+        return (Long64Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, Long64Vector.class, long.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (long) (a << i)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector shiftR(int s) {
+        return (Long64Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, Long64Vector.class, long.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (long) (a >>> i)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector aShiftR(int s) {
+        return (Long64Vector) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, Long64Vector.class, long.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (long) (a >> i)));
     }
 
     // Ternary operations
@@ -449,6 +494,15 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
                                (arr, idx, v) -> v.forEach((i, a_) -> ((long[])arr)[idx + i] = a_));
     }
 
+    @Override
+    @ForceInline
+    public void intoArray(long[] a, int ax, Mask<Long, Shapes.S64Bit> m) {
+        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+        Long64Vector oldVal = SPECIES.fromArray(a, ax);
+        Long64Vector newVal = oldVal.blend(this, m);
+        newVal.intoArray(a, ax);
+    }
+
     //
 
     @Override
@@ -482,6 +536,9 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         }
         return new Long64Mask(bits);
     }
+
+    // Comparisons
+
 
     // Foreach
 
@@ -585,6 +642,33 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
         });
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector blend(Vector<Long, Shapes.S64Bit> o1, Mask<Long, Shapes.S64Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Long64Vector v = (Long64Vector)o1;
+        Long64Mask   m = (Long64Mask)o2;
+
+        return (Long64Vector) VectorIntrinsics.blend(
+            Long64Vector.class, Long64Mask.class, long.class, LENGTH,
+            this, v, m,
+            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public <F> Vector<F, Shapes.S64Bit> rebracket(Class<F> type) {
+        Objects.requireNonNull(type);
+        // TODO: check proper element type
+        return VectorIntrinsics.rebracket(
+            Long64Vector.class, long.class, LENGTH,
+            type, this,
+            (v, t) -> (Vector<F, Shapes.S64Bit>) v.reshape(t, v.shape())
+        );
     }
 
     @Override
@@ -692,6 +776,19 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
                 res[i] = (long) (bits[i] ? -1 : 0);
             }
             return new Long64Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <Z> Mask<Z, Shapes.S64Bit> rebracket(Class<Z> type) {
+            Objects.requireNonNull(type);
+            // TODO: check proper element type
+            return VectorIntrinsics.rebracket(
+                Long64Mask.class, long.class, LENGTH,
+                type, this,
+                (m, t) -> (Mask<Z, Shapes.S64Bit>)m.reshape(t, m.species().shape())
+            );
         }
 
         // Unary operations
@@ -856,7 +953,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
                 ((long bits) -> SPECIES.op(i -> (long)bits)));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Long64Mask trueMask() {
@@ -865,7 +961,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
                                                      (z -> Long64Mask.TRUE_MASK));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Long64Mask falseMask() {
@@ -882,6 +977,12 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             return (Long64Vector) VectorIntrinsics.load(Long64Vector.class, long.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((long[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Long64Vector fromArray(long[] a, int ax, Mask<Long, Shapes.S64Bit> m) {
+            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
         }
     }
 }

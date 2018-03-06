@@ -471,11 +471,11 @@ VectorNode* VectorNode::scalar2vector(Node* s, uint vlen, const Type* opd_t) {
   }
 }
 
-VectorNode* VectorNode::shift_count(Node* shift, Node* cnt, uint vlen, BasicType bt) {
-  assert(VectorNode::is_shift(shift) && !cnt->is_Con(), "only variable shift count");
+VectorNode* VectorNode::shift_count(int opc, Node* cnt, uint vlen, BasicType bt) {
+  assert(!cnt->is_Con(), "only variable shift count");
   // Match shift count type with shift vector type.
   const TypeVect* vt = TypeVect::make(bt, vlen);
-  switch (shift->Opcode()) {
+  switch (opc) {
   case Op_LShiftI:
   case Op_LShiftL:
     return new LShiftCntVNode(cnt, vt);
@@ -485,7 +485,7 @@ VectorNode* VectorNode::shift_count(Node* shift, Node* cnt, uint vlen, BasicType
   case Op_URShiftL:
     return new RShiftCntVNode(cnt, vt);
   default:
-    fatal("Missed vector creation for '%s'", NodeClassNames[shift->Opcode()]);
+    fatal("Missed vector creation for '%s'", NodeClassNames[opc]);
     return NULL;
   }
 }
@@ -695,6 +695,10 @@ bool ReductionNode::implemented(int opc, uint vlen, BasicType bt) {
 #ifndef PRODUCT
 void VectorBoxAllocateNode::dump_spec(outputStream *st) const {
   CallStaticJavaNode::dump_spec(st);
+}
+
+void VectorMaskCmpNode::dump_spec(outputStream *st) const {
+  st->print(" %d #", _predicate); _type->dump_on(st);
 }
 #endif // PRODUCT
 

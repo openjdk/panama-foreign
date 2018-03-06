@@ -27,7 +27,6 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -292,7 +291,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     public $abstractvectortype$<Shapes.$shape$> pow($type$ o, Mask<$Boxtype$,Shapes.$shape$> m) {
         return pow(SPECIES.broadcast(o), m);
     }
-    
+
     @Override
     @ForceInline
     public $abstractvectortype$<Shapes.$shape$> fma($type$ o1, $type$ o2) {
@@ -449,7 +448,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a * b)));
     }
 
-
     @Override
     @ForceInline
     public $vectortype$ div(Vector<$Boxtype$,Shapes.$shape$> o) {
@@ -460,6 +458,38 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this, v,
             (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a / b)));
     }
+
+#if[intOrFP]
+    @Override
+    @ForceInline
+    public $vectortype$ add(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> ($type$)(a + b));
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ sub(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> ($type$)(a - b));
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ mul(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> ($type$)(a * b));
+        return blend(mul(v), m);
+    }
+#end[intOrFP]
+
+#if[FP]
+    @Override
+    @ForceInline
+    public $vectortype$ div(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> ($type$)(a / b));
+        return blend(div(v), m);
+    }
+#end[FP]
 
 #if[BITWISE]
     @Override
@@ -493,6 +523,51 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             VECTOR_OP_XOR, $vectortype$.class, $type$.class, LENGTH,
             this, v,
             (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a ^ b)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ and(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(and(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ or(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(or(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ xor(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(xor(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftL(int s) {
+        return ($vectortype$) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> ($type$) (a << i)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftR(int s) {
+        return ($vectortype$) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> ($type$) (a >>> i)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ aShiftR(int s) {
+        return ($vectortype$) VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> ($type$) (a >> i)));
     }
 #end[BITWISE]
 
@@ -574,6 +649,15 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                                (arr, idx, v) -> v.forEach((i, a_) -> (($type$[])arr)[idx + i] = a_));
     }
 
+    @Override
+    @ForceInline
+    public void intoArray($type$[] a, int ax, Mask<$Boxtype$, Shapes.$shape$> m) {
+        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+        $vectortype$ oldVal = SPECIES.fromArray(a, ax);
+        $vectortype$ newVal = oldVal.blend(this, m);
+        newVal.intoArray(a, ax);
+    }
+
     //
 
     @Override
@@ -607,6 +691,82 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         }
         return new $masktype$(bits);
     }
+
+    // Comparisons
+
+#if[intOrFloat]
+    @Override
+    @ForceInline
+    public $masktype$ equal(Vector<$Boxtype$, Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+
+        return ($masktype$) VectorIntrinsics.compare(
+            BT_eq, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
+    }
+
+    @Override
+    @ForceInline
+    public $masktype$ notEqual(Vector<$Boxtype$, Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+
+        return ($masktype$) VectorIntrinsics.compare(
+            BT_ne, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
+    }
+
+    @Override
+    @ForceInline
+    public $masktype$ lessThan(Vector<$Boxtype$, Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+
+        return ($masktype$) VectorIntrinsics.compare(
+            BT_lt, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
+    }
+
+    @Override
+    @ForceInline
+    public $masktype$ lessThanEq(Vector<$Boxtype$, Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+
+        return ($masktype$) VectorIntrinsics.compare(
+            BT_le, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
+    }
+
+    @Override
+    @ForceInline
+    public $masktype$ greaterThan(Vector<$Boxtype$, Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+
+        return ($masktype$) VectorIntrinsics.compare(
+            BT_gt, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a > b));
+    }
+
+    @Override
+    @ForceInline
+    public $masktype$ greaterThanEq(Vector<$Boxtype$, Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+
+        return ($masktype$) VectorIntrinsics.compare(
+            BT_ge, $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
+    }
+#end[intOrFloat]
 
     // Foreach
 
@@ -725,6 +885,33 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     }
 
     @Override
+    @ForceInline
+    public $vectortype$ blend(Vector<$Boxtype$, Shapes.$shape$> o1, Mask<$Boxtype$, Shapes.$shape$> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        $vectortype$ v = ($vectortype$)o1;
+        $masktype$   m = ($masktype$)o2;
+
+        return ($vectortype$) VectorIntrinsics.blend(
+            $vectortype$.class, $masktype$.class, $type$.class, LENGTH,
+            this, v, m,
+            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public <F> Vector<F, Shapes.$shape$> rebracket(Class<F> type) {
+        Objects.requireNonNull(type);
+        // TODO: check proper element type
+        return VectorIntrinsics.rebracket(
+            $vectortype$.class, $type$.class, LENGTH,
+            type, this,
+            (v, t) -> (Vector<F, Shapes.$shape$>) v.reshape(t, v.shape())
+        );
+    }
+
+    @Override
     public <F, Z extends Shape> Vector<F, Z> cast(Class<F> type, Z shape) {
         Vector.Species<F,Z> species = Vector.speciesInstance(type, shape);
 
@@ -829,6 +1016,19 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 res[i] = ($type$) (bits[i] ? -1 : 0);
             }
             return new $vectortype$(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <Z> Mask<Z, Shapes.$shape$> rebracket(Class<Z> type) {
+            Objects.requireNonNull(type);
+            // TODO: check proper element type
+            return VectorIntrinsics.rebracket(
+                $masktype$.class, $type$.class, LENGTH,
+                type, this,
+                (m, t) -> (Mask<Z, Shapes.$shape$>)m.reshape(t, m.species().shape())
+            );
         }
 
         // Unary operations
@@ -1013,7 +1213,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         }
 #end[BITWISE]
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public $masktype$ trueMask() {
@@ -1022,7 +1221,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                                                      (z -> $masktype$.TRUE_MASK));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public $masktype$ falseMask() {
@@ -1039,6 +1237,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             return ($vectortype$) VectorIntrinsics.load($vectortype$.class, $type$.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray(($type$[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public $vectortype$ fromArray($type$[] a, int ax, Mask<$Boxtype$, Shapes.$shape$> m) {
+            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
         }
     }
 }

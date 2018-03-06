@@ -27,7 +27,6 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -291,7 +290,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     public DoubleVector<Shapes.S64Bit> pow(double o, Mask<Double,Shapes.S64Bit> m) {
         return pow(SPECIES.broadcast(o), m);
     }
-    
+
     @Override
     @ForceInline
     public DoubleVector<Shapes.S64Bit> fma(double o1, double o2) {
@@ -382,7 +381,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double)(a * b)));
     }
 
-
     @Override
     @ForceInline
     public Double64Vector div(Vector<Double,Shapes.S64Bit> o) {
@@ -392,6 +390,34 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             VECTOR_OP_DIV, Double64Vector.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
+    }
+
+    @Override
+    @ForceInline
+    public Double64Vector add(Vector<Double,Shapes.S64Bit> v, Mask<Double, Shapes.S64Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a + b));
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Double64Vector sub(Vector<Double,Shapes.S64Bit> v, Mask<Double, Shapes.S64Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a - b));
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Double64Vector mul(Vector<Double,Shapes.S64Bit> v, Mask<Double, Shapes.S64Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a * b));
+        return blend(mul(v), m);
+    }
+
+    @Override
+    @ForceInline
+    public Double64Vector div(Vector<Double,Shapes.S64Bit> v, Mask<Double, Shapes.S64Bit> m) {
+        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a / b));
+        return blend(div(v), m);
     }
 
 
@@ -450,6 +476,15 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
                                (arr, idx, v) -> v.forEach((i, a_) -> ((double[])arr)[idx + i] = a_));
     }
 
+    @Override
+    @ForceInline
+    public void intoArray(double[] a, int ax, Mask<Double, Shapes.S64Bit> m) {
+        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+        Double64Vector oldVal = SPECIES.fromArray(a, ax);
+        Double64Vector newVal = oldVal.blend(this, m);
+        newVal.intoArray(a, ax);
+    }
+
     //
 
     @Override
@@ -483,6 +518,9 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         }
         return new Double64Mask(bits);
     }
+
+    // Comparisons
+
 
     // Foreach
 
@@ -586,6 +624,33 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
                 throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
             }
         });
+    }
+
+    @Override
+    @ForceInline
+    public Double64Vector blend(Vector<Double, Shapes.S64Bit> o1, Mask<Double, Shapes.S64Bit> o2) {
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
+        Double64Vector v = (Double64Vector)o1;
+        Double64Mask   m = (Double64Mask)o2;
+
+        return (Double64Vector) VectorIntrinsics.blend(
+            Double64Vector.class, Double64Mask.class, double.class, LENGTH,
+            this, v, m,
+            (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public <F> Vector<F, Shapes.S64Bit> rebracket(Class<F> type) {
+        Objects.requireNonNull(type);
+        // TODO: check proper element type
+        return VectorIntrinsics.rebracket(
+            Double64Vector.class, double.class, LENGTH,
+            type, this,
+            (v, t) -> (Vector<F, Shapes.S64Bit>) v.reshape(t, v.shape())
+        );
     }
 
     @Override
@@ -693,6 +758,19 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
                 res[i] = (double) (bits[i] ? -1 : 0);
             }
             return new Double64Vector(res);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <Z> Mask<Z, Shapes.S64Bit> rebracket(Class<Z> type) {
+            Objects.requireNonNull(type);
+            // TODO: check proper element type
+            return VectorIntrinsics.rebracket(
+                Double64Mask.class, double.class, LENGTH,
+                type, this,
+                (m, t) -> (Mask<Z, Shapes.S64Bit>)m.reshape(t, m.species().shape())
+            );
         }
 
         // Unary operations
@@ -857,7 +935,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
                 ((long bits) -> SPECIES.op(i -> Double.longBitsToDouble((long)bits))));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Double64Mask trueMask() {
@@ -866,7 +943,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
                                                      (z -> Double64Mask.TRUE_MASK));
         }
 
-        @HotSpotIntrinsicCandidate
         @Override
         @ForceInline
         public Double64Mask falseMask() {
@@ -883,6 +959,12 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             return (Double64Vector) VectorIntrinsics.load(Double64Vector.class, double.class, LENGTH,
                                                         a, ix,
                                                         (arr, idx) -> super.fromArray((double[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Double64Vector fromArray(double[] a, int ax, Mask<Double, Shapes.S64Bit> m) {
+            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
         }
     }
 }

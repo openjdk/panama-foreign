@@ -89,7 +89,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     //
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> add(Vector<Float,S> o) {
         return bOp(o, (i, a, b) -> (float) (a + b));
@@ -97,7 +96,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract FloatVector<S> add(float o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> add(Vector<Float,S> o, Mask<Float, S> m) {
         return bOp(o, m, (i, a, b) -> (float) (a + b));
@@ -119,7 +117,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract FloatVector<S> addSaturate(float o, Mask<Float, S> m);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> sub(Vector<Float,S> o) {
         return bOp(o, (i, a, b) -> (float) (a - b));
@@ -127,7 +124,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract FloatVector<S> sub(float o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> sub(Vector<Float,S> o, Mask<Float, S> m) {
         return bOp(o, m, (i, a, b) -> (float) (a - b));
@@ -149,7 +145,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract FloatVector<S> subSaturate(float o, Mask<Float, S> m);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> mul(Vector<Float,S> o) {
         return bOp(o, (i, a, b) -> (float) (a * b));
@@ -157,7 +152,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract FloatVector<S> mul(float o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> mul(Vector<Float,S> o, Mask<Float, S> m) {
         return bOp(o, m, (i, a, b) -> (float) (a * b));
@@ -165,7 +159,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract FloatVector<S> mul(float o, Mask<Float, S> m);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> div(Vector<Float,S> o) {
         return bOp(o, (i, a, b) -> (float) (a / b));
@@ -173,7 +166,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract FloatVector<S> div(float o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> div(Vector<Float,S> o, Mask<Float, S> m) {
         return bOp(o, m, (i, a, b) -> (float) (a / b));
@@ -181,7 +173,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract FloatVector<S> div(float o, Mask<Float, S> m);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> neg() {
         return uOp((i, a) -> (float) (-a));
@@ -192,7 +183,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
         return uOp(m, (i, a) -> (float) (-a));
     }
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> abs() {
         return uOp((i, a) -> (float) Math.abs(a));
@@ -217,7 +207,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract FloatVector<S> max(float o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public Mask<Float, S> equal(Vector<Float,S> o) {
         return bTest(o, (i, a, b) -> a == b);
@@ -232,7 +221,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract Mask<Float, S> notEqual(float o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public Mask<Float, S> lessThan(Vector<Float,S> o) {
         return bTest(o, (i, a, b) -> a < b);
@@ -247,7 +235,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract Mask<Float, S> lessThanEq(float o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public Mask<Float, S> greaterThan(Vector<Float,S> o) {
         return bTest(o, (i, a, b) -> a > b);
@@ -262,7 +249,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     public abstract Mask<Float, S> greaterThanEq(float o);
 
-    @HotSpotIntrinsicCandidate
     @Override
     public FloatVector<S> blend(Vector<Float,S> o, Mask<Float, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
@@ -493,7 +479,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     // Type specific horizontal reductions
 
-    @HotSpotIntrinsicCandidate
     public float addAll() {
         return rOp((float) 0, (i, a, b) -> (float) (a + b));
     }
@@ -502,7 +487,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
         return rOp((float) 0, (i, a, b) -> (float) (a - b));
     }
 
-    @HotSpotIntrinsicCandidate
     public float mulAll() {
         return rOp((float) 1, (i, a, b) -> (float) (a * b));
     }
@@ -518,7 +502,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     // Type conversions
 
-    @HotSpotIntrinsicCandidate
     @Override
     public <F> Vector<F,S> cast(Class<F> type) {
         return cast(type, shape());
@@ -532,12 +515,10 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
     // Type specific extractors
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(float[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);
     }
 
-    @HotSpotIntrinsicCandidate
     public void intoArray(float[] a, int ax, Mask<Float, S> m) {
         forEach(m, (i, a_) -> a[ax + i] = a_);
     }
@@ -566,13 +547,11 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
 
         // Factories
 
-        @HotSpotIntrinsicCandidate
         @Override
         public FloatVector<S> zero() {
             return op(i -> 0);
         }
 
-        @HotSpotIntrinsicCandidate
         public FloatVector<S> broadcast(float e) {
             return op(i -> e);
         }
@@ -590,12 +569,10 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
             return op(i -> es[i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public FloatVector<S> fromArray(float[] a, int ax) {
             return op(i -> a[ax + i]);
         }
 
-        @HotSpotIntrinsicCandidate
         public FloatVector<S> fromArray(float[] a, int ax, Mask<Float, S> m) {
             return op(m, i -> a[ax + i]);
         }

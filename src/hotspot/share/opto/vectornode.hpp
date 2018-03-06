@@ -62,7 +62,7 @@ class VectorNode : public TypeNode {
   virtual uint ideal_reg() const { return Matcher::vector_ideal_reg(vect_type()->length_in_bytes()); }
 
   static VectorNode* scalar2vector(Node* s, uint vlen, const Type* opd_t);
-  static VectorNode* shift_count(Node* shift, Node* cnt, uint vlen, BasicType bt);
+  static VectorNode* shift_count(int opc, Node* cnt, uint vlen, BasicType bt);
   static VectorNode* make(int opc, Node* n1, Node* n2, uint vlen, BasicType bt);
   static VectorNode* make(int opc, Node* n1, Node* n2, Node* n3, uint vlen, BasicType bt);
 
@@ -946,6 +946,9 @@ class VectorMaskCmpNode : public VectorNode {
 
   virtual int Opcode() const;
   BoolTest::mask get_predicate() { return _predicate; }
+#ifndef PRODUCT
+  virtual void dump_spec(outputStream *st) const;
+#endif // PRODUCT
 };
 
 // Used to wrap other vector nodes in order to add masking functionality.
@@ -1033,7 +1036,7 @@ class VectorReinterpretNode : public VectorNode {
     BasicType src_bt = src_vt->element_basic_type();
     BasicType dst_bt = dst_vt->element_basic_type();
     int src_len = src_vt->length();
-    int dst_len = src_vt->length();
+    int dst_len = dst_vt->length();
     // For now require consistency in resulting vector size. Otherwise we will need
     // some backend tricks to handle register allocation for size change.
     assert(type2aelembytes(src_bt) * src_len == type2aelembytes(dst_bt) * dst_len,
