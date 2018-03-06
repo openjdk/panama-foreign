@@ -725,6 +725,9 @@
   product(bool, UseVectorApiIntrinsics, true,                               \
           "Enables intrinsification of Vector API")                         \
                                                                             \
+  product(bool, VectorAPIAggressiveReboxing, true,                          \
+          "Enables aggressive reboxing of vectors")                         \
+                                                                            \
   notproduct(bool, DebugVectorApi, false,                                   \
           "Enables printing of debug messages for Vector API")              \
                                                                             \

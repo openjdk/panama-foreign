@@ -2090,6 +2090,8 @@ void Compile::inline_incrementally(PhaseIterGVN& igvn) {
 
     if (failing())  return;
 
+    print_method(PHASE_INCREMENTAL_INLINE_STEP, 3);
+
     {
       TracePhase tp("incrementalInline_igvn", &timers[_t_incrInline_igvn]);
       igvn.optimize();
@@ -2542,7 +2544,7 @@ void Compile::scalarize_vbox_node(VectorBoxNode* vec_box) {
     }
   }
 
-  while (calls.size() > 0) {
+  while (VectorAPIAggressiveReboxing && calls.size() > 0) {
     CallJavaNode* call = calls.pop()->as_CallJava();
     // Attach new VBA to the call and use it instead of Phi (VBA ... VBA).
 
@@ -2861,6 +2863,7 @@ void Compile::Code_Gen() {
   {
     TracePhase tp("matcher", &timers[_t_matcher]);
     matcher.match();
+    print_method(PHASE_AFTER_MATCHING, 3);
   }
   // In debug mode can dump m._nodes.dump() for mapping of ideal to machine
   // nodes.  Mapping is only valid at the root of each matched subtree.
