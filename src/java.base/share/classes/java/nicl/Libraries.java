@@ -24,7 +24,7 @@ package java.nicl;
 
 import java.io.File;
 import jdk.internal.nicl.Errno;
-import jdk.internal.nicl.NativeLibraryImpl;
+import jdk.internal.nicl.LibrariesHelper;
 import jdk.internal.nicl.types.BindingRegistry;
 import jdk.internal.nicl.types.Function;
 import jdk.internal.nicl.types.Type;
@@ -35,11 +35,11 @@ import java.lang.invoke.MethodType;
 import java.nicl.types.LayoutType;
 import java.util.Objects;
 
-public final class NativeLibrary {
+public final class Libraries {
     private static final Errno ERRNO = Errno.platformHasErrno() ? new Errno() : null;
 
     // don't create
-    private NativeLibrary() {}
+    private Libraries() {}
 
     /**
      * Create a raw, uncivilized version of the interface
@@ -54,7 +54,7 @@ public final class NativeLibrary {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.bindRaw"));
         }
-        return NativeLibraryImpl.bindRaw(c, lib);
+        return LibrariesHelper.bindRaw(c, lib);
     }
 
     /**
@@ -68,7 +68,7 @@ public final class NativeLibrary {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.bindRaw"));
         }
-        return NativeLibraryImpl.bindRaw(c);
+        return LibrariesHelper.bindRaw(c);
     }
 
     /**
@@ -83,7 +83,7 @@ public final class NativeLibrary {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.bind"));
         }
-        return NativeLibraryImpl.bind(c);
+        return LibrariesHelper.bind(c);
     }
 
     /**
@@ -99,7 +99,7 @@ public final class NativeLibrary {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.bind"));
         }
-        return NativeLibraryImpl.bind(c, lib);
+        return LibrariesHelper.bind(c, lib);
     }
 
     /**
@@ -118,7 +118,7 @@ public final class NativeLibrary {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.lookupNative", symbolName));
         }
-        return NativeLibraryImpl.lookupNativeMethod(libs, symbolName, methodType, isVarArgs);
+        return LibrariesHelper.lookupNativeMethod(libs, symbolName, methodType, isVarArgs);
     }
 
     public static MethodHandle lookupNativeMethod(Library lib, String symbolName, MethodType methodType, boolean isVarArgs) throws NoSuchMethodException, IllegalAccessException {
@@ -157,7 +157,7 @@ public final class NativeLibrary {
             throw new UnsatisfiedLinkError(
                 "Directory separator should not appear in library name: " + filename);
         }
-        return NativeLibraryImpl.loadLibrary(filename);
+        return LibrariesHelper.loadLibrary(filename);
     }
 
     /**
@@ -186,7 +186,7 @@ public final class NativeLibrary {
             throw new UnsatisfiedLinkError(
                 "Expecting an absolute path of the library: " + filename);
         }
-        return NativeLibraryImpl.load(filename);
+        return LibrariesHelper.load(filename);
     }
 
     public static Library getDefaultLibrary() {
@@ -194,7 +194,7 @@ public final class NativeLibrary {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.getDefaultLibrary"));
         }
-        return NativeLibraryImpl.getDefaultLibrary();
+        return LibrariesHelper.getDefaultLibrary();
     }
 
     public static <T> LayoutType<T> createLayout(Class<T> c) {

@@ -33,7 +33,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.Scope;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
@@ -44,7 +44,7 @@ public class UpcallHandler {
 
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.nicl.UpcallHandler.DEBUG"));
-    private static final LayoutType<Long> LONG_LAYOUT_TYPE = NativeLibrary.createLayout(long.class);
+    private static final LayoutType<Long> LONG_LAYOUT_TYPE = Libraries.createLayout(long.class);
 
     private static final long MAX_STACK_ARG_BYTES = 64 * 1024; // FIXME: Arbitrary limitation for now...
 
@@ -182,28 +182,28 @@ public class UpcallHandler {
         if (carrierType.isPrimitive()) {
             switch (PrimitiveClassType.typeof(carrierType)) {
                 case BOOLEAN:
-                    return src.cast(NativeLibrary.createLayout(boolean.class)).lvalue().get();
+                    return src.cast(Libraries.createLayout(boolean.class)).lvalue().get();
 
                 case BYTE:
-                    return src.cast(NativeLibrary.createLayout(byte.class)).lvalue().get();
+                    return src.cast(Libraries.createLayout(byte.class)).lvalue().get();
 
                 case SHORT:
-                    return src.cast(NativeLibrary.createLayout(short.class)).lvalue().get();
+                    return src.cast(Libraries.createLayout(short.class)).lvalue().get();
 
                 case CHAR:
-                    return src.cast(NativeLibrary.createLayout(char.class)).lvalue().get();
+                    return src.cast(Libraries.createLayout(char.class)).lvalue().get();
 
                 case INT:
-                    return src.cast(NativeLibrary.createLayout(int.class)).lvalue().get();
+                    return src.cast(Libraries.createLayout(int.class)).lvalue().get();
 
                 case LONG:
-                    return src.cast(NativeLibrary.createLayout(long.class)).lvalue().get();
+                    return src.cast(Libraries.createLayout(long.class)).lvalue().get();
 
                 case FLOAT:
-                    return src.cast(NativeLibrary.createLayout(float.class)).lvalue().get();
+                    return src.cast(Libraries.createLayout(float.class)).lvalue().get();
 
                 case DOUBLE:
-                    return src.cast(NativeLibrary.createLayout(double.class)).lvalue().get();
+                    return src.cast(Libraries.createLayout(double.class)).lvalue().get();
 
                 case VOID:
                 default:
@@ -227,7 +227,7 @@ public class UpcallHandler {
                 scope = new NativeScope();
 
                 @SuppressWarnings({"rawtypes", "unchecked"})
-                Reference<?> rtmp = scope.allocateStruct(NativeLibrary.createLayout((Class)carrierType));
+                Reference<?> rtmp = scope.allocateStruct(Libraries.createLayout((Class)carrierType));
 
                 structs[index] = r = rtmp;
             }

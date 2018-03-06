@@ -23,7 +23,7 @@
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 
 /**
  * @test
@@ -34,21 +34,21 @@ public class LoadLibraryTest {
     @Test
     public void testLoadLibrary() {
         checkSecurityException(() -> {
-            NativeLibrary.loadLibrary("mylibrary.so");
+            Libraries.loadLibrary("mylibrary.so");
         });
     }
 
     @Test
     public void testLoad() {
         checkSecurityException(() -> {
-            NativeLibrary.load("/usr/lib/mylibrary.so");
+            Libraries.load("/usr/lib/mylibrary.so");
         });
     }
 
     @Test
     public void testGetDefaultLibrary() {
         checkSecurityException(() -> {
-            NativeLibrary.getDefaultLibrary();
+            Libraries.getDefaultLibrary();
         });
     }
 

@@ -26,7 +26,7 @@ import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
 
 import java.lang.ref.Cleaner;
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.types.Pointer;
 
 class UpcallStub {
@@ -38,7 +38,7 @@ class UpcallStub {
 
         Stub(int id) throws Throwable {
             this.id = id;
-            this.entryPoint = new BoundedPointer<>(NativeLibrary.createLayout(void.class),
+            this.entryPoint = new BoundedPointer<>(Libraries.createLayout(void.class),
                     new BoundedMemoryRegion(NativeInvoker.allocateUpcallStub(id), 0), 0, 0);
         }
 

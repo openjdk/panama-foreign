@@ -25,7 +25,7 @@
  * @test
  */
 
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.Header;
@@ -69,7 +69,7 @@ public class Upcall {
     }
 
     public void test() {
-        upcall i = NativeLibrary.bindRaw(upcall.class, NativeLibrary.loadLibrary("Upcall"));
+        upcall i = Libraries.bindRaw(upcall.class, Libraries.loadLibrary("Upcall"));
         visitorImpl v = new visitorImpl();
 
         i.do_upcall(v, MAGIC_INTEGER);

@@ -25,7 +25,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import java.lang.invoke.MethodType;
 import java.nicl.Library;
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 
 /**
  * @test
@@ -37,7 +37,7 @@ public class NativeLookupTest {
     public void testNativeLookup() {
         checkSecurityException(() -> {
             try {
-                NativeLibrary.lookupNativeMethod(NativeLibrary.getDefaultLibrary(), "foo",
+                Libraries.lookupNativeMethod(Libraries.getDefaultLibrary(), "foo",
                     MethodType.methodType(Void.class), false);
             } catch (IllegalAccessException | NoSuchMethodException ex) {
                 throw new RuntimeException(ex);
@@ -49,8 +49,8 @@ public class NativeLookupTest {
     public void testNativeLookupLibraryArray() {
         checkSecurityException(() -> {
             try {
-                NativeLibrary.lookupNativeMethod(
-                    new Library[] { NativeLibrary.getDefaultLibrary() }, "foo",
+                Libraries.lookupNativeMethod(
+                    new Library[] { Libraries.getDefaultLibrary() }, "foo",
                     MethodType.methodType(Void.class), false);
             } catch (IllegalAccessException | NoSuchMethodException ex) {
                 throw new RuntimeException(ex);

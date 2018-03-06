@@ -23,7 +23,7 @@
 package jdk.internal.nicl;
 
 import java.nicl.Library;
-import java.nicl.LibrarySymbol;
+import java.nicl.Library.Symbol;
 
 class SymbolLookup {
     private final Library[] libraries;
@@ -36,7 +36,7 @@ class SymbolLookup {
         this.libraries = libraries;
     }
 
-    public LibrarySymbol lookup(String name) throws NoSuchMethodException {
+    public Symbol lookup(String name) throws NoSuchMethodException {
         for (Library lib : libraries) {
             try {
                 return lib.lookup(name);

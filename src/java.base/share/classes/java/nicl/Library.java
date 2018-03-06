@@ -22,6 +22,26 @@
  */
 package java.nicl;
 
+import java.nicl.types.Pointer;
+
 public interface Library {
-    LibrarySymbol lookup(String name) throws NoSuchMethodException;
+    public static class Symbol {
+        private final String name;
+        private final Pointer<Void> address;
+
+        public Symbol(String name, Pointer<Void> address) {
+            this.name = name;
+            this.address = address;
+        }
+
+        public String getName() {
+            return name;
+        }
+    
+        public Pointer<Void> getAddress() {
+            return address;
+        }
+    }
+
+    Symbol lookup(String name) throws NoSuchMethodException;
 }

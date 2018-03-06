@@ -23,7 +23,7 @@
 package java.nicl.types;
 
 import java.io.ByteArrayOutputStream;
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import jdk.internal.nicl.Util;
 
 /**
@@ -49,34 +49,34 @@ public interface Pointer<T> extends Resource {
 
     private static <T> Pointer<T> buildPtr(Pointer<?> p, long offset, LayoutType<T> type) {
         return p
-                .cast(NativeLibrary.createLayout(byte.class))
+                .cast(Libraries.createLayout(byte.class))
                 .offset(offset)
                 .cast(type);
     }
 
     public static void copyFromArray(int[] src, Pointer<?> p, long offset, int nElems) {
-        Pointer<Integer> dst = buildPtr(p, offset, NativeLibrary.createLayout(int.class));
+        Pointer<Integer> dst = buildPtr(p, offset, Libraries.createLayout(int.class));
         for (int i = 0; i < nElems; i++) {
             dst.offset(i).lvalue().set(src[i]);
         }
     }
 
     public static void copyToArray(Pointer<?> p, long offset, int[] dst, int nElems) {
-        Pointer<Integer> src = buildPtr(p, offset, NativeLibrary.createLayout(int.class));
+        Pointer<Integer> src = buildPtr(p, offset, Libraries.createLayout(int.class));
         for (int i = 0; i < nElems; i++) {
             dst[i] = src.offset(i).lvalue().get();
         }
     }
 
     public static <T> void copyFromArray(T[] src, Pointer<?> p, long offset, int nElems, Class<T> elementType) {
-        Pointer<T> dst = buildPtr(p, offset, NativeLibrary.createLayout(elementType));
+        Pointer<T> dst = buildPtr(p, offset, Libraries.createLayout(elementType));
         for (int i = 0; i < nElems; i++) {
             dst.offset(i).lvalue().set(src[i]);
         }
     }
 
     public static <T> void copyToArray(Pointer<?> p, long offset, T[] dst, int nElems, Class<T> elementType) {
-        Pointer<T> src = buildPtr(p, offset, NativeLibrary.createLayout(elementType));
+        Pointer<T> src = buildPtr(p, offset, Libraries.createLayout(elementType));
         for (int i = 0; i < nElems; i++) {
             dst[i] = src.offset(i).lvalue().get();
         }

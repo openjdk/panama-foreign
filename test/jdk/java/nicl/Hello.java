@@ -41,8 +41,8 @@ public class Hello {
 
     public static void main(String[] args) {
         // "hello" library mentioned already in annotation (LibraryDependencies)
-        // No need to explicitly call NativeLibrary.loadLibrary!
-        hello i = NativeLibrary.bindRaw(hello.class);
+        // No need to explicitly call Libraries.loadLibrary!
+        hello i = Libraries.bindRaw(hello.class);
         int value = i.func();
         if (value != 42) {
             throw new RuntimeException("Expected 42, but got " + i);

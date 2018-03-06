@@ -96,7 +96,7 @@ public class UnixSystem {
     private static final String OS = System.getProperty("os.name");
 
     public void testGetpid() {
-        system i = NativeLibrary.bindRaw(system.class);
+        system i = Libraries.bindRaw(system.class);
 
         long actual = i.getpid();
         long expected = ProcessHandle.current().pid();
@@ -111,7 +111,7 @@ public class UnixSystem {
         try (Scope scope = Scope.newNativeScope()) {
             long bufSize = 128;
 
-            LayoutType<Byte> t = NativeLibrary.createLayout(byte.class);
+            LayoutType<Byte> t = Libraries.createLayout(byte.class);
             Pointer<Byte> buf = scope.allocate(t, bufSize);
             Pointer<Byte> cfmt = scope.toCString(fmt);
 
@@ -125,7 +125,7 @@ public class UnixSystem {
     }
 
     public void testPrintf() {
-        system i = NativeLibrary.bindRaw(system.class);
+        system i = Libraries.bindRaw(system.class);
 
         int n;
 
@@ -151,17 +151,17 @@ public class UnixSystem {
     }
 
     private int getSizeUsingStat_Linux(String path) throws Exception {
-        LinuxSystem i = NativeLibrary.bindRaw(LinuxSystem.class);
+        LinuxSystem i = Libraries.bindRaw(LinuxSystem.class);
 
         try (Scope scope = Scope.newNativeScope()) {
-            LinuxSystem.stat s = scope.allocateStruct(NativeLibrary.createLayout(LinuxSystem.stat.class));
+            LinuxSystem.stat s = scope.allocateStruct(Libraries.createLayout(LinuxSystem.stat.class));
             Pointer<LinuxSystem.stat> p = s.ptr();
 
             s = p.deref();
 
             int res = i.__xstat(1, scope.toCString(path), p);
             if (res != 0) {
-                NativeLibrary.throwErrnoException("Call to __xstat failed");
+                Libraries.throwErrnoException("Call to __xstat failed");
             }
 
             return s.st_size$get();
@@ -169,17 +169,17 @@ public class UnixSystem {
     }
 
     private int getSizeUsingStat_MacOSX(String path) throws Exception {
-        MacOSXSystem i = NativeLibrary.bindRaw(MacOSXSystem.class);
+        MacOSXSystem i = Libraries.bindRaw(MacOSXSystem.class);
 
         try (Scope scope = Scope.newNativeScope()) {
-            MacOSXSystem.stat s = scope.allocateStruct(NativeLibrary.createLayout(MacOSXSystem.stat.class));
+            MacOSXSystem.stat s = scope.allocateStruct(Libraries.createLayout(MacOSXSystem.stat.class));
             Pointer<MacOSXSystem.stat> p = s.ptr();
 
             s = p.deref();
 
             int res = i.stat$INODE64(scope.toCString(path), p);
             if (res != 0) {
-                NativeLibrary.throwErrnoException("Call to stat failed");
+                Libraries.throwErrnoException("Call to stat failed");
             }
 
             return (int)s.st_size$get();
@@ -187,7 +187,7 @@ public class UnixSystem {
     }
 
     public void testStat() {
-        system i = NativeLibrary.bindRaw(system.class);
+        system i = Libraries.bindRaw(system.class);
 
         int nBytes = 4711;
 
@@ -216,20 +216,20 @@ public class UnixSystem {
 
 
     public void testEnviron() {
-        system i = NativeLibrary.bindRaw(system.class);
+        system i = Libraries.bindRaw(system.class);
 
         {
             // Pointer version
-            Pointer<Pointer<Byte>> pp = (Pointer)i.environ$get().cast(NativeLibrary.createLayout(byte.class).ptrType());
-            Pointer<Byte> sp = (Pointer)pp.lvalue().get().cast(NativeLibrary.createLayout(byte.class));
+            Pointer<Pointer<Byte>> pp = (Pointer)i.environ$get().cast(Libraries.createLayout(byte.class).ptrType());
+            Pointer<Byte> sp = (Pointer)pp.lvalue().get().cast(Libraries.createLayout(byte.class));
             System.out.println("testEnviron.str: " + Pointer.toString(sp));
         }
 
         {
             // Reference version
             Reference<Pointer<Pointer<Byte>>> r = i.environ$ref();
-            Pointer<Pointer<Byte>> spp = (Pointer)r.get().cast(NativeLibrary.createLayout(byte.class).ptrType());
-            Pointer<Byte> sp = (Pointer)spp.lvalue().get().cast(NativeLibrary.createLayout(byte.class));
+            Pointer<Pointer<Byte>> spp = (Pointer)r.get().cast(Libraries.createLayout(byte.class).ptrType());
+            Pointer<Byte> sp = (Pointer)spp.lvalue().get().cast(Libraries.createLayout(byte.class));
             System.out.println("testEnviron.str: " + Pointer.toString(sp));
         }
     }

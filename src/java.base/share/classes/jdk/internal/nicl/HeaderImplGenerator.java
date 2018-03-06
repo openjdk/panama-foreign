@@ -31,7 +31,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.metadata.*;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
@@ -566,7 +566,7 @@ class HeaderImplGenerator extends ClassGenerator {
 
         MethodHandle mh = getBridgeTarget(bridge, Util.methodTypeFor(method));
 
-        mh = mh.bindTo(NativeLibrary.bindRaw(bridge.to()));
+        mh = mh.bindTo(Libraries.bindRaw(bridge.to()));
 
         // Either constructor:
         //
@@ -621,12 +621,12 @@ class HeaderImplGenerator extends ClassGenerator {
 
         if (bridge.to() == Bridge.class) {
             // Default - no pointer adjustment needed, so just wrap in new type
-            pt = ptr.cast(NativeLibrary.createLayout(c));
+            pt = ptr.cast(Libraries.createLayout(c));
         } else {
             // Pointer adjustment (may be) required, so feed through helper method
             MethodType methodType = MethodType.methodType(Pointer.class, Pointer.class);
             MethodHandle mh = getBridgeTarget(bridge, methodType);
-            Object o = NativeLibrary.bindRaw(bridge.to());
+            Object o = Libraries.bindRaw(bridge.to());
             mh = mh.bindTo(o);
 
             try {
@@ -688,7 +688,7 @@ class HeaderImplGenerator extends ClassGenerator {
         try {
             mh = MethodHandles
                     .publicLookup()
-                    .findStatic(NativeLibrary.class, "bindRaw", MethodType.methodType(Object.class, Class.class))
+                    .findStatic(Libraries.class, "bindRaw", MethodType.methodType(Object.class, Class.class))
                     .asType(MethodType.methodType(method.getReturnType(), Class.class))
                     .bindTo(method.getAnnotation(Singleton.class).of());
         } catch (NoSuchMethodException | IllegalAccessException e) {

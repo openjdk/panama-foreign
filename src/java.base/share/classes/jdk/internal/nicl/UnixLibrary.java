@@ -23,7 +23,7 @@
 package jdk.internal.nicl;
 
 import java.nicl.Library;
-import java.nicl.LibrarySymbol;
+import java.nicl.Library.Symbol;
 import java.nicl.Scope;
 import java.nicl.types.Pointer;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
@@ -40,7 +40,7 @@ class UnixLibrary implements Library {
     }
 
     @Override
-    public LibrarySymbol lookup(String name) throws NoSuchMethodException {
+    public Symbol lookup(String name) throws NoSuchMethodException {
         if (DEBUG) {
             System.err.println("Library.lookup(" + name + ")");
         }
@@ -71,7 +71,7 @@ class UnixLibrary implements Library {
                 throw new NoSuchMethodException("Failed to look up " + name);
             }
 
-            return new LibrarySymbol(name, addr);
+            return new Symbol(name, addr);
         } catch (Throwable t) {
             throw new NoSuchMethodException("Failed to look up " + name);
         }

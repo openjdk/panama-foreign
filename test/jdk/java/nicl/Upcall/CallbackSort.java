@@ -25,7 +25,7 @@
  * @test
  */
 
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
@@ -60,8 +60,8 @@ public class CallbackSort {
         public int fn(Pointer<Void> e1, Pointer<Void> e2) {
             upcallCalled = true;
 
-            Pointer<Integer> p1 = e1.cast(NativeLibrary.createLayout(int.class));
-            Pointer<Integer> p2 = e2.cast(NativeLibrary.createLayout(int.class));
+            Pointer<Integer> p1 = e1.cast(Libraries.createLayout(int.class));
+            Pointer<Integer> p2 = e2.cast(Libraries.createLayout(int.class));
 
             int i1 = p1.lvalue().get();
             int i2 = p2.lvalue().get();
@@ -75,8 +75,8 @@ public class CallbackSort {
     }
 
     private void doSort(NativeIntArray elems) {
-        stdlib i = NativeLibrary.bindRaw(stdlib.class, NativeLibrary.loadLibrary("Upcall"));
-        Pointer<Void> p = elems.getBasePointer().cast(NativeLibrary.createLayout(void.class));
+        stdlib i = Libraries.bindRaw(stdlib.class, Libraries.loadLibrary("Upcall"));
+        Pointer<Void> p = elems.getBasePointer().cast(Libraries.createLayout(void.class));
         i.slowsort(p, elems.size(), elems.getElemSize(), new comparator());
     }
 
@@ -134,7 +134,7 @@ public class CallbackSort {
 
         public NativeIntArray(int nelems) {
             this.nelems = nelems;
-            this.base = scope.allocate(NativeLibrary.createLayout(int.class), nelems * ELEM_SIZE);
+            this.base = scope.allocate(Libraries.createLayout(int.class), nelems * ELEM_SIZE);
         }
 
         public Pointer<Integer> getBasePointer() {

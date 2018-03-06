@@ -25,7 +25,7 @@
  * @test
  */
 
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.Header;
@@ -65,7 +65,7 @@ public class DoubleUpcall {
     }
 
     public void test() {
-        upcall i = NativeLibrary.bindRaw(upcall.class, NativeLibrary.loadLibrary("Upcall"));
+        upcall i = Libraries.bindRaw(upcall.class, Libraries.loadLibrary("Upcall"));
         upcall.cb v = new cbImpl();
 
         double d = i.double_upcall(v, 1.23, 1.11);

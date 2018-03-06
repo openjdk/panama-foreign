@@ -180,7 +180,7 @@ class NativeInvoker {
 
             @SuppressWarnings("unchecked")
             Class<? extends Reference<?>> c = (Class<? extends Reference<?>>) methodType.returnType();
-            LayoutType<? extends Reference<?>> lt = NativeLibrary.createLayout(c);
+            LayoutType<? extends Reference<?>> lt = Libraries.createLayout(c);
 
             @SuppressWarnings("unchecked")
             Reference<?> r = scope.allocateStruct((LayoutType)lt);
@@ -347,7 +347,7 @@ class NativeInvoker {
             long[] values = new long[(int)n];
             Reference<?> r = (Reference<?>)arg;
 
-            Pointer<Long> src = r.ptr().cast(NativeLibrary.createLayout(byte.class)).offset(binding.getOffset()).cast(NativeLibrary.createLayout(long.class));
+            Pointer<Long> src = r.ptr().cast(Libraries.createLayout(byte.class)).offset(binding.getOffset()).cast(Libraries.createLayout(long.class));
 
             for (int i = 0; i < n; i++) {
                 values[i] = src.offset(i).lvalue().get();

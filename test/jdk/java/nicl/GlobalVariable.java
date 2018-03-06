@@ -98,7 +98,7 @@ public class GlobalVariable {
 
     private final globvar i;
     {
-        i = NativeLibrary.bindRaw(globvar.class, NativeLibrary.loadLibrary("GlobalVariable"));
+        i = Libraries.bindRaw(globvar.class, Libraries.loadLibrary("GlobalVariable"));
         i.init();
     }
 
@@ -185,7 +185,7 @@ public class GlobalVariable {
         assertEquals(42, i.global_struct$ref().get().i$get());
 
         try (Scope scope = Scope.newNativeScope()) {
-            globvar.MyStruct s = scope.allocateStruct(NativeLibrary.createLayout(globvar.MyStruct.class));
+            globvar.MyStruct s = scope.allocateStruct(Libraries.createLayout(globvar.MyStruct.class));
 
             s.i$set(47);
 

@@ -25,7 +25,7 @@ package jdk.internal.nicl;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.types.Pointer;
 
 public class Errno {
@@ -60,7 +60,7 @@ public class Errno {
 
     public int errno() {
         try {
-            Pointer<Integer> p = Util.createPtr((long)errnoMH.invoke(), NativeLibrary.createLayout(int.class));
+            Pointer<Integer> p = Util.createPtr((long)errnoMH.invoke(), Libraries.createLayout(int.class));
             return p.lvalue().get();
         } catch (Throwable t) {
             throw new RuntimeException(t);
@@ -69,7 +69,7 @@ public class Errno {
 
     public String strerror(int errno) {
         try {
-            Pointer<Byte> p = Util.createPtr((long)strerrorMH.invoke(errno), NativeLibrary.createLayout(byte.class));
+            Pointer<Byte> p = Util.createPtr((long)strerrorMH.invoke(errno), Libraries.createLayout(byte.class));
             return Pointer.toString(p);
         } catch (Throwable t) {
             throw new RuntimeException(t);

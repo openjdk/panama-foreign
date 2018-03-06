@@ -29,7 +29,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.io.File;
 import java.nicl.Library;
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.metadata.LibraryDependencies;
 import java.nicl.metadata.NativeType;
 import java.nio.file.Files;
@@ -42,7 +42,7 @@ import java.util.Optional;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-public class NativeLibraryImpl {
+public class LibrariesHelper {
     enum ImplType {
         HEADER, CIVILIZED;
 
@@ -171,14 +171,14 @@ public class NativeLibraryImpl {
     public static Library[] loadLibraries(String[] pathStrs, String[] names) {
         if (pathStrs == null || pathStrs.length == 0) {
             return Arrays.stream(names).map(
-                NativeLibrary::loadLibrary).toArray(Library[]::new);
+                Libraries::loadLibrary).toArray(Library[]::new);
         } else {
             Path[] paths = Arrays.stream(pathStrs).map(Paths::get).toArray(Path[]::new);
             return Arrays.stream(names).map(libName -> {
                 Optional<Path> absPath = findLibraryPath(paths, libName);
                 return absPath.isPresent() ?
-                    NativeLibrary.load(absPath.get().toString()) :
-                    NativeLibrary.loadLibrary(libName);
+                    Libraries.load(absPath.get().toString()) :
+                    Libraries.loadLibrary(libName);
             }).toArray(Library[]::new);
         }
     }
@@ -242,7 +242,7 @@ public class NativeLibraryImpl {
         try {
             T rawInstance = bindRaw(c);
 
-            Class<?> civilizedCls = NativeLibraryImpl.getOrCreateCivilizedImpl(c, rawInstance);
+            Class<?> civilizedCls = LibrariesHelper.getOrCreateCivilizedImpl(c, rawInstance);
 
             return U.allocateInstance(civilizedCls);
         } catch (Throwable t) {

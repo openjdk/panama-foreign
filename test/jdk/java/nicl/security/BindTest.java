@@ -44,28 +44,28 @@ public class BindTest {
     @Test
     public void testBindRaw() {
         checkSecurityException(()-> {
-            system i = NativeLibrary.bindRaw(system.class);
+            system i = Libraries.bindRaw(system.class);
          });
     }
 
     @Test
     public void testBind() {
         checkSecurityException(()-> {
-            NativeLibrary.bind(system.class);
+            Libraries.bind(system.class);
          });
     }
 
     @Test
     public void testBindRawWithLibrary() {
         checkSecurityException(()-> {
-            system i = NativeLibrary.bindRaw(system.class, NativeLibrary.getDefaultLibrary());
+            system i = Libraries.bindRaw(system.class, Libraries.getDefaultLibrary());
          });
     }
 
     @Test
     public void testBindWithLibrary() {
         checkSecurityException(()-> {
-            system i = NativeLibrary.bindRaw(system.class, NativeLibrary.getDefaultLibrary());
+            system i = Libraries.bindRaw(system.class, Libraries.getDefaultLibrary());
          });
     }
 

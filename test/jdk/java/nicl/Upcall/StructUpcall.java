@@ -26,7 +26,7 @@
  * @modules java.base/jdk.internal.misc
  */
 
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
@@ -107,29 +107,29 @@ public class StructUpcall {
                 System.err.println("\ts.field1  = " + s.field1$get());
                 System.err.println("\ts.field2 = " + s.field2$get());
                 System.err.println("\ts.field3 = " + s.field3$get());
-                System.err.println("\ts.field4 = " + s.field4$get().cast(NativeLibrary.createLayout(byte.class)).lvalue().get());
-                System.err.println("\ts.field5 = " + s.field5$get().cast(NativeLibrary.createLayout(byte.class)).lvalue().get());
-                System.err.println("\ts.field6 = " + s.field6$get().cast(NativeLibrary.createLayout(byte.class)).lvalue().get());
+                System.err.println("\ts.field4 = " + s.field4$get().cast(Libraries.createLayout(byte.class)).lvalue().get());
+                System.err.println("\ts.field5 = " + s.field5$get().cast(Libraries.createLayout(byte.class)).lvalue().get());
+                System.err.println("\ts.field6 = " + s.field6$get().cast(Libraries.createLayout(byte.class)).lvalue().get());
             }
 
             assertEquals(47, s.field1$get());
             assertEquals(11, s.field2$get());
             assertEquals(93, s.field3$get());
-            assertEquals(123, s.field4$get().cast(NativeLibrary.createLayout(byte.class)).lvalue().get());
-            assertEquals(124, s.field5$get().cast(NativeLibrary.createLayout(byte.class)).lvalue().get());
-            assertEquals(125, s.field6$get().cast(NativeLibrary.createLayout(byte.class)).lvalue().get());
+            assertEquals(123, s.field4$get().cast(Libraries.createLayout(byte.class)).lvalue().get());
+            assertEquals(124, s.field5$get().cast(Libraries.createLayout(byte.class)).lvalue().get());
+            assertEquals(125, s.field6$get().cast(Libraries.createLayout(byte.class)).lvalue().get());
         }
     }
 
     public void test() {
-        Index i = NativeLibrary.bindRaw(Index.class, NativeLibrary.loadLibrary("Upcall"));
+        Index i = Libraries.bindRaw(Index.class, Libraries.loadLibrary("Upcall"));
 
         try (Scope scope = Scope.newNativeScope()) {
-            Reference<Index.MyStruct> s = scope.allocateStruct(NativeLibrary.createLayout(Index.MyStruct.class));
+            Reference<Index.MyStruct> s = scope.allocateStruct(Libraries.createLayout(Index.MyStruct.class));
 
-            Pointer<Byte> p1 = scope.allocate(NativeLibrary.createLayout(byte.class));
-            Pointer<Byte> p2 = scope.allocate(NativeLibrary.createLayout(byte.class));
-            Pointer<Byte> p3 = scope.allocate(NativeLibrary.createLayout(byte.class));
+            Pointer<Byte> p1 = scope.allocate(Libraries.createLayout(byte.class));
+            Pointer<Byte> p2 = scope.allocate(Libraries.createLayout(byte.class));
+            Pointer<Byte> p3 = scope.allocate(Libraries.createLayout(byte.class));
 
             p1.lvalue().set((byte)123);
             p2.lvalue().set((byte)124);
@@ -138,16 +138,16 @@ public class StructUpcall {
             s.get().field1$set(47);
             s.get().field2$set(11);
             s.get().field3$set(93);
-            s.get().field4$set(p1.cast(NativeLibrary.createLayout(void.class)));
-            s.get().field5$set(p2.cast(NativeLibrary.createLayout(void.class)));
-            s.get().field6$set(p3.cast(NativeLibrary.createLayout(void.class)));
+            s.get().field4$set(p1.cast(Libraries.createLayout(void.class)));
+            s.get().field5$set(p2.cast(Libraries.createLayout(void.class)));
+            s.get().field6$set(p3.cast(Libraries.createLayout(void.class)));
 
             assertEquals(47, s.get().field1$get());
             assertEquals(11, s.get().field2$get());
             assertEquals(93, s.get().field3$get());
-            assertEquals(123, s.get().field4$get().cast(NativeLibrary.createLayout(byte.class)).lvalue().get());
-            assertEquals(124, s.get().field5$get().cast(NativeLibrary.createLayout(byte.class)).lvalue().get());
-            assertEquals(125, s.get().field6$get().cast(NativeLibrary.createLayout(byte.class)).lvalue().get());
+            assertEquals(123, s.get().field4$get().cast(Libraries.createLayout(byte.class)).lvalue().get());
+            assertEquals(124, s.get().field5$get().cast(Libraries.createLayout(byte.class)).lvalue().get());
+            assertEquals(125, s.get().field6$get().cast(Libraries.createLayout(byte.class)).lvalue().get());
 
             Index.MyStructVisitor v = new MyStructVisitorImpl();
 

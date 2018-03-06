@@ -22,10 +22,10 @@
  */
 package jdk.internal.nicl.types;
 
-import jdk.internal.nicl.NativeLibraryImpl;
+import jdk.internal.nicl.LibrariesHelper;
 import jdk.internal.nicl.Util;
 
-import java.nicl.NativeLibrary;
+import java.nicl.Libraries;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 
@@ -35,7 +35,7 @@ public class BoundedPointer<T> implements Pointer<T> {
     private static final boolean DEBUG_WARN_ON_OOBPTR = Boolean.valueOf(
         privilegedGetProperty("jdk.internal.nicl.types.DEBUG_WARN_ON_OOBPTR", "true"));
 
-    public static final Pointer<Void> NULL = new BoundedPointer<>(NativeLibrary.createLayout(void.class), BoundedMemoryRegion.NOTHING, 0, 0);
+    public static final Pointer<Void> NULL = new BoundedPointer<>(Libraries.createLayout(void.class), BoundedMemoryRegion.NOTHING, 0, 0);
 
     public static boolean isNull(long addr) {
         // FIMXE: Include the 64k?
@@ -64,13 +64,13 @@ public class BoundedPointer<T> implements Pointer<T> {
     }
 
     public static BoundedPointer<Void> createNativeVoidPointer(long offset) {
-        return new BoundedPointer<>(NativeLibrary.createLayout(void.class), BoundedMemoryRegion.EVERYTHING, offset);
+        return new BoundedPointer<>(Libraries.createLayout(void.class), BoundedMemoryRegion.EVERYTHING, offset);
     }
 
     @Override
     public T deref() {
         if (Util.isCStruct(type.getCarrierType())) {
-            Class<? extends T> c = NativeLibraryImpl.getImplClass(type.getCarrierType());
+            Class<? extends T> c = LibrariesHelper.getImplClass(type.getCarrierType());
 
             try {
                 return c.getConstructor(Pointer.class).newInstance(this);

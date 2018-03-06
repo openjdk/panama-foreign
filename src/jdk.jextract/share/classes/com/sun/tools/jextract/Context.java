@@ -39,7 +39,7 @@ import java.util.jar.JarOutputStream;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
-import jdk.internal.nicl.NativeLibraryImpl;
+import jdk.internal.nicl.LibrariesHelper;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -288,7 +288,7 @@ public final class Context {
 
     public void parse(Function<HeaderFile, CodeFactory> fn) {
         if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
-            Library[] libs = NativeLibraryImpl.loadLibraries(
+            Library[] libs = LibrariesHelper.loadLibraries(
                 linkCheckPaths.toArray(new String[0]),
                 libraryNames.toArray(new String[0]));
 
