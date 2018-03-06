@@ -22,6 +22,7 @@
  */
 package java.nicl.types;
 
+import jdk.internal.nicl.types.LayoutTypeImpl;
 import jdk.internal.nicl.types.Type;
 
 public interface LayoutType<T> {
@@ -31,4 +32,8 @@ public interface LayoutType<T> {
     long getNativeTypeSize();
 
     LayoutType<Pointer<T>> ptrType();
+
+    public static <T> LayoutType<T> create(Class<T> c) {
+        return LayoutTypeImpl.create(c);
+    }
 }

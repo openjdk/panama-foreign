@@ -30,7 +30,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nicl.Library;
 import java.nicl.Library.Symbol;
-import java.nicl.Libraries;
+import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 
 // FIXME: Grovel this?
@@ -149,7 +149,7 @@ class UnixDynamicLibraries {
                 return null;
             }
 
-            return new BoundedPointer<>(Libraries.createLayout(byte.class), new BoundedMemoryRegion(addr, Util.strlen(addr) + 1));
+            return new BoundedPointer<>(LayoutType.create(byte.class), new BoundedMemoryRegion(addr, Util.strlen(addr) + 1));
         } catch (Throwable t) {
             t.printStackTrace();
             throw new RuntimeException("Failed to invoke dlopen");

@@ -139,9 +139,9 @@ public class StructTest {
 
     public void test() {
         try (Scope scope = Scope.newNativeScope()) {
-            MyStruct s = scope.allocateStruct(Libraries.createLayout(MyStruct.class));
+            MyStruct s = scope.allocateStruct(LayoutType.create(MyStruct.class));
             long size = TOTAL_SIZE;
-            Pointer<Byte> p = scope.allocate(Libraries.createLayout(byte.class), size);
+            Pointer<Byte> p = scope.allocate(LayoutType.create(byte.class), size);
 
             for (int i = 0; i < size; i++) {
                 p.offset(i).lvalue().set((byte)i);

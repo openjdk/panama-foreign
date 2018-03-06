@@ -22,8 +22,8 @@
  */
 
 
-import java.nicl.NativeLibrary;
 import java.nicl.Scope;
+import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Reference;
 import java.util.Iterator;
@@ -37,7 +37,7 @@ public class NativeIntArray implements Iterable<Integer> {
 
     public NativeIntArray(int nelems) {
         this.nelems = nelems;
-        this.base = scope.allocate(NativeLibrary.createLayout(int.class), nelems * ELEM_SIZE);
+        this.base = scope.allocate(LayoutType.create(int.class), nelems * ELEM_SIZE);
     }
 
     public Pointer<Integer> getBasePointer() {

@@ -37,7 +37,6 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.nicl.Library.Symbol;
-import java.nicl.Libraries;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
@@ -313,7 +312,7 @@ public final class Util {
     }
 
 
-    public static final LayoutType<Byte> BYTE_TYPE = Libraries.createLayout(byte.class);
+    public static final LayoutType<Byte> BYTE_TYPE = LayoutType.create(byte.class);
     public static final LayoutType<Pointer<Byte>> BYTE_PTR_TYPE = BYTE_TYPE.ptrType();
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -356,15 +355,15 @@ public final class Util {
     }
 
     public static Pointer<Long> createArrayElementsPointer(long[] arr) {
-        return new BoundedPointer<>(Libraries.createLayout(long.class), createRegionForArrayElements(arr), 0);
+        return new BoundedPointer<>(LayoutType.create(long.class), createRegionForArrayElements(arr), 0);
     }
 
     public static Pointer<Byte> createArrayElementsPointer(byte[] arr) {
-        return new BoundedPointer<>(Libraries.createLayout(byte.class), createRegionForArrayElements(arr), 0);
+        return new BoundedPointer<>(LayoutType.create(byte.class), createRegionForArrayElements(arr), 0);
     }
 
     public static Pointer<Long> createArrayElementsPointer(long[] arr, Scope scope) {
-        return new BoundedPointer<>(Libraries.createLayout(long.class), createRegionForArrayElements(arr, scope), 0);
+        return new BoundedPointer<>(LayoutType.create(long.class), createRegionForArrayElements(arr, scope), 0);
     }
 
     public static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {

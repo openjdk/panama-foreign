@@ -112,8 +112,8 @@ public class PointerTest {
 
     void testStrings() {
         try (Scope scope = Scope.newNativeScope()) {
-            LayoutType<Integer> iType = Libraries.createLayout(int.class);
-            LayoutType<Pointer<Pointer<Byte>>> ppcType = Libraries.createLayout(byte.class).ptrType().ptrType();
+            LayoutType<Integer> iType = LayoutType.create(int.class);
+            LayoutType<Pointer<Pointer<Byte>>> ppcType = LayoutType.create(byte.class).ptrType().ptrType();
 
             Pointer<Pointer<Pointer<Byte>>> pppc = scope.allocate(ppcType);
             Pointer<Integer> pi = scope.allocate(iType);
@@ -128,7 +128,7 @@ public class PointerTest {
 
     void testStrings2() {
         try (Scope scope = Scope.newNativeScope()) {
-            LayoutType<Integer> iType = Libraries.createLayout(int.class);
+            LayoutType<Integer> iType = LayoutType.create(int.class);
 
             Pointer<Integer> pi = scope.allocate(iType);
 
@@ -164,8 +164,8 @@ public class PointerTest {
 
     void testStructs() {
         try (Scope scope = Scope.newNativeScope()) {
-            LayoutType<Integer> iType = Libraries.createLayout(int.class);
-            LayoutType<Pointer<Pointer<pointers.MyStruct>>> ppsType = Libraries.createLayout(pointers.MyStruct.class).ptrType().ptrType();
+            LayoutType<Integer> iType = LayoutType.create(int.class);
+            LayoutType<Pointer<Pointer<pointers.MyStruct>>> ppsType = LayoutType.create(pointers.MyStruct.class).ptrType().ptrType();
 
             Pointer<Pointer<Pointer<pointers.MyStruct>>> ppps = scope.allocate(ppsType);
             Pointer<Integer> pi = scope.allocate(iType);
@@ -180,7 +180,7 @@ public class PointerTest {
 
     void testStructs2() {
         try (Scope scope = Scope.newNativeScope()) {
-            LayoutType<Integer> iType = Libraries.createLayout(int.class);
+            LayoutType<Integer> iType = LayoutType.create(int.class);
 
             Pointer<Integer> pi = scope.allocate(iType);
 

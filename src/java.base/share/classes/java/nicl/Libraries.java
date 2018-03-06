@@ -25,14 +25,6 @@ package java.nicl;
 import java.io.File;
 import jdk.internal.nicl.Errno;
 import jdk.internal.nicl.LibrariesHelper;
-import jdk.internal.nicl.types.BindingRegistry;
-import jdk.internal.nicl.types.Function;
-import jdk.internal.nicl.types.Type;
-import jdk.internal.nicl.types.LayoutTypeImpl;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
-import java.nicl.types.LayoutType;
 import java.util.Objects;
 
 public final class Libraries {
@@ -48,7 +40,6 @@ public final class Libraries {
      * @param lib the library in which to look for native symbols
      * @return
      */
-    @Deprecated
     public static <T> T bindRaw(Class<T> c, Library lib) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
@@ -77,7 +68,6 @@ public final class Libraries {
      * @param c the raw, uncivilized version of the interface
      * @return
      */
-    @Deprecated
     public static Object bind(Class<?> c) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
@@ -93,36 +83,12 @@ public final class Libraries {
      * @param lib the library in which to look for native symbols
      * @return
      */
-    @Deprecated
     public static Object bind(Class<?> c, Library lib) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.bind"));
         }
         return LibrariesHelper.bind(c, lib);
-    }
-
-    /**
-     * Lookup a method handle for a native function with the specified arguments
-     *
-     * @param libs the libraries in which to look for native symbols
-     * @param symbolName the name of the symbol to look up
-     * @param methodType the type of the returned method handle
-     * @param isVarArgs true if the function is a varargs method
-     * @return a method handle which, when invoked, will call the target native function
-     * @throws NoSuchMethodException
-     * @throws IllegalAccessException
-     */
-    public static MethodHandle lookupNativeMethod(Library[] libs, String symbolName, MethodType methodType, boolean isVarArgs) throws NoSuchMethodException, IllegalAccessException {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkPermission(new RuntimePermission("java.nicl.lookupNative", symbolName));
-        }
-        return LibrariesHelper.lookupNativeMethod(libs, symbolName, methodType, isVarArgs);
-    }
-
-    public static MethodHandle lookupNativeMethod(Library lib, String symbolName, MethodType methodType, boolean isVarArgs) throws NoSuchMethodException, IllegalAccessException {
-        return lookupNativeMethod(new Library[] { lib }, symbolName, methodType, isVarArgs);
     }
 
     /**
@@ -197,10 +163,6 @@ public final class Libraries {
         return LibrariesHelper.getDefaultLibrary();
     }
 
-    public static <T> LayoutType<T> createLayout(Class<T> c) {
-        return LayoutTypeImpl.create(c);
-    }
-
     public static int errno() {
         if (ERRNO == null) {
             throw new UnsupportedOperationException();
@@ -215,19 +177,5 @@ public final class Libraries {
 
     public static void throwErrnoException() throws Exception {
         throw new Exception(ERRNO.strerror(errno()));
-    }
-
-    /**
-     * Lookup a method handle for a native function with the specified arguments
-     *
-     * @param lib the library in which to look for the function
-     * @param symbol the name of the symbol to look up
-     * @param type the type descriptor of the native function
-     */
-    public static MethodHandle lookupNativeMethod(Library lib, String symbol, String type)
-        throws NoSuchMethodException, IllegalAccessException {
-        Function fn = (Function) Type.of(type);
-        MethodType mt = BindingRegistry.getInstance().defaultMethodType(fn);
-        return lookupNativeMethod(lib, symbol, mt, fn.isVarArg());
     }
 }

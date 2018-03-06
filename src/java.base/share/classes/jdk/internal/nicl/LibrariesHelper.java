@@ -216,7 +216,6 @@ public class LibrariesHelper {
         return Platform.getInstance().defaultLibrary();
     }
 
-    @Deprecated
     public static <T> T bindRaw(Class<T> c, Library lib) {
         return bindRaw(c, new SymbolLookup(new Library[] { lib }));
     }
@@ -250,7 +249,6 @@ public class LibrariesHelper {
         }
     }
 
-    @Deprecated
     public static <T> Object bind(Class<T> c, Library lib) {
         return bind(c, new SymbolLookup(lib));
     }

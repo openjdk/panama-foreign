@@ -621,7 +621,7 @@ class HeaderImplGenerator extends ClassGenerator {
 
         if (bridge.to() == Bridge.class) {
             // Default - no pointer adjustment needed, so just wrap in new type
-            pt = ptr.cast(Libraries.createLayout(c));
+            pt = ptr.cast(LayoutType.create(c));
         } else {
             // Pointer adjustment (may be) required, so feed through helper method
             MethodType methodType = MethodType.methodType(Pointer.class, Pointer.class);

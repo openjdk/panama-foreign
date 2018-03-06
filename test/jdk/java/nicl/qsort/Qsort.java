@@ -23,7 +23,7 @@
 
 
 import java.nicl.types.Pointer;
-import java.nicl.NativeLibrary;
+import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Reference;
 
@@ -48,8 +48,8 @@ public class Qsort {
         @Override
         public int fn(Pointer<Void> e1, Pointer<Void> e2) {
             // Extract the actual integers to be compared
-            Pointer<Integer> p1 = e1.cast(NativeLibrary.createLayout(int.class));
-            Pointer<Integer> p2 = e2.cast(NativeLibrary.createLayout(int.class));
+            Pointer<Integer> p1 = e1.cast(LayoutType.create(int.class));
+            Pointer<Integer> p2 = e2.cast(LayoutType.create(int.class));
 
             int i1 = p1.lvalue().get();
             int i2 = p1.lvalue().get();
@@ -68,7 +68,7 @@ public class Qsort {
     }
 
     public void testQsort() {
-        stdlib stdlib = NativeLibrary.bindRaw(stdlib.class);
+        stdlib stdlib = LayoutType.bindRaw(stdlib.class);
 
         int nelems = 10;
         NativeIntArray arr = new NativeIntArray(nelems);
@@ -79,7 +79,7 @@ public class Qsort {
 
         printElements(arr);
 
-        stdlib.qsort(arr.getBasePointer().cast(NativeLibrary.createLayout(void.class)), arr.size(), arr.getElemSize(), new comparator());
+        stdlib.qsort(arr.getBasePointer().cast(LayoutType.create(void.class)), arr.size(), arr.getElemSize(), new comparator());
 
         printElements(arr);
     }

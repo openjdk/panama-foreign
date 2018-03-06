@@ -111,7 +111,7 @@ public class UnixSystem {
         try (Scope scope = Scope.newNativeScope()) {
             long bufSize = 128;
 
-            LayoutType<Byte> t = Libraries.createLayout(byte.class);
+            LayoutType<Byte> t = LayoutType.create(byte.class);
             Pointer<Byte> buf = scope.allocate(t, bufSize);
             Pointer<Byte> cfmt = scope.toCString(fmt);
 
@@ -154,7 +154,7 @@ public class UnixSystem {
         LinuxSystem i = Libraries.bindRaw(LinuxSystem.class);
 
         try (Scope scope = Scope.newNativeScope()) {
-            LinuxSystem.stat s = scope.allocateStruct(Libraries.createLayout(LinuxSystem.stat.class));
+            LinuxSystem.stat s = scope.allocateStruct(LayoutType.create(LinuxSystem.stat.class));
             Pointer<LinuxSystem.stat> p = s.ptr();
 
             s = p.deref();
@@ -172,7 +172,7 @@ public class UnixSystem {
         MacOSXSystem i = Libraries.bindRaw(MacOSXSystem.class);
 
         try (Scope scope = Scope.newNativeScope()) {
-            MacOSXSystem.stat s = scope.allocateStruct(Libraries.createLayout(MacOSXSystem.stat.class));
+            MacOSXSystem.stat s = scope.allocateStruct(LayoutType.create(MacOSXSystem.stat.class));
             Pointer<MacOSXSystem.stat> p = s.ptr();
 
             s = p.deref();
@@ -220,16 +220,16 @@ public class UnixSystem {
 
         {
             // Pointer version
-            Pointer<Pointer<Byte>> pp = (Pointer)i.environ$get().cast(Libraries.createLayout(byte.class).ptrType());
-            Pointer<Byte> sp = (Pointer)pp.lvalue().get().cast(Libraries.createLayout(byte.class));
+            Pointer<Pointer<Byte>> pp = (Pointer)i.environ$get().cast(LayoutType.create(byte.class).ptrType());
+            Pointer<Byte> sp = (Pointer)pp.lvalue().get().cast(LayoutType.create(byte.class));
             System.out.println("testEnviron.str: " + Pointer.toString(sp));
         }
 
         {
             // Reference version
             Reference<Pointer<Pointer<Byte>>> r = i.environ$ref();
-            Pointer<Pointer<Byte>> spp = (Pointer)r.get().cast(Libraries.createLayout(byte.class).ptrType());
-            Pointer<Byte> sp = (Pointer)spp.lvalue().get().cast(Libraries.createLayout(byte.class));
+            Pointer<Pointer<Byte>> spp = (Pointer)r.get().cast(LayoutType.create(byte.class).ptrType());
+            Pointer<Byte> sp = (Pointer)spp.lvalue().get().cast(LayoutType.create(byte.class));
             System.out.println("testEnviron.str: " + Pointer.toString(sp));
         }
     }

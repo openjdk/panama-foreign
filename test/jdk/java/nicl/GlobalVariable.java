@@ -185,7 +185,7 @@ public class GlobalVariable {
         assertEquals(42, i.global_struct$ref().get().i$get());
 
         try (Scope scope = Scope.newNativeScope()) {
-            globvar.MyStruct s = scope.allocateStruct(Libraries.createLayout(globvar.MyStruct.class));
+            globvar.MyStruct s = scope.allocateStruct(LayoutType.create(globvar.MyStruct.class));
 
             s.i$set(47);
 
