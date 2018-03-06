@@ -441,14 +441,12 @@ static bool is_short_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
 
 bool ciType::is_vectormask() {
   return basic_type() == T_OBJECT &&
-      (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_VectorMask) ||
-      (as_klass()->name()->sid() == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_VectorAbstractMask)) ||
-      is_float64mask(__) || is_float128mask(__) || is_float256mask(__) || is_float512mask(__) ||
-      is_double64mask(__) || is_double128mask(__) || is_double256mask(__) || is_double512mask(__) ||
-      is_int64mask(__) || is_int128mask(__) || is_int256mask(__) || is_int512mask(__) ||
-      is_long64mask(__) || is_long128mask(__) || is_long256mask(__) || is_long512mask(__) ||
-      is_byte64mask(__) || is_byte128mask(__) || is_byte256mask(__) || is_byte512mask(__) ||
-      is_short64mask(__) || is_short128mask(__) || is_short256mask(__) || is_short512mask(__));
+      (is_float64mask(__) || is_float128mask(__) || is_float256mask(__) || is_float512mask(__) ||
+       is_double64mask(__) || is_double128mask(__) || is_double256mask(__) || is_double512mask(__) ||
+       is_int64mask(__) || is_int128mask(__) || is_int256mask(__) || is_int512mask(__) ||
+       is_long64mask(__) || is_long128mask(__) || is_long256mask(__) || is_long512mask(__) ||
+       is_byte64mask(__) || is_byte128mask(__) || is_byte256mask(__) || is_byte512mask(__) ||
+       is_short64mask(__) || is_short128mask(__) || is_short256mask(__) || is_short512mask(__));
 }
 
 bool ciType::is_vectorapi_vector() {

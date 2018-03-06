@@ -787,12 +787,26 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         static final Float512Mask TRUE_MASK = new Float512Mask(true);
         static final Float512Mask FALSE_MASK = new Float512Mask(false);
 
+        // FIXME: was temporarily put here to simplify rematerialization support in the JVM
+        private final boolean[] bits; // Don't access directly, use getBits() instead.
+
         public Float512Mask(boolean[] bits) {
-            super(bits);
+            if (bits.length != LENGTH) {
+                throw new IllegalArgumentException("Boolean array must be the same length as the masked vector");
+            }
+            this.bits = bits.clone();
         }
 
         public Float512Mask(boolean val) {
-            super(val);
+            boolean[] bits = new boolean[LENGTH];
+            for (int i = 0; i < bits.length; i++) {
+                bits[i] = val;
+            }
+            this.bits = bits;
+        }
+
+        boolean[] getBits() {
+            return VectorIntrinsics.maybeRebox(this).bits;
         }
 
         @Override

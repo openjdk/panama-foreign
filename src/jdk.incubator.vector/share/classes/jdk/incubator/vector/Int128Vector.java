@@ -842,12 +842,26 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         static final Int128Mask TRUE_MASK = new Int128Mask(true);
         static final Int128Mask FALSE_MASK = new Int128Mask(false);
 
+        // FIXME: was temporarily put here to simplify rematerialization support in the JVM
+        private final boolean[] bits; // Don't access directly, use getBits() instead.
+
         public Int128Mask(boolean[] bits) {
-            super(bits);
+            if (bits.length != LENGTH) {
+                throw new IllegalArgumentException("Boolean array must be the same length as the masked vector");
+            }
+            this.bits = bits.clone();
         }
 
         public Int128Mask(boolean val) {
-            super(val);
+            boolean[] bits = new boolean[LENGTH];
+            for (int i = 0; i < bits.length; i++) {
+                bits[i] = val;
+            }
+            this.bits = bits;
+        }
+
+        boolean[] getBits() {
+            return VectorIntrinsics.maybeRebox(this).bits;
         }
 
         @Override

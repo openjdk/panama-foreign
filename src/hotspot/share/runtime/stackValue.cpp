@@ -31,43 +31,96 @@
 #include "oops/typeArrayOop.inline.hpp"
 #include "runtime/stackValue.hpp"
 
-static BasicType klass2bt(InstanceKlass* ik) {
+static BasicType klass2bt(InstanceKlass* ik, bool& is_mask) {
   switch(vmSymbols::find_sid(ik->name())) {
+    // Vectors
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte64Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte128Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte256Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte512Vector):
+      is_mask = false;
       return T_BYTE;
 
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short64Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short128Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short256Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short512Vector):
+      is_mask = false;
       return T_SHORT;
 
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int64Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector):
+      is_mask = false;
       return T_INT;
 
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long64Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long128Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long256Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long512Vector):
+      is_mask = false;
       return T_LONG;
 
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float64Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector):
+      is_mask = false;
       return T_FLOAT;
 
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double64Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector):
+      is_mask = false;
       return T_DOUBLE;
+
+    // Masks
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte64Vector_Byte64Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte128Vector_Byte128Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte256Vector_Byte256Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte512Vector_Byte512Mask):
+      is_mask = true;
+      return T_BYTE;
+
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short64Vector_Short64Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short128Vector_Short128Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short256Vector_Short256Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short512Vector_Short512Mask):
+      is_mask = true;
+      return T_SHORT;
+
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int64Vector_Int64Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Mask):
+      is_mask = true;
+      return T_INT;
+
+    // LongMask
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long64Vector_Long64Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long128Vector_Long128Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long256Vector_Long256Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long512Vector_Long512Mask):
+      is_mask = true;
+      return T_LONG;
+
+    // FloatMask
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float64Vector_Float64Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Mask):
+      is_mask = true;
+      return T_INT;
+
+    // DoubleMask
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double64Vector_Double64Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Mask):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Mask):
+      is_mask = true;
+      return T_LONG;
 
     default:
       fatal("unknown klass: %s", ik->name()->as_utf8());
@@ -78,35 +131,59 @@ static BasicType klass2bt(InstanceKlass* ik) {
 static int klass2bytes(InstanceKlass* ik) {
   switch(vmSymbols::find_sid(ik->name())) {
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte64Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte64Vector_Byte64Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short64Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short64Vector_Short64Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int64Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int64Vector_Int64Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long64Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long64Vector_Long64Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float64Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float64Vector_Float64Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double64Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double64Vector_Double64Mask):
       return (64 / 8);
 
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte128Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte128Vector_Byte128Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short128Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short128Vector_Short128Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int128Vector_Int128Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long128Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long128Vector_Long128Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float128Vector_Float128Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double128Vector_Double128Mask):
       return (128 / 8);
 
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte256Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte256Vector_Byte256Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short256Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short256Vector_Short256Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int256Vector_Int256Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long256Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long256Vector_Long256Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float256Vector_Float256Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double256Vector_Double256Mask):
       return (256 / 8);
 
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte512Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte512Vector_Byte512Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short512Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short512Vector_Short512Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int512Vector_Int512Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long512Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long512Vector_Long512Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Float512Vector_Float512Mask):
     case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector):
+    case vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double512Vector_Double512Mask):
       return (512 / 8);
 
     default:
@@ -115,9 +192,9 @@ static int klass2bytes(InstanceKlass* ik) {
   }
 }
 
-static void init_array(typeArrayOop arr, BasicType elem_bt, int num_elem, address value_addr) {
+static void init_vector_array(typeArrayOop arr, BasicType elem_bt, int num_elem, address value_addr) {
   int elem_size = type2aelembytes(elem_bt);
-  
+
   for (int i = 0; i < num_elem; i++) {
     switch (elem_bt) {
       case T_BYTE: {
@@ -156,14 +233,51 @@ static void init_array(typeArrayOop arr, BasicType elem_bt, int num_elem, addres
   }
 }
 
+static void init_mask_array(typeArrayOop arr, BasicType elem_bt, int num_elem, address value_addr) {
+  int elem_size = type2aelembytes(elem_bt);
+
+  for (int i = 0; i < num_elem; i++) {
+    switch (elem_bt) {
+      case T_BYTE: {
+        jbyte elem_value = *(jbyte*) (value_addr + i * elem_size);
+        arr->bool_at_put(i, elem_value != 0);
+        break;
+      }
+      case T_SHORT: {
+        jshort elem_value = *(jshort*) (value_addr + i * elem_size);
+        arr->bool_at_put(i, elem_value != 0);
+        break;
+      }
+      case T_INT: {
+        jint elem_value = *(jint*) (value_addr + i * elem_size);
+        arr->bool_at_put(i, elem_value != 0);
+        break;
+      }
+      case T_LONG: {
+        jlong elem_value = *(jlong*) (value_addr + i * elem_size);
+        arr->bool_at_put(i, elem_value != 0);
+        break;
+      }
+      default:
+        fatal("unsupported: %s", type2name(elem_bt));
+    }
+  }
+}
+
 static oop allocate_vector(InstanceKlass* ik, address value_addr) {
-  BasicType elem_bt = klass2bt(ik);
+  bool is_mask = false; // overwritten by klass2bt
+  BasicType elem_bt = klass2bt(ik, is_mask);
   int num_elem = klass2bytes(ik) / type2aelembytes(elem_bt);
-  TypeArrayKlass* ak = TypeArrayKlass::cast(Universe::typeArrayKlassObj(elem_bt));
+  assert(!is_mask || (elem_bt != T_FLOAT && elem_bt != T_DOUBLE), "%s", type2name(elem_bt));
+  TypeArrayKlass* ak = TypeArrayKlass::cast(Universe::typeArrayKlassObj(is_mask ? T_BOOLEAN : elem_bt));
   JavaThread* thread = JavaThread::current();
   JRT_BLOCK
     typeArrayOop arr = ak->allocate(num_elem, THREAD);
-    init_array(arr, elem_bt, num_elem, value_addr);
+    if (is_mask) {
+      init_mask_array(arr, elem_bt, num_elem, value_addr);
+    } else {
+      init_vector_array(arr, elem_bt, num_elem, value_addr);
+    }
     return arr;
   JRT_END
 }

@@ -200,64 +200,66 @@ public interface Vector<E, S extends Vector.Shape> {
         default int length(Species<?, ?> s) { return bitSize() / s.elementSize(); }  // usually bitSize / sizeof(s.elementType)
     }
 
-    interface Mask<E, S extends Shape> {
-        default int length() { return species().length(); }
+    abstract class Mask<E, S extends Shape> {
+        public int length() { return species().length(); }
 
-        long toLong();
+        public abstract long toLong();
 
-        boolean[] toArray();
+        public abstract boolean[] toArray();
 
-        boolean anyTrue();
+        public abstract boolean anyTrue();
 
-        boolean allTrue();
+        public abstract boolean allTrue();
 
-        int trueCount();
+        public abstract int trueCount();
 
         // TODO: LZ count
         // numberOfLeadingZeros
         // numberOfTrailingZeros
 
-        Mask<E, S> and(Mask<E, S> o);
+        public abstract Mask<E, S> and(Mask<E, S> o);
 
-        Mask<E, S> or(Mask<E, S> o);
+        public abstract Mask<E, S> or(Mask<E, S> o);
 
-        Mask<E, S> not();
+        public abstract Mask<E, S> not();
 
-        Species<E, S> species();
+        public abstract Species<E, S> species();
 
-        Vector<E, S> toVector();
+        public abstract Vector<E, S> toVector();
 
+        public abstract
         <Z> Vector<Z, S> toVector(Class<Z> e);
 
-        boolean getElement(int i);
+        public abstract boolean getElement(int i);
 
+        public abstract
         <F, Z extends Shape>
         Mask<F, Z> reshape(Class<F> type, Z shape);
 
-        default <Z>
+        public <Z>
         Mask<Z, S> rebracket(Class<Z> e) {
             return reshape(e, species().shape());
         }
 
-        default <Z extends Shape> Mask<E, Z>
+        public <Z extends Shape> Mask<E, Z>
         resize(Z shape) {
             return reshape(species().elementType(), shape);
         }
 
     }
 
-    interface Shuffle<E, S extends Shape> {
-        default int length() { return species().length(); }
+    abstract class Shuffle<E, S extends Shape> {
+        public int length() { return species().length(); }
 
-        int[] toArray();
+        public abstract int[] toArray();
 
-        Species<E, S> species();
+        public abstract Species<E, S> species();
 
-        IntVector.IntSpecies<S> intSpecies();
+        public abstract IntVector.IntSpecies<S> intSpecies();
 
-        IntVector<S> toVector();
+        public abstract IntVector<S> toVector();
 
-        default int getElement(int i) { return toArray()[i]; }
+        public int getElement(int i) { return toArray()[i]; }
     }
 
     @SuppressWarnings("unchecked")

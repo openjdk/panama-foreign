@@ -787,12 +787,26 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
         static final Float64Mask TRUE_MASK = new Float64Mask(true);
         static final Float64Mask FALSE_MASK = new Float64Mask(false);
 
+        // FIXME: was temporarily put here to simplify rematerialization support in the JVM
+        private final boolean[] bits; // Don't access directly, use getBits() instead.
+
         public Float64Mask(boolean[] bits) {
-            super(bits);
+            if (bits.length != LENGTH) {
+                throw new IllegalArgumentException("Boolean array must be the same length as the masked vector");
+            }
+            this.bits = bits.clone();
         }
 
         public Float64Mask(boolean val) {
-            super(val);
+            boolean[] bits = new boolean[LENGTH];
+            for (int i = 0; i < bits.length; i++) {
+                bits[i] = val;
+            }
+            this.bits = bits;
+        }
+
+        boolean[] getBits() {
+            return VectorIntrinsics.maybeRebox(this).bits;
         }
 
         @Override

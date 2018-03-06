@@ -26,7 +26,7 @@ package jdk.incubator.vector;
 
 import java.util.Arrays;
 
-abstract class AbstractShuffle<E, S extends Vector.Shape> implements Vector.Shuffle<E, S> {
+abstract class AbstractShuffle<E, S extends Vector.Shape> extends Vector.Shuffle<E, S> {
     private final int[] reorder;
 
     public AbstractShuffle(int[] reorder) {

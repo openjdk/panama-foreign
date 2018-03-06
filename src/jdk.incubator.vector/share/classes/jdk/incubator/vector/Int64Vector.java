@@ -842,12 +842,26 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         static final Int64Mask TRUE_MASK = new Int64Mask(true);
         static final Int64Mask FALSE_MASK = new Int64Mask(false);
 
+        // FIXME: was temporarily put here to simplify rematerialization support in the JVM
+        private final boolean[] bits; // Don't access directly, use getBits() instead.
+
         public Int64Mask(boolean[] bits) {
-            super(bits);
+            if (bits.length != LENGTH) {
+                throw new IllegalArgumentException("Boolean array must be the same length as the masked vector");
+            }
+            this.bits = bits.clone();
         }
 
         public Int64Mask(boolean val) {
-            super(val);
+            boolean[] bits = new boolean[LENGTH];
+            for (int i = 0; i < bits.length; i++) {
+                bits[i] = val;
+            }
+            this.bits = bits;
+        }
+
+        boolean[] getBits() {
+            return VectorIntrinsics.maybeRebox(this).bits;
         }
 
         @Override

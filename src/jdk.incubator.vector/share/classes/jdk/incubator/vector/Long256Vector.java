@@ -734,12 +734,26 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         static final Long256Mask TRUE_MASK = new Long256Mask(true);
         static final Long256Mask FALSE_MASK = new Long256Mask(false);
 
+        // FIXME: was temporarily put here to simplify rematerialization support in the JVM
+        private final boolean[] bits; // Don't access directly, use getBits() instead.
+
         public Long256Mask(boolean[] bits) {
-            super(bits);
+            if (bits.length != LENGTH) {
+                throw new IllegalArgumentException("Boolean array must be the same length as the masked vector");
+            }
+            this.bits = bits.clone();
         }
 
         public Long256Mask(boolean val) {
-            super(val);
+            boolean[] bits = new boolean[LENGTH];
+            for (int i = 0; i < bits.length; i++) {
+                bits[i] = val;
+            }
+            this.bits = bits;
+        }
+
+        boolean[] getBits() {
+            return VectorIntrinsics.maybeRebox(this).bits;
         }
 
         @Override

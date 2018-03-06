@@ -26,29 +26,10 @@ package jdk.incubator.vector;
 
 import java.util.Arrays;
 
-abstract class AbstractMask<E, S extends Vector.Shape> implements Vector.Mask<E, S> {
-    private final boolean[] bits; // Don't access directly, use getBits() instead.
+abstract class AbstractMask<E, S extends Vector.Shape> extends Vector.Mask<E, S> {
 
     /*package-private*/
-    boolean[] getBits() {
-        return VectorIntrinsics.maybeRebox(this).bits;
-    }
-
-    AbstractMask(boolean[] bits) {
-        if (bits.length != species().length()) {
-            throw new ArrayIndexOutOfBoundsException("Boolean array must be the same length as the masked vector");
-        }
-
-        this.bits = bits.clone();
-    }
-
-    AbstractMask(boolean val) {
-        boolean[] bits = new boolean[species().length()];
-        for (int i = 0; i < bits.length; i++) {
-            bits[i] = val;
-        }
-        this.bits = bits;
-    }
+    abstract boolean[] getBits();
 
     // Unary operator
 
