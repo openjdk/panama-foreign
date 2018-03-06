@@ -61,15 +61,79 @@ public class Long512VectorTests {
         }
     }
 
+    interface FUnOp {
+        long apply(long a);
+    }
+
+    static void assertArraysEquals(long[] a, long[] r, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(long[] a, long[] r, boolean[] mask, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
+        }
+    }
+
+    interface FBinOp {
+        long apply(long a, long b);
+    }
+
+    interface FBinMaskOp {
+        long apply(long a, long b, boolean m);
+
+        static FBinMaskOp lift(FBinOp f) {
+            return (a, b, m) -> m ? f.apply(a, b) : a;
+        }
+    }
+
+    static void assertArraysEquals(long[] a, long[] b, long[] r, FBinOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(long[] a, long[] b, long[] r, boolean[] mask, FBinOp f) {
+        assertArraysEquals(a, b, r, mask, FBinMaskOp.lift(f));
+    }
+
+    static void assertArraysEquals(long[] a, long[] b, long[] r, boolean[] mask, FBinMaskOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i]);
+            }
+        } catch (AssertionError err) {
+            Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % species.length()]);
+        }
+    }
+
     static long add(long a, long b) {
         return (long)(a + b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void addLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -79,22 +143,19 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.add(bv).intoArray(c, i);
+            av.add(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)add(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Long512VectorTests::add);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void addMaskedLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -110,37 +171,25 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.add(bv, tMask).intoArray(c, i);
-            av.add(bv, fMask).intoArray(d, i);
-            av.add(bv, pMask).intoArray(e, i);
+            av.add(bv, tMask).intoArray(rT, i);
+            av.add(bv, fMask).intoArray(rF, i);
+            av.add(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_res = (long)(add(a[i], b[i]));
-            long d_res = (long) a[i];
-            long e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Long512VectorTests::add);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Long512VectorTests::add);
+        assertArraysEquals(a, b, rM, mask, Long512VectorTests::add);
     }
 
     static long sub(long a, long b) {
         return (long)(a - b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void subLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -150,22 +199,19 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.sub(bv).intoArray(c, i);
+            av.sub(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)sub(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Long512VectorTests::sub);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void subMaskedLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -181,37 +227,25 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.sub(bv, tMask).intoArray(c, i);
-            av.sub(bv, fMask).intoArray(d, i);
-            av.sub(bv, pMask).intoArray(e, i);
+            av.sub(bv, tMask).intoArray(rT, i);
+            av.sub(bv, fMask).intoArray(rF, i);
+            av.sub(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_res = (long)(sub(a[i], b[i]));
-            long d_res = (long) a[i];
-            long e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Long512VectorTests::sub);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Long512VectorTests::sub);
+        assertArraysEquals(a, b, rM, mask, Long512VectorTests::sub);
     }
 
     static long div(long a, long b) {
         return (long)(a / b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void divLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -221,22 +255,19 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.div(bv).intoArray(c, i);
+            av.div(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)div(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Long512VectorTests::div);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void divMaskedLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -252,37 +283,25 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.div(bv, tMask).intoArray(c, i);
-            av.div(bv, fMask).intoArray(d, i);
-            av.div(bv, pMask).intoArray(e, i);
+            av.div(bv, tMask).intoArray(rT, i);
+            av.div(bv, fMask).intoArray(rF, i);
+            av.div(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_res = (long)(div(a[i], b[i]));
-            long d_res = (long) a[i];
-            long e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Long512VectorTests::div);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Long512VectorTests::div);
+        assertArraysEquals(a, b, rM, mask, Long512VectorTests::div);
     }
 
     static long mul(long a, long b) {
         return (long)(a * b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void mulLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -292,22 +311,19 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.mul(bv).intoArray(c, i);
+            av.mul(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)mul(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Long512VectorTests::mul);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void mulMaskedLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -323,26 +339,14 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.mul(bv, tMask).intoArray(c, i);
-            av.mul(bv, fMask).intoArray(d, i);
-            av.mul(bv, pMask).intoArray(e, i);
+            av.mul(bv, tMask).intoArray(rT, i);
+            av.mul(bv, fMask).intoArray(rF, i);
+            av.mul(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_res = (long)(mul(a[i], b[i]));
-            long d_res = (long) a[i];
-            long e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Long512VectorTests::mul);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Long512VectorTests::mul);
+        assertArraysEquals(a, b, rM, mask, Long512VectorTests::mul);
     }
 
 
@@ -352,11 +356,11 @@ public class Long512VectorTests {
 
 
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void andLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -366,13 +370,10 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.and(bv).intoArray(c, i);
+            av.and(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)and(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Long512VectorTests::and);
     }
 
 
@@ -381,9 +382,9 @@ public class Long512VectorTests {
     static void andMaskedLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -399,26 +400,14 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.and(bv, tMask).intoArray(c, i);
-            av.and(bv, fMask).intoArray(d, i);
-            av.and(bv, pMask).intoArray(e, i);
+            av.and(bv, tMask).intoArray(rT, i);
+            av.and(bv, fMask).intoArray(rF, i);
+            av.and(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_res = (long)(and(a[i], b[i]));
-            long d_res = (long) a[i];
-            long e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Long512VectorTests::and);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Long512VectorTests::and);
+        assertArraysEquals(a, b, rM, mask, Long512VectorTests::and);
     }
 
 
@@ -429,11 +418,11 @@ public class Long512VectorTests {
 
 
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void orLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -443,13 +432,10 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.or(bv).intoArray(c, i);
+            av.or(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)or(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Long512VectorTests::or);
     }
 
 
@@ -458,9 +444,9 @@ public class Long512VectorTests {
     static void orMaskedLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -476,26 +462,14 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.or(bv, tMask).intoArray(c, i);
-            av.or(bv, fMask).intoArray(d, i);
-            av.or(bv, pMask).intoArray(e, i);
+            av.or(bv, tMask).intoArray(rT, i);
+            av.or(bv, fMask).intoArray(rF, i);
+            av.or(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_res = (long)(or(a[i], b[i]));
-            long d_res = (long) a[i];
-            long e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Long512VectorTests::or);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Long512VectorTests::or);
+        assertArraysEquals(a, b, rM, mask, Long512VectorTests::or);
     }
 
 
@@ -506,11 +480,11 @@ public class Long512VectorTests {
 
 
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void xorLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -520,13 +494,10 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.xor(bv).intoArray(c, i);
+            av.xor(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)xor(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Long512VectorTests::xor);
     }
 
 
@@ -535,9 +506,9 @@ public class Long512VectorTests {
     static void xorMaskedLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -553,26 +524,14 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.xor(bv, tMask).intoArray(c, i);
-            av.xor(bv, fMask).intoArray(d, i);
-            av.xor(bv, pMask).intoArray(e, i);
+            av.xor(bv, tMask).intoArray(rT, i);
+            av.xor(bv, fMask).intoArray(rF, i);
+            av.xor(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_res = (long)(xor(a[i], b[i]));
-            long d_res = (long) a[i];
-            long e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Long512VectorTests::xor);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Long512VectorTests::xor);
+        assertArraysEquals(a, b, rM, mask, Long512VectorTests::xor);
     }
 
 
@@ -580,11 +539,11 @@ public class Long512VectorTests {
         return (long)(Math.max(a, b));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void maxLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -594,24 +553,21 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.max(bv).intoArray(c, i);
+            av.max(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)max(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Long512VectorTests::max);
     }
 
     static long min(long a, long b) {
         return (long)(Math.min(a, b));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void minLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -621,22 +577,24 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.min(bv).intoArray(c, i);
+            av.min(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)min(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Long512VectorTests::min);
+    }
+
+
+    static long blend(long a, long b, boolean mask) {
+        return mask ? b : a;
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void blendLong512VectorTests() {
         long[] a = new long[SIZE];
         long[] b = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -652,29 +610,15 @@ public class Long512VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
             LongVector<Shapes.S512Bit> bv = species.fromArray(b, i);
-            av.blend(bv, tMask).intoArray(c, i);
-            av.blend(bv, fMask).intoArray(d, i);
-            av.blend(bv, pMask).intoArray(e, i);
+            av.blend(bv, tMask).intoArray(rT, i);
+            av.blend(bv, fMask).intoArray(rF, i);
+            av.blend(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_sum = (long) b[i];
-            long d_sum = (long) a[i];
-            long e_sum;
-            if (mask[i%species.length()] == false) {
-              e_sum = d_sum;
-            } else {
-              e_sum = c_sum;
-            }
-
-            Assert.assertEquals(c_sum, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_sum, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_sum, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Long512VectorTests::blend);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Long512VectorTests::blend);
+        assertArraysEquals(a, b, rM, mask, Long512VectorTests::blend);
     }
-
-
     static long neg(long a) {
         return (long)(-((long)a));
     }
@@ -682,7 +626,7 @@ public class Long512VectorTests {
    @org.testng.annotations.Test(invocationCount = 10)
     static void negLong512VectorTests() {
         long[] a = new long[SIZE];
-        long[] b = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -690,21 +634,18 @@ public class Long512VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
-            av.neg().intoArray(b, i);
+            av.neg().intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)neg((long)a[i]), b[i], "at index #" + i);
-        }
+        assertArraysEquals(a, r, Long512VectorTests::neg);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void negMaskedLong512VectorTests() {
         long[] a = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -718,26 +659,14 @@ public class Long512VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
-            av.neg(tMask).intoArray(c, i);
-            av.neg(fMask).intoArray(d, i);
-            av.neg(pMask).intoArray(e, i);
+            av.neg(tMask).intoArray(rT, i);
+            av.neg(fMask).intoArray(rF, i);
+            av.neg(pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_res = (long)neg((long)a[i]);
-            long d_res = (long) a[i];
-            long e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, rT, tMask.toArray(), Long512VectorTests::neg);
+        assertArraysEquals(a, rF, fMask.toArray(), Long512VectorTests::neg);
+        assertArraysEquals(a, rM, mask, Long512VectorTests::neg);
     }
 
     static long abs(long a) {
@@ -747,7 +676,7 @@ public class Long512VectorTests {
    @org.testng.annotations.Test(invocationCount = 10)
     static void absLong512VectorTests() {
         long[] a = new long[SIZE];
-        long[] b = new long[SIZE];
+        long[] r = new long[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -755,21 +684,18 @@ public class Long512VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
-            av.abs().intoArray(b, i);
+            av.abs().intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((long)abs((long)a[i]), b[i], "at index #" + i);
-        }
+        assertArraysEquals(a, r, Long512VectorTests::abs);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void absMaskedLong512VectorTests() {
         long[] a = new long[SIZE];
-        long[] c = new long[SIZE];
-        long[] d = new long[SIZE];
-        long[] e = new long[SIZE];
+        long[] rT = new long[SIZE];
+        long[] rF = new long[SIZE];
+        long[] rM = new long[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -783,26 +709,14 @@ public class Long512VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             LongVector<Shapes.S512Bit> av = species.fromArray(a, i);
-            av.abs(tMask).intoArray(c, i);
-            av.abs(fMask).intoArray(d, i);
-            av.abs(pMask).intoArray(e, i);
+            av.abs(tMask).intoArray(rT, i);
+            av.abs(fMask).intoArray(rF, i);
+            av.abs(pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            long c_res = (long)abs((long)a[i]);
-            long d_res = (long) a[i];
-            long e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, rT, tMask.toArray(), Long512VectorTests::abs);
+        assertArraysEquals(a, rF, fMask.toArray(), Long512VectorTests::abs);
+        assertArraysEquals(a, rM, mask, Long512VectorTests::abs);
     }
 
 }

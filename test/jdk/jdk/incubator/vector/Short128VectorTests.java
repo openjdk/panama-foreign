@@ -61,15 +61,79 @@ public class Short128VectorTests {
         }
     }
 
+    interface FUnOp {
+        short apply(short a);
+    }
+
+    static void assertArraysEquals(short[] a, short[] r, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(short[] a, short[] r, boolean[] mask, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
+        }
+    }
+
+    interface FBinOp {
+        short apply(short a, short b);
+    }
+
+    interface FBinMaskOp {
+        short apply(short a, short b, boolean m);
+
+        static FBinMaskOp lift(FBinOp f) {
+            return (a, b, m) -> m ? f.apply(a, b) : a;
+        }
+    }
+
+    static void assertArraysEquals(short[] a, short[] b, short[] r, FBinOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(short[] a, short[] b, short[] r, boolean[] mask, FBinOp f) {
+        assertArraysEquals(a, b, r, mask, FBinMaskOp.lift(f));
+    }
+
+    static void assertArraysEquals(short[] a, short[] b, short[] r, boolean[] mask, FBinMaskOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i]);
+            }
+        } catch (AssertionError err) {
+            Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % species.length()]);
+        }
+    }
+
     static short add(short a, short b) {
         return (short)(a + b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void addShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -79,22 +143,19 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.add(bv).intoArray(c, i);
+            av.add(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)add(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Short128VectorTests::add);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void addMaskedShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -110,37 +171,25 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.add(bv, tMask).intoArray(c, i);
-            av.add(bv, fMask).intoArray(d, i);
-            av.add(bv, pMask).intoArray(e, i);
+            av.add(bv, tMask).intoArray(rT, i);
+            av.add(bv, fMask).intoArray(rF, i);
+            av.add(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_res = (short)(add(a[i], b[i]));
-            short d_res = (short) a[i];
-            short e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Short128VectorTests::add);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Short128VectorTests::add);
+        assertArraysEquals(a, b, rM, mask, Short128VectorTests::add);
     }
 
     static short sub(short a, short b) {
         return (short)(a - b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void subShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -150,22 +199,19 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.sub(bv).intoArray(c, i);
+            av.sub(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)sub(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Short128VectorTests::sub);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void subMaskedShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -181,37 +227,25 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.sub(bv, tMask).intoArray(c, i);
-            av.sub(bv, fMask).intoArray(d, i);
-            av.sub(bv, pMask).intoArray(e, i);
+            av.sub(bv, tMask).intoArray(rT, i);
+            av.sub(bv, fMask).intoArray(rF, i);
+            av.sub(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_res = (short)(sub(a[i], b[i]));
-            short d_res = (short) a[i];
-            short e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Short128VectorTests::sub);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Short128VectorTests::sub);
+        assertArraysEquals(a, b, rM, mask, Short128VectorTests::sub);
     }
 
     static short div(short a, short b) {
         return (short)(a / b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void divShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -221,22 +255,19 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.div(bv).intoArray(c, i);
+            av.div(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)div(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Short128VectorTests::div);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void divMaskedShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -252,37 +283,25 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.div(bv, tMask).intoArray(c, i);
-            av.div(bv, fMask).intoArray(d, i);
-            av.div(bv, pMask).intoArray(e, i);
+            av.div(bv, tMask).intoArray(rT, i);
+            av.div(bv, fMask).intoArray(rF, i);
+            av.div(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_res = (short)(div(a[i], b[i]));
-            short d_res = (short) a[i];
-            short e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Short128VectorTests::div);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Short128VectorTests::div);
+        assertArraysEquals(a, b, rM, mask, Short128VectorTests::div);
     }
 
     static short mul(short a, short b) {
         return (short)(a * b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void mulShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -292,22 +311,19 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.mul(bv).intoArray(c, i);
+            av.mul(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)mul(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Short128VectorTests::mul);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void mulMaskedShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -323,26 +339,14 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.mul(bv, tMask).intoArray(c, i);
-            av.mul(bv, fMask).intoArray(d, i);
-            av.mul(bv, pMask).intoArray(e, i);
+            av.mul(bv, tMask).intoArray(rT, i);
+            av.mul(bv, fMask).intoArray(rF, i);
+            av.mul(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_res = (short)(mul(a[i], b[i]));
-            short d_res = (short) a[i];
-            short e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Short128VectorTests::mul);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Short128VectorTests::mul);
+        assertArraysEquals(a, b, rM, mask, Short128VectorTests::mul);
     }
 
 
@@ -352,11 +356,11 @@ public class Short128VectorTests {
 
 
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void andShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -366,13 +370,10 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.and(bv).intoArray(c, i);
+            av.and(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)and(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Short128VectorTests::and);
     }
 
 
@@ -381,9 +382,9 @@ public class Short128VectorTests {
     static void andMaskedShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -399,26 +400,14 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.and(bv, tMask).intoArray(c, i);
-            av.and(bv, fMask).intoArray(d, i);
-            av.and(bv, pMask).intoArray(e, i);
+            av.and(bv, tMask).intoArray(rT, i);
+            av.and(bv, fMask).intoArray(rF, i);
+            av.and(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_res = (short)(and(a[i], b[i]));
-            short d_res = (short) a[i];
-            short e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Short128VectorTests::and);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Short128VectorTests::and);
+        assertArraysEquals(a, b, rM, mask, Short128VectorTests::and);
     }
 
 
@@ -429,11 +418,11 @@ public class Short128VectorTests {
 
 
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void orShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -443,13 +432,10 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.or(bv).intoArray(c, i);
+            av.or(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)or(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Short128VectorTests::or);
     }
 
 
@@ -458,9 +444,9 @@ public class Short128VectorTests {
     static void orMaskedShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -476,26 +462,14 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.or(bv, tMask).intoArray(c, i);
-            av.or(bv, fMask).intoArray(d, i);
-            av.or(bv, pMask).intoArray(e, i);
+            av.or(bv, tMask).intoArray(rT, i);
+            av.or(bv, fMask).intoArray(rF, i);
+            av.or(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_res = (short)(or(a[i], b[i]));
-            short d_res = (short) a[i];
-            short e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Short128VectorTests::or);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Short128VectorTests::or);
+        assertArraysEquals(a, b, rM, mask, Short128VectorTests::or);
     }
 
 
@@ -506,11 +480,11 @@ public class Short128VectorTests {
 
 
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void xorShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -520,13 +494,10 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.xor(bv).intoArray(c, i);
+            av.xor(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)xor(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Short128VectorTests::xor);
     }
 
 
@@ -535,9 +506,9 @@ public class Short128VectorTests {
     static void xorMaskedShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -553,26 +524,14 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.xor(bv, tMask).intoArray(c, i);
-            av.xor(bv, fMask).intoArray(d, i);
-            av.xor(bv, pMask).intoArray(e, i);
+            av.xor(bv, tMask).intoArray(rT, i);
+            av.xor(bv, fMask).intoArray(rF, i);
+            av.xor(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_res = (short)(xor(a[i], b[i]));
-            short d_res = (short) a[i];
-            short e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Short128VectorTests::xor);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Short128VectorTests::xor);
+        assertArraysEquals(a, b, rM, mask, Short128VectorTests::xor);
     }
 
 
@@ -580,11 +539,11 @@ public class Short128VectorTests {
         return (short)(Math.max(a, b));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void maxShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -594,24 +553,21 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.max(bv).intoArray(c, i);
+            av.max(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)max(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Short128VectorTests::max);
     }
 
     static short min(short a, short b) {
         return (short)(Math.min(a, b));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void minShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -621,22 +577,24 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.min(bv).intoArray(c, i);
+            av.min(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)min(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Short128VectorTests::min);
+    }
+
+
+    static short blend(short a, short b, boolean mask) {
+        return mask ? b : a;
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void blendShort128VectorTests() {
         short[] a = new short[SIZE];
         short[] b = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -652,29 +610,15 @@ public class Short128VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
             ShortVector<Shapes.S128Bit> bv = species.fromArray(b, i);
-            av.blend(bv, tMask).intoArray(c, i);
-            av.blend(bv, fMask).intoArray(d, i);
-            av.blend(bv, pMask).intoArray(e, i);
+            av.blend(bv, tMask).intoArray(rT, i);
+            av.blend(bv, fMask).intoArray(rF, i);
+            av.blend(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_sum = (short) b[i];
-            short d_sum = (short) a[i];
-            short e_sum;
-            if (mask[i%species.length()] == false) {
-              e_sum = d_sum;
-            } else {
-              e_sum = c_sum;
-            }
-
-            Assert.assertEquals(c_sum, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_sum, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_sum, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Short128VectorTests::blend);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Short128VectorTests::blend);
+        assertArraysEquals(a, b, rM, mask, Short128VectorTests::blend);
     }
-
-
     static short neg(short a) {
         return (short)(-((short)a));
     }
@@ -682,7 +626,7 @@ public class Short128VectorTests {
    @org.testng.annotations.Test(invocationCount = 10)
     static void negShort128VectorTests() {
         short[] a = new short[SIZE];
-        short[] b = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -690,21 +634,18 @@ public class Short128VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
-            av.neg().intoArray(b, i);
+            av.neg().intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)neg((short)a[i]), b[i], "at index #" + i);
-        }
+        assertArraysEquals(a, r, Short128VectorTests::neg);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void negMaskedShort128VectorTests() {
         short[] a = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -718,26 +659,14 @@ public class Short128VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
-            av.neg(tMask).intoArray(c, i);
-            av.neg(fMask).intoArray(d, i);
-            av.neg(pMask).intoArray(e, i);
+            av.neg(tMask).intoArray(rT, i);
+            av.neg(fMask).intoArray(rF, i);
+            av.neg(pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_res = (short)neg((short)a[i]);
-            short d_res = (short) a[i];
-            short e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, rT, tMask.toArray(), Short128VectorTests::neg);
+        assertArraysEquals(a, rF, fMask.toArray(), Short128VectorTests::neg);
+        assertArraysEquals(a, rM, mask, Short128VectorTests::neg);
     }
 
     static short abs(short a) {
@@ -747,7 +676,7 @@ public class Short128VectorTests {
    @org.testng.annotations.Test(invocationCount = 10)
     static void absShort128VectorTests() {
         short[] a = new short[SIZE];
-        short[] b = new short[SIZE];
+        short[] r = new short[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -755,21 +684,18 @@ public class Short128VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
-            av.abs().intoArray(b, i);
+            av.abs().intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((short)abs((short)a[i]), b[i], "at index #" + i);
-        }
+        assertArraysEquals(a, r, Short128VectorTests::abs);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void absMaskedShort128VectorTests() {
         short[] a = new short[SIZE];
-        short[] c = new short[SIZE];
-        short[] d = new short[SIZE];
-        short[] e = new short[SIZE];
+        short[] rT = new short[SIZE];
+        short[] rF = new short[SIZE];
+        short[] rM = new short[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -783,26 +709,14 @@ public class Short128VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             ShortVector<Shapes.S128Bit> av = species.fromArray(a, i);
-            av.abs(tMask).intoArray(c, i);
-            av.abs(fMask).intoArray(d, i);
-            av.abs(pMask).intoArray(e, i);
+            av.abs(tMask).intoArray(rT, i);
+            av.abs(fMask).intoArray(rF, i);
+            av.abs(pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            short c_res = (short)abs((short)a[i]);
-            short d_res = (short) a[i];
-            short e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, rT, tMask.toArray(), Short128VectorTests::abs);
+        assertArraysEquals(a, rF, fMask.toArray(), Short128VectorTests::abs);
+        assertArraysEquals(a, rM, mask, Short128VectorTests::abs);
     }
 
 }

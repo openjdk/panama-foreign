@@ -1,10 +1,15 @@
+
+    static $type$ blend($type$ a, $type$ b, boolean mask) {
+        return mask ? b : a;
+    }
+
     @org.testng.annotations.Test(invocationCount = 10)
     static void [[TEST]]$vectorteststype$() {
         $type$[] a = new $type$[SIZE];
         $type$[] b = new $type$[SIZE];
-        $type$[] c = new $type$[SIZE];
-        $type$[] d = new $type$[SIZE];
-        $type$[] e = new $type$[SIZE];
+        $type$[] rT = new $type$[SIZE];
+        $type$[] rF = new $type$[SIZE];
+        $type$[] rM = new $type$[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -20,26 +25,12 @@
         for (int i = 0; i < a.length; i += species.length()) {
             $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
             $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
-            av.[[TEST]](bv, tMask).intoArray(c, i);
-            av.[[TEST]](bv, fMask).intoArray(d, i);
-            av.[[TEST]](bv, pMask).intoArray(e, i);
+            av.[[TEST]](bv, tMask).intoArray(rT, i);
+            av.[[TEST]](bv, fMask).intoArray(rF, i);
+            av.[[TEST]](bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            $type$ c_sum = ($type$) b[i];
-            $type$ d_sum = ($type$) a[i];
-            $type$ e_sum;
-            if (mask[i%species.length()] == false) {
-              e_sum = d_sum;
-            } else {
-              e_sum = c_sum;
-            }
-
-            Assert.assertEquals(c_sum, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_sum, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_sum, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), $vectorteststype$::blend);
+        assertArraysEquals(a, b, rF, fMask.toArray(), $vectorteststype$::blend);
+        assertArraysEquals(a, b, rM, mask, $vectorteststype$::blend);
     }
-
-

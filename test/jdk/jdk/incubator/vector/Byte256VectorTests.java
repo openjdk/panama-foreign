@@ -61,15 +61,79 @@ public class Byte256VectorTests {
         }
     }
 
+    interface FUnOp {
+        byte apply(byte a);
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] r, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] r, boolean[] mask, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
+        }
+    }
+
+    interface FBinOp {
+        byte apply(byte a, byte b);
+    }
+
+    interface FBinMaskOp {
+        byte apply(byte a, byte b, boolean m);
+
+        static FBinMaskOp lift(FBinOp f) {
+            return (a, b, m) -> m ? f.apply(a, b) : a;
+        }
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] b, byte[] r, FBinOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] b, byte[] r, boolean[] mask, FBinOp f) {
+        assertArraysEquals(a, b, r, mask, FBinMaskOp.lift(f));
+    }
+
+    static void assertArraysEquals(byte[] a, byte[] b, byte[] r, boolean[] mask, FBinMaskOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i]);
+            }
+        } catch (AssertionError err) {
+            Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % species.length()]);
+        }
+    }
+
     static byte add(byte a, byte b) {
         return (byte)(a + b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void addByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -79,22 +143,19 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.add(bv).intoArray(c, i);
+            av.add(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)add(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Byte256VectorTests::add);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void addMaskedByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -110,37 +171,25 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.add(bv, tMask).intoArray(c, i);
-            av.add(bv, fMask).intoArray(d, i);
-            av.add(bv, pMask).intoArray(e, i);
+            av.add(bv, tMask).intoArray(rT, i);
+            av.add(bv, fMask).intoArray(rF, i);
+            av.add(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_res = (byte)(add(a[i], b[i]));
-            byte d_res = (byte) a[i];
-            byte e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Byte256VectorTests::add);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Byte256VectorTests::add);
+        assertArraysEquals(a, b, rM, mask, Byte256VectorTests::add);
     }
 
     static byte sub(byte a, byte b) {
         return (byte)(a - b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void subByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -150,22 +199,19 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.sub(bv).intoArray(c, i);
+            av.sub(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)sub(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Byte256VectorTests::sub);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void subMaskedByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -181,37 +227,25 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.sub(bv, tMask).intoArray(c, i);
-            av.sub(bv, fMask).intoArray(d, i);
-            av.sub(bv, pMask).intoArray(e, i);
+            av.sub(bv, tMask).intoArray(rT, i);
+            av.sub(bv, fMask).intoArray(rF, i);
+            av.sub(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_res = (byte)(sub(a[i], b[i]));
-            byte d_res = (byte) a[i];
-            byte e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Byte256VectorTests::sub);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Byte256VectorTests::sub);
+        assertArraysEquals(a, b, rM, mask, Byte256VectorTests::sub);
     }
 
     static byte div(byte a, byte b) {
         return (byte)(a / b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void divByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -221,22 +255,19 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.div(bv).intoArray(c, i);
+            av.div(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)div(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Byte256VectorTests::div);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void divMaskedByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -252,37 +283,25 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.div(bv, tMask).intoArray(c, i);
-            av.div(bv, fMask).intoArray(d, i);
-            av.div(bv, pMask).intoArray(e, i);
+            av.div(bv, tMask).intoArray(rT, i);
+            av.div(bv, fMask).intoArray(rF, i);
+            av.div(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_res = (byte)(div(a[i], b[i]));
-            byte d_res = (byte) a[i];
-            byte e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Byte256VectorTests::div);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Byte256VectorTests::div);
+        assertArraysEquals(a, b, rM, mask, Byte256VectorTests::div);
     }
 
     static byte mul(byte a, byte b) {
         return (byte)(a * b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void mulByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -292,22 +311,19 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.mul(bv).intoArray(c, i);
+            av.mul(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)mul(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Byte256VectorTests::mul);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void mulMaskedByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -323,26 +339,14 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.mul(bv, tMask).intoArray(c, i);
-            av.mul(bv, fMask).intoArray(d, i);
-            av.mul(bv, pMask).intoArray(e, i);
+            av.mul(bv, tMask).intoArray(rT, i);
+            av.mul(bv, fMask).intoArray(rF, i);
+            av.mul(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_res = (byte)(mul(a[i], b[i]));
-            byte d_res = (byte) a[i];
-            byte e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Byte256VectorTests::mul);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Byte256VectorTests::mul);
+        assertArraysEquals(a, b, rM, mask, Byte256VectorTests::mul);
     }
 
 
@@ -352,11 +356,11 @@ public class Byte256VectorTests {
 
 
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void andByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -366,13 +370,10 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.and(bv).intoArray(c, i);
+            av.and(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)and(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Byte256VectorTests::and);
     }
 
 
@@ -381,9 +382,9 @@ public class Byte256VectorTests {
     static void andMaskedByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -399,26 +400,14 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.and(bv, tMask).intoArray(c, i);
-            av.and(bv, fMask).intoArray(d, i);
-            av.and(bv, pMask).intoArray(e, i);
+            av.and(bv, tMask).intoArray(rT, i);
+            av.and(bv, fMask).intoArray(rF, i);
+            av.and(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_res = (byte)(and(a[i], b[i]));
-            byte d_res = (byte) a[i];
-            byte e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Byte256VectorTests::and);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Byte256VectorTests::and);
+        assertArraysEquals(a, b, rM, mask, Byte256VectorTests::and);
     }
 
 
@@ -429,11 +418,11 @@ public class Byte256VectorTests {
 
 
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void orByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -443,13 +432,10 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.or(bv).intoArray(c, i);
+            av.or(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)or(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Byte256VectorTests::or);
     }
 
 
@@ -458,9 +444,9 @@ public class Byte256VectorTests {
     static void orMaskedByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -476,26 +462,14 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.or(bv, tMask).intoArray(c, i);
-            av.or(bv, fMask).intoArray(d, i);
-            av.or(bv, pMask).intoArray(e, i);
+            av.or(bv, tMask).intoArray(rT, i);
+            av.or(bv, fMask).intoArray(rF, i);
+            av.or(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_res = (byte)(or(a[i], b[i]));
-            byte d_res = (byte) a[i];
-            byte e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Byte256VectorTests::or);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Byte256VectorTests::or);
+        assertArraysEquals(a, b, rM, mask, Byte256VectorTests::or);
     }
 
 
@@ -506,11 +480,11 @@ public class Byte256VectorTests {
 
 
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void xorByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -520,13 +494,10 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.xor(bv).intoArray(c, i);
+            av.xor(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)xor(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Byte256VectorTests::xor);
     }
 
 
@@ -535,9 +506,9 @@ public class Byte256VectorTests {
     static void xorMaskedByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -553,26 +524,14 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.xor(bv, tMask).intoArray(c, i);
-            av.xor(bv, fMask).intoArray(d, i);
-            av.xor(bv, pMask).intoArray(e, i);
+            av.xor(bv, tMask).intoArray(rT, i);
+            av.xor(bv, fMask).intoArray(rF, i);
+            av.xor(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_res = (byte)(xor(a[i], b[i]));
-            byte d_res = (byte) a[i];
-            byte e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Byte256VectorTests::xor);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Byte256VectorTests::xor);
+        assertArraysEquals(a, b, rM, mask, Byte256VectorTests::xor);
     }
 
 
@@ -580,11 +539,11 @@ public class Byte256VectorTests {
         return (byte)(Math.max(a, b));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void maxByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -594,24 +553,21 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.max(bv).intoArray(c, i);
+            av.max(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)max(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Byte256VectorTests::max);
     }
 
     static byte min(byte a, byte b) {
         return (byte)(Math.min(a, b));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void minByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -621,22 +577,24 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.min(bv).intoArray(c, i);
+            av.min(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)min(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Byte256VectorTests::min);
+    }
+
+
+    static byte blend(byte a, byte b, boolean mask) {
+        return mask ? b : a;
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void blendByte256VectorTests() {
         byte[] a = new byte[SIZE];
         byte[] b = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -652,29 +610,15 @@ public class Byte256VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
             ByteVector<Shapes.S256Bit> bv = species.fromArray(b, i);
-            av.blend(bv, tMask).intoArray(c, i);
-            av.blend(bv, fMask).intoArray(d, i);
-            av.blend(bv, pMask).intoArray(e, i);
+            av.blend(bv, tMask).intoArray(rT, i);
+            av.blend(bv, fMask).intoArray(rF, i);
+            av.blend(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_sum = (byte) b[i];
-            byte d_sum = (byte) a[i];
-            byte e_sum;
-            if (mask[i%species.length()] == false) {
-              e_sum = d_sum;
-            } else {
-              e_sum = c_sum;
-            }
-
-            Assert.assertEquals(c_sum, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_sum, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_sum, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Byte256VectorTests::blend);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Byte256VectorTests::blend);
+        assertArraysEquals(a, b, rM, mask, Byte256VectorTests::blend);
     }
-
-
     static byte neg(byte a) {
         return (byte)(-((byte)a));
     }
@@ -682,7 +626,7 @@ public class Byte256VectorTests {
    @org.testng.annotations.Test(invocationCount = 10)
     static void negByte256VectorTests() {
         byte[] a = new byte[SIZE];
-        byte[] b = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -690,21 +634,18 @@ public class Byte256VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
-            av.neg().intoArray(b, i);
+            av.neg().intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)neg((byte)a[i]), b[i], "at index #" + i);
-        }
+        assertArraysEquals(a, r, Byte256VectorTests::neg);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void negMaskedByte256VectorTests() {
         byte[] a = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -718,26 +659,14 @@ public class Byte256VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
-            av.neg(tMask).intoArray(c, i);
-            av.neg(fMask).intoArray(d, i);
-            av.neg(pMask).intoArray(e, i);
+            av.neg(tMask).intoArray(rT, i);
+            av.neg(fMask).intoArray(rF, i);
+            av.neg(pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_res = (byte)neg((byte)a[i]);
-            byte d_res = (byte) a[i];
-            byte e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, rT, tMask.toArray(), Byte256VectorTests::neg);
+        assertArraysEquals(a, rF, fMask.toArray(), Byte256VectorTests::neg);
+        assertArraysEquals(a, rM, mask, Byte256VectorTests::neg);
     }
 
     static byte abs(byte a) {
@@ -747,7 +676,7 @@ public class Byte256VectorTests {
    @org.testng.annotations.Test(invocationCount = 10)
     static void absByte256VectorTests() {
         byte[] a = new byte[SIZE];
-        byte[] b = new byte[SIZE];
+        byte[] r = new byte[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -755,21 +684,18 @@ public class Byte256VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
-            av.abs().intoArray(b, i);
+            av.abs().intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((byte)abs((byte)a[i]), b[i], "at index #" + i);
-        }
+        assertArraysEquals(a, r, Byte256VectorTests::abs);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void absMaskedByte256VectorTests() {
         byte[] a = new byte[SIZE];
-        byte[] c = new byte[SIZE];
-        byte[] d = new byte[SIZE];
-        byte[] e = new byte[SIZE];
+        byte[] rT = new byte[SIZE];
+        byte[] rF = new byte[SIZE];
+        byte[] rM = new byte[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -783,26 +709,14 @@ public class Byte256VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             ByteVector<Shapes.S256Bit> av = species.fromArray(a, i);
-            av.abs(tMask).intoArray(c, i);
-            av.abs(fMask).intoArray(d, i);
-            av.abs(pMask).intoArray(e, i);
+            av.abs(tMask).intoArray(rT, i);
+            av.abs(fMask).intoArray(rF, i);
+            av.abs(pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            byte c_res = (byte)abs((byte)a[i]);
-            byte d_res = (byte) a[i];
-            byte e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, rT, tMask.toArray(), Byte256VectorTests::abs);
+        assertArraysEquals(a, rF, fMask.toArray(), Byte256VectorTests::abs);
+        assertArraysEquals(a, rM, mask, Byte256VectorTests::abs);
     }
 
 }

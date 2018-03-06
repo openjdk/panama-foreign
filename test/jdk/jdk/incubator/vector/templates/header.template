@@ -78,3 +78,67 @@ public class $vectorteststype$ {
         }
     }
 
+    interface FUnOp {
+        $type$ apply($type$ a);
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] r, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] r, boolean[] mask, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
+        }
+    }
+
+    interface FBinOp {
+        $type$ apply($type$ a, $type$ b);
+    }
+
+    interface FBinMaskOp {
+        $type$ apply($type$ a, $type$ b, boolean m);
+
+        static FBinMaskOp lift(FBinOp f) {
+            return (a, b, m) -> m ? f.apply(a, b) : a;
+        }
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] r, FBinOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] r, boolean[] mask, FBinOp f) {
+        assertArraysEquals(a, b, r, mask, FBinMaskOp.lift(f));
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] r, boolean[] mask, FBinMaskOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i]);
+            }
+        } catch (AssertionError err) {
+            Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % species.length()]);
+        }
+    }
+

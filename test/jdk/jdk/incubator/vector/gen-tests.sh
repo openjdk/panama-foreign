@@ -27,7 +27,7 @@
 . config.sh
 
 # First, generate the template file.
-./gen-template.sh
+bash ./gen-template.sh
 
 Log false "Generating Vector API tests, $(date)\n"
 

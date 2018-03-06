@@ -61,15 +61,79 @@ public class Float64VectorTests {
         }
     }
 
+    interface FUnOp {
+        float apply(float a);
+    }
+
+    static void assertArraysEquals(float[] a, float[] r, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(float[] a, float[] r, boolean[] mask, FUnOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
+        }
+    }
+
+    interface FBinOp {
+        float apply(float a, float b);
+    }
+
+    interface FBinMaskOp {
+        float apply(float a, float b, boolean m);
+
+        static FBinMaskOp lift(FBinOp f) {
+            return (a, b, m) -> m ? f.apply(a, b) : a;
+        }
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, FBinOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i]), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "at index #" + i);
+        }
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, boolean[] mask, FBinOp f) {
+        assertArraysEquals(a, b, r, mask, FBinMaskOp.lift(f));
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] r, boolean[] mask, FBinMaskOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i]);
+            }
+        } catch (AssertionError err) {
+            Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % species.length()]);
+        }
+    }
+
     static float add(float a, float b) {
         return (float)(a + b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void addFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
+        float[] r = new float[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -79,22 +143,19 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.add(bv).intoArray(c, i);
+            av.add(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((float)add(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Float64VectorTests::add);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void addMaskedFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
-        float[] d = new float[SIZE];
-        float[] e = new float[SIZE];
+        float[] rT = new float[SIZE];
+        float[] rF = new float[SIZE];
+        float[] rM = new float[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -110,37 +171,25 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.add(bv, tMask).intoArray(c, i);
-            av.add(bv, fMask).intoArray(d, i);
-            av.add(bv, pMask).intoArray(e, i);
+            av.add(bv, tMask).intoArray(rT, i);
+            av.add(bv, fMask).intoArray(rF, i);
+            av.add(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            float c_res = (float)(add(a[i], b[i]));
-            float d_res = (float) a[i];
-            float e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Float64VectorTests::add);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Float64VectorTests::add);
+        assertArraysEquals(a, b, rM, mask, Float64VectorTests::add);
     }
 
     static float sub(float a, float b) {
         return (float)(a - b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void subFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
+        float[] r = new float[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -150,22 +199,19 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.sub(bv).intoArray(c, i);
+            av.sub(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((float)sub(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Float64VectorTests::sub);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void subMaskedFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
-        float[] d = new float[SIZE];
-        float[] e = new float[SIZE];
+        float[] rT = new float[SIZE];
+        float[] rF = new float[SIZE];
+        float[] rM = new float[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -181,37 +227,25 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.sub(bv, tMask).intoArray(c, i);
-            av.sub(bv, fMask).intoArray(d, i);
-            av.sub(bv, pMask).intoArray(e, i);
+            av.sub(bv, tMask).intoArray(rT, i);
+            av.sub(bv, fMask).intoArray(rF, i);
+            av.sub(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            float c_res = (float)(sub(a[i], b[i]));
-            float d_res = (float) a[i];
-            float e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Float64VectorTests::sub);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Float64VectorTests::sub);
+        assertArraysEquals(a, b, rM, mask, Float64VectorTests::sub);
     }
 
     static float div(float a, float b) {
         return (float)(a / b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void divFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
+        float[] r = new float[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -221,22 +255,19 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.div(bv).intoArray(c, i);
+            av.div(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((float)div(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Float64VectorTests::div);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void divMaskedFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
-        float[] d = new float[SIZE];
-        float[] e = new float[SIZE];
+        float[] rT = new float[SIZE];
+        float[] rF = new float[SIZE];
+        float[] rM = new float[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -252,37 +283,25 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.div(bv, tMask).intoArray(c, i);
-            av.div(bv, fMask).intoArray(d, i);
-            av.div(bv, pMask).intoArray(e, i);
+            av.div(bv, tMask).intoArray(rT, i);
+            av.div(bv, fMask).intoArray(rF, i);
+            av.div(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            float c_res = (float)(div(a[i], b[i]));
-            float d_res = (float) a[i];
-            float e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Float64VectorTests::div);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Float64VectorTests::div);
+        assertArraysEquals(a, b, rM, mask, Float64VectorTests::div);
     }
 
     static float mul(float a, float b) {
         return (float)(a * b);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void mulFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
+        float[] r = new float[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -292,22 +311,19 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.mul(bv).intoArray(c, i);
+            av.mul(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((float)mul(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Float64VectorTests::mul);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void mulMaskedFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
-        float[] d = new float[SIZE];
-        float[] e = new float[SIZE];
+        float[] rT = new float[SIZE];
+        float[] rF = new float[SIZE];
+        float[] rM = new float[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -323,26 +339,14 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.mul(bv, tMask).intoArray(c, i);
-            av.mul(bv, fMask).intoArray(d, i);
-            av.mul(bv, pMask).intoArray(e, i);
+            av.mul(bv, tMask).intoArray(rT, i);
+            av.mul(bv, fMask).intoArray(rF, i);
+            av.mul(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            float c_res = (float)(mul(a[i], b[i]));
-            float d_res = (float) a[i];
-            float e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Float64VectorTests::mul);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Float64VectorTests::mul);
+        assertArraysEquals(a, b, rM, mask, Float64VectorTests::mul);
     }
 
 
@@ -358,11 +362,11 @@ public class Float64VectorTests {
         return (float)(Math.max(a, b));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void maxFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
+        float[] r = new float[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -372,24 +376,21 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.max(bv).intoArray(c, i);
+            av.max(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((float)max(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Float64VectorTests::max);
     }
 
     static float min(float a, float b) {
         return (float)(Math.min(a, b));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
+    @org.testng.annotations.Test(invocationCount = 10)
     static void minFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
+        float[] r = new float[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -399,22 +400,24 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.min(bv).intoArray(c, i);
+            av.min(bv).intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((float)min(a[i], b[i]), c[i], "at index #" + i);
-        }
+        assertArraysEquals(a, b, r, Float64VectorTests::min);
+    }
+
+
+    static float blend(float a, float b, boolean mask) {
+        return mask ? b : a;
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void blendFloat64VectorTests() {
         float[] a = new float[SIZE];
         float[] b = new float[SIZE];
-        float[] c = new float[SIZE];
-        float[] d = new float[SIZE];
-        float[] e = new float[SIZE];
+        float[] rT = new float[SIZE];
+        float[] rF = new float[SIZE];
+        float[] rM = new float[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -430,29 +433,15 @@ public class Float64VectorTests {
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
             FloatVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.blend(bv, tMask).intoArray(c, i);
-            av.blend(bv, fMask).intoArray(d, i);
-            av.blend(bv, pMask).intoArray(e, i);
+            av.blend(bv, tMask).intoArray(rT, i);
+            av.blend(bv, fMask).intoArray(rF, i);
+            av.blend(bv, pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            float c_sum = (float) b[i];
-            float d_sum = (float) a[i];
-            float e_sum;
-            if (mask[i%species.length()] == false) {
-              e_sum = d_sum;
-            } else {
-              e_sum = c_sum;
-            }
-
-            Assert.assertEquals(c_sum, c[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_sum, d[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_sum, e[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, b, rT, tMask.toArray(), Float64VectorTests::blend);
+        assertArraysEquals(a, b, rF, fMask.toArray(), Float64VectorTests::blend);
+        assertArraysEquals(a, b, rM, mask, Float64VectorTests::blend);
     }
-
-
     static float neg(float a) {
         return (float)(-((float)a));
     }
@@ -460,7 +449,7 @@ public class Float64VectorTests {
    @org.testng.annotations.Test(invocationCount = 10)
     static void negFloat64VectorTests() {
         float[] a = new float[SIZE];
-        float[] b = new float[SIZE];
+        float[] r = new float[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -468,21 +457,18 @@ public class Float64VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            av.neg().intoArray(b, i);
+            av.neg().intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((float)neg((float)a[i]), b[i], "at index #" + i);
-        }
+        assertArraysEquals(a, r, Float64VectorTests::neg);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void negMaskedFloat64VectorTests() {
         float[] a = new float[SIZE];
-        float[] c = new float[SIZE];
-        float[] d = new float[SIZE];
-        float[] e = new float[SIZE];
+        float[] rT = new float[SIZE];
+        float[] rF = new float[SIZE];
+        float[] rM = new float[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -496,26 +482,14 @@ public class Float64VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            av.neg(tMask).intoArray(c, i);
-            av.neg(fMask).intoArray(d, i);
-            av.neg(pMask).intoArray(e, i);
+            av.neg(tMask).intoArray(rT, i);
+            av.neg(fMask).intoArray(rF, i);
+            av.neg(pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            float c_res = (float)neg((float)a[i]);
-            float d_res = (float) a[i];
-            float e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, rT, tMask.toArray(), Float64VectorTests::neg);
+        assertArraysEquals(a, rF, fMask.toArray(), Float64VectorTests::neg);
+        assertArraysEquals(a, rM, mask, Float64VectorTests::neg);
     }
 
     static float abs(float a) {
@@ -525,7 +499,7 @@ public class Float64VectorTests {
    @org.testng.annotations.Test(invocationCount = 10)
     static void absFloat64VectorTests() {
         float[] a = new float[SIZE];
-        float[] b = new float[SIZE];
+        float[] r = new float[SIZE];
 
         // Data Initialization.
         init_arr1(a);
@@ -533,21 +507,18 @@ public class Float64VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            av.abs().intoArray(b, i);
+            av.abs().intoArray(r, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            Assert.assertEquals((float)abs((float)a[i]), b[i], "at index #" + i);
-        }
+        assertArraysEquals(a, r, Float64VectorTests::abs);
     }
 
     @org.testng.annotations.Test(invocationCount = 10)
     static void absMaskedFloat64VectorTests() {
         float[] a = new float[SIZE];
-        float[] c = new float[SIZE];
-        float[] d = new float[SIZE];
-        float[] e = new float[SIZE];
+        float[] rT = new float[SIZE];
+        float[] rF = new float[SIZE];
+        float[] rM = new float[SIZE];
         boolean[] mask = new boolean[species.length()];
         
         // Data Initialization.
@@ -561,26 +532,14 @@ public class Float64VectorTests {
         // Computation.
         for (int i = 0; i < a.length; i += species.length()) {
             FloatVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            av.abs(tMask).intoArray(c, i);
-            av.abs(fMask).intoArray(d, i);
-            av.abs(pMask).intoArray(e, i);
+            av.abs(tMask).intoArray(rT, i);
+            av.abs(fMask).intoArray(rF, i);
+            av.abs(pMask).intoArray(rM, i);
         }
 
-        // Checking.
-        for (int i = 0; i < a.length; i++) {
-            float c_res = (float)abs((float)a[i]);
-            float d_res = (float) a[i];
-            float e_res;
-            if (mask[i%species.length()] == false) {
-              e_res = d_res;
-            } else {
-              e_res = c_res;
-            }
-
-            Assert.assertEquals(c_res, c[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(d_res, d[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-            Assert.assertEquals(e_res, e[i], "at index #" + i + ", a[i] = " + a[i] + ", mask = " + mask[i%species.length()]);
-        }
+        assertArraysEquals(a, rT, tMask.toArray(), Float64VectorTests::abs);
+        assertArraysEquals(a, rF, fMask.toArray(), Float64VectorTests::abs);
+        assertArraysEquals(a, rM, mask, Float64VectorTests::abs);
     }
 
 }
