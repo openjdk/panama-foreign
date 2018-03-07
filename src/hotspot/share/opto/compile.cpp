@@ -2690,12 +2690,8 @@ Node* Compile::expand_vbox_node_helper(Node* vbox,
     VectorBoxAllocateNode* vbox_alloc = static_cast<VectorBoxAllocateNode*>(vbox->in(0));
     return expand_vbox_alloc_node(vbox_alloc, vect, box_type, vect_type);
   } else {
-#ifndef PRODUCT
-    tty->print_cr("vbox"); vbox->dump(3);
-    tty->print_cr("vect"); vbox->dump(3);
-#endif // PRODUCT
-    fatal("");
-    return NULL;
+    // TODO: ensure that expanded vbox is initialized with the same value (vect).
+    return vbox; // already expanded
   }
 }
 
