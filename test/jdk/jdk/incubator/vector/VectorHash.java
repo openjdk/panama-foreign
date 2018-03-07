@@ -112,7 +112,7 @@ public class VectorHash {
         int i = 0;
         for (; i < (a.length & ~(BYTE_64_SPECIES.length() - 1)); i += BYTE_64_SPECIES.length()) {
             ByteVector<Shapes.S64Bit> b = BYTE_64_SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> x = (IntVector<Shapes.S256Bit>) b.cast(Integer.class, Shapes.S_256_BIT);
+            IntVector<Shapes.S256Bit> x = (IntVector<Shapes.S256Bit>) b.cast(INT_256_Species);
             h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).addAll();
         }
 
@@ -127,7 +127,7 @@ public class VectorHash {
         int i = 0;
         for (; i < (a.length & ~(BYTE_128_SPECIES.length() - 1)); i += BYTE_128_SPECIES.length()) {
             ByteVector<Shapes.S128Bit> b = BYTE_128_SPECIES.fromArray(a, i);
-            IntVector<Shapes.S512Bit> x = (IntVector<Shapes.S512Bit>) b.cast(Integer.class, Shapes.S_512_BIT);
+            IntVector<Shapes.S512Bit> x = (IntVector<Shapes.S512Bit>) b.cast(INT_512_Species);
             h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addAll();
         }
 
@@ -137,40 +137,38 @@ public class VectorHash {
         return h;
     }
 
+    static final IntVector.IntSpecies<Shapes.S512Bit> INT_512_Species = (IntVector.IntSpecies<Shapes.S512Bit>)
+            Vector.speciesInstance(Integer.class, Shapes.S_512_BIT);
     static final ByteVector.ByteSpecies<Shapes.S128Bit> BYTE_128_SPECIES = (ByteVector.ByteSpecies<Shapes.S128Bit>)
             Vector.speciesInstance(Byte.class, Shapes.S_128_BIT);
     static final int COEFF_31_TO_16;
     static final IntVector<Shapes.S512Bit> H_COEFF_16;
 
+    static final IntVector.IntSpecies<Shapes.S256Bit> INT_256_Species = (IntVector.IntSpecies<Shapes.S256Bit>)
+            Vector.speciesInstance(Integer.class, Shapes.S_256_BIT);
     static final ByteVector.ByteSpecies<Shapes.S64Bit> BYTE_64_SPECIES = (ByteVector.ByteSpecies<Shapes.S64Bit>)
             Vector.speciesInstance(Byte.class, Shapes.S_64_BIT);
     static final int COEFF_31_TO_8;
     static final IntVector<Shapes.S256Bit> H_COEFF_8;
 
     static {
-        IntVector.IntSpecies<Shapes.S256Bit> int256Species = (IntVector.IntSpecies<Shapes.S256Bit>)
-                Vector.speciesInstance(Integer.class, Shapes.S_256_BIT);
-
-        int[] a = new int[int256Species.length()];
+        int[] a = new int[INT_256_Species.length()];
         a[a.length - 1] = 1;
         for (int i = 1; i < a.length; i++) {
             a[a.length - 1 - i] = a[a.length - 1 - i + 1] * 31;
         }
 
         COEFF_31_TO_8 = a[0] * 31;
-        H_COEFF_8 = int256Species.fromArray(a, 0);
+        H_COEFF_8 = INT_256_Species.fromArray(a, 0);
 
 
-        IntVector.IntSpecies<Shapes.S512Bit> int512Species = (IntVector.IntSpecies<Shapes.S512Bit>)
-                Vector.speciesInstance(Integer.class, Shapes.S_512_BIT);
-
-        a = new int[int512Species.length()];
+        a = new int[INT_512_Species.length()];
         a[a.length - 1] = 1;
         for (int i = 1; i < a.length; i++) {
             a[a.length - 1 - i] = a[a.length - 1 - i + 1] * 31;
         }
 
         COEFF_31_TO_16 = a[0] * 31;
-        H_COEFF_16 = int512Species.fromArray(a, 0);
+        H_COEFF_16 = INT_512_Species.fromArray(a, 0);
     }
 }

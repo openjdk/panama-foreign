@@ -25,6 +25,7 @@
 package jdk.incubator.vector;
 
 import jdk.internal.misc.Unsafe;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -115,31 +116,31 @@ public interface Vector<E, S extends Vector.Shape> {
     Vector<E, S> swizzle(Shuffle<E, S> s);
 
 
-    //Conversions
-    default <F, Z extends Shape> Vector<F, Z> reshape(Class<F> type, Z shape) {
-        Vector.Species<F, Z> species = speciesInstance(type, shape);
-        int blen = Math.max(species.bitSize(), bitSize());
-        ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-        intoByteBuffer(bb, 0);
-        return species.fromByteBuffer(bb, 0);
+    // Conversions
+
+    // Bitwise preserving
+
+    @ForceInline
+    default <F, T extends Shape> Vector<F, T> reshape(Species<F, T> species) {
+        return species.reshape(this);
     }
 
-    //Costless vector cast.  Bit-wise contents preserved
-    default <F> Vector<F, S> rebracket(Class<F> type) { return reshape(type, shape());}
-
-    //Size-fixed semantic cast
-    <F, Z extends Shape>
-    Vector<F, Z> cast(Class<F> type, Z shape);
-
-    default <Z extends Shape>
-    Vector<E, Z> resize(Z shape) {
-        return reshape(elementType(), shape);
+    @ForceInline
+    default <F> Vector<F, S> rebracket(Species<F, S> species) {
+        return species.reshape(this);
     }
 
-    default <F> Vector<F, S> cast(Class<F> type) {
-        return cast(type, shape());
+    @ForceInline
+    default <T extends Shape> Vector<E, T> resize(Species<E, T> species) {
+        return species.reshape(this);
     }
 
+    // Cast
+
+    @ForceInline
+    default <F, T extends Shape> Vector<F, T> cast(Species<F, T> species) {
+        return species.cast(this);
+    }
 
     //Array stores
 
@@ -191,9 +192,91 @@ public interface Vector<E, S extends Vector.Shape> {
         Mask<E, S> falseMask();
 
         Shuffle<E, S> constantShuffle(int... ixs);
+
+
+        // Vector type/shape transformations
+
+        // Reshape
+        // Preserves bits, truncating if new shape is smaller in bit size than
+        // old shape, or expanding (with zero bits) if new shape is larger in
+        // bit size
+
+        default <F, T extends Shape> Vector<E, S> reshape(Vector<F, T> o) {
+            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
+            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+            o.intoByteBuffer(bb, 0);
+            return fromByteBuffer(bb, 0);
+        }
+
+        // Change type, not shape
+        // No truncation or expansion of bits
+        @ForceInline
+        default <F> Vector<E, S> rebracket(Vector<F, S> o) {
+            return reshape(o);
+        }
+
+        // Change shape, not type
+        // Truncation or expansion of bits
+        @ForceInline
+        default <T extends Shape> Vector<E, S> resize(Vector<E, T> o) {
+            return reshape(o);
+        }
+
+        // Cast
+        // Elements will be converted as per JLS primitive conversion rules
+        // If elementType == o.elementType then its equivalent to a resize
+        <F, T extends Shape> Vector<E, S> cast(Vector<F, T> o);
+
+
+        // Mask type/shape transformations
+
+        default <F, T extends Shape> Mask<E, S> reshape(Mask<F, T> m) {
+            return constantMask(m.toArray());
+        }
+
+        @ForceInline
+        default <F> Mask<E, S> rebracket(Mask<F, S> m) {
+            return reshape(m);
+        }
+
+        @ForceInline
+        default <T extends Shape> Mask<E, S> resize(Mask<E, T> m) {
+            return reshape(m);
+        }
+
+
+        // Shuffle type/shape transformations
+
+        default <F, T extends Shape> Shuffle<E, S> reshape(Shuffle<F, T> m) {
+            return constantShuffle(m.toArray());
+        }
+
+        @ForceInline
+        default <F> Shuffle<E, S> rebracket(Shuffle<F, S> m) {
+            return reshape(m);
+        }
+
+        @ForceInline
+        default <T extends Shape> Shuffle<E, S> resize(Shuffle<E, T> m) {
+            return reshape(m);
+        }
+
+
+        // Species/species transformations
+
+        // Returns a species for a given element type and the length of this
+        // species.
+        // The length of the returned species will be equal to the length of
+        // this species.
+        //
+        // Throws IAE if no shape exists for the element type and this species length,
+//        default <F> Species<F, ?> toSpeciesWithSameNumberOfLanes(Class<F> c) {
+//            // @@@ TODO implement and find better name
+//            throw new UnsupportedOperationException();
+//        }
+
     }
 
-//    interface Shape<V extends Vector<?, ?> /*extends Vector<?, Shape<V>>*/> {
     interface Shape {
         int bitSize();  // usually 64, 128, 256, etc.
 
@@ -227,25 +310,22 @@ public interface Vector<E, S extends Vector.Shape> {
 
         public abstract Vector<E, S> toVector();
 
-        public abstract
-        <Z> Vector<Z, S> toVector(Class<Z> e);
-
         public abstract boolean getElement(int i);
 
-        public abstract
-        <F, Z extends Shape>
-        Mask<F, Z> reshape(Class<F> type, Z shape);
-
-        public <Z>
-        Mask<Z, S> rebracket(Class<Z> e) {
-            return reshape(e, species().shape());
+        @ForceInline
+        public <F, T extends Shape> Mask<F, T> reshape(Species<F, T> species) {
+            return species.reshape(this);
         }
 
-        public <Z extends Shape> Mask<E, Z>
-        resize(Z shape) {
-            return reshape(species().elementType(), shape);
+        @ForceInline
+        public <F> Mask<F, S> rebracket(Species<F, S> species) {
+            return species.reshape(this);
         }
 
+        @ForceInline
+        public <T extends Shape> Mask<E, T> resize(Species<E, T> species) {
+            return species.reshape(this);
+        }
     }
 
     abstract class Shuffle<E, S extends Shape> {
@@ -260,16 +340,31 @@ public interface Vector<E, S extends Vector.Shape> {
         public abstract IntVector<S> toVector();
 
         public int getElement(int i) { return toArray()[i]; }
+
+        @ForceInline
+        public <F, T extends Shape> Shuffle<F, T> reshape(Species<F, T> species) {
+            return species.reshape(this);
+        }
+
+        @ForceInline
+        public <F> Shuffle<F, S> rebracket(Species<F, S> species) {
+            return species.reshape(this);
+        }
+
+        @ForceInline
+        public <T extends Shape> Shuffle<E, T> resize(Species<E, T> species) {
+            return species.reshape(this);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    static <E, S extends Shape> Vector.Species<E, S> preferredSpeciesInstance(Class<E> c) {
+    static <E> Vector.Species<E, ?> preferredSpeciesInstance(Class<E> c) {
         Unsafe u = Unsafe.getUnsafe();
 
         int vectorLength = u.getMaxVectorSize(boxToPrimitive(c));
         int vectorBitSize = bitSizeForVectorLength(c, vectorLength);
         Shape s = shapeForVectorBitSize(vectorBitSize);
-        return (Vector.Species<E, S>) speciesInstance(c, s);
+        return speciesInstance(c, s);
     }
 
     private static Class<?> boxToPrimitive(Class<?> c) {

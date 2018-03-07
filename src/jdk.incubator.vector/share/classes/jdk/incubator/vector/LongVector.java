@@ -462,13 +462,6 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
         return rOp((long) 0, (i, a, b) -> (long) (a ^ b));
     }
 
-    // Type conversions
-
-    @Override
-    public <F> Vector<F,S> cast(Class<F> type) {
-        return cast(type, shape());
-    }
-
     // Type specific accessors
 
     public abstract long get(int i);
@@ -591,5 +584,51 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
             LongBuffer fb = bb.asLongBuffer();
             return op(m, i -> fb.get(i));
         }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <F, T extends Shape> LongVector<S> cast(Vector<F, T> v) {
+            // Allocate array of required size
+            long[] a = new long[length()];
+
+            Class<?> vtype = v.species().elementType();
+            int limit = Math.min(v.species().length(), length());
+            if (vtype == Byte.class) {
+                ByteVector<T> tv = (ByteVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == Short.class) {
+                ShortVector<T> tv = (ShortVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == Integer.class) {
+                IntVector<T> tv = (IntVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == Long.class){
+                LongVector<T> tv = (LongVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == Float.class){
+                FloatVector<T> tv = (FloatVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == Double.class){
+                DoubleVector<T> tv = (DoubleVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else {
+                throw new UnsupportedOperationException("Bad lane type for casting.");
+            }
+
+            return scalars(a);
+        }
+
     }
 }

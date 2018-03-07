@@ -714,56 +714,16 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     @Override
     @ForceInline
     @SuppressWarnings("unchecked")
-    public <F> Vector<F, Shapes.S256Bit> rebracket(Class<F> type) {
-        Objects.requireNonNull(type);
+    public <F> Vector<F, Shapes.S256Bit> rebracket(Species<F, Shapes.S256Bit> species) {
+        Objects.requireNonNull(species);
         // TODO: check proper element type
+        // TODO: update to pass species as an argument and preferably
+        // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Float256Vector.class, float.class, LENGTH,
-            type, this,
-            (v, t) -> (Vector<F, Shapes.S256Bit>) v.reshape(t, v.shape())
+            species.elementType(), this,
+            (v, t) -> species.reshape(v)
         );
-    }
-
-    @Override
-    public <F, Z extends Shape> Vector<F, Z> cast(Class<F> type, Z shape) {
-        Vector.Species<F,Z> species = Vector.speciesInstance(type, shape);
-
-        // Whichever is larger
-        int blen = Math.max(species.bitSize(), bitSize()) / Byte.SIZE;
-        ByteBuffer bb = ByteBuffer.allocate(blen);
-
-        int limit = Math.min(species.length(), length());
-
-        float[] vec = getElements();
-        if (type == Byte.class) {
-            for (int i = 0; i < limit; i++){
-                bb.put(i, (byte) vec[i]);
-            }
-        } else if (type == Short.class) {
-            for (int i = 0; i < limit; i++){
-                bb.asShortBuffer().put(i, (short) vec[i]);
-            }
-        } else if (type == Integer.class) {
-            for (int i = 0; i < limit; i++){
-                bb.asIntBuffer().put(i, (int) vec[i]);
-            }
-        } else if (type == Long.class){
-            for (int i = 0; i < limit; i++){
-                bb.asLongBuffer().put(i, (long) vec[i]);
-            }
-        } else if (type == Float.class){
-            for (int i = 0; i < limit; i++){
-                bb.asFloatBuffer().put(i, (float) vec[i]);
-            }
-        } else if (type == Double.class){
-            for (int i = 0; i < limit; i++){
-                bb.asDoubleBuffer().put(i, (double) vec[i]);
-            }
-        } else {
-            throw new UnsupportedOperationException("Bad lane type for casting.");
-        }
-
-        return species.fromByteBuffer(bb);
     }
 
     // Accessors
@@ -791,17 +751,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Float256Mask(boolean[] bits) {
-            if (bits.length != LENGTH) {
-                throw new IllegalArgumentException("Boolean array must be the same length as the masked vector");
-            }
-            this.bits = bits.clone();
+            this.bits = Arrays.copyOf(bits, species().length());
         }
 
         public Float256Mask(boolean val) {
-            boolean[] bits = new boolean[LENGTH];
-            for (int i = 0; i < bits.length; i++) {
-                bits[i] = val;
-            }
+            boolean[] bits = new boolean[species().length()];
+            Arrays.fill(bits, val);
             this.bits = bits;
         }
 
@@ -848,13 +803,13 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <Z> Mask<Z, Shapes.S256Bit> rebracket(Class<Z> type) {
-            Objects.requireNonNull(type);
+        public <Z> Mask<Z, Shapes.S256Bit> rebracket(Species<Z, Shapes.S256Bit> species) {
+            Objects.requireNonNull(species);
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Float256Mask.class, float.class, LENGTH,
-                type, this,
-                (m, t) -> (Mask<Z, Shapes.S256Bit>)m.reshape(t, m.species().shape())
+                species.elementType(), this,
+                (m, t) -> m.reshape(species)
             );
         }
 
@@ -995,7 +950,7 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
         @Override
         public Float256Mask constantMask(boolean... bits) {
-            return new Float256Mask(bits.clone());
+            return new Float256Mask(bits);
         }
 
         @Override
