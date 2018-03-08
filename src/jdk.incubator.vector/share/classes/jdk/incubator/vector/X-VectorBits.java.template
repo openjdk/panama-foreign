@@ -608,6 +608,15 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v -> (long) v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b)));
     }
+
+    @Override
+    @ForceInline
+    public $type$ andAll() {
+        return ($type$) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_AND, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v -> (long) v.rOp(($type$) -1, (i, a, b) -> ($type$) (a & b)));
+    }
 #end[intOrlong]
 #if[FP]
     @Override

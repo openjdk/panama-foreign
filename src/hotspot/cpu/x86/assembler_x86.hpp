@@ -1506,6 +1506,8 @@ private:
   // Move Quadword
   void movq(Address     dst, XMMRegister src);
   void movq(XMMRegister dst, Address src);
+  void movq(Register dst, XMMRegister src);
+  void movq(XMMRegister dst, Register src);
 
   void movsbl(Register dst, Address src);
   void movsbl(Register dst, Register src);
@@ -2104,6 +2106,7 @@ private:
   void vpand(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vpand(XMMRegister dst, XMMRegister nds, Address src, int vector_len);
   void evpandd(XMMRegister dst, KRegister mask, XMMRegister nds, XMMRegister src, bool merge, int vector_len);
+  void vpandq(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
   // Andn packed integers
   void pandn(XMMRegister dst, XMMRegister src);

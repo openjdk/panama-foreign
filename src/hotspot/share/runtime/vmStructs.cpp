@@ -2014,6 +2014,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_c2_type(URShiftVINode, VectorNode)                              \
   declare_c2_type(URShiftVLNode, VectorNode)                              \
   declare_c2_type(AndVNode, VectorNode)                                   \
+  declare_c2_type(AndReductionVNode, ReductionNode)                       \
   declare_c2_type(OrVNode, VectorNode)                                    \
   declare_c2_type(XorVNode, VectorNode)                                   \
   declare_c2_type(LoadVectorNode, LoadNode)                               \

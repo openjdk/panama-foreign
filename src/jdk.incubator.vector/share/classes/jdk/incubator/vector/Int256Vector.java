@@ -519,6 +519,15 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
             v -> (long) v.rOp((int) 1, (i, a, b) -> (int) (a * b)));
     }
 
+    @Override
+    @ForceInline
+    public int andAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_AND, Int256Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp((int) -1, (i, a, b) -> (int) (a & b)));
+    }
+
     // Memory operations
 
     @Override

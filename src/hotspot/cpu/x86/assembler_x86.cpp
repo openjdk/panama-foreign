@@ -2872,6 +2872,23 @@ void Assembler::movq(Address dst, XMMRegister src) {
   emit_operand(src, dst);
 }
 
+void Assembler::movq(Register dst, XMMRegister src) {
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+  InstructionAttr attributes(AVX_128bit, /* rex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ true, /* uses_vl */ false);
+  // swap src/dst to get correct prefix
+  int encode = simd_prefix_and_encode(src, xnoreg, as_XMMRegister(dst->encoding()), VEX_SIMD_66, VEX_OPCODE_0F, &attributes);
+  emit_int8(0x7E);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
+
+void Assembler::movq(XMMRegister dst, Register src) {
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+  InstructionAttr attributes(AVX_128bit, /* rex_w */true, /* legacy_mode */ false, /* no_mask_reg */ true, /* uses_vl */ false);
+  int encode = simd_prefix_and_encode(dst, xnoreg, as_XMMRegister(src->encoding()), VEX_SIMD_66, VEX_OPCODE_0F, &attributes);
+  emit_int8(0x6E);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
+
 void Assembler::movsbl(Register dst, Address src) { // movsxb
   InstructionMark im(this);
   prefix(src, dst);
@@ -6381,6 +6398,15 @@ void Assembler::evpandd(XMMRegister dst, KRegister mask, XMMRegister nds, XMMReg
   if (merge) {
     attributes.reset_is_clear_context();
   }
+  int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F, &attributes);
+  emit_int8((unsigned char)0xDB);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
+
+void Assembler::vpandq(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len) {
+  assert(UseAVX > 2, "requires some form of EVEX");
+  InstructionAttr attributes(vector_len, /* vex_w */ VM_Version::supports_evex(), /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  attributes.set_rex_vex_w_reverted();
   int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F, &attributes);
   emit_int8((unsigned char)0xDB);
   emit_int8((unsigned char)(0xC0 | encode));
