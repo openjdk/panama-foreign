@@ -7601,12 +7601,12 @@ Node* LibraryCallKit::shift_count(Node* cnt, int shift_op, BasicType bt, int num
       return cnt;
     }
   } else {
-    Node* cnt = cnt;
+    Node* maskedcnt = cnt;
     if (t == NULL || t->_lo < 0 || t->_hi > (int)mask) {
-      cnt = _gvn.transform(ConNode::make(TypeInt::make(mask)));
-      cnt = _gvn.transform(new AndINode(cnt, cnt));
+      Node* nmask = _gvn.transform(ConNode::make(TypeInt::make(mask)));
+      maskedcnt = _gvn.transform(new AndINode(cnt, nmask));
     }
-    return VectorNode::shift_count(shift_op, cnt, num_elem, bt);
+    return VectorNode::shift_count(shift_op, maskedcnt, num_elem, bt);
   }
 }
 
