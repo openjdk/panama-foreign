@@ -103,7 +103,6 @@ PLATFORM_MODULES += \
     jdk.dynalink \
     jdk.httpserver \
     jdk.incubator.httpclient \
-    jdk.internal.clang \
     jdk.internal.vm.compiler.management \
     jdk.jsobject \
     jdk.localedata \
@@ -124,6 +123,7 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
 endif
 
 JRE_TOOL_MODULES += \
+    jdk.internal.clang \
     jdk.jdwp.agent \
     jdk.pack \
     jdk.scripting.nashorn.shell \
