@@ -34,12 +34,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.regex.PatternSyntaxException;
 import java.util.spi.ToolProvider;
 
@@ -126,16 +127,15 @@ public final class Main {
         // to check & warn missing symbols during jextract session.
         parser.accepts("L", format("help.L")).withRequiredArg();
         parser.accepts("l", format("help.l")).withRequiredArg();
-        parser.accepts("o", format("help.o")).withRequiredArg();
+        parser.accepts("d", format("help.d")).withRequiredArg();
+        parser.acceptsAll(List.of("o", "jar"), format("help.o")).withRequiredArg();
         parser.accepts("t", format("help.t")).withRequiredArg();
         parser.accepts("m", format("help.m")).withRequiredArg();
-        parser.accepts("h", format("help.h")).forHelp();
-        parser.accepts("help", format("help.h")).forHelp();
+        parser.acceptsAll(List.of("?", "h", "help"), format("help.h")).forHelp();
         parser.accepts("C", format("help.C")).withRequiredArg();
         parser.accepts("log", format("help.log")).withRequiredArg();
         parser.accepts("exclude-symbols", format("help.exclude_symbols")).withRequiredArg();
         parser.accepts("rpath", format("help.rpath")).withRequiredArg();
-        parser.accepts("?", format("help.h")).forHelp();
         parser.nonOptions(format("help.non.option"));
 
         OptionSet options = null;
@@ -150,7 +150,7 @@ public final class Main {
              return 1;
         }
 
-        if (args.length == 0 || options.has("h") || options.has("?") || options.has("help")) {
+        if (args.length == 0 || options.has("h")) {
              printHelp(parser);
              return args.length == 0? 1 : 0;
         }
@@ -237,13 +237,42 @@ public final class Main {
             return 0;
         }
 
-        String outputName = options.has("o")? (String)options.valueOf("o") :
-            options.nonOptionArguments().get(0) + ".jar";
-        Path jar = Paths.get(outputName);
+        boolean hasOutput = false;
+
+        if (options.has("d")) {
+            hasOutput = true;
+            Path dest = Paths.get((String) options.valueOf("d"));
+            dest = dest.toAbsolutePath();
+            try {
+                if (!Files.exists(dest)) {
+                    Files.createDirectories(dest);
+                } else if (!Files.isDirectory(dest)) {
+                    ctx.err.println(format("not.a.directory", dest));
+                    return 4;
+                }
+                ctx.collectClassFiles(dest, targetPackage);
+            } catch (IOException ex) {
+                ctx.err.println(format("cannot.write.class.file", dest, ex));
+                if (Main.DEBUG) {
+                    ex.printStackTrace(ctx.err);
+                }
+                return 5;
+            }
+        }
+
+        String outputName;
+        if (options.has("o")) {
+            outputName = (String) options.valueOf("o");
+        } else if (hasOutput) {
+            return 0;
+        } else {
+            outputName =  options.nonOptionArguments().get(0) + ".jar";
+        }
+
         try {
-            ctx.collectJarFile(jar, targetPackage);
+            ctx.collectJarFile(Paths.get(outputName), targetPackage);
         } catch (IOException ex) {
-            ctx.err.println(format("cannot.write.jar.file", jar, ex));
+            ctx.err.println(format("cannot.write.jar.file", outputName, ex));
             if (Main.DEBUG) {
                 ex.printStackTrace(ctx.err);
             }

@@ -382,6 +382,27 @@ public final class Context {
         return Collections.unmodifiableMap(rv);
     }
 
+    void collectClassFiles(Path destDir, String... pkgs) throws IOException {
+        try {
+            collectClasses(pkgs).entrySet().stream().forEach(e -> {
+                try {
+                    String path = e.getKey().replace('.', File.separatorChar) + ".class";
+                    logger.fine(() -> "Writing " + path);
+                    Path fullPath = destDir.resolve(path).normalize();
+                    Files.createDirectories(fullPath.getParent());
+                    try (OutputStream fos = Files.newOutputStream(fullPath)) {
+                        fos.write(e.getValue());
+                        fos.flush();
+                    }
+                } catch (IOException ioe) {
+                    throw new UncheckedIOException(ioe);
+                }
+            });
+        } catch (UncheckedIOException uioe) {
+            throw uioe.getCause();
+        }
+    }
+
     private void writeJar(CodeFactory cf, JarOutputStream jar) {
         cf.collect().entrySet().stream().forEach(e -> {
             try {
@@ -419,7 +440,7 @@ public final class Context {
     void collectJarFile(final Path jar, String... pkgs) throws IOException {
         logger.info(() -> "Collecting jar file " + jar);
         try (OutputStream os = Files.newOutputStream(jar, CREATE, TRUNCATE_EXISTING, WRITE);
-             JarOutputStream jo = new JarOutputStream(os)) {
+                JarOutputStream jo = new JarOutputStream(os)) {
             collectJarFile(jo, pkgs);
         } catch (UncheckedIOException uioe) {
             throw uioe.getCause();
