@@ -46,13 +46,13 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
     )
     AC_ARG_WITH([libclang-lib], [AS_HELP_STRING([--with-libclang-lib=<path>],
         [Specify where to find libclang binary, so/dylib/dll ])],
-      [LIBCLANG_LDFLAGS="-L$withval -rpath $withval"],
+      [LIBCLANG_LDFLAGS="-L$withval -Wl,-rpath,$withval"],
       [LIBCLANG_LDFLAGS=""]
     )
 
     if test "x$with_libclang" != "xyes"; then
       LIBCLANG_CPPFLAGS="-I$with_libclang/include"
-      LIBCLANG_LDFLAGS="-L$with_libclang/lib -rpath $with_libclang/lib"
+      LIBCLANG_LDFLAGS="-L$with_libclang/lib -Wl,-rpath,$with_libclang/lib"
     fi
 
     OLD_CPPFLAGS=$CPPFLAGS
