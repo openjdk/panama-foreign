@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -53,83 +51,20 @@ import jdk.incubator.vector.LongVector;
 #end[Long]
 
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
-@org.testng.annotations.Test
-public class $vectorteststype$ {
-    static final int SIZE = $bits$ * 1000;
-    static final $abstractvectortype$.$Type$Species<Shapes.S$bits$Bit> species = ($abstractvectortype$.$Type$Species<Shapes.S$bits$Bit>)
+import java.util.List;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+@Test
+public class $vectorteststype$ extends AbstractVectorTest {
+
+    static final $abstractvectortype$.$Type$Species<Shapes.S$bits$Bit> SPECIES = ($abstractvectortype$.$Type$Species<Shapes.S$bits$Bit>)
                 Vector.speciesInstance($Wideboxtype$.class, Shapes.S_$bits$_BIT);
 
-    static void init_mask(boolean[] t, int size) {
-        for (int i = 0; i < size; i++) {
-          t[i] = (i%2 == 0);
-        }
-    }
-
-    static void init_arr1($type$[] t) {
-        for (int i = 0; i < t.length; i++) {
-            t[i] = ($type$)(i*5);
-        }
-    }
-
-    static void init_arr2($type$[] t) {
-        for (int i = 0; i < t.length; i++) {
-            t[i] = ((($type$)(i+1) == 0) ? 1 : ($type$)(i+1));
-        }
-    }
-
-    static void init_5arr($type$[] t1, $type$[] t2, $type$[] t3, $type$[] t4, $type$[] t5) {
-        assert(t1.length == t2.length && t2.length == t3.length && t3.length == t4.length && t4.length == t5.length);
-#if[FP]
-        $type$ corner1 = $Wideboxtype$.MAX_VALUE;
-        $type$ corner2 = $Wideboxtype$.MIN_VALUE;
-        $type$ corner3 = $Wideboxtype$.NEGATIVE_INFINITY;
-        $type$ corner4 = $Wideboxtype$.POSITIVE_INFINITY;
-        $type$ corner5 = $Wideboxtype$.NaN;
-        $type$ corner6 = ($type$)0.0;
-        $type$ corner7 = ($type$)-0.0;
-#end[FP]
-#if[BITWISE]
-        $type$ corner1 = $Wideboxtype$.MAX_VALUE;
-        $type$ corner2 = $Wideboxtype$.MIN_VALUE;
-        $type$ corner3 = corner2;
-        $type$ corner4 = corner1;
-        $type$ corner5 = 0;
-        $type$ corner6 = 0;
-        $type$ corner7 = 0;
-#end[BITWISE]
-
-
-        for (int i = 0; i < t1.length; i++) {
-            t1[i] = ($type$)(i);
-            t2[i] = ($type$)(i+1);
-            t3[i] = ($type$)(i-2);
-            t4[i] = i%3 == 0 ? t1[i] : (i%3 == 1 ? t2[i] : t3[i]);
-            switch(i%7) {
-                case 0:
-                    t5[i] = corner1;
-                    break;
-                case 1:
-                    t5[i] = corner2;
-                    break;
-                case 2:
-                    t5[i] = corner3;
-                    break;
-                case 3:
-                    t5[i] = corner4;
-                    break;
-                case 4:
-                    t5[i] = corner5;
-                    break;
-                case 5:
-                    t5[i] = corner6;
-                    break;
-                default:
-                    t5[i] = corner7;
-                    break;
-            }
-        }
-    }
 
     interface FUnOp {
         $type$ apply($type$ a);
@@ -150,10 +85,10 @@ public class $vectorteststype$ {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i]);
+                Assert.assertEquals(mask[i % SPECIES.length()] ? f.apply(a[i]) : a[i], r[i]);
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
+            Assert.assertEquals(mask[i % SPECIES.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
         }
     }
 
@@ -188,10 +123,142 @@ public class $vectorteststype$ {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i]);
+                Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i]);
             }
         } catch (AssertionError err) {
-            Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % species.length()]);
+            Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
+    }
+    
+    static final List<IntFunction<$type$[]>> $TYPE$_GENERATORS = List.of(
+            withToString("$type$[i * 5]", (int s) -> {
+                return fill(s * 1000,
+                            i -> ($type$)(i * 5));
+            }),
+            withToString("$type$[i + 1]", (int s) -> {
+                return fill(s * 1000,
+                            i -> ((($type$)(i + 1) == 0) ? 1 : ($type$)(i + 1)));
+            })
+    );
+
+    // Create combinations of pairs
+    // @@@ Might be sensitive to order e.g. div by 0
+    static final List<List<IntFunction<$type$[]>>> $TYPE$_GENERATOR_PAIRS =
+        Stream.of($TYPE$_GENERATORS.get(0)).
+                flatMap(fa -> $TYPE$_GENERATORS.stream().skip(1).map(fb -> List.of(fa, fb))).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] $type$BinaryOpProvider() {
+        return $TYPE$_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] $type$BinaryOpMaskProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+                flatMap(fm -> $TYPE$_GENERATOR_PAIRS.stream().map(lfa -> {
+                    return Stream.concat(lfa.stream(), Stream.of(fm)).toArray();
+                })).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] $type$UnaryOpProvider() {
+        return $TYPE$_GENERATORS.stream().
+                map(f -> new Object[]{f}).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] $type$UnaryOpMaskProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+                flatMap(fm -> $TYPE$_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fm};
+                })).
+                toArray(Object[][]::new);
+    }
+
+    static final List<IntFunction<$type$[]>> $TYPE$_COMPARE_GENERATORS = List.of(
+            withToString("$type$[i]", (int s) -> {
+                return fill(s * 1000,
+                            i -> ($type$)i);
+            }),
+            withToString("$type$[i + 1]", (int s) -> {
+                return fill(s * 1000,
+                            i -> ($type$)(i + 1));
+            }),
+            withToString("$type$[i - 2]", (int s) -> {
+                return fill(s * 1000,
+                            i -> ($type$)(i - 2));
+            }),
+            withToString("$type$[zigZag(i)]", (int s) -> {
+                return fill(s * 1000,
+                            i -> i%3 == 0 ? ($type$)i : (i%3 == 1 ? ($type$)(i + 1) : ($type$)(i - 2)));
+            }),
+            withToString("$type$[cornerComparisonCase(i)]", (int s) -> {
+                return fill(s * 1000,
+                            i -> cornerComparisonCase(i));
+            })
+    );
+
+    static final List<List<IntFunction<$type$[]>>> $TYPE$_COMPARE_GENERATOR_PAIRS =
+        $TYPE$_COMPARE_GENERATORS.stream().
+                flatMap(fa -> $TYPE$_COMPARE_GENERATORS.stream().map(fb -> List.of(fa, fb))).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] $type$CompareOpProvider() {
+        return $TYPE$_COMPARE_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    interface To$Type$F {
+        $type$ apply(int i);
+    }
+
+    static $type$[] fill(int s , To$Type$F f) {
+        return fill(new $type$[s], f);
+    }
+
+    static $type$[] fill($type$[] a, To$Type$F f) {
+        for (int i = 0; i < a.length; i++) {
+            a[i] = f.apply(i);
+        }
+        return a;
+    }
+    
+    static $type$ cornerComparisonCase(int i) {
+#if[FP]
+        switch(i % 7) {
+            case 0:
+                return $Wideboxtype$.MAX_VALUE;
+            case 1:
+                return $Wideboxtype$.MIN_VALUE;
+            case 2:
+                return $Wideboxtype$.NEGATIVE_INFINITY;
+            case 3:
+                return $Wideboxtype$.POSITIVE_INFINITY;
+            case 4:
+                return $Wideboxtype$.NaN;
+            case 5:
+                return ($type$)0.0;
+            default:
+                return ($type$)-0.0;
+        }
+#else[FP]
+        switch(i % 5) {
+            case 0:
+                return $Wideboxtype$.MAX_VALUE;
+            case 1:
+                return $Wideboxtype$.MIN_VALUE;
+            case 2:
+                return $Wideboxtype$.MIN_VALUE;
+            case 3:
+                return $Wideboxtype$.MAX_VALUE;
+            default:
+                return ($type$)0;
+        }
+#end[FP]
     }
 

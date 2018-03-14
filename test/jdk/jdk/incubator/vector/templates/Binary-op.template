@@ -1,20 +1,16 @@
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void [[TEST]]$vectorteststype$() {
-        $type$[] a = new $type$[SIZE];
-        $type$[] b = new $type$[SIZE];
-        $type$[] r = new $type$[SIZE];
 
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "$type$BinaryOpProvider", invocationCount = 10)
+    static void [[TEST]]$vectorteststype$(IntFunction<$type$[]> fa, IntFunction<$type$[]> fb) {
+        $type$[] a = fa.apply(SPECIES.length());
+        $type$[] b = fb.apply(SPECIES.length());
+        $type$[] r = new $type$[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
-            $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> bv = SPECIES.fromArray(b, i);
             av.[[TEST]](bv).intoArray(r, i);
         }
 
         assertArraysEquals(a, b, r, $vectorteststype$::[[TEST]]);
     }
-

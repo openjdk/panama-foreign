@@ -1,17 +1,14 @@
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void [[TEST]]$vectorteststype$() {
-        $type$[] a = new $type$[SIZE];
-        $type$[] r = new $type$[SIZE];
 
-        // Data Initialization.
-        init_arr1(a);
+    @Test(dataProvider = "$type$UnaryOpProvider", invocationCount = 10)
+    static void [[TEST]]$vectorteststype$(IntFunction<$type$[]> fa) {
+        $type$[] a = fa.apply(SPECIES.length());
+        $type$[] r = new $type$[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
             av.[[TEST]]().intoArray(r, i);
         }
 
         assertArraysEquals(a, r, $vectorteststype$::[[TEST]]);
     }
-

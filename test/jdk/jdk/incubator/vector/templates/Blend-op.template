@@ -3,34 +3,21 @@
         return mask ? b : a;
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void [[TEST]]$vectorteststype$() {
-        $type$[] a = new $type$[SIZE];
-        $type$[] b = new $type$[SIZE];
-        $type$[] rT = new $type$[SIZE];
-        $type$[] rF = new $type$[SIZE];
-        $type$[] rM = new $type$[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-        init_arr2(b);
-
-        Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> pMask = species.constantMask(mask);
-        Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> tMask = species.trueMask();
-        Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> fMask = species.falseMask();
+    @Test(dataProvider = "$type$BinaryOpMaskProvider", invocationCount = 10)
+    static void [[TEST]]$vectorteststype$(IntFunction<$type$[]> fa, IntFunction<$type$[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        $type$[] a = fa.apply(SPECIES.length());
+        $type$[] b = fb.apply(SPECIES.length());
+        $type$[] r = new $type$[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            $abstractvectortype$<Shapes.S$bits$Bit> av = species.fromArray(a, i);
-            $abstractvectortype$<Shapes.S$bits$Bit> bv = species.fromArray(b, i);
-            av.[[TEST]](bv, tMask).intoArray(rT, i);
-            av.[[TEST]](bv, fMask).intoArray(rF, i);
-            av.[[TEST]](bv, pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
+            $abstractvectortype$<Shapes.S$bits$Bit> bv = SPECIES.fromArray(b, i);
+            av.[[TEST]](bv, vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, b, rT, tMask.toArray(), $vectorteststype$::blend);
-        assertArraysEquals(a, b, rF, fMask.toArray(), $vectorteststype$::blend);
-        assertArraysEquals(a, b, rM, mask, $vectorteststype$::blend);
+        assertArraysEquals(a, b, r, mask, $vectorteststype$::blend);
     }

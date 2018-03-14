@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -36,72 +34,20 @@ import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.IntVector;
 
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
-@org.testng.annotations.Test
-public class Int64VectorTests {
-    static final int SIZE = 64 * 1000;
-    static final IntVector.IntSpecies<Shapes.S64Bit> species = (IntVector.IntSpecies<Shapes.S64Bit>)
+import java.util.List;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+@Test
+public class Int64VectorTests extends AbstractVectorTest {
+
+    static final IntVector.IntSpecies<Shapes.S64Bit> SPECIES = (IntVector.IntSpecies<Shapes.S64Bit>)
                 Vector.speciesInstance(Integer.class, Shapes.S_64_BIT);
 
-    static void init_mask(boolean[] t, int size) {
-        for (int i = 0; i < size; i++) {
-          t[i] = (i%2 == 0);
-        }
-    }
-
-    static void init_arr1(int[] t) {
-        for (int i = 0; i < t.length; i++) {
-            t[i] = (int)(i*5);
-        }
-    }
-
-    static void init_arr2(int[] t) {
-        for (int i = 0; i < t.length; i++) {
-            t[i] = (((int)(i+1) == 0) ? 1 : (int)(i+1));
-        }
-    }
-
-    static void init_5arr(int[] t1, int[] t2, int[] t3, int[] t4, int[] t5) {
-        assert(t1.length == t2.length && t2.length == t3.length && t3.length == t4.length && t4.length == t5.length);
-        int corner1 = Integer.MAX_VALUE;
-        int corner2 = Integer.MIN_VALUE;
-        int corner3 = corner2;
-        int corner4 = corner1;
-        int corner5 = 0;
-        int corner6 = 0;
-        int corner7 = 0;
-
-
-        for (int i = 0; i < t1.length; i++) {
-            t1[i] = (int)(i);
-            t2[i] = (int)(i+1);
-            t3[i] = (int)(i-2);
-            t4[i] = i%3 == 0 ? t1[i] : (i%3 == 1 ? t2[i] : t3[i]);
-            switch(i%7) {
-                case 0:
-                    t5[i] = corner1;
-                    break;
-                case 1:
-                    t5[i] = corner2;
-                    break;
-                case 2:
-                    t5[i] = corner3;
-                    break;
-                case 3:
-                    t5[i] = corner4;
-                    break;
-                case 4:
-                    t5[i] = corner5;
-                    break;
-                case 5:
-                    t5[i] = corner6;
-                    break;
-                default:
-                    t5[i] = corner7;
-                    break;
-            }
-        }
-    }
 
     interface FUnOp {
         int apply(int a);
@@ -122,10 +68,10 @@ public class Int64VectorTests {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i]);
+                Assert.assertEquals(mask[i % SPECIES.length()] ? f.apply(a[i]) : a[i], r[i]);
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(mask[i % species.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
+            Assert.assertEquals(mask[i % SPECIES.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
         }
     }
 
@@ -160,235 +106,281 @@ public class Int64VectorTests {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i]);
+                Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i]);
             }
         } catch (AssertionError err) {
-            Assert.assertEquals(f.apply(a[i], b[i], mask[i % species.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % species.length()]);
+            Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
+    
+    static final List<IntFunction<int[]>> INT_GENERATORS = List.of(
+            withToString("int[i * 5]", (int s) -> {
+                return fill(s * 1000,
+                            i -> (int)(i * 5));
+            }),
+            withToString("int[i + 1]", (int s) -> {
+                return fill(s * 1000,
+                            i -> (((int)(i + 1) == 0) ? 1 : (int)(i + 1)));
+            })
+    );
+
+    // Create combinations of pairs
+    // @@@ Might be sensitive to order e.g. div by 0
+    static final List<List<IntFunction<int[]>>> INT_GENERATOR_PAIRS =
+        Stream.of(INT_GENERATORS.get(0)).
+                flatMap(fa -> INT_GENERATORS.stream().skip(1).map(fb -> List.of(fa, fb))).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] intBinaryOpProvider() {
+        return INT_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] intBinaryOpMaskProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+                flatMap(fm -> INT_GENERATOR_PAIRS.stream().map(lfa -> {
+                    return Stream.concat(lfa.stream(), Stream.of(fm)).toArray();
+                })).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] intUnaryOpProvider() {
+        return INT_GENERATORS.stream().
+                map(f -> new Object[]{f}).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] intUnaryOpMaskProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+                flatMap(fm -> INT_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fm};
+                })).
+                toArray(Object[][]::new);
+    }
+
+    static final List<IntFunction<int[]>> INT_COMPARE_GENERATORS = List.of(
+            withToString("int[i]", (int s) -> {
+                return fill(s * 1000,
+                            i -> (int)i);
+            }),
+            withToString("int[i + 1]", (int s) -> {
+                return fill(s * 1000,
+                            i -> (int)(i + 1));
+            }),
+            withToString("int[i - 2]", (int s) -> {
+                return fill(s * 1000,
+                            i -> (int)(i - 2));
+            }),
+            withToString("int[zigZag(i)]", (int s) -> {
+                return fill(s * 1000,
+                            i -> i%3 == 0 ? (int)i : (i%3 == 1 ? (int)(i + 1) : (int)(i - 2)));
+            }),
+            withToString("int[cornerComparisonCase(i)]", (int s) -> {
+                return fill(s * 1000,
+                            i -> cornerComparisonCase(i));
+            })
+    );
+
+    static final List<List<IntFunction<int[]>>> INT_COMPARE_GENERATOR_PAIRS =
+        INT_COMPARE_GENERATORS.stream().
+                flatMap(fa -> INT_COMPARE_GENERATORS.stream().map(fb -> List.of(fa, fb))).
+                collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] intCompareOpProvider() {
+        return INT_COMPARE_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    interface ToIntF {
+        int apply(int i);
+    }
+
+    static int[] fill(int s , ToIntF f) {
+        return fill(new int[s], f);
+    }
+
+    static int[] fill(int[] a, ToIntF f) {
+        for (int i = 0; i < a.length; i++) {
+            a[i] = f.apply(i);
+        }
+        return a;
+    }
+    
+    static int cornerComparisonCase(int i) {
+        switch(i % 5) {
+            case 0:
+                return Integer.MAX_VALUE;
+            case 1:
+                return Integer.MIN_VALUE;
+            case 2:
+                return Integer.MIN_VALUE;
+            case 3:
+                return Integer.MAX_VALUE;
+            default:
+                return (int)0;
+        }
+    }
+
 
     static int add(int a, int b) {
         return (int)(a + b);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void addInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    static void addInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
             av.add(bv).intoArray(r, i);
         }
 
         assertArraysEquals(a, b, r, Int64VectorTests::add);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void addMaskedInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-        init_arr2(b);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    static void addInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.add(bv, tMask).intoArray(rT, i);
-            av.add(bv, fMask).intoArray(rF, i);
-            av.add(bv, pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            av.add(bv, vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, b, rT, tMask.toArray(), Int64VectorTests::add);
-        assertArraysEquals(a, b, rF, fMask.toArray(), Int64VectorTests::add);
-        assertArraysEquals(a, b, rM, mask, Int64VectorTests::add);
+        assertArraysEquals(a, b, r, mask, Int64VectorTests::add);
     }
 
     static int sub(int a, int b) {
         return (int)(a - b);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void subInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    static void subInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
             av.sub(bv).intoArray(r, i);
         }
 
         assertArraysEquals(a, b, r, Int64VectorTests::sub);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void subMaskedInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-        init_arr2(b);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    static void subInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.sub(bv, tMask).intoArray(rT, i);
-            av.sub(bv, fMask).intoArray(rF, i);
-            av.sub(bv, pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            av.sub(bv, vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, b, rT, tMask.toArray(), Int64VectorTests::sub);
-        assertArraysEquals(a, b, rF, fMask.toArray(), Int64VectorTests::sub);
-        assertArraysEquals(a, b, rM, mask, Int64VectorTests::sub);
+        assertArraysEquals(a, b, r, mask, Int64VectorTests::sub);
     }
 
     static int div(int a, int b) {
         return (int)(a / b);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void divInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    static void divInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
             av.div(bv).intoArray(r, i);
         }
 
         assertArraysEquals(a, b, r, Int64VectorTests::div);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void divMaskedInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-        init_arr2(b);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    static void divInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.div(bv, tMask).intoArray(rT, i);
-            av.div(bv, fMask).intoArray(rF, i);
-            av.div(bv, pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            av.div(bv, vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, b, rT, tMask.toArray(), Int64VectorTests::div);
-        assertArraysEquals(a, b, rF, fMask.toArray(), Int64VectorTests::div);
-        assertArraysEquals(a, b, rM, mask, Int64VectorTests::div);
+        assertArraysEquals(a, b, r, mask, Int64VectorTests::div);
     }
 
     static int mul(int a, int b) {
         return (int)(a * b);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void mulInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    static void mulInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
             av.mul(bv).intoArray(r, i);
         }
 
         assertArraysEquals(a, b, r, Int64VectorTests::mul);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void mulMaskedInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-        init_arr2(b);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    static void mulInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.mul(bv, tMask).intoArray(rT, i);
-            av.mul(bv, fMask).intoArray(rF, i);
-            av.mul(bv, pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            av.mul(bv, vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, b, rT, tMask.toArray(), Int64VectorTests::mul);
-        assertArraysEquals(a, b, rF, fMask.toArray(), Int64VectorTests::mul);
-        assertArraysEquals(a, b, rM, mask, Int64VectorTests::mul);
+        assertArraysEquals(a, b, r, mask, Int64VectorTests::mul);
     }
 
 
@@ -398,20 +390,16 @@ public class Int64VectorTests {
 
 
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void andInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    static void andInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
             av.and(bv).intoArray(r, i);
         }
 
@@ -420,36 +408,23 @@ public class Int64VectorTests {
 
 
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void andMaskedInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-        init_arr2(b);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    static void andInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.and(bv, tMask).intoArray(rT, i);
-            av.and(bv, fMask).intoArray(rF, i);
-            av.and(bv, pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            av.and(bv, vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, b, rT, tMask.toArray(), Int64VectorTests::and);
-        assertArraysEquals(a, b, rF, fMask.toArray(), Int64VectorTests::and);
-        assertArraysEquals(a, b, rM, mask, Int64VectorTests::and);
+        assertArraysEquals(a, b, r, mask, Int64VectorTests::and);
     }
 
 
@@ -460,20 +435,16 @@ public class Int64VectorTests {
 
 
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void orInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    static void orInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
             av.or(bv).intoArray(r, i);
         }
 
@@ -482,36 +453,23 @@ public class Int64VectorTests {
 
 
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void orMaskedInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-        init_arr2(b);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    static void orInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.or(bv, tMask).intoArray(rT, i);
-            av.or(bv, fMask).intoArray(rF, i);
-            av.or(bv, pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            av.or(bv, vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, b, rT, tMask.toArray(), Int64VectorTests::or);
-        assertArraysEquals(a, b, rF, fMask.toArray(), Int64VectorTests::or);
-        assertArraysEquals(a, b, rM, mask, Int64VectorTests::or);
+        assertArraysEquals(a, b, r, mask, Int64VectorTests::or);
     }
 
 
@@ -522,20 +480,16 @@ public class Int64VectorTests {
 
 
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void xorInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    static void xorInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
             av.xor(bv).intoArray(r, i);
         }
 
@@ -544,36 +498,23 @@ public class Int64VectorTests {
 
 
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void xorMaskedInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-        init_arr2(b);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    static void xorInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.xor(bv, tMask).intoArray(rT, i);
-            av.xor(bv, fMask).intoArray(rF, i);
-            av.xor(bv, pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            av.xor(bv, vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, b, rT, tMask.toArray(), Int64VectorTests::xor);
-        assertArraysEquals(a, b, rF, fMask.toArray(), Int64VectorTests::xor);
-        assertArraysEquals(a, b, rM, mask, Int64VectorTests::xor);
+        assertArraysEquals(a, b, r, mask, Int64VectorTests::xor);
     }
 
 
@@ -581,20 +522,16 @@ public class Int64VectorTests {
         return (int)(Math.max(a, b));
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void maxInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    static void maxInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
             av.max(bv).intoArray(r, i);
         }
 
@@ -605,1067 +542,126 @@ public class Int64VectorTests {
         return (int)(Math.min(a, b));
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void minInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
-        init_arr2(b);
+    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    static void minInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
             av.min(bv).intoArray(r, i);
         }
 
         assertArraysEquals(a, b, r, Int64VectorTests::min);
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanInt64VectorTests1() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
+    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+    static void lessThanInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = av.lessThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = av.lessThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = av.lessThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = av.lessThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = av.lessThan(ev);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            Vector.Mask<Integer, Shapes.S64Bit> mv = av.lessThan(bv);
 
             // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), a[i+j] < a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), a[i+j] < b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), a[i+j] < c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), a[i+j] < d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), a[i+j] < e[i+j]);
+            for (int j = 0; j < SPECIES.length(); j++) {
+                Assert.assertEquals(mv.getElement(j), a[i + j] < b[i + j]);
             }
         }
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanInt64VectorTests2() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
+    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+    static void greaterThanInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = bv.lessThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = bv.lessThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = bv.lessThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = bv.lessThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = bv.lessThan(ev);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            Vector.Mask<Integer, Shapes.S64Bit> mv = av.greaterThan(bv);
 
             // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), b[i+j] < a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), b[i+j] < b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), b[i+j] < c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), b[i+j] < d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), b[i+j] < e[i+j]);
+            for (int j = 0; j < SPECIES.length(); j++) {
+                Assert.assertEquals(mv.getElement(j), a[i + j] > b[i + j]);
             }
         }
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanInt64VectorTests3() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
+    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+    static void equalInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = cv.lessThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = cv.lessThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = cv.lessThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = cv.lessThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = cv.lessThan(ev);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            Vector.Mask<Integer, Shapes.S64Bit> mv = av.equal(bv);
 
             // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), c[i+j] < a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), c[i+j] < b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), c[i+j] < c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), c[i+j] < d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), c[i+j] < e[i+j]);
+            for (int j = 0; j < SPECIES.length(); j++) {
+                Assert.assertEquals(mv.getElement(j), a[i + j] == b[i + j]);
             }
         }
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanInt64VectorTests4() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
+    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+    static void notEqualInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = dv.lessThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = dv.lessThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = dv.lessThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = dv.lessThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = dv.lessThan(ev);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            Vector.Mask<Integer, Shapes.S64Bit> mv = av.notEqual(bv);
 
             // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), d[i+j] < a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), d[i+j] < b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), d[i+j] < c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), d[i+j] < d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), d[i+j] < e[i+j]);
+            for (int j = 0; j < SPECIES.length(); j++) {
+                Assert.assertEquals(mv.getElement(j), a[i + j] != b[i + j]);
             }
         }
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanInt64VectorTests5() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
+    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+    static void lessThanEqInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = ev.lessThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = ev.lessThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = ev.lessThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = ev.lessThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = ev.lessThan(ev);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            Vector.Mask<Integer, Shapes.S64Bit> mv = av.lessThanEq(bv);
 
             // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), e[i+j] < a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), e[i+j] < b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), e[i+j] < c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), e[i+j] < d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), e[i+j] < e[i+j]);
-            }
-        }
-    }
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanInt64VectorTests1() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = av.greaterThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = av.greaterThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = av.greaterThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = av.greaterThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = av.greaterThan(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), a[i+j] > a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), a[i+j] > b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), a[i+j] > c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), a[i+j] > d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), a[i+j] > e[i+j]);
+            for (int j = 0; j < SPECIES.length(); j++) {
+                Assert.assertEquals(mv.getElement(j), a[i + j] <= b[i + j]);
             }
         }
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanInt64VectorTests2() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
+    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+    static void greaterThanEqInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = bv.greaterThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = bv.greaterThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = bv.greaterThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = bv.greaterThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = bv.greaterThan(ev);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            Vector.Mask<Integer, Shapes.S64Bit> mv = av.greaterThanEq(bv);
 
             // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), b[i+j] > a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), b[i+j] > b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), b[i+j] > c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), b[i+j] > d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), b[i+j] > e[i+j]);
-            }
-        }
-    }
-
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanInt64VectorTests3() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = cv.greaterThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = cv.greaterThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = cv.greaterThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = cv.greaterThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = cv.greaterThan(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), c[i+j] > a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), c[i+j] > b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), c[i+j] > c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), c[i+j] > d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), c[i+j] > e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanInt64VectorTests4() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = dv.greaterThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = dv.greaterThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = dv.greaterThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = dv.greaterThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = dv.greaterThan(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), d[i+j] > a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), d[i+j] > b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), d[i+j] > c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), d[i+j] > d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), d[i+j] > e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanInt64VectorTests5() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = ev.greaterThan(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = ev.greaterThan(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = ev.greaterThan(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = ev.greaterThan(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = ev.greaterThan(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), e[i+j] > a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), e[i+j] > b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), e[i+j] > c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), e[i+j] > d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), e[i+j] > e[i+j]);
-            }
-        }
-    }
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void equalInt64VectorTests1() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = av.equal(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = av.equal(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = av.equal(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = av.equal(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = av.equal(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), a[i+j] == a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), a[i+j] == b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), a[i+j] == c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), a[i+j] == d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), a[i+j] == e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void equalInt64VectorTests2() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = bv.equal(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = bv.equal(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = bv.equal(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = bv.equal(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = bv.equal(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), b[i+j] == a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), b[i+j] == b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), b[i+j] == c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), b[i+j] == d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), b[i+j] == e[i+j]);
-            }
-        }
-    }
-
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void equalInt64VectorTests3() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = cv.equal(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = cv.equal(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = cv.equal(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = cv.equal(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = cv.equal(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), c[i+j] == a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), c[i+j] == b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), c[i+j] == c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), c[i+j] == d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), c[i+j] == e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void equalInt64VectorTests4() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = dv.equal(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = dv.equal(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = dv.equal(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = dv.equal(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = dv.equal(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), d[i+j] == a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), d[i+j] == b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), d[i+j] == c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), d[i+j] == d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), d[i+j] == e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void equalInt64VectorTests5() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = ev.equal(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = ev.equal(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = ev.equal(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = ev.equal(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = ev.equal(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), e[i+j] == a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), e[i+j] == b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), e[i+j] == c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), e[i+j] == d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), e[i+j] == e[i+j]);
-            }
-        }
-    }
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void notEqualInt64VectorTests1() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = av.notEqual(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = av.notEqual(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = av.notEqual(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = av.notEqual(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = av.notEqual(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), a[i+j] != a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), a[i+j] != b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), a[i+j] != c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), a[i+j] != d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), a[i+j] != e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void notEqualInt64VectorTests2() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = bv.notEqual(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = bv.notEqual(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = bv.notEqual(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = bv.notEqual(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = bv.notEqual(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), b[i+j] != a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), b[i+j] != b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), b[i+j] != c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), b[i+j] != d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), b[i+j] != e[i+j]);
-            }
-        }
-    }
-
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void notEqualInt64VectorTests3() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = cv.notEqual(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = cv.notEqual(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = cv.notEqual(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = cv.notEqual(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = cv.notEqual(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), c[i+j] != a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), c[i+j] != b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), c[i+j] != c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), c[i+j] != d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), c[i+j] != e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void notEqualInt64VectorTests4() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = dv.notEqual(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = dv.notEqual(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = dv.notEqual(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = dv.notEqual(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = dv.notEqual(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), d[i+j] != a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), d[i+j] != b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), d[i+j] != c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), d[i+j] != d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), d[i+j] != e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void notEqualInt64VectorTests5() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = ev.notEqual(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = ev.notEqual(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = ev.notEqual(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = ev.notEqual(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = ev.notEqual(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), e[i+j] != a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), e[i+j] != b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), e[i+j] != c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), e[i+j] != d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), e[i+j] != e[i+j]);
-            }
-        }
-    }
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanEqInt64VectorTests1() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = av.lessThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = av.lessThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = av.lessThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = av.lessThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = av.lessThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), a[i+j] <= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), a[i+j] <= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), a[i+j] <= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), a[i+j] <= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), a[i+j] <= e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanEqInt64VectorTests2() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = bv.lessThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = bv.lessThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = bv.lessThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = bv.lessThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = bv.lessThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), b[i+j] <= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), b[i+j] <= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), b[i+j] <= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), b[i+j] <= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), b[i+j] <= e[i+j]);
-            }
-        }
-    }
-
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanEqInt64VectorTests3() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = cv.lessThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = cv.lessThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = cv.lessThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = cv.lessThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = cv.lessThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), c[i+j] <= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), c[i+j] <= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), c[i+j] <= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), c[i+j] <= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), c[i+j] <= e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanEqInt64VectorTests4() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = dv.lessThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = dv.lessThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = dv.lessThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = dv.lessThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = dv.lessThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), d[i+j] <= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), d[i+j] <= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), d[i+j] <= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), d[i+j] <= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), d[i+j] <= e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void lessThanEqInt64VectorTests5() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = ev.lessThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = ev.lessThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = ev.lessThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = ev.lessThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = ev.lessThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), e[i+j] <= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), e[i+j] <= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), e[i+j] <= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), e[i+j] <= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), e[i+j] <= e[i+j]);
-            }
-        }
-    }
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanEqInt64VectorTests1() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = av.greaterThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = av.greaterThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = av.greaterThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = av.greaterThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = av.greaterThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), a[i+j] >= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), a[i+j] >= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), a[i+j] >= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), a[i+j] >= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), a[i+j] >= e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanEqInt64VectorTests2() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = bv.greaterThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = bv.greaterThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = bv.greaterThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = bv.greaterThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = bv.greaterThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), b[i+j] >= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), b[i+j] >= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), b[i+j] >= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), b[i+j] >= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), b[i+j] >= e[i+j]);
-            }
-        }
-    }
-
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanEqInt64VectorTests3() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = cv.greaterThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = cv.greaterThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = cv.greaterThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = cv.greaterThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = cv.greaterThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), c[i+j] >= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), c[i+j] >= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), c[i+j] >= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), c[i+j] >= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), c[i+j] >= e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanEqInt64VectorTests4() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = dv.greaterThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = dv.greaterThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = dv.greaterThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = dv.greaterThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = dv.greaterThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), d[i+j] >= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), d[i+j] >= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), d[i+j] >= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), d[i+j] >= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), d[i+j] >= e[i+j]);
-            }
-        }
-    }
-
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void greaterThanEqInt64VectorTests5() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] c = new int[SIZE];
-        int[] d = new int[SIZE];
-        int[] e = new int[SIZE];
-
-        // Data Initialization.
-        init_5arr(a, b, c, d, e);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            IntVector<Shapes.S64Bit> cv = species.fromArray(c, i);
-            IntVector<Shapes.S64Bit> dv = species.fromArray(d, i);
-            IntVector<Shapes.S64Bit> ev = species.fromArray(e, i);
-            Vector.Mask<Integer, Shapes.S64Bit> mask1 = ev.greaterThanEq(av);
-            Vector.Mask<Integer, Shapes.S64Bit> mask2 = ev.greaterThanEq(bv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask3 = ev.greaterThanEq(cv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask4 = ev.greaterThanEq(dv);
-            Vector.Mask<Integer, Shapes.S64Bit> mask5 = ev.greaterThanEq(ev);
-
-            // Check results as part of computation.
-            for (int j = 0; j < species.length(); j++) {
-                Assert.assertEquals(mask1.getElement(j), e[i+j] >= a[i+j]);
-                Assert.assertEquals(mask2.getElement(j), e[i+j] >= b[i+j]);
-                Assert.assertEquals(mask3.getElement(j), e[i+j] >= c[i+j]);
-                Assert.assertEquals(mask4.getElement(j), e[i+j] >= d[i+j]);
-                Assert.assertEquals(mask5.getElement(j), e[i+j] >= e[i+j]);
+            for (int j = 0; j < SPECIES.length(); j++) {
+                Assert.assertEquals(mv.getElement(j), a[i + j] >= b[i + j]);
             }
         }
     }
@@ -1674,136 +670,93 @@ public class Int64VectorTests {
         return mask ? b : a;
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void blendInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] b = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-        init_arr2(b);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    static void blendInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            IntVector<Shapes.S64Bit> bv = species.fromArray(b, i);
-            av.blend(bv, tMask).intoArray(rT, i);
-            av.blend(bv, fMask).intoArray(rF, i);
-            av.blend(bv, pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+            av.blend(bv, vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, b, rT, tMask.toArray(), Int64VectorTests::blend);
-        assertArraysEquals(a, b, rF, fMask.toArray(), Int64VectorTests::blend);
-        assertArraysEquals(a, b, rM, mask, Int64VectorTests::blend);
+        assertArraysEquals(a, b, r, mask, Int64VectorTests::blend);
     }
+
     static int neg(int a) {
         return (int)(-((int)a));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void negInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
+    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    static void negInt64VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
             av.neg().intoArray(r, i);
         }
 
         assertArraysEquals(a, r, Int64VectorTests::neg);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void negMaskedInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intUnaryOpMaskProvider")
+    static void negMaskedInt64VectorTests(IntFunction<int[]> fa,
+                                                IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            av.neg(tMask).intoArray(rT, i);
-            av.neg(fMask).intoArray(rF, i);
-            av.neg(pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            av.neg(vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, rT, tMask.toArray(), Int64VectorTests::neg);
-        assertArraysEquals(a, rF, fMask.toArray(), Int64VectorTests::neg);
-        assertArraysEquals(a, rM, mask, Int64VectorTests::neg);
+        assertArraysEquals(a, r, mask, Int64VectorTests::neg);
     }
 
     static int abs(int a) {
         return (int)(Math.abs((int)a));
     }
 
-   @org.testng.annotations.Test(invocationCount = 10)
-    static void absInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] r = new int[SIZE];
-
-        // Data Initialization.
-        init_arr1(a);
+    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    static void absInt64VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
             av.abs().intoArray(r, i);
         }
 
         assertArraysEquals(a, r, Int64VectorTests::abs);
     }
 
-    @org.testng.annotations.Test(invocationCount = 10)
-    static void absMaskedInt64VectorTests() {
-        int[] a = new int[SIZE];
-        int[] rT = new int[SIZE];
-        int[] rF = new int[SIZE];
-        int[] rM = new int[SIZE];
-        boolean[] mask = new boolean[species.length()];
-        
-        // Data Initialization.
-        init_mask(mask, species.length());
-        init_arr1(a);
-
-        Vector.Mask<Integer, Shapes.S64Bit> pMask = species.constantMask(mask);
-        Vector.Mask<Integer, Shapes.S64Bit> tMask = species.trueMask();
-        Vector.Mask<Integer, Shapes.S64Bit> fMask = species.falseMask();
+    @Test(dataProvider = "intUnaryOpMaskProvider")
+    static void absMaskedInt64VectorTests(IntFunction<int[]> fa,
+                                                IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
 
         // Computation.
-        for (int i = 0; i < a.length; i += species.length()) {
-            IntVector<Shapes.S64Bit> av = species.fromArray(a, i);
-            av.abs(tMask).intoArray(rT, i);
-            av.abs(fMask).intoArray(rF, i);
-            av.abs(pMask).intoArray(rM, i);
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+            av.abs(vmask).intoArray(r, i);
         }
 
-        assertArraysEquals(a, rT, tMask.toArray(), Int64VectorTests::abs);
-        assertArraysEquals(a, rF, fMask.toArray(), Int64VectorTests::abs);
-        assertArraysEquals(a, rM, mask, Int64VectorTests::abs);
+        assertArraysEquals(a, r, mask, Int64VectorTests::abs);
     }
-
 }
 
