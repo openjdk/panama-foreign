@@ -108,54 +108,19 @@ AC_DEFUN([FLAGS_SETUP_DEBUG_SYMBOLS],
 [
   # Debug symbols
   if test "x$TOOLCHAIN_TYPE" = xgcc; then
-    if test "x$OPENJDK_TARGET_CPU_BITS" = "x64" && test "x$DEBUG_LEVEL" = "xfastdebug"; then
-      CFLAGS_DEBUG_SYMBOLS="-g1"
-    else
-      CFLAGS_DEBUG_SYMBOLS="-g"
-    fi
+    CFLAGS_DEBUG_SYMBOLS="-g"
   elif test "x$TOOLCHAIN_TYPE" = xclang; then
     CFLAGS_DEBUG_SYMBOLS="-g"
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
-    CFLAGS_DEBUG_SYMBOLS="-g -xs"
     # -g0 enables debug symbols without disabling inlining.
-    CXXFLAGS_DEBUG_SYMBOLS="-g0 -xs"
+    CFLAGS_DEBUG_SYMBOLS="-g0 -xs"
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     CFLAGS_DEBUG_SYMBOLS="-g"
   elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
-    CFLAGS_DEBUG_SYMBOLS="-Zi"
+    CFLAGS_DEBUG_SYMBOLS="-Z7 -d2Zi+"
   fi
 
-  if test "x$CXXFLAGS_DEBUG_SYMBOLS" = x; then
-    # If we did not specify special flags for C++, use C version
-    CXXFLAGS_DEBUG_SYMBOLS="$CFLAGS_DEBUG_SYMBOLS"
-  fi
   AC_SUBST(CFLAGS_DEBUG_SYMBOLS)
-  AC_SUBST(CXXFLAGS_DEBUG_SYMBOLS)
-
-  # FIXME: This was never used in the old build. What to do with it?
-  if test "x$TOOLCHAIN_TYPE" = xgcc; then
-    # "-Og" suppported for GCC 4.8 and later
-    CFLAG_OPTIMIZE_DEBUG_FLAG="-Og"
-    FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$CFLAG_OPTIMIZE_DEBUG_FLAG],
-      IF_TRUE: [HAS_CFLAG_OPTIMIZE_DEBUG=true],
-      IF_FALSE: [HAS_CFLAG_OPTIMIZE_DEBUG=false])
-  fi
-
-  # Debug symbols for JVM_CFLAGS
-  if test "x$TOOLCHAIN_TYPE" = xsolstudio; then
-    JVM_CFLAGS_SYMBOLS="$JVM_CFLAGS_SYMBOLS -xs"
-    if test "x$DEBUG_LEVEL" = xslowdebug; then
-      JVM_CFLAGS_SYMBOLS="$JVM_CFLAGS_SYMBOLS -g"
-    else
-      # -g0 does not disable inlining, which -g does.
-      JVM_CFLAGS_SYMBOLS="$JVM_CFLAGS_SYMBOLS -g0"
-    fi
-  elif test "x$TOOLCHAIN_TYPE" = xmicrosoft; then
-    JVM_CFLAGS_SYMBOLS="$JVM_CFLAGS_SYMBOLS -Z7 -d2Zi+"
-  else
-    JVM_CFLAGS_SYMBOLS="$JVM_CFLAGS_SYMBOLS -g"
-  fi
-  AC_SUBST(JVM_CFLAGS_SYMBOLS)
 ])
 
 AC_DEFUN([FLAGS_SETUP_WARNINGS],
@@ -189,16 +154,7 @@ AC_DEFUN([FLAGS_SETUP_WARNINGS],
       CFLAGS_WARNINGS_ARE_ERRORS="-errtags -errwarn=%all"
       ;;
     gcc)
-      # Prior to gcc 4.4, a -Wno-X where X is unknown for that version of gcc will cause an error
-      FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [-Wno-this-is-a-warning-that-do-not-exist],
-          IF_TRUE: [GCC_CAN_DISABLE_WARNINGS=true],
-          IF_FALSE: [GCC_CAN_DISABLE_WARNINGS=false]
-      )
-      if test "x$GCC_CAN_DISABLE_WARNINGS" = "xtrue"; then
-        DISABLE_WARNING_PREFIX="-Wno-"
-      else
-        DISABLE_WARNING_PREFIX=
-      fi
+      DISABLE_WARNING_PREFIX="-Wno-"
       CFLAGS_WARNINGS_ARE_ERRORS="-Werror"
       # Repeate the check for the BUILD_CC and BUILD_CXX. Need to also reset
       # CFLAGS since any target specific flags will likely not work with the
@@ -209,15 +165,7 @@ AC_DEFUN([FLAGS_SETUP_WARNINGS],
       CXX="$BUILD_CXX"
       CFLAGS_OLD="$CFLAGS"
       CFLAGS=""
-      FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [-Wno-this-is-a-warning-that-do-not-exist],
-          IF_TRUE: [BUILD_CC_CAN_DISABLE_WARNINGS=true],
-          IF_FALSE: [BUILD_CC_CAN_DISABLE_WARNINGS=false]
-      )
-      if test "x$BUILD_CC_CAN_DISABLE_WARNINGS" = "xtrue"; then
-        BUILD_CC_DISABLE_WARNING_PREFIX="-Wno-"
-      else
-        BUILD_CC_DISABLE_WARNING_PREFIX=
-      fi
+      BUILD_CC_DISABLE_WARNING_PREFIX="-Wno-"
       CC="$CC_OLD"
       CXX="$CXX_OLD"
       CFLAGS="$CFLAGS_OLD"
@@ -253,17 +201,10 @@ AC_DEFUN([FLAGS_SETUP_QUALITY_CHECKS],
       # This is most likely not really correct.
 
       # Add runtime stack smashing and undefined behavior checks.
-      # Not all versions of gcc support -fstack-protector
-      STACK_PROTECTOR_CFLAG="-fstack-protector-all"
-      FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$STACK_PROTECTOR_CFLAG -Werror],
-          IF_FALSE: [STACK_PROTECTOR_CFLAG=""])
+      CFLAGS_DEBUG_OPTIONS="-fstack-protector-all --param ssp-buffer-size=1"
+      CXXFLAGS_DEBUG_OPTIONS="-fstack-protector-all --param ssp-buffer-size=1"
 
-      CFLAGS_DEBUG_OPTIONS="$STACK_PROTECTOR_CFLAG --param ssp-buffer-size=1"
-      CXXFLAGS_DEBUG_OPTIONS="$STACK_PROTECTOR_CFLAG --param ssp-buffer-size=1"
-
-      if test "x$STACK_PROTECTOR_CFLAG" != x; then
-        JVM_CFLAGS_SYMBOLS="$JVM_CFLAGS_SYMBOLS $STACK_PROTECTOR_CFLAG --param ssp-buffer-size=1"
-      fi
+      JVM_CFLAGS_SYMBOLS="$JVM_CFLAGS_SYMBOLS -fstack-protector-all --param ssp-buffer-size=1"
       ;;
     esac
   fi
@@ -496,7 +437,6 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
   if test "x$DEBUG_LEVEL" != xrelease; then
     DEBUG_OPTIONS_FLAGS_JDK="$CFLAGS_DEBUG_OPTIONS"
     DEBUG_SYMBOLS_CFLAGS_JDK="$CFLAGS_DEBUG_SYMBOLS"
-    DEBUG_SYMBOLS_CXXFLAGS_JDK="$CXXFLAGS_DEBUG_SYMBOLS"
   fi
 
   #### TOOLCHAIN DEFINES
@@ -556,6 +496,12 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
     TOOLCHAIN_CFLAGS_JDK_CXXONLY="-features=no%except -norunpath -xnolib" # CXX only
     TOOLCHAIN_CFLAGS_JVM="-template=no%extdef -features=no%split_init \
         -library=stlport4 -mt -features=no%except"
+    if test "x$DEBUG_LEVEL" = xslowdebug; then
+      # Previously -g was used instead of -g0 for slowdebug; this is equivalent
+      # to setting +d.
+      TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM +d"
+    fi
+
   elif test "x$TOOLCHAIN_TYPE" = xxlc; then
     TOOLCHAIN_CFLAGS_JDK="-qchars=signed -qfullpath -qsaveopt"  # add on both CFLAGS
     TOOLCHAIN_CFLAGS_JVM="-qtune=balanced \
@@ -810,12 +756,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_CPU_DEP],
     TOOLCHAIN_CHECK_COMPILER_VERSION(VERSION: 6, PREFIX: $2, IF_AT_LEAST: FLAGS_SETUP_GCC6_COMPILER_FLAGS($1))
     $1_TOOLCHAIN_CFLAGS="${$1_GCC6_CFLAGS}"
 
-    TOOLCHAIN_CHECK_COMPILER_VERSION(VERSION: [4.8], PREFIX: $2,
-        IF_AT_LEAST: [
-          # These flags either do not work or give spurious warnings prior to gcc 4.8.
-          $1_WARNING_CFLAGS_JVM="-Wno-format-zero-length -Wtype-limits -Wuninitialized"
-        ]
-    )
+    $1_WARNING_CFLAGS_JVM="-Wno-format-zero-length -Wtype-limits -Wuninitialized"
   fi
 
   # EXPORT to API
@@ -825,16 +766,16 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_CPU_DEP],
 
   CFLAGS_JDK_COMMON="$ALWAYS_CFLAGS_JDK $ALWAYS_DEFINES_JDK $TOOLCHAIN_CFLAGS_JDK \
       $OS_CFLAGS $CFLAGS_OS_DEF_JDK $DEBUG_CFLAGS_JDK $DEBUG_OPTIONS_FLAGS_JDK \
-      $WARNING_CFLAGS $WARNING_CFLAGS_JDK"
+      $WARNING_CFLAGS $WARNING_CFLAGS_JDK $DEBUG_SYMBOLS_CFLAGS_JDK"
 
   # Use ${$2EXTRA_CFLAGS} to block EXTRA_CFLAGS to be added to build flags.
   # (Currently we don't have any OPENJDK_BUILD_EXTRA_CFLAGS, but that might
   # change in the future.)
 
-  CFLAGS_JDK_COMMON_CONLY="$TOOLCHAIN_CFLAGS_JDK_CONLY $DEBUG_SYMBOLS_CFLAGS_JDK \
+  CFLAGS_JDK_COMMON_CONLY="$TOOLCHAIN_CFLAGS_JDK_CONLY  \
       $WARNING_CFLAGS_JDK_CONLY ${$2EXTRA_CFLAGS}"
   CFLAGS_JDK_COMMON_CXXONLY="$ALWAYS_DEFINES_JDK_CXXONLY $TOOLCHAIN_CFLAGS_JDK_CXXONLY \
-      $DEBUG_SYMBOLS_CXXFLAGS_JDK $WARNING_CFLAGS_JDK_CXXONLY ${$2EXTRA_CXXFLAGS}"
+      $WARNING_CFLAGS_JDK_CXXONLY ${$2EXTRA_CXXFLAGS}"
 
   $1_CFLAGS_JVM="${$1_DEFINES_CPU_JVM} ${$1_CFLAGS_CPU} ${$1_CFLAGS_CPU_JVM} ${$1_TOOLCHAIN_CFLAGS} ${$1_WARNING_CFLAGS_JVM}"
   $1_CFLAGS_JDK="${$1_DEFINES_CPU_JDK} ${$1_CFLAGS_CPU} ${$1_CFLAGS_CPU_JDK} ${$1_TOOLCHAIN_CFLAGS}"

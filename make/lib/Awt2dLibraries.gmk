@@ -61,7 +61,6 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBMLIB_IMAGE, \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LIBS := $(BUILD_LIBMLIB_LDLIBS) \
         $(JDKLIB_LIBS), \
-    LIBS_solaris := -lc, \
     VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
     RC_FLAGS := $(RC_FLAGS) \
         -D "JDK_FNAME=mlib_image.dll" \
@@ -119,7 +118,7 @@ ifeq ($(OPENJDK_TARGET_OS)-$(OPENJDK_TARGET_CPU_ARCH), solaris-sparc)
       MAPFILE := $(BUILD_LIBMLIB_IMAGE_MAPFILE), \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
-      LIBS := -ljava -ljvm -lc $(BUILD_LIBMLIB_LDLIBS), \
+      LIBS := -ljava -ljvm $(BUILD_LIBMLIB_LDLIBS), \
       OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libmlib_image_v, \
   ))
 
@@ -250,7 +249,7 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBAWT, \
         -delayload:comctl32.dll -delayload:shlwapi.dll, \
     LIBS_unix := -ljvm -ljava $(LIBM), \
     LIBS_linux :=  $(LIBDL), \
-    LIBS_solaris := $(LIBDL) -lc, \
+    LIBS_solaris := $(LIBDL), \
     LIBS_aix := $(LIBDL),\
     LIBS_macosx := -lmlib_image \
         -framework Cocoa \
@@ -330,7 +329,7 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS),windows macosx),)
       endif
     endif
 
-    LIBAWT_XAWT_LIBS := $(LIBM) -lawt -lXext -lX11 -lXrender $(LIBDL) -lXtst -lXi -ljava -ljvm -lc
+    LIBAWT_XAWT_LIBS := $(LIBM) -lawt -lXext -lX11 -lXrender $(LIBDL) -lXtst -lXi -ljava -ljvm
 
     ifeq ($(OPENJDK_TARGET_OS), linux)
       LIBAWT_XAWT_LIBS += -lpthread
@@ -429,7 +428,6 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBLCMS, \
     LIBS_unix := -lawt -ljvm -ljava $(LCMS_LIBS), \
     LIBS_linux := $(LIBM), \
     LIBS_macosx := $(LIBM), \
-    LIBS_solaris := -lc, \
     LIBS_aix := $(LIBM),\
     LIBS_windows := $(WIN_AWT_LIB) $(WIN_JAVA_LIB), \
     VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
@@ -569,7 +567,7 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS), windows macosx),)
       REORDER := $(LIBAWT_HEADLESS_REORDER), \
       LIBS_unix := -lawt -ljvm -ljava, \
       LIBS_linux := $(LIBM) $(LIBDL), \
-      LIBS_solaris := $(LIBM) $(LIBDL) $(LIBCXX) -lc, \
+      LIBS_solaris := $(LIBM) $(LIBDL) $(LIBCXX), \
       OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libawt_headless, \
   ))
 
@@ -584,6 +582,45 @@ ifeq ($(findstring $(OPENJDK_TARGET_OS), windows macosx),)
 endif
 
 ################################################################################
+
+ifeq ($(FREETYPE_TO_USE), system)
+  LIBFREETYPE_CFLAGS := $(FREETYPE_CFLAGS)
+  LIBFREETYPE_LIBS := $(FREETYPE_LIBS)
+else
+  LIBFREETYPE_SRC := $(TOPDIR)/src/java.desktop/share/native/libfreetype
+  BUILD_LIBFREETYPE_HEADERS := $(addprefix -I, $(LIBFREETYPE_SRC)/include)
+  LIBFREETYPE_CFLAGS := $(BUILD_LIBFREETYPE_HEADERS)
+  ifeq ($(OPENJDK_TARGET_OS), windows)
+    LIBFREETYPE_LIBS := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libfreetype/freetype.lib
+  else
+    LIBFREETYPE_LIBS := -lfreetype
+  endif
+
+  $(eval $(call SetupNativeCompilation, BUILD_LIBFREETYPE, \
+      NAME := freetype, \
+      OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
+      SRC := $(LIBFREETYPE_SRC)/src, \
+      OPTIMIZATION := HIGHEST, \
+      CFLAGS := $(CFLAGS_JDKLIB) $(BUILD_LIBFREETYPE_HEADERS) \
+          -DFT2_BUILD_LIBRARY, \
+      DISABLED_WARNINGS_solstudio := \
+         E_STATEMENT_NOT_REACHED \
+         E_END_OF_LOOP_CODE_NOT_REACHED, \
+      DISABLED_WARNINGS_microsoft := 4267 2220 4244, \
+      LDFLAGS := $(LDFLAGS_JDKLIB) \
+          $(call SET_SHARED_LIBRARY_ORIGIN), \
+      VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
+      RC_FLAGS := $(RC_FLAGS) \
+          -D "JDK_FNAME=freetype.dll" \
+          -D "JDK_INTERNAL_NAME=freetype" \
+          -D "JDK_FTYPE=0x2L", \
+      OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libfreetype, \
+  ))
+
+  TARGETS += $(BUILD_LIBFREETYPE)
+endif
+
+###########################################################################
 
 LIBFONTMANAGER_SRC := $(TOPDIR)/src/java.desktop/share/native/libfontmanager \
     $(TOPDIR)/src/java.desktop/$(OPENJDK_TARGET_OS_TYPE)/native/libfontmanager
@@ -625,10 +662,10 @@ LIBFONTMANAGER_CFLAGS += $(HARFBUZZ_CFLAGS)
 
 #### End harfbuzz configuration
 
-LIBFONTMANAGER_CFLAGS += $(FREETYPE_CFLAGS)
+LIBFONTMANAGER_CFLAGS += $(LIBFREETYPE_CFLAGS)
 # This may be overridden in a custom makefile
 BUILD_LIBFONTMANAGER_MAPFILE ?= $(TOPDIR)/make/mapfiles/libfontmanager/mapfile-vers
-BUILD_LIBFONTMANAGER_FONTLIB += $(FREETYPE_LIBS)
+BUILD_LIBFONTMANAGER_FONTLIB += $(LIBFREETYPE_LIBS)
 
 LIBFONTMANAGER_OPTIMIZATION := HIGH
 
@@ -659,7 +696,7 @@ endif
 
 $(eval $(call SetupNativeCompilation, BUILD_LIBFONTMANAGER, \
     NAME := fontmanager, \
-    OUTPUT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libfontmanager, \
+    OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
     SRC := $(LIBFONTMANAGER_SRC), \
     EXCLUDE_FILES := $(LIBFONTMANAGER_EXCLUDE_FILES) \
         AccelGlyphCache.c, \
@@ -690,8 +727,6 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBFONTMANAGER, \
     LDFLAGS_macosx := -undefined dynamic_lookup, \
     LIBS := $(BUILD_LIBFONTMANAGER_FONTLIB), \
     LIBS_unix := -lawt -ljava -ljvm $(LIBM) $(LIBCXX), \
-    LIBS_linux := -lc, \
-    LIBS_solaris := -lc, \
     LIBS_aix := -lawt_headless,\
     LIBS_windows := $(WIN_JAVA_LIB) advapi32.lib user32.lib gdi32.lib \
         $(WIN_AWT_LIB), \
@@ -703,25 +738,14 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBFONTMANAGER, \
     OBJECT_DIR := $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libfontmanager, \
 ))
 
-$(INSTALL_LIBRARIES_HERE)/$(call SHARED_LIBRARY,fontmanager): $(BUILD_LIBFONTMANAGER_TARGET)
-	$(install-file)
-        ifneq ($(FREETYPE_BUNDLE_LIB_PATH), )
-          ifeq ($(OPENJDK_TARGET_OS), macosx)
-            # If bundling freetype on macosx, we need to rewrite the rpath location
-            # in the libfontmanager library to point to the bundled location
-	    $(INSTALL_NAME_TOOL) -change \
-	        `$(OTOOL) -D $(FREETYPE_BUNDLE_LIB_PATH)/$(call SHARED_LIBRARY,freetype) | $(TAIL) -n1` \
-	        '@rpath/$(call SHARED_LIBRARY,freetype)' \
-	        $@
-          endif
-        endif
-
-BUILD_LIBFONTMANAGER += $(INSTALL_LIBRARIES_HERE)/$(call SHARED_LIBRARY,fontmanager)
-
 $(BUILD_LIBFONTMANAGER): $(BUILD_LIBAWT)
 
 ifneq (, $(findstring $(OPENJDK_TARGET_OS), solaris aix))
   $(BUILD_LIBFONTMANAGER): $(BUILD_LIBAWT_HEADLESS)
+endif
+
+ifeq ($(FREETYPE_TO_USE), bundled)
+  $(BUILD_LIBFONTMANAGER): $(BUILD_LIBFREETYPE)
 endif
 
 TARGETS += $(BUILD_LIBFONTMANAGER)
@@ -921,7 +945,6 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
   endif
 
   ifeq ($(OPENJDK_TARGET_OS), macosx)
-    LIBSPLASHSCREEN_LDFLAGS := -L$(INSTALL_LIBRARIES_HERE)
     LIBSPLASHSCREEN_LIBS += \
         $(LIBM) -lpthread -liconv -losxapp \
         -framework ApplicationServices \
@@ -929,7 +952,6 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
         -framework Cocoa \
         -framework JavaNativeFoundation
   else ifeq ($(OPENJDK_TARGET_OS), windows)
-    LIBSPLASHSCREEN_LDFLAGS := -delayload:user32.dll
     LIBSPLASHSCREEN_LIBS += kernel32.lib user32.lib gdi32.lib delayimp.lib $(WIN_JAVA_LIB) jvm.lib
   else
     LIBSPLASHSCREEN_LIBS += $(X_LIBS) -lX11 -lXext $(LIBM) -lpthread -ldl
@@ -951,8 +973,10 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
           E_STATEMENT_NOT_REACHED, \
       DISABLED_WARNINGS_microsoft := 4018 4244 4267, \
       MAPFILE := $(TOPDIR)/make/mapfiles/libsplashscreen/mapfile-vers, \
-      LDFLAGS := $(LIBSPLASHSCREEN_LDFLAGS) $(LDFLAGS_JDKLIB) \
+      LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
+      LDFLAGS_macosx := -L$(INSTALL_LIBRARIES_HERE), \
+      LDFLAGS_windows := -delayload:user32.dll, \
       LIBS := $(JDKLIB_LIBS) $(LIBSPLASHSCREEN_LIBS) $(LIBZ_LIBS) \
           $(GIFLIB_LIBS) $(LIBJPEG_LIBS) $(PNG_LIBS), \
       LIBS_aix := -liconv, \
