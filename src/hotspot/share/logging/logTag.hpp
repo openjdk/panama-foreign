@@ -193,6 +193,7 @@ class LogTag : public AllStatic {
   }
 
   static LogTag::type from_string(const char *str);
+  static LogTag::type fuzzy_match(const char *tag);
   static void list_tags(outputStream* out);
 
  private:
