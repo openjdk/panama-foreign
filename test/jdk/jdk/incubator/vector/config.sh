@@ -53,3 +53,17 @@ function LogRun () {
   fi
   echo -ne "$2" >> $BUILDLOG_FILE
 }
+
+# Determine which delimiter to use based on the OS.
+# Windows uses ";", while Unix-based OSes use ":"
+uname_s=$(uname -s)
+VECTORTESTS_HOME_CP=$VECTORTESTS_HOME
+if [ "$uname_cygwin" == "CYGWIN" ]; then
+  VECTORTESTS_HOME_CP=$(cygpath -pw $VECTORTESTS_HOME)
+fi
+
+if [ "$uname_s" == "Linux" ] || [ "$uname_s" == "Darwin" ]; then
+  SEPARATOR=":"
+else
+  SEPARATOR=";"
+fi

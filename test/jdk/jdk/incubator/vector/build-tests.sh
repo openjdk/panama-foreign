@@ -39,8 +39,8 @@ do
     vectorteststype=${typeprefix}${Type}${bits}VectorTests
     # Compile
     Log true "Compiling ${vectorteststype}... "
-    Log false "\n${JAVAC} -cp \"${TESTNG_JAR}\" --add-modules=jdk.incubator.vector $vectorteststype.java 2>&1"
-    compilation=$(${JAVAC} -cp "${TESTNG_JAR}" \
+    Log false "\n${JAVAC} -cp \"${VECTORTESTS_HOME_CP}$SEPARATOR${TESTNG_JAR}\" --add-modules=jdk.incubator.vector $vectorteststype.java 2>&1"
+    compilation=$(${JAVAC} -cp "${VECTORTESTS_HOME_CP}$SEPARATOR${TESTNG_JAR}" \
                     --add-modules=jdk.incubator.vector $vectorteststype.java 2>&1)
     if [[ $compilation  == *"error"* ]]; then
       Log true "$compilation\n"

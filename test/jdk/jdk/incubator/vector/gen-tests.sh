@@ -117,7 +117,7 @@ do
 
     # Generate
     Log true "Generating $vectorteststype... "
-    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${TEMPLATE_FILE} > $vectorteststype.java"
+    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${TEMPLATE_FILE} > $vectorteststype.java "
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
       < ${TEMPLATE_FILE} \
       > $vectorteststype.java

@@ -44,7 +44,6 @@ case $key in
     DISABLE_VECTOR_INTRINSICS=true
     echo "Warning: Disabling Vector intrinsics..."
     shift # past argument
-    shift # past value
     ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
@@ -73,10 +72,10 @@ fi
 LogRun false "Running tests $(date)\n"
 LogRun true "Running the following tests:\n"
 LogRun true "${TESTS}\n"
-LogRun false "${JAVA} -cp \"${VECTORTESTS_HOME}${SEPARATOR}${TESTNG_RUN_JAR}${SEPARATOR}${JCOMMANDER_JAR}\" ${JAVA_FLAGS} --add-modules jdk.incubator.vector org.testng.TestNG -testclass $TESTS"
+LogRun false "${JAVA} -cp \"${VECTORTESTS_HOME_CP}${SEPARATOR}${TESTNG_RUN_JAR}${SEPARATOR}${JCOMMANDER_JAR}\" ${JAVA_FLAGS} --add-modules jdk.incubator.vector org.testng.TestNG -testclass $TESTS"
 
 # Actual TestNG run.
-time ${JAVA} -cp "${VECTORTESTS_HOME}${SEPARATOR}${TESTNG_RUN_JAR}${SEPARATOR}${JCOMMANDER_JAR}" \
+time ${JAVA} -cp "${VECTORTESTS_HOME_CP}${SEPARATOR}${TESTNG_RUN_JAR}${SEPARATOR}${JCOMMANDER_JAR}" \
   ${JAVA_FLAGS} \
   --add-modules jdk.incubator.vector \
   org.testng.TestNG -testclass $TESTS

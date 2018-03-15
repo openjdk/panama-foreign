@@ -2,6 +2,9 @@ Introduction:
 
 The goal of this project is to cover testing of the Vector API.
 
+Pre-Setup:
+- Make sure java/javac point to the VectorAPI build you want to test (setup the PATH environment variable appropriately).
+
 Setup:
 
 1. Run bash gen-template.sh from this directory. This will generate tests files from the templates to each vector shape and type.
@@ -20,5 +23,6 @@ jtreg -ea -esa -avm -va -nr *VectorTests.java
 	    - org.testng_6.13.1.r201712040515.jar
 	
 	6. Export the unzipped folder path to the TESTNG_PLUGIN environment variable.
+     Note: For Cygwin users, make sure to use Windows-style full-paths (such as "c:\" instead of "/cygdrive/c/")
  
   7. Run bash run-tests.sh to run the tests with your own installation of TestNG.
