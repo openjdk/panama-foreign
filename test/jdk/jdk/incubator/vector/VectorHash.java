@@ -34,6 +34,9 @@ import jdk.incubator.vector.Vector;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.SplittableRandom;
+
+import static java.util.stream.Collectors.joining;
 
 public class VectorHash {
 
@@ -45,6 +48,10 @@ public class VectorHash {
             assertHashCode(bk);
             assertHashCode(bv);
         });
+
+        String letters = new SplittableRandom().ints(1024, 'A', 'Z' + 1).
+                mapToObj(c -> Character.toString((char) c)).collect(joining());
+        assertHashCode(letters.getBytes(StandardCharsets.UTF_8));
     }
 
     static void assertHashCode(byte[] b) {
@@ -53,6 +60,7 @@ public class VectorHash {
         assertEquals(hashCodeUnrollConstants(b), expected);
         assertEquals(hashCodeVector64(b), expected);
         assertEquals(hashCodeVector128(b), expected);
+        assertEquals(hashCodeVector512Shift(b), expected);
     }
 
     static void assertEquals(Object a, Object b) {
@@ -137,15 +145,45 @@ public class VectorHash {
         return h;
     }
 
+    static int hashCodeVector512Shift(byte[] a) {
+        return hashCodeVector512Shift(a, BYTE_512_SPECIES, INT_512_Species);
+    }
+
+    static <S extends Vector.Shape> int hashCodeVector512Shift(
+            byte[] a,
+            ByteVector.ByteSpecies<S> byteSpecies, IntVector.IntSpecies<S> intSpecies) {
+        int h = 1;
+        int i = 0;
+        for (; i < (a.length & ~(byteSpecies.length() - 1)); i += byteSpecies.length()) {
+            ByteVector<S> b = byteSpecies.fromArray(a, i);
+
+            for (int j = 0; j < byteSpecies.length() / intSpecies.length(); j++) {
+                // @@@ co-variant override
+                IntVector<Shapes.S512Bit> x = (IntVector<Shapes.S512Bit>) b.cast(intSpecies);
+                h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addAll();
+
+                // @@@ co-variant override
+                b = (ByteVector<S>) b.shiftEL(intSpecies.length());
+            }
+        }
+
+        for (; i < a.length; i++) {
+            h = 31 * h + a[i];
+        }
+        return h;
+    }
+
     static final IntVector.IntSpecies<Shapes.S512Bit> INT_512_Species = (IntVector.IntSpecies<Shapes.S512Bit>)
             Vector.speciesInstance(Integer.class, Shapes.S_512_BIT);
-    static final ByteVector.ByteSpecies<Shapes.S128Bit> BYTE_128_SPECIES = (ByteVector.ByteSpecies<Shapes.S128Bit>)
-            Vector.speciesInstance(Byte.class, Shapes.S_128_BIT);
+    static final IntVector.IntSpecies<Shapes.S256Bit> INT_256_Species = (IntVector.IntSpecies<Shapes.S256Bit>)
+            Vector.speciesInstance(Integer.class, Shapes.S_256_BIT);
     static final int COEFF_31_TO_16;
     static final IntVector<Shapes.S512Bit> H_COEFF_16;
 
-    static final IntVector.IntSpecies<Shapes.S256Bit> INT_256_Species = (IntVector.IntSpecies<Shapes.S256Bit>)
-            Vector.speciesInstance(Integer.class, Shapes.S_256_BIT);
+    static final ByteVector.ByteSpecies<Shapes.S512Bit> BYTE_512_SPECIES = (ByteVector.ByteSpecies<Shapes.S512Bit>)
+            Vector.speciesInstance(Byte.class, Shapes.S_512_BIT);
+    static final ByteVector.ByteSpecies<Shapes.S128Bit> BYTE_128_SPECIES = (ByteVector.ByteSpecies<Shapes.S128Bit>)
+            Vector.speciesInstance(Byte.class, Shapes.S_128_BIT);
     static final ByteVector.ByteSpecies<Shapes.S64Bit> BYTE_64_SPECIES = (ByteVector.ByteSpecies<Shapes.S64Bit>)
             Vector.speciesInstance(Byte.class, Shapes.S_64_BIT);
     static final int COEFF_31_TO_8;
