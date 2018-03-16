@@ -24,7 +24,7 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
@@ -431,6 +431,13 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
     public abstract LongVector<S> with(int i, long e);
 
     // Type specific extractors
+
+    @ForceInline
+    public long[] toArray() {
+        long[] a = new long[species().length()];
+        intoArray(a, 0);
+        return a;
+    }
 
     public void intoArray(long[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);

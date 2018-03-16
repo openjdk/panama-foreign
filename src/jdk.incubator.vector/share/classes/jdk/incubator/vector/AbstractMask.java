@@ -70,6 +70,11 @@ abstract class AbstractMask<E, S extends Vector.Shape> extends Vector.Mask<E, S>
     }
 
     @Override
+    public void intoArray(boolean[] bits, int i) {
+        System.arraycopy(getBits(), 0, bits, i, species().length());
+    }
+
+    @Override
     public boolean[] toArray() {
         return getBits().clone();
     }

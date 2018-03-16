@@ -731,7 +731,11 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Long64Mask(boolean[] bits) {
-            this.bits = Arrays.copyOf(bits, species().length());
+            this(bits, 0);
+        }
+
+        public Long64Mask(boolean[] bits, int i) {
+            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
         }
 
         public Long64Mask(boolean val) {
@@ -833,7 +837,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Long64Mask.class, long.class, LENGTH,
-                                         this, species().trueMask(),
+                                         this, species().maskAllTrue(),
                                          (m1, m2) -> super.allTrue());
         }
     }
@@ -845,6 +849,10 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
         public Long64Shuffle(int[] reorder) {
             super(reorder);
+        }
+
+        public Long64Shuffle(int[] reorder, int i) {
+            super(reorder, i);
         }
 
         @Override
@@ -929,13 +937,23 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         // Factories
 
         @Override
-        public Long64Mask constantMask(boolean... bits) {
+        public Long64Mask maskFromValues(boolean... bits) {
             return new Long64Mask(bits);
         }
 
         @Override
-        public Long64Shuffle constantShuffle(int... ixs) {
+        public Long64Mask maskFromArray(boolean[] bits, int i) {
+            return new Long64Mask(bits, i);
+        }
+
+        @Override
+        public Long64Shuffle shuffleFromValues(int... ixs) {
             return new Long64Shuffle(ixs);
+        }
+
+        @Override
+        public Long64Shuffle shuffleFromArray(int[] ixs, int i) {
+            return new Long64Shuffle(ixs, i);
         }
 
         @Override
@@ -957,7 +975,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Long64Mask trueMask() {
+        public Long64Mask maskAllTrue() {
             return VectorIntrinsics.broadcastCoerced(Long64Mask.class, long.class, LENGTH,
                                                      (long)-1,
                                                      (z -> Long64Mask.TRUE_MASK));
@@ -965,7 +983,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Long64Mask falseMask() {
+        public Long64Mask maskAllFalse() {
             return VectorIntrinsics.broadcastCoerced(Long64Mask.class, long.class, LENGTH,
                                                      0,
                                                      (z -> Long64Mask.FALSE_MASK));

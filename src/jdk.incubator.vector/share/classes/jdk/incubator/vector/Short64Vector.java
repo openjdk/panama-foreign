@@ -697,7 +697,11 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Short64Mask(boolean[] bits) {
-            this.bits = Arrays.copyOf(bits, species().length());
+            this(bits, 0);
+        }
+
+        public Short64Mask(boolean[] bits, int i) {
+            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
         }
 
         public Short64Mask(boolean val) {
@@ -799,7 +803,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Short64Mask.class, short.class, LENGTH,
-                                         this, species().trueMask(),
+                                         this, species().maskAllTrue(),
                                          (m1, m2) -> super.allTrue());
         }
     }
@@ -811,6 +815,10 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
         public Short64Shuffle(int[] reorder) {
             super(reorder);
+        }
+
+        public Short64Shuffle(int[] reorder, int i) {
+            super(reorder, i);
         }
 
         @Override
@@ -895,13 +903,23 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         // Factories
 
         @Override
-        public Short64Mask constantMask(boolean... bits) {
+        public Short64Mask maskFromValues(boolean... bits) {
             return new Short64Mask(bits);
         }
 
         @Override
-        public Short64Shuffle constantShuffle(int... ixs) {
+        public Short64Mask maskFromArray(boolean[] bits, int i) {
+            return new Short64Mask(bits, i);
+        }
+
+        @Override
+        public Short64Shuffle shuffleFromValues(int... ixs) {
             return new Short64Shuffle(ixs);
+        }
+
+        @Override
+        public Short64Shuffle shuffleFromArray(int[] ixs, int i) {
+            return new Short64Shuffle(ixs, i);
         }
 
         @Override
@@ -923,7 +941,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Short64Mask trueMask() {
+        public Short64Mask maskAllTrue() {
             return VectorIntrinsics.broadcastCoerced(Short64Mask.class, short.class, LENGTH,
                                                      (short)-1,
                                                      (z -> Short64Mask.TRUE_MASK));
@@ -931,7 +949,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Short64Mask falseMask() {
+        public Short64Mask maskAllFalse() {
             return VectorIntrinsics.broadcastCoerced(Short64Mask.class, short.class, LENGTH,
                                                      0,
                                                      (z -> Short64Mask.FALSE_MASK));

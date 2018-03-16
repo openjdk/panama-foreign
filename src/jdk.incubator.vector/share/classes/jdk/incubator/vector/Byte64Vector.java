@@ -697,7 +697,11 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Byte64Mask(boolean[] bits) {
-            this.bits = Arrays.copyOf(bits, species().length());
+            this(bits, 0);
+        }
+
+        public Byte64Mask(boolean[] bits, int i) {
+            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
         }
 
         public Byte64Mask(boolean val) {
@@ -799,7 +803,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Byte64Mask.class, byte.class, LENGTH,
-                                         this, species().trueMask(),
+                                         this, species().maskAllTrue(),
                                          (m1, m2) -> super.allTrue());
         }
     }
@@ -811,6 +815,10 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         public Byte64Shuffle(int[] reorder) {
             super(reorder);
+        }
+
+        public Byte64Shuffle(int[] reorder, int i) {
+            super(reorder, i);
         }
 
         @Override
@@ -895,13 +903,23 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         // Factories
 
         @Override
-        public Byte64Mask constantMask(boolean... bits) {
+        public Byte64Mask maskFromValues(boolean... bits) {
             return new Byte64Mask(bits);
         }
 
         @Override
-        public Byte64Shuffle constantShuffle(int... ixs) {
+        public Byte64Mask maskFromArray(boolean[] bits, int i) {
+            return new Byte64Mask(bits, i);
+        }
+
+        @Override
+        public Byte64Shuffle shuffleFromValues(int... ixs) {
             return new Byte64Shuffle(ixs);
+        }
+
+        @Override
+        public Byte64Shuffle shuffleFromArray(int[] ixs, int i) {
+            return new Byte64Shuffle(ixs, i);
         }
 
         @Override
@@ -923,7 +941,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Byte64Mask trueMask() {
+        public Byte64Mask maskAllTrue() {
             return VectorIntrinsics.broadcastCoerced(Byte64Mask.class, byte.class, LENGTH,
                                                      (byte)-1,
                                                      (z -> Byte64Mask.TRUE_MASK));
@@ -931,7 +949,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Byte64Mask falseMask() {
+        public Byte64Mask maskAllFalse() {
             return VectorIntrinsics.broadcastCoerced(Byte64Mask.class, byte.class, LENGTH,
                                                      0,
                                                      (z -> Byte64Mask.FALSE_MASK));

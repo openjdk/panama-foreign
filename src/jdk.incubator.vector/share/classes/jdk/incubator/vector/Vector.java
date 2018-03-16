@@ -181,14 +181,18 @@ public interface Vector<E, S extends Vector.Shape> {
         Vector<E, S> fromByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
 
         //Mask and shuffle constructions
-        Mask<E, S> constantMask(boolean... bits);
 
-        Mask<E, S> trueMask();
+        Mask<E, S> maskFromValues(boolean... bits);
 
-        Mask<E, S> falseMask();
+        Mask<E, S> maskFromArray(boolean[] bits, int i);
 
-        Shuffle<E, S> constantShuffle(int... ixs);
+        Mask<E, S> maskAllTrue();
 
+        Mask<E, S> maskAllFalse();
+
+        Shuffle<E, S> shuffleFromValues(int... ixs);
+
+        Shuffle<E, S> shuffleFromArray(int[] ixs, int i);
 
         // Vector type/shape transformations
 
@@ -227,7 +231,7 @@ public interface Vector<E, S extends Vector.Shape> {
         // Mask type/shape transformations
 
         default <F, T extends Shape> Mask<E, S> reshape(Mask<F, T> m) {
-            return constantMask(m.toArray());
+            return maskFromValues(m.toArray());
         }
 
         @ForceInline
@@ -244,7 +248,7 @@ public interface Vector<E, S extends Vector.Shape> {
         // Shuffle type/shape transformations
 
         default <F, T extends Shape> Shuffle<E, S> reshape(Shuffle<F, T> m) {
-            return constantShuffle(m.toArray());
+            return shuffleFromValues(m.toArray());
         }
 
         @ForceInline
@@ -283,6 +287,8 @@ public interface Vector<E, S extends Vector.Shape> {
         public int length() { return species().length(); }
 
         public abstract long toLong();
+
+        public abstract void intoArray(boolean[] bits, int i);
 
         public abstract boolean[] toArray();
 
@@ -326,6 +332,8 @@ public interface Vector<E, S extends Vector.Shape> {
 
     abstract class Shuffle<E, S extends Shape> {
         public int length() { return species().length(); }
+
+        public abstract void intoArray(int[] ixs, int i);
 
         public abstract int[] toArray();
 

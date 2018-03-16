@@ -24,7 +24,7 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -505,6 +505,13 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
     public abstract FloatVector<S> with(int i, float e);
 
     // Type specific extractors
+
+    @ForceInline
+    public float[] toArray() {
+        float[] a = new float[species().length()];
+        intoArray(a, 0);
+        return a;
+    }
 
     public void intoArray(float[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);

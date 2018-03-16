@@ -751,7 +751,11 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Double64Mask(boolean[] bits) {
-            this.bits = Arrays.copyOf(bits, species().length());
+            this(bits, 0);
+        }
+
+        public Double64Mask(boolean[] bits, int i) {
+            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
         }
 
         public Double64Mask(boolean val) {
@@ -853,7 +857,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Double64Mask.class, long.class, LENGTH,
-                                         this, species().trueMask(),
+                                         this, species().maskAllTrue(),
                                          (m1, m2) -> super.allTrue());
         }
     }
@@ -865,6 +869,10 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
         public Double64Shuffle(int[] reorder) {
             super(reorder);
+        }
+
+        public Double64Shuffle(int[] reorder, int i) {
+            super(reorder, i);
         }
 
         @Override
@@ -949,13 +957,23 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         // Factories
 
         @Override
-        public Double64Mask constantMask(boolean... bits) {
+        public Double64Mask maskFromValues(boolean... bits) {
             return new Double64Mask(bits);
         }
 
         @Override
-        public Double64Shuffle constantShuffle(int... ixs) {
+        public Double64Mask maskFromArray(boolean[] bits, int i) {
+            return new Double64Mask(bits, i);
+        }
+
+        @Override
+        public Double64Shuffle shuffleFromValues(int... ixs) {
             return new Double64Shuffle(ixs);
+        }
+
+        @Override
+        public Double64Shuffle shuffleFromArray(int[] ixs, int i) {
+            return new Double64Shuffle(ixs, i);
         }
 
         @Override
@@ -977,7 +995,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Double64Mask trueMask() {
+        public Double64Mask maskAllTrue() {
             return VectorIntrinsics.broadcastCoerced(Double64Mask.class, long.class, LENGTH,
                                                      (long)-1,
                                                      (z -> Double64Mask.TRUE_MASK));
@@ -985,7 +1003,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Double64Mask falseMask() {
+        public Double64Mask maskAllFalse() {
             return VectorIntrinsics.broadcastCoerced(Double64Mask.class, long.class, LENGTH,
                                                      0,
                                                      (z -> Double64Mask.FALSE_MASK));

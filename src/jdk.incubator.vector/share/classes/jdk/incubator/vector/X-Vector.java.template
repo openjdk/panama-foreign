@@ -24,7 +24,7 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 #if[!byte]
@@ -626,6 +626,13 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> implements Ve
     public abstract $abstractvectortype$<S> with(int i, $type$ e);
 
     // Type specific extractors
+
+    @ForceInline
+    public $type$[] toArray() {
+        $type$[] a = new $type$[species().length()];
+        intoArray(a, 0);
+        return a;
+    }
 
     public void intoArray($type$[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);

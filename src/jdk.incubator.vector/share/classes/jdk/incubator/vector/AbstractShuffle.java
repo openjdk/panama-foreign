@@ -30,7 +30,16 @@ abstract class AbstractShuffle<E, S extends Vector.Shape> extends Vector.Shuffle
     private final int[] reorder;
 
     public AbstractShuffle(int[] reorder) {
-        this.reorder = Arrays.copyOf(reorder, species().length());
+        this(reorder, 0);
+    }
+
+    public AbstractShuffle(int[] reorder, int i) {
+        this.reorder = Arrays.copyOfRange(reorder, i, i + species().length());
+    }
+
+    @Override
+    public void intoArray(int[] ixs, int i) {
+        System.arraycopy(reorder, 0, ixs, i, reorder.length);
     }
 
     @Override

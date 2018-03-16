@@ -731,7 +731,11 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Long256Mask(boolean[] bits) {
-            this.bits = Arrays.copyOf(bits, species().length());
+            this(bits, 0);
+        }
+
+        public Long256Mask(boolean[] bits, int i) {
+            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
         }
 
         public Long256Mask(boolean val) {
@@ -833,7 +837,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Long256Mask.class, long.class, LENGTH,
-                                         this, species().trueMask(),
+                                         this, species().maskAllTrue(),
                                          (m1, m2) -> super.allTrue());
         }
     }
@@ -845,6 +849,10 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
         public Long256Shuffle(int[] reorder) {
             super(reorder);
+        }
+
+        public Long256Shuffle(int[] reorder, int i) {
+            super(reorder, i);
         }
 
         @Override
@@ -929,13 +937,23 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         // Factories
 
         @Override
-        public Long256Mask constantMask(boolean... bits) {
+        public Long256Mask maskFromValues(boolean... bits) {
             return new Long256Mask(bits);
         }
 
         @Override
-        public Long256Shuffle constantShuffle(int... ixs) {
+        public Long256Mask maskFromArray(boolean[] bits, int i) {
+            return new Long256Mask(bits, i);
+        }
+
+        @Override
+        public Long256Shuffle shuffleFromValues(int... ixs) {
             return new Long256Shuffle(ixs);
+        }
+
+        @Override
+        public Long256Shuffle shuffleFromArray(int[] ixs, int i) {
+            return new Long256Shuffle(ixs, i);
         }
 
         @Override
@@ -957,7 +975,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public Long256Mask trueMask() {
+        public Long256Mask maskAllTrue() {
             return VectorIntrinsics.broadcastCoerced(Long256Mask.class, long.class, LENGTH,
                                                      (long)-1,
                                                      (z -> Long256Mask.TRUE_MASK));
@@ -965,7 +983,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public Long256Mask falseMask() {
+        public Long256Mask maskAllFalse() {
             return VectorIntrinsics.broadcastCoerced(Long256Mask.class, long.class, LENGTH,
                                                      0,
                                                      (z -> Long256Mask.FALSE_MASK));

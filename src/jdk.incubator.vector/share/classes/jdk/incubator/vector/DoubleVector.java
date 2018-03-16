@@ -24,7 +24,7 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
@@ -505,6 +505,13 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
     public abstract DoubleVector<S> with(int i, double e);
 
     // Type specific extractors
+
+    @ForceInline
+    public double[] toArray() {
+        double[] a = new double[species().length()];
+        intoArray(a, 0);
+        return a;
+    }
 
     public void intoArray(double[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);

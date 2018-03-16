@@ -24,7 +24,7 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
@@ -430,6 +430,13 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
     public abstract ByteVector<S> with(int i, byte e);
 
     // Type specific extractors
+
+    @ForceInline
+    public byte[] toArray() {
+        byte[] a = new byte[species().length()];
+        intoArray(a, 0);
+        return a;
+    }
 
     public void intoArray(byte[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);

@@ -731,7 +731,11 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Long128Mask(boolean[] bits) {
-            this.bits = Arrays.copyOf(bits, species().length());
+            this(bits, 0);
+        }
+
+        public Long128Mask(boolean[] bits, int i) {
+            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
         }
 
         public Long128Mask(boolean val) {
@@ -833,7 +837,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Long128Mask.class, long.class, LENGTH,
-                                         this, species().trueMask(),
+                                         this, species().maskAllTrue(),
                                          (m1, m2) -> super.allTrue());
         }
     }
@@ -845,6 +849,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         public Long128Shuffle(int[] reorder) {
             super(reorder);
+        }
+
+        public Long128Shuffle(int[] reorder, int i) {
+            super(reorder, i);
         }
 
         @Override
@@ -929,13 +937,23 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         // Factories
 
         @Override
-        public Long128Mask constantMask(boolean... bits) {
+        public Long128Mask maskFromValues(boolean... bits) {
             return new Long128Mask(bits);
         }
 
         @Override
-        public Long128Shuffle constantShuffle(int... ixs) {
+        public Long128Mask maskFromArray(boolean[] bits, int i) {
+            return new Long128Mask(bits, i);
+        }
+
+        @Override
+        public Long128Shuffle shuffleFromValues(int... ixs) {
             return new Long128Shuffle(ixs);
+        }
+
+        @Override
+        public Long128Shuffle shuffleFromArray(int[] ixs, int i) {
+            return new Long128Shuffle(ixs, i);
         }
 
         @Override
@@ -957,7 +975,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public Long128Mask trueMask() {
+        public Long128Mask maskAllTrue() {
             return VectorIntrinsics.broadcastCoerced(Long128Mask.class, long.class, LENGTH,
                                                      (long)-1,
                                                      (z -> Long128Mask.TRUE_MASK));
@@ -965,7 +983,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public Long128Mask falseMask() {
+        public Long128Mask maskAllFalse() {
             return VectorIntrinsics.broadcastCoerced(Long128Mask.class, long.class, LENGTH,
                                                      0,
                                                      (z -> Long128Mask.FALSE_MASK));

@@ -24,7 +24,7 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -431,6 +431,13 @@ public abstract class IntVector<S extends Vector.Shape> implements Vector<Intege
     public abstract IntVector<S> with(int i, int e);
 
     // Type specific extractors
+
+    @ForceInline
+    public int[] toArray() {
+        int[] a = new int[species().length()];
+        intoArray(a, 0);
+        return a;
+    }
 
     public void intoArray(int[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);

@@ -254,7 +254,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -293,7 +293,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -335,7 +335,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -379,7 +379,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -424,7 +424,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -469,7 +469,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -641,7 +641,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -677,7 +677,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -712,7 +712,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {

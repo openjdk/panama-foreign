@@ -24,7 +24,7 @@
  */
 package jdk.incubator.vector;
 
-import jdk.internal.HotSpotIntrinsicCandidate;
+import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
@@ -431,6 +431,13 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
     public abstract ShortVector<S> with(int i, short e);
 
     // Type specific extractors
+
+    @ForceInline
+    public short[] toArray() {
+        short[] a = new short[species().length()];
+        intoArray(a, 0);
+        return a;
+    }
 
     public void intoArray(short[] a, int ax) {
         forEach((i, a_) -> a[ax + i] = a_);

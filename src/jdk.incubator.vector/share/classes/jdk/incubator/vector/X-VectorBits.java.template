@@ -921,7 +921,11 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public $masktype$(boolean[] bits) {
-            this.bits = Arrays.copyOf(bits, species().length());
+            this(bits, 0);
+        }
+
+        public $masktype$(boolean[] bits, int i) {
+            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
         }
 
         public $masktype$(boolean val) {
@@ -1023,7 +1027,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, $masktype$.class, $bitstype$.class, LENGTH,
-                                         this, species().trueMask(),
+                                         this, species().maskAllTrue(),
                                          (m1, m2) -> super.allTrue());
         }
     }
@@ -1035,6 +1039,10 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
         public $shuffletype$(int[] reorder) {
             super(reorder);
+        }
+
+        public $shuffletype$(int[] reorder, int i) {
+            super(reorder, i);
         }
 
         @Override
@@ -1119,13 +1127,23 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         // Factories
 
         @Override
-        public $masktype$ constantMask(boolean... bits) {
+        public $masktype$ maskFromValues(boolean... bits) {
             return new $masktype$(bits);
         }
 
         @Override
-        public $shuffletype$ constantShuffle(int... ixs) {
+        public $masktype$ maskFromArray(boolean[] bits, int i) {
+            return new $masktype$(bits, i);
+        }
+
+        @Override
+        public $shuffletype$ shuffleFromValues(int... ixs) {
             return new $shuffletype$(ixs);
+        }
+
+        @Override
+        public $shuffletype$ shuffleFromArray(int[] ixs, int i) {
+            return new $shuffletype$(ixs, i);
         }
 
 #if[FP]
@@ -1167,7 +1185,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
         @Override
         @ForceInline
-        public $masktype$ trueMask() {
+        public $masktype$ maskAllTrue() {
             return VectorIntrinsics.broadcastCoerced($masktype$.class, $bitstype$.class, LENGTH,
                                                      ($bitstype$)-1,
                                                      (z -> $masktype$.TRUE_MASK));
@@ -1175,7 +1193,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
         @Override
         @ForceInline
-        public $masktype$ falseMask() {
+        public $masktype$ maskAllFalse() {
             return VectorIntrinsics.broadcastCoerced($masktype$.class, $bitstype$.class, LENGTH,
                                                      0,
                                                      (z -> $masktype$.FALSE_MASK));

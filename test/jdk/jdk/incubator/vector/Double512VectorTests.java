@@ -258,7 +258,7 @@ public class Double512VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -297,7 +297,7 @@ public class Double512VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -341,7 +341,7 @@ public class Double512VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -381,7 +381,7 @@ public class Double512VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -561,7 +561,7 @@ public class Double512VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -597,7 +597,7 @@ public class Double512VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -632,7 +632,7 @@ public class Double512VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
+        Vector.Mask<Double, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
         // Computation.
         for (int i = 0; i < a.length; i += SPECIES.length()) {

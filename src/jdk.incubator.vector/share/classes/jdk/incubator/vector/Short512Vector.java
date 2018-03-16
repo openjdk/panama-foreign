@@ -697,7 +697,11 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Short512Mask(boolean[] bits) {
-            this.bits = Arrays.copyOf(bits, species().length());
+            this(bits, 0);
+        }
+
+        public Short512Mask(boolean[] bits, int i) {
+            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
         }
 
         public Short512Mask(boolean val) {
@@ -799,7 +803,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Short512Mask.class, short.class, LENGTH,
-                                         this, species().trueMask(),
+                                         this, species().maskAllTrue(),
                                          (m1, m2) -> super.allTrue());
         }
     }
@@ -811,6 +815,10 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
         public Short512Shuffle(int[] reorder) {
             super(reorder);
+        }
+
+        public Short512Shuffle(int[] reorder, int i) {
+            super(reorder, i);
         }
 
         @Override
@@ -895,13 +903,23 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         // Factories
 
         @Override
-        public Short512Mask constantMask(boolean... bits) {
+        public Short512Mask maskFromValues(boolean... bits) {
             return new Short512Mask(bits);
         }
 
         @Override
-        public Short512Shuffle constantShuffle(int... ixs) {
+        public Short512Mask maskFromArray(boolean[] bits, int i) {
+            return new Short512Mask(bits, i);
+        }
+
+        @Override
+        public Short512Shuffle shuffleFromValues(int... ixs) {
             return new Short512Shuffle(ixs);
+        }
+
+        @Override
+        public Short512Shuffle shuffleFromArray(int[] ixs, int i) {
+            return new Short512Shuffle(ixs, i);
         }
 
         @Override
@@ -923,7 +941,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Short512Mask trueMask() {
+        public Short512Mask maskAllTrue() {
             return VectorIntrinsics.broadcastCoerced(Short512Mask.class, short.class, LENGTH,
                                                      (short)-1,
                                                      (z -> Short512Mask.TRUE_MASK));
@@ -931,7 +949,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Short512Mask falseMask() {
+        public Short512Mask maskAllFalse() {
             return VectorIntrinsics.broadcastCoerced(Short512Mask.class, short.class, LENGTH,
                                                      0,
                                                      (z -> Short512Mask.FALSE_MASK));

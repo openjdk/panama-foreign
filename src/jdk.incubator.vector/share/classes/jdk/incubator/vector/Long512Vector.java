@@ -731,7 +731,11 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Long512Mask(boolean[] bits) {
-            this.bits = Arrays.copyOf(bits, species().length());
+            this(bits, 0);
+        }
+
+        public Long512Mask(boolean[] bits, int i) {
+            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
         }
 
         public Long512Mask(boolean val) {
@@ -833,7 +837,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         @ForceInline
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Long512Mask.class, long.class, LENGTH,
-                                         this, species().trueMask(),
+                                         this, species().maskAllTrue(),
                                          (m1, m2) -> super.allTrue());
         }
     }
@@ -845,6 +849,10 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
         public Long512Shuffle(int[] reorder) {
             super(reorder);
+        }
+
+        public Long512Shuffle(int[] reorder, int i) {
+            super(reorder, i);
         }
 
         @Override
@@ -929,13 +937,23 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         // Factories
 
         @Override
-        public Long512Mask constantMask(boolean... bits) {
+        public Long512Mask maskFromValues(boolean... bits) {
             return new Long512Mask(bits);
         }
 
         @Override
-        public Long512Shuffle constantShuffle(int... ixs) {
+        public Long512Mask maskFromArray(boolean[] bits, int i) {
+            return new Long512Mask(bits, i);
+        }
+
+        @Override
+        public Long512Shuffle shuffleFromValues(int... ixs) {
             return new Long512Shuffle(ixs);
+        }
+
+        @Override
+        public Long512Shuffle shuffleFromArray(int[] ixs, int i) {
+            return new Long512Shuffle(ixs, i);
         }
 
         @Override
@@ -957,7 +975,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Long512Mask trueMask() {
+        public Long512Mask maskAllTrue() {
             return VectorIntrinsics.broadcastCoerced(Long512Mask.class, long.class, LENGTH,
                                                      (long)-1,
                                                      (z -> Long512Mask.TRUE_MASK));
@@ -965,7 +983,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Long512Mask falseMask() {
+        public Long512Mask maskAllFalse() {
             return VectorIntrinsics.broadcastCoerced(Long512Mask.class, long.class, LENGTH,
                                                      0,
                                                      (z -> Long512Mask.FALSE_MASK));
