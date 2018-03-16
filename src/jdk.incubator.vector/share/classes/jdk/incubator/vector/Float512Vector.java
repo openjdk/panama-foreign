@@ -203,18 +203,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> div(float o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public FloatVector<Shapes.S512Bit> div(float o, Mask<Float,Shapes.S512Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public FloatVector<Shapes.S512Bit> min(float o) {
         return min(SPECIES.broadcast(o));
     }
@@ -265,6 +253,18 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @ForceInline
     public FloatVector<Shapes.S512Bit> blend(float o, Mask<Float,Shapes.S512Bit> m) {
         return blend(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S512Bit> div(float o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S512Bit> div(float o, Mask<Float,Shapes.S512Bit> m) {
+        return div(SPECIES.broadcast(o), m);
     }
 
     @Override
@@ -339,6 +339,17 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Float512Vector div(Vector<Float,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Float512Vector v = (Float512Vector)o;
+        return (Float512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Float512Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
+    }
+
+    @Override
+    @ForceInline
     public Float512Vector sqrt() {
         return (Float512Vector) VectorIntrinsics.unaryOp(
             VECTOR_OP_SQRT, Float512Vector.class, float.class, LENGTH,
@@ -379,17 +390,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             VECTOR_OP_MUL, Float512Vector.class, float.class, LENGTH,
             this, v,
             (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Float512Vector div(Vector<Float,Shapes.S512Bit> o) {
-        Objects.requireNonNull(o);
-        Float512Vector v = (Float512Vector)o;
-        return (Float512Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Float512Vector.class, float.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
     }
 
     @Override

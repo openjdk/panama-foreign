@@ -94,7 +94,7 @@ gen_header $template_file
 # ALU binary ops.
 gen_binary_alu_op "add" "a + b" $template_file
 gen_binary_alu_op "sub" "a - b" $template_file
-gen_binary_alu_op "div" "a \/ b" $template_file
+gen_binary_alu_op "div" "a \/ b" $template_file "FP"
 gen_binary_alu_op "mul" "a \* b" $template_file
 gen_binary_alu_op "and" "a \& b" $template_file "BITWISE"
 gen_binary_alu_op "or" "a | b" $template_file "BITWISE"

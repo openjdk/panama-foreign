@@ -160,20 +160,6 @@ public abstract class IntVector<S extends Vector.Shape> implements Vector<Intege
     public abstract IntVector<S> mul(int o, Mask<Integer, S> m);
 
     @Override
-    public IntVector<S> div(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a / b));
-    }
-
-    public abstract IntVector<S> div(int o);
-
-    @Override
-    public IntVector<S> div(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a / b));
-    }
-
-    public abstract IntVector<S> div(int o, Mask<Integer, S> m);
-
-    @Override
     public IntVector<S> neg() {
         return uOp((i, a) -> (int) (-a));
     }
@@ -300,30 +286,6 @@ public abstract class IntVector<S extends Vector.Shape> implements Vector<Intege
     public IntVector<S> not(Mask<Integer, S> m) {
         return uOp(m, (i, a) -> (int) (~a));
     }
-
-    public IntVector<S> floorDiv(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a / b));
-    }
-
-    public abstract IntVector<S> floorDiv(int o);
-
-    public IntVector<S> floorDiv(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a / b));
-    }
-
-    public abstract IntVector<S> floorDiv(int o, Mask<Integer, S> m);
-
-    public IntVector<S> floorMod(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a % b));
-    }
-
-    public abstract IntVector<S> floorMod(int o);
-
-    public IntVector<S> floorMod(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a % b));
-    }
-
-    public abstract IntVector<S> floorMod(int o, Mask<Integer, S> m);
 
     // logical shift left
     public IntVector<S> shiftL(Vector<Integer,S> o) {

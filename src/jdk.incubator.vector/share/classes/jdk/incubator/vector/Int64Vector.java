@@ -203,18 +203,6 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S64Bit> div(int o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S64Bit> div(int o, Mask<Integer,Shapes.S64Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public IntVector<Shapes.S64Bit> min(int o) {
         return min(SPECIES.broadcast(o));
     }
@@ -304,30 +292,6 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S64Bit> floorDiv(int o) {
-        return floorDiv(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S64Bit> floorDiv(int o, Mask<Integer,Shapes.S64Bit> m) {
-        return floorDiv(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S64Bit> floorMod(int o) {
-        return floorMod(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S64Bit> floorMod(int o, Mask<Integer,Shapes.S64Bit> m) {
-        return floorMod(SPECIES.broadcast(o), m);
-    }
-
 
     // Unary operations
 
@@ -383,17 +347,6 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
             VECTOR_OP_MUL, Int64Vector.class, int.class, LENGTH,
             this, v,
             (v1, v2) -> ((Int64Vector)v1).bOp(v2, (i, a, b) -> (int)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector div(Vector<Integer,Shapes.S64Bit> o) {
-        Objects.requireNonNull(o);
-        Int64Vector v = (Int64Vector)o;
-        return (Int64Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Int64Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Int64Vector)v1).bOp(v2, (i, a, b) -> (int)(a / b)));
     }
 
     @Override

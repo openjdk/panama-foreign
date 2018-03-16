@@ -203,18 +203,6 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.S128Bit> div(short o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector<Shapes.S128Bit> div(short o, Mask<Short,Shapes.S128Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public ShortVector<Shapes.S128Bit> min(short o) {
         return min(SPECIES.broadcast(o));
     }
@@ -304,30 +292,6 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
-    @Override
-    @ForceInline
-    public ShortVector<Shapes.S128Bit> floorDiv(short o) {
-        return floorDiv(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector<Shapes.S128Bit> floorDiv(short o, Mask<Short,Shapes.S128Bit> m) {
-        return floorDiv(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector<Shapes.S128Bit> floorMod(short o) {
-        return floorMod(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector<Shapes.S128Bit> floorMod(short o, Mask<Short,Shapes.S128Bit> m) {
-        return floorMod(SPECIES.broadcast(o), m);
-    }
-
 
     // Unary operations
 
@@ -366,17 +330,6 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             VECTOR_OP_MUL, Short128Vector.class, short.class, LENGTH,
             this, v,
             (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Short128Vector div(Vector<Short,Shapes.S128Bit> o) {
-        Objects.requireNonNull(o);
-        Short128Vector v = (Short128Vector)o;
-        return (Short128Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Short128Vector.class, short.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a / b)));
     }
 
 

@@ -61,6 +61,7 @@ public final class DoubleVectorHelper {
     }
 
 
+
     public static <S extends Vector.Shape>
     DoubleVector<S> ceil(DoubleVector<S> va) {
         return va.uOp((i, a) -> (double) Math.ceil((double) a));

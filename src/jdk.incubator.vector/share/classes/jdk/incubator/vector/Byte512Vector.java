@@ -203,18 +203,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S512Bit> div(byte o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S512Bit> div(byte o, Mask<Byte,Shapes.S512Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public ByteVector<Shapes.S512Bit> min(byte o) {
         return min(SPECIES.broadcast(o));
     }
@@ -304,30 +292,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S512Bit> floorDiv(byte o) {
-        return floorDiv(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S512Bit> floorDiv(byte o, Mask<Byte,Shapes.S512Bit> m) {
-        return floorDiv(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S512Bit> floorMod(byte o) {
-        return floorMod(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S512Bit> floorMod(byte o, Mask<Byte,Shapes.S512Bit> m) {
-        return floorMod(SPECIES.broadcast(o), m);
-    }
-
 
     // Unary operations
 
@@ -366,17 +330,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             VECTOR_OP_MUL, Byte512Vector.class, byte.class, LENGTH,
             this, v,
             (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte512Vector div(Vector<Byte,Shapes.S512Bit> o) {
-        Objects.requireNonNull(o);
-        Byte512Vector v = (Byte512Vector)o;
-        return (Byte512Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Byte512Vector.class, byte.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte)(a / b)));
     }
 
 

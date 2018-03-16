@@ -305,44 +305,8 @@ public class Int256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Int256VectorTests::sub);
     }
 
-    static int div(int a, int b) {
-        return (int)(a / b);
-    }
 
-    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
-    static void divInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.div(bv).intoArray(r, i);
-        }
-
-        assertArraysEquals(a, b, r, Int256VectorTests::div);
-    }
-
-    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
-    static void divInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
-                                          IntFunction<boolean[]> fm) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.constantMask(mask);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.div(bv, vmask).intoArray(r, i);
-        }
-
-        assertArraysEquals(a, b, r, mask, Int256VectorTests::div);
-    }
 
     static int mul(int a, int b) {
         return (int)(a * b);

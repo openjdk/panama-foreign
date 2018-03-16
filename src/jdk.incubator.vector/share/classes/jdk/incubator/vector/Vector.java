@@ -63,10 +63,6 @@ public interface Vector<E, S extends Vector.Shape> {
 
     Vector<E, S> mul(Vector<E, S> o, Mask<E, S> m);
 
-    Vector<E, S> div(Vector<E, S> o);
-
-    Vector<E, S> div(Vector<E, S> o, Mask<E, S> m);
-
     Vector<E, S> neg();
 
     Vector<E, S> neg(Mask<E, S> m);

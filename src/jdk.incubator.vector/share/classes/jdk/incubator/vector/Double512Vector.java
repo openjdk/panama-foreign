@@ -203,18 +203,6 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public DoubleVector<Shapes.S512Bit> div(double o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S512Bit> div(double o, Mask<Double,Shapes.S512Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public DoubleVector<Shapes.S512Bit> min(double o) {
         return min(SPECIES.broadcast(o));
     }
@@ -265,6 +253,18 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     @ForceInline
     public DoubleVector<Shapes.S512Bit> blend(double o, Mask<Double,Shapes.S512Bit> m) {
         return blend(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> div(double o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S512Bit> div(double o, Mask<Double,Shapes.S512Bit> m) {
+        return div(SPECIES.broadcast(o), m);
     }
 
     @Override
@@ -339,6 +339,17 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Double512Vector div(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
+    }
+
+    @Override
+    @ForceInline
     public Double512Vector sqrt() {
         return (Double512Vector) VectorIntrinsics.unaryOp(
             VECTOR_OP_SQRT, Double512Vector.class, double.class, LENGTH,
@@ -379,17 +390,6 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             VECTOR_OP_MUL, Double512Vector.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Double512Vector div(Vector<Double,Shapes.S512Bit> o) {
-        Objects.requireNonNull(o);
-        Double512Vector v = (Double512Vector)o;
-        return (Double512Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Double512Vector.class, double.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
     }
 
     @Override

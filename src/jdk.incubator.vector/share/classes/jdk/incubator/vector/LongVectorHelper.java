@@ -61,6 +61,26 @@ public final class LongVectorHelper {
     }
 
     public static <S extends Vector.Shape>
+    LongVector<S> div(LongVector<S> va, LongVector<S> vb) {
+        return va.bOp(vb, (i, a, b) -> (long) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    LongVector<S> div(LongVector<S> va, LongVector<S> vb, Vector.Mask<Long, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> (long) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    LongVector<S> mod(LongVector<S> va, LongVector<S> vb) {
+        return va.bOp(vb, (i, a, b) -> (long) (a % b));
+    }
+
+    public static <S extends Vector.Shape>
+    LongVector<S> mod(LongVector<S> va, LongVector<S> vb, Vector.Mask<Long, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> (long) (a % b));
+    }
+
+    public static <S extends Vector.Shape>
     LongVector<S> addExact(LongVector<S> va, LongVector<S> vb) {
         return va.bOp(vb, (i, a, b) -> Math.addExact(a, b));
     }

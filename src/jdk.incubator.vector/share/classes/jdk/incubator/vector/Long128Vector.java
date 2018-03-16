@@ -203,18 +203,6 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> div(long o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S128Bit> div(long o, Mask<Long,Shapes.S128Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public LongVector<Shapes.S128Bit> min(long o) {
         return min(SPECIES.broadcast(o));
     }
@@ -304,30 +292,6 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S128Bit> floorDiv(long o) {
-        return floorDiv(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S128Bit> floorDiv(long o, Mask<Long,Shapes.S128Bit> m) {
-        return floorDiv(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S128Bit> floorMod(long o) {
-        return floorMod(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S128Bit> floorMod(long o, Mask<Long,Shapes.S128Bit> m) {
-        return floorMod(SPECIES.broadcast(o), m);
-    }
-
 
     // Unary operations
 
@@ -366,17 +330,6 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             VECTOR_OP_MUL, Long128Vector.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Long128Vector div(Vector<Long,Shapes.S128Bit> o) {
-        Objects.requireNonNull(o);
-        Long128Vector v = (Long128Vector)o;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Long128Vector.class, long.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a / b)));
     }
 
 

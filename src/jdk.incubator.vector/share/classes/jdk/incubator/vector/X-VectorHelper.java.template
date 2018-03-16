@@ -60,6 +60,28 @@ public final class $abstractvectortype$Helper {
         return va.uOp(m, (i, a) -> op.apply(i, a));
     }
 
+#if[BITWISE]
+    public static <S extends Vector.Shape>
+    $abstractvectortype$<S> div($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+        return va.bOp(vb, (i, a, b) -> ($type$) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    $abstractvectortype$<S> div($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> ($type$) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    $abstractvectortype$<S> mod($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+        return va.bOp(vb, (i, a, b) -> ($type$) (a % b));
+    }
+
+    public static <S extends Vector.Shape>
+    $abstractvectortype$<S> mod($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> ($type$) (a % b));
+    }
+#end[BITWISE]
+
 #if[intOrlong]
     public static <S extends Vector.Shape>
     $abstractvectortype$<S> addExact($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {

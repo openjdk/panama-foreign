@@ -160,20 +160,6 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
     public abstract DoubleVector<S> mul(double o, Mask<Double, S> m);
 
     @Override
-    public DoubleVector<S> div(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) (a / b));
-    }
-
-    public abstract DoubleVector<S> div(double o);
-
-    @Override
-    public DoubleVector<S> div(Vector<Double,S> o, Mask<Double, S> m) {
-        return bOp(o, m, (i, a, b) -> (double) (a / b));
-    }
-
-    public abstract DoubleVector<S> div(double o, Mask<Double, S> m);
-
-    @Override
     public DoubleVector<S> neg() {
         return uOp((i, a) -> (double) (-a));
     }
@@ -255,6 +241,18 @@ public abstract class DoubleVector<S extends Vector.Shape> implements Vector<Dou
     }
 
     public abstract DoubleVector<S> blend(double o, Mask<Double, S> m);
+
+    public DoubleVector<S> div(Vector<Double,S> o) {
+        return bOp(o, (i, a, b) -> (double) (a / b));
+    }
+
+    public abstract DoubleVector<S> div(double o);
+
+    public DoubleVector<S> div(Vector<Double,S> o, Mask<Double, S> m) {
+        return bOp(o, m, (i, a, b) -> (double) (a / b));
+    }
+
+    public abstract DoubleVector<S> div(double o, Mask<Double, S> m);
 
     public DoubleVector<S> sqrt() {
         return uOp((i, a) -> (double) Math.sqrt((double) a));

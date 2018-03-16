@@ -203,18 +203,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public DoubleVector<Shapes.S64Bit> div(double o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S64Bit> div(double o, Mask<Double,Shapes.S64Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public DoubleVector<Shapes.S64Bit> min(double o) {
         return min(SPECIES.broadcast(o));
     }
@@ -265,6 +253,18 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     @ForceInline
     public DoubleVector<Shapes.S64Bit> blend(double o, Mask<Double,Shapes.S64Bit> m) {
         return blend(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S64Bit> div(double o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S64Bit> div(double o, Mask<Double,Shapes.S64Bit> m) {
+        return div(SPECIES.broadcast(o), m);
     }
 
     @Override
@@ -339,6 +339,17 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
+    public Double64Vector div(Vector<Double,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Double64Vector v = (Double64Vector)o;
+        return (Double64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Double64Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
+    }
+
+    @Override
+    @ForceInline
     public Double64Vector sqrt() {
         return (Double64Vector) VectorIntrinsics.unaryOp(
             VECTOR_OP_SQRT, Double64Vector.class, double.class, LENGTH,
@@ -379,17 +390,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             VECTOR_OP_MUL, Double64Vector.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Double64Vector div(Vector<Double,Shapes.S64Bit> o) {
-        Objects.requireNonNull(o);
-        Double64Vector v = (Double64Vector)o;
-        return (Double64Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Double64Vector.class, double.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
     }
 
     @Override

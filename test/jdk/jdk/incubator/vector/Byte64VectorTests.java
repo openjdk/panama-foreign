@@ -305,44 +305,8 @@ public class Byte64VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Byte64VectorTests::sub);
     }
 
-    static byte div(byte a, byte b) {
-        return (byte)(a / b);
-    }
 
-    @Test(dataProvider = "byteBinaryOpProvider", invocationCount = 10)
-    static void divByte64VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-            av.div(bv).intoArray(r, i);
-        }
-
-        assertArraysEquals(a, b, r, Byte64VectorTests::div);
-    }
-
-    @Test(dataProvider = "byteBinaryOpMaskProvider", invocationCount = 10)
-    static void divByte64VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
-                                          IntFunction<boolean[]> fm) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S64Bit> vmask = SPECIES.constantMask(mask);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-            av.div(bv, vmask).intoArray(r, i);
-        }
-
-        assertArraysEquals(a, b, r, mask, Byte64VectorTests::div);
-    }
 
     static byte mul(byte a, byte b) {
         return (byte)(a * b);

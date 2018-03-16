@@ -160,20 +160,6 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
     public abstract FloatVector<S> mul(float o, Mask<Float, S> m);
 
     @Override
-    public FloatVector<S> div(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) (a / b));
-    }
-
-    public abstract FloatVector<S> div(float o);
-
-    @Override
-    public FloatVector<S> div(Vector<Float,S> o, Mask<Float, S> m) {
-        return bOp(o, m, (i, a, b) -> (float) (a / b));
-    }
-
-    public abstract FloatVector<S> div(float o, Mask<Float, S> m);
-
-    @Override
     public FloatVector<S> neg() {
         return uOp((i, a) -> (float) (-a));
     }
@@ -255,6 +241,18 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
     }
 
     public abstract FloatVector<S> blend(float o, Mask<Float, S> m);
+
+    public FloatVector<S> div(Vector<Float,S> o) {
+        return bOp(o, (i, a, b) -> (float) (a / b));
+    }
+
+    public abstract FloatVector<S> div(float o);
+
+    public FloatVector<S> div(Vector<Float,S> o, Mask<Float, S> m) {
+        return bOp(o, m, (i, a, b) -> (float) (a / b));
+    }
+
+    public abstract FloatVector<S> div(float o, Mask<Float, S> m);
 
     public FloatVector<S> sqrt() {
         return uOp((i, a) -> (float) Math.sqrt((double) a));

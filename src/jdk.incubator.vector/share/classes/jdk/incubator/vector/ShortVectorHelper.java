@@ -60,6 +60,26 @@ public final class ShortVectorHelper {
         return va.uOp(m, (i, a) -> op.apply(i, a));
     }
 
+    public static <S extends Vector.Shape>
+    ShortVector<S> div(ShortVector<S> va, ShortVector<S> vb) {
+        return va.bOp(vb, (i, a, b) -> (short) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    ShortVector<S> div(ShortVector<S> va, ShortVector<S> vb, Vector.Mask<Short, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> (short) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    ShortVector<S> mod(ShortVector<S> va, ShortVector<S> vb) {
+        return va.bOp(vb, (i, a, b) -> (short) (a % b));
+    }
+
+    public static <S extends Vector.Shape>
+    ShortVector<S> mod(ShortVector<S> va, ShortVector<S> vb, Vector.Mask<Short, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> (short) (a % b));
+    }
+
 
 
 }

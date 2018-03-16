@@ -60,6 +60,26 @@ public final class ByteVectorHelper {
         return va.uOp(m, (i, a) -> op.apply(i, a));
     }
 
+    public static <S extends Vector.Shape>
+    ByteVector<S> div(ByteVector<S> va, ByteVector<S> vb) {
+        return va.bOp(vb, (i, a, b) -> (byte) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    ByteVector<S> div(ByteVector<S> va, ByteVector<S> vb, Vector.Mask<Byte, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> (byte) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    ByteVector<S> mod(ByteVector<S> va, ByteVector<S> vb) {
+        return va.bOp(vb, (i, a, b) -> (byte) (a % b));
+    }
+
+    public static <S extends Vector.Shape>
+    ByteVector<S> mod(ByteVector<S> va, ByteVector<S> vb, Vector.Mask<Byte, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> (byte) (a % b));
+    }
+
 
 
 }

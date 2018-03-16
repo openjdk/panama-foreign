@@ -160,20 +160,6 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
     public abstract LongVector<S> mul(long o, Mask<Long, S> m);
 
     @Override
-    public LongVector<S> div(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> (long) (a / b));
-    }
-
-    public abstract LongVector<S> div(long o);
-
-    @Override
-    public LongVector<S> div(Vector<Long,S> o, Mask<Long, S> m) {
-        return bOp(o, m, (i, a, b) -> (long) (a / b));
-    }
-
-    public abstract LongVector<S> div(long o, Mask<Long, S> m);
-
-    @Override
     public LongVector<S> neg() {
         return uOp((i, a) -> (long) (-a));
     }
@@ -300,30 +286,6 @@ public abstract class LongVector<S extends Vector.Shape> implements Vector<Long,
     public LongVector<S> not(Mask<Long, S> m) {
         return uOp(m, (i, a) -> (long) (~a));
     }
-
-    public LongVector<S> floorDiv(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> (long) (a / b));
-    }
-
-    public abstract LongVector<S> floorDiv(long o);
-
-    public LongVector<S> floorDiv(Vector<Long,S> o, Mask<Long, S> m) {
-        return bOp(o, m, (i, a, b) -> (long) (a / b));
-    }
-
-    public abstract LongVector<S> floorDiv(long o, Mask<Long, S> m);
-
-    public LongVector<S> floorMod(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> (long) (a % b));
-    }
-
-    public abstract LongVector<S> floorMod(long o);
-
-    public LongVector<S> floorMod(Vector<Long,S> o, Mask<Long, S> m) {
-        return bOp(o, m, (i, a, b) -> (long) (a % b));
-    }
-
-    public abstract LongVector<S> floorMod(long o, Mask<Long, S> m);
 
     // logical shift left
     public LongVector<S> shiftL(Vector<Long,S> o) {

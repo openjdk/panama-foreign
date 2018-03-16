@@ -203,18 +203,6 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S512Bit> div(long o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S512Bit> div(long o, Mask<Long,Shapes.S512Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public LongVector<Shapes.S512Bit> min(long o) {
         return min(SPECIES.broadcast(o));
     }
@@ -304,30 +292,6 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S512Bit> floorDiv(long o) {
-        return floorDiv(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S512Bit> floorDiv(long o, Mask<Long,Shapes.S512Bit> m) {
-        return floorDiv(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S512Bit> floorMod(long o) {
-        return floorMod(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S512Bit> floorMod(long o, Mask<Long,Shapes.S512Bit> m) {
-        return floorMod(SPECIES.broadcast(o), m);
-    }
-
 
     // Unary operations
 
@@ -366,17 +330,6 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             VECTOR_OP_MUL, Long512Vector.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> ((Long512Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Long512Vector div(Vector<Long,Shapes.S512Bit> o) {
-        Objects.requireNonNull(o);
-        Long512Vector v = (Long512Vector)o;
-        return (Long512Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Long512Vector.class, long.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Long512Vector)v1).bOp(v2, (i, a, b) -> (long)(a / b)));
     }
 
 

@@ -160,20 +160,6 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
     public abstract ShortVector<S> mul(short o, Mask<Short, S> m);
 
     @Override
-    public ShortVector<S> div(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a / b));
-    }
-
-    public abstract ShortVector<S> div(short o);
-
-    @Override
-    public ShortVector<S> div(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a / b));
-    }
-
-    public abstract ShortVector<S> div(short o, Mask<Short, S> m);
-
-    @Override
     public ShortVector<S> neg() {
         return uOp((i, a) -> (short) (-a));
     }
@@ -300,30 +286,6 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
     public ShortVector<S> not(Mask<Short, S> m) {
         return uOp(m, (i, a) -> (short) (~a));
     }
-
-    public ShortVector<S> floorDiv(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a / b));
-    }
-
-    public abstract ShortVector<S> floorDiv(short o);
-
-    public ShortVector<S> floorDiv(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a / b));
-    }
-
-    public abstract ShortVector<S> floorDiv(short o, Mask<Short, S> m);
-
-    public ShortVector<S> floorMod(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a % b));
-    }
-
-    public abstract ShortVector<S> floorMod(short o);
-
-    public ShortVector<S> floorMod(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a % b));
-    }
-
-    public abstract ShortVector<S> floorMod(short o, Mask<Short, S> m);
 
     // logical shift left
     public ShortVector<S> shiftL(Vector<Short,S> o) {

@@ -203,18 +203,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S256Bit> div(float o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public FloatVector<Shapes.S256Bit> div(float o, Mask<Float,Shapes.S256Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public FloatVector<Shapes.S256Bit> min(float o) {
         return min(SPECIES.broadcast(o));
     }
@@ -265,6 +253,18 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     @ForceInline
     public FloatVector<Shapes.S256Bit> blend(float o, Mask<Float,Shapes.S256Bit> m) {
         return blend(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> div(float o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S256Bit> div(float o, Mask<Float,Shapes.S256Bit> m) {
+        return div(SPECIES.broadcast(o), m);
     }
 
     @Override
@@ -339,6 +339,17 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Float256Vector div(Vector<Float,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Float256Vector v = (Float256Vector)o;
+        return (Float256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Float256Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float256Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
+    }
+
+    @Override
+    @ForceInline
     public Float256Vector sqrt() {
         return (Float256Vector) VectorIntrinsics.unaryOp(
             VECTOR_OP_SQRT, Float256Vector.class, float.class, LENGTH,
@@ -379,17 +390,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             VECTOR_OP_MUL, Float256Vector.class, float.class, LENGTH,
             this, v,
             (v1, v2) -> ((Float256Vector)v1).bOp(v2, (i, a, b) -> (float)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Float256Vector div(Vector<Float,Shapes.S256Bit> o) {
-        Objects.requireNonNull(o);
-        Float256Vector v = (Float256Vector)o;
-        return (Float256Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Float256Vector.class, float.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Float256Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
     }
 
     @Override

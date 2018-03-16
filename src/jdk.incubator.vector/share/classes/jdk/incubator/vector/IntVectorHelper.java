@@ -61,6 +61,26 @@ public final class IntVectorHelper {
     }
 
     public static <S extends Vector.Shape>
+    IntVector<S> div(IntVector<S> va, IntVector<S> vb) {
+        return va.bOp(vb, (i, a, b) -> (int) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    IntVector<S> div(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> (int) (a / b));
+    }
+
+    public static <S extends Vector.Shape>
+    IntVector<S> mod(IntVector<S> va, IntVector<S> vb) {
+        return va.bOp(vb, (i, a, b) -> (int) (a % b));
+    }
+
+    public static <S extends Vector.Shape>
+    IntVector<S> mod(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer, S> m) {
+        return va.bOp(vb, m, (i, a, b) -> (int) (a % b));
+    }
+
+    public static <S extends Vector.Shape>
     IntVector<S> addExact(IntVector<S> va, IntVector<S> vb) {
         return va.bOp(vb, (i, a, b) -> Math.addExact(a, b));
     }

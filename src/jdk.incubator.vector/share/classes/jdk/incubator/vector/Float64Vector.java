@@ -203,18 +203,6 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S64Bit> div(float o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public FloatVector<Shapes.S64Bit> div(float o, Mask<Float,Shapes.S64Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public FloatVector<Shapes.S64Bit> min(float o) {
         return min(SPECIES.broadcast(o));
     }
@@ -265,6 +253,18 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     @ForceInline
     public FloatVector<Shapes.S64Bit> blend(float o, Mask<Float,Shapes.S64Bit> m) {
         return blend(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S64Bit> div(float o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public FloatVector<Shapes.S64Bit> div(float o, Mask<Float,Shapes.S64Bit> m) {
+        return div(SPECIES.broadcast(o), m);
     }
 
     @Override
@@ -339,6 +339,17 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
+    public Float64Vector div(Vector<Float,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Float64Vector v = (Float64Vector)o;
+        return (Float64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Float64Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float64Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
+    }
+
+    @Override
+    @ForceInline
     public Float64Vector sqrt() {
         return (Float64Vector) VectorIntrinsics.unaryOp(
             VECTOR_OP_SQRT, Float64Vector.class, float.class, LENGTH,
@@ -379,17 +390,6 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             VECTOR_OP_MUL, Float64Vector.class, float.class, LENGTH,
             this, v,
             (v1, v2) -> ((Float64Vector)v1).bOp(v2, (i, a, b) -> (float)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Float64Vector div(Vector<Float,Shapes.S64Bit> o) {
-        Objects.requireNonNull(o);
-        Float64Vector v = (Float64Vector)o;
-        return (Float64Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Float64Vector.class, float.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Float64Vector)v1).bOp(v2, (i, a, b) -> (float)(a / b)));
     }
 
     @Override

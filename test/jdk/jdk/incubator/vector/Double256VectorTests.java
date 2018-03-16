@@ -309,9 +309,12 @@ public class Double256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Double256VectorTests::sub);
     }
 
+
     static double div(double a, double b) {
         return (double)(a / b);
     }
+
+
 
     @Test(dataProvider = "doubleBinaryOpProvider", invocationCount = 10)
     static void divDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
@@ -328,6 +331,8 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Double256VectorTests::div);
     }
+
+
 
     @Test(dataProvider = "doubleBinaryOpMaskProvider", invocationCount = 10)
     static void divDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
@@ -347,6 +352,7 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, Double256VectorTests::div);
     }
+
 
     static double mul(double a, double b) {
         return (double)(a * b);

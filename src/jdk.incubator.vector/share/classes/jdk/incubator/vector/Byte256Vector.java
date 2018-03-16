@@ -203,18 +203,6 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S256Bit> div(byte o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S256Bit> div(byte o, Mask<Byte,Shapes.S256Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public ByteVector<Shapes.S256Bit> min(byte o) {
         return min(SPECIES.broadcast(o));
     }
@@ -304,30 +292,6 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S256Bit> floorDiv(byte o) {
-        return floorDiv(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S256Bit> floorDiv(byte o, Mask<Byte,Shapes.S256Bit> m) {
-        return floorDiv(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S256Bit> floorMod(byte o) {
-        return floorMod(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S256Bit> floorMod(byte o, Mask<Byte,Shapes.S256Bit> m) {
-        return floorMod(SPECIES.broadcast(o), m);
-    }
-
 
     // Unary operations
 
@@ -366,17 +330,6 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             VECTOR_OP_MUL, Byte256Vector.class, byte.class, LENGTH,
             this, v,
             (v1, v2) -> ((Byte256Vector)v1).bOp(v2, (i, a, b) -> (byte)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte256Vector div(Vector<Byte,Shapes.S256Bit> o) {
-        Objects.requireNonNull(o);
-        Byte256Vector v = (Byte256Vector)o;
-        return (Byte256Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Byte256Vector.class, byte.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Byte256Vector)v1).bOp(v2, (i, a, b) -> (byte)(a / b)));
     }
 
 

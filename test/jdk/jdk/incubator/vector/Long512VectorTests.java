@@ -305,44 +305,8 @@ public class Long512VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Long512VectorTests::sub);
     }
 
-    static long div(long a, long b) {
-        return (long)(a / b);
-    }
 
-    @Test(dataProvider = "longBinaryOpProvider", invocationCount = 10)
-    static void divLong512VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
-        long[] a = fa.apply(SPECIES.length());
-        long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
-            LongVector<Shapes.S512Bit> bv = SPECIES.fromArray(b, i);
-            av.div(bv).intoArray(r, i);
-        }
-
-        assertArraysEquals(a, b, r, Long512VectorTests::div);
-    }
-
-    @Test(dataProvider = "longBinaryOpMaskProvider", invocationCount = 10)
-    static void divLong512VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb,
-                                          IntFunction<boolean[]> fm) {
-        long[] a = fa.apply(SPECIES.length());
-        long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Shapes.S512Bit> vmask = SPECIES.constantMask(mask);
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
-            LongVector<Shapes.S512Bit> bv = SPECIES.fromArray(b, i);
-            av.div(bv, vmask).intoArray(r, i);
-        }
-
-        assertArraysEquals(a, b, r, mask, Long512VectorTests::div);
-    }
 
     static long mul(long a, long b) {
         return (long)(a * b);

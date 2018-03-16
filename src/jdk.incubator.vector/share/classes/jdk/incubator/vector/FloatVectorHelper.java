@@ -61,6 +61,7 @@ public final class FloatVectorHelper {
     }
 
 
+
     public static <S extends Vector.Shape>
     FloatVector<S> ceil(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.ceil((double) a));

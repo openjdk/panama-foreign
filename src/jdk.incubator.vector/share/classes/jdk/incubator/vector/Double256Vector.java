@@ -203,18 +203,6 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public DoubleVector<Shapes.S256Bit> div(double o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S256Bit> div(double o, Mask<Double,Shapes.S256Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public DoubleVector<Shapes.S256Bit> min(double o) {
         return min(SPECIES.broadcast(o));
     }
@@ -265,6 +253,18 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     @ForceInline
     public DoubleVector<Shapes.S256Bit> blend(double o, Mask<Double,Shapes.S256Bit> m) {
         return blend(SPECIES.broadcast(o), m);
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S256Bit> div(double o) {
+        return div(SPECIES.broadcast(o));
+    }
+
+    @Override
+    @ForceInline
+    public DoubleVector<Shapes.S256Bit> div(double o, Mask<Double,Shapes.S256Bit> m) {
+        return div(SPECIES.broadcast(o), m);
     }
 
     @Override
@@ -339,6 +339,17 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Double256Vector div(Vector<Double,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Double256Vector v = (Double256Vector)o;
+        return (Double256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_DIV, Double256Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double256Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
+    }
+
+    @Override
+    @ForceInline
     public Double256Vector sqrt() {
         return (Double256Vector) VectorIntrinsics.unaryOp(
             VECTOR_OP_SQRT, Double256Vector.class, double.class, LENGTH,
@@ -379,17 +390,6 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             VECTOR_OP_MUL, Double256Vector.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> ((Double256Vector)v1).bOp(v2, (i, a, b) -> (double)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Double256Vector div(Vector<Double,Shapes.S256Bit> o) {
-        Objects.requireNonNull(o);
-        Double256Vector v = (Double256Vector)o;
-        return (Double256Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Double256Vector.class, double.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Double256Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
     }
 
     @Override

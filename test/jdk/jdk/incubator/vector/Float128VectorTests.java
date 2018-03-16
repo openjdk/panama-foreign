@@ -309,9 +309,12 @@ public class Float128VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, mask, Float128VectorTests::sub);
     }
 
+
     static float div(float a, float b) {
         return (float)(a / b);
     }
+
+
 
     @Test(dataProvider = "floatBinaryOpProvider", invocationCount = 10)
     static void divFloat128VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
@@ -328,6 +331,8 @@ public class Float128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Float128VectorTests::div);
     }
+
+
 
     @Test(dataProvider = "floatBinaryOpMaskProvider", invocationCount = 10)
     static void divFloat128VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
@@ -347,6 +352,7 @@ public class Float128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, Float128VectorTests::div);
     }
+
 
     static float mul(float a, float b) {
         return (float)(a * b);

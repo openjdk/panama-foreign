@@ -159,20 +159,6 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
     public abstract ByteVector<S> mul(byte o, Mask<Byte, S> m);
 
     @Override
-    public ByteVector<S> div(Vector<Byte,S> o) {
-        return bOp(o, (i, a, b) -> (byte) (a / b));
-    }
-
-    public abstract ByteVector<S> div(byte o);
-
-    @Override
-    public ByteVector<S> div(Vector<Byte,S> o, Mask<Byte, S> m) {
-        return bOp(o, m, (i, a, b) -> (byte) (a / b));
-    }
-
-    public abstract ByteVector<S> div(byte o, Mask<Byte, S> m);
-
-    @Override
     public ByteVector<S> neg() {
         return uOp((i, a) -> (byte) (-a));
     }
@@ -299,30 +285,6 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
     public ByteVector<S> not(Mask<Byte, S> m) {
         return uOp(m, (i, a) -> (byte) (~a));
     }
-
-    public ByteVector<S> floorDiv(Vector<Byte,S> o) {
-        return bOp(o, (i, a, b) -> (byte) (a / b));
-    }
-
-    public abstract ByteVector<S> floorDiv(byte o);
-
-    public ByteVector<S> floorDiv(Vector<Byte,S> o, Mask<Byte, S> m) {
-        return bOp(o, m, (i, a, b) -> (byte) (a / b));
-    }
-
-    public abstract ByteVector<S> floorDiv(byte o, Mask<Byte, S> m);
-
-    public ByteVector<S> floorMod(Vector<Byte,S> o) {
-        return bOp(o, (i, a, b) -> (byte) (a % b));
-    }
-
-    public abstract ByteVector<S> floorMod(byte o);
-
-    public ByteVector<S> floorMod(Vector<Byte,S> o, Mask<Byte, S> m) {
-        return bOp(o, m, (i, a, b) -> (byte) (a % b));
-    }
-
-    public abstract ByteVector<S> floorMod(byte o, Mask<Byte, S> m);
 
     // logical shift left
     public ByteVector<S> shiftL(Vector<Byte,S> o) {

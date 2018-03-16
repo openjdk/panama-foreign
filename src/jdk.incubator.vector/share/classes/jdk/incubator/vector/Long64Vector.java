@@ -203,18 +203,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S64Bit> div(long o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S64Bit> div(long o, Mask<Long,Shapes.S64Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public LongVector<Shapes.S64Bit> min(long o) {
         return min(SPECIES.broadcast(o));
     }
@@ -304,30 +292,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S64Bit> floorDiv(long o) {
-        return floorDiv(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S64Bit> floorDiv(long o, Mask<Long,Shapes.S64Bit> m) {
-        return floorDiv(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S64Bit> floorMod(long o) {
-        return floorMod(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S64Bit> floorMod(long o, Mask<Long,Shapes.S64Bit> m) {
-        return floorMod(SPECIES.broadcast(o), m);
-    }
-
 
     // Unary operations
 
@@ -366,17 +330,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             VECTOR_OP_MUL, Long64Vector.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Long64Vector div(Vector<Long,Shapes.S64Bit> o) {
-        Objects.requireNonNull(o);
-        Long64Vector v = (Long64Vector)o;
-        return (Long64Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Long64Vector.class, long.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a / b)));
     }
 
 

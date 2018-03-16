@@ -203,18 +203,6 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> div(int o) {
-        return div(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S256Bit> div(int o, Mask<Integer,Shapes.S256Bit> m) {
-        return div(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public IntVector<Shapes.S256Bit> min(int o) {
         return min(SPECIES.broadcast(o));
     }
@@ -304,30 +292,6 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S256Bit> floorDiv(int o) {
-        return floorDiv(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S256Bit> floorDiv(int o, Mask<Integer,Shapes.S256Bit> m) {
-        return floorDiv(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S256Bit> floorMod(int o) {
-        return floorMod(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S256Bit> floorMod(int o, Mask<Integer,Shapes.S256Bit> m) {
-        return floorMod(SPECIES.broadcast(o), m);
-    }
-
 
     // Unary operations
 
@@ -383,17 +347,6 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
             VECTOR_OP_MUL, Int256Vector.class, int.class, LENGTH,
             this, v,
             (v1, v2) -> ((Int256Vector)v1).bOp(v2, (i, a, b) -> (int)(a * b)));
-    }
-
-    @Override
-    @ForceInline
-    public Int256Vector div(Vector<Integer,Shapes.S256Bit> o) {
-        Objects.requireNonNull(o);
-        Int256Vector v = (Int256Vector)o;
-        return (Int256Vector) VectorIntrinsics.binaryOp(
-            VECTOR_OP_DIV, Int256Vector.class, int.class, LENGTH,
-            this, v,
-            (v1, v2) -> ((Int256Vector)v1).bOp(v2, (i, a, b) -> (int)(a / b)));
     }
 
     @Override
