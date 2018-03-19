@@ -120,7 +120,7 @@ public class VectorHash {
         int i = 0;
         for (; i < (a.length & ~(BYTE_64_SPECIES.length() - 1)); i += BYTE_64_SPECIES.length()) {
             ByteVector<Shapes.S64Bit> b = BYTE_64_SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> x = (IntVector<Shapes.S256Bit>) b.cast(INT_256_Species);
+            IntVector<Shapes.S256Bit> x = (IntVector<Shapes.S256Bit>) b.cast(INT_256_SPECIES);
             h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).addAll();
         }
 
@@ -135,7 +135,7 @@ public class VectorHash {
         int i = 0;
         for (; i < (a.length & ~(BYTE_128_SPECIES.length() - 1)); i += BYTE_128_SPECIES.length()) {
             ByteVector<Shapes.S128Bit> b = BYTE_128_SPECIES.fromArray(a, i);
-            IntVector<Shapes.S512Bit> x = (IntVector<Shapes.S512Bit>) b.cast(INT_512_Species);
+            IntVector<Shapes.S512Bit> x = (IntVector<Shapes.S512Bit>) b.cast(INT_512_SPECIES);
             h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addAll();
         }
 
@@ -146,12 +146,16 @@ public class VectorHash {
     }
 
     static int hashCodeVector512Shift(byte[] a) {
-        return hashCodeVector512Shift(a, BYTE_512_SPECIES, INT_512_Species);
+        return hashCodeVectorGenericShift(a, BYTE_512_SPECIES, INT_512_SPECIES,
+                                          COEFF_31_TO_16,
+                                          H_COEFF_16);
     }
 
-    static <S extends Vector.Shape> int hashCodeVector512Shift(
+    static <S extends Vector.Shape> int hashCodeVectorGenericShift(
             byte[] a,
-            ByteVector.ByteSpecies<S> byteSpecies, IntVector.IntSpecies<S> intSpecies) {
+            ByteVector.ByteSpecies<S> byteSpecies, IntVector.IntSpecies<S> intSpecies,
+            int top_h_coeff,
+            IntVector<S> v_h_coeff) {
         int h = 1;
         int i = 0;
         for (; i < (a.length & ~(byteSpecies.length() - 1)); i += byteSpecies.length()) {
@@ -159,8 +163,8 @@ public class VectorHash {
 
             for (int j = 0; j < byteSpecies.length() / intSpecies.length(); j++) {
                 // @@@ co-variant override
-                IntVector<Shapes.S512Bit> x = (IntVector<Shapes.S512Bit>) b.cast(intSpecies);
-                h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addAll();
+                IntVector<S> x = (IntVector<S>) b.cast(intSpecies);
+                h = h * top_h_coeff + x.mul(v_h_coeff).addAll();
 
                 // @@@ co-variant override
                 b = (ByteVector<S>) b.shiftEL(intSpecies.length());
@@ -173,9 +177,9 @@ public class VectorHash {
         return h;
     }
 
-    static final IntVector.IntSpecies<Shapes.S512Bit> INT_512_Species = (IntVector.IntSpecies<Shapes.S512Bit>)
+    static final IntVector.IntSpecies<Shapes.S512Bit> INT_512_SPECIES = (IntVector.IntSpecies<Shapes.S512Bit>)
             Vector.speciesInstance(Integer.class, Shapes.S_512_BIT);
-    static final IntVector.IntSpecies<Shapes.S256Bit> INT_256_Species = (IntVector.IntSpecies<Shapes.S256Bit>)
+    static final IntVector.IntSpecies<Shapes.S256Bit> INT_256_SPECIES = (IntVector.IntSpecies<Shapes.S256Bit>)
             Vector.speciesInstance(Integer.class, Shapes.S_256_BIT);
     static final int COEFF_31_TO_16;
     static final IntVector<Shapes.S512Bit> H_COEFF_16;
@@ -190,23 +194,23 @@ public class VectorHash {
     static final IntVector<Shapes.S256Bit> H_COEFF_8;
 
     static {
-        int[] a = new int[INT_256_Species.length()];
+        int[] a = new int[INT_256_SPECIES.length()];
         a[a.length - 1] = 1;
         for (int i = 1; i < a.length; i++) {
             a[a.length - 1 - i] = a[a.length - 1 - i + 1] * 31;
         }
 
         COEFF_31_TO_8 = a[0] * 31;
-        H_COEFF_8 = INT_256_Species.fromArray(a, 0);
+        H_COEFF_8 = INT_256_SPECIES.fromArray(a, 0);
 
 
-        a = new int[INT_512_Species.length()];
+        a = new int[INT_512_SPECIES.length()];
         a[a.length - 1] = 1;
         for (int i = 1; i < a.length; i++) {
             a[a.length - 1 - i] = a[a.length - 1 - i + 1] * 31;
         }
 
         COEFF_31_TO_16 = a[0] * 31;
-        H_COEFF_16 = INT_512_Species.fromArray(a, 0);
+        H_COEFF_16 = INT_512_SPECIES.fromArray(a, 0);
     }
 }
