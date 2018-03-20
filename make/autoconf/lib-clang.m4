@@ -41,18 +41,29 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
     ENABLE_LIBCLANG="yes"
     AC_ARG_WITH([libclang-include], [AS_HELP_STRING([--with-libclang-include=<path>],
         [Specify where to find libclang header files, clang-c/Index.h ])],
-      [LIBCLANG_CPPFLAGS="-I$withval"],
-      [LIBCLANG_CPPFLAGS=""]
+      [CLANG_INCLUDE_PATH="$withval"],
+      [CLANG_INLCUDE_PATH=""]
     )
     AC_ARG_WITH([libclang-lib], [AS_HELP_STRING([--with-libclang-lib=<path>],
         [Specify where to find libclang binary, so/dylib/dll ])],
-      [LIBCLANG_LDFLAGS="-L$withval -Wl,-rpath,$withval"],
-      [LIBCLANG_LDFLAGS=""]
+      [CLANG_LIB_PATH="$withval"],
+      [CLANG_LIB_PATH=""]
     )
 
     if test "x$with_libclang" != "xyes"; then
-      LIBCLANG_CPPFLAGS="-I$with_libclang/include"
-      LIBCLANG_LDFLAGS="-L$with_libclang/lib -Wl,-rpath,$with_libclang/lib"
+      CLANG_INCLUDE_PATH="$with_libclang/include"
+      CLANG_LIB_PATH="$with_libclang/lib"
+    fi
+
+    if test "x$CLANG_INCLUDE_PATH" != "x"; then
+        LIBCLANG_CPPFLAGS="-I$CLANG_INCLUDE_PATH"
+    else
+        LIBCLANG_CPPFLAGS=""
+    fi
+    if test "x$CLANG_LIB_PATH" != "x"; then
+        LIBCLANG_LDFLAGS="-L$CLANG_LIB_PATH -Wl,-rpath,$CLANG_LIB_PATH"
+    else
+        LIBCLANG_LDFLAGS=""
     fi
 
     OLD_CPPFLAGS=$CPPFLAGS
@@ -81,12 +92,16 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
   fi
 
   if test "x$ENABLE_LIBCLANG" = "xno"; then
+    CLANG_INCLUDE_PATH=""
+    CLANG_LIB_PATH=""
     LIBCLANG_CPPFLAGS=""
     LIBCLANG_LDFLAGS=""
     LIBCLANG_LIBS=""
   fi
 
   AC_SUBST(ENABLE_LIBCLANG)
+  AC_SUBST(CLANG_INCLUDE_PATH)
+  AC_SUBST(CLANG_LIB_PATH)
   AC_SUBST(LIBCLANG_CPPFLAGS)
   AC_SUBST(LIBCLANG_LDFLAGS)
   AC_SUBST(LIBCLANG_LIBS)
