@@ -297,6 +297,14 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
 
 
 
+    @Override
+    @ForceInline
+    public Byte512Vector not() {
+        return (Byte512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, Byte512Vector.class, byte.class, LENGTH,
+            this,
+            v1 -> ((Byte512Vector)v1).uOp((i, a) -> (byte) ~a));
+    }
     // Binary operations
 
     @Override

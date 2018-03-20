@@ -314,6 +314,14 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     }
 
 
+    @Override
+    @ForceInline
+    public Int512Vector not() {
+        return (Int512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, Int512Vector.class, int.class, LENGTH,
+            this,
+            v1 -> ((Int512Vector)v1).uOp((i, a) -> (int) ~a));
+    }
     // Binary operations
 
     @Override

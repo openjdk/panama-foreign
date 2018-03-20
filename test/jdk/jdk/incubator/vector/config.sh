@@ -25,7 +25,7 @@
 #
 
 VECTORTESTS_HOME="$(pwd)"
-JDK_SRC_HOME="${VECTORTESTS_HOME}/../../../../../"
+JDK_SRC_HOME="./../../../../../"
 JDK_BUILD="${JDK_SRC_HOME}/build/"
 JAVA="java"
 JAVAC="javac"

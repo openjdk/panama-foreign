@@ -539,7 +539,6 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void greaterThanLong256VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -557,7 +556,6 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void equalLong256VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -575,7 +573,6 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void notEqualLong256VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -593,7 +590,6 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void lessThanEqLong256VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -611,7 +607,6 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void greaterThanEqLong256VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -629,7 +624,6 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     static long blend(long a, long b, boolean mask) {
         return mask ? b : a;
     }
@@ -722,5 +716,46 @@ public class Long256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Long256VectorTests::abs);
     }
+
+
+    static long not(long a) {
+        return (long)(~((long)a));
+    }
+
+
+
+    @Test(dataProvider = "longUnaryOpProvider", invocationCount = 10)
+    static void notLong256VectorTests(IntFunction<long[]> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        // Computation.
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            LongVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+            av.not().intoArray(r, i);
+        }
+
+        assertArraysEquals(a, r, Long256VectorTests::not);
+    }
+
+
+
+    @Test(dataProvider = "longUnaryOpMaskProvider")
+    static void notMaskedLong256VectorTests(IntFunction<long[]> fa,
+                                                IntFunction<boolean[]> fm) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Long, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            LongVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+            av.not(vmask).intoArray(r, i);
+        }
+
+        assertArraysEquals(a, r, mask, Long256VectorTests::not);
+    }
+
 }
 

@@ -121,6 +121,10 @@ do
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
       < ${TEMPLATE_FILE} \
       > $vectorteststype.java
+    if [ VAR_OS_ENV==windows.cygwin ]; then
+      tr -d  '\r' < $vectorteststype.java > temp
+      mv temp $vectorteststype.java
+    fi
     Log true "done\n"
   done
 done

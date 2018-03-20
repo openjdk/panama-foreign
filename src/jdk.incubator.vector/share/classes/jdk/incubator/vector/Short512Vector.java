@@ -297,6 +297,14 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
 
 
+    @Override
+    @ForceInline
+    public Short512Vector not() {
+        return (Short512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, Short512Vector.class, short.class, LENGTH,
+            this,
+            v1 -> ((Short512Vector)v1).uOp((i, a) -> (short) ~a));
+    }
     // Binary operations
 
     @Override

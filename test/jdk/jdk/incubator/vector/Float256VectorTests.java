@@ -459,7 +459,6 @@ public class Float256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void greaterThanFloat256VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -477,7 +476,6 @@ public class Float256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void equalFloat256VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -495,7 +493,6 @@ public class Float256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void notEqualFloat256VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -513,7 +510,6 @@ public class Float256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void lessThanEqFloat256VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -531,7 +527,6 @@ public class Float256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void greaterThanEqFloat256VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -549,7 +544,6 @@ public class Float256VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     static float blend(float a, float b, boolean mask) {
         return mask ? b : a;
     }
@@ -642,5 +636,8 @@ public class Float256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Float256VectorTests::abs);
     }
+
+
+
 }
 

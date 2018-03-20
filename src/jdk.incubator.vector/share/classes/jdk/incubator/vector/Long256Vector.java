@@ -297,6 +297,14 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
 
 
+    @Override
+    @ForceInline
+    public Long256Vector not() {
+        return (Long256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, Long256Vector.class, long.class, LENGTH,
+            this,
+            v1 -> ((Long256Vector)v1).uOp((i, a) -> (long) ~a));
+    }
     // Binary operations
 
     @Override

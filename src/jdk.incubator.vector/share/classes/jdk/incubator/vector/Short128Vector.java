@@ -297,6 +297,14 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
 
 
 
+    @Override
+    @ForceInline
+    public Short128Vector not() {
+        return (Short128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, Short128Vector.class, short.class, LENGTH,
+            this,
+            v1 -> ((Short128Vector)v1).uOp((i, a) -> (short) ~a));
+    }
     // Binary operations
 
     @Override

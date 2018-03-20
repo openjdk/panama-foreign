@@ -314,6 +314,14 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     }
 
 
+    @Override
+    @ForceInline
+    public Int64Vector not() {
+        return (Int64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, Int64Vector.class, int.class, LENGTH,
+            this,
+            v1 -> ((Int64Vector)v1).uOp((i, a) -> (int) ~a));
+    }
     // Binary operations
 
     @Override

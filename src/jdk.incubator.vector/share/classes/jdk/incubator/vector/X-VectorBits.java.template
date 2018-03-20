@@ -400,6 +400,16 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     }
 #end[FP]
 
+#if[BITWISE]
+    @Override
+    @ForceInline
+    public $vectortype$ not() {
+        return ($vectortype$) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) ~a));
+    }
+#end[BITWISE]
     // Binary operations
 
     @Override

@@ -129,6 +129,8 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_SqrtD:
     assert(bt == T_DOUBLE, "must be");
     return Op_SqrtVD;
+  case Op_Not:
+    return Op_NotV;
   case Op_LShiftI:
     switch (bt) {
     case T_BOOLEAN:
@@ -224,6 +226,7 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_NegVF:
   case Op_NegVD:
   case Op_SqrtVD:
+  case Op_NotV:
   case Op_LShiftVB:
   case Op_LShiftVS:
   case Op_LShiftVI:
@@ -401,6 +404,8 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
 
   case Op_SqrtVF: return new SqrtVFNode(n1, vt);
   case Op_SqrtVD: return new SqrtVDNode(n1, vt);
+
+  case Op_NotV: return new NotVNode(n1, vt);
 
   case Op_LShiftVB: return new LShiftVBNode(n1, n2, vt);
   case Op_LShiftVS: return new LShiftVSNode(n1, n2, vt);

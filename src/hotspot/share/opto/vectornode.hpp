@@ -425,6 +425,14 @@ class SqrtVDNode : public VectorNode {
   virtual int Opcode() const;
 };
 
+//------------------------------NotVNode--------------------------------------
+// Vector Not
+class NotVNode : public VectorNode {
+public:
+  NotVNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+};
+
 //------------------------------LShiftVBNode-----------------------------------
 // Vector left shift bytes
 class LShiftVBNode : public VectorNode {

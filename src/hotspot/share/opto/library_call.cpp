@@ -6981,20 +6981,21 @@ enum {
   OP_ABS     = 0,
   OP_NEG     = 1,
   OP_SQRT    = 2,
+  OP_NOT     = 3,
   // Binary
-  OP_ADD     = 3,
-  OP_SUB     = 4,
-  OP_MUL     = 5,
-  OP_DIV     = 6,
-  OP_AND     = 7,
-  OP_OR      = 8,
-  OP_XOR     = 9,
+  OP_ADD     = 4,
+  OP_SUB     = 5,
+  OP_MUL     = 6,
+  OP_DIV     = 7,
+  OP_AND     = 8,
+  OP_OR      = 9,
+  OP_XOR     = 10,
   // Ternary
-  OP_FMA     = 10,
+  OP_FMA     = 11,
   // Broadcast int
-  OP_LSHIFT  = 11,
-  OP_RSHIFT  = 12,
-  OP_URSHIFT = 13
+  OP_LSHIFT  = 12,
+  OP_RSHIFT  = 13,
+  OP_URSHIFT = 14
 };
 
 static int get_opc(jint op, BasicType bt) {
@@ -7104,6 +7105,16 @@ static int get_opc(jint op, BasicType bt) {
         case T_FLOAT:  return Op_SqrtF;
         case T_DOUBLE: return Op_SqrtD;
         default: fatal("SQRT: %s", type2name(bt));
+      }
+      break;
+    }
+    case OP_NOT: {
+      switch (bt) {
+        case T_BYTE:   // fall-through
+        case T_SHORT:  // fall-through
+        case T_INT:    // fall-through
+        case T_LONG:   return Op_Not;
+        default: fatal("NOT: %s", type2name(bt));
       }
       break;
     }

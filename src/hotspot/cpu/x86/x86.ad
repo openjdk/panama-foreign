@@ -5609,7 +5609,7 @@ instruct rvmul8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
 %}
 
 instruct rsand2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp2) %{
-  predicate(UseSSE > 1 && UseAVX == 0 && n->in(1)->bottom_type()->basic_type() == T_INT);
+  predicate(UseSSE > 1 && n->in(1)->bottom_type()->basic_type() == T_INT);
   match(Set dst (AndReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
   format %{ "pshufd  $tmp2,$src2,0x1\n\t"
@@ -5627,28 +5627,8 @@ instruct rsand2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF 
   ins_pipe( pipe_slow );
 %}
 
-instruct rvand2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp2) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->basic_type() == T_INT);
-  match(Set dst (AndReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2);
-  format %{ "pshufd   $tmp2,$src2,0x1\n\t"
-            "vpand    $tmp,$src2,$tmp2\n\t"
-            "movd     $tmp2,$src1\n\t"
-            "vpand    $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! and reduction2I" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1, vector_len);
-    __ vpand($tmp$$XMMRegister, $src2$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ movdl($tmp2$$XMMRegister, $src1$$Register);
-    __ vpand($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ movdl($dst$$Register, $tmp2$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
 instruct rsand4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
-  predicate(UseSSE > 1 && UseAVX == 0 && n->in(1)->bottom_type()->basic_type() == T_INT);
+  predicate(UseSSE > 1 && n->in(1)->bottom_type()->basic_type() == T_INT);
   match(Set dst (AndReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
   format %{ "pshufd  $tmp2,$src2,0xE\n\t"
@@ -5665,30 +5645,6 @@ instruct rsand4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
     __ pand($tmp2$$XMMRegister, $tmp$$XMMRegister);
     __ movdl($tmp$$XMMRegister, $src1$$Register);
     __ pand($tmp2$$XMMRegister, $tmp$$XMMRegister);
-    __ movdl($dst$$Register, $tmp2$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rvand4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->basic_type() == T_INT);
-  match(Set dst (AndReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2);
-  format %{ "pshufd   $tmp2,$src2,0xE\n\t"
-            "vpand    $tmp,$src2,$tmp2\n\t"
-            "pshufd   $tmp2,$tmp,0x1\n\t"
-            "vpand    $tmp,$tmp,$tmp2\n\t"
-            "movd     $tmp2,$src1\n\t"
-            "vpand    $tmp2,$tmp,$tmp2\n\t"
-            "movd     $dst,$tmp2\t! and reduction4I" %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0xE, vector_len);
-    __ vpand($tmp$$XMMRegister, $src2$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ vpshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0x1, vector_len);
-    __ vpand($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ movdl($tmp2$$XMMRegister, $src1$$Register);
-    __ vpand($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ movdl($dst$$Register, $tmp2$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -5754,7 +5710,7 @@ instruct rvand16I_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
 %}
 
 instruct rsand2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, regF tmp, regF tmp2) %{
-  predicate(UseSSE >= 2 && UseAVX == 0 && n->in(1)->bottom_type()->basic_type() == T_LONG);
+  predicate(UseSSE >= 2 && n->in(1)->bottom_type()->basic_type() == T_LONG);
   match(Set dst (AndReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
   format %{ "pshufd  $tmp2,$src2,0xE\n\t"
@@ -5767,25 +5723,6 @@ instruct rsand2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, regF tmp, regF 
     __ pand($tmp2$$XMMRegister, $src2$$XMMRegister);
     __ movdq($tmp$$XMMRegister, $src1$$Register);
     __ pand($tmp2$$XMMRegister, $tmp$$XMMRegister);
-    __ movq($dst$$Register, $tmp2$$XMMRegister);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct rvand2L_reduction_reg_avx(rRegL dst, rRegL src1, vecX src2, regF tmp, regF tmp2) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->basic_type() == T_LONG);
-  match(Set dst (AndReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2);
-  format %{ "vpshufd  $tmp,$src2,0xE\n\t"
-            "vpand  $tmp2,$src2,$tmp\n\t"
-            "movq   $tmp,$src1\n\t"
-            "vpand  $tmp2,$tmp2,$tmp\n\t"
-            "movq   $dst,$tmp2\t! and reduction2L" %}
-  ins_encode %{
-    __ vpshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE, 0);
-    __ vpand($tmp2$$XMMRegister, $src2$$XMMRegister, $tmp$$XMMRegister, 0);
-    __ movq($tmp$$XMMRegister, $src1$$Register);
-    __ vpand($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, 0);
     __ movq($dst$$Register, $tmp2$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -13953,7 +13890,7 @@ instruct vblendvpd4D(vecY dst, vecY src1, vecY src2, vecY mask) %{
 // --------------------------------- NEG --------------------------------------
 // a = -a
 instruct vneg2I_reg(vecD dst, vecD src) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 2);
+  predicate(UseSSE > 1 && n->as_Vector()->length() == 2);
   match(Set dst (NegVI  src));
   effect(TEMP dst);
   format %{ "pxor   $dst,$dst\n\t"
@@ -13967,7 +13904,7 @@ instruct vneg2I_reg(vecD dst, vecD src) %{
 %}
 
 instruct vneg4I_reg(vecX dst, vecX src) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 4);
+  predicate(UseSSE > 1 && n->as_Vector()->length() == 4);
   match(Set dst (NegVI  src));
   effect(TEMP dst);
   format %{ "pxor   $dst,$dst\n\t"
@@ -14123,7 +14060,7 @@ instruct vabs2I_reg(vecD dst, vecD src) %{
   format %{ "pabsd $dst,$src\t# $dst = |$src| abs packed2I" %}
   ins_cost(150);
   ins_encode %{
-	__ pabsd($dst$$XMMRegister, $src$$XMMRegister);
+    __ pabsd($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -14134,7 +14071,7 @@ instruct vabs4I_reg(vecX dst, vecX src) %{
   format %{ "pabsd $dst,$src\t# $dst = |$src| abs packed4I" %}
   ins_cost(150);
   ins_encode %{
-	__ pabsd($dst$$XMMRegister, $src$$XMMRegister);
+    __ pabsd($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -14146,7 +14083,7 @@ instruct vabs8I_reg(vecY dst, vecY src) %{
   ins_cost(150);
   ins_encode %{
     int vector_len = 1;
-	__ vpabsd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vpabsd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -14158,7 +14095,7 @@ instruct vabs16I_reg(vecZ dst, vecZ src) %{
   ins_cost(150);
   ins_encode %{
     int vector_len = 2;
-	__ evpabsd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ evpabsd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -14251,6 +14188,103 @@ instruct vabs16F_reg(vecZ dst, vecZ src) %{
   ins_encode %{
     int vector_len = 2;
     __ vandps($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_float_signmask()), vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+//------------------------------------- NOT --------------------------------------------
+instruct vnot4B(vecS dst, vecS src) %{
+  predicate(UseSSE > 1 && n->as_Vector()->length_in_bytes() == 4);
+  match(Set dst (NotV src));
+  effect(TEMP dst);
+  format %{ "pxor    $dst,$src\t! not vectors (4 bytes)" %}
+  ins_encode %{
+    __ movdl($dst$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ pxor($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vnot4B_reg(vecS dst, vecS src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length_in_bytes() == 4);
+  match(Set dst (NotV src));
+  effect(TEMP scratch);
+  format %{ "vpxor   $dst,$src\t! not vectors (4 bytes)" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpxor($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), vector_len, $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vnot8B(vecD dst, vecD src) %{
+  predicate(UseSSE > 1 && n->as_Vector()->length_in_bytes() == 8);
+  match(Set dst (NotV src));
+  effect(TEMP dst);
+  format %{ "pxor    $dst,$src\t! not vectors (8 bytes)" %}
+  ins_encode %{
+    __ movq($dst$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ pxor($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vnot8B_reg(vecD dst, vecD src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length_in_bytes() == 8);
+  match(Set dst (NotV src));
+  effect(TEMP scratch);
+  format %{ "vpxor   $dst,$src,0xFFFFFFFF \t! not vectors (8 bytes)" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpxor($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), vector_len, $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vnot16B(vecX dst, vecX src) %{
+  predicate(UseSSE > 1 && n->as_Vector()->length_in_bytes() == 16);
+  match(Set dst (NotV src));
+  effect(TEMP dst);
+  format %{ "pxor    $dst,$src\t! not vectors (16 bytes)" %}
+  ins_encode %{
+    __ movdqu($dst$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ pxor($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vnot16B_reg(vecX dst, vecX src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length_in_bytes() == 16);
+  match(Set dst (NotV src));
+  effect(TEMP scratch);
+  format %{ "vpxor   $dst,$src,0xFFFFFFFF \t! not vectors (16 bytes)" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpxor($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), vector_len, $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vnot32B_reg(vecY dst, vecY src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length_in_bytes() == 32);
+  match(Set dst (NotV  src));
+  effect(TEMP scratch);
+  format %{ "vpxor   $dst,$src,0xFFFFFFFF \t! not vectors (32 bytes)" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpxor($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), vector_len, $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vnot64B_reg(vecZ dst, vecZ src, rRegL scratch) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length_in_bytes() == 64);
+  match(Set dst (NotV src));
+  effect(TEMP scratch);
+  format %{ "vpxor   $dst,$src,0xFFFFFFFF \t! not vectors (64 bytes)" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpxor($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}

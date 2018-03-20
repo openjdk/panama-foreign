@@ -459,7 +459,6 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void greaterThanDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -477,7 +476,6 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void equalDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -495,7 +493,6 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void notEqualDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -513,7 +510,6 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void lessThanEqDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -531,7 +527,6 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void greaterThanEqDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -549,7 +544,6 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     static double blend(double a, double b, boolean mask) {
         return mask ? b : a;
     }
@@ -642,5 +636,8 @@ public class Double512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Double512VectorTests::abs);
     }
+
+
+
 }
 

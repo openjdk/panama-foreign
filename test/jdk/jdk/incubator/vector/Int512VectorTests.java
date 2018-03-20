@@ -539,7 +539,6 @@ public class Int512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void greaterThanInt512VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -557,7 +556,6 @@ public class Int512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void equalInt512VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -575,7 +573,6 @@ public class Int512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void notEqualInt512VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -593,7 +590,6 @@ public class Int512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void lessThanEqInt512VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -611,7 +607,6 @@ public class Int512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void greaterThanEqInt512VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -629,7 +624,6 @@ public class Int512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     static int blend(int a, int b, boolean mask) {
         return mask ? b : a;
     }
@@ -722,5 +716,46 @@ public class Int512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Int512VectorTests::abs);
     }
+
+
+    static int not(int a) {
+        return (int)(~((int)a));
+    }
+
+
+
+    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    static void notInt512VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+
+        // Computation.
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+            av.not().intoArray(r, i);
+        }
+
+        assertArraysEquals(a, r, Int512VectorTests::not);
+    }
+
+
+
+    @Test(dataProvider = "intUnaryOpMaskProvider")
+    static void notMaskedInt512VectorTests(IntFunction<int[]> fa,
+                                                IntFunction<boolean[]> fm) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Integer, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            IntVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+            av.not(vmask).intoArray(r, i);
+        }
+
+        assertArraysEquals(a, r, mask, Int512VectorTests::not);
+    }
+
 }
 

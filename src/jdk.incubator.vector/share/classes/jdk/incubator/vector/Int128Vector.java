@@ -314,6 +314,14 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
     }
 
 
+    @Override
+    @ForceInline
+    public Int128Vector not() {
+        return (Int128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, Int128Vector.class, int.class, LENGTH,
+            this,
+            v1 -> ((Int128Vector)v1).uOp((i, a) -> (int) ~a));
+    }
     // Binary operations
 
     @Override

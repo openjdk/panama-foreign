@@ -539,7 +539,6 @@ public class Byte512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void greaterThanByte512VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -557,7 +556,6 @@ public class Byte512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void equalByte512VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -575,7 +573,6 @@ public class Byte512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void notEqualByte512VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -593,7 +590,6 @@ public class Byte512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void lessThanEqByte512VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -611,7 +607,6 @@ public class Byte512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void greaterThanEqByte512VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -629,7 +624,6 @@ public class Byte512VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     static byte blend(byte a, byte b, boolean mask) {
         return mask ? b : a;
     }
@@ -722,5 +716,46 @@ public class Byte512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Byte512VectorTests::abs);
     }
+
+
+    static byte not(byte a) {
+        return (byte)(~((byte)a));
+    }
+
+
+
+    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    static void notByte512VectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        // Computation.
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            ByteVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+            av.not().intoArray(r, i);
+        }
+
+        assertArraysEquals(a, r, Byte512VectorTests::not);
+    }
+
+
+
+    @Test(dataProvider = "byteUnaryOpMaskProvider")
+    static void notMaskedByte512VectorTests(IntFunction<byte[]> fa,
+                                                IntFunction<boolean[]> fm) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
+
+        // Computation.
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            ByteVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+            av.not(vmask).intoArray(r, i);
+        }
+
+        assertArraysEquals(a, r, mask, Byte512VectorTests::not);
+    }
+
 }
 

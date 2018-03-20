@@ -297,6 +297,14 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
 
 
+    @Override
+    @ForceInline
+    public Long64Vector not() {
+        return (Long64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, Long64Vector.class, long.class, LENGTH,
+            this,
+            v1 -> ((Long64Vector)v1).uOp((i, a) -> (long) ~a));
+    }
     // Binary operations
 
     @Override

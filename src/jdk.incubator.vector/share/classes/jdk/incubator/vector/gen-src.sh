@@ -75,9 +75,19 @@ do
     < X-Vector.java.template \
     > $abstractvectortype.java
 
+  if [ VAR_OS_ENV==windows.cygwin ]; then
+    tr -d '\r' < $abstractvectortype.java > temp
+    mv temp $abstractvectortype.java
+  fi
+
   java $SPP -nel $args \
     < X-VectorHelper.java.template \
     > ${abstractvectortype}Helper.java
+
+  if [ VAR_OS_ENV==windows.cygwin ]; then
+    tr -d '\r' < ${abstractvectortype}Helper.java > temp
+    mv temp ${abstractvectortype}Helper.java
+  fi
 
   for bits in 64 128 256 512
   do
@@ -94,6 +104,11 @@ do
     java $SPP -nel $bitargs \
       < X-VectorBits.java.template \
       > $vectortype.java
+
+    if [ VAR_OS_ENV==windows.cygwin ]; then
+      tr -d  '\r' < $vectortype.java > temp
+      mv temp $vectortype.java
+    fi
   done
 
 done

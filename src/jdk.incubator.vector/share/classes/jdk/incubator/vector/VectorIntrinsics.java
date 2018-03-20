@@ -14,24 +14,25 @@ import java.util.function.*;
     static final int VECTOR_OP_ABS  = 0;
     static final int VECTOR_OP_NEG  = 1;
     static final int VECTOR_OP_SQRT = 2;
+    static final int VECTOR_OP_NOT  = 3;
 
     // Binary
-    static final int VECTOR_OP_ADD  = 3;
-    static final int VECTOR_OP_SUB  = 4;
-    static final int VECTOR_OP_MUL  = 5;
-    static final int VECTOR_OP_DIV  = 6;
+    static final int VECTOR_OP_ADD  = 4;
+    static final int VECTOR_OP_SUB  = 5;
+    static final int VECTOR_OP_MUL  = 6;
+    static final int VECTOR_OP_DIV  = 7;
 
-    static final int VECTOR_OP_AND  = 7;
-    static final int VECTOR_OP_OR   = 8;
-    static final int VECTOR_OP_XOR  = 9;
+    static final int VECTOR_OP_AND  = 8;
+    static final int VECTOR_OP_OR   = 9;
+    static final int VECTOR_OP_XOR  = 10;
 
     // Ternary
-    static final int VECTOR_OP_FMA  = 10;
+    static final int VECTOR_OP_FMA  = 11;
 
     // Broadcast int
-    static final int VECTOR_OP_LSHIFT  = 11;
-    static final int VECTOR_OP_RSHIFT  = 12;
-    static final int VECTOR_OP_URSHIFT = 13;
+    static final int VECTOR_OP_LSHIFT  = 12;
+    static final int VECTOR_OP_RSHIFT  = 13;
+    static final int VECTOR_OP_URSHIFT = 14;
 
     // Copied from open/src/hotspot/cpu/x86/assembler_x86.hpp
     // enum Condition { // The x86 condition codes used for conditional jumps/moves.

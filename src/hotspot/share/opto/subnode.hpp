@@ -467,6 +467,15 @@ public:
   virtual const Type* Value(PhaseGVN* phase) const;
 };
 
+//--------------------------------NotNode-----------------------------------------
+// not for byte, short, int and long
+class NotNode : public Node {
+public:
+  NotNode(Compile* C, Node *c, Node *in1) : Node(c, in1) {}
+  virtual int Opcode() const;
+  virtual const Type* Value(PhaseGVN* phase) const;
+};
+
 //-------------------------------ReverseBytesINode--------------------------------
 // reverse bytes of an integer
 class ReverseBytesINode : public Node {

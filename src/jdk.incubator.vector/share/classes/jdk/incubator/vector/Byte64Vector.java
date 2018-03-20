@@ -297,6 +297,14 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
 
 
+    @Override
+    @ForceInline
+    public Byte64Vector not() {
+        return (Byte64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_NOT, Byte64Vector.class, byte.class, LENGTH,
+            this,
+            v1 -> ((Byte64Vector)v1).uOp((i, a) -> (byte) ~a));
+    }
     // Binary operations
 
     @Override

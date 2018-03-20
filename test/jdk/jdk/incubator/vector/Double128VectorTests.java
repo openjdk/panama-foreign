@@ -459,7 +459,6 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void greaterThanDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -477,7 +476,6 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void equalDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -495,7 +493,6 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void notEqualDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -513,7 +510,6 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void lessThanEqDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -531,7 +527,6 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void greaterThanEqDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -549,7 +544,6 @@ public class Double128VectorTests extends AbstractVectorTest {
             }
         }
     }
-
     static double blend(double a, double b, boolean mask) {
         return mask ? b : a;
     }
@@ -642,5 +636,8 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Double128VectorTests::abs);
     }
+
+
+
 }
 
