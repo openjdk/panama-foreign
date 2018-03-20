@@ -104,9 +104,13 @@ public class JextractToolProviderTest {
         }
     }
 
-    private static Class<?> loadClass(Path path, String className) {
+    private static Class<?> loadClass(String className, Path...paths) {
         try {
-            URLClassLoader ucl = new URLClassLoader(new URL[] { path.toUri().toURL() }, null);
+            URL[] urls = new URL[paths.length];
+            for (int i = 0; i < paths.length; i++) {
+                urls[i] = paths[i].toUri().toURL();
+            }
+            URLClassLoader ucl = new URLClassLoader(urls, null);
             return Class.forName(className, false, ucl);
         } catch (RuntimeException re) {
             throw re;
@@ -118,6 +122,20 @@ public class JextractToolProviderTest {
     private static Method findMethod(Class<?> cls, String name, Class<?>... argTypes) {
         try {
             return cls.getMethod(name, argTypes);
+        } catch (Exception e) {
+            System.err.println(e);
+            return null;
+        }
+    }
+
+    private static Method findFirstMethod(Class<?> cls, String name) {
+        try {
+            for (Method m : cls.getMethods()) {
+                if (name.equals(m.getName())) {
+                    return m;
+                }
+            }
+            return null;
         } catch (Exception e) {
             System.err.println(e);
             return null;
@@ -173,7 +191,26 @@ public class JextractToolProviderTest {
 	Path helloH = getInputFilePath("hello.h");
         checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
         try {
-            Class<?> cls = loadClass(helloJar, "hello");
+            Class<?> cls = loadClass("hello", helloJar);
+            // check header annotation
+            Header header = cls.getAnnotation(Header.class);
+            assertNotNull(header);
+            assertEquals(header.path(), helloH.toString());
+
+            // check a method for "void func()"
+            assertNotNull(findMethod(cls, "func", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+    }
+
+    private void testTargetPackage(String targetPkgOption) {
+        Path helloJar = getOutputFilePath("hello.jar");
+        deleteFile(helloJar);
+	Path helloH = getInputFilePath("hello.h");
+        checkSuccess(null, targetPkgOption, "com.acme", "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass("com.acme.hello", helloJar);
             // check header annotation
             Header header = cls.getAnnotation(Header.class);
             assertNotNull(header);
@@ -187,23 +224,48 @@ public class JextractToolProviderTest {
     }
 
     @Test
-    public void testOutputClassPackageOption() {
-        Path helloJar = getOutputFilePath("hello.jar");
-        deleteFile(helloJar);
-	Path helloH = getInputFilePath("hello.h");
-        checkSuccess(null, "-t", "com.acme", "-o", helloJar.toString(), helloH.toString());
-        try {
-            Class<?> cls = loadClass(helloJar, "com.acme.hello");
-            // check header annotation
-            Header header = cls.getAnnotation(Header.class);
-            assertNotNull(header);
-            assertEquals(header.path(), helloH.toString());
+    public void testTargetPackageOption() {
+        testTargetPackage("-t");
+    }
 
-            // check a method for "void func()"
-            assertNotNull(findMethod(cls, "func", Object[].class));
+    @Test
+    public void testTargetPackageLongOption() {
+        testTargetPackage("--target-package");
+    }
+
+    private void testPackageMapping(String pkgMapOption) {
+        Path worldJar = getOutputFilePath("world.jar");
+        deleteFile(worldJar);
+        Path mytypesJar = getOutputFilePath("mytypes.jar");
+        deleteFile(mytypesJar);
+
+	Path worldH = getInputFilePath("world.h");
+	Path include = getInputFilePath("include");
+        // generate jar for mytypes.h
+        checkSuccess(null, "-t", "com.acme", "-o", mytypesJar.toString(),
+            include.resolve("mytypes.h").toString());
+        // world.h include mytypes.h, use appropriate package for stuff from mytypes.h
+        checkSuccess(null, "-I", include.toString(), pkgMapOption, include.toString() + "=com.acme",
+            "-o", worldJar.toString(), worldH.toString());
+        try {
+            Class<?> cls = loadClass("world", worldJar, mytypesJar);
+            Method m = findFirstMethod(cls, "distance");
+            Class<?>[] params = m.getParameterTypes();
+            assertEquals(params[0].getName(), "com.acme.mytypes$Point");
         } finally {
-            deleteFile(helloJar);
+            deleteFile(worldJar);
+            deleteFile(mytypesJar);
         }
+    }
+
+    @Test
+    public void testPackageDirMappingOption() {
+        testPackageMapping("-m");
+    }
+
+    @Test
+    public void testPackageDirMappingLongOption() {
+        testPackageMapping("--package-map");
     }
 
     @Test
@@ -237,7 +299,7 @@ public class JextractToolProviderTest {
 	Path helloH = getInputFilePath("hello.h");
         checkSuccess(null, "-l", "hello", "-o", helloJar.toString(), helloH.toString());
         try {
-            Class<?> cls = loadClass(helloJar, "hello");
+            Class<?> cls = loadClass("hello", helloJar);
             // check LibraryDependencies annotation capture -l value
             LibraryDependencies libDeps = cls.getAnnotation(LibraryDependencies.class);
             assertNotNull(libDeps);
@@ -259,7 +321,7 @@ public class JextractToolProviderTest {
         checkSuccess(null, "-l", "hello", "-rpath", rpathDir.toString(),
              "-o", helloJar.toString(), helloH.toString());
         try {
-            Class<?> cls = loadClass(helloJar, "hello");
+            Class<?> cls = loadClass("hello", helloJar);
             // check LibraryDependencies annotation captures -l and -rpath values
             LibraryDependencies libDeps = cls.getAnnotation(LibraryDependencies.class);
             assertNotNull(libDeps);
@@ -279,7 +341,7 @@ public class JextractToolProviderTest {
 	Path uniondeclH = getInputFilePath("uniondecl.h");
         try {
             checkSuccess(null, "-o", uniondeclJar.toString(), uniondeclH.toString());
-            Class<?> unionCls = loadClass(uniondeclJar, "uniondecl");
+            Class<?> unionCls = loadClass("uniondecl", uniondeclJar);
             assertNotNull(unionCls);
             boolean found = Arrays.stream(unionCls.getClasses()).
                 map(Class::getSimpleName).
@@ -298,7 +360,7 @@ public class JextractToolProviderTest {
         Path helloH = getInputFilePath("hello.h");
         checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
         try {
-            Class<?> cls = loadClass(helloJar, "hello");
+            Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
             // check a method for "void junk()"
@@ -310,7 +372,7 @@ public class JextractToolProviderTest {
         // try with --exclude-symbols" this time.
         checkSuccess(null, "--exclude-symbols", "junk", "-o", helloJar.toString(), helloH.toString());
         try {
-            Class<?> cls = loadClass(helloJar, "hello");
+            Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
             // check a method for "void junk()"

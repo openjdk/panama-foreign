@@ -61,8 +61,8 @@ public final class Main {
         return new MessageFormat(MESSAGES_BUNDLE.getString(msgId)).format(args);
     }
 
-    final Context ctx;
-    String targetPackage;
+    private final Context ctx;
+    private String targetPackage;
 
     public Main(Context ctx) {
         this.ctx = ctx;
@@ -129,8 +129,8 @@ public final class Main {
         parser.accepts("l", format("help.l")).withRequiredArg();
         parser.accepts("d", format("help.d")).withRequiredArg();
         parser.acceptsAll(List.of("o", "jar"), format("help.o")).withRequiredArg();
-        parser.accepts("t", format("help.t")).withRequiredArg();
-        parser.accepts("m", format("help.m")).withRequiredArg();
+        parser.acceptsAll(List.of("t", "target-package"), format("help.t")).withRequiredArg();
+        parser.acceptsAll(List.of("m", "package-map"), format("help.m")).withRequiredArg();
         parser.acceptsAll(List.of("?", "h", "help"), format("help.h")).forHelp();
         parser.accepts("C", format("help.C")).withRequiredArg();
         parser.accepts("log", format("help.log")).withRequiredArg();
