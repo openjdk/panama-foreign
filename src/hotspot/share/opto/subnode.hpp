@@ -473,7 +473,6 @@ class NotNode : public Node {
 public:
   NotNode(Compile* C, Node *c, Node *in1) : Node(c, in1) {}
   virtual int Opcode() const;
-  virtual const Type* Value(PhaseGVN* phase) const;
 };
 
 //-------------------------------ReverseBytesINode--------------------------------
