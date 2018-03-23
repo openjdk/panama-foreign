@@ -45,6 +45,7 @@ public class TestJextractFFI {
     final Path clang_header_path;
     final Path clang_lib_path;
 
+    final static String CLANG_JAR = "clang.jar";
     final static String CLANG_JNI_PATH = "clang_jni";
     final static String CLANG_FFI_PATH = "clang_ffi";
     final static String JCLANG_PATH = "jclang";
@@ -86,6 +87,7 @@ public class TestJextractFFI {
         List<String> command = List.of(jextract_cmd,
                 "-I", clang_header_path.toString(),
                 "-t", "clang",
+                "-o", CLANG_JAR,
                 "-d", CLANG_JNI_PATH,
                 clang_header_path
                         .resolve("clang-c").resolve("Index.h").toString());
@@ -95,7 +97,7 @@ public class TestJextractFFI {
     public void buildJclang() throws IOException, InterruptedException {
         List<String> command = new ArrayList<>(List.of(
                 javac_cmd,
-                "--class-path", CLANG_JNI_PATH,
+                "--module-path", CLANG_JAR,
                 "-d", JCLANG_PATH));
         Files.walk(jclang_src_path)
                 .map(path -> path.toString())
@@ -111,9 +113,8 @@ public class TestJextractFFI {
                 "-d", CLANG_FFI_PATH,
                 "-J-Dlibclang.debug=true",
                 "-J-Djava.library.path=" + clang_lib_path.toString(),
-                "-J--class-path", "-J" + CLANG_JNI_PATH,
-                "-J--add-reads", "-Jjdk.internal.clang=ALL-UNNAMED",
-                "-J--patch-module", "-Jjdk.internal.clang=" + JCLANG_PATH,
+                "-J--module-path", "-J" + CLANG_JAR,
+                "-J--upgrade-module-path", "-J" + JCLANG_PATH,
                 // FIXME: Temporary work-around. Compile mode should not crash
                 "-J-Xint",
                 clang_header_path

@@ -76,6 +76,8 @@ BOOT_MODULES += \
 UPGRADEABLE_MODULES += \
     java.compiler \
     jdk.internal.vm.compiler \
+    jdk.internal.clang \
+    jdk.jextract \
     #
 
 
@@ -123,7 +125,6 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
 endif
 
 JRE_TOOL_MODULES += \
-    jdk.internal.clang \
     jdk.jdwp.agent \
     jdk.pack \
     jdk.scripting.nashorn.shell \
@@ -181,8 +182,10 @@ INTERIM_IMAGE_MODULES := java.base java.logging
 LANGTOOLS_MODULES := \
     java.compiler \
     jdk.compiler \
+    jdk.internal.clang \
     jdk.javadoc \
     jdk.jdeps \
+    jdk.jextract \
     jdk.jshell \
     #
 
@@ -220,6 +223,7 @@ endif
 
 ifeq ($(ENABLE_LIBCLANG), no)
   MODULES_FILTER += jdk.internal.clang
+  MODULES_FILTER += jdk.jextract
 endif
 
 ################################################################################
