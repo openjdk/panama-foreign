@@ -30,51 +30,53 @@ import jdk.internal.vm.annotation.ForceInline;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public interface Vector<E, S extends Vector.Shape> {
+public abstract class Vector<E, S extends Vector.Shape> {
 
-    Species<E, S> species();
+    Vector() {}
 
-    default Class<E> elementType() { return species().elementType(); }
+    public abstract Species<E, S> species();
 
-    default S shape() { return species().shape(); }
+    public Class<E> elementType() { return species().elementType(); }
 
-    default int length() { return species().length(); }
+    public S shape() { return species().shape(); }
 
-    default int bitSize() { return species().bitSize(); }
+    public int length() { return species().length(); }
+
+    public int bitSize() { return species().bitSize(); }
 
     //Arithmetic
-    Vector<E, S> add(Vector<E, S> o);
+    public abstract Vector<E, S> add(Vector<E, S> o);
 
-    Vector<E, S> add(Vector<E, S> o, Mask<E, S> m);
+    public abstract Vector<E, S> add(Vector<E, S> o, Mask<E, S> m);
 
-    Vector<E, S> addSaturate(Vector<E, S> o);
+    public abstract Vector<E, S> addSaturate(Vector<E, S> o);
 
-    Vector<E, S> addSaturate(Vector<E, S> o, Mask<E, S> m);
+    public abstract Vector<E, S> addSaturate(Vector<E, S> o, Mask<E, S> m);
 
-    Vector<E, S> sub(Vector<E, S> o);
+    public abstract Vector<E, S> sub(Vector<E, S> o);
 
-    Vector<E, S> sub(Vector<E, S> o, Mask<E, S> m);
+    public abstract Vector<E, S> sub(Vector<E, S> o, Mask<E, S> m);
 
-    Vector<E, S> subSaturate(Vector<E, S> o);
+    public abstract Vector<E, S> subSaturate(Vector<E, S> o);
 
-    Vector<E, S> subSaturate(Vector<E, S> o, Mask<E, S> m);
+    public abstract Vector<E, S> subSaturate(Vector<E, S> o, Mask<E, S> m);
 
-    Vector<E, S> mul(Vector<E, S> o);
+    public abstract Vector<E, S> mul(Vector<E, S> o);
 
-    Vector<E, S> mul(Vector<E, S> o, Mask<E, S> m);
+    public abstract Vector<E, S> mul(Vector<E, S> o, Mask<E, S> m);
 
-    Vector<E, S> neg();
+    public abstract Vector<E, S> neg();
 
-    Vector<E, S> neg(Mask<E, S> m);
+    public abstract Vector<E, S> neg(Mask<E, S> m);
 
     //Maths from java.math
-    Vector<E, S> abs();
+    public abstract Vector<E, S> abs();
 
-    Vector<E, S> abs(Mask<E, S> m);
+    public abstract Vector<E, S> abs(Mask<E, S> m);
 
-    Vector<E, S> min(Vector<E, S> o);
+    public abstract Vector<E, S> min(Vector<E, S> o);
 
-    Vector<E, S> max(Vector<E, S> o);
+    public abstract Vector<E, S> max(Vector<E, S> o);
 
     //TODO: Parity
 
@@ -82,34 +84,34 @@ public interface Vector<E, S extends Vector.Shape> {
     //For now these are projected into the same element type.  False is the element 0.  True is otherwise.
     //TODO: N.B. Floating point NaN behaviors?
     //TODO: Check the JLS
-    Mask<E, S> equal(Vector<E, S> o);
+    public abstract Mask<E, S> equal(Vector<E, S> o);
 
-    Mask<E, S> notEqual(Vector<E, S> o);
+    public abstract Mask<E, S> notEqual(Vector<E, S> o);
 
-    Mask<E, S> lessThan(Vector<E, S> o);
+    public abstract Mask<E, S> lessThan(Vector<E, S> o);
 
-    Mask<E, S> lessThanEq(Vector<E, S> o);
+    public abstract Mask<E, S> lessThanEq(Vector<E, S> o);
 
-    Mask<E, S> greaterThan(Vector<E, S> o);
+    public abstract Mask<E, S> greaterThan(Vector<E, S> o);
 
-    Mask<E, S> greaterThanEq(Vector<E, S> o);
+    public abstract Mask<E, S> greaterThanEq(Vector<E, S> o);
 
     //Elemental shifting
-    Vector<E, S> rotateEL(int i); //Rotate elements left
+    public abstract Vector<E, S> rotateEL(int i); //Rotate elements left
 
-    Vector<E, S> rotateER(int i); //Rotate elements right
+    public abstract Vector<E, S> rotateER(int i); //Rotate elements right
 
-    Vector<E, S> shiftEL(int i); //shift elements left
+    public abstract Vector<E, S> shiftEL(int i); //shift elements left
 
-    Vector<E, S> shiftER(int i); //shift elements right
+    public abstract Vector<E, S> shiftER(int i); //shift elements right
 
     //Blend, etc.
-    Vector<E, S> blend(Vector<E, S> o, Mask<E, S> m);
+    public abstract Vector<E, S> blend(Vector<E, S> o, Mask<E, S> m);
 
     //Shuffles
-    Vector<E, S> shuffle(Vector<E, S> o, Shuffle<E, S> s); //TODO: Example
+    public abstract Vector<E, S> shuffle(Vector<E, S> o, Shuffle<E, S> s); //TODO: Example
 
-    Vector<E, S> swizzle(Shuffle<E, S> s);
+    public abstract Vector<E, S> swizzle(Shuffle<E, S> s);
 
 
     // Conversions
@@ -117,82 +119,84 @@ public interface Vector<E, S extends Vector.Shape> {
     // Bitwise preserving
 
     @ForceInline
-    default <F, T extends Shape> Vector<F, T> reshape(Species<F, T> species) {
+    public <F, T extends Shape> Vector<F, T> reshape(Species<F, T> species) {
         return species.reshape(this);
     }
 
     @ForceInline
-    default <F> Vector<F, S> rebracket(Species<F, S> species) {
+    public <F> Vector<F, S> rebracket(Species<F, S> species) {
         return species.reshape(this);
     }
 
     @ForceInline
-    default <T extends Shape> Vector<E, T> resize(Species<E, T> species) {
+    public <T extends Shape> Vector<E, T> resize(Species<E, T> species) {
         return species.reshape(this);
     }
 
     // Cast
 
     @ForceInline
-    default <F, T extends Shape> Vector<F, T> cast(Species<F, T> species) {
+    public <F, T extends Shape> Vector<F, T> cast(Species<F, T> species) {
         return species.cast(this);
     }
 
     //Array stores
 
-    void intoByteArray(byte[] bs, int ix);
+    public abstract void intoByteArray(byte[] bs, int ix);
 
-    void intoByteArray(byte[] bs, int ix, Mask<E, S> m);
+    public abstract void intoByteArray(byte[] bs, int ix, Mask<E, S> m);
 
-    void intoByteBuffer(ByteBuffer bb);
+    public abstract void intoByteBuffer(ByteBuffer bb);
 
-    void intoByteBuffer(ByteBuffer bb, Mask<E, S> m);
+    public abstract void intoByteBuffer(ByteBuffer bb, Mask<E, S> m);
 
-    void intoByteBuffer(ByteBuffer bb, int ix);
+    public abstract void intoByteBuffer(ByteBuffer bb, int ix);
 
-    void intoByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
+    public abstract void intoByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
 
 
-    interface Species<E, S extends Shape> {
-        Class<E> elementType();
+    public static abstract class Species<E, S extends Shape> {
+        Species() {}
 
-        int elementSize();
+        public abstract Class<E> elementType();
 
-        S shape();
+        public abstract int elementSize();
 
-        default int length() { return shape().length(this); }
+        public abstract S shape();
 
-        default int bitSize() { return shape().bitSize(); }
+        public int length() { return shape().length(this); }
+
+        public int bitSize() { return shape().bitSize(); }
 
         // Factory
 
-        Vector<E, S> zero();
+        public abstract Vector<E, S> zero();
 
-        Vector<E, S> fromByteArray(byte[] bs, int ix);
+        public abstract Vector<E, S> fromByteArray(byte[] bs, int ix);
 
-        Vector<E, S> fromByteArray(byte[] bs, int ix, Mask<E, S> m);
+        public abstract Vector<E, S> fromByteArray(byte[] bs, int ix, Mask<E, S> m);
 
-        Vector<E, S> fromByteBuffer(ByteBuffer bb);
+        public abstract Vector<E, S> fromByteBuffer(ByteBuffer bb);
 
-        Vector<E, S> fromByteBuffer(ByteBuffer bb, Mask<E, S> m);
+        public abstract Vector<E, S> fromByteBuffer(ByteBuffer bb, Mask<E, S> m);
 
-        Vector<E, S> fromByteBuffer(ByteBuffer bb, int ix);
+        public abstract Vector<E, S> fromByteBuffer(ByteBuffer bb, int ix);
 
-        Vector<E, S> fromByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
+        public abstract Vector<E, S> fromByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
 
         //Mask and shuffle constructions
 
-        Mask<E, S> maskFromValues(boolean... bits);
+        public abstract Mask<E, S> maskFromValues(boolean... bits);
 
-        Mask<E, S> maskFromArray(boolean[] bits, int i);
+        public abstract Mask<E, S> maskFromArray(boolean[] bits, int i);
 
-        Mask<E, S> maskAllTrue();
+        public abstract Mask<E, S> maskAllTrue();
 
-        Mask<E, S> maskAllFalse();
+        public abstract Mask<E, S> maskAllFalse();
 
-        Shuffle<E, S> shuffleFromValues(int... ixs);
+        public abstract Shuffle<E, S> shuffleFromValues(int... ixs);
 
-        Shuffle<E, S> shuffleFromArray(int[] ixs, int i);
+        public abstract Shuffle<E, S> shuffleFromArray(int[] ixs, int i);
 
         // Vector type/shape transformations
 
@@ -201,7 +205,7 @@ public interface Vector<E, S extends Vector.Shape> {
         // old shape, or expanding (with zero bits) if new shape is larger in
         // bit size
 
-        default <F, T extends Shape> Vector<E, S> reshape(Vector<F, T> o) {
+        public <F, T extends Shape> Vector<E, S> reshape(Vector<F, T> o) {
             int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
             ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
             o.intoByteBuffer(bb, 0);
@@ -211,53 +215,53 @@ public interface Vector<E, S extends Vector.Shape> {
         // Change type, not shape
         // No truncation or expansion of bits
         @ForceInline
-        default <F> Vector<E, S> rebracket(Vector<F, S> o) {
+        public <F> Vector<E, S> rebracket(Vector<F, S> o) {
             return reshape(o);
         }
 
         // Change shape, not type
         // Truncation or expansion of bits
         @ForceInline
-        default <T extends Shape> Vector<E, S> resize(Vector<E, T> o) {
+        public <T extends Shape> Vector<E, S> resize(Vector<E, T> o) {
             return reshape(o);
         }
 
         // Cast
         // Elements will be converted as per JLS primitive conversion rules
         // If elementType == o.elementType then its equivalent to a resize
-        <F, T extends Shape> Vector<E, S> cast(Vector<F, T> o);
+        public abstract <F, T extends Shape> Vector<E, S> cast(Vector<F, T> o);
 
 
         // Mask type/shape transformations
 
-        default <F, T extends Shape> Mask<E, S> reshape(Mask<F, T> m) {
+        public <F, T extends Shape> Mask<E, S> reshape(Mask<F, T> m) {
             return maskFromValues(m.toArray());
         }
 
         @ForceInline
-        default <F> Mask<E, S> rebracket(Mask<F, S> m) {
+        public <F> Mask<E, S> rebracket(Mask<F, S> m) {
             return reshape(m);
         }
 
         @ForceInline
-        default <T extends Shape> Mask<E, S> resize(Mask<E, T> m) {
+        public <T extends Shape> Mask<E, S> resize(Mask<E, T> m) {
             return reshape(m);
         }
 
 
         // Shuffle type/shape transformations
 
-        default <F, T extends Shape> Shuffle<E, S> reshape(Shuffle<F, T> m) {
+        public <F, T extends Shape> Shuffle<E, S> reshape(Shuffle<F, T> m) {
             return shuffleFromValues(m.toArray());
         }
 
         @ForceInline
-        default <F> Shuffle<E, S> rebracket(Shuffle<F, S> m) {
+        public <F> Shuffle<E, S> rebracket(Shuffle<F, S> m) {
             return reshape(m);
         }
 
         @ForceInline
-        default <T extends Shape> Shuffle<E, S> resize(Shuffle<E, T> m) {
+        public <T extends Shape> Shuffle<E, S> resize(Shuffle<E, T> m) {
             return reshape(m);
         }
 
@@ -270,20 +274,24 @@ public interface Vector<E, S extends Vector.Shape> {
         // this species.
         //
         // Throws IAE if no shape exists for the element type and this species length,
-//        default <F> Species<F, ?> toSpeciesWithSameNumberOfLanes(Class<F> c) {
+//        public <F> Species<F, ?> toSpeciesWithSameNumberOfLanes(Class<F> c) {
 //            // @@@ TODO implement and find better name
 //            throw new UnsupportedOperationException();
 //        }
 
     }
 
-    interface Shape {
-        int bitSize();  // usually 64, 128, 256, etc.
+    public static abstract class Shape {
+        Shape() {}
 
-        default int length(Species<?, ?> s) { return bitSize() / s.elementSize(); }  // usually bitSize / sizeof(s.elementType)
+        public abstract int bitSize();  // usually 64, 128, 256, etc.
+
+        public int length(Species<?, ?> s) { return bitSize() / s.elementSize(); }  // usually bitSize / sizeof(s.elementType)
     }
 
-    abstract class Mask<E, S extends Shape> {
+    public static abstract class Mask<E, S extends Shape> {
+        Mask() {}
+
         public int length() { return species().length(); }
 
         public abstract long toLong();
@@ -330,7 +338,9 @@ public interface Vector<E, S extends Vector.Shape> {
         }
     }
 
-    abstract class Shuffle<E, S extends Shape> {
+    public static abstract class Shuffle<E, S extends Shape> {
+        Shuffle() {}
+
         public int length() { return species().length(); }
 
         public abstract void intoArray(int[] ixs, int i);
@@ -362,7 +372,7 @@ public interface Vector<E, S extends Vector.Shape> {
     }
 
     @SuppressWarnings("unchecked")
-    static <E> Vector.Species<E, ?> preferredSpeciesInstance(Class<E> c) {
+    public static <E> Vector.Species<E, ?> preferredSpeciesInstance(Class<E> c) {
         Unsafe u = Unsafe.getUnsafe();
 
         int vectorLength = u.getMaxVectorSize(boxToPrimitive(c));
@@ -436,7 +446,7 @@ public interface Vector<E, S extends Vector.Shape> {
     }
 
     @SuppressWarnings("unchecked")
-    static <E, S extends Shape> Vector.Species<E, S> speciesInstance(Class<E> c, S s) {
+    public static <E, S extends Shape> Vector.Species<E, S> speciesInstance(Class<E> c, S s) {
         Vector.Species<E, S> res = null;
 
         //Float

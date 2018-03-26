@@ -31,7 +31,7 @@ import java.nio.FloatBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
-public abstract class FloatVector<S extends Vector.Shape> implements Vector<Float,S> {
+public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S> {
 
     FloatVector() {}
 
@@ -534,7 +534,7 @@ public abstract class FloatVector<S extends Vector.Shape> implements Vector<Floa
     @Override
     public abstract FloatSpecies<S> species();
 
-    public static abstract class FloatSpecies<S extends Vector.Shape> implements Vector.Species<Float, S> {
+    public static abstract class FloatSpecies<S extends Vector.Shape> extends Vector.Species<Float, S> {
         interface FOp {
             float apply(int i);
         }

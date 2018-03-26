@@ -29,7 +29,7 @@ final public class Shapes {
 
     public static final S64Bit S_64_BIT = new S64Bit();
 
-    public static final class S64Bit implements Vector.Shape {
+    public static final class S64Bit extends Vector.Shape {
         @Override
         public int bitSize() {
             return 64;
@@ -38,7 +38,7 @@ final public class Shapes {
 
     public static final S128Bit S_128_BIT = new S128Bit();
 
-    public static final class S128Bit implements Vector.Shape {
+    public static final class S128Bit extends Vector.Shape {
         @Override
         public int bitSize() {
             return 128;
@@ -47,7 +47,7 @@ final public class Shapes {
 
     public static final S256Bit S_256_BIT = new S256Bit();
 
-    public static final class S256Bit implements Vector.Shape {
+    public static final class S256Bit extends Vector.Shape {
         @Override
         public int bitSize() {
             return 256;
@@ -56,7 +56,7 @@ final public class Shapes {
 
     public static final S512Bit S_512_BIT = new S512Bit();
 
-    public static final class S512Bit implements Vector.Shape {
+    public static final class S512Bit extends Vector.Shape {
         @Override
         public int bitSize() {
             return 512;

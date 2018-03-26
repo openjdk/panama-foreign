@@ -31,7 +31,7 @@ import java.nio.IntBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
-public abstract class IntVector<S extends Vector.Shape> implements Vector<Integer,S> {
+public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S> {
 
     IntVector() {}
 
@@ -460,7 +460,7 @@ public abstract class IntVector<S extends Vector.Shape> implements Vector<Intege
     @Override
     public abstract IntSpecies<S> species();
 
-    public static abstract class IntSpecies<S extends Vector.Shape> implements Vector.Species<Integer, S> {
+    public static abstract class IntSpecies<S extends Vector.Shape> extends Vector.Species<Integer, S> {
         interface FOp {
             int apply(int i);
         }

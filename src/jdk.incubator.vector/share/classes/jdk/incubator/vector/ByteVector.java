@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
-public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,S> {
+public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> {
 
     ByteVector() {}
 
@@ -459,7 +459,7 @@ public abstract class ByteVector<S extends Vector.Shape> implements Vector<Byte,
     @Override
     public abstract ByteSpecies<S> species();
 
-    public static abstract class ByteSpecies<S extends Vector.Shape> implements Vector.Species<Byte, S> {
+    public static abstract class ByteSpecies<S extends Vector.Shape> extends Vector.Species<Byte, S> {
         interface FOp {
             byte apply(int i);
         }

@@ -31,7 +31,7 @@ import java.nio.ShortBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
-public abstract class ShortVector<S extends Vector.Shape> implements Vector<Short,S> {
+public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S> {
 
     ShortVector() {}
 
@@ -460,7 +460,7 @@ public abstract class ShortVector<S extends Vector.Shape> implements Vector<Shor
     @Override
     public abstract ShortSpecies<S> species();
 
-    public static abstract class ShortSpecies<S extends Vector.Shape> implements Vector.Species<Short, S> {
+    public static abstract class ShortSpecies<S extends Vector.Shape> extends Vector.Species<Short, S> {
         interface FOp {
             short apply(int i);
         }
