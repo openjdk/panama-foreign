@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.spi.ToolProvider;
 import org.testng.annotations.Test;
 
@@ -116,6 +118,15 @@ public class JextractToolProviderTest {
             throw re;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static Field findField(Class<?> cls, String name) {
+        try {
+            return cls.getField(name);
+        } catch (Exception e) {
+            System.err.println(e);
+            return null;
         }
     }
 
@@ -350,6 +361,43 @@ public class JextractToolProviderTest {
             assertTrue(found, "uniondecl.IntOrFloat not found");
         } finally {
             deleteFile(uniondeclJar);
+        }
+    }
+
+    private void checkIntField(Class<?> cls, String name, int value) {
+        Field field = findField(cls, name);
+        assertNotNull(field);
+        assertEquals(field.getType(), int.class);
+        try {
+            assertEquals((int)field.get(null), value);
+        } catch (Exception exp) {
+            System.err.println(exp);
+            assertTrue(false, "should not reach here");
+        }
+    }
+
+    @Test
+    public void testAnonymousEnum() {
+        Path anonenumJar = getOutputFilePath("anonenum.jar");
+        deleteFile(anonenumJar);
+	Path anonenumH = getInputFilePath("anonenum.h");
+        try {
+            checkSuccess(null, "-o", anonenumJar.toString(), anonenumH.toString());
+            Class<?> anonenumCls = loadClass("anonenum", anonenumJar);
+            assertNotNull(anonenumCls);
+            // the nested type for anonymous enum has name starting with "enum__anonymous_at"
+            // followed by full path name of header file + line + column numbers. Any non-ident
+            // char replaced by "_". But we test only the start pattern here.
+            Optional<Class<?>> optEnumCls = Arrays.stream(anonenumCls.getClasses()).
+                filter(c -> c.getSimpleName().startsWith("enum__anonymous_at")).
+                findFirst();
+            assertTrue(optEnumCls.isPresent());
+            Class<?> enumCls = optEnumCls.get();
+            checkIntField(enumCls, "RED", 0xff0000);
+            checkIntField(enumCls, "GREEN", 0x00ff00);
+            checkIntField(enumCls, "BLUE", 0x0000ff);
+        } finally {
+            deleteFile(anonenumJar);
         }
     }
 

@@ -54,9 +54,7 @@ public class Utils {
 
     public static String toClassName(String cname) {
         StringBuilder sb = new StringBuilder(cname.length());
-        if (! Character.isJavaIdentifierStart(cname.charAt(0))) {
-            sb.append('_');
-        }
+        cname = toJavaIdentifier(cname);
         sb.append(cname);
         if (SourceVersion.isKeyword(cname)) {
             sb.append("$");
