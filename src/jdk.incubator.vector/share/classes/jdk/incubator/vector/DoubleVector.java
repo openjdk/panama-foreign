@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -241,6 +242,30 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     }
 
     public abstract DoubleVector<S> blend(double o, Mask<Double, S> m);
+
+    @Override
+    public abstract DoubleVector<S> shuffle(Vector<Double,S> o, Shuffle<Double, S> m);
+
+    @Override
+    public abstract DoubleVector<S> swizzle(Shuffle<Double, S> m);
+
+    @Override
+    @ForceInline
+    public <T extends Shape> DoubleVector<T> resize(Species<Double, T> species) {
+        return (DoubleVector<T>) species.reshape(this);
+    }
+
+    @Override
+    public abstract DoubleVector<S> rotateEL(int i);
+
+    @Override
+    public abstract DoubleVector<S> rotateER(int i);
+
+    @Override
+    public abstract DoubleVector<S> shiftEL(int i);
+
+    @Override
+    public abstract DoubleVector<S> shiftER(int i);
 
     public DoubleVector<S> div(Vector<Double,S> o) {
         return bOp(o, (i, a, b) -> (double) (a / b));
@@ -626,6 +651,27 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
             bb = bb.duplicate().position(ix);
             DoubleBuffer fb = bb.asDoubleBuffer();
             return op(m, i -> fb.get(i));
+        }
+
+        @Override
+        @ForceInline
+        public <F, T extends Shape> DoubleVector<S> reshape(Vector<F, T> o) {
+            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
+            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+            o.intoByteBuffer(bb, 0);
+            return fromByteBuffer(bb, 0);
+        }
+
+        @Override
+        @ForceInline
+        public <F> DoubleVector<S> rebracket(Vector<F, S> o) {
+            return reshape(o);
+        }
+
+        @Override
+        @ForceInline
+        public <T extends Shape> DoubleVector<S> resize(Vector<Double, T> o) {
+            return reshape(o);
         }
 
         @Override

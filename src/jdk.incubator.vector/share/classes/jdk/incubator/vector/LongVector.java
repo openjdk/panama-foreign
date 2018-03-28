@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.LongBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -241,6 +242,30 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     }
 
     public abstract LongVector<S> blend(long o, Mask<Long, S> m);
+
+    @Override
+    public abstract LongVector<S> shuffle(Vector<Long,S> o, Shuffle<Long, S> m);
+
+    @Override
+    public abstract LongVector<S> swizzle(Shuffle<Long, S> m);
+
+    @Override
+    @ForceInline
+    public <T extends Shape> LongVector<T> resize(Species<Long, T> species) {
+        return (LongVector<T>) species.reshape(this);
+    }
+
+    @Override
+    public abstract LongVector<S> rotateEL(int i);
+
+    @Override
+    public abstract LongVector<S> rotateER(int i);
+
+    @Override
+    public abstract LongVector<S> shiftEL(int i);
+
+    @Override
+    public abstract LongVector<S> shiftER(int i);
 
 
     public LongVector<S> and(Vector<Long,S> o) {
@@ -552,6 +577,27 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
             bb = bb.duplicate().position(ix);
             LongBuffer fb = bb.asLongBuffer();
             return op(m, i -> fb.get(i));
+        }
+
+        @Override
+        @ForceInline
+        public <F, T extends Shape> LongVector<S> reshape(Vector<F, T> o) {
+            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
+            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+            o.intoByteBuffer(bb, 0);
+            return fromByteBuffer(bb, 0);
+        }
+
+        @Override
+        @ForceInline
+        public <F> LongVector<S> rebracket(Vector<F, S> o) {
+            return reshape(o);
+        }
+
+        @Override
+        @ForceInline
+        public <T extends Shape> LongVector<S> resize(Vector<Long, T> o) {
+            return reshape(o);
         }
 
         @Override

@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -241,6 +242,30 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     }
 
     public abstract FloatVector<S> blend(float o, Mask<Float, S> m);
+
+    @Override
+    public abstract FloatVector<S> shuffle(Vector<Float,S> o, Shuffle<Float, S> m);
+
+    @Override
+    public abstract FloatVector<S> swizzle(Shuffle<Float, S> m);
+
+    @Override
+    @ForceInline
+    public <T extends Shape> FloatVector<T> resize(Species<Float, T> species) {
+        return (FloatVector<T>) species.reshape(this);
+    }
+
+    @Override
+    public abstract FloatVector<S> rotateEL(int i);
+
+    @Override
+    public abstract FloatVector<S> rotateER(int i);
+
+    @Override
+    public abstract FloatVector<S> shiftEL(int i);
+
+    @Override
+    public abstract FloatVector<S> shiftER(int i);
 
     public FloatVector<S> div(Vector<Float,S> o) {
         return bOp(o, (i, a, b) -> (float) (a / b));
@@ -626,6 +651,27 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
             bb = bb.duplicate().position(ix);
             FloatBuffer fb = bb.asFloatBuffer();
             return op(m, i -> fb.get(i));
+        }
+
+        @Override
+        @ForceInline
+        public <F, T extends Shape> FloatVector<S> reshape(Vector<F, T> o) {
+            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
+            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+            o.intoByteBuffer(bb, 0);
+            return fromByteBuffer(bb, 0);
+        }
+
+        @Override
+        @ForceInline
+        public <F> FloatVector<S> rebracket(Vector<F, S> o) {
+            return reshape(o);
+        }
+
+        @Override
+        @ForceInline
+        public <T extends Shape> FloatVector<S> resize(Vector<Float, T> o) {
+            return reshape(o);
         }
 
         @Override

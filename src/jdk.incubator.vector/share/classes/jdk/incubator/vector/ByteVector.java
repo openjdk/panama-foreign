@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
@@ -240,6 +241,30 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     }
 
     public abstract ByteVector<S> blend(byte o, Mask<Byte, S> m);
+
+    @Override
+    public abstract ByteVector<S> shuffle(Vector<Byte,S> o, Shuffle<Byte, S> m);
+
+    @Override
+    public abstract ByteVector<S> swizzle(Shuffle<Byte, S> m);
+
+    @Override
+    @ForceInline
+    public <T extends Shape> ByteVector<T> resize(Species<Byte, T> species) {
+        return (ByteVector<T>) species.reshape(this);
+    }
+
+    @Override
+    public abstract ByteVector<S> rotateEL(int i);
+
+    @Override
+    public abstract ByteVector<S> rotateER(int i);
+
+    @Override
+    public abstract ByteVector<S> shiftEL(int i);
+
+    @Override
+    public abstract ByteVector<S> shiftER(int i);
 
 
     public ByteVector<S> and(Vector<Byte,S> o) {
@@ -551,6 +576,27 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
             bb = bb.duplicate().position(ix);
             ByteBuffer fb = bb;
             return op(m, i -> fb.get(i));
+        }
+
+        @Override
+        @ForceInline
+        public <F, T extends Shape> ByteVector<S> reshape(Vector<F, T> o) {
+            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
+            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+            o.intoByteBuffer(bb, 0);
+            return fromByteBuffer(bb, 0);
+        }
+
+        @Override
+        @ForceInline
+        public <F> ByteVector<S> rebracket(Vector<F, S> o) {
+            return reshape(o);
+        }
+
+        @Override
+        @ForceInline
+        public <T extends Shape> ByteVector<S> resize(Vector<Byte, T> o) {
+            return reshape(o);
         }
 
         @Override

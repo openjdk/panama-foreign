@@ -128,10 +128,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
         return species.reshape(this);
     }
 
-    @ForceInline
-    public <T extends Shape> Vector<E, T> resize(Species<E, T> species) {
-        return species.reshape(this);
-    }
+    public abstract <T extends Shape> Vector<E, T> resize(Species<E, T> species);
 
     // Cast
 
@@ -204,27 +201,15 @@ public abstract class Vector<E, S extends Vector.Shape> {
         // Preserves bits, truncating if new shape is smaller in bit size than
         // old shape, or expanding (with zero bits) if new shape is larger in
         // bit size
-
-        public <F, T extends Shape> Vector<E, S> reshape(Vector<F, T> o) {
-            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
-            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-            o.intoByteBuffer(bb, 0);
-            return fromByteBuffer(bb, 0);
-        }
+        public abstract <F, T extends Shape> Vector<E, S> reshape(Vector<F, T> o);
 
         // Change type, not shape
         // No truncation or expansion of bits
-        @ForceInline
-        public <F> Vector<E, S> rebracket(Vector<F, S> o) {
-            return reshape(o);
-        }
+        public abstract <F> Vector<E, S> rebracket(Vector<F, S> o);
 
         // Change shape, not type
         // Truncation or expansion of bits
-        @ForceInline
-        public <T extends Shape> Vector<E, S> resize(Vector<E, T> o) {
-            return reshape(o);
-        }
+        public abstract <T extends Shape> Vector<E, S> resize(Vector<E, T> o);
 
         // Cast
         // Elements will be converted as per JLS primitive conversion rules

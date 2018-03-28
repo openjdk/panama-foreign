@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 #if[!byte]
 import java.nio.$Type$Buffer;
 #end[!byte]
@@ -243,6 +244,30 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     }
 
     public abstract $abstractvectortype$<S> blend($type$ o, Mask<$Boxtype$, S> m);
+
+    @Override
+    public abstract $abstractvectortype$<S> shuffle(Vector<$Boxtype$,S> o, Shuffle<$Boxtype$, S> m);
+
+    @Override
+    public abstract $abstractvectortype$<S> swizzle(Shuffle<$Boxtype$, S> m);
+
+    @Override
+    @ForceInline
+    public <T extends Shape> $abstractvectortype$<T> resize(Species<$Boxtype$, T> species) {
+        return ($abstractvectortype$<T>) species.reshape(this);
+    }
+
+    @Override
+    public abstract $abstractvectortype$<S> rotateEL(int i);
+
+    @Override
+    public abstract $abstractvectortype$<S> rotateER(int i);
+
+    @Override
+    public abstract $abstractvectortype$<S> shiftEL(int i);
+
+    @Override
+    public abstract $abstractvectortype$<S> shiftER(int i);
 
 #if[FP]
     public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o) {
@@ -761,6 +786,26 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
             bb = bb.duplicate().position(ix);
             $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
             return op(m, i -> fb.get(i));
+        }
+
+        @Override
+        public <F, T extends Shape> $abstractvectortype$<S> reshape(Vector<F, T> o) {
+            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
+            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+            o.intoByteBuffer(bb, 0);
+            return fromByteBuffer(bb, 0);
+        }
+
+        @Override
+        @ForceInline
+        public <F> $abstractvectortype$<S> rebracket(Vector<F, S> o) {
+            return reshape(o);
+        }
+
+        @Override
+        @ForceInline
+        public <T extends Shape> $abstractvectortype$<S> resize(Vector<$Boxtype$, T> o) {
+            return reshape(o);
         }
 
         @Override

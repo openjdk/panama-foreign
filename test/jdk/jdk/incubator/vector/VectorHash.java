@@ -162,12 +162,10 @@ public class VectorHash {
             ByteVector<S> b = byteSpecies.fromArray(a, i);
 
             for (int j = 0; j < byteSpecies.length() / intSpecies.length(); j++) {
-                // @@@ co-variant override
-                IntVector<S> x = (IntVector<S>) b.cast(intSpecies);
+                IntVector<S> x = intSpecies.cast(b);
                 h = h * top_h_coeff + x.mul(v_h_coeff).addAll();
 
-                // @@@ co-variant override
-                b = (ByteVector<S>) b.shiftEL(intSpecies.length());
+                b = b.shiftEL(intSpecies.length());
             }
         }
 

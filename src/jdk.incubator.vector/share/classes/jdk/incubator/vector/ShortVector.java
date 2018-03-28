@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -241,6 +242,30 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     }
 
     public abstract ShortVector<S> blend(short o, Mask<Short, S> m);
+
+    @Override
+    public abstract ShortVector<S> shuffle(Vector<Short,S> o, Shuffle<Short, S> m);
+
+    @Override
+    public abstract ShortVector<S> swizzle(Shuffle<Short, S> m);
+
+    @Override
+    @ForceInline
+    public <T extends Shape> ShortVector<T> resize(Species<Short, T> species) {
+        return (ShortVector<T>) species.reshape(this);
+    }
+
+    @Override
+    public abstract ShortVector<S> rotateEL(int i);
+
+    @Override
+    public abstract ShortVector<S> rotateER(int i);
+
+    @Override
+    public abstract ShortVector<S> shiftEL(int i);
+
+    @Override
+    public abstract ShortVector<S> shiftER(int i);
 
 
     public ShortVector<S> and(Vector<Short,S> o) {
@@ -552,6 +577,27 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
             bb = bb.duplicate().position(ix);
             ShortBuffer fb = bb.asShortBuffer();
             return op(m, i -> fb.get(i));
+        }
+
+        @Override
+        @ForceInline
+        public <F, T extends Shape> ShortVector<S> reshape(Vector<F, T> o) {
+            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
+            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+            o.intoByteBuffer(bb, 0);
+            return fromByteBuffer(bb, 0);
+        }
+
+        @Override
+        @ForceInline
+        public <F> ShortVector<S> rebracket(Vector<F, S> o) {
+            return reshape(o);
+        }
+
+        @Override
+        @ForceInline
+        public <T extends Shape> ShortVector<S> resize(Vector<Short, T> o) {
+            return reshape(o);
         }
 
         @Override

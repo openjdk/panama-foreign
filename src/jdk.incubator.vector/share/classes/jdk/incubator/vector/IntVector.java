@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -241,6 +242,30 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     public abstract IntVector<S> blend(int o, Mask<Integer, S> m);
+
+    @Override
+    public abstract IntVector<S> shuffle(Vector<Integer,S> o, Shuffle<Integer, S> m);
+
+    @Override
+    public abstract IntVector<S> swizzle(Shuffle<Integer, S> m);
+
+    @Override
+    @ForceInline
+    public <T extends Shape> IntVector<T> resize(Species<Integer, T> species) {
+        return (IntVector<T>) species.reshape(this);
+    }
+
+    @Override
+    public abstract IntVector<S> rotateEL(int i);
+
+    @Override
+    public abstract IntVector<S> rotateER(int i);
+
+    @Override
+    public abstract IntVector<S> shiftEL(int i);
+
+    @Override
+    public abstract IntVector<S> shiftER(int i);
 
 
     public IntVector<S> and(Vector<Integer,S> o) {
@@ -552,6 +577,27 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
             bb = bb.duplicate().position(ix);
             IntBuffer fb = bb.asIntBuffer();
             return op(m, i -> fb.get(i));
+        }
+
+        @Override
+        @ForceInline
+        public <F, T extends Shape> IntVector<S> reshape(Vector<F, T> o) {
+            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
+            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+            o.intoByteBuffer(bb, 0);
+            return fromByteBuffer(bb, 0);
+        }
+
+        @Override
+        @ForceInline
+        public <F> IntVector<S> rebracket(Vector<F, S> o) {
+            return reshape(o);
+        }
+
+        @Override
+        @ForceInline
+        public <T extends Shape> IntVector<S> resize(Vector<Integer, T> o) {
+            return reshape(o);
         }
 
         @Override
