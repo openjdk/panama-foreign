@@ -642,6 +642,22 @@ int ReductionNode::opcode(int opc, BasicType bt) {
       assert(bt == T_LONG, "must be");
       vopc = Op_AndReductionV;
       break;
+    case Op_OrI:
+      assert(bt == T_INT, "must be");
+      vopc = Op_OrReductionV;
+      break;
+    case Op_OrL:
+      assert(bt == T_LONG, "must be");
+      vopc = Op_OrReductionV;
+      break;
+    case Op_XorI:
+      assert(bt == T_INT, "must be");
+      vopc = Op_XorReductionV;
+      break;
+    case Op_XorL:
+      assert(bt == T_LONG, "must be");
+      vopc = Op_XorReductionV;
+      break;
     // TODO: add MulL for targets that support it
     default:
       break;
@@ -666,6 +682,8 @@ ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, Basi
   case Op_MulReductionVF: return new MulReductionVFNode(ctrl, n1, n2);
   case Op_MulReductionVD: return new MulReductionVDNode(ctrl, n1, n2);
   case Op_AndReductionV: return new AndReductionVNode(ctrl, n1, n2);
+  case Op_OrReductionV: return new OrReductionVNode(ctrl, n1, n2);
+  case Op_XorReductionV: return new XorReductionVNode(ctrl, n1, n2);
   default:
     fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
     return NULL;
@@ -692,6 +710,8 @@ Node* ReductionNode::make_reduction_input(PhaseGVN& gvn, int opc, BasicType bt) 
     case Op_AddReductionVL: // fallthrough
     case Op_AddReductionVF: // fallthrough
     case Op_AddReductionVD:
+    case Op_OrReductionV:
+    case Op_XorReductionV:
       return gvn.zerocon(bt);
     case Op_MulReductionVI:
       return gvn.makecon(TypeInt::ONE);

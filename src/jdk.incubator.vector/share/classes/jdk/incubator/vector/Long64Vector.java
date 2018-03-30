@@ -452,6 +452,24 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             v -> (long) v.rOp((long) -1, (i, a, b) -> (long) (a & b)));
     }
 
+    @Override
+    @ForceInline
+    public long orAll() {
+        return (long) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_OR, Long64Vector.class, long.class, LENGTH,
+            this,
+            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public long xorAll() {
+        return (long) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_XOR, Long64Vector.class, long.class, LENGTH,
+            this,
+            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a ^ b)));
+    }
+
     // Memory operations
 
     @Override

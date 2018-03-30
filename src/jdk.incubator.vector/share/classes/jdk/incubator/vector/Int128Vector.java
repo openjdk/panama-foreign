@@ -489,6 +489,24 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
             v -> (long) v.rOp((int) -1, (i, a, b) -> (int) (a & b)));
     }
 
+    @Override
+    @ForceInline
+    public int orAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_OR, Int128Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public int xorAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_XOR, Int128Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a ^ b)));
+    }
+
     // Memory operations
 
     @Override
