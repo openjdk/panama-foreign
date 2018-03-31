@@ -28,8 +28,69 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
+/**
+ * A {@code Vector} is designed for use in computations that can be transformed
+ * by a runtime compiler, on supported hardware, to Single Instruction Multiple
+ * Data (SIMD) computations leveraging vector hardware registers and vector
+ * hardware instructions.  Such computations exploit data parallelism to perform
+ * the same operation on multiple data points simultaneously in a faster time it
+ * would ordinarily take to perform the same operation sequentially on each data
+ * point.
+ * <p>
+ * A Vector represents an ordered immutable sequence of elements of the same
+ * element type {@code e} that is one of the following primitive types
+ * {@code byte}, {@code short}, {@code int}, {@code long}, {@code float}, or
+ * {@code double}).  The type variable {@code E} corresponds to the boxed
+ * element type, specifically the class that wraps a value of {@code e} in an
+ * object (such the {@code Integer} class that wraps a value of {@code int}}.
+ * A Vector has a {@link #shape() shape } {@code S}, extending type
+ * {@link #Vector.Shape}, that governs the total {@link #bitSize() size} in bits
+ * of the sequence of elements.
+ * Only Vectors of the same element type and shape can be operated on together.
+ * <p>
+ * The number of elements in the sequence is referred to as the Vector
+ * {@link #length() length}, and can be derived from the Vector bit size divided
+ * by the element bit size.
+ * The length also corresponds to the number of Vector lanes.  An element at
+ * position {@code N} (from {@code 0}, inclusive, to length, exclusive) in the
+ * sequence corresponds to an element at lane {@code N}.  Note: this arrangement
+ * of Vector bit size, Vector length, element bit size, and element position has
+ * no bearing on how a Vector instance and its sequence of elements may be
+ * arranged in memory or represented as a value in a vector hardware register.
+ * <p>
+ * Vector declares a set of operations (methods) that are common to all
+ * element types (such as addition).  Sub-classes of Vector with a concrete
+ * boxed element type declare further operations that are specific to that
+ * element type (such as access to element values in lanes, logical operations
+ * on values of integral elements types, or transcendental operations on values
+ * of floating point element types).
+ * There are six sub-classes of Vector corresponding to the supported set
+ * of element types, {@link ByteVector<S>}, {@link ShortVector<S>},
+ * {@link IntVector<S>} {@link LongVector<S>}, {@link FloatVector<S>}, and
+ * {@link DoubleVector<S>}.
+ * <p>
+ * Species...
+ *
+ * <p>
+ * Operations...
+ * unary operations
+ * binary operations
+ * reductive operations
+ * cross-lane operations
+ * <p>
+ * Masks...
+ * <p>
+ * Shuffles
+ *
+ * <p>This is a value-based
+ * class; use of identity-sensitive operations (including reference equality
+ * ({@code ==}), identity hash code, or synchronization) on instances of
+ * {@code Vector} may have unpredictable results and should be avoided.
+ *
+ * @param <E> the boxed element type of elements in this vector
+ * @param <S> the type of shape of this vector
+ */
 public abstract class Vector<E, S extends Vector.Shape> {
 
     Vector() {}
@@ -389,6 +450,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
             throw new IllegalArgumentException("Bad vector type: " + c.getName());
         }
     }
+
     // @@@ public static method on Species?
     private static int bitSizeForVectorLength(Class<?> c, int elementSize) {
         if (c == Float.class) {
