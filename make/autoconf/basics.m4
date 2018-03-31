@@ -851,8 +851,6 @@ AC_DEFUN_ONCE([BASIC_SETUP_OUTPUT_DIR],
   # You can run make from the OUTPUTDIR, or from the top-level Makefile
   # which will look for generated configurations
   AC_CONFIG_FILES([$OUTPUTDIR/Makefile:$AUTOCONF_DIR/Makefile.in])
-  # Pass down libclang location to test
-  AC_CONFIG_FILES([$TOPDIR/test/jdk/com/sun/tools/jextract/jclang-ffi/clang.properties])
 ])
 
 #%%% Simple tools %%%

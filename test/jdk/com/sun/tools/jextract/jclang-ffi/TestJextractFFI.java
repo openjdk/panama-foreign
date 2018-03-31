@@ -174,14 +174,10 @@ public class TestJextractFFI {
 
     public static int main(String... args) throws IOException, InterruptedException {
         final Path src_path = Paths.get(System.getProperty("test.src"));
-        Properties clang_properties = new Properties();
-        try (Reader in = Files.newBufferedReader(src_path.resolve("clang.properties"))) {
-            clang_properties.load(in);
-        }
 
         TestJextractFFI test = new TestJextractFFI(
-                Paths.get(clang_properties.getProperty("CLANG_INCLUDE_PATH")).toAbsolutePath(),
-                Paths.get(clang_properties.getProperty("CLANG_LIB_PATH")).toAbsolutePath(),
+                Paths.get(System.getProperty("clang.include.path")).toAbsolutePath(),
+                Paths.get(System.getProperty("clang.lib.path")).toAbsolutePath(),
                 src_path.resolve("src").toAbsolutePath()
         );
 
