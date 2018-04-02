@@ -682,21 +682,6 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
             (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
     }
 
-    @Override
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public <F> Vector<F, Shapes.S64Bit> rebracket(Species<F, Shapes.S64Bit> species) {
-        Objects.requireNonNull(species);
-        // TODO: check proper element type
-        // TODO: update to pass the two species as an arguments and ideally
-        // push down intrinsic call into species implementation
-        return VectorIntrinsics.rebracket(
-            Short64Vector.class, short.class, LENGTH,
-            species.elementType(), this,
-            (v, t) -> species.reshape(v)
-        );
-    }
-
     // Accessors
 
     @Override
@@ -781,9 +766,9 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         public <Z> Mask<Z, Shapes.S64Bit> rebracket(Species<Z, Shapes.S64Bit> species) {
             Objects.requireNonNull(species);
             // TODO: check proper element type
-            return VectorIntrinsics.rebracket(
+            return VectorIntrinsics.reinterpret(
                 Short64Mask.class, short.class, LENGTH,
-                species.elementType(), this,
+                species.elementType(), species.length(), this,
                 (m, t) -> m.reshape(species)
             );
         }
@@ -880,26 +865,31 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         }
 
         @Override
+        @ForceInline
         public int bitSize() {
             return BIT_SIZE;
         }
 
         @Override
+        @ForceInline
         public int length() {
             return LENGTH;
         }
 
         @Override
+        @ForceInline
         public Class<Short> elementType() {
             return short.class;
         }
 
         @Override
+        @ForceInline
         public int elementSize() {
             return Short.SIZE;
         }
 
         @Override
+        @ForceInline
         public Shapes.S64Bit shape() {
             return Shapes.S_64_BIT;
         }
@@ -1000,6 +990,96 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         @ForceInline
         public Short64Vector fromArray(short[] a, int ax, Mask<Short, Shapes.S64Bit> m) {
             return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <F> Short64Vector rebracket(Vector<F, Shapes.S64Bit> o) {
+            Objects.requireNonNull(o);
+            if (o.elementType() == byte.class) {
+                Byte64Vector so = (Byte64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Byte64Vector.class, byte.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else if (o.elementType() == short.class) {
+                Short64Vector so = (Short64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Short64Vector.class, short.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else if (o.elementType() == int.class) {
+                Int64Vector so = (Int64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Int64Vector.class, int.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else if (o.elementType() == long.class) {
+                Long64Vector so = (Long64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Long64Vector.class, long.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else if (o.elementType() == float.class) {
+                Float64Vector so = (Float64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Float64Vector.class, float.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else if (o.elementType() == double.class) {
+                Double64Vector so = (Double64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Double64Vector.class, double.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else {
+                throw new InternalError("Unimplemented size");
+            }
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <T extends Shape> Short64Vector resize(Vector<Short, T> o) {
+            Objects.requireNonNull(o);
+            if (o.bitSize() == 64) {
+                Short64Vector so = (Short64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Short64Vector.class, short.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else if (o.bitSize() == 128) {
+                Short128Vector so = (Short128Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Short128Vector.class, short.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else if (o.bitSize() == 256) {
+                Short256Vector so = (Short256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Short256Vector.class, short.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else if (o.bitSize() == 512) {
+                Short512Vector so = (Short512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Short512Vector.class, short.class, so.length(),
+                    short.class, LENGTH, so,
+                    (v, t) -> (Short64Vector)reshape(v)
+                );
+            } else {
+                throw new InternalError("Unimplemented size");
+            }
         }
     }
 }

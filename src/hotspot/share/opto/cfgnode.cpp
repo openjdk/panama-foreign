@@ -2110,16 +2110,23 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if (can_reshape && progress == NULL) {
     PhaseIterGVN *igvn = phase->is_IterGVN();
 
-    bool all_inputs_are_vboxes = true;
+    bool all_inputs_are_equiv_vboxes = true;
     for (uint i = 1; i < req(); ++i) {
       Node *n = in(i);
       if (in(i)->Opcode() != Op_VectorBox) {
-        all_inputs_are_vboxes = false;
+        all_inputs_are_equiv_vboxes = false;
+        break;
+      }
+      // Check that vector type of vboxes is equivalent
+      if (i != 1 &&
+          Type::cmp(in(i-1)->in(VectorBoxNode::Value)->bottom_type(),
+                    in(i)->in(VectorBoxNode::Value)->bottom_type()) != 0) {
+        all_inputs_are_equiv_vboxes = false;
         break;
       }
     }
 
-    if (all_inputs_are_vboxes) {
+    if (all_inputs_are_equiv_vboxes) {
       VectorBoxNode* vbox = static_cast<VectorBoxNode*>(in(1));
       PhiNode* new_vbox_phi = new PhiNode(r, vbox->box_type());
       PhiNode* new_vect_phi = new PhiNode(r, vbox->vec_type());

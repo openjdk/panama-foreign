@@ -920,21 +920,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
     }
 
-    @Override
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public <F> Vector<F, Shapes.$shape$> rebracket(Species<F, Shapes.$shape$> species) {
-        Objects.requireNonNull(species);
-        // TODO: check proper element type
-        // TODO: update to pass the two species as an arguments and ideally
-        // push down intrinsic call into species implementation
-        return VectorIntrinsics.rebracket(
-            $vectortype$.class, $type$.class, LENGTH,
-            species.elementType(), this,
-            (v, t) -> species.reshape(v)
-        );
-    }
-
     // Accessors
 
     @Override
@@ -1019,9 +1004,9 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         public <Z> Mask<Z, Shapes.$shape$> rebracket(Species<Z, Shapes.$shape$> species) {
             Objects.requireNonNull(species);
             // TODO: check proper element type
-            return VectorIntrinsics.rebracket(
+            return VectorIntrinsics.reinterpret(
                 $masktype$.class, $type$.class, LENGTH,
-                species.elementType(), this,
+                species.elementType(), species.length(), this,
                 (m, t) -> m.reshape(species)
             );
         }
@@ -1118,26 +1103,31 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         }
 
         @Override
+        @ForceInline
         public int bitSize() {
             return BIT_SIZE;
         }
 
         @Override
+        @ForceInline
         public int length() {
             return LENGTH;
         }
 
         @Override
+        @ForceInline
         public Class<$Boxtype$> elementType() {
             return $type$.class;
         }
 
         @Override
+        @ForceInline
         public int elementSize() {
             return $Boxtype$.SIZE;
         }
 
         @Override
+        @ForceInline
         public Shapes.$shape$ shape() {
             return Shapes.$Shape$;
         }
@@ -1258,6 +1248,96 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @ForceInline
         public $vectortype$ fromArray($type$[] a, int ax, Mask<$Boxtype$, Shapes.$shape$> m) {
             return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <F> $vectortype$ rebracket(Vector<F, Shapes.$shape$> o) {
+            Objects.requireNonNull(o);
+            if (o.elementType() == byte.class) {
+                Byte$bits$Vector so = (Byte$bits$Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Byte$bits$Vector.class, byte.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else if (o.elementType() == short.class) {
+                Short$bits$Vector so = (Short$bits$Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Short$bits$Vector.class, short.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else if (o.elementType() == int.class) {
+                Int$bits$Vector so = (Int$bits$Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Int$bits$Vector.class, int.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else if (o.elementType() == long.class) {
+                Long$bits$Vector so = (Long$bits$Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Long$bits$Vector.class, long.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else if (o.elementType() == float.class) {
+                Float$bits$Vector so = (Float$bits$Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Float$bits$Vector.class, float.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else if (o.elementType() == double.class) {
+                Double$bits$Vector so = (Double$bits$Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Double$bits$Vector.class, double.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else {
+                throw new InternalError("Unimplemented size");
+            }
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <T extends Shape> $vectortype$ resize(Vector<$Boxtype$, T> o) {
+            Objects.requireNonNull(o);
+            if (o.bitSize() == 64) {
+                $Type$64Vector so = ($Type$64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    $Type$64Vector.class, $type$.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else if (o.bitSize() == 128) {
+                $Type$128Vector so = ($Type$128Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    $Type$128Vector.class, $type$.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else if (o.bitSize() == 256) {
+                $Type$256Vector so = ($Type$256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    $Type$256Vector.class, $type$.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else if (o.bitSize() == 512) {
+                $Type$512Vector so = ($Type$512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    $Type$512Vector.class, $type$.class, so.length(),
+                    $type$.class, LENGTH, so,
+                    (v, t) -> ($vectortype$)reshape(v)
+                );
+            } else {
+                throw new InternalError("Unimplemented size");
+            }
         }
     }
 }

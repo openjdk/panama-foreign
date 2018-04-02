@@ -207,16 +207,16 @@ import java.util.function.*;
 
     /* ============================================================================ */
 
-    interface VectorRebracketOp<VT, VF> {
+    interface VectorReinterpretOp<VT, VF> {
         VT apply(VF v, Class<?> elementType);
     }
 
     @HotSpotIntrinsicCandidate
     static
     <VT, VF>
-    VT rebracket(Class<VF> fromVectorClass, Class<?> fromElementType, int fromVLen,
-                 Class<?> toElementType, VF v,
-                 VectorRebracketOp<VT,VF> defaultImpl) {
+    VT reinterpret(Class<VF> fromVectorClass, Class<?> fromElementType, int fromVLen,
+                   Class<?> toElementType, int toVLen, VF v,
+                   VectorReinterpretOp<VT,VF> defaultImpl) {
         return defaultImpl.apply(v, toElementType);
     }
 

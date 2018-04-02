@@ -711,21 +711,6 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
     }
 
-    @Override
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public <F> Vector<F, Shapes.S512Bit> rebracket(Species<F, Shapes.S512Bit> species) {
-        Objects.requireNonNull(species);
-        // TODO: check proper element type
-        // TODO: update to pass the two species as an arguments and ideally
-        // push down intrinsic call into species implementation
-        return VectorIntrinsics.rebracket(
-            Double512Vector.class, double.class, LENGTH,
-            species.elementType(), this,
-            (v, t) -> species.reshape(v)
-        );
-    }
-
     // Accessors
 
     @Override
@@ -810,9 +795,9 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         public <Z> Mask<Z, Shapes.S512Bit> rebracket(Species<Z, Shapes.S512Bit> species) {
             Objects.requireNonNull(species);
             // TODO: check proper element type
-            return VectorIntrinsics.rebracket(
+            return VectorIntrinsics.reinterpret(
                 Double512Mask.class, double.class, LENGTH,
-                species.elementType(), this,
+                species.elementType(), species.length(), this,
                 (m, t) -> m.reshape(species)
             );
         }
@@ -909,26 +894,31 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         }
 
         @Override
+        @ForceInline
         public int bitSize() {
             return BIT_SIZE;
         }
 
         @Override
+        @ForceInline
         public int length() {
             return LENGTH;
         }
 
         @Override
+        @ForceInline
         public Class<Double> elementType() {
             return double.class;
         }
 
         @Override
+        @ForceInline
         public int elementSize() {
             return Double.SIZE;
         }
 
         @Override
+        @ForceInline
         public Shapes.S512Bit shape() {
             return Shapes.S_512_BIT;
         }
@@ -1029,6 +1019,96 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         @ForceInline
         public Double512Vector fromArray(double[] a, int ax, Mask<Double, Shapes.S512Bit> m) {
             return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <F> Double512Vector rebracket(Vector<F, Shapes.S512Bit> o) {
+            Objects.requireNonNull(o);
+            if (o.elementType() == byte.class) {
+                Byte512Vector so = (Byte512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Byte512Vector.class, byte.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else if (o.elementType() == short.class) {
+                Short512Vector so = (Short512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Short512Vector.class, short.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else if (o.elementType() == int.class) {
+                Int512Vector so = (Int512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Int512Vector.class, int.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else if (o.elementType() == long.class) {
+                Long512Vector so = (Long512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Long512Vector.class, long.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else if (o.elementType() == float.class) {
+                Float512Vector so = (Float512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Float512Vector.class, float.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else if (o.elementType() == double.class) {
+                Double512Vector so = (Double512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Double512Vector.class, double.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else {
+                throw new InternalError("Unimplemented size");
+            }
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <T extends Shape> Double512Vector resize(Vector<Double, T> o) {
+            Objects.requireNonNull(o);
+            if (o.bitSize() == 64) {
+                Double64Vector so = (Double64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Double64Vector.class, double.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else if (o.bitSize() == 128) {
+                Double128Vector so = (Double128Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Double128Vector.class, double.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else if (o.bitSize() == 256) {
+                Double256Vector so = (Double256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Double256Vector.class, double.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else if (o.bitSize() == 512) {
+                Double512Vector so = (Double512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Double512Vector.class, double.class, so.length(),
+                    double.class, LENGTH, so,
+                    (v, t) -> (Double512Vector)reshape(v)
+                );
+            } else {
+                throw new InternalError("Unimplemented size");
+            }
         }
     }
 }

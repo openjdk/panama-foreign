@@ -281,7 +281,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     @Override
     @ForceInline
     public <T extends Shape> ByteVector<T> resize(Species<Byte, T> species) {
-        return (ByteVector<T>) species.reshape(this);
+        return (ByteVector<T>) species.resize(this);
     }
 
     @Override
@@ -410,14 +410,14 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         ByteBuffer fb = bb;
         forEach((i, a) -> fb.put(i, a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Byte, S> m) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         ByteBuffer fb = bb;
         forEach(m, (i, a) -> fb.put(i, a));
     }

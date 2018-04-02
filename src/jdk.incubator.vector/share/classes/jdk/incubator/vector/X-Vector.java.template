@@ -284,7 +284,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     @Override
     @ForceInline
     public <T extends Shape> $abstractvectortype$<T> resize(Species<$Boxtype$, T> species) {
-        return ($abstractvectortype$<T>) species.reshape(this);
+        return ($abstractvectortype$<T>) species.resize(this);
     }
 
     @Override
@@ -631,14 +631,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
         forEach((i, a) -> fb.put(i, a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, S> m) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
         forEach(m, (i, a) -> fb.put(i, a));
     }

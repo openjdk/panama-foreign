@@ -282,7 +282,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     @Override
     @ForceInline
     public <T extends Shape> ShortVector<T> resize(Species<Short, T> species) {
-        return (ShortVector<T>) species.reshape(this);
+        return (ShortVector<T>) species.resize(this);
     }
 
     @Override
@@ -411,14 +411,14 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         ShortBuffer fb = bb.asShortBuffer();
         forEach((i, a) -> fb.put(i, a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Short, S> m) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         ShortBuffer fb = bb.asShortBuffer();
         forEach(m, (i, a) -> fb.put(i, a));
     }

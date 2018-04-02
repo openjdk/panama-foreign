@@ -282,7 +282,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     @Override
     @ForceInline
     public <T extends Shape> FloatVector<T> resize(Species<Float, T> species) {
-        return (FloatVector<T>) species.reshape(this);
+        return (FloatVector<T>) species.resize(this);
     }
 
     @Override
@@ -517,14 +517,14 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         FloatBuffer fb = bb.asFloatBuffer();
         forEach((i, a) -> fb.put(i, a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Float, S> m) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         FloatBuffer fb = bb.asFloatBuffer();
         forEach(m, (i, a) -> fb.put(i, a));
     }

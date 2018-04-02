@@ -537,7 +537,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      */
     @ForceInline
     public <F> Vector<F, S> rebracket(Species<F, S> species) {
-        return species.reshape(this);
+        return species.rebracket(this);
     }
 
     /**

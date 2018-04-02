@@ -1145,17 +1145,17 @@ class VectorStoreMaskNode : public VectorNode {
 
 // This is intended for use as a simple reinterpret node that has no cast.
 class VectorReinterpretNode : public VectorNode {
+ private:
+  const TypeVect* _src_vt;
+ protected:
+  uint size_of() const { return sizeof(*this); }
  public:
   VectorReinterpretNode(Node* in, const TypeVect* src_vt, const TypeVect* dst_vt)
-      : VectorNode(in, dst_vt) {
-    BasicType src_bt = src_vt->element_basic_type();
-    BasicType dst_bt = dst_vt->element_basic_type();
-    int src_len = src_vt->length();
-    int dst_len = dst_vt->length();
-    // For now require consistency in resulting vector size. Otherwise we will need
-    // some backend tricks to handle register allocation for size change.
-    assert(type2aelembytes(src_bt) * src_len == type2aelembytes(dst_bt) * dst_len,
-           "reinterpreting means we cannot change vector size upwards");
+      : VectorNode(in, dst_vt), _src_vt(src_vt) { }
+
+  virtual uint hash() const { return VectorNode::hash() + _src_vt->hash(); }
+  virtual uint cmp( const Node &n ) const {
+    return VectorNode::cmp(n) && !Type::cmp(_src_vt,((VectorReinterpretNode&)n)._src_vt);
   }
 
   virtual int Opcode() const;

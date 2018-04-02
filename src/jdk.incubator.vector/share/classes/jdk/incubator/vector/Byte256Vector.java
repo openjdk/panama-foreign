@@ -682,21 +682,6 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
     }
 
-    @Override
-    @ForceInline
-    @SuppressWarnings("unchecked")
-    public <F> Vector<F, Shapes.S256Bit> rebracket(Species<F, Shapes.S256Bit> species) {
-        Objects.requireNonNull(species);
-        // TODO: check proper element type
-        // TODO: update to pass the two species as an arguments and ideally
-        // push down intrinsic call into species implementation
-        return VectorIntrinsics.rebracket(
-            Byte256Vector.class, byte.class, LENGTH,
-            species.elementType(), this,
-            (v, t) -> species.reshape(v)
-        );
-    }
-
     // Accessors
 
     @Override
@@ -781,9 +766,9 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         public <Z> Mask<Z, Shapes.S256Bit> rebracket(Species<Z, Shapes.S256Bit> species) {
             Objects.requireNonNull(species);
             // TODO: check proper element type
-            return VectorIntrinsics.rebracket(
+            return VectorIntrinsics.reinterpret(
                 Byte256Mask.class, byte.class, LENGTH,
-                species.elementType(), this,
+                species.elementType(), species.length(), this,
                 (m, t) -> m.reshape(species)
             );
         }
@@ -880,26 +865,31 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         }
 
         @Override
+        @ForceInline
         public int bitSize() {
             return BIT_SIZE;
         }
 
         @Override
+        @ForceInline
         public int length() {
             return LENGTH;
         }
 
         @Override
+        @ForceInline
         public Class<Byte> elementType() {
             return byte.class;
         }
 
         @Override
+        @ForceInline
         public int elementSize() {
             return Byte.SIZE;
         }
 
         @Override
+        @ForceInline
         public Shapes.S256Bit shape() {
             return Shapes.S_256_BIT;
         }
@@ -1000,6 +990,96 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         @ForceInline
         public Byte256Vector fromArray(byte[] a, int ax, Mask<Byte, Shapes.S256Bit> m) {
             return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <F> Byte256Vector rebracket(Vector<F, Shapes.S256Bit> o) {
+            Objects.requireNonNull(o);
+            if (o.elementType() == byte.class) {
+                Byte256Vector so = (Byte256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Byte256Vector.class, byte.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else if (o.elementType() == short.class) {
+                Short256Vector so = (Short256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Short256Vector.class, short.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else if (o.elementType() == int.class) {
+                Int256Vector so = (Int256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Int256Vector.class, int.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else if (o.elementType() == long.class) {
+                Long256Vector so = (Long256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Long256Vector.class, long.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else if (o.elementType() == float.class) {
+                Float256Vector so = (Float256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Float256Vector.class, float.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else if (o.elementType() == double.class) {
+                Double256Vector so = (Double256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Double256Vector.class, double.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else {
+                throw new InternalError("Unimplemented size");
+            }
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        public <T extends Shape> Byte256Vector resize(Vector<Byte, T> o) {
+            Objects.requireNonNull(o);
+            if (o.bitSize() == 64) {
+                Byte64Vector so = (Byte64Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Byte64Vector.class, byte.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else if (o.bitSize() == 128) {
+                Byte128Vector so = (Byte128Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Byte128Vector.class, byte.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else if (o.bitSize() == 256) {
+                Byte256Vector so = (Byte256Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Byte256Vector.class, byte.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else if (o.bitSize() == 512) {
+                Byte512Vector so = (Byte512Vector)o;
+                return VectorIntrinsics.reinterpret(
+                    Byte512Vector.class, byte.class, so.length(),
+                    byte.class, LENGTH, so,
+                    (v, t) -> (Byte256Vector)reshape(v)
+                );
+            } else {
+                throw new InternalError("Unimplemented size");
+            }
         }
     }
 }

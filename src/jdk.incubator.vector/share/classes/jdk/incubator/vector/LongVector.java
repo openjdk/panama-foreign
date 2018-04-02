@@ -282,7 +282,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     @Override
     @ForceInline
     public <T extends Shape> LongVector<T> resize(Species<Long, T> species) {
-        return (LongVector<T>) species.reshape(this);
+        return (LongVector<T>) species.resize(this);
     }
 
     @Override
@@ -432,14 +432,14 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         LongBuffer fb = bb.asLongBuffer();
         forEach((i, a) -> fb.put(i, a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Long, S> m) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         LongBuffer fb = bb.asLongBuffer();
         forEach(m, (i, a) -> fb.put(i, a));
     }

@@ -2790,39 +2790,248 @@ instruct fmaF_reg(regF a, regF b, regF c) %{
 
 // ====================VECTOR INSTRUCTIONS=====================================
 
-// FIXME: eliminate VectorReinterpret nodes before matching
-
 instruct reinterpretS(vecS dst) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
   match(Set dst (VectorReinterpret dst));
   ins_cost(125);
   format %{ " # reinterpret $dst" %}
   ins_encode %{
     // empty
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretS2D(vecD dst, vecS src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretS2X(vecX dst, vecS src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretS2Y(vecY dst, vecS src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretS2Z(vecZ dst, vecS src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretD2S(vecS dst, vecD src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct reinterpretD(vecD dst) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
   match(Set dst (VectorReinterpret dst));
   ins_cost(125);
   format %{ " # reinterpret $dst" %}
   ins_encode %{
     // empty
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretD2X(vecX dst, vecD src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretD2Y(vecY dst, vecD src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretD2Z(vecZ dst, vecD src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretX2S(vecS dst, vecX src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretX2D(vecD dst, vecX src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct reinterpretX(vecX dst) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
   match(Set dst (VectorReinterpret dst));
   ins_cost(125);
   format %{ " # reinterpret $dst" %}
   ins_encode %{
     // empty
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretX2Y(vecY dst, vecX src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretX2Z(vecZ dst, vecX src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretY2S(vecS dst, vecY src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretY2D(vecD dst, vecY src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretY2X(vecX dst, vecY src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct reinterpretY(vecY dst) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
   match(Set dst (VectorReinterpret dst));
   ins_cost(125);
   format %{ " # reinterpret $dst" %}
@@ -2832,7 +3041,78 @@ instruct reinterpretY(vecY dst) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct reinterpretY2Z(vecZ dst, vecY src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 32);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP dst);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretZ2S(vecS dst, vecZ src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 4 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretZ2D(vecD dst, vecZ src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretZ2X(vecX dst, vecZ src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretZ2Y(vecY dst, vecZ src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct reinterpretZ(vecZ dst) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 64);
   match(Set dst (VectorReinterpret dst));
   ins_cost(125);
   format %{ " # reinterpret $dst" %}

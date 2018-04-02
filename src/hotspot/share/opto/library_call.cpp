@@ -340,10 +340,11 @@ class LibraryCallKit : public GraphKit {
   bool inline_vector_blend();
   bool inline_vector_compare();
   bool inline_vector_broadcast_int();
-  bool inline_vector_rebracket();
+  bool inline_vector_reinterpret();
   Node* box_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
   Node* unbox_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
   Node* shift_count(Node* cnt, int shift_op, BasicType bt, int num_elem);
+  void set_vector_result(Node* result, bool set_res = true);
 
   void clear_upper_avx() {
 #ifdef X86
@@ -908,8 +909,8 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     return inline_vector_compare();
   case vmIntrinsics::_VectorBroadcastInt:
     return inline_vector_broadcast_int();
-  case vmIntrinsics::_VectorRebracket:
-    return inline_vector_rebracket();
+  case vmIntrinsics::_VectorReinterpret:
+    return inline_vector_reinterpret();
 
   default:
     // If you get here, it may be that someone has added a new intrinsic
@@ -7189,6 +7190,19 @@ Node* LibraryCallKit::unbox_vector(Node* v, const TypeInstPtr* vbox_type, BasicT
   return unbox;
 }
 
+void LibraryCallKit::set_vector_result(Node* result, bool set_res) {
+  if (DebugVectorApi) {
+    tty->print("============ ");
+    callee()->print();
+    tty->print_cr(" ============");
+    result->dump(5);
+    tty->print_cr("----------------------------------------------------");
+  }
+  if (set_res) {
+    set_result(result);
+  }
+}
+
 bool LibraryCallKit::inline_vector_nary_operation(int n) {
   const TypeInt* opr              = gvn().type(argument(0))->is_int();
   const TypeInstPtr* vector_klass = gvn().type(argument(1))->is_instptr();
@@ -7255,7 +7269,7 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   }
   // Wrap it up in VectorBox to keep object type information.
   operation = box_vector(operation, vbox_type, elem_bt, num_elem);
-  set_result(operation);
+  set_vector_result(operation);
 
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;
@@ -7320,7 +7334,7 @@ bool LibraryCallKit::inline_vector_broadcast_coerced() {
   Node* broadcast = VectorNode::scalar2vector(elem, num_elem, Type::get_const_basic_type(elem_bt));
   broadcast = gvn().transform(broadcast);
   Node* box = box_vector(broadcast, vbox_type, elem_bt, num_elem);
-  set_result(box);
+  set_vector_result(box);
 
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;
@@ -7381,10 +7395,11 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
     set_all_memory(reset_memory());
     Node* vstore = gvn().transform(StoreVectorNode::make(0, control(), memory(adr), adr, adr_type, val, num_elem));
     set_memory(vstore, adr_type);
+    set_vector_result(vstore, false);
   } else {
     Node* vload = gvn().transform(LoadVectorNode::make(0, control(), memory(adr), adr, adr_type, num_elem, elem_bt));
     Node* box = box_vector(vload, vbox_type, elem_bt, num_elem);
-    set_result(box);
+    set_vector_result(box);
   }
 
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
@@ -7464,7 +7479,7 @@ bool LibraryCallKit::inline_vector_reduction() {
     }
     default: fatal("%s", type2name(elem_bt));
   }
-  set_result(bits);
+  set_vector_result(bits);
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;
 }
@@ -7503,7 +7518,7 @@ bool LibraryCallKit::inline_vector_test() {
   }
   Node* test = new VectorTestNode(opd1, opd2, booltest);
   test = _gvn.transform(test);
-  set_result(test);
+  set_vector_result(test);
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;
 }
@@ -7551,7 +7566,7 @@ bool LibraryCallKit::inline_vector_blend() {
 
   Node* blend = _gvn.transform(new VectorBlendNode(v1, v2, mask));
   Node* box = box_vector(blend, vbox_type, elem_bt, num_elem);
-  set_result(box);
+  set_vector_result(box);
 
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;
@@ -7605,7 +7620,7 @@ bool LibraryCallKit::inline_vector_compare() {
   Node* operation = _gvn.transform(new VectorMaskCmpNode(pred, v1, v2, vt));
 
   Node* box = box_vector(operation, mbox_type, mask_bt, num_elem);
-  set_result(box);
+  set_vector_result(box);
 
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;
@@ -7669,20 +7684,21 @@ bool LibraryCallKit::inline_vector_broadcast_int() {
   Node* operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, num_elem, elem_bt));
 
   Node* vbox = box_vector(operation, vbox_type, elem_bt, num_elem);
-  set_result(vbox);
+  set_vector_result(vbox);
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;
 }
 
-bool LibraryCallKit::inline_vector_rebracket() {
+bool LibraryCallKit::inline_vector_reinterpret() {
   const TypeInstPtr* vector_klass_from = gvn().type(argument(0))->is_instptr();
   const TypeInstPtr* elem_klass_from   = gvn().type(argument(1))->is_instptr();
   const TypeInt*     vlen_from         = gvn().type(argument(2))->is_int();
 
   const TypeInstPtr* elem_klass_to     = gvn().type(argument(3))->is_instptr();
+  const TypeInt*     vlen_to           = gvn().type(argument(4))->is_int();
 
   if (vector_klass_from->const_oop() == NULL || elem_klass_from->const_oop() == NULL || !vlen_from->is_con() ||
-      elem_klass_to->const_oop() == NULL ) {
+      elem_klass_to->const_oop() == NULL || !vlen_to->is_con()) {
     return false; // not enough info for intrinsification
   }
 
@@ -7712,18 +7728,30 @@ bool LibraryCallKit::inline_vector_rebracket() {
     return false; // type mismatch
   }
   int num_elem_from = vlen_from->get_con();
-
-  int num_elem_to = (type2aelembytes(elem_bt_from) * num_elem_from) / type2aelembytes(elem_bt_to);
-  if (num_elem_to == 0) {
-    return false;
-  }
+  int num_elem_to = vlen_to->get_con();
   if (is_mask) {
     elem_bt_to = getMaskBasicType(elem_bt_to);
   }
 
+  // Check whether we can unbox to appropriate size.
+  if (!arch_supports_vector(Op_VectorReinterpret,
+                            num_elem_from,
+                            elem_bt_from,
+                            is_mask ? VecMaskUseAll : VecMaskNotUsed)) {
+    return false;
+  }
+
+  // Check whether we can support resizing/reinterpreting to the new size.
+  if (!arch_supports_vector(Op_VectorReinterpret,
+                            num_elem_to,
+                            elem_bt_to,
+                            is_mask ? VecMaskUseAll : VecMaskNotUsed)) {
+    return false;
+  }
+
   const TypeInstPtr* vbox_type_from = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass_from);
 
-  Node* opd1 = unbox_vector(argument(4), vbox_type_from, elem_bt_from, num_elem_from);
+  Node* opd1 = unbox_vector(argument(5), vbox_type_from, elem_bt_from, num_elem_from);
   if (opd1 == NULL) {
     return false;
   }
@@ -7734,14 +7762,14 @@ bool LibraryCallKit::inline_vector_rebracket() {
   const TypeVect* src_type = TypeVect::make(elem_bt_from, num_elem_from);
   const TypeVect* dst_type = TypeVect::make(elem_bt_to,   num_elem_to);
   Node* op = opd1;
-  if (src_type != dst_type) {
+  if (Type::cmp(src_type, dst_type) != 0) {
     op = _gvn.transform(new VectorReinterpretNode(op, src_type, dst_type));
   }
   ciKlass* vbox_klass_to = get_exact_klass_for_vector_box(vbox_klass_from, elem_bt_to,
                                                           num_elem_to, is_mask ? VECAPI_MASK : VECAPI_VECTOR);
   const TypeInstPtr* vbox_type_to = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass_to);
   Node* vbox = box_vector(op, vbox_type_to, elem_bt_to, num_elem_to);
-  set_result(vbox);
+  set_vector_result(vbox);
   return true;
 }
 

@@ -282,7 +282,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     @Override
     @ForceInline
     public <T extends Shape> DoubleVector<T> resize(Species<Double, T> species) {
-        return (DoubleVector<T>) species.reshape(this);
+        return (DoubleVector<T>) species.resize(this);
     }
 
     @Override
@@ -517,14 +517,14 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         DoubleBuffer fb = bb.asDoubleBuffer();
         forEach((i, a) -> fb.put(i, a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Double, S> m) {
-        bb = bb.duplicate().position(ix);
+        bb = bb.duplicate().order(bb.order()).position(ix);
         DoubleBuffer fb = bb.asDoubleBuffer();
         forEach(m, (i, a) -> fb.put(i, a));
     }
