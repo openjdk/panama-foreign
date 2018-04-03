@@ -580,7 +580,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Short512Vector(res);
     }

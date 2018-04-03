@@ -833,7 +833,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         $type$[] vec = getElements();
         $type$[] res = new $type$[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new $vectortype$(res);
     }

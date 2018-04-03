@@ -580,7 +580,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         byte[] vec = getElements();
         byte[] res = new byte[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Byte128Vector(res);
     }

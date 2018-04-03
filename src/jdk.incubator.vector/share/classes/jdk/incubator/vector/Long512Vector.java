@@ -641,7 +641,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Long512Vector(res);
     }

@@ -678,7 +678,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         int[] vec = getElements();
         int[] res = new int[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Int256Vector(res);
     }

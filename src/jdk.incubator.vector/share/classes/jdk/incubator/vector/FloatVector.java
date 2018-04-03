@@ -114,13 +114,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
     /**
      * Adds this vector to the result of broadcasting an input scalar,
-     * selecting lane elements governed by a mask.
+     * selecting lane elements controlled by a mask.
      * <p>
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
      * @param b the input vector
-     * @param m the mask governing lane selection
+     * @param m the mask controlling lane selection
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
@@ -547,8 +547,26 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
     // Type specific accessors
 
+    /**
+     * Gets the lane element at lane index {@code i}
+     *
+     * @param i the lane index
+     * @return the lane element at lane index {@code i}
+     */
     public abstract float get(int i);
 
+    /**
+     * Replaces the lane element of this vector at lane index {@code i} with
+     * value {@code e}.
+     * <p>
+     * This is a cross-lane operation.
+     * @@@ specify as blend(species().broadcast(e), mask)
+     *
+     * @param i the lane index of the lane element to be replaced
+     * @param e the value to be placed
+     * @return the result of replacing the lane element of this vector at lane
+     * index {@code i} with value {@code e}.
+     */
     public abstract FloatVector<S> with(int i, float e);
 
     // Type specific extractors

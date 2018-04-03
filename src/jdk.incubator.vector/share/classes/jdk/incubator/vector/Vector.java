@@ -38,24 +38,24 @@ import java.nio.ByteBuffer;
  * faster time it would ordinarily take to perform the same operation
  * sequentially on each data point.
  * <p>
- * A Vector represents an ordered immutable sequence of elements of the same
+ * A Vector represents an ordered immutable sequence of values of the same
  * element type {@code e} that is one of the following primitive types
  * {@code byte}, {@code short}, {@code int}, {@code long}, {@code float}, or
  * {@code double}).  The type variable {@code E} corresponds to the boxed
  * element type, specifically the class that wraps a value of {@code e} in an
  * object (such the {@code Integer} class that wraps a value of {@code int}}.
- * A Vector has a {@link #shape() shape } {@code S}, extending type
- * {@link #Vector.Shape}, that governs the total {@link #bitSize() size} in bits
- * of the sequence of elements.
+ * A Vector has a {@link #shape() shape} {@code S}, extending type
+ * {@link Shape}, that governs the total {@link #bitSize() size} in bits
+ * of the sequence of values.
  * <p>
- * The number of elements in the sequence is referred to as the Vector
- * {@link #length() length}, and can be derived from the Vector bit size divided
- * by the element bit size.
- * The length also corresponds to the number of Vector lanes.  An element at
- * position {@code N} (from {@code 0}, inclusive, to length, exclusive) in the
- * sequence corresponds to an element at lane {@code N}.  Note: this arrangement
- * of Vector bit size, Vector length, element bit size, and element position has
- * no bearing on how a Vector instance and its sequence of elements may be
+ * The number of values in the sequence is referred to as the Vector
+ * {@link #length() length}.  The length also corresponds to the number of
+ * Vector lanes.  The lane element at lane index {@code N} (from {@code 0},
+ * inclusive, to length, exclusive) corresponds to the {@code N + 1}'th value in
+ * the sequence.
+ * Note: this arrangement
+ * of Vector bit size, Vector length, element bit size, and lane element index
+ * has no bearing on how a Vector instance and its sequence of elements may be
  * arranged in memory or represented as a value in a vector hardware register.
  * <p>
  * Vector declares a set of vector operations (methods) that are common to all
@@ -69,20 +69,24 @@ import java.nio.ByteBuffer;
  * {@link IntVector<S>} {@link LongVector<S>}, {@link FloatVector<S>}, and
  * {@link DoubleVector<S>}.
  * <p>
- * Species...
- *
- * Masks...
- *
- * Shuffles...
- *
- *
+ * Vector values, instances of Vector, are created from a special kind of
+ * factory called a {@link Species}.  A Species has an
+ * element type and shape and creates Vector values of the same element type
+ * and shape.
+ * A species can be {@link #speciesInstance obtained} given an element type and
+ * shape, or a preferred species can be {@link #speciesInstance obtained} given
+ * just an element type where the most optimal shape is selected for the current
+ * platform.  It is recommended that Species instances be held in
+ * {@code static final} fields for optimal creation and usage of Vector values
+ * by the runtime compiler.
  * <p>
  * Vector operations can be grouped into various categories and their behaviour
  * generally specified as follows:
  * <ul>
  * <li>
- * A vector unary operation (1-ary) operates on one input
- * vector to produce a result vector.  For each lane of the input vector the
+ * A vector unary operation (1-ary) operates on one input vector to produce a
+ * result vector.
+ * For each lane of the input vector the
  * lane element is operated on using the specified scalar unary operation and
  * the element result is placed into the vector result at the same lane.
  * The following pseudocode expresses the behaviour of this operation category,
@@ -93,7 +97,7 @@ import java.nio.ByteBuffer;
  * EVector<S> a = ...;
  * e[] ar = new e[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_unary_op(a.getElement(i));
+ *     ar[i] = scalar_unary_op(a.get(i));
  * }
  * EVector<S> r = a.species().fromArray(ar, 0);
  * }</pre>
@@ -103,7 +107,8 @@ import java.nio.ByteBuffer;
  *
  * <li>
  * A vector binary operation (2-ary) operates on two input
- * vectors to produce a result vector.  For each lane of the two input vectors,
+ * vectors to produce a result vector.
+ * For each lane of the two input vectors,
  * a and b say, the corresponding lane elements from a and b are operated on
  * using the specified scalar binary operation and the element result is placed
  * into the vector result at the same lane.
@@ -114,7 +119,7 @@ import java.nio.ByteBuffer;
  * EVector<S> b = ...;
  * e[] ar = new e[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_op(a.getElement(i), b.getElement(i));
+ *     ar[i] = scalar_binary_op(a.get(i), b.get(i));
  * }
  * EVector<S> r = a.species().fromArray(ar, 0);
  * }</pre>
@@ -125,19 +130,21 @@ import java.nio.ByteBuffer;
  * <li>
  * Generalizing from unary (1-ary) and binary (2-ary) operations, a vector n-ary
  * operation operates in n input vectors to produce a
- * result vector.  N lane elements from each input vector are operated on
+ * result vector.
+ * N lane elements from each input vector are operated on
  * using the specified n-ary scalar operation and the element result is placed
  * into the vector result at the same lane.
  * Unless otherwise specified the n input and result vectors will have the same
  * element type and shape.
  *
  * <li>
- * A vector reductive operation operates on all the lane
- * elements of an input vector.  An accumulation function is applied to all the
+ * A vector reduction operation operates on all the lane
+ * elements of an input vector.
+ * An accumulation function is applied to all the
  * lane elements to produce a scalar result.
- * If the reductive operation is associative then the result may be accumulated
+ * If the reduction operation is associative then the result may be accumulated
  * by operating on the lane elements in any order using a specified associative
- * scalar binary operation and identity value.  Otherwise, the reductive
+ * scalar binary operation and identity value.  Otherwise, the reduction
  * operation specifies the behaviour of the accumulation function.
  * The following pseudocode expresses the behaviour of this operation category
  * if it is associative:
@@ -145,7 +152,7 @@ import java.nio.ByteBuffer;
  * EVector<S> a = ...;
  * e r = <identity value>;
  * for (int i = 0; i < a.length(); i++) {
- *     r = assoc_scalar_binary_op(r, a.getElement(i));
+ *     r = assoc_scalar_binary_op(r, a.get(i));
  * }
  * }</pre>
  *
@@ -164,7 +171,7 @@ import java.nio.ByteBuffer;
  * EVector<S> b = ...;
  * boolean[] ar = new boolean[a.length()];
  * for (int i = 0; i < a.length(); i++) {
- *     ar[i] = scalar_binary_test_op(a.getElement(i), b.getElement(i));
+ *     ar[i] = scalar_binary_test_op(a.get(i), b.get(i));
  * }
  * Mask<E, S> r = a.species().maskFromArray(ar, 0);
  * }</pre>
@@ -173,18 +180,34 @@ import java.nio.ByteBuffer;
  * the same element type and shape.
  *
  * <li>
- * A vector cross-lane operation...
+ * The prior categories of operation can be said to operate within the vector
+ * lanes, where lane access is uniformly applied to all vectors, specifically
+ * the scalar operation is applied to elements taken from input vectors at the
+ * same lane, and if appropriate applied to the result vector at the same lane.
+ * A further category of operation is a cross-lane vector operation where lane
+ * access is defined by the arguments to the operation.  Cross-lane operations
+ * generally rearrange lane elements, by permutation (commonly controlled by a
+ * {@link Shuffle}) or by blending (commonly controlled by a {@link Mask}).
+ * Such an operation explicitly specifies how it rearranges lane elements.
  * </ul>
  *
- * If a vector operation does not fit into any of the above categories then
+ * If a vector operation is represented as an instance method then first input
+ * vector corresponds to {@code this} vector and subsequent input vectors are
+ * arguments of the method.  Otherwise, if the an operation is represented as a
+ * static method then all input vectors are arguments of the method.
+ * <p>
+ * If a vector operation does not belong to one of the above categories then
  * the operation explicitly specifies how it processes the lane elements of
  * input vectors, and where appropriate expresses the behaviour using
  * pseudocode.
  *
  * <p>
- * Many vector operations provide an additional mask accepting variant.  The
- * mask governs which lanes are selected to apply the scalar operation to lane
- * elements.
+ * Many vector operations provide an additional {@link Mask mask} accepting
+ * variant.
+ * The mask controls which lanes are selected for application of the scalar
+ * operation.  Masks are a key component for the support of control flow in
+ * vector computations.
+ * <p>
  * For certain operation categories the mask accepting variants can be specified
  * in generic terms.  If a lane of the mask is set then the scalar operation is
  * applied to corresponding lane elements, otherwise if a lane of a mask is not
@@ -194,9 +217,9 @@ import java.nio.ByteBuffer;
  * <ul>
  * <li>
  * For a vector n-ary operation the default operation is a function that returns
- * it's first argument.
+ * it's first argument, specifically a lane element of the first input vector.
  * <li>
- * For an associative vector reductive operation the default operation is a
+ * For an associative vector reduction operation the default operation is a
  * function that returns the identity value.
  * <li>
  * For vector binary test operation the default operation is a function that
@@ -209,11 +232,12 @@ import java.nio.ByteBuffer;
  * <p>
  * For convenience many vector operations, of arity greater than one, provide
  * an additional scalar accepting variant.  This variant accepts compatible
- * scalar values instead of vectors for the second and subsequent arguments,
+ * scalar values instead of vectors for the second and subsequent input vectors,
  * if any.
  * Unless otherwise specified the scalar variant behaves as if each scalar value
- * is transformed to a vector using the vector species broadcast operation, and
- * then the vector accepting vector operation is applied to the transformed
+ * is transformed to a vector using the vector Species
+ * {@code broadcast} operation, and
+ * then the vector accepting vector operation is applied using the transformed
  * values.
  *
  * <p>
@@ -254,13 +278,13 @@ public abstract class Vector<E, S extends Vector.Shape> {
 
     /**
      * Adds this vector to an input vector, selecting lane elements
-     * governed by a mask.
+     * controlled by a mask.
      * <p>
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
      * @param b the input vector
-     * @param m the mask governing lane selection
+     * @param m the mask controlling lane selection
      * @return the result of adding this vector to the given vector
      */
     public abstract Vector<E, S> add(Vector<E, S> b, Mask<E, S> m);
@@ -342,8 +366,35 @@ public abstract class Vector<E, S extends Vector.Shape> {
     public abstract Mask<E, S> greaterThanEq(Vector<E, S> o);
 
     //Elemental shifting
+
+    /**
+     * Rotates left the lane elements of this vector by the given number of
+     * lanes, {@code i}, modulus the vector length.
+     * <p>
+     * This is a cross-lane operation that permutes the lane elements of this
+     * vector.
+     * For each lane of the input vector, at lane index {@code l}, the lane
+     * element is assigned to the result vector at lane index
+     * {@code (i + l) % this.length()}.
+     *
+     * @param i the number of lanes to rotate left
+     * @return the result of rotating left lane elements of this vector by the
+     * given number of lanes
+     */
     public abstract Vector<E, S> rotateEL(int i); //Rotate elements left
 
+    /**
+     * Rotates right the lane elements of this vector by the given number of
+     * lanes, {@code i}, modulus the vector length.
+     * <p>
+     * This is a cross-lane operation that permutes the lane elements of this
+     * vector and behaves as if rotating left the lane elements by
+     * {@code this.length() - (i % this.length())} lanes.
+     *
+     * @param i the number of lanes to rotate left
+     * @return the result of rotating right lane elements of this vector by the
+     * given number of lanes
+     */
     public abstract Vector<E, S> rotateER(int i); //Rotate elements right
 
     public abstract Vector<E, S> shiftEL(int i); //shift elements left
@@ -397,6 +448,13 @@ public abstract class Vector<E, S extends Vector.Shape> {
     public abstract void intoByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
 
 
+    /**
+     * A Species is a factory for creating {@link Vector}, {@link Mask} and
+     * {@link Shuffle} values of the same element type and shape.
+     *
+     * @param <E> the boxed element type of this species
+     * @param <S> the type of shape of this species
+     */
     public static abstract class Species<E, S extends Shape> {
         Species() {}
 
@@ -511,14 +569,48 @@ public abstract class Vector<E, S extends Vector.Shape> {
 
     }
 
+    /**
+     * A {@code Shape} governs the total size, in bits, of a
+     * {@link Vector}, {@link Mask}, or {@code Shuffle}.  The shape in
+     * combination with the element type together govern the number of lanes.
+     */
     public static abstract class Shape {
         Shape() {}
 
-        public abstract int bitSize();  // usually 64, 128, 256, etc.
+        /**
+         * Returns the size, in bits, of this shape.
+         *
+         * @return the size, in bits, of this shape.
+         */
+        public abstract int bitSize();
 
-        public int length(Species<?, ?> s) { return bitSize() / s.elementSize(); }  // usually bitSize / sizeof(s.elementType)
+        // @@@ remove this method
+        public int length(Species<?, ?> s) { return bitSize() / s.elementSize(); }
     }
 
+    /**
+     * A {@code Mask} represents an ordered immutable sequence of {@code boolean}
+     * values.  A Mask can be used with a mask accepting vector operation to
+     * control the selection and operation of lane elements of input vectors.
+     * <p>
+     * The number of values in the sequence is referred to as the Mask
+     * {@link #length() length}.  The length also corresponds to the number of
+     * Mask lanes.  The lane element at lane index {@code N} (from {@code 0},
+     * inclusive, to length, exclusive) corresponds to the {@code N + 1}'th
+     * value in the sequence.
+     * A Mask and Vector of the same element type and shape have the same number
+     * of lanes.
+     * <p>
+     * A lane is said to be <em>set</em> if the lane element is {@code true},
+     * otherwise a lane is said to be <em>unset</em> if the lane element is
+     * {@code false}.
+     * <p>
+     * Mask declares a limited set of unary, binary and reductive mask
+     * operations.
+     *
+     * @param <E> the boxed element type of this mask
+     * @param <S> the type of shape of this mask
+     */
     public static abstract class Mask<E, S extends Shape> {
         Mask() {}
 
@@ -550,6 +642,13 @@ public abstract class Vector<E, S extends Vector.Shape> {
 
         public abstract Vector<E, S> toVector();
 
+        /**
+         * Tests if the lane at index {@code i} is set
+         * @param i the lane index
+         *
+         * @return true if the lane at index {@code i} is set, otherwise false
+         */
+        // @@@ Rename to isSet
         public abstract boolean getElement(int i);
 
         @ForceInline
@@ -568,6 +667,30 @@ public abstract class Vector<E, S extends Vector.Shape> {
         }
     }
 
+    /**
+     * A {@code Shuffle} represents an ordered immutable sequence of
+     * {@code int} values.  A Shuffle can be used with a shuffle accepting
+     * vector operation to control the rearrangement of lane elements of input
+     * vectors
+     * <p>
+     * The number of values in the sequence is referred to as the Shuffle
+     * {@link #length() length}.  The length also corresponds to the number of
+     * Shuffle lanes.  The lane element at lane index {@code N} (from {@code 0},
+     * inclusive, to length, exclusive) corresponds to the {@code N + 1}'th
+     * value in the sequence.
+     * A Shuffle and Vector of the same element type and shape have the same
+     * number of lanes.
+     * <p>
+     * A {@code Shuffle<E, S>} is a specialized and limited form of an
+     * {@code IntVector<S>} where the Shuffle's lane elements correspond to
+     * lane index values.
+     * A Shuffle describes how a lane element of a vector may cross lanes from
+     * its lane index, {@code i} say, to another lane index whose value is the
+     * Shuffle's lane element at lane index {@code i}.
+     *
+     * @param <E> the boxed element type of this mask
+     * @param <S> the type of shape of this mask
+     */
     public static abstract class Shuffle<E, S extends Shape> {
         Shuffle() {}
 

@@ -626,7 +626,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Float128Vector(res);
     }

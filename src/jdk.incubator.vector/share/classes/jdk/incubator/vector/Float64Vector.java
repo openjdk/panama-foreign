@@ -626,7 +626,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
         float[] vec = getElements();
         float[] res = new float[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Float64Vector(res);
     }

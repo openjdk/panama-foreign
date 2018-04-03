@@ -626,7 +626,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         double[] vec = getElements();
         double[] res = new double[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Double64Vector(res);
     }

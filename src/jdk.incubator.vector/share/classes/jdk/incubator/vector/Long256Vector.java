@@ -641,7 +641,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Long256Vector(res);
     }

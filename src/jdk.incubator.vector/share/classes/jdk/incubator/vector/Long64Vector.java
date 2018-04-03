@@ -641,7 +641,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         long[] vec = getElements();
         long[] res = new long[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Long64Vector(res);
     }

@@ -580,7 +580,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         short[] vec = getElements();
         short[] res = new short[length()];
         for (int i = 0; i < length(); i++){
-            res[j + i % length()] = vec[i];
+            res[(j + i) % length()] = vec[i];
         }
         return new Short64Vector(res);
     }

@@ -27,6 +27,8 @@ package jdk.incubator.vector;
 
 final public class Shapes {
 
+    // @@@ Move into Vector.Shape
+
     public static final S64Bit S_64_BIT = new S64Bit();
 
     public static final class S64Bit extends Vector.Shape {
