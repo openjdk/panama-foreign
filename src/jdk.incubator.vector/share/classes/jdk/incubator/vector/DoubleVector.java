@@ -95,14 +95,36 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         return bOp(o, (i, a, b) -> (double) (a + b));
     }
 
-    public abstract DoubleVector<S> add(double o);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract DoubleVector<S> add(double b);
 
     @Override
     public DoubleVector<S> add(Vector<Double,S> o, Mask<Double, S> m) {
         return bOp(o, m, (i, a, b) -> (double) (a + b));
     }
 
-    public abstract DoubleVector<S> add(double o, Mask<Double, S> m);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar,
+     * selecting lane elements governed by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @param m the mask governing lane selection
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract DoubleVector<S> add(double b, Mask<Double, S> m);
 
     @Override
     public DoubleVector<S> addSaturate(Vector<Double,S> o) {
@@ -654,7 +676,6 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         }
 
         @Override
-        @ForceInline
         public <F, T extends Shape> DoubleVector<S> reshape(Vector<F, T> o) {
             int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
             ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());

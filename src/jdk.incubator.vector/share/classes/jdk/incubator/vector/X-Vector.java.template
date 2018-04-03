@@ -97,14 +97,36 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return bOp(o, (i, a, b) -> ($type$) (a + b));
     }
 
-    public abstract $abstractvectortype$<S> add($type$ o);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract $abstractvectortype$<S> add($type$ b);
 
     @Override
     public $abstractvectortype$<S> add(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
         return bOp(o, m, (i, a, b) -> ($type$) (a + b));
     }
 
-    public abstract $abstractvectortype$<S> add($type$ o, Mask<$Boxtype$, S> m);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar,
+     * selecting lane elements governed by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @param m the mask governing lane selection
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract $abstractvectortype$<S> add($type$ b, Mask<$Boxtype$, S> m);
 
     @Override
     public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> o) {
@@ -610,6 +632,17 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
 
     // Type specific horizontal reductions
 
+#if[BITWISE]
+    /**
+     * Sums all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements, and the identity value
+     * is {@code 0}.
+     *
+     * @return the sum of all the lane elements of this vector
+     */
+#end[BITWISE]
     public $type$ addAll() {
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a + b));
     }

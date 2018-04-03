@@ -95,14 +95,36 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
         return bOp(o, (i, a, b) -> (short) (a + b));
     }
 
-    public abstract ShortVector<S> add(short o);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract ShortVector<S> add(short b);
 
     @Override
     public ShortVector<S> add(Vector<Short,S> o, Mask<Short, S> m) {
         return bOp(o, m, (i, a, b) -> (short) (a + b));
     }
 
-    public abstract ShortVector<S> add(short o, Mask<Short, S> m);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar,
+     * selecting lane elements governed by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @param m the mask governing lane selection
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract ShortVector<S> add(short b, Mask<Short, S> m);
 
     @Override
     public ShortVector<S> addSaturate(Vector<Short,S> o) {
@@ -417,6 +439,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
 
     // Type specific horizontal reductions
 
+    /**
+     * Sums all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements, and the identity value
+     * is {@code 0}.
+     *
+     * @return the sum of all the lane elements of this vector
+     */
     public short addAll() {
         return rOp((short) 0, (i, a, b) -> (short) (a + b));
     }
@@ -580,7 +611,6 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
         }
 
         @Override
-        @ForceInline
         public <F, T extends Shape> ShortVector<S> reshape(Vector<F, T> o) {
             int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
             ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());

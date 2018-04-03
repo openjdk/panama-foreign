@@ -33,10 +33,10 @@ import java.nio.ByteBuffer;
  * A {@code Vector} is designed for use in computations that can be transformed
  * by a runtime compiler, on supported hardware, to Single Instruction Multiple
  * Data (SIMD) computations leveraging vector hardware registers and vector
- * hardware instructions.  Such computations exploit data parallelism to perform
- * the same operation on multiple data points simultaneously in a faster time it
- * would ordinarily take to perform the same operation sequentially on each data
- * point.
+ * hardware instructions.  Such SIMD computations exploit data parallelism to
+ * perform the same operation on multiple data points simultaneously in a
+ * faster time it would ordinarily take to perform the same operation
+ * sequentially on each data point.
  * <p>
  * A Vector represents an ordered immutable sequence of elements of the same
  * element type {@code e} that is one of the following primitive types
@@ -47,7 +47,6 @@ import java.nio.ByteBuffer;
  * A Vector has a {@link #shape() shape } {@code S}, extending type
  * {@link #Vector.Shape}, that governs the total {@link #bitSize() size} in bits
  * of the sequence of elements.
- * Only Vectors of the same element type and shape can be operated on together.
  * <p>
  * The number of elements in the sequence is referred to as the Vector
  * {@link #length() length}, and can be derived from the Vector bit size divided
@@ -59,7 +58,7 @@ import java.nio.ByteBuffer;
  * no bearing on how a Vector instance and its sequence of elements may be
  * arranged in memory or represented as a value in a vector hardware register.
  * <p>
- * Vector declares a set of operations (methods) that are common to all
+ * Vector declares a set of vector operations (methods) that are common to all
  * element types (such as addition).  Sub-classes of Vector with a concrete
  * boxed element type declare further operations that are specific to that
  * element type (such as access to element values in lanes, logical operations
@@ -72,18 +71,153 @@ import java.nio.ByteBuffer;
  * <p>
  * Species...
  *
- * <p>
- * Operations...
- * unary operations
- * binary operations
- * reductive operations
- * cross-lane operations
- * <p>
  * Masks...
- * <p>
- * Shuffles
  *
- * <p>This is a value-based
+ * Shuffles...
+ *
+ *
+ * <p>
+ * Vector operations can be grouped into various categories and their behaviour
+ * generally specified as follows:
+ * <ul>
+ * <li>
+ * A vector unary operation (1-ary) operates on one input
+ * vector to produce a result vector.  For each lane of the input vector the
+ * lane element is operated on using the specified scalar unary operation and
+ * the element result is placed into the vector result at the same lane.
+ * The following pseudocode expresses the behaviour of this operation category,
+ * where {@code e} is the element type and {@code EVector} corresponds to the
+ * primitive Vector type:
+ *
+ * <pre>{@code
+ * EVector<S> a = ...;
+ * e[] ar = new e[a.length()];
+ * for (int i = 0; i < a.length(); i++) {
+ *     ar[i] = scalar_unary_op(a.getElement(i));
+ * }
+ * EVector<S> r = a.species().fromArray(ar, 0);
+ * }</pre>
+ *
+ * Unless otherwise specified the input and result vectors will have the same
+ * element type and shape.
+ *
+ * <li>
+ * A vector binary operation (2-ary) operates on two input
+ * vectors to produce a result vector.  For each lane of the two input vectors,
+ * a and b say, the corresponding lane elements from a and b are operated on
+ * using the specified scalar binary operation and the element result is placed
+ * into the vector result at the same lane.
+ * The following pseudocode expresses the behaviour of this operation category:
+ *
+ * <pre>{@code
+ * EVector<S> a = ...;
+ * EVector<S> b = ...;
+ * e[] ar = new e[a.length()];
+ * for (int i = 0; i < a.length(); i++) {
+ *     ar[i] = scalar_binary_op(a.getElement(i), b.getElement(i));
+ * }
+ * EVector<S> r = a.species().fromArray(ar, 0);
+ * }</pre>
+ *
+ * Unless otherwise specified the two input and result vectors will have the
+ * same element type and shape.
+ *
+ * <li>
+ * Generalizing from unary (1-ary) and binary (2-ary) operations, a vector n-ary
+ * operation operates in n input vectors to produce a
+ * result vector.  N lane elements from each input vector are operated on
+ * using the specified n-ary scalar operation and the element result is placed
+ * into the vector result at the same lane.
+ * Unless otherwise specified the n input and result vectors will have the same
+ * element type and shape.
+ *
+ * <li>
+ * A vector reductive operation operates on all the lane
+ * elements of an input vector.  An accumulation function is applied to all the
+ * lane elements to produce a scalar result.
+ * If the reductive operation is associative then the result may be accumulated
+ * by operating on the lane elements in any order using a specified associative
+ * scalar binary operation and identity value.  Otherwise, the reductive
+ * operation specifies the behaviour of the accumulation function.
+ * The following pseudocode expresses the behaviour of this operation category
+ * if it is associative:
+ * <pre>{@code
+ * EVector<S> a = ...;
+ * e r = <identity value>;
+ * for (int i = 0; i < a.length(); i++) {
+ *     r = assoc_scalar_binary_op(r, a.getElement(i));
+ * }
+ * }</pre>
+ *
+ * Unless otherwise specified the scalar result type and element type will be
+ * the same.
+ *
+ * <li>
+ * A vector binary test operation operates on two input vectors to produce a
+ * result mask.  For each lane of the two input vectors, a and b say, the
+ * the corresponding lane elements from a and b are operated on using the
+ * specified scalar binary test operation and the boolean result is placed
+ * into the mask at the same lane.
+ * The following pseudocode expresses the behaviour of this operation category:
+ * <pre>{@code
+ * EVector<S> a = ...;
+ * EVector<S> b = ...;
+ * boolean[] ar = new boolean[a.length()];
+ * for (int i = 0; i < a.length(); i++) {
+ *     ar[i] = scalar_binary_test_op(a.getElement(i), b.getElement(i));
+ * }
+ * Mask<E, S> r = a.species().maskFromArray(ar, 0);
+ * }</pre>
+ *
+ * Unless otherwise specified the two input vectors and result mask will have
+ * the same element type and shape.
+ *
+ * <li>
+ * A vector cross-lane operation...
+ * </ul>
+ *
+ * If a vector operation does not fit into any of the above categories then
+ * the operation explicitly specifies how it processes the lane elements of
+ * input vectors, and where appropriate expresses the behaviour using
+ * pseudocode.
+ *
+ * <p>
+ * Many vector operations provide an additional mask accepting variant.  The
+ * mask governs which lanes are selected to apply the scalar operation to lane
+ * elements.
+ * For certain operation categories the mask accepting variants can be specified
+ * in generic terms.  If a lane of the mask is set then the scalar operation is
+ * applied to corresponding lane elements, otherwise if a lane of a mask is not
+ * set then a default scalar operation is applied and its result is placed into
+ * the vector result at the same lane. The default operation is specified for
+ * the following operation categories:
+ * <ul>
+ * <li>
+ * For a vector n-ary operation the default operation is a function that returns
+ * it's first argument.
+ * <li>
+ * For an associative vector reductive operation the default operation is a
+ * function that returns the identity value.
+ * <li>
+ * For vector binary test operation the default operation is a function that
+ * returns false.
+ *</ul>
+ * Otherwise, the mask accepting variant of the operation explicitly specifies
+ * how it processes the lane elements of input vectors, and where appropriate
+ * expresses the behaviour using pseudocode.
+ *
+ * <p>
+ * For convenience many vector operations, of arity greater than one, provide
+ * an additional scalar accepting variant.  This variant accepts compatible
+ * scalar values instead of vectors for the second and subsequent arguments,
+ * if any.
+ * Unless otherwise specified the scalar variant behaves as if each scalar value
+ * is transformed to a vector using the vector species broadcast operation, and
+ * then the vector accepting vector operation is applied to the transformed
+ * values.
+ *
+ * <p>
+ * This is a value-based
  * class; use of identity-sensitive operations (including reference equality
  * ({@code ==}), identity hash code, or synchronization) on instances of
  * {@code Vector} may have unpredictable results and should be avoided.
@@ -106,9 +240,30 @@ public abstract class Vector<E, S extends Vector.Shape> {
     public int bitSize() { return species().bitSize(); }
 
     //Arithmetic
-    public abstract Vector<E, S> add(Vector<E, S> o);
 
-    public abstract Vector<E, S> add(Vector<E, S> o, Mask<E, S> m);
+    /**
+     * Adds this vector to an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @return the result of adding this vector to the input vector
+     */
+    public abstract Vector<E, S> add(Vector<E, S> b);
+
+    /**
+     * Adds this vector to an input vector, selecting lane elements
+     * governed by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @param m the mask governing lane selection
+     * @return the result of adding this vector to the given vector
+     */
+    public abstract Vector<E, S> add(Vector<E, S> b, Mask<E, S> m);
 
     public abstract Vector<E, S> addSaturate(Vector<E, S> o);
 
@@ -126,6 +281,14 @@ public abstract class Vector<E, S extends Vector.Shape> {
 
     public abstract Vector<E, S> mul(Vector<E, S> o, Mask<E, S> m);
 
+    /**
+     * Negates this vector.
+     * <p>
+     * This is a vector unary operation where the primitive negation operation
+     * ({@code -})is applied to lane elements.
+     *
+     * @return the result of negating this vector
+     */
     public abstract Vector<E, S> neg();
 
     public abstract Vector<E, S> neg(Mask<E, S> m);
@@ -142,14 +305,35 @@ public abstract class Vector<E, S extends Vector.Shape> {
     //TODO: Parity
 
     //Comparisons
-    //For now these are projected into the same element type.  False is the element 0.  True is otherwise.
+
     //TODO: N.B. Floating point NaN behaviors?
     //TODO: Check the JLS
-    public abstract Mask<E, S> equal(Vector<E, S> o);
+
+    /**
+     * Tests if this vector is equal to the given vector.
+     * <p>
+     * This is a vector binary test operation where the primitive equals
+     * operation ({@code ==}) is applied to lane elements.
+     *
+     * @param b the given vector
+     * @return the result mask of testing if this vector is equal to the given
+     * vector
+     */
+    public abstract Mask<E, S> equal(Vector<E, S> b);
 
     public abstract Mask<E, S> notEqual(Vector<E, S> o);
 
-    public abstract Mask<E, S> lessThan(Vector<E, S> o);
+    /**
+     * Tests if this vector is less than the given vector.
+     * <p>
+     * This is a vector binary test operation where the primitive less than
+     * operation ({@code <}) is applied to lane elements.
+     *
+     * @param b the given vector
+     * @return the mask result of testing if this vector is less than the given
+     * vector
+     */
+    public abstract Mask<E, S> lessThan(Vector<E, S> b);
 
     public abstract Mask<E, S> lessThanEq(Vector<E, S> o);
 

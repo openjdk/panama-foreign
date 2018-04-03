@@ -95,14 +95,36 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         return bOp(o, (i, a, b) -> (float) (a + b));
     }
 
-    public abstract FloatVector<S> add(float o);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract FloatVector<S> add(float b);
 
     @Override
     public FloatVector<S> add(Vector<Float,S> o, Mask<Float, S> m) {
         return bOp(o, m, (i, a, b) -> (float) (a + b));
     }
 
-    public abstract FloatVector<S> add(float o, Mask<Float, S> m);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar,
+     * selecting lane elements governed by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @param m the mask governing lane selection
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract FloatVector<S> add(float b, Mask<Float, S> m);
 
     @Override
     public FloatVector<S> addSaturate(Vector<Float,S> o) {
@@ -654,7 +676,6 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         }
 
         @Override
-        @ForceInline
         public <F, T extends Shape> FloatVector<S> reshape(Vector<F, T> o) {
             int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
             ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());

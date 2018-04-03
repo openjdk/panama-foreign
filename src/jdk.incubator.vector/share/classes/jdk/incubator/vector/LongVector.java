@@ -95,14 +95,36 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
         return bOp(o, (i, a, b) -> (long) (a + b));
     }
 
-    public abstract LongVector<S> add(long o);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract LongVector<S> add(long b);
 
     @Override
     public LongVector<S> add(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a + b));
     }
 
-    public abstract LongVector<S> add(long o, Mask<Long, S> m);
+    /**
+     * Adds this vector to the result of broadcasting an input scalar,
+     * selecting lane elements governed by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive addition operation
+     * ({@code +}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @param m the mask governing lane selection
+     * @return the result of adding this vector to the broadcast of an input
+     * scalar
+     */
+    public abstract LongVector<S> add(long b, Mask<Long, S> m);
 
     @Override
     public LongVector<S> addSaturate(Vector<Long,S> o) {
@@ -417,6 +439,15 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
 
     // Type specific horizontal reductions
 
+    /**
+     * Sums all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements, and the identity value
+     * is {@code 0}.
+     *
+     * @return the sum of all the lane elements of this vector
+     */
     public long addAll() {
         return rOp((long) 0, (i, a, b) -> (long) (a + b));
     }
@@ -580,7 +611,6 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
         }
 
         @Override
-        @ForceInline
         public <F, T extends Shape> LongVector<S> reshape(Vector<F, T> o) {
             int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
             ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
