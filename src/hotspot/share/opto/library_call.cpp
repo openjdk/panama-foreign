@@ -7413,6 +7413,16 @@ bool LibraryCallKit::inline_vector_reduction() {
   int opc  = get_opc(opr->get_con(), elem_bt);
   int sopc = ReductionNode::opcode(opc, elem_bt);
 
+  // FIXME: When encountering a SubReduction, we want to check for support of
+  // the corresponding AddReduction node.
+  if (sopc == Op_SubReductionV) {
+    if (gvn().type(argument(2))->isa_int()) {
+      sopc = Op_AddReductionVI;
+    } else if (gvn().type(argument(2))->isa_long()) {
+      sopc = Op_AddReductionVL;
+    }
+  }
+
   // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
   if (!arch_supports_vector(sopc, num_elem, elem_bt, VecMaskNotUsed)) {
     return false;

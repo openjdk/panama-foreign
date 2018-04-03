@@ -1939,6 +1939,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_c2_type(SubFPNode, SubNode)                                     \
   declare_c2_type(SubFNode, SubFPNode)                                    \
   declare_c2_type(SubDNode, SubFPNode)                                    \
+  declare_c2_type(SubReductionVNode, ReductionNode)                       \
   declare_c2_type(CmpNode, SubNode)                                       \
   declare_c2_type(CmpINode, CmpNode)                                      \
   declare_c2_type(CmpUNode, CmpNode)                                      \
@@ -1959,6 +1960,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_c2_type(CmpLTMaskNode, Node)                                    \
   declare_c2_type(NegNode, Node)                                          \
   declare_c2_type(NegINode, NegNode)                                      \
+  declare_c2_type(NegLNode, NegNode)                                      \
   declare_c2_type(NegFNode, NegNode)                                      \
   declare_c2_type(NegDNode, NegNode)                                      \
   declare_c2_type(AtanDNode, Node)                                        \

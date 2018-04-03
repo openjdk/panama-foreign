@@ -402,6 +402,17 @@ public:
   virtual uint ideal_reg() const { return Op_RegI; }
 };
 
+//------------------------------NegLNode---------------------------------------
+// Negate value an int.  For int values, negation is the same as subtraction 
+// from zero
+class NegLNode : public NegNode {
+public:
+  NegLNode(Node *in1) : NegNode(in1) {}
+  virtual int Opcode() const;
+  const Type *bottom_type() const { return TypeLong::LONG; }
+  virtual uint ideal_reg() const { return Op_RegL; }
+};
+
 //------------------------------NegFNode---------------------------------------
 // Negate value a float.  Negating 0.0 returns -0.0, but subtracting from
 // zero returns +0.0 (per JVM spec on 'fneg' bytecode).  As subtraction

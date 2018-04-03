@@ -470,6 +470,15 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a ^ b)));
     }
 
+    @Override
+    @ForceInline
+    public long subAll() {
+        return (long) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_SUB, Long512Vector.class, long.class, LENGTH,
+            this,
+            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a - b)));
+    }
+
     // Memory operations
 
     @Override

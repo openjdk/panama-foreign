@@ -2595,6 +2595,30 @@ instruct absD_reg_reg_evex(regD dst, regD src) %{
 %}
 #endif
 
+instruct negI_rReg_2(rRegI dst, rFlagsReg cr)
+%{
+  match(Set dst (NegI dst));
+  effect(KILL cr);
+ 
+  format %{ "negl    $dst\t# int" %}
+  ins_encode %{
+    __ negl($dst$$Register);
+  %}
+  ins_pipe(ialu_reg);
+%}
+
+instruct negL_rReg_2(rRegL dst, rFlagsReg cr)
+%{
+  match(Set dst (NegL dst));
+  effect(KILL cr);
+
+  format %{ "negq    $dst\t# int" %}
+  ins_encode %{
+    __ negq($dst$$Register);
+  %}
+  ins_pipe(ialu_reg);
+%}
+
 instruct negF_reg(regF dst) %{
   predicate((UseSSE>=1) && (UseAVX == 0));
   match(Set dst (NegF dst));

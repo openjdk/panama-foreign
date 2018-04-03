@@ -658,6 +658,14 @@ int ReductionNode::opcode(int opc, BasicType bt) {
       assert(bt == T_LONG, "must be");
       vopc = Op_XorReductionV;
       break;
+    case Op_SubI:
+      assert(bt == T_INT, "must be");
+      vopc = Op_SubReductionV;
+      break;
+    case Op_SubL:
+      assert(bt == T_LONG, "must be");
+      vopc = Op_SubReductionV;
+      break;
     // TODO: add MulL for targets that support it
     default:
       break;
@@ -684,6 +692,7 @@ ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, Basi
   case Op_AndReductionV: return new AndReductionVNode(ctrl, n1, n2);
   case Op_OrReductionV: return new OrReductionVNode(ctrl, n1, n2);
   case Op_XorReductionV: return new XorReductionVNode(ctrl, n1, n2);
+  case Op_SubReductionV: return new SubReductionVNode(ctrl, n1, n2);
   default:
     fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
     return NULL;
@@ -712,6 +721,7 @@ Node* ReductionNode::make_reduction_input(PhaseGVN& gvn, int opc, BasicType bt) 
     case Op_AddReductionVD:
     case Op_OrReductionV:
     case Op_XorReductionV:
+    case Op_SubReductionV:
       return gvn.zerocon(bt);
     case Op_MulReductionVI:
       return gvn.makecon(TypeInt::ONE);
@@ -764,4 +774,20 @@ const TypeFunc* VectorBoxNode::vec_box_type(const TypeInstPtr* box_type) {
   const TypeTuple *range = TypeTuple::make(TypeFunc::Parms+1, fields);
 
   return TypeFunc::make(domain, range);
+}
+
+Node* SubReductionVNode::Ideal(PhaseGVN* phase, bool can_reshape) {
+  Node* ctrl = in(0);
+  Node* in1 = in(1);
+  Node* in2 = in(2);
+
+  if (phase->type(in1)->isa_int()) {
+		assert(phase->type(in2)->is_vect()->element_type()->is_int(), "must be consistent");
+    return new NegINode(phase->transform(new AddReductionVINode(ctrl,in1,in2)));
+  } else if (phase->type(in1)->isa_long()) {
+    return new NegLNode(phase->transform(new AddReductionVLNode(ctrl,in1,in2)));
+  } else {
+    Unimplemented();
+    return NULL;
+  } 
 }
