@@ -773,7 +773,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Int256Vector.class, int.class, LENGTH,
-            species.elementType(), this,
+            int.class, this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -864,7 +864,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Int256Mask.class, int.class, LENGTH,
-                species.elementType(), this,
+                int.class, this,
                 (m, t) -> m.reshape(species)
             );
         }
@@ -972,7 +972,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @Override
         public Class<Integer> elementType() {
-            return Integer.class;
+            return int.class;
         }
 
         @Override

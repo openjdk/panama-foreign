@@ -729,32 +729,32 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
 
             Class<?> vtype = v.species().elementType();
             int limit = Math.min(v.species().length(), length());
-            if (vtype == Byte.class) {
+            if (vtype == byte.class) {
                 ByteVector<T> tv = (ByteVector<T>)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
-            } else if (vtype == Short.class) {
+            } else if (vtype == short.class) {
                 ShortVector<T> tv = (ShortVector<T>)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
-            } else if (vtype == Integer.class) {
+            } else if (vtype == int.class) {
                 IntVector<T> tv = (IntVector<T>)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
-            } else if (vtype == Long.class){
+            } else if (vtype == long.class){
                 LongVector<T> tv = (LongVector<T>)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
-            } else if (vtype == Float.class){
+            } else if (vtype == float.class){
                 FloatVector<T> tv = (FloatVector<T>)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
-            } else if (vtype == Double.class){
+            } else if (vtype == double.class){
                 DoubleVector<T> tv = (DoubleVector<T>)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);

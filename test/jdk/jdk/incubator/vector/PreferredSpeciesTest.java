@@ -41,20 +41,20 @@ public class PreferredSpeciesTest {
     @DataProvider
     public static Object[][] classesProvider() {
         return new Object[][]{
-                {Byte.class, byte.class},
-                {Short.class, short.class},
-                {Integer.class, int.class},
-                {Float.class, float.class},
-                {Long.class, long.class},
-                {Double.class, double.class},
+                {byte.class},
+                {short.class},
+                {int.class},
+                {float.class},
+                {long.class},
+                {double.class},
         };
     }
 
     @Test(dataProvider = "classesProvider")
-    void testVectorLength(Class<?> box, Class<?> prim) {
+    void testVectorLength(Class<?> c) {
         Vector.Species<?, ?> species =
-                Vector.preferredSpeciesInstance(box);
+                Vector.preferredSpeciesInstance(c);
 
-        Assert.assertEquals(species.length(), U.getMaxVectorSize(prim));
+        Assert.assertEquals(species.length(), U.getMaxVectorSize(c));
     }
 }

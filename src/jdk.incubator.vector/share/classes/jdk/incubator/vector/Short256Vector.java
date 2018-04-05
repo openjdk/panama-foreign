@@ -675,7 +675,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Short256Vector.class, short.class, LENGTH,
-            species.elementType(), this,
+            short.class, this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -766,7 +766,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Short256Mask.class, short.class, LENGTH,
-                species.elementType(), this,
+                short.class, this,
                 (m, t) -> m.reshape(species)
             );
         }
@@ -874,7 +874,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
 
         @Override
         public Class<Short> elementType() {
-            return Short.class;
+            return short.class;
         }
 
         @Override

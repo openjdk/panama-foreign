@@ -928,7 +928,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             $vectortype$.class, $type$.class, LENGTH,
-            species.elementType(), this,
+            $type$.class, this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -1019,7 +1019,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 $masktype$.class, $type$.class, LENGTH,
-                species.elementType(), this,
+                $type$.class, this,
                 (m, t) -> m.reshape(species)
             );
         }
@@ -1127,7 +1127,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
         @Override
         public Class<$Boxtype$> elementType() {
-            return $Boxtype$.class;
+            return $type$.class;
         }
 
         @Override

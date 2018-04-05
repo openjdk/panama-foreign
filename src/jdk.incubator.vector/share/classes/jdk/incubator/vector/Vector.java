@@ -742,54 +742,30 @@ public abstract class Vector<E, S extends Vector.Shape> {
     public static <E> Vector.Species<E, ?> preferredSpeciesInstance(Class<E> c) {
         Unsafe u = Unsafe.getUnsafe();
 
-        int vectorLength = u.getMaxVectorSize(boxToPrimitive(c));
+        int vectorLength = u.getMaxVectorSize(c);
         int vectorBitSize = bitSizeForVectorLength(c, vectorLength);
         Shape s = shapeForVectorBitSize(vectorBitSize);
         return speciesInstance(c, s);
     }
 
-    private static Class<?> boxToPrimitive(Class<?> c) {
-        if (c == Float.class) {
-            return float.class;
-        }
-        else if (c == Double.class) {
-            return double.class;
-        }
-        else if (c == Byte.class) {
-            return byte.class;
-        }
-        else if (c == Short.class) {
-            return short.class;
-        }
-        else if (c == Integer.class) {
-            return int.class;
-        }
-        else if (c == Long.class) {
-            return long.class;
-        }
-        else {
-            throw new IllegalArgumentException("Bad vector type: " + c.getName());
-        }
-    }
-
     // @@@ public static method on Species?
     private static int bitSizeForVectorLength(Class<?> c, int elementSize) {
-        if (c == Float.class) {
+        if (c == float.class) {
             return Float.SIZE * elementSize;
         }
-        else if (c == Double.class) {
+        else if (c == double.class) {
             return Double.SIZE * elementSize;
         }
-        else if (c == Byte.class) {
+        else if (c == byte.class) {
             return Byte.SIZE * elementSize;
         }
-        else if (c == Short.class) {
+        else if (c == short.class) {
             return Short.SIZE * elementSize;
         }
-        else if (c == Integer.class) {
+        else if (c == int.class) {
             return Integer.SIZE * elementSize;
         }
-        else if (c == Long.class) {
+        else if (c == long.class) {
             return Long.SIZE * elementSize;
         }
         else {
@@ -826,26 +802,26 @@ public abstract class Vector<E, S extends Vector.Shape> {
      */
     @SuppressWarnings("unchecked")
     public static <E, S extends Shape> Vector.Species<E, S> speciesInstance(Class<E> c, S s) {
-        if (c == Float.class) {
+        if (c == float.class) {
             return (Vector.Species<E, S>) FloatVector.speciesInstance(s);
         }
-        else if (c == Double.class) {
+        else if (c == double.class) {
             return (Vector.Species<E, S>) DoubleVector.speciesInstance(s);
         }
-        else if (c == Byte.class) {
+        else if (c == byte.class) {
             return (Vector.Species<E, S>) ByteVector.speciesInstance(s);
         }
-        else if (c == Short.class) {
+        else if (c == short.class) {
             return (Vector.Species<E, S>) ShortVector.speciesInstance(s);
         }
-        else if (c == Integer.class) {
+        else if (c == int.class) {
             return (Vector.Species<E, S>) IntVector.speciesInstance(s);
         }
-        else if (c == Long.class) {
+        else if (c == long.class) {
             return (Vector.Species<E, S>) LongVector.speciesInstance(s);
         }
         else {
-            throw new IllegalArgumentException("Bad vector type: " + c.getName());
+            throw new IllegalArgumentException("Bad vector element type: " + c.getName());
         }
     }
 }

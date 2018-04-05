@@ -773,7 +773,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Int128Vector.class, int.class, LENGTH,
-            species.elementType(), this,
+            int.class, this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -864,7 +864,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Int128Mask.class, int.class, LENGTH,
-                species.elementType(), this,
+                int.class, this,
                 (m, t) -> m.reshape(species)
             );
         }
@@ -972,7 +972,7 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
         @Override
         public Class<Integer> elementType() {
-            return Integer.class;
+            return int.class;
         }
 
         @Override

@@ -41,7 +41,6 @@ public class VectorRuns {
             a[i] = -1;
             countRunAscending(a);
 
-            System.out.println(i);
             assertEquals(countRunAscending(a), i);
             assertEquals(countRunAscendingVector(a), i);
         }

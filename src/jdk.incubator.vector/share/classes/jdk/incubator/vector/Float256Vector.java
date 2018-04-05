@@ -721,7 +721,7 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Float256Vector.class, float.class, LENGTH,
-            species.elementType(), this,
+            float.class, this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -812,7 +812,7 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Float256Mask.class, float.class, LENGTH,
-                species.elementType(), this,
+                float.class, this,
                 (m, t) -> m.reshape(species)
             );
         }
@@ -920,7 +920,7 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
         @Override
         public Class<Float> elementType() {
-            return Float.class;
+            return float.class;
         }
 
         @Override
