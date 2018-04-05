@@ -59,6 +59,16 @@ public class Cursor extends StructType {
     public native boolean isPreprocessing();
     public native boolean isInvalid();
     public native boolean isDefinition();
+    public native boolean isAnonymousStruct();
+
+    public boolean isAnonymousEnum() {
+        // libclang::clang_Cursor_isAnonymous only applies to struct, not enum
+        return (type().kind() == TypeKind.Enum && spelling().isEmpty());
+    }
+
+    public boolean isAnonymous() {
+        return isAnonymousStruct() || isAnonymousEnum();
+    }
 
     public native String spelling();
     public native String USR();

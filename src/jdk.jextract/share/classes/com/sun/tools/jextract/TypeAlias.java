@@ -29,16 +29,27 @@ public final class TypeAlias implements JType {
     String annotationClassDescriptor;
     JType baseType;
 
-    TypeAlias(String alias, JType essence) {
+    private TypeAlias(String alias, JType essence) {
+        baseType = essence;
+        annotationClassDescriptor = alias;
+    }
+
+    public static TypeAlias of(String alias, JType essence) {
         if (essence instanceof JType2) {
             // We don't need to know extra info for intermediate definitions
             essence = ((JType2) essence).getDelegate();
+            return of(alias, essence);
         }
+
         if (essence instanceof TypeAlias) {
-            essence = ((TypeAlias) essence).baseType;
+            TypeAlias other = (TypeAlias) essence;
+            if (alias.equals(other.annotationClassDescriptor)) {
+                return other;
+            }
+            return of(alias, ((TypeAlias) essence).baseType);
         }
-        baseType = essence;
-        annotationClassDescriptor = alias;
+
+        return new TypeAlias(alias, essence);
     }
 
     @Override

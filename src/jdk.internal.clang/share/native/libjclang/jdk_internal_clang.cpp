@@ -338,6 +338,12 @@ JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Cursor_isDefinition
     return clang_isCursorDefinition(*ptr);
 }
 
+JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Cursor_isAnonymousStruct
+  (JNIEnv *env, jobject cursor) {
+    CXCursor *ptr = (CXCursor*) J2P(env, cursor);
+    return clang_Cursor_isAnonymous(*ptr);
+}
+
 JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Cursor_spelling
   (JNIEnv *env, jobject cursor) {
     CXCursor *ptr = (CXCursor*) J2P(env, cursor);

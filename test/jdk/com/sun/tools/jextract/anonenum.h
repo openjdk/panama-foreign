@@ -26,3 +26,25 @@ enum {
     GREEN = 0x00ff00,
     BLUE = 0x0000ff
 };
+
+typedef enum {
+   Java,
+   C,
+   CPP,
+   Python,
+   Ruby
+} codetype_t;
+
+enum SIZE {
+   XS,
+   S,
+   M,
+   L,
+   XL,
+   XXL
+};
+
+typedef enum temp {
+   ONE = 1,
+   TWO
+} temp_t;

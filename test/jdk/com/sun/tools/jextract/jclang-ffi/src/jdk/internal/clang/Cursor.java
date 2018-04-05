@@ -57,6 +57,17 @@ public class Cursor {
         return LibClang.lib.clang_isCursorDefinition(cursor) != 0;
     }
 
+    public boolean isAnonymousStruct() { return LibClang.lib.clang_Cursor_isAnonymous(cursor) != 0; }
+
+    public boolean isAnonymousEnum() {
+        // libclang::clang_Cursor_isAnonymous only applies to struct, not enum
+        return (type().kind() == TypeKind.Enum && spelling().isEmpty());
+    }
+
+    public boolean isAnonymous() {
+        return isAnonymousStruct() || isAnonymousEnum();
+    }
+
     public String spelling() {
         return LibClang.CXStrToString(
                 LibClang.lib.clang_getCursorSpelling(cursor));
@@ -138,7 +149,7 @@ public class Cursor {
         // FIXME: need a way to pass ar down as user data d
         LibClang.lib.clang_visitChildren(cursor, (c, p, d) -> {
             ar.add(new Cursor(c));
-            return Index.CXChildVisitResult.CXChildVisit_Continue;
+            return Index.CXChildVisit_Continue;
         }, null);
         return ar.stream();
     }

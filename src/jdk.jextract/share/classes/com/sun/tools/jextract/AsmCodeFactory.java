@@ -111,7 +111,9 @@ final class AsmCodeFactory extends CodeFactory {
             throws IOException {
         cw.visitEnd();
         byte[] bytecodes = cw.toByteArray();
-        types.put(clsName, bytecodes);
+        if (null != types.put(clsName, bytecodes)) {
+            logger.warning("Class " + clsName + " definition is overwritten");
+        }
     }
 
     /**
@@ -234,46 +236,18 @@ final class AsmCodeFactory extends CodeFactory {
     }
 
     private void createEnum(Cursor cursor) {
-        String nativeName = Utils.getIdentifier(cursor);
-        logger.fine(() -> "create enum: " + nativeName);
-
-        String intf = Utils.toClassName(nativeName);
-        String name = internal_name + "$" + intf;
-
-        logger.fine(() -> "Define class " + name + " for native type " + nativeName);
-        global_cw.visitInnerClass(name, internal_name, intf,
-                ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE | ACC_ANNOTATION);
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        String[] superAnno = { "java/lang/annotation/Annotation" };
-        cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE | ACC_ANNOTATION,
-                name, null, "java/lang/Object", superAnno);
-        annotateC(cw, cursor);
-        AnnotationVisitor av = cw.visitAnnotation(
-                "Ljava/nicl/metadata/NativeType;", true);
-        Type t = cursor.getEnumDeclIntegerType();
-        av.visit("layout", Utils.getLayout(t));
-        av.visit("ctype", t.spelling());
-        av.visit("size", t.size());
-        av.visitEnd();
-
-        av = cw.visitAnnotation("Ljava/lang/annotation/Target;", true);
-        av.visitEnum("value", "Ljava/lang/annotation/ElementType;", "TYPE_USE");
-        av.visitEnd();
-        av = cw.visitAnnotation("Ljava/lang/annotation/Retention;", true);
-        av.visitEnum("value", "Ljava/lang/annotation/RetentionPolicy;", "RUNTIME");
-        av.visitEnd();
-        cw.visitInnerClass(name, internal_name, intf,
-                ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE | ACC_ANNOTATION);
-        // constants
+        // define enum constants in global_cw
         cursor.stream()
                 .filter(cx -> cx.kind() == CursorKind.EnumConstantDecl)
-                .forEachOrdered(cx -> addConstant(cw, cx));
-        // Write class
-        try {
-            writeClassFile(cw, owner.clsName + "$" + intf);
-        } catch (IOException ex) {
-            handleException(ex);
+                .forEachOrdered(cx -> addConstant(global_cw, cx));
+
+        if (cursor.isAnonymousEnum()) {
+            // We are done with anonymous enum
+            return;
         }
+
+        // generate annotation class for named enum
+        createAnnotationCls(cursor);
     }
 
     private void createAnnotationCls(Cursor dcl) {

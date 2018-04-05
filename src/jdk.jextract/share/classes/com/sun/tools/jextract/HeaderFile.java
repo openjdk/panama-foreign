@@ -112,11 +112,21 @@ public final class HeaderFile {
                     ctx.err.println(Main.format("warn.symbol.not.found", name));
                 }
             }
+
             JType jt = dict.computeIfAbsent(t, type -> {
                 logger.fine(() -> "PH: Compute type for " + type.spelling());
                 return define(type);
             });
             assert (jt instanceof JType2);
+
+            if (t.kind() == TypeKind.Typedef &&
+                    t.canonicalType().kind() == TypeKind.Enum &&
+                    t.spelling().equals(t.canonicalType().getDeclarationCursor().spelling()))
+            {
+                logger.fine("Skip redundant typedef " + t.spelling());
+                return;
+            }
+
             // Only main file can define interface
             if (cf != null && this.main == main) {
                 cf.addType(jt, c);
@@ -167,7 +177,7 @@ public final class HeaderFile {
         Cursor defC = dcl.getDefinition();
         if (defC.isInvalid()) {
             name = Utils.toInternalName(pkgName, clsName, name);
-            jt = JType2.bind(new TypeAlias(name, JType.Void), t, dcl);
+            jt = JType2.bind(TypeAlias.of(name, JType.Void), t, dcl);
         } else {
             jt = JType2.bind(
                     new JType.InnerType(Utils.toInternalName(pkgName, clsName), name),
@@ -180,7 +190,7 @@ public final class HeaderFile {
     }
 
     // Use of dict.lookup() and lookup() is tricky, if a type should have being
-    // declare earlier, use dict.lookup(); otherwise use lookup() for potentially
+    // declared earlier, use dict.lookup(); otherwise use lookup() for potentially
     // local declaration of a type.
     JType define(Type t) {
         JType jt;
@@ -208,7 +218,7 @@ public final class HeaderFile {
             case Enum:
                 String name = Utils.toInternalName(pkgName, clsName,
                         Utils.toClassName(Utils.getIdentifier(t)));
-                jt = new TypeAlias(name, JType.Int);
+                jt = TypeAlias.of(name, JType.Int);
                 break;
             case Invalid:
                 throw new IllegalArgumentException("Invalid type");
@@ -236,7 +246,7 @@ public final class HeaderFile {
                 logger.fine(() -> "Typedef " + t.spelling() + " as " + truetype.spelling());
                 name = Utils.toInternalName(pkgName, clsName,
                         Utils.toClassName(t.spelling()));
-                jt = new TypeAlias(name, globalLookup(truetype));
+                jt = TypeAlias.of(name, globalLookup(truetype));
                 break;
             case BlockPointer:
                 // FIXME: what is BlockPointer? A FunctionalPointer as this is closure

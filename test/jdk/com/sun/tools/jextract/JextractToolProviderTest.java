@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
 import org.testng.annotations.Test;
@@ -376,26 +377,63 @@ public class JextractToolProviderTest {
         }
     }
 
+    private Class<?> findClass(Class<?>[] clz, String name) {
+        for (Class<?> cls: clz) {
+            if (cls.getSimpleName().equals(name)) {
+                return cls;
+            }
+        }
+        return null;
+    }
+
+    private void testEnumValue(Class<?> enumCls, Map<String, Integer> values) {
+        values.entrySet().stream().
+                forEach(e -> checkIntField(enumCls, e.getKey(), e.getValue()));
+    }
+
     @Test
     public void testAnonymousEnum() {
         Path anonenumJar = getOutputFilePath("anonenum.jar");
         deleteFile(anonenumJar);
-	Path anonenumH = getInputFilePath("anonenum.h");
+    	Path anonenumH = getInputFilePath("anonenum.h");
         try {
             checkSuccess(null, "-o", anonenumJar.toString(), anonenumH.toString());
             Class<?> anonenumCls = loadClass("anonenum", anonenumJar);
             assertNotNull(anonenumCls);
-            // the nested type for anonymous enum has name starting with "enum__anonymous_at"
-            // followed by full path name of header file + line + column numbers. Any non-ident
-            // char replaced by "_". But we test only the start pattern here.
-            Optional<Class<?>> optEnumCls = Arrays.stream(anonenumCls.getClasses()).
-                filter(c -> c.getSimpleName().startsWith("enum__anonymous_at")).
-                findFirst();
-            assertTrue(optEnumCls.isPresent());
-            Class<?> enumCls = optEnumCls.get();
-            checkIntField(enumCls, "RED", 0xff0000);
-            checkIntField(enumCls, "GREEN", 0x00ff00);
-            checkIntField(enumCls, "BLUE", 0x0000ff);
+            checkIntField(anonenumCls, "RED", 0xff0000);
+            checkIntField(anonenumCls, "GREEN", 0x00ff00);
+            checkIntField(anonenumCls, "BLUE", 0x0000ff);
+            testEnumValue(anonenumCls, Map.of(
+                    "Java", 0,
+                    "C", 1,
+                    "CPP", 2,
+                    "Python", 3,
+                    "Ruby", 4));
+            testEnumValue(anonenumCls, Map.of(
+                    "XS", 0,
+                    "S", 1,
+                    "M", 2,
+                    "L", 3,
+                    "XL", 4,
+                    "XXL", 5));
+            testEnumValue(anonenumCls, Map.of(
+                    "ONE", 1,
+                    "TWO", 2));
+
+            Class<?> enumClz[] = anonenumCls.getClasses();
+            assert(enumClz.length >= 4);
+
+            Class<?> enumCls = findClass(enumClz, "codetype_t");
+            assertNotNull(enumCls);
+
+            enumCls = findClass(enumClz, "SIZE");
+            assertNotNull(enumCls);
+
+            enumCls = findClass(enumClz, "temp");
+            assertNotNull(enumCls);
+
+            enumCls = findClass(enumClz, "temp_t");
+            assertNotNull(enumCls);
         } finally {
             deleteFile(anonenumJar);
         }
