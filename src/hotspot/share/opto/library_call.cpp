@@ -7670,23 +7670,6 @@ bool LibraryCallKit::inline_vector_broadcast_int() {
   return true;
 }
 
-static BasicType extract_bt_from_box_class(ciType* t) {
-  if (t->basic_type() == T_OBJECT) {
-    switch(t->as_klass()->name()->sid()) {
-      case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Boolean):   return T_BOOLEAN;
-      case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Byte):      return T_BYTE;
-      case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Short):     return T_SHORT;
-      case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Character): return T_CHAR;
-      case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Integer):   return T_INT;
-      case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Long):      return T_LONG;
-      case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Float):     return T_FLOAT;
-      case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_Double):    return T_DOUBLE;
-      default: fatal("unknown type: %s", t->as_klass()->name()->as_utf8());
-    }
-  }
-  return T_ILLEGAL;
-}
-
 bool LibraryCallKit::inline_vector_rebracket() {
   const TypeInstPtr* vector_klass_from = gvn().type(argument(0))->is_instptr();
   const TypeInstPtr* elem_klass_from   = gvn().type(argument(1))->is_instptr();
@@ -7714,10 +7697,10 @@ bool LibraryCallKit::inline_vector_rebracket() {
     elem_bt_from = getMaskBasicType(elem_bt_from);
   }
   ciType* elem_type_to = elem_klass_to->const_oop()->as_instance()->java_mirror_type();
-  BasicType elem_bt_to = extract_bt_from_box_class(elem_type_to);
-  if (elem_bt_to == T_ILLEGAL) {
-    return false;
+  if (!elem_type_to->is_primitive_type()) {
+    return false; // should be primitive type
   }
+  BasicType elem_bt_to = elem_type_to->basic_type();
   if (is_mask) {
     elem_bt_to = getMaskBasicType(elem_bt_to);
   }
@@ -7750,7 +7733,7 @@ bool LibraryCallKit::inline_vector_rebracket() {
   if (src_type != dst_type) {
     op = _gvn.transform(new VectorReinterpretNode(op, src_type, dst_type));
   }
-  ciKlass* vbox_klass_to = get_exact_klass_for_vector_box(vbox_klass_from, extract_bt_from_box_class(elem_type_to),
+  ciKlass* vbox_klass_to = get_exact_klass_for_vector_box(vbox_klass_from, elem_bt_to,
                                                           num_elem_to, is_mask ? VECAPI_MASK : VECAPI_VECTOR);
   const TypeInstPtr* vbox_type_to = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass_to);
   Node* vbox = box_vector(op, vbox_type_to, elem_bt_to, num_elem_to);

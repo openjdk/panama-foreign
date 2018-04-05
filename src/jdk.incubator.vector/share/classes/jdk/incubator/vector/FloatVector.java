@@ -845,7 +845,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      */
     @SuppressWarnings("unchecked")
     public static FloatSpecies<?> preferredSpeciesInstance() {
-        return (FloatSpecies<?>) Vector.preferredSpeciesInstance(Float.class);
+        return (FloatSpecies<?>) Vector.preferredSpeciesInstance(float.class);
     }
 
     /**

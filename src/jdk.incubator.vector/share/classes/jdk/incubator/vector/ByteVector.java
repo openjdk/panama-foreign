@@ -758,7 +758,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      */
     @SuppressWarnings("unchecked")
     public static ByteSpecies<?> preferredSpeciesInstance() {
-        return (ByteSpecies<?>) Vector.preferredSpeciesInstance(Byte.class);
+        return (ByteSpecies<?>) Vector.preferredSpeciesInstance(byte.class);
     }
 
     /**

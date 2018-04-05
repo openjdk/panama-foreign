@@ -675,7 +675,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Short128Vector.class, short.class, LENGTH,
-            short.class, this,
+            species.elementType(), this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -766,7 +766,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Short128Mask.class, short.class, LENGTH,
-                short.class, this,
+                species.elementType(), this,
                 (m, t) -> m.reshape(species)
             );
         }

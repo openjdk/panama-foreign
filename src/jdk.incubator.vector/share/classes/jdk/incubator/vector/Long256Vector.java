@@ -736,7 +736,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Long256Vector.class, long.class, LENGTH,
-            long.class, this,
+            species.elementType(), this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -827,7 +827,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Long256Mask.class, long.class, LENGTH,
-                long.class, this,
+                species.elementType(), this,
                 (m, t) -> m.reshape(species)
             );
         }

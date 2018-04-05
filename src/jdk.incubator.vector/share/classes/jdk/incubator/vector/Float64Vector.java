@@ -721,7 +721,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Float64Vector.class, float.class, LENGTH,
-            float.class, this,
+            species.elementType(), this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -812,7 +812,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Float64Mask.class, float.class, LENGTH,
-                float.class, this,
+                species.elementType(), this,
                 (m, t) -> m.reshape(species)
             );
         }

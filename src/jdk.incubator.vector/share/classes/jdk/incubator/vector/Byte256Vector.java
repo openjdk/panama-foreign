@@ -675,7 +675,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Byte256Vector.class, byte.class, LENGTH,
-            byte.class, this,
+            species.elementType(), this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -766,7 +766,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Byte256Mask.class, byte.class, LENGTH,
-                byte.class, this,
+                species.elementType(), this,
                 (m, t) -> m.reshape(species)
             );
         }

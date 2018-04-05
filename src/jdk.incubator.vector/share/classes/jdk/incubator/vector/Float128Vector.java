@@ -721,7 +721,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Float128Vector.class, float.class, LENGTH,
-            float.class, this,
+            species.elementType(), this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -812,7 +812,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Float128Mask.class, float.class, LENGTH,
-                float.class, this,
+                species.elementType(), this,
                 (m, t) -> m.reshape(species)
             );
         }

@@ -780,7 +780,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      */
     @SuppressWarnings("unchecked")
     public static IntSpecies<?> preferredSpeciesInstance() {
-        return (IntSpecies<?>) Vector.preferredSpeciesInstance(Integer.class);
+        return (IntSpecies<?>) Vector.preferredSpeciesInstance(int.class);
     }
 
     /**

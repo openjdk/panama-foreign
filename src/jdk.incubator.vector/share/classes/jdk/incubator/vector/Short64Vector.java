@@ -675,7 +675,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Short64Vector.class, short.class, LENGTH,
-            short.class, this,
+            species.elementType(), this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -766,7 +766,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Short64Mask.class, short.class, LENGTH,
-                short.class, this,
+                species.elementType(), this,
                 (m, t) -> m.reshape(species)
             );
         }

@@ -997,7 +997,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      */
     @SuppressWarnings("unchecked")
     public static $Type$Species<?> preferredSpeciesInstance() {
-        return ($Type$Species<?>) Vector.preferredSpeciesInstance($Boxtype$.class);
+        return ($Type$Species<?>) Vector.preferredSpeciesInstance($type$.class);
     }
 
     /**

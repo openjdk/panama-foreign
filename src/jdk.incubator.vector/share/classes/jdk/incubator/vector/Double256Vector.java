@@ -721,7 +721,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Double256Vector.class, double.class, LENGTH,
-            double.class, this,
+            species.elementType(), this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -812,7 +812,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Double256Mask.class, double.class, LENGTH,
-                double.class, this,
+                species.elementType(), this,
                 (m, t) -> m.reshape(species)
             );
         }

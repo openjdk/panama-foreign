@@ -780,7 +780,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      */
     @SuppressWarnings("unchecked")
     public static LongSpecies<?> preferredSpeciesInstance() {
-        return (LongSpecies<?>) Vector.preferredSpeciesInstance(Long.class);
+        return (LongSpecies<?>) Vector.preferredSpeciesInstance(long.class);
     }
 
     /**

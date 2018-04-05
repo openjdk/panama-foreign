@@ -759,7 +759,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      */
     @SuppressWarnings("unchecked")
     public static ShortSpecies<?> preferredSpeciesInstance() {
-        return (ShortSpecies<?>) Vector.preferredSpeciesInstance(Short.class);
+        return (ShortSpecies<?>) Vector.preferredSpeciesInstance(short.class);
     }
 
     /**

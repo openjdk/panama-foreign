@@ -845,7 +845,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      */
     @SuppressWarnings("unchecked")
     public static DoubleSpecies<?> preferredSpeciesInstance() {
-        return (DoubleSpecies<?>) Vector.preferredSpeciesInstance(Double.class);
+        return (DoubleSpecies<?>) Vector.preferredSpeciesInstance(double.class);
     }
 
     /**

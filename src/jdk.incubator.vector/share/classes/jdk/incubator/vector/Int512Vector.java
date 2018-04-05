@@ -773,7 +773,7 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         // push down intrinsic call into species implementation
         return VectorIntrinsics.rebracket(
             Int512Vector.class, int.class, LENGTH,
-            int.class, this,
+            species.elementType(), this,
             (v, t) -> species.reshape(v)
         );
     }
@@ -864,7 +864,7 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             // TODO: check proper element type
             return VectorIntrinsics.rebracket(
                 Int512Mask.class, int.class, LENGTH,
-                int.class, this,
+                species.elementType(), this,
                 (m, t) -> m.reshape(species)
             );
         }
