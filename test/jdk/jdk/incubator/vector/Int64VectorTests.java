@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 @Test
 public class Int64VectorTests extends AbstractVectorTest {
 
-    static final IntVector.IntSpecies<Shapes.S64Bit> SPECIES = (IntVector.IntSpecies<Shapes.S64Bit>)
-                Vector.speciesInstance(Integer.class, Shapes.S_64_BIT);
+    static final IntVector.IntSpecies<Shapes.S64Bit> SPECIES =
+                IntVector.speciesInstance(Shapes.S_64_BIT);
 
 
     interface FUnOp {
@@ -654,6 +654,7 @@ public class Int64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void greaterThanInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -671,6 +672,7 @@ public class Int64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void equalInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -688,6 +690,7 @@ public class Int64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void notEqualInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -705,6 +708,7 @@ public class Int64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void lessThanEqInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -722,6 +726,7 @@ public class Int64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void greaterThanEqInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -739,6 +744,7 @@ public class Int64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     static int blend(int a, int b, boolean mask) {
         return mask ? b : a;
     }

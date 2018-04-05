@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 @Test
 public class Long64VectorTests extends AbstractVectorTest {
 
-    static final LongVector.LongSpecies<Shapes.S64Bit> SPECIES = (LongVector.LongSpecies<Shapes.S64Bit>)
-                Vector.speciesInstance(Long.class, Shapes.S_64_BIT);
+    static final LongVector.LongSpecies<Shapes.S64Bit> SPECIES =
+                LongVector.speciesInstance(Shapes.S_64_BIT);
 
 
     interface FUnOp {
@@ -654,6 +654,7 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void greaterThanLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -671,6 +672,7 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void equalLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -688,6 +690,7 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void notEqualLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -705,6 +708,7 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void lessThanEqLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -722,6 +726,7 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "longCompareOpProvider", invocationCount = 10)
     static void greaterThanEqLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
@@ -739,6 +744,7 @@ public class Long64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     static long blend(long a, long b, boolean mask) {
         return mask ? b : a;
     }

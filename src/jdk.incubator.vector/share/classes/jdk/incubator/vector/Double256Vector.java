@@ -865,7 +865,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     // Shuffle
 
     static final class Double256Shuffle extends AbstractShuffle<Double, Shapes.S256Bit> {
-        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S256Bit>) Vector.speciesInstance(Integer.class, Shapes.S_256_BIT);
+        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_256_BIT);
 
         public Double256Shuffle(int[] reorder) {
             super(reorder);

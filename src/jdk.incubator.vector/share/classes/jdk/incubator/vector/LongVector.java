@@ -29,6 +29,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.LongBuffer;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
@@ -765,5 +766,44 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
             return scalars(a);
         }
 
+    }
+
+    /**
+     * Finds the preferred species for an element type of {@code long}.
+     * <p>
+     * A preferred species is a species chosen by the platform that has a
+     * shape of maximal bit size.  A preferred species for different element
+     * types will have the same shape, and therefore vectors, masks, and
+     * shuffles created from such species will be shape compatible.
+     *
+     * @return the preferred species for an element type of {@code long}
+     */
+    @SuppressWarnings("unchecked")
+    public static LongSpecies<?> preferredSpeciesInstance() {
+        return (LongSpecies<?>) Vector.preferredSpeciesInstance(Long.class);
+    }
+
+    /**
+     * Finds a species for an element type of {@code long} and shape.
+     *
+     * @param s the shape
+     * @param <S> the type of shape
+     * @return a species for an element type of {@code long} and shape
+     * @throws IllegalArgumentException if no such species exists for the shape
+     */
+    @SuppressWarnings("unchecked")
+    public static <S extends Shape> LongSpecies<S> speciesInstance(S s) {
+        Objects.requireNonNull(s);
+        if (s == Shapes.S_64_BIT) {
+            return (LongSpecies<S>) Long64Vector.SPECIES;
+        } else if (s == Shapes.S_128_BIT) {
+            return (LongSpecies<S>) Long128Vector.SPECIES;
+        } else if (s == Shapes.S_256_BIT) {
+            return (LongSpecies<S>) Long256Vector.SPECIES;
+        } else if (s == Shapes.S_512_BIT) {
+            return (LongSpecies<S>) Long512Vector.SPECIES;
+        } else {
+            throw new IllegalArgumentException("Bad shape: " + s);
+        }
     }
 }

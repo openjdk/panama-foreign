@@ -865,7 +865,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     // Shuffle
 
     static final class Float512Shuffle extends AbstractShuffle<Float, Shapes.S512Bit> {
-        static final IntVector.IntSpecies<Shapes.S512Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S512Bit>) Vector.speciesInstance(Integer.class, Shapes.S_512_BIT);
+        static final IntVector.IntSpecies<Shapes.S512Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_512_BIT);
 
         public Float512Shuffle(int[] reorder) {
             super(reorder);

@@ -819,7 +819,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
     // Shuffle
 
     static final class Byte128Shuffle extends AbstractShuffle<Byte, Shapes.S128Bit> {
-        static final IntVector.IntSpecies<Shapes.S128Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S128Bit>) Vector.speciesInstance(Integer.class, Shapes.S_128_BIT);
+        static final IntVector.IntSpecies<Shapes.S128Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_128_BIT);
 
         public Byte128Shuffle(int[] reorder) {
             super(reorder);

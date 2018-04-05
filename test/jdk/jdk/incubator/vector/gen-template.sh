@@ -51,8 +51,8 @@ function gen_op_tmpl {
   fi
 
   sed "s/\[\[TEST\]\]/${test}/g" $template > $TEMPLATE_FOLDER/current
-  sed -i "s/\[\[TEST_OP\]\]/${op}/g" $TEMPLATE_FOLDER/current
-  sed -i "s/\[\[TEST_INIT\]\]/${init}/g" $TEMPLATE_FOLDER/current
+  sed -i -e "s/\[\[TEST_OP\]\]/${op}/g" $TEMPLATE_FOLDER/current
+  sed -i -e "s/\[\[TEST_INIT\]\]/${init}/g" $TEMPLATE_FOLDER/current
 
   if [ "$guard" != "" ]; then
     echo -e "#if[${guard}]\n" >> $4

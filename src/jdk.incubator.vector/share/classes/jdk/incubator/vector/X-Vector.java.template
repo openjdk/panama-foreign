@@ -31,6 +31,7 @@ import java.nio.ByteOrder;
 #if[!byte]
 import java.nio.$Type$Buffer;
 #end[!byte]
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
@@ -982,5 +983,44 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
             return scalars(a);
         }
 
+    }
+
+    /**
+     * Finds the preferred species for an element type of {@code $type$}.
+     * <p>
+     * A preferred species is a species chosen by the platform that has a
+     * shape of maximal bit size.  A preferred species for different element
+     * types will have the same shape, and therefore vectors, masks, and
+     * shuffles created from such species will be shape compatible.
+     *
+     * @return the preferred species for an element type of {@code $type$}
+     */
+    @SuppressWarnings("unchecked")
+    public static $Type$Species<?> preferredSpeciesInstance() {
+        return ($Type$Species<?>) Vector.preferredSpeciesInstance($Boxtype$.class);
+    }
+
+    /**
+     * Finds a species for an element type of {@code $type$} and shape.
+     *
+     * @param s the shape
+     * @param <S> the type of shape
+     * @return a species for an element type of {@code $type$} and shape
+     * @throws IllegalArgumentException if no such species exists for the shape
+     */
+    @SuppressWarnings("unchecked")
+    public static <S extends Shape> $Type$Species<S> speciesInstance(S s) {
+        Objects.requireNonNull(s);
+        if (s == Shapes.S_64_BIT) {
+            return ($Type$Species<S>) $Type$64Vector.SPECIES;
+        } else if (s == Shapes.S_128_BIT) {
+            return ($Type$Species<S>) $Type$128Vector.SPECIES;
+        } else if (s == Shapes.S_256_BIT) {
+            return ($Type$Species<S>) $Type$256Vector.SPECIES;
+        } else if (s == Shapes.S_512_BIT) {
+            return ($Type$Species<S>) $Type$512Vector.SPECIES;
+        } else {
+            throw new IllegalArgumentException("Bad shape: " + s);
+        }
     }
 }

@@ -865,7 +865,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     // Shuffle
 
     static final class Double64Shuffle extends AbstractShuffle<Double, Shapes.S64Bit> {
-        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S64Bit>) Vector.speciesInstance(Integer.class, Shapes.S_64_BIT);
+        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_64_BIT);
 
         public Double64Shuffle(int[] reorder) {
             super(reorder);

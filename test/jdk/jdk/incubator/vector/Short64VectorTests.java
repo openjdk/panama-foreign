@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 @Test
 public class Short64VectorTests extends AbstractVectorTest {
 
-    static final ShortVector.ShortSpecies<Shapes.S64Bit> SPECIES = (ShortVector.ShortSpecies<Shapes.S64Bit>)
-                Vector.speciesInstance(Short.class, Shapes.S_64_BIT);
+    static final ShortVector.ShortSpecies<Shapes.S64Bit> SPECIES =
+                ShortVector.speciesInstance(Shapes.S_64_BIT);
 
 
     interface FUnOp {
@@ -654,6 +654,7 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void greaterThanShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -671,6 +672,7 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void equalShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -688,6 +690,7 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void notEqualShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -705,6 +708,7 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void lessThanEqShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -722,6 +726,7 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void greaterThanEqShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -739,6 +744,7 @@ public class Short64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     static short blend(short a, short b, boolean mask) {
         return mask ? b : a;
     }

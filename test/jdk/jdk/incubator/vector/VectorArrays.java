@@ -55,8 +55,8 @@ public class VectorArrays {
     }
 
     static int mismatch(byte[] a, byte[] b) {
-        ByteVector.ByteSpecies<Shapes.S256Bit> species = (ByteVector.ByteSpecies<Shapes.S256Bit>)
-                Vector.speciesInstance(Byte.class, Shapes.S_256_BIT);
+        ByteVector.ByteSpecies<Shapes.S256Bit> species =
+                ByteVector.speciesInstance(Shapes.S_256_BIT);
         return mismatch(a, b, species);
     }
 

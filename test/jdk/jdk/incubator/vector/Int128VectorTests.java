@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 @Test
 public class Int128VectorTests extends AbstractVectorTest {
 
-    static final IntVector.IntSpecies<Shapes.S128Bit> SPECIES = (IntVector.IntSpecies<Shapes.S128Bit>)
-                Vector.speciesInstance(Integer.class, Shapes.S_128_BIT);
+    static final IntVector.IntSpecies<Shapes.S128Bit> SPECIES =
+                IntVector.speciesInstance(Shapes.S_128_BIT);
 
 
     interface FUnOp {
@@ -654,6 +654,7 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void greaterThanInt128VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -671,6 +672,7 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void equalInt128VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -688,6 +690,7 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void notEqualInt128VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -705,6 +708,7 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void lessThanEqInt128VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -722,6 +726,7 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void greaterThanEqInt128VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
@@ -739,6 +744,7 @@ public class Int128VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     static int blend(int a, int b, boolean mask) {
         return mask ? b : a;
     }

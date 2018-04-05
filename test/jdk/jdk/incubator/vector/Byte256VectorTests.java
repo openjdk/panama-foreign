@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 @Test
 public class Byte256VectorTests extends AbstractVectorTest {
 
-    static final ByteVector.ByteSpecies<Shapes.S256Bit> SPECIES = (ByteVector.ByteSpecies<Shapes.S256Bit>)
-                Vector.speciesInstance(Byte.class, Shapes.S_256_BIT);
+    static final ByteVector.ByteSpecies<Shapes.S256Bit> SPECIES =
+                ByteVector.speciesInstance(Shapes.S_256_BIT);
 
 
     interface FUnOp {
@@ -654,6 +654,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void greaterThanByte256VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -671,6 +672,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void equalByte256VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -688,6 +690,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void notEqualByte256VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -705,6 +708,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void lessThanEqByte256VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -722,6 +726,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void greaterThanEqByte256VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
@@ -739,6 +744,7 @@ public class Byte256VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     static byte blend(byte a, byte b, boolean mask) {
         return mask ? b : a;
     }

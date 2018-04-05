@@ -1072,7 +1072,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     // Shuffle
 
     static final class $shuffletype$ extends AbstractShuffle<$Boxtype$, Shapes.$shape$> {
-        static final IntVector.IntSpecies<Shapes.$shape$> INT_SPECIES = (IntVector.IntSpecies<Shapes.$shape$>) Vector.speciesInstance(Integer.class, Shapes.$Shape$);
+        static final IntVector.IntSpecies<Shapes.$shape$> INT_SPECIES = IntVector.speciesInstance(Shapes.$Shape$);
 
         public $shuffletype$(int[] reorder) {
             super(reorder);

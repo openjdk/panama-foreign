@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 @Test
 public class Double512VectorTests extends AbstractVectorTest {
 
-    static final DoubleVector.DoubleSpecies<Shapes.S512Bit> SPECIES = (DoubleVector.DoubleSpecies<Shapes.S512Bit>)
-                Vector.speciesInstance(Double.class, Shapes.S_512_BIT);
+    static final DoubleVector.DoubleSpecies<Shapes.S512Bit> SPECIES =
+                DoubleVector.speciesInstance(Shapes.S_512_BIT);
 
 
     interface FUnOp {
@@ -502,6 +502,7 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void greaterThanDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -519,6 +520,7 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void equalDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -536,6 +538,7 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void notEqualDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -553,6 +556,7 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void lessThanEqDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -570,6 +574,7 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void greaterThanEqDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -587,6 +592,7 @@ public class Double512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     static double blend(double a, double b, boolean mask) {
         return mask ? b : a;
     }

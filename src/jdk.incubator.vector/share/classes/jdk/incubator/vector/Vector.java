@@ -724,6 +724,20 @@ public abstract class Vector<E, S extends Vector.Shape> {
         }
     }
 
+    /**
+     * Finds a preferred species for an element type.
+     * <p>
+     * A preferred species is a species chosen by the platform that has a
+     * shape of maximal bit size.  A preferred species for different element
+     * types will have the same shape, and therefore vectors created from
+     * such species will be shape compatible.
+     *
+     * @param c the element type
+     * @param <E> the boxed element type
+     * @return a preferred species for an element type
+     * @throws IllegalArgumentException if no such species exists for the
+     * element type
+     */
     @SuppressWarnings("unchecked")
     public static <E> Vector.Species<E, ?> preferredSpeciesInstance(Class<E> c) {
         Unsafe u = Unsafe.getUnsafe();
@@ -799,79 +813,39 @@ public abstract class Vector<E, S extends Vector.Shape> {
         }
     }
 
+    /**
+     * Finds a species for an element type and shape.
+     *
+     * @param c the element type
+     * @param s the shape
+     * @param <E> the boxed element type
+     * @param <S> the type of shape
+     * @return a species for an element type and shape
+     * @throws IllegalArgumentException if no such species exists for the
+     * element type and/or shape
+     */
     @SuppressWarnings("unchecked")
     public static <E, S extends Shape> Vector.Species<E, S> speciesInstance(Class<E> c, S s) {
-        Vector.Species<E, S> res = null;
-
-        //Float
         if (c == Float.class) {
-            if (s == Shapes.S_64_BIT)
-                res = (Vector.Species<E, S>) Float64Vector.SPECIES;
-            else if (s == Shapes.S_128_BIT)
-                res = (Vector.Species<E, S>) Float128Vector.SPECIES;
-            else if (s == Shapes.S_256_BIT)
-                res = (Vector.Species<E, S>) Float256Vector.SPECIES;
-            else if (s == Shapes.S_512_BIT)
-                res = (Vector.Species<E, S>) Float512Vector.SPECIES;
-            //Double
+            return (Vector.Species<E, S>) FloatVector.speciesInstance(s);
         }
         else if (c == Double.class) {
-            if (s == Shapes.S_64_BIT)
-                res = (Vector.Species<E, S>) Double64Vector.SPECIES;
-            else if (s == Shapes.S_128_BIT)
-                res = (Vector.Species<E, S>) Double128Vector.SPECIES;
-            else if (s == Shapes.S_256_BIT)
-                res = (Vector.Species<E, S>) Double256Vector.SPECIES;
-            else if (s == Shapes.S_512_BIT)
-                res = (Vector.Species<E, S>) Double512Vector.SPECIES;
-            //Byte
+            return (Vector.Species<E, S>) DoubleVector.speciesInstance(s);
         }
         else if (c == Byte.class) {
-            if (s == Shapes.S_64_BIT)
-                res = (Vector.Species<E, S>) Byte64Vector.SPECIES;
-            else if (s == Shapes.S_128_BIT)
-                res = (Vector.Species<E, S>) Byte128Vector.SPECIES;
-            else if (s == Shapes.S_256_BIT)
-                res = (Vector.Species<E, S>) Byte256Vector.SPECIES;
-            else if (s == Shapes.S_512_BIT)
-                res = (Vector.Species<E, S>) Byte512Vector.SPECIES;
-            //Short
+            return (Vector.Species<E, S>) ByteVector.speciesInstance(s);
         }
         else if (c == Short.class) {
-            if (s == Shapes.S_64_BIT)
-                res = (Vector.Species<E, S>) Short64Vector.SPECIES;
-            else if (s == Shapes.S_128_BIT)
-                res = (Vector.Species<E, S>) Short128Vector.SPECIES;
-            else if (s == Shapes.S_256_BIT)
-                res = (Vector.Species<E, S>) Short256Vector.SPECIES;
-            else if (s == Shapes.S_512_BIT)
-                res = (Vector.Species<E, S>) Short512Vector.SPECIES;
-            //Int
+            return (Vector.Species<E, S>) ShortVector.speciesInstance(s);
         }
         else if (c == Integer.class) {
-            if (s == Shapes.S_64_BIT)
-                res = (Vector.Species<E, S>) Int64Vector.SPECIES;
-            else if (s == Shapes.S_128_BIT)
-                res = (Vector.Species<E, S>) Int128Vector.SPECIES;
-            else if (s == Shapes.S_256_BIT)
-                res = (Vector.Species<E, S>) Int256Vector.SPECIES;
-            else if (s == Shapes.S_512_BIT)
-                res = (Vector.Species<E, S>) Int512Vector.SPECIES;
-            //Long
+            return (Vector.Species<E, S>) IntVector.speciesInstance(s);
         }
         else if (c == Long.class) {
-            if (s == Shapes.S_64_BIT)
-                res = (Vector.Species<E, S>) Long64Vector.SPECIES;
-            else if (s == Shapes.S_128_BIT)
-                res = (Vector.Species<E, S>) Long128Vector.SPECIES;
-            else if (s == Shapes.S_256_BIT)
-                res = (Vector.Species<E, S>) Long256Vector.SPECIES;
-            else if (s == Shapes.S_512_BIT)
-                res = (Vector.Species<E, S>) Long512Vector.SPECIES;
+            return (Vector.Species<E, S>) LongVector.speciesInstance(s);
         }
         else {
             throw new IllegalArgumentException("Bad vector type: " + c.getName());
         }
-        return res;
     }
 }

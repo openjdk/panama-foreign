@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 @Test
 public class Double64VectorTests extends AbstractVectorTest {
 
-    static final DoubleVector.DoubleSpecies<Shapes.S64Bit> SPECIES = (DoubleVector.DoubleSpecies<Shapes.S64Bit>)
-                Vector.speciesInstance(Double.class, Shapes.S_64_BIT);
+    static final DoubleVector.DoubleSpecies<Shapes.S64Bit> SPECIES =
+                DoubleVector.speciesInstance(Shapes.S_64_BIT);
 
 
     interface FUnOp {
@@ -502,6 +502,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void greaterThanDouble64VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -519,6 +520,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void equalDouble64VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -536,6 +538,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void notEqualDouble64VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -553,6 +556,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void lessThanEqDouble64VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -570,6 +574,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void greaterThanEqDouble64VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
@@ -587,6 +592,7 @@ public class Double64VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     static double blend(double a, double b, boolean mask) {
         return mask ? b : a;
     }

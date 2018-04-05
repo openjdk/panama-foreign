@@ -880,7 +880,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     // Shuffle
 
     static final class Long64Shuffle extends AbstractShuffle<Long, Shapes.S64Bit> {
-        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = (IntVector.IntSpecies<Shapes.S64Bit>) Vector.speciesInstance(Integer.class, Shapes.S_64_BIT);
+        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_64_BIT);
 
         public Long64Shuffle(int[] reorder) {
             super(reorder);

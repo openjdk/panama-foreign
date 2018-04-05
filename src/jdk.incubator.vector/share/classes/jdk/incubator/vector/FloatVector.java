@@ -29,6 +29,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings("cast")
@@ -830,5 +831,44 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
             return scalars(a);
         }
 
+    }
+
+    /**
+     * Finds the preferred species for an element type of {@code float}.
+     * <p>
+     * A preferred species is a species chosen by the platform that has a
+     * shape of maximal bit size.  A preferred species for different element
+     * types will have the same shape, and therefore vectors, masks, and
+     * shuffles created from such species will be shape compatible.
+     *
+     * @return the preferred species for an element type of {@code float}
+     */
+    @SuppressWarnings("unchecked")
+    public static FloatSpecies<?> preferredSpeciesInstance() {
+        return (FloatSpecies<?>) Vector.preferredSpeciesInstance(Float.class);
+    }
+
+    /**
+     * Finds a species for an element type of {@code float} and shape.
+     *
+     * @param s the shape
+     * @param <S> the type of shape
+     * @return a species for an element type of {@code float} and shape
+     * @throws IllegalArgumentException if no such species exists for the shape
+     */
+    @SuppressWarnings("unchecked")
+    public static <S extends Shape> FloatSpecies<S> speciesInstance(S s) {
+        Objects.requireNonNull(s);
+        if (s == Shapes.S_64_BIT) {
+            return (FloatSpecies<S>) Float64Vector.SPECIES;
+        } else if (s == Shapes.S_128_BIT) {
+            return (FloatSpecies<S>) Float128Vector.SPECIES;
+        } else if (s == Shapes.S_256_BIT) {
+            return (FloatSpecies<S>) Float256Vector.SPECIES;
+        } else if (s == Shapes.S_512_BIT) {
+            return (FloatSpecies<S>) Float512Vector.SPECIES;
+        } else {
+            throw new IllegalArgumentException("Bad shape: " + s);
+        }
     }
 }

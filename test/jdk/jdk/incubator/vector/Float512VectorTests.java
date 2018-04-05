@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 @Test
 public class Float512VectorTests extends AbstractVectorTest {
 
-    static final FloatVector.FloatSpecies<Shapes.S512Bit> SPECIES = (FloatVector.FloatSpecies<Shapes.S512Bit>)
-                Vector.speciesInstance(Float.class, Shapes.S_512_BIT);
+    static final FloatVector.FloatSpecies<Shapes.S512Bit> SPECIES =
+                FloatVector.speciesInstance(Shapes.S_512_BIT);
 
 
     interface FUnOp {
@@ -502,6 +502,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void greaterThanFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -519,6 +520,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void equalFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -536,6 +538,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void notEqualFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -553,6 +556,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void lessThanEqFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -570,6 +574,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void greaterThanEqFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
@@ -587,6 +592,7 @@ public class Float512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     static float blend(float a, float b, boolean mask) {
         return mask ? b : a;
     }

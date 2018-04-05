@@ -45,8 +45,8 @@ import java.util.stream.Stream;
 @Test
 public class Short512VectorTests extends AbstractVectorTest {
 
-    static final ShortVector.ShortSpecies<Shapes.S512Bit> SPECIES = (ShortVector.ShortSpecies<Shapes.S512Bit>)
-                Vector.speciesInstance(Short.class, Shapes.S_512_BIT);
+    static final ShortVector.ShortSpecies<Shapes.S512Bit> SPECIES =
+                ShortVector.speciesInstance(Shapes.S_512_BIT);
 
 
     interface FUnOp {
@@ -654,6 +654,7 @@ public class Short512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void greaterThanShort512VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -671,6 +672,7 @@ public class Short512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void equalShort512VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -688,6 +690,7 @@ public class Short512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void notEqualShort512VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -705,6 +708,7 @@ public class Short512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void lessThanEqShort512VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -722,6 +726,7 @@ public class Short512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void greaterThanEqShort512VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
@@ -739,6 +744,7 @@ public class Short512VectorTests extends AbstractVectorTest {
             }
         }
     }
+
     static short blend(short a, short b, boolean mask) {
         return mask ? b : a;
     }

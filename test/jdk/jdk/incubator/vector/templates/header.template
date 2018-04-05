@@ -62,8 +62,8 @@ import java.util.stream.Stream;
 @Test
 public class $vectorteststype$ extends AbstractVectorTest {
 
-    static final $abstractvectortype$.$Type$Species<Shapes.S$bits$Bit> SPECIES = ($abstractvectortype$.$Type$Species<Shapes.S$bits$Bit>)
-                Vector.speciesInstance($Wideboxtype$.class, Shapes.S_$bits$_BIT);
+    static final $abstractvectortype$.$Type$Species<Shapes.S$bits$Bit> SPECIES =
+                $Type$Vector.speciesInstance(Shapes.S_$bits$_BIT);
 
 
     interface FUnOp {

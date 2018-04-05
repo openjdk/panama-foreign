@@ -34,8 +34,8 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class AddTest {
-    static final FloatVector.FloatSpecies<Shapes.S256Bit> SPECIES = (FloatVector.FloatSpecies<Shapes.S256Bit>)
-            Vector.speciesInstance(Float.class, Shapes.S_256_BIT);
+    static final FloatVector.FloatSpecies<Shapes.S256Bit> SPECIES =
+            FloatVector.speciesInstance(Shapes.S_256_BIT);
 
     static final int SIZE = 1024;
     static float[] a = new float[SIZE];
