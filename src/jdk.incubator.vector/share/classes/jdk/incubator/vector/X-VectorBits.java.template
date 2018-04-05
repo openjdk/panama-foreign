@@ -576,7 +576,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     // Type specific horizontal reductions
 
-#if[intOrlong]
+#if[intOrLong]
     @Override
     @ForceInline
     public $type$ addAll() {
@@ -630,7 +630,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a - b)));
     }
-#end[intOrlong]
+#end[intOrLong]
 #if[FP]
     @Override
     @ForceInline
@@ -817,7 +817,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     }
 #end[FP]
 
-#if[intOrlong]
+#if[intOrLong]
     $fpvectortype$ toFP() {
         $type$[] vec = getElements();
         $fptype$[] res = new $fptype$[this.species().length()];
@@ -826,7 +826,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         }
         return new $fpvectortype$(res);
     }
-#end[intOrlong]
+#end[intOrLong]
 
     @Override
     public $vectortype$ rotateEL(int j) {

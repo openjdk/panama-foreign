@@ -335,54 +335,54 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     }
 
     // logical shift left
-    public LongVector<S> shiftL(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> (long) (a << b));
-    }
-
     public LongVector<S> shiftL(int s) {
         return uOp((i, a) -> (long) (a << s));
-    }
-
-    public LongVector<S> shiftL(Vector<Long,S> o, Mask<Long, S> m) {
-        return bOp(o, m, (i, a, b) -> (long) (a << b));
     }
 
     public LongVector<S> shiftL(int s, Mask<Long, S> m) {
         return uOp(m, (i, a) -> (long) (a << s));
     }
 
-    // logical, or unsigned, shift right
-    public LongVector<S> shiftR(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> (long) (a >>> b));
+    public LongVector<S> shiftL(Vector<Long,S> o) {
+        return bOp(o, (i, a, b) -> (long) (a << b));
     }
 
+    public LongVector<S> shiftL(Vector<Long,S> o, Mask<Long, S> m) {
+        return bOp(o, m, (i, a, b) -> (long) (a << b));
+    }
+
+    // logical, or unsigned, shift right
     public LongVector<S> shiftR(int s) {
         return uOp((i, a) -> (long) (a >>> s));
-    }
-
-    public LongVector<S> shiftR(Vector<Long,S> o, Mask<Long, S> m) {
-        return bOp(o, m, (i, a, b) -> (long) (a >>> b));
     }
 
     public LongVector<S> shiftR(int s, Mask<Long, S> m) {
         return uOp(m, (i, a) -> (long) (a >>> s));
     }
 
-    // arithmetic, or signed, shift right
-    public LongVector<S> ashiftR(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> (long) (a >> b));
+    public LongVector<S> shiftR(Vector<Long,S> o) {
+        return bOp(o, (i, a, b) -> (long) (a >>> b));
     }
 
+    public LongVector<S> shiftR(Vector<Long,S> o, Mask<Long, S> m) {
+        return bOp(o, m, (i, a, b) -> (long) (a >>> b));
+    }
+
+    // arithmetic, or signed, shift right
     public LongVector<S> aShiftR(int s) {
         return uOp((i, a) -> (long) (a >> s));
     }
 
-    public LongVector<S> ashiftR(Vector<Long,S> o, Mask<Long, S> m) {
-        return bOp(o, m, (i, a, b) -> (long) (a >> b));
-    }
-
     public LongVector<S> aShiftR(int s, Mask<Long, S> m) {
         return uOp(m, (i, a) -> (long) (a >> s));
+    }
+
+    public LongVector<S> ashiftR(Vector<Long,S> o) {
+        return bOp(o, (i, a, b) -> (long) (a >> b));
+    }
+
+    public LongVector<S> ashiftR(Vector<Long,S> o, Mask<Long, S> m) {
+        return bOp(o, m, (i, a, b) -> (long) (a >> b));
     }
 
     public LongVector<S> rotateL(int j) {
@@ -560,7 +560,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
 
         public LongVector<S> random() {
             ThreadLocalRandom r = ThreadLocalRandom.current();
-            return op(i -> (long) r.nextInt());
+            return op(i -> r.nextLong());
         }
 
         public LongVector<S> scalars(long... es) {

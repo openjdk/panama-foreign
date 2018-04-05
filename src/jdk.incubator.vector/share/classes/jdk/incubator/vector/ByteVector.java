@@ -334,55 +334,34 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     }
 
     // logical shift left
-    public ByteVector<S> shiftL(Vector<Byte,S> o) {
-        return bOp(o, (i, a, b) -> (byte) (a << b));
-    }
-
     public ByteVector<S> shiftL(int s) {
         return uOp((i, a) -> (byte) (a << s));
-    }
-
-    public ByteVector<S> shiftL(Vector<Byte,S> o, Mask<Byte, S> m) {
-        return bOp(o, m, (i, a, b) -> (byte) (a << b));
     }
 
     public ByteVector<S> shiftL(int s, Mask<Byte, S> m) {
         return uOp(m, (i, a) -> (byte) (a << s));
     }
 
-    // logical, or unsigned, shift right
-    public ByteVector<S> shiftR(Vector<Byte,S> o) {
-        return bOp(o, (i, a, b) -> (byte) (a >>> b));
-    }
 
+    // logical, or unsigned, shift right
     public ByteVector<S> shiftR(int s) {
         return uOp((i, a) -> (byte) (a >>> s));
-    }
-
-    public ByteVector<S> shiftR(Vector<Byte,S> o, Mask<Byte, S> m) {
-        return bOp(o, m, (i, a, b) -> (byte) (a >>> b));
     }
 
     public ByteVector<S> shiftR(int s, Mask<Byte, S> m) {
         return uOp(m, (i, a) -> (byte) (a >>> s));
     }
 
-    // arithmetic, or signed, shift right
-    public ByteVector<S> ashiftR(Vector<Byte,S> o) {
-        return bOp(o, (i, a, b) -> (byte) (a >> b));
-    }
 
+    // arithmetic, or signed, shift right
     public ByteVector<S> aShiftR(int s) {
         return uOp((i, a) -> (byte) (a >> s));
-    }
-
-    public ByteVector<S> ashiftR(Vector<Byte,S> o, Mask<Byte, S> m) {
-        return bOp(o, m, (i, a, b) -> (byte) (a >> b));
     }
 
     public ByteVector<S> aShiftR(int s, Mask<Byte, S> m) {
         return uOp(m, (i, a) -> (byte) (a >> s));
     }
+
 
     public ByteVector<S> rotateL(int j) {
         return uOp((i, a) -> (byte) Integer.rotateLeft(a, j));

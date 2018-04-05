@@ -82,7 +82,7 @@ public final class $abstractvectortype$Helper {
     }
 #end[BITWISE]
 
-#if[intOrlong]
+#if[intOrLong]
     public static <S extends Vector.Shape>
     $abstractvectortype$<S> addExact($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
         return va.bOp(vb, (i, a, b) -> Math.addExact(a, b));
@@ -142,7 +142,7 @@ public final class $abstractvectortype$Helper {
     $abstractvectortype$<S> subtractExtract($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$,S> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.subtractExact(a, b));
     }
-#end[intOrlong]
+#end[intOrLong]
 #if[int]
     // @@@ Shape specific
     // Int256Vector -> Long512Vector

@@ -335,55 +335,34 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     }
 
     // logical shift left
-    public ShortVector<S> shiftL(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a << b));
-    }
-
     public ShortVector<S> shiftL(int s) {
         return uOp((i, a) -> (short) (a << s));
-    }
-
-    public ShortVector<S> shiftL(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a << b));
     }
 
     public ShortVector<S> shiftL(int s, Mask<Short, S> m) {
         return uOp(m, (i, a) -> (short) (a << s));
     }
 
-    // logical, or unsigned, shift right
-    public ShortVector<S> shiftR(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a >>> b));
-    }
 
+    // logical, or unsigned, shift right
     public ShortVector<S> shiftR(int s) {
         return uOp((i, a) -> (short) (a >>> s));
-    }
-
-    public ShortVector<S> shiftR(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a >>> b));
     }
 
     public ShortVector<S> shiftR(int s, Mask<Short, S> m) {
         return uOp(m, (i, a) -> (short) (a >>> s));
     }
 
-    // arithmetic, or signed, shift right
-    public ShortVector<S> ashiftR(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a >> b));
-    }
 
+    // arithmetic, or signed, shift right
     public ShortVector<S> aShiftR(int s) {
         return uOp((i, a) -> (short) (a >> s));
-    }
-
-    public ShortVector<S> ashiftR(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a >> b));
     }
 
     public ShortVector<S> aShiftR(int s, Mask<Short, S> m) {
         return uOp(m, (i, a) -> (short) (a >> s));
     }
+
 
     public ShortVector<S> rotateL(int j) {
         return uOp((i, a) -> (short) Integer.rotateLeft(a, j));

@@ -527,55 +527,61 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     }
 
     // logical shift left
-    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a << b));
-    }
-
     public $abstractvectortype$<S> shiftL(int s) {
         return uOp((i, a) -> ($type$) (a << s));
-    }
-
-    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a << b));
     }
 
     public $abstractvectortype$<S> shiftL(int s, Mask<$Boxtype$, S> m) {
         return uOp(m, (i, a) -> ($type$) (a << s));
     }
 
-    // logical, or unsigned, shift right
-    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a >>> b));
+#if[intOrLong]
+    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a << b));
     }
 
+    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a << b));
+    }
+#end[intOrLong]
+
+    // logical, or unsigned, shift right
     public $abstractvectortype$<S> shiftR(int s) {
         return uOp((i, a) -> ($type$) (a >>> s));
-    }
-
-    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a >>> b));
     }
 
     public $abstractvectortype$<S> shiftR(int s, Mask<$Boxtype$, S> m) {
         return uOp(m, (i, a) -> ($type$) (a >>> s));
     }
 
-    // arithmetic, or signed, shift right
-    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a >> b));
+#if[intOrLong]
+    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a >>> b));
     }
 
+    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a >>> b));
+    }
+#end[intOrLong]
+
+    // arithmetic, or signed, shift right
     public $abstractvectortype$<S> aShiftR(int s) {
         return uOp((i, a) -> ($type$) (a >> s));
-    }
-
-    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a >> b));
     }
 
     public $abstractvectortype$<S> aShiftR(int s, Mask<$Boxtype$, S> m) {
         return uOp(m, (i, a) -> ($type$) (a >> s));
     }
+
+#if[intOrLong]
+    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> o) {
+        return bOp(o, (i, a, b) -> ($type$) (a >> b));
+    }
+
+    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
+        return bOp(o, m, (i, a, b) -> ($type$) (a >> b));
+    }
+#end[intOrLong]
 
     public $abstractvectortype$<S> rotateL(int j) {
         return uOp((i, a) -> ($type$) $Wideboxtype$.rotateLeft(a, j));
