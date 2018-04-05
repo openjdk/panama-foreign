@@ -75,6 +75,21 @@ public class Short512VectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FReductionOp {
+      short apply(short[] a, int idx);
+    }
+
+    static void assertReductionArraysEquals(short[] a, short[] b, FReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         short apply(short a, short b);
     }
@@ -521,6 +536,106 @@ public class Short512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Short512VectorTests::min);
     }
+
+    static short andAll(short[] a, int idx) {
+        short res = -1;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res &= a[i];
+        }
+
+        return res;
+    }
+
+
+
+    @Test(dataProvider = "shortUnaryOpProvider", invocationCount = 10)
+    static void andAllShort512VectorTests(IntFunction<short[]> fa) {
+      short[] a = fa.apply(SPECIES.length());
+      short[] r = new short[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        ShortVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.andAll();
+      }
+
+      assertReductionArraysEquals(a, r, Short512VectorTests::andAll);
+    }
+
+
+
+    static short orAll(short[] a, int idx) {
+        short res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res |= a[i];
+        }
+
+        return res;
+    }
+
+
+
+    @Test(dataProvider = "shortUnaryOpProvider", invocationCount = 10)
+    static void orAllShort512VectorTests(IntFunction<short[]> fa) {
+      short[] a = fa.apply(SPECIES.length());
+      short[] r = new short[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        ShortVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.orAll();
+      }
+
+      assertReductionArraysEquals(a, r, Short512VectorTests::orAll);
+    }
+
+
+
+    static short xorAll(short[] a, int idx) {
+        short res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res ^= a[i];
+        }
+
+        return res;
+    }
+
+
+
+    @Test(dataProvider = "shortUnaryOpProvider", invocationCount = 10)
+    static void xorAllShort512VectorTests(IntFunction<short[]> fa) {
+      short[] a = fa.apply(SPECIES.length());
+      short[] r = new short[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        ShortVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.xorAll();
+      }
+
+      assertReductionArraysEquals(a, r, Short512VectorTests::xorAll);
+    }
+
+
+    static short subAll(short[] a, int idx) {
+        short res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res -= a[i];
+        }
+
+        return res;
+    }
+
+    @Test(dataProvider = "shortUnaryOpProvider", invocationCount = 10)
+    static void subAllShort512VectorTests(IntFunction<short[]> fa) {
+      short[] a = fa.apply(SPECIES.length());
+      short[] r = new short[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        ShortVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.subAll();
+      }
+
+      assertReductionArraysEquals(a, r, Short512VectorTests::subAll);
+    }
+
 
     @Test(dataProvider = "shortCompareOpProvider", invocationCount = 10)
     static void lessThanShort512VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {

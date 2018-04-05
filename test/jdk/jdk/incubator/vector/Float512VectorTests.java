@@ -75,6 +75,21 @@ public class Float512VectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FReductionOp {
+      float apply(float[] a, int idx);
+    }
+
+    static void assertReductionArraysEquals(float[] a, float[] b, FReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         float apply(float a, float b);
     }
@@ -441,6 +456,34 @@ public class Float512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Float512VectorTests::min);
     }
+
+
+
+
+
+
+    static float subAll(float[] a, int idx) {
+        float res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res -= a[i];
+        }
+
+        return res;
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider", invocationCount = 10)
+    static void subAllFloat512VectorTests(IntFunction<float[]> fa) {
+      float[] a = fa.apply(SPECIES.length());
+      float[] r = new float[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        FloatVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.subAll();
+      }
+
+      assertReductionArraysEquals(a, r, Float512VectorTests::subAll);
+    }
+
 
     @Test(dataProvider = "floatCompareOpProvider", invocationCount = 10)
     static void lessThanFloat512VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {

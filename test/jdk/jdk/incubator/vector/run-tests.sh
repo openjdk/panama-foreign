@@ -58,6 +58,7 @@ if [ "$TESTS" == "" ]; then
   # Run all the tests by default.
   TESTS="Byte64VectorTests,Byte128VectorTests,Byte256VectorTests,Byte512VectorTests,"
   TESTS+="Int64VectorTests,Int128VectorTests,Int256VectorTests,Int512VectorTests,"
+  TESTS+="Long64VectorTests,Long128VectorTests,Long256VectorTests,Long512VectorTests,"
   TESTS+="Short64VectorTests,Short128VectorTests,Short256VectorTests,Short512VectorTests,"
   TESTS+="Double64VectorTests,Double128VectorTests,Double256VectorTests,Double512VectorTests,"
   TESTS+="Float64VectorTests,Float128VectorTests,Float256VectorTests,Float512VectorTests"
@@ -65,7 +66,7 @@ fi
 
 # Get Java flags.
 JAVA_FLAGS="-XX:-TieredCompilation"
-if [ $DISABLE_VECTOR_INTRINSICS ]; then
+if [ "$DISABLE_VECTOR_INTRINSICS" == "true" ]; then
 	JAVA_FLAGS+=" -XX:-UseVectorApiIntrinsics"
 fi
 

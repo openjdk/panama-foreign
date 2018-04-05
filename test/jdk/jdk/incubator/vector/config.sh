@@ -27,8 +27,8 @@
 VECTORTESTS_HOME="$(pwd)"
 JDK_SRC_HOME="./../../../../../"
 JDK_BUILD="${JDK_SRC_HOME}/build/"
-JAVA="java"
-JAVAC="javac"
+JAVA="${JAVA_HOME}/bin/java"
+JAVAC="${JAVA_HOME}/bin/javac"
 BUILDLOG_FILE="./build.log"
 SPP_CLASSNAME="build.tools.spp.Spp"
 # Windows: Classpath Separator is ';'

@@ -75,6 +75,21 @@ public class Double256VectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FReductionOp {
+      double apply(double[] a, int idx);
+    }
+
+    static void assertReductionArraysEquals(double[] a, double[] b, FReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         double apply(double a, double b);
     }
@@ -441,6 +456,34 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Double256VectorTests::min);
     }
+
+
+
+
+
+
+    static double subAll(double[] a, int idx) {
+        double res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res -= a[i];
+        }
+
+        return res;
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider", invocationCount = 10)
+    static void subAllDouble256VectorTests(IntFunction<double[]> fa) {
+      double[] a = fa.apply(SPECIES.length());
+      double[] r = new double[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        DoubleVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.subAll();
+      }
+
+      assertReductionArraysEquals(a, r, Double256VectorTests::subAll);
+    }
+
 
     @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
     static void lessThanDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {

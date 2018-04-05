@@ -92,6 +92,21 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
+    interface FReductionOp {
+      $type$ apply($type$[] a, int idx);
+    }
+
+    static void assertReductionArraysEquals($type$[] a, $type$[] b, FReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         $type$ apply($type$ a, $type$ b);
     }

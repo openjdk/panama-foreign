@@ -75,6 +75,21 @@ public class Int256VectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FReductionOp {
+      int apply(int[] a, int idx);
+    }
+
+    static void assertReductionArraysEquals(int[] a, int[] b, FReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         int apply(int a, int b);
     }
@@ -521,6 +536,106 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Int256VectorTests::min);
     }
+
+    static int andAll(int[] a, int idx) {
+        int res = -1;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res &= a[i];
+        }
+
+        return res;
+    }
+
+
+
+    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    static void andAllInt256VectorTests(IntFunction<int[]> fa) {
+      int[] a = fa.apply(SPECIES.length());
+      int[] r = new int[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.andAll();
+      }
+
+      assertReductionArraysEquals(a, r, Int256VectorTests::andAll);
+    }
+
+
+
+    static int orAll(int[] a, int idx) {
+        int res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res |= a[i];
+        }
+
+        return res;
+    }
+
+
+
+    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    static void orAllInt256VectorTests(IntFunction<int[]> fa) {
+      int[] a = fa.apply(SPECIES.length());
+      int[] r = new int[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.orAll();
+      }
+
+      assertReductionArraysEquals(a, r, Int256VectorTests::orAll);
+    }
+
+
+
+    static int xorAll(int[] a, int idx) {
+        int res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res ^= a[i];
+        }
+
+        return res;
+    }
+
+
+
+    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    static void xorAllInt256VectorTests(IntFunction<int[]> fa) {
+      int[] a = fa.apply(SPECIES.length());
+      int[] r = new int[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.xorAll();
+      }
+
+      assertReductionArraysEquals(a, r, Int256VectorTests::xorAll);
+    }
+
+
+    static int subAll(int[] a, int idx) {
+        int res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res -= a[i];
+        }
+
+        return res;
+    }
+
+    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    static void subAllInt256VectorTests(IntFunction<int[]> fa) {
+      int[] a = fa.apply(SPECIES.length());
+      int[] r = new int[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.subAll();
+      }
+
+      assertReductionArraysEquals(a, r, Int256VectorTests::subAll);
+    }
+
 
     @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
     static void lessThanInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {

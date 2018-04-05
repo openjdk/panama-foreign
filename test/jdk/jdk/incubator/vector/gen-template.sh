@@ -34,22 +34,30 @@ binary_masked="$TEMPLATE_FOLDER/Binary-Masked-op.template"
 binary_scalar="$TEMPLATE_FOLDER/Binary-Scalar-op.template"
 blend="$TEMPLATE_FOLDER/Blend-op.template"
 compare_template="$TEMPLATE_FOLDER/Compare.template"
+reduction_scalar="$TEMPLATE_FOLDER/Reduction-Scalar-op.template"
+reduction_template="$TEMPLATE_FOLDER/Reduction-op.template"
 
 function gen_op_tmpl { 
   template=$1
   test=$2
   op=$3
   guard=""
-  if [ $# == 5 ]; then
+  init=""
+  if [ $# -gt 4 ]; then
     guard=$5
   fi
+  if [ $# == 6 ]; then
+    init=$6
+  fi
+
   sed "s/\[\[TEST\]\]/${test}/g" $template > $TEMPLATE_FOLDER/current
-  sed "s/\[\[TEST_OP\]\]/${op}/g" $TEMPLATE_FOLDER/current > $TEMPLATE_FOLDER/current2
+  sed -i "s/\[\[TEST_OP\]\]/${op}/g" $TEMPLATE_FOLDER/current
+  sed -i "s/\[\[TEST_INIT\]\]/${init}/g" $TEMPLATE_FOLDER/current
 
   if [ "$guard" != "" ]; then
     echo -e "#if[${guard}]\n" >> $4
   fi
-  cat $TEMPLATE_FOLDER/current2 >> $4
+  cat $TEMPLATE_FOLDER/current >> $4
   if [ "$guard" != "" ]; then
     echo -e "#end[${guard}]\n" >> $4
   fi
@@ -57,7 +65,6 @@ function gen_op_tmpl {
 
 function finalize {
   rm -rf $TEMPLATE_FOLDER/current
-  rm -rf $TEMPLATE_FOLDER/current2
 }
 
 function gen_binary_alu_op {
@@ -78,6 +85,12 @@ function gen_binary_op {
   echo "Generating binary op $1 ($2)..."
   gen_op_tmpl $binary_scalar "$@"
   gen_op_tmpl $binary "$@"
+}
+
+function gen_reduction_op {
+  echo "Generating reduction op $1 ($2)..."
+  gen_op_tmpl $reduction_scalar "$@"
+  gen_op_tmpl $reduction_template "$@"
 }
 
 function gen_header {
@@ -105,6 +118,12 @@ gen_binary_alu_op "xor" "a ^ b" $template_file "BITWISE"
 # Masked reductions.
 gen_binary_op "max" "Math.max(a, b)" $template_file
 gen_binary_op "min" "Math.min(a, b)" $template_file
+
+# Reductions.
+gen_reduction_op "andAll" "\&" $template_file "BITWISE" "-1"
+gen_reduction_op "orAll" "|" $template_file "BITWISE" "0"
+gen_reduction_op "xorAll" "^" $template_file "BITWISE" "0"
+gen_reduction_op "subAll" "-" $template_file "" "0"
 
 # Compares
 gen_op_tmpl $compare_template "lessThan" "<" $template_file

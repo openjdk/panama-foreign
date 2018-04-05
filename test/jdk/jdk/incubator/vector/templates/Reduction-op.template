@@ -1,0 +1,13 @@
+    @Test(dataProvider = "$type$UnaryOpProvider", invocationCount = 10)
+    static void [[TEST]]$vectorteststype$(IntFunction<$type$[]> fa) {
+      $type$[] a = fa.apply(SPECIES.length());
+      $type$[] r = new $type$[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.[[TEST]]();
+      }
+
+      assertReductionArraysEquals(a, r, $vectorteststype$::[[TEST]]);
+    }
+

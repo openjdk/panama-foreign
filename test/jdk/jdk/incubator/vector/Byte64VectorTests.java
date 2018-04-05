@@ -75,6 +75,21 @@ public class Byte64VectorTests extends AbstractVectorTest {
         }
     }
 
+    interface FReductionOp {
+      byte apply(byte[] a, int idx);
+    }
+
+    static void assertReductionArraysEquals(byte[] a, byte[] b, FReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         byte apply(byte a, byte b);
     }
@@ -521,6 +536,106 @@ public class Byte64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Byte64VectorTests::min);
     }
+
+    static byte andAll(byte[] a, int idx) {
+        byte res = -1;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res &= a[i];
+        }
+
+        return res;
+    }
+
+
+
+    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    static void andAllByte64VectorTests(IntFunction<byte[]> fa) {
+      byte[] a = fa.apply(SPECIES.length());
+      byte[] r = new byte[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        ByteVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.andAll();
+      }
+
+      assertReductionArraysEquals(a, r, Byte64VectorTests::andAll);
+    }
+
+
+
+    static byte orAll(byte[] a, int idx) {
+        byte res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res |= a[i];
+        }
+
+        return res;
+    }
+
+
+
+    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    static void orAllByte64VectorTests(IntFunction<byte[]> fa) {
+      byte[] a = fa.apply(SPECIES.length());
+      byte[] r = new byte[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        ByteVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.orAll();
+      }
+
+      assertReductionArraysEquals(a, r, Byte64VectorTests::orAll);
+    }
+
+
+
+    static byte xorAll(byte[] a, int idx) {
+        byte res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res ^= a[i];
+        }
+
+        return res;
+    }
+
+
+
+    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    static void xorAllByte64VectorTests(IntFunction<byte[]> fa) {
+      byte[] a = fa.apply(SPECIES.length());
+      byte[] r = new byte[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        ByteVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.xorAll();
+      }
+
+      assertReductionArraysEquals(a, r, Byte64VectorTests::xorAll);
+    }
+
+
+    static byte subAll(byte[] a, int idx) {
+        byte res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res -= a[i];
+        }
+
+        return res;
+    }
+
+    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    static void subAllByte64VectorTests(IntFunction<byte[]> fa) {
+      byte[] a = fa.apply(SPECIES.length());
+      byte[] r = new byte[a.length];
+
+      for (int i = 0; i < a.length; i += SPECIES.length()) {
+        ByteVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+        r[i] = av.subAll();
+      }
+
+      assertReductionArraysEquals(a, r, Byte64VectorTests::subAll);
+    }
+
 
     @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
     static void lessThanByte64VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
