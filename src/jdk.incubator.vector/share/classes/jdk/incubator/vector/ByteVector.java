@@ -566,20 +566,92 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
             return op(i -> es[i]);
         }
 
-        public ByteVector<S> fromArray(byte[] a, int ax) {
-            return op(i -> a[ax + i]);
+        /**
+         * Loads a vector from an array starting at offset.
+         * <p>
+         * For each vector lane, where {@code N} is the vector lane index, the
+         * array element at index {@code i + N} is placed into the
+         * resulting vector at lane index {@code N}.
+         *
+         * @param a the array
+         * @param i the offset into the array
+         * @return the vector loaded from an array
+         * @throws IndexOutOfBoundsException if {@code i < 0} or
+         * {@code i < a.length - this.length()}
+         */
+        public ByteVector<S> fromArray(byte[] a, int i) {
+            return op(n -> a[i + n]);
         }
 
-        public ByteVector<S> fromArray(byte[] a, int ax, Mask<Byte, S> m) {
-            return op(m, i -> a[ax + i]);
+        /**
+         * Loads a vector from an array starting at offset.
+         * <p>
+         * For each vector lane, where {@code N} is the vector lane index,
+         * if the mask lane at index {@code N} is set then the array element at
+         * index {@code i + N} is placed into the resulting vector at lane index
+         * {@code N}, otherwise the default element value is placed into the
+         * resulting vector at lane index {@code N}.
+         *
+         * @param a the array
+         * @param i the offset into the array
+         * @param m the mask
+         * @return the vector loaded from an array
+         * @throws IndexOutOfBoundsException if {@code i < 0} or
+         * {@code i < a.length - this.length()}
+         */
+        public ByteVector<S> fromArray(byte[] a, int i, Mask<Byte, S> m) {
+            return op(m, n -> a[i + n]);
         }
 
-        public ByteVector<S> fromArray(byte[] a, int ax, int[] indexMap, int mx) {
-            return op(i -> a[ax + indexMap[mx + i]]);
+        /**
+         * Loads a vector from an array using indexes obtained from an index
+         * map.
+         * <p>
+         * For each vector lane, where {@code N} is the vector lane index, the
+         * array element at index {@code i + indexMap[j + N]} is placed into the
+         * resulting vector at lane index {@code N}.
+         *
+         * @param a the array
+         * @param i the offset into the array, may be negative if relative
+         * indexes in the index map compensate to produce a value within the
+         * array bounds
+         * @param indexMap the index map
+         * @param j the offset into the index map
+         * @return the vector loaded from an array
+         * @throws IndexOutOfBoundsException if {@code j < 0}, or
+         * {@code j < indexMap.length - this.length()}, or for any vector
+         * lane index {@code N} the result of {@code i + indexMap[j + N]} is
+         * {@code < 0} or {@code >= a.length}
+         */
+        public ByteVector<S> fromArray(byte[] a, int i, int[] indexMap, int j) {
+            return op(n -> a[i + indexMap[j + n]]);
         }
 
-        public ByteVector<S> fromArray(byte[] a, int ax, Mask<Byte, S> m, int[] indexMap, int mx) {
-            return op(m, i -> a[ax + indexMap[mx + i]]);
+        /**
+         * Loads a vector from an array using indexes obtained from an index
+         * map.
+         * <p>
+         * For each vector lane, where {@code N} is the vector lane index,
+         * if the mask lane at index {@code N} is set then the array element at
+         * index {@code i + indexMap[j + N]} is placed into the resulting vector
+         * at lane index {@code N}, otherwise the default element value is
+         * placed into the resulting vector at lane index {@code N}.
+         *
+         * @param a the array
+         * @param i the offset into the array, may be negative if relative
+         * indexes in the index map compensate to produce a value within the
+         * array bounds
+         * @param m the mask
+         * @param indexMap the index map
+         * @param j the offset into the index map
+         * @return the vector loaded from an array
+         * @throws IndexOutOfBoundsException if {@code j < 0}, or
+         * {@code j < indexMap.length - this.length()}, or for any vector
+         * lane index {@code N} the result of {@code i + indexMap[j + N]} is
+         * {@code < 0} or {@code >= a.length}
+         */
+        public ByteVector<S> fromArray(byte[] a, int i, Mask<Byte, S> m, int[] indexMap, int j) {
+            return op(m, n -> a[i + indexMap[j + n]]);
         }
 
         @Override
