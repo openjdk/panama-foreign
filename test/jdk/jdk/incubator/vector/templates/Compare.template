@@ -1,18 +1,20 @@
 
-    @Test(dataProvider = "$type$CompareOpProvider", invocationCount = 10)
+    @Test(dataProvider = "$type$CompareOpProvider")
     static void [[TEST]]$vectorteststype$(IntFunction<$type$[]> fa, IntFunction<$type$[]> fb) {
         $type$[] a = fa.apply(SPECIES.length());
         $type$[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
-            $abstractvectortype$<Shapes.S$bits$Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mv = av.[[TEST]](bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
+                $abstractvectortype$<Shapes.S$bits$Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> mv = av.[[TEST]](bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] [[TEST_OP]] b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] [[TEST_OP]] b[i + j]);
+                }
             }
         }
     }
+

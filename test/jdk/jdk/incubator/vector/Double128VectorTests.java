@@ -48,6 +48,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     static final DoubleVector.DoubleSpecies<Shapes.S128Bit> SPECIES =
                 DoubleVector.speciesInstance(Shapes.S_128_BIT);
 
+    static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
     interface FUnOp {
         double apply(double a);
@@ -250,23 +251,23 @@ public class Double128VectorTests extends AbstractVectorTest {
         return (double)(a + b);
     }
 
-    @Test(dataProvider = "doubleBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpProvider")
     static void addDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] b = fb.apply(SPECIES.length()); 
+        double[] r = new double[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.add(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.add(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Double128VectorTests::add);
     }
 
-    @Test(dataProvider = "doubleBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpMaskProvider")
     static void addDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
@@ -275,13 +276,13 @@ public class Double128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.add(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.add(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Double128VectorTests::add);
     }
 
@@ -289,23 +290,23 @@ public class Double128VectorTests extends AbstractVectorTest {
         return (double)(a - b);
     }
 
-    @Test(dataProvider = "doubleBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpProvider")
     static void subDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] b = fb.apply(SPECIES.length()); 
+        double[] r = new double[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.sub(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.sub(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Double128VectorTests::sub);
     }
 
-    @Test(dataProvider = "doubleBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpMaskProvider")
     static void subDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
@@ -314,13 +315,13 @@ public class Double128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.sub(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.sub(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Double128VectorTests::sub);
     }
 
@@ -331,25 +332,25 @@ public class Double128VectorTests extends AbstractVectorTest {
 
 
 
-    @Test(dataProvider = "doubleBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpProvider")
     static void divDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] b = fb.apply(SPECIES.length()); 
+        double[] r = new double[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.div(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.div(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Double128VectorTests::div);
     }
 
 
 
-    @Test(dataProvider = "doubleBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpMaskProvider")
     static void divDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
@@ -358,13 +359,13 @@ public class Double128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.div(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.div(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Double128VectorTests::div);
     }
 
@@ -373,23 +374,23 @@ public class Double128VectorTests extends AbstractVectorTest {
         return (double)(a * b);
     }
 
-    @Test(dataProvider = "doubleBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpProvider")
     static void mulDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] b = fb.apply(SPECIES.length()); 
+        double[] r = new double[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.mul(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.mul(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Double128VectorTests::mul);
     }
 
-    @Test(dataProvider = "doubleBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpMaskProvider")
     static void mulDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
@@ -398,13 +399,13 @@ public class Double128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.mul(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.mul(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Double128VectorTests::mul);
     }
 
@@ -421,19 +422,19 @@ public class Double128VectorTests extends AbstractVectorTest {
         return (double)(Math.max(a, b));
     }
 
-    @Test(dataProvider = "doubleBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpProvider")
     static void maxDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] b = fb.apply(SPECIES.length()); 
+        double[] r = new double[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.max(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.max(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Double128VectorTests::max);
     }
 
@@ -441,19 +442,19 @@ public class Double128VectorTests extends AbstractVectorTest {
         return (double)(Math.min(a, b));
     }
 
-    @Test(dataProvider = "doubleBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpProvider")
     static void minDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] b = fb.apply(SPECIES.length()); 
+        double[] r = new double[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.min(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.min(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Double128VectorTests::min);
     }
 
@@ -470,134 +471,146 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         return res;
     }
-
-    @Test(dataProvider = "doubleUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleUnaryOpProvider")
     static void subAllDouble128VectorTests(IntFunction<double[]> fa) {
-      double[] a = fa.apply(SPECIES.length());
-      double[] r = new double[a.length];
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
 
-      for (int i = 0; i < a.length; i += SPECIES.length()) {
-        DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-        r[i] = av.subAll();
-      }
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.subAll();
+            }
+        }
 
-      assertReductionArraysEquals(a, r, Double128VectorTests::subAll);
+        assertReductionArraysEquals(a, r, Double128VectorTests::subAll);
     }
 
-
-    @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleCompareOpProvider")
     static void lessThanDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Double, Shapes.S128Bit> mv = av.lessThan(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Shapes.S128Bit> mv = av.lessThan(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] < b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] < b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "doubleCompareOpProvider")
     static void greaterThanDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Double, Shapes.S128Bit> mv = av.greaterThan(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Shapes.S128Bit> mv = av.greaterThan(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] > b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] > b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "doubleCompareOpProvider")
     static void equalDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Double, Shapes.S128Bit> mv = av.equal(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Shapes.S128Bit> mv = av.equal(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] == b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] == b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "doubleCompareOpProvider")
     static void notEqualDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Double, Shapes.S128Bit> mv = av.notEqual(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Shapes.S128Bit> mv = av.notEqual(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] != b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] != b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "doubleCompareOpProvider")
     static void lessThanEqDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Double, Shapes.S128Bit> mv = av.lessThanEq(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Shapes.S128Bit> mv = av.lessThanEq(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] <= b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] <= b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "doubleCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "doubleCompareOpProvider")
     static void greaterThanEqDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Double, Shapes.S128Bit> mv = av.greaterThanEq(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Shapes.S128Bit> mv = av.greaterThanEq(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] >= b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] >= b[i + j]);
+                }
             }
         }
     }
+
 
     static double blend(double a, double b, boolean mask) {
         return mask ? b : a;
     }
 
-    @Test(dataProvider = "doubleBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleBinaryOpMaskProvider")
     static void blendDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb,
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
@@ -606,13 +619,13 @@ public class Double128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.blend(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.blend(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Double128VectorTests::blend);
     }
 
@@ -620,15 +633,15 @@ public class Double128VectorTests extends AbstractVectorTest {
         return (double)(-((double)a));
     }
 
-    @Test(dataProvider = "doubleUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleUnaryOpProvider")
     static void negDouble128VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.neg().intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.neg().intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, Double128VectorTests::neg);
@@ -642,10 +655,11 @@ public class Double128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.neg(vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.neg(vmask).intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, mask, Double128VectorTests::neg);
@@ -655,15 +669,15 @@ public class Double128VectorTests extends AbstractVectorTest {
         return (double)(Math.abs((double)a));
     }
 
-    @Test(dataProvider = "doubleUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "doubleUnaryOpProvider")
     static void absDouble128VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.abs().intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.abs().intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, Double128VectorTests::abs);
@@ -677,10 +691,11 @@ public class Double128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.abs(vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.abs(vmask).intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, mask, Double128VectorTests::abs);

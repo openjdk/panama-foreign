@@ -48,6 +48,7 @@ public class Int256VectorTests extends AbstractVectorTest {
     static final IntVector.IntSpecies<Shapes.S256Bit> SPECIES =
                 IntVector.speciesInstance(Shapes.S_256_BIT);
 
+    static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
     interface FUnOp {
         int apply(int a);
@@ -246,23 +247,23 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a + b);
     }
 
-    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpProvider")
     static void addInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length()); 
+        int[] b = fb.apply(SPECIES.length()); 
+        int[] r = new int[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.add(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.add(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Int256VectorTests::add);
     }
 
-    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void addInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -271,13 +272,13 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.add(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.add(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Int256VectorTests::add);
     }
 
@@ -285,23 +286,23 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a - b);
     }
 
-    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpProvider")
     static void subInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length()); 
+        int[] b = fb.apply(SPECIES.length()); 
+        int[] r = new int[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.sub(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.sub(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Int256VectorTests::sub);
     }
 
-    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void subInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -310,13 +311,13 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.sub(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.sub(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Int256VectorTests::sub);
     }
 
@@ -327,23 +328,23 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(a * b);
     }
 
-    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpProvider")
     static void mulInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length()); 
+        int[] b = fb.apply(SPECIES.length()); 
+        int[] r = new int[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.mul(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.mul(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Int256VectorTests::mul);
     }
 
-    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void mulInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -352,13 +353,13 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.mul(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.mul(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Int256VectorTests::mul);
     }
 
@@ -369,25 +370,25 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpProvider")
     static void andInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length()); 
+        int[] b = fb.apply(SPECIES.length()); 
+        int[] r = new int[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.and(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.and(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Int256VectorTests::and);
     }
 
 
 
-    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void andInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -396,13 +397,13 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.and(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.and(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Int256VectorTests::and);
     }
 
@@ -414,25 +415,25 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpProvider")
     static void orInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length()); 
+        int[] b = fb.apply(SPECIES.length()); 
+        int[] r = new int[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.or(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.or(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Int256VectorTests::or);
     }
 
 
 
-    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void orInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -441,13 +442,13 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.or(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.or(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Int256VectorTests::or);
     }
 
@@ -459,25 +460,25 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpProvider")
     static void xorInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length()); 
+        int[] b = fb.apply(SPECIES.length()); 
+        int[] r = new int[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.xor(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.xor(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Int256VectorTests::xor);
     }
 
 
 
-    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void xorInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -486,13 +487,13 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.xor(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.xor(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Int256VectorTests::xor);
     }
 
@@ -501,19 +502,19 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(Math.max(a, b));
     }
 
-    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpProvider")
     static void maxInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length()); 
+        int[] b = fb.apply(SPECIES.length()); 
+        int[] r = new int[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.max(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.max(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Int256VectorTests::max);
     }
 
@@ -521,19 +522,19 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(Math.min(a, b));
     }
 
-    @Test(dataProvider = "intBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpProvider")
     static void minInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length());
-        int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length()); 
+        int[] b = fb.apply(SPECIES.length()); 
+        int[] r = new int[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.min(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.min(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Int256VectorTests::min);
     }
 
@@ -547,20 +548,20 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-
-    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intUnaryOpProvider")
     static void andAllInt256VectorTests(IntFunction<int[]> fa) {
-      int[] a = fa.apply(SPECIES.length());
-      int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
-      for (int i = 0; i < a.length; i += SPECIES.length()) {
-        IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-        r[i] = av.andAll();
-      }
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.andAll();
+            }
+        }
 
-      assertReductionArraysEquals(a, r, Int256VectorTests::andAll);
+        assertReductionArraysEquals(a, r, Int256VectorTests::andAll);
     }
-
 
 
     static int orAll(int[] a, int idx) {
@@ -573,20 +574,20 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-
-    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intUnaryOpProvider")
     static void orAllInt256VectorTests(IntFunction<int[]> fa) {
-      int[] a = fa.apply(SPECIES.length());
-      int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
-      for (int i = 0; i < a.length; i += SPECIES.length()) {
-        IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-        r[i] = av.orAll();
-      }
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.orAll();
+            }
+        }
 
-      assertReductionArraysEquals(a, r, Int256VectorTests::orAll);
+        assertReductionArraysEquals(a, r, Int256VectorTests::orAll);
     }
-
 
 
     static int xorAll(int[] a, int idx) {
@@ -599,20 +600,20 @@ public class Int256VectorTests extends AbstractVectorTest {
     }
 
 
-
-    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intUnaryOpProvider")
     static void xorAllInt256VectorTests(IntFunction<int[]> fa) {
-      int[] a = fa.apply(SPECIES.length());
-      int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
-      for (int i = 0; i < a.length; i += SPECIES.length()) {
-        IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-        r[i] = av.xorAll();
-      }
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.xorAll();
+            }
+        }
 
-      assertReductionArraysEquals(a, r, Int256VectorTests::xorAll);
+        assertReductionArraysEquals(a, r, Int256VectorTests::xorAll);
     }
-
 
     static int subAll(int[] a, int idx) {
         int res = 0;
@@ -622,134 +623,146 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         return res;
     }
-
-    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intUnaryOpProvider")
     static void subAllInt256VectorTests(IntFunction<int[]> fa) {
-      int[] a = fa.apply(SPECIES.length());
-      int[] r = new int[a.length];
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
-      for (int i = 0; i < a.length; i += SPECIES.length()) {
-        IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-        r[i] = av.subAll();
-      }
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.subAll();
+            }
+        }
 
-      assertReductionArraysEquals(a, r, Int256VectorTests::subAll);
+        assertReductionArraysEquals(a, r, Int256VectorTests::subAll);
     }
 
-
-    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intCompareOpProvider")
     static void lessThanInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Integer, Shapes.S256Bit> mv = av.lessThan(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Shapes.S256Bit> mv = av.lessThan(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] < b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] < b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "intCompareOpProvider")
     static void greaterThanInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Integer, Shapes.S256Bit> mv = av.greaterThan(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Shapes.S256Bit> mv = av.greaterThan(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] > b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] > b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "intCompareOpProvider")
     static void equalInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Integer, Shapes.S256Bit> mv = av.equal(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Shapes.S256Bit> mv = av.equal(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] == b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] == b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "intCompareOpProvider")
     static void notEqualInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Integer, Shapes.S256Bit> mv = av.notEqual(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Shapes.S256Bit> mv = av.notEqual(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] != b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] != b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "intCompareOpProvider")
     static void lessThanEqInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Integer, Shapes.S256Bit> mv = av.lessThanEq(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Shapes.S256Bit> mv = av.lessThanEq(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] <= b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] <= b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "intCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "intCompareOpProvider")
     static void greaterThanEqInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Integer, Shapes.S256Bit> mv = av.greaterThanEq(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Shapes.S256Bit> mv = av.greaterThanEq(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] >= b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] >= b[i + j]);
+                }
             }
         }
     }
+
 
     static int blend(int a, int b, boolean mask) {
         return mask ? b : a;
     }
 
-    @Test(dataProvider = "intBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "intBinaryOpMaskProvider")
     static void blendInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb,
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
@@ -758,13 +771,13 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
-            av.blend(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+                av.blend(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Int256VectorTests::blend);
     }
 
@@ -772,15 +785,15 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(-((int)a));
     }
 
-    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intUnaryOpProvider")
     static void negInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            av.neg().intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.neg().intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, Int256VectorTests::neg);
@@ -794,10 +807,11 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            av.neg(vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.neg(vmask).intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, mask, Int256VectorTests::neg);
@@ -807,15 +821,15 @@ public class Int256VectorTests extends AbstractVectorTest {
         return (int)(Math.abs((int)a));
     }
 
-    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intUnaryOpProvider")
     static void absInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            av.abs().intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.abs().intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, Int256VectorTests::abs);
@@ -829,10 +843,11 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            av.abs(vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.abs(vmask).intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, mask, Int256VectorTests::abs);
@@ -845,15 +860,15 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
-    @Test(dataProvider = "intUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "intUnaryOpProvider")
     static void notInt256VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            av.not().intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.not().intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, Int256VectorTests::not);
@@ -869,10 +884,11 @@ public class Int256VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            av.not(vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.not(vmask).intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, mask, Int256VectorTests::not);

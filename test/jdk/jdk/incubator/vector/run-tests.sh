@@ -79,6 +79,7 @@ LogRun false "${JAVA} -cp \"${VECTORTESTS_HOME_CP}${SEPARATOR}${TESTNG_RUN_JAR}$
 time ${JAVA} -cp "${VECTORTESTS_HOME_CP}${SEPARATOR}${TESTNG_RUN_JAR}${SEPARATOR}${JCOMMANDER_JAR}" \
   ${JAVA_FLAGS} \
   --add-modules jdk.incubator.vector \
+  -Djdk.incubator.vector.test.loop-iterations=${TEST_ITER_COUNT} \
   org.testng.TestNG -testclass $TESTS
 LogRun true "Tests run complete. Please look at test-output/index.html to visualize the results.\n"
 

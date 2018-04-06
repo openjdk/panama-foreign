@@ -39,6 +39,7 @@ TEMPLATE_FILE="myVectorTemplate.template"
 TESTNG_JAR="${TESTNG_PLUGIN}/plugins/org.testng.source_6.13.1.r201712040515.jar"
 TESTNG_RUN_JAR="${TESTNG_PLUGIN}/plugins/org.testng_6.13.1.r201712040515.jar"
 JCOMMANDER_JAR="${TESTNG_PLUGIN}/plugins/com.beust.jcommander_1.72.0.jar"
+TEST_ITER_COUNT=100
 
 function Log () {
   if [ $1 == true ]; then

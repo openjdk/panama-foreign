@@ -7,10 +7,11 @@
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
-            av.[[TEST]](vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
+                av.[[TEST]](vmask).intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, mask, $vectorteststype$::[[TEST]]);

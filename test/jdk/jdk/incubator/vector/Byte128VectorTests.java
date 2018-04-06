@@ -48,6 +48,7 @@ public class Byte128VectorTests extends AbstractVectorTest {
     static final ByteVector.ByteSpecies<Shapes.S128Bit> SPECIES =
                 ByteVector.speciesInstance(Shapes.S_128_BIT);
 
+    static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
     interface FUnOp {
         byte apply(byte a);
@@ -246,23 +247,23 @@ public class Byte128VectorTests extends AbstractVectorTest {
         return (byte)(a + b);
     }
 
-    @Test(dataProvider = "byteBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpProvider")
     static void addByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.add(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.add(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Byte128VectorTests::add);
     }
 
-    @Test(dataProvider = "byteBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
     static void addByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
                                           IntFunction<boolean[]> fm) {
         byte[] a = fa.apply(SPECIES.length());
@@ -271,13 +272,13 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.add(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.add(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Byte128VectorTests::add);
     }
 
@@ -285,23 +286,23 @@ public class Byte128VectorTests extends AbstractVectorTest {
         return (byte)(a - b);
     }
 
-    @Test(dataProvider = "byteBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpProvider")
     static void subByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.sub(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.sub(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Byte128VectorTests::sub);
     }
 
-    @Test(dataProvider = "byteBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
     static void subByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
                                           IntFunction<boolean[]> fm) {
         byte[] a = fa.apply(SPECIES.length());
@@ -310,13 +311,13 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.sub(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.sub(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Byte128VectorTests::sub);
     }
 
@@ -327,23 +328,23 @@ public class Byte128VectorTests extends AbstractVectorTest {
         return (byte)(a * b);
     }
 
-    @Test(dataProvider = "byteBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpProvider")
     static void mulByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.mul(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.mul(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Byte128VectorTests::mul);
     }
 
-    @Test(dataProvider = "byteBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
     static void mulByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
                                           IntFunction<boolean[]> fm) {
         byte[] a = fa.apply(SPECIES.length());
@@ -352,13 +353,13 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.mul(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.mul(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Byte128VectorTests::mul);
     }
 
@@ -369,25 +370,25 @@ public class Byte128VectorTests extends AbstractVectorTest {
 
 
 
-    @Test(dataProvider = "byteBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpProvider")
     static void andByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.and(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.and(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Byte128VectorTests::and);
     }
 
 
 
-    @Test(dataProvider = "byteBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
     static void andByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
                                           IntFunction<boolean[]> fm) {
         byte[] a = fa.apply(SPECIES.length());
@@ -396,13 +397,13 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.and(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.and(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Byte128VectorTests::and);
     }
 
@@ -414,25 +415,25 @@ public class Byte128VectorTests extends AbstractVectorTest {
 
 
 
-    @Test(dataProvider = "byteBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpProvider")
     static void orByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.or(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.or(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Byte128VectorTests::or);
     }
 
 
 
-    @Test(dataProvider = "byteBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
     static void orByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
                                           IntFunction<boolean[]> fm) {
         byte[] a = fa.apply(SPECIES.length());
@@ -441,13 +442,13 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.or(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.or(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Byte128VectorTests::or);
     }
 
@@ -459,25 +460,25 @@ public class Byte128VectorTests extends AbstractVectorTest {
 
 
 
-    @Test(dataProvider = "byteBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpProvider")
     static void xorByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.xor(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.xor(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Byte128VectorTests::xor);
     }
 
 
 
-    @Test(dataProvider = "byteBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
     static void xorByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
                                           IntFunction<boolean[]> fm) {
         byte[] a = fa.apply(SPECIES.length());
@@ -486,13 +487,13 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.xor(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.xor(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Byte128VectorTests::xor);
     }
 
@@ -501,19 +502,19 @@ public class Byte128VectorTests extends AbstractVectorTest {
         return (byte)(Math.max(a, b));
     }
 
-    @Test(dataProvider = "byteBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpProvider")
     static void maxByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.max(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.max(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Byte128VectorTests::max);
     }
 
@@ -521,19 +522,19 @@ public class Byte128VectorTests extends AbstractVectorTest {
         return (byte)(Math.min(a, b));
     }
 
-    @Test(dataProvider = "byteBinaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpProvider")
     static void minByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.min(bv).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.min(bv).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, Byte128VectorTests::min);
     }
 
@@ -547,20 +548,20 @@ public class Byte128VectorTests extends AbstractVectorTest {
     }
 
 
-
-    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void andAllByte128VectorTests(IntFunction<byte[]> fa) {
-      byte[] a = fa.apply(SPECIES.length());
-      byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
 
-      for (int i = 0; i < a.length; i += SPECIES.length()) {
-        ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-        r[i] = av.andAll();
-      }
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.andAll();
+            }
+        }
 
-      assertReductionArraysEquals(a, r, Byte128VectorTests::andAll);
+        assertReductionArraysEquals(a, r, Byte128VectorTests::andAll);
     }
-
 
 
     static byte orAll(byte[] a, int idx) {
@@ -573,20 +574,20 @@ public class Byte128VectorTests extends AbstractVectorTest {
     }
 
 
-
-    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void orAllByte128VectorTests(IntFunction<byte[]> fa) {
-      byte[] a = fa.apply(SPECIES.length());
-      byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
 
-      for (int i = 0; i < a.length; i += SPECIES.length()) {
-        ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-        r[i] = av.orAll();
-      }
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.orAll();
+            }
+        }
 
-      assertReductionArraysEquals(a, r, Byte128VectorTests::orAll);
+        assertReductionArraysEquals(a, r, Byte128VectorTests::orAll);
     }
-
 
 
     static byte xorAll(byte[] a, int idx) {
@@ -599,20 +600,20 @@ public class Byte128VectorTests extends AbstractVectorTest {
     }
 
 
-
-    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void xorAllByte128VectorTests(IntFunction<byte[]> fa) {
-      byte[] a = fa.apply(SPECIES.length());
-      byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
 
-      for (int i = 0; i < a.length; i += SPECIES.length()) {
-        ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-        r[i] = av.xorAll();
-      }
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.xorAll();
+            }
+        }
 
-      assertReductionArraysEquals(a, r, Byte128VectorTests::xorAll);
+        assertReductionArraysEquals(a, r, Byte128VectorTests::xorAll);
     }
-
 
     static byte subAll(byte[] a, int idx) {
         byte res = 0;
@@ -622,134 +623,146 @@ public class Byte128VectorTests extends AbstractVectorTest {
 
         return res;
     }
-
-    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void subAllByte128VectorTests(IntFunction<byte[]> fa) {
-      byte[] a = fa.apply(SPECIES.length());
-      byte[] r = new byte[a.length];
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
 
-      for (int i = 0; i < a.length; i += SPECIES.length()) {
-        ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-        r[i] = av.subAll();
-      }
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.subAll();
+            }
+        }
 
-      assertReductionArraysEquals(a, r, Byte128VectorTests::subAll);
+        assertReductionArraysEquals(a, r, Byte128VectorTests::subAll);
     }
 
-
-    @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteCompareOpProvider")
     static void lessThanByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Byte, Shapes.S128Bit> mv = av.lessThan(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte, Shapes.S128Bit> mv = av.lessThan(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] < b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] < b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "byteCompareOpProvider")
     static void greaterThanByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Byte, Shapes.S128Bit> mv = av.greaterThan(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte, Shapes.S128Bit> mv = av.greaterThan(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] > b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] > b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "byteCompareOpProvider")
     static void equalByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Byte, Shapes.S128Bit> mv = av.equal(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte, Shapes.S128Bit> mv = av.equal(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] == b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] == b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "byteCompareOpProvider")
     static void notEqualByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Byte, Shapes.S128Bit> mv = av.notEqual(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte, Shapes.S128Bit> mv = av.notEqual(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] != b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] != b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "byteCompareOpProvider")
     static void lessThanEqByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Byte, Shapes.S128Bit> mv = av.lessThanEq(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte, Shapes.S128Bit> mv = av.lessThanEq(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] <= b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] <= b[i + j]);
+                }
             }
         }
     }
 
-    @Test(dataProvider = "byteCompareOpProvider", invocationCount = 10)
+
+    @Test(dataProvider = "byteCompareOpProvider")
     static void greaterThanEqByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            Vector.Mask<Byte, Shapes.S128Bit> mv = av.greaterThanEq(bv);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte, Shapes.S128Bit> mv = av.greaterThanEq(bv);
 
-            // Check results as part of computation.
-            for (int j = 0; j < SPECIES.length(); j++) {
-                Assert.assertEquals(mv.getElement(j), a[i + j] >= b[i + j]);
+                // Check results as part of computation.
+                for (int j = 0; j < SPECIES.length(); j++) {
+                    Assert.assertEquals(mv.getElement(j), a[i + j] >= b[i + j]);
+                }
             }
         }
     }
+
 
     static byte blend(byte a, byte b, boolean mask) {
         return mask ? b : a;
     }
 
-    @Test(dataProvider = "byteBinaryOpMaskProvider", invocationCount = 10)
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
     static void blendByte128VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
                                           IntFunction<boolean[]> fm) {
         byte[] a = fa.apply(SPECIES.length());
@@ -758,13 +771,13 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-            av.blend(bv, vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                ByteVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.blend(bv, vmask).intoArray(r, i);
+            }
         }
-
         assertArraysEquals(a, b, r, mask, Byte128VectorTests::blend);
     }
 
@@ -772,15 +785,15 @@ public class Byte128VectorTests extends AbstractVectorTest {
         return (byte)(-((byte)a));
     }
 
-    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void negByte128VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.neg().intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.neg().intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, Byte128VectorTests::neg);
@@ -794,10 +807,11 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.neg(vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.neg(vmask).intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, mask, Byte128VectorTests::neg);
@@ -807,15 +821,15 @@ public class Byte128VectorTests extends AbstractVectorTest {
         return (byte)(Math.abs((byte)a));
     }
 
-    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void absByte128VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.abs().intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.abs().intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, Byte128VectorTests::abs);
@@ -829,10 +843,11 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.abs(vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.abs(vmask).intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, mask, Byte128VectorTests::abs);
@@ -845,15 +860,15 @@ public class Byte128VectorTests extends AbstractVectorTest {
 
 
 
-    @Test(dataProvider = "byteUnaryOpProvider", invocationCount = 10)
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void notByte128VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
-
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.not().intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.not().intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, Byte128VectorTests::not);
@@ -869,10 +884,11 @@ public class Byte128VectorTests extends AbstractVectorTest {
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Byte, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
 
-        // Computation.
-        for (int i = 0; i < a.length; i += SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-            av.not(vmask).intoArray(r, i);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.not(vmask).intoArray(r, i);
+            }
         }
 
         assertArraysEquals(a, r, mask, Byte128VectorTests::not);

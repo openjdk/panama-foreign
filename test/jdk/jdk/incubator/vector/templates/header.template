@@ -65,6 +65,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
     static final $abstractvectortype$.$Type$Species<Shapes.S$bits$Bit> SPECIES =
                 $Type$Vector.speciesInstance(Shapes.S_$bits$_BIT);
 
+    static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
     interface FUnOp {
         $type$ apply($type$ a);
