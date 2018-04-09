@@ -725,5 +725,47 @@ public class Float64VectorTests extends AbstractVectorTest {
 
 
 
+
+
+    static float sqrt(float a) {
+        return (float)(Math.sqrt((double)a));
+    }
+
+
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void sqrtFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.sqrt().intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, Float64VectorTests::sqrt);
+    }
+
+
+
+    @Test(dataProvider = "floatUnaryOpMaskProvider")
+    static void sqrtMaskedFloat64VectorTests(IntFunction<float[]> fa,
+                                                IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Float, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.sqrt(vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, mask, Float64VectorTests::sqrt);
+    }
+
 }
 

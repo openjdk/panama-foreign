@@ -725,5 +725,47 @@ public class Double256VectorTests extends AbstractVectorTest {
 
 
 
+
+
+    static double sqrt(double a) {
+        return (double)(Math.sqrt((double)a));
+    }
+
+
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void sqrtDouble256VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.sqrt().intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, Double256VectorTests::sqrt);
+    }
+
+
+
+    @Test(dataProvider = "doubleUnaryOpMaskProvider")
+    static void sqrtMaskedDouble256VectorTests(IntFunction<double[]> fa,
+                                                IntFunction<boolean[]> fm) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Double, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.sqrt(vmask).intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, r, mask, Double256VectorTests::sqrt);
+    }
+
 }
 

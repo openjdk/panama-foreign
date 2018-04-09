@@ -225,6 +225,7 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_NegVI:
   case Op_NegVF:
   case Op_NegVD:
+  case Op_SqrtVF:
   case Op_SqrtVD:
   case Op_NotV:
   case Op_LShiftVB:

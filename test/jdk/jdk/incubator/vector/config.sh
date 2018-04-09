@@ -59,7 +59,7 @@ function LogRun () {
 # Windows uses ";", while Unix-based OSes use ":"
 uname_s=$(uname -s)
 VECTORTESTS_HOME_CP=$VECTORTESTS_HOME
-if [ "$uname_cygwin" == "CYGWIN" ]; then
+if [ VAR_OS_ENV==windows.cygwin ]; then
   VECTORTESTS_HOME_CP=$(cygpath -pw $VECTORTESTS_HOME)
 fi
 

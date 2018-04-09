@@ -141,6 +141,7 @@ gen_op_tmpl $blend "blend" "" $template_file
 gen_unary_alu_op "neg" "-((\$type\$)a)" $template_file
 gen_unary_alu_op "abs" "Math.abs((\$type\$)a)" $template_file
 gen_unary_alu_op "not" "~((\$type\$)a)" $template_file "BITWISE"
+gen_unary_alu_op "sqrt" "Math.sqrt((double)a)" $template_file "FP"
 #gen_binary_op "lessThan" "<" $template_file
 #gen_binary_op "greaterThan" ">" $template_file
 gen_footer $template_file

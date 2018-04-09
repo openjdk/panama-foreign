@@ -916,5 +916,8 @@ public class Short512VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, Short512VectorTests::not);
     }
 
+
+
+
 }
 

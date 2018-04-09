@@ -916,5 +916,8 @@ public class Short64VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, Short64VectorTests::not);
     }
 
+
+
+
 }
 
