@@ -138,12 +138,25 @@ class ReductionNode : public Node {
 };
 
 //------------------------------AddReductionVINode--------------------------------------
-// Vector add int as a reduction
+// Vector add byte, short and int as a reduction
 class AddReductionVINode : public ReductionNode {
 public:
-  AddReductionVINode(Node * ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {}
+  AddReductionVINode(Node * ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {
+    if (in1->bottom_type()->basic_type() == T_INT) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             in2->bottom_type()->is_vect()->element_basic_type() == T_BYTE ||
+             in2->bottom_type()->is_vect()->element_basic_type() == T_SHORT, "");
+    }
+  }
   virtual int Opcode() const;
-  virtual const Type* bottom_type() const { return TypeInt::INT; }
+  virtual const Type* bottom_type() const {
+    if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT)
+      return TypeInt::INT; 
+    else if(in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE)
+      return TypeInt::BYTE;
+    else
+      return TypeInt::SHORT;
+  }
   virtual uint ideal_reg() const { return Op_RegI; }
 };
 
@@ -573,17 +586,30 @@ class AndVNode : public VectorNode {
 };
 
 //------------------------------AndReductionVNode--------------------------------------
-// Vector and int, long as a reduction
+// Vector and byte, short, int, long as a reduction
 class AndReductionVNode : public ReductionNode {
 public:
-  AndReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) { 
-    assert(in1->bottom_type()->basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),""); 
-    assert(in1->bottom_type()->basic_type() == T_INT ||
-           in1->bottom_type()->basic_type() == T_LONG, "");
+  AndReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {
+    if (in1->bottom_type()->basic_type() == T_INT) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+        in2->bottom_type()->is_vect()->element_basic_type() == T_BYTE ||
+        in2->bottom_type()->is_vect()->element_basic_type() == T_SHORT, "");
+    }
+    else if (in1->bottom_type()->basic_type() == T_LONG) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_LONG, "");
+    }
   }
   virtual int Opcode() const;
-  virtual const Type* bottom_type() const { if (in(1)->bottom_type()->basic_type() == T_INT) 
-                                              return TypeInt::INT; else return TypeLong::LONG; }
+  virtual const Type* bottom_type() const {
+    if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT)
+      return TypeInt::INT;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE)
+      return TypeInt::BYTE;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT)
+      return TypeInt::SHORT;
+    else
+      return TypeLong::LONG;
+  }
   virtual uint ideal_reg() const { return in(1)->bottom_type()->basic_type() == T_INT ? Op_RegI : Op_RegL; }
 };
 

@@ -463,6 +463,28 @@ public class Double512VectorTests extends AbstractVectorTest {
 
 
 
+    static double addAll(double[] a, int idx) {
+        double res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res += a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void addAllDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.addAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Double512VectorTests::addAll);
+    }
     static double subAll(double[] a, int idx) {
         double res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

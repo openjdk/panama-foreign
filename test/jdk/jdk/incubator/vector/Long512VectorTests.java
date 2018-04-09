@@ -615,6 +615,28 @@ public class Long512VectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, Long512VectorTests::xorAll);
     }
 
+    static long addAll(long[] a, int idx) {
+        long res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res += a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "longUnaryOpProvider")
+    static void addAllLong512VectorTests(IntFunction<long[]> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.addAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Long512VectorTests::addAll);
+    }
     static long subAll(long[] a, int idx) {
         long res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

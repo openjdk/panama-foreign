@@ -463,6 +463,28 @@ public class Float64VectorTests extends AbstractVectorTest {
 
 
 
+    static float addAll(float[] a, int idx) {
+        float res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res += a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void addAllFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.addAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Float64VectorTests::addAll);
+    }
     static float subAll(float[] a, int idx) {
         float res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

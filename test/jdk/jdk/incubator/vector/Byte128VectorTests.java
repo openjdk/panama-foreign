@@ -615,6 +615,28 @@ public class Byte128VectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, Byte128VectorTests::xorAll);
     }
 
+    static byte addAll(byte[] a, int idx) {
+        byte res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res += a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "byteUnaryOpProvider")
+    static void addAllByte128VectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ByteVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.addAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Byte128VectorTests::addAll);
+    }
     static byte subAll(byte[] a, int idx) {
         byte res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

@@ -425,6 +425,23 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
 
     // Type specific horizontal reductions
 
+    @Override
+    @ForceInline
+    public byte addAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_ADD, Byte512Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp((byte) 0, (i, a, b) -> (byte) (a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public byte andAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_AND, Byte512Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp((byte) -1, (i, a, b) -> (byte) (a & b)));
+    }
 
     // Memory operations
 

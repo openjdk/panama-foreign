@@ -615,6 +615,28 @@ public class Short128VectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, Short128VectorTests::xorAll);
     }
 
+    static short addAll(short[] a, int idx) {
+        short res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res += a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "shortUnaryOpProvider")
+    static void addAllShort128VectorTests(IntFunction<short[]> fa) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] r = new short[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ShortVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.addAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Short128VectorTests::addAll);
+    }
     static short subAll(short[] a, int idx) {
         short res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

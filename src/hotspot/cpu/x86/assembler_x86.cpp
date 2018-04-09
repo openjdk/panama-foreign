@@ -1173,12 +1173,22 @@ void Assembler::addl(Address dst, int32_t imm32) {
   emit_arith_operand(0x81, rax, dst, imm32);
 }
 
+void Assembler::addb(Register dst, Register src) {
+  (void)prefix_and_encode(dst->encoding(), src->encoding());
+  emit_arith(0x02, 0xC0, dst, src);
+}
+
 void Assembler::addb(Address dst, int imm8) {
   InstructionMark im(this);
   prefix(dst);
   emit_int8((unsigned char)0x80);
   emit_operand(rax, dst, 1);
   emit_int8(imm8);
+}
+
+void Assembler::addw(Register dst, Register src) {
+  (void)prefix_and_encode(dst->encoding(), src->encoding());
+  emit_arith(0x03, 0xC0, dst, src);
 }
 
 void Assembler::addw(Address dst, int imm16) {
@@ -1358,6 +1368,16 @@ void Assembler::aesenclast(XMMRegister dst, XMMRegister src) {
   int encode = simd_prefix_and_encode(dst, dst, src, VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
   emit_int8((unsigned char)0xDD);
   emit_int8((unsigned char)(0xC0 | encode));
+}
+
+void Assembler::andb(Register dst, Register src) {
+  (void)prefix_and_encode(dst->encoding(), src->encoding());
+  emit_arith(0x22, 0xC0, dst, src);
+}
+
+void Assembler::andw(Register dst, Register src) {
+  (void)prefix_and_encode(dst->encoding(), src->encoding());
+  emit_arith(0x23, 0xC0, dst, src);
 }
 
 void Assembler::andl(Address dst, int32_t imm32) {
@@ -3922,6 +3942,15 @@ void Assembler::pextrw(Address dst, XMMRegister src, int imm8) {
   simd_prefix(src, xnoreg, dst, VEX_SIMD_66, VEX_OPCODE_0F_3A, &attributes);
   emit_int8((unsigned char)0x15);
   emit_operand(src, dst);
+  emit_int8(imm8);
+}
+
+void Assembler::pextrb(Register dst, XMMRegister src, int imm8) {
+  assert(VM_Version::supports_sse4_1(), "");
+  InstructionAttr attributes(AVX_128bit, /* rex_w */ false, /* legacy_mode */ _legacy_mode_dq, /* no_mask_reg */ true, /* uses_vl */ false);
+  int encode = simd_prefix_and_encode(src, xnoreg, as_XMMRegister(dst->encoding()), VEX_SIMD_66, VEX_OPCODE_0F_3A, &attributes);
+  emit_int8(0x14);
+  emit_int8((unsigned char)(0xC0 | encode));
   emit_int8(imm8);
 }
 

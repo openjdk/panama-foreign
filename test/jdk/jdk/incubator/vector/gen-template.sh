@@ -123,6 +123,7 @@ gen_binary_op "min" "Math.min(a, b)" $template_file
 gen_reduction_op "andAll" "\&" $template_file "BITWISE" "-1"
 gen_reduction_op "orAll" "|" $template_file "BITWISE" "0"
 gen_reduction_op "xorAll" "^" $template_file "BITWISE" "0"
+gen_reduction_op "addAll" "+" $template_file "" "0"
 gen_reduction_op "subAll" "-" $template_file "" "0"
 
 # Compares

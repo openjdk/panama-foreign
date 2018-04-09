@@ -615,6 +615,28 @@ public class Int64VectorTests extends AbstractVectorTest {
         assertReductionArraysEquals(a, r, Int64VectorTests::xorAll);
     }
 
+    static int addAll(int[] a, int idx) {
+        int res = 0;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res += a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "intUnaryOpProvider")
+    static void addAllInt64VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.addAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Int64VectorTests::addAll);
+    }
     static int subAll(int[] a, int idx) {
         int res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

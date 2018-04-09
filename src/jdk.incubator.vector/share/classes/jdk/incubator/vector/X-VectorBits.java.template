@@ -576,7 +576,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     // Type specific horizontal reductions
 
-#if[intOrLong]
+#if[BITWISE]
     @Override
     @ForceInline
     public $type$ addAll() {
@@ -588,20 +588,22 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
-    public $type$ mulAll() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b)));
-    }
-
-    @Override
-    @ForceInline
     public $type$ andAll() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_AND, $vectortype$.class, $type$.class, LENGTH,
             this,
             v -> (long) v.rOp(($type$) -1, (i, a, b) -> ($type$) (a & b)));
+    }
+#end[BITWISE]
+#if[intOrLong]
+
+    @Override
+    @ForceInline
+    public $type$ mulAll() {
+        return ($type$) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v -> (long) v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b)));
     }
 
     @Override

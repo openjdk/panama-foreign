@@ -436,20 +436,20 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public long mulAll() {
-        return (long) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MUL, Long512Vector.class, long.class, LENGTH,
-            this,
-            v -> (long) v.rOp((long) 1, (i, a, b) -> (long) (a * b)));
-    }
-
-    @Override
-    @ForceInline
     public long andAll() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_AND, Long512Vector.class, long.class, LENGTH,
             this,
             v -> (long) v.rOp((long) -1, (i, a, b) -> (long) (a & b)));
+    }
+
+    @Override
+    @ForceInline
+    public long mulAll() {
+        return (long) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MUL, Long512Vector.class, long.class, LENGTH,
+            this,
+            v -> (long) v.rOp((long) 1, (i, a, b) -> (long) (a * b)));
     }
 
     @Override

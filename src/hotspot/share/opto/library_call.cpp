@@ -7441,6 +7441,8 @@ bool LibraryCallKit::inline_vector_reduction() {
 
   Node* bits = NULL;
   switch (elem_bt) {
+    case T_BYTE:
+    case T_SHORT:
     case T_INT: {
       bits = gvn().transform(new ConvI2LNode(rn));
       break;

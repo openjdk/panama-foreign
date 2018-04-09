@@ -425,6 +425,23 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
 
     // Type specific horizontal reductions
 
+    @Override
+    @ForceInline
+    public byte addAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_ADD, Byte256Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp((byte) 0, (i, a, b) -> (byte) (a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public byte andAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_AND, Byte256Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp((byte) -1, (i, a, b) -> (byte) (a & b)));
+    }
 
     // Memory operations
 

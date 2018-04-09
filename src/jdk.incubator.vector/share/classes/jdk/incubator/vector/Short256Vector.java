@@ -425,6 +425,23 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
 
     // Type specific horizontal reductions
 
+    @Override
+    @ForceInline
+    public short addAll() {
+        return (short) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_ADD, Short256Vector.class, short.class, LENGTH,
+            this,
+            v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a + b)));
+    }
+
+    @Override
+    @ForceInline
+    public short andAll() {
+        return (short) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_AND, Short256Vector.class, short.class, LENGTH,
+            this,
+            v -> (long) v.rOp((short) -1, (i, a, b) -> (short) (a & b)));
+    }
 
     // Memory operations
 
