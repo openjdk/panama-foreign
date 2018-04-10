@@ -616,19 +616,59 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
             return op(i -> 0);
         }
 
+        /**
+         * Returns a vector where all lane elements are set to the primitive
+         * value {@code e}.
+         *
+         * @param e the value
+         * @return a vector of vector where all lane elements are set to
+         * the primitive value {@code e}
+         */
         public FloatVector<S> broadcast(float e) {
             return op(i -> e);
         }
 
+        /**
+         * Returns a vector where the first lane element is set to the primtive
+         * value {@code e}, all other lane elements are set to the default
+         * value.
+         *
+         * @param e the value
+         * @return a vector where the first lane element is set to the primitive
+         * value {@code e}
+         */
         public FloatVector<S> single(float e) {
             return op(i -> i == 0 ? e : (float) 0);
         }
 
+        /**
+         * Returns a vector where each lane element is set to a randomly
+         * generated primitive value.
+         * @@@ what are the properties of the random number generator?
+         *
+         * @return a vector where each lane elements is set to a randomly
+         * generated primitive value
+         */
         public FloatVector<S> random() {
             ThreadLocalRandom r = ThreadLocalRandom.current();
             return op(i -> r.nextFloat());
         }
 
+        /**
+         * Returns a vector where each lane element is set to a given
+         * primitive value.
+         * <p>
+         * For each vector lane, where {@code N} is the vector lane index, the
+         * the primitive value at index {@code N} is placed into the resulting
+         * vector at lane index {@code N}.
+         *
+         * @@@ What should happen if es.length < this.length() ? use the default
+         * value or throw IndexOutOfBoundsException
+         *
+         * @param es the given primitive values
+         * @return a vector where each lane element is set to a given primitive
+         * value
+         */
         public FloatVector<S> scalars(float... es) {
             return op(i -> es[i]);
         }
@@ -643,15 +683,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
          * @param a the array
          * @param i the offset into the array
          * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code i < 0} or
-         * {@code i < a.length - this.length()}
+         * @throws IndexOutOfBoundsException if {@code i < 0}, or
+         * {@code i > a.length - this.length()}
          */
         public FloatVector<S> fromArray(float[] a, int i) {
             return op(n -> a[i + n]);
         }
 
         /**
-         * Loads a vector from an array starting at offset.
+         * Loads a vector from an array starting at offset and using a mask.
          * <p>
          * For each vector lane, where {@code N} is the vector lane index,
          * if the mask lane at index {@code N} is set then the array element at
@@ -663,8 +703,9 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
          * @param i the offset into the array
          * @param m the mask
          * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code i < 0} or
-         * {@code i < a.length - this.length()}
+         * @throws IndexOutOfBoundsException if {@code i < 0}, or
+         * for any vector lane index {@code N} where the mask at lane {@code N}
+         * is set {@code i > a.length - N}
          */
         public FloatVector<S> fromArray(float[] a, int i, Mask<Float, S> m) {
             return op(m, n -> a[i + n]);
@@ -686,9 +727,9 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
          * @param j the offset into the index map
          * @return the vector loaded from an array
          * @throws IndexOutOfBoundsException if {@code j < 0}, or
-         * {@code j < indexMap.length - this.length()}, or for any vector
-         * lane index {@code N} the result of {@code i + indexMap[j + N]} is
-         * {@code < 0} or {@code >= a.length}
+         * {@code j > indexMap.length - this.length()},
+         * or for any vector lane index {@code N} the result of
+         * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
          */
         public FloatVector<S> fromArray(float[] a, int i, int[] indexMap, int j) {
             return op(n -> a[i + indexMap[j + n]]);
@@ -696,7 +737,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
         /**
          * Loads a vector from an array using indexes obtained from an index
-         * map.
+         * map and using a mask.
          * <p>
          * For each vector lane, where {@code N} is the vector lane index,
          * if the mask lane at index {@code N} is set then the array element at
@@ -713,8 +754,9 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
          * @param j the offset into the index map
          * @return the vector loaded from an array
          * @throws IndexOutOfBoundsException if {@code j < 0}, or
-         * {@code j < indexMap.length - this.length()}, or for any vector
-         * lane index {@code N} the result of {@code i + indexMap[j + N]} is
+         * {@code j > indexMap.length - this.length()},
+         * or for any vector lane index {@code N} where the mask at lane
+         * {@code N} is set the result of {@code i + indexMap[j + N]} is
          * {@code < 0} or {@code >= a.length}
          */
         public FloatVector<S> fromArray(float[] a, int i, Mask<Float, S> m, int[] indexMap, int j) {

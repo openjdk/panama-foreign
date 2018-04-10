@@ -27,6 +27,7 @@ package jdk.incubator.vector;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 /**
@@ -253,14 +254,48 @@ public abstract class Vector<E, S extends Vector.Shape> {
 
     Vector() {}
 
+    /**
+     * Returns the species of this vector.
+     *
+     * @return the species of this vector
+     */
     public abstract Species<E, S> species();
 
+    // @@@
+
+    /**
+     * Returns the primitive element type of this vector.
+     *
+     * @return the primitive element type of this vector
+     */
     public Class<E> elementType() { return species().elementType(); }
 
+    /**
+     * Returns the element size, in bits, of this vector.
+     *
+     * @return the element size, in bits
+     */
+    public int elementSize() { return species().elementSize(); }
+
+    /**
+     * Returns the shape of this vector.
+     *
+     * @return the shape of this vector
+     */
     public S shape() { return species().shape(); }
 
+    /**
+     * Returns the number of vector lanes (the length).
+     *
+     * @return the number of vector lanes
+     */
     public int length() { return species().length(); }
 
+    /**
+     * Returns the total vector size, in bits.
+     *
+     * @return the total vector size, in bits
+     */
     public int bitSize() { return species().bitSize(); }
 
     //Arithmetic
@@ -458,45 +493,282 @@ public abstract class Vector<E, S extends Vector.Shape> {
     public static abstract class Species<E, S extends Shape> {
         Species() {}
 
+        /**
+         * Returns the primitive element type of vectors produced by this
+         * species.
+         *
+         * @return the primitive element type
+         */
         public abstract Class<E> elementType();
 
+        /**
+         * Returns the element size, in bits, of vectors produced by this
+         * species.
+         *
+         * @return the element size, in bits
+         */
         public abstract int elementSize();
 
+        /**
+         * Returns the shape of masks, shuffles, and vectors produced by this
+         * species.
+         *
+         * @return the primitive element type
+         */
         public abstract S shape();
 
+        /**
+         * Returns the mask, shuffe, or vector lanes produced by this species.
+         *
+         * @return the the number of lanes
+         */
         public int length() { return shape().length(this); }
 
+        /**
+         * Returns the total vector size, in bits, of vectors produced by this
+         * species.
+         *
+         * @return the total vector size, in bits
+         */
         public int bitSize() { return shape().bitSize(); }
 
         // Factory
 
+        /**
+         * Returns a vector where all lane elements are set to the default
+         * primitive value.
+         *
+         * @return a zero vector
+         */
         public abstract Vector<E, S> zero();
 
-        public abstract Vector<E, S> fromByteArray(byte[] bs, int ix);
+        /**
+         * Loads a vector from a byte array starting at an offset.
+         * <p>
+         * Bytes are composed into primitive lane elements according to the
+         * native byte order of the underlying platform
+         * <p>
+         * This method behaves as if it returns the result of calling the
+         * byte buffer, offset, and mask accepting
+         * {@link #fromByteBuffer(ByteBuffer, int, Mask) method} as follows:
+         * <pre>{@code
+         * return this.fromByteBuffer(ByteBuffer.wrap(a), i, this.maskAllTrue());
+         * }</pre>
+         *
+         * @param a the byte array
+         * @param i the offset into the array
+         * @return a vector loaded from a byte array
+         * @throws IndexOutOfBoundsException if {@code i < 0} or
+         * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
+         */
+        public abstract Vector<E, S> fromByteArray(byte[] a, int i);
 
-        public abstract Vector<E, S> fromByteArray(byte[] bs, int ix, Mask<E, S> m);
+        /**
+         * Loads a vector from a byte array starting at an offset and using a
+         * mask.
+         * <p>
+         * Bytes are composed into primitive lane elements according to the
+         * native byte order of the underlying platform.
+         * <p>
+         * This method behaves as if it returns the result of calling the
+         * byte buffer, offset, and mask accepting
+         * {@link #fromByteBuffer(ByteBuffer, int, Mask) method} as follows:
+         * <pre>{@code
+         * return this.fromByteBuffer(ByteBuffer.wrap(a), i, m);
+         * }</pre>
+         *
+         * @param a the byte array
+         * @param i the offset into the array
+         * @param m the mask
+         * @return a vector loaded from a byte array
+         * @throws IndexOutOfBoundsException if {@code i < 0} or
+         * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
+         */
+        public abstract Vector<E, S> fromByteArray(byte[] a, int i, Mask<E, S> m);
 
-        public abstract Vector<E, S> fromByteBuffer(ByteBuffer bb);
+        /**
+         * Loads a vector from a {@link ByteBuffer byte buffer} starting at the
+         * buffer's position.
+         * <p>
+         * Bytes are composed into primitive lane elements according to the
+         * native byte order of the underlying platform.
+         * <p>
+         * This method behaves as if it returns the result of calling the
+         * byte buffer, offset, and mask accepting
+         * {@link #fromByteBuffer(ByteBuffer, int, Mask) method} as follows:
+         * <pre>{@code
+         *   return this.fromByteBuffer(b, b.position(), this.maskAllTrue())
+         * }</pre>
+         *
+         * @param b the byte buffer
+         * @return a vector loaded from a byte buffer
+         * @throws IndexOutOfBoundsException if there are fewer than
+         * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
+         * remaining in the byte buffer
+         */
+        public abstract Vector<E, S> fromByteBuffer(ByteBuffer b);
 
-        public abstract Vector<E, S> fromByteBuffer(ByteBuffer bb, Mask<E, S> m);
+        /**
+         * Loads a vector from a {@link ByteBuffer byte buffer} starting at the
+         * buffer's position and using a mask.
+         * <p>
+         * Bytes are composed into primitive lane elements according to the
+         * native byte order of the underlying platform.
+         * <p>
+         * This method behaves as if it returns the result of calling the
+         * byte buffer, offset, and mask accepting
+         * {@link #fromByteBuffer(ByteBuffer, int, Mask)} method} as follows:
+         * <pre>{@code
+         *   return this.fromByteBuffer(b, b.position(), m)
+         * }</pre>
+         *
+         * @param b the byte buffer
+         * @param m the mask
+         * @return a vector loaded from a byte buffer
+         * @throws IndexOutOfBoundsException if there are fewer than
+         * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
+         * remaining in the byte buffer
+         */
+        public abstract Vector<E, S> fromByteBuffer(ByteBuffer b, Mask<E, S> m);
 
-        public abstract Vector<E, S> fromByteBuffer(ByteBuffer bb, int ix);
+        /**
+         * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
+         * offset into the byte buffer.
+         * <p>
+         * Bytes are composed into primitive lane elements according to the
+         * native byte order of the underlying platform.
+         * <p>
+         * This method behaves as if it returns the result of calling the
+         * byte buffer, offset, and mask accepting
+         * {@link #fromByteBuffer(ByteBuffer, int, Mask)} method} as follows:
+         * <pre>{@code
+         *   return this.fromByteBuffer(b, i, this.maskAllTrue())
+         * }</pre>
+         *
+         * @param b the byte buffer
+         * @param i the offset into the byte buffer
+         * @return a vector loaded from a byte buffer
+         * @throws IndexOutOfBoundsException if the offset is {@code < 0},
+         * or {@code > b.limit()},
+         * or if there are fewer than
+         * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
+         * remaining in the byte buffer from the given offset
+         */
+        public abstract Vector<E, S> fromByteBuffer(ByteBuffer b, int i);
 
-        public abstract Vector<E, S> fromByteBuffer(ByteBuffer bb, int ix, Mask<E, S> m);
+        /**
+         * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
+         * offset into the byte buffer and using a mask.
+         * <p>
+         * This method behaves as if the byte buffer is viewed as a primitive
+         * {@link java.nio.Buffer buffer} for the primitive element type,
+         * according to the native byte order of the underlying platform, and
+         * the returned vector is loaded with a mask from a primitive array
+         * obtained from the primitive buffer.
+         * The following pseudocode expresses the behaviour, where
+         * {@coce EBuffer} is the primitive buffer and {@code e} is the
+         * primitive element type:
+         * <pre>{@code
+         * EBuffer eb = b.duplicate().
+         *     order(ByteOrder.nativeOrder()).position(i).
+         *     asEBuffer();
+         * e[] = new e[this.length()];
+         * for (int n = 0; n < t.length && m.isSet(n); n++) {
+         *     e[n] = eb.get(n);
+         * }
+         * Vector<E, S> r = this.fromArray(e, 0, m);
+         * }</pre>
+         *
+         * @param b the byte buffer
+         * @param i the offset into the byte buffer
+         * @return a vector loaded from a byte buffer
+         * @throws IndexOutOfBoundsException if the offset is {@code < 0},
+         * or {@code > b.limit()},
+         * for any vector lane index {@code N} where the mask at lane {@code N}
+         * is set
+         * {@code i > b.limit() - (N * this.elementSize() / Byte.SIZE)} bytes
+         */
+        public abstract Vector<E, S> fromByteBuffer(ByteBuffer b, int i, Mask<E, S> m);
 
         //Mask and shuffle constructions
 
+        /**
+         * Returns a mask where each lane is set or unset according to a given
+         * {@code boolean} value.
+         * <p>
+         * For each mask lane, where {@code N} is the mask lane index,
+         * if the given {@code boolean} value at index {@code N} is {@code true}
+         * then the mask lane at index {@code N} is set, otherwise it is unset.
+         *
+         * @@@ What should happen if bits.length < this.length() ? use the
+         * default value or throw IndexOutOfBoundsException
+         *
+         * @param bits the given {@code boolean} values
+         * @return a mask where each lane is set or unset according to a given
+         * {@code boolean} value
+         */
         public abstract Mask<E, S> maskFromValues(boolean... bits);
 
-        public abstract Mask<E, S> maskFromArray(boolean[] bits, int i);
+        /**
+         * Loads a mask from a {@code boolean} array starting at an offset.
+         * <p>
+         * For each mask lane, where {@code N} is the mask lane index,
+         * if the array element at index {@code i + N} is {@code true} then the
+         * mask lane at index {@code N} is set, otherwise it is unset.
+         *
+         * @param a the {@code boolean} array
+         * @param i the offset into the array
+         * @return the mask loaded from a {@code boolean} array
+         * @throws IndexOutOfBoundsException if {@code i < 0}, or
+         * {@code i > a.length - this.length()}
+         */
+        public abstract Mask<E, S> maskFromArray(boolean[] a, int i);
 
+        /**
+         * Returns a mask where all lanes are a set.
+         *
+         * @return a mask where all lanes are a set
+         */
         public abstract Mask<E, S> maskAllTrue();
 
+        /**
+         * Returns a mask where all lanes are unset.
+         *
+         * @return a mask where all lanes are unset
+         */
         public abstract Mask<E, S> maskAllFalse();
 
-        public abstract Shuffle<E, S> shuffleFromValues(int... ixs);
+        /**
+         * Returns a shuffle where each lane element to a given {@code int}
+         * value.
+         * <p>
+         * For each shuffle lane, where {@code N} is the shuffle lane index, the
+         * the {@code int} value at index {@code N} is placed into the resulting
+         * shuffle at lane index {@code N}.
+         *
+         * @@@ What should happen if indexes.length < this.length() ? use the
+         * default value or throw IndexOutOfBoundsException
+         *
+         * @param indexes the given {@code int} values
+         * @return a shufle where each lane element is set to a given
+         * {@code int} value
+         */
+        public abstract Shuffle<E, S> shuffleFromValues(int... indexes);
 
-        public abstract Shuffle<E, S> shuffleFromArray(int[] ixs, int i);
+        /**
+         * Loads a shuffle from an {@code int} array starting at offset.
+         * <p>
+         * For each shuffle lane, where {@code N} is the shuffle lane index, the
+         * array element at index {@code i + N} is placed into the
+         * resulting shuffle at lane index {@code N}.
+         *
+         * @param a the {@code int} array
+         * @param i the offset into the array
+         * @return the shuffle loaded from an {@code int} array
+         * @throws IndexOutOfBoundsException if {@code i < 0}, or
+         * {@code i > a.length - this.length()}
+         */
+        public abstract Shuffle<E, S> shuffleFromArray(int[] a, int i);
 
         // Vector type/shape transformations
 
@@ -504,20 +776,118 @@ public abstract class Vector<E, S extends Vector.Shape> {
         // Preserves bits, truncating if new shape is smaller in bit size than
         // old shape, or expanding (with zero bits) if new shape is larger in
         // bit size
-        public abstract <F, T extends Shape> Vector<E, S> reshape(Vector<F, T> o);
+
+        /**
+         * Transforms an input vector of shape {@code T} and element type
+         * {@code F} to a vector of this species shape {@code S} and element
+         * type {@code E}.
+         * <p>
+         * The underlying bits of the input vector are copied to the resulting
+         * vector without modification, but those bits, before copying, may be
+         * truncated if the vector bit size is greater than this species bit
+         * size, or appended to with zero bits if the vector bit size is less
+         * than this species bit size.
+         * <p>
+         * The method behaves as if the input vector is stored into a byte array
+         * and then the returned vector is loaded from the byte array.
+         * The following pseudocode expresses the behaviour:
+         * <pre>{@code
+         * int blen = Math.max(v.bitSize(), this.bitSize()) / Byte.SIZE;
+         * byte[] b = new byte[blen];
+         * v.intoByteArray(b, 0);
+         * return fromByteArray(b, 0);
+         * }</pre>
+         *
+         * @param v the input vector
+         * @param <F> the boxed element type of the vector
+         * @param <T> the type of shape of the vector
+         * @return a vector transformed, by shape and element type, from an
+         * input vector
+         */
+        public abstract <F, T extends Shape> Vector<E, S> reshape(Vector<F, T> v);
 
         // Change type, not shape
         // No truncation or expansion of bits
-        public abstract <F> Vector<E, S> rebracket(Vector<F, S> o);
+
+        /**
+         * Transforms an input vector of element type {@code F} to a vector of
+         * this species element type {@code E}, where the this species shape
+         * {@code S} is preserved.
+         * <p>
+         * The underlying bits of the given vector are copied without
+         * modification to the resulting vector.
+         * <p>
+         * The method behaves as if the input vector is stored into a byte array
+         * and then the returned vector is loaded from the byte array.
+         * The following pseudocode expresses the behaviour:
+         * <pre>{@code
+         * byte[] b = new byte[v.bitSize() / Byte.SIZE];
+         * v.intoByteArray(b, 0);
+         * return fromByteArray(b, 0);
+         * }</pre>
+         *
+         * @param v the input vector
+         * @param <F> the boxed element type of the vector
+         * @return a vector transformed, by element type, from an input vector
+         */
+        public abstract <F> Vector<E, S> rebracket(Vector<F, S> v);
 
         // Change shape, not type
         // Truncation or expansion of bits
-        public abstract <T extends Shape> Vector<E, S> resize(Vector<E, T> o);
+
+        /**
+         * Transforms an input vector of shape {@code T} to a vector of this
+         * species shape {@code S}, where the this species element type
+         * {@code E} is preserved.
+         * <p>
+         * The lane elements of the input vector are copied without
+         * modification to the resulting vector, but those lane elements, before
+         * copying, may be truncated if the vector length is greater than this
+         * species length, or appended to with default element values if the
+         * vector length is less than this species length.
+         * <p>
+         * The method behaves as if the input vector is stored into a byte array
+         * and then the returned vector is loaded from the byte array.
+         * The following pseudocode expresses the behaviour:
+         * <pre>{@code
+         * int len = Math.max(v.bitSize(), this.bitSize()) / Byte.SIZE;
+         * byte[] b = new byte[blen];
+         * v.intoByteArray(b, 0);
+         * return fromByteArray(b, 0);
+         * }</pre>
+         *
+         * @param v the input vector
+         * @param <T> the type of shape of the vector
+         * @return a vector transformed, by shape, from an input vector
+         */
+        public abstract <T extends Shape> Vector<E, S> resize(Vector<E, T> v);
 
         // Cast
         // Elements will be converted as per JLS primitive conversion rules
         // If elementType == o.elementType then its equivalent to a resize
-        public abstract <F, T extends Shape> Vector<E, S> cast(Vector<F, T> o);
+
+        /**
+         * Converts an input vector of shape {@code T} and element type
+         * {@code F} to a vector of this species shape {@code S} and element
+         * type {@code E}.
+         * <p>
+         * For each input vector lane up to the length of the input vector or
+         * this species, which ever is the minimum, and where {@code N} is the
+         * vector lane index, the element at index {@code N} of primitive type
+         * {@code F} is converted, according to primitive conversion rules
+         * specified by the Java Language Specification, to a value of primitive
+         * type {@code E} and placed into the resulting vector at lane index
+         * {@code N}.  If this species length is greater than the input
+         * vector length then the default primitive value is placed into
+         * subsequent lanes of the resulting vector.
+         *
+         * @param v the input vector
+         * @param <F> the boxed element type of the vector
+         * @param <T> the type of shape of the vector
+         * @return a vector, converted by shape and element type, from an input
+         * vector.
+         */
+        public abstract <F, T extends Shape> Vector<E, S> cast(Vector<F, T> v);
 
 
         // Mask type/shape transformations
