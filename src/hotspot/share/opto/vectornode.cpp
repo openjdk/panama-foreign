@@ -131,6 +131,13 @@ int VectorNode::opcode(int sopc, BasicType bt) {
     return Op_SqrtVD;
   case Op_Not:
     return Op_NotV;
+  case Op_PopCountI:
+    if (bt == T_INT) {
+      return Op_PopCountVI;
+    }
+    // Unimplemented for subword types since bit count changes
+    // depending on size of lane (and sign bit).
+    return 0;
   case Op_LShiftI:
     switch (bt) {
     case T_BOOLEAN:
@@ -285,6 +292,7 @@ bool VectorNode::implemented(int opc, uint vlen, BasicType bt) {
   }
   return false;
 }
+
 bool VectorNode::is_shift(Node* n) {
   switch (n->Opcode()) {
   case Op_LShiftI:
@@ -406,6 +414,7 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_SqrtVF: return new SqrtVFNode(n1, vt);
   case Op_SqrtVD: return new SqrtVDNode(n1, vt);
 
+  case Op_PopCountVI: return new PopCountVINode(n1, vt);
   case Op_NotV: return new NotVNode(n1, vt);
 
   case Op_LShiftVB: return new LShiftVBNode(n1, n2, vt);
@@ -689,6 +698,7 @@ int ReductionNode::opcode(int opc, BasicType bt) {
   }
   return vopc;
 }
+
 // Return the appropriate reduction node.
 ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, BasicType bt) {
 

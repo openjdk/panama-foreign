@@ -25,7 +25,6 @@
 #include "precompiled.hpp"
 #include "code/debugInfo.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/interfaceSupport.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "oops/typeArrayOop.inline.hpp"
