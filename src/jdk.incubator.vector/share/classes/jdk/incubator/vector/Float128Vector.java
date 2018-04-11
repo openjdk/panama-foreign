@@ -977,6 +977,12 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         }
 
         @Override
+        public Float128Shuffle shuffleFromVector(Vector<Integer, Shapes.S128Bit> v) {
+            int[] a = ((IntVector<Shapes.S128Bit>) v).toArray();
+            return new Float128Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Float128Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Float128Vector.class, float.class, LENGTH,

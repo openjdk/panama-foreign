@@ -992,6 +992,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         }
 
         @Override
+        public Long256Shuffle shuffleFromVector(Vector<Integer, Shapes.S256Bit> v) {
+            int[] a = ((IntVector<Shapes.S256Bit>) v).toArray();
+            return new Long256Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Long256Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Long256Vector.class, long.class, LENGTH,

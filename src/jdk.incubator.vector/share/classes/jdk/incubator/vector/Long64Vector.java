@@ -992,6 +992,12 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         }
 
         @Override
+        public Long64Shuffle shuffleFromVector(Vector<Integer, Shapes.S64Bit> v) {
+            int[] a = ((IntVector<Shapes.S64Bit>) v).toArray();
+            return new Long64Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Long64Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Long64Vector.class, long.class, LENGTH,

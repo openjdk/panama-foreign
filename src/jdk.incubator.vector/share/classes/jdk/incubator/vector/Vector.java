@@ -408,9 +408,9 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * <p>
      * This is a cross-lane operation that permutes the lane elements of this
      * vector.
-     * For each lane of the input vector, at lane index {@code l}, the lane
+     * For each lane of the input vector, at lane index {@code N}, the lane
      * element is assigned to the result vector at lane index
-     * {@code (i + l) % this.length()}.
+     * {@code (i + N) % this.length()}.
      *
      * @param i the number of lanes to rotate left
      * @return the result of rotating left lane elements of this vector by the
@@ -436,12 +436,60 @@ public abstract class Vector<E, S extends Vector.Shape> {
 
     public abstract Vector<E, S> shiftER(int i); //shift elements right
 
-    //Blend, etc.
-    public abstract Vector<E, S> blend(Vector<E, S> o, Mask<E, S> m);
+    /**
+     * Blends the lane elements of this vector with those of an input vector,
+     * selecting lanes controlled by a mask.
+     * <p>
+     * For each lane of the mask, at lane index {@code N}, if the mask lane
+     * is set then the lane element at {@code N} from the input vector is
+     * selected and placed into the resulting vector at {@code N},
+     * otherwise the the lane element at {@code N} from this input vector is
+     * selected and placed into the resulting vector at {@code N}.
+     *
+     * @param b the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of blending the lane elements of this vector with
+     * those of an input vector
+     */
+    public abstract Vector<E, S> blend(Vector<E, S> b, Mask<E, S> m);
 
-    //Shuffles
-    public abstract Vector<E, S> shuffle(Vector<E, S> o, Shuffle<E, S> s);
+    /**
+     * Shuffles the lane elements of this vector and those of an input vector,
+     * selecting lane indexes controlled by a shuffle.
+     * <p>
+     * This is a cross-lane operation that permutes the lane elements of this
+     * vector and tine input vector.
+     * For each lane of the shuffle, at lane index {@code N}, if the shuffle
+     * lane element, {@code I}, is less than the length of this vector then the
+     * lane element at {@code I} from this vector is selected and placed into
+     * the resulting vector at {@code N}, otherwise the lane element at
+     * {@code I - this.length()} from the input vector is selected and placed
+     * into the resulting vector at {@code N}.
+     *
+     * @param b the input vector
+     * @param s the shuffle controlling lane index selection
+     * @return the result of shuffling the lane elements of this vector and
+     * those of an input vector
+     * @throws IndexOutOfBoundsException if any lane element is {@code < 0} or
+     * {@code >= 2 * this.length())
+     */
+    public abstract Vector<E, S> shuffle(Vector<E, S> b, Shuffle<E, S> s);
 
+    /**
+     * Shuffles the lane elements of this vector selecting lane indexes
+     * controlled by a shuffle.
+     * <p>
+     * This is a cross-lane operation that permutes the lane elements of this
+     * vector.
+     * For each lane of the shuffle, at lane index {@code N} with lane
+     * element {@code I}, the lane element at {@code I} from this vector is
+     * selected and placed into the resulting vector at {@code N}.
+     *
+     * @param s the shuffle controlling lane index selection
+     * @return the result of shuffling the lane elements of this vector
+     * @throws IndexOutOfBoundsException if any lane element is {@code < 0} or
+     * {@code >= this.length())
+     */
     public abstract Vector<E, S> swizzle(Shuffle<E, S> s);
 
 
@@ -972,6 +1020,21 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * {@code i > a.length - this.length()}
          */
         public abstract Shuffle<E, S> shuffleFromArray(int[] a, int i);
+
+        /**
+         * Returns a shuffle containing lane elements of an {@code int}
+         * vector.
+         * <p>
+         * For each vector lane, where {@code N} is the vector lane index, the
+         * lane element at index {@code N} is placed into the resulting shuffle
+         * at lane index {@code N}.
+         *
+         * @param v the {@code int} vector
+         * @return a shuffle containing lane elements of an {@code int} vector
+         */
+        public abstract Shuffle<E, S> shuffleFromVector(Vector<Integer, S> v);
+
+        // Shuffle iota, 0...N
 
         // Vector type/shape transformations
 
@@ -1639,6 +1702,8 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * {@code i > a.length - this.length()}
          */
         public abstract void intoArray(int[] a, int i);
+
+        // @@@ rotate/shift/EL/ER
 
         /**
          * Returns an {@link IntVector}, of the same shape as this shuffle,

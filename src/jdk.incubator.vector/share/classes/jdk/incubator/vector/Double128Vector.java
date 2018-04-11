@@ -977,6 +977,12 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         }
 
         @Override
+        public Double128Shuffle shuffleFromVector(Vector<Integer, Shapes.S128Bit> v) {
+            int[] a = ((IntVector<Shapes.S128Bit>) v).toArray();
+            return new Double128Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Double128Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Double128Vector.class, double.class, LENGTH,

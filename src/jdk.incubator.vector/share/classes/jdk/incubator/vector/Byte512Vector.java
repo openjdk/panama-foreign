@@ -948,6 +948,12 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         }
 
         @Override
+        public Byte512Shuffle shuffleFromVector(Vector<Integer, Shapes.S512Bit> v) {
+            int[] a = ((IntVector<Shapes.S512Bit>) v).toArray();
+            return new Byte512Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Byte512Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Byte512Vector.class, byte.class, LENGTH,

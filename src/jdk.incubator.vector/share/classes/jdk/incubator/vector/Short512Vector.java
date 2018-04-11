@@ -948,6 +948,12 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         }
 
         @Override
+        public Short512Shuffle shuffleFromVector(Vector<Integer, Shapes.S512Bit> v) {
+            int[] a = ((IntVector<Shapes.S512Bit>) v).toArray();
+            return new Short512Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Short512Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Short512Vector.class, short.class, LENGTH,

@@ -1185,6 +1185,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             return new $shuffletype$(ixs, i);
         }
 
+        @Override
+        public $shuffletype$ shuffleFromVector(Vector<Integer, Shapes.$shape$> v) {
+            int[] a = ((IntVector<Shapes.$shape$>) v).toArray();
+            return new $shuffletype$(a, 0);
+        }
+
 #if[FP]
         @Override
         @ForceInline

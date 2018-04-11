@@ -977,6 +977,12 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         }
 
         @Override
+        public Double256Shuffle shuffleFromVector(Vector<Integer, Shapes.S256Bit> v) {
+            int[] a = ((IntVector<Shapes.S256Bit>) v).toArray();
+            return new Double256Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Double256Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Double256Vector.class, double.class, LENGTH,

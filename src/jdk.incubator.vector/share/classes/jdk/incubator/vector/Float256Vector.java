@@ -977,6 +977,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         }
 
         @Override
+        public Float256Shuffle shuffleFromVector(Vector<Integer, Shapes.S256Bit> v) {
+            int[] a = ((IntVector<Shapes.S256Bit>) v).toArray();
+            return new Float256Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Float256Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Float256Vector.class, float.class, LENGTH,

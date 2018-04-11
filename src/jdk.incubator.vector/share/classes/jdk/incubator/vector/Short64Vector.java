@@ -948,6 +948,12 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         }
 
         @Override
+        public Short64Shuffle shuffleFromVector(Vector<Integer, Shapes.S64Bit> v) {
+            int[] a = ((IntVector<Shapes.S64Bit>) v).toArray();
+            return new Short64Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Short64Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Short64Vector.class, short.class, LENGTH,

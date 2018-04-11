@@ -948,6 +948,12 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         }
 
         @Override
+        public Byte256Shuffle shuffleFromVector(Vector<Integer, Shapes.S256Bit> v) {
+            int[] a = ((IntVector<Shapes.S256Bit>) v).toArray();
+            return new Byte256Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Byte256Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Byte256Vector.class, byte.class, LENGTH,

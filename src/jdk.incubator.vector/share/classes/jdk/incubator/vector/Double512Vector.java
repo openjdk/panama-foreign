@@ -977,6 +977,12 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         }
 
         @Override
+        public Double512Shuffle shuffleFromVector(Vector<Integer, Shapes.S512Bit> v) {
+            int[] a = ((IntVector<Shapes.S512Bit>) v).toArray();
+            return new Double512Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Double512Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Double512Vector.class, double.class, LENGTH,

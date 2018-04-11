@@ -992,6 +992,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         }
 
         @Override
+        public Long128Shuffle shuffleFromVector(Vector<Integer, Shapes.S128Bit> v) {
+            int[] a = ((IntVector<Shapes.S128Bit>) v).toArray();
+            return new Long128Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Long128Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Long128Vector.class, long.class, LENGTH,

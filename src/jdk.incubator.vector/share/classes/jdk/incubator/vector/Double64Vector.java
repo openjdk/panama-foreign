@@ -977,6 +977,12 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         }
 
         @Override
+        public Double64Shuffle shuffleFromVector(Vector<Integer, Shapes.S64Bit> v) {
+            int[] a = ((IntVector<Shapes.S64Bit>) v).toArray();
+            return new Double64Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Double64Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Double64Vector.class, double.class, LENGTH,

@@ -1029,6 +1029,12 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         }
 
         @Override
+        public Int64Shuffle shuffleFromVector(Vector<Integer, Shapes.S64Bit> v) {
+            int[] a = ((IntVector<Shapes.S64Bit>) v).toArray();
+            return new Int64Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Int64Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Int64Vector.class, int.class, LENGTH,

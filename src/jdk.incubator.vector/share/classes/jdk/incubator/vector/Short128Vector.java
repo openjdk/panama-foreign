@@ -948,6 +948,12 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         }
 
         @Override
+        public Short128Shuffle shuffleFromVector(Vector<Integer, Shapes.S128Bit> v) {
+            int[] a = ((IntVector<Shapes.S128Bit>) v).toArray();
+            return new Short128Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Short128Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Short128Vector.class, short.class, LENGTH,

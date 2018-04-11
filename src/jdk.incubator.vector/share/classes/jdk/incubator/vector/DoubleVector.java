@@ -567,8 +567,10 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * Replaces the lane element of this vector at lane index {@code i} with
      * value {@code e}.
      * <p>
-     * This is a cross-lane operation.
-     * @@@ specify as blend(species().broadcast(e), mask)
+     * This is a cross-lane operation and behaves it returns the result of
+     * blending this vector with an input vector that is the result of
+     * broadcasting {@code e} and a mask that has only one lane set at lane
+     * index {@code i}.
      *
      * @param i the lane index of the lane element to be replaced
      * @param e the value to be placed

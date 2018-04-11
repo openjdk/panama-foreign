@@ -992,6 +992,12 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         }
 
         @Override
+        public Long512Shuffle shuffleFromVector(Vector<Integer, Shapes.S512Bit> v) {
+            int[] a = ((IntVector<Shapes.S512Bit>) v).toArray();
+            return new Long512Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Long512Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Long512Vector.class, long.class, LENGTH,

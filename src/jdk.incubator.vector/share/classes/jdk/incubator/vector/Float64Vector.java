@@ -977,6 +977,12 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
         }
 
         @Override
+        public Float64Shuffle shuffleFromVector(Vector<Integer, Shapes.S64Bit> v) {
+            int[] a = ((IntVector<Shapes.S64Bit>) v).toArray();
+            return new Float64Shuffle(a, 0);
+        }
+
+        @Override
         @ForceInline
         public Float64Vector zero() {
             return VectorIntrinsics.broadcastCoerced(Float64Vector.class, float.class, LENGTH,
