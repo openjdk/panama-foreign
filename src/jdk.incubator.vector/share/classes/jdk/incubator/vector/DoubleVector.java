@@ -32,6 +32,13 @@ import java.nio.DoubleBuffer;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
+
+/**
+ * A specialized {@link Vector} representing an ordered immutable sequence of
+ * {@code double} values.
+ *
+ * @param <S> the type of shape of this vector
+ */
 @SuppressWarnings("cast")
 public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double,S> {
 
@@ -572,6 +579,19 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
 
     // Type specific extractors
 
+    /**
+     * Returns an array containing the lane elements of this vector.
+     * <p>
+     * This method behaves as if it {@link #intoArray(double[], int)} stores}
+     * this vector into an allocated array and returns the array as follows:
+     * <pre>{@code
+     *   double[] a = new double[this.length()];
+     *   this.intoArray(a, 0);
+     *   return a;
+     * }</pre>
+     *
+     * @return an array containing the the lane elements of this vector
+     */
     @ForceInline
     public double[] toArray() {
         double[] a = new double[species().length()];
@@ -579,20 +599,87 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         return a;
     }
 
-    public void intoArray(double[] a, int ax) {
-        forEach((i, a_) -> a[ax + i] = a_);
+    /**
+     * Stores this vector into an array starting at offset.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * the lane element at index {@code N} is stored into the array at index
+     * {@code i + N}.
+     *
+     * @param a the array
+     * @param i the offset into the array
+     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * {@code i > a.length - this.length()}
+     */
+    public void intoArray(double[] a, int i) {
+        forEach((n, e) -> a[i + n] = e);
     }
 
-    public void intoArray(double[] a, int ax, Mask<Double, S> m) {
-        forEach(m, (i, a_) -> a[ax + i] = a_);
+    /**
+     * Stores this vector into an array starting at offset and using a mask.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * if the mask lane at index {@code N} is set then the lane element at
+     * index {@code N} is stored into the array index {@code i + N}.
+     *
+     * @param a the array
+     * @param i the offset into the array
+     * @param m the mask
+     * @throws IndexOutOfBoundsException if {@code i < 0}, or
+     * for any vector lane index {@code N} where the mask at lane {@code N}
+     * is set {@code i >= a.length - N}
+     */
+    public void intoArray(double[] a, int i, Mask<Double, S> m) {
+        forEach(m, (n, e) -> a[i + n] = e);
     }
 
-    public void intoArray(double[] a, int ax, int[] indexMap, int mx) {
-        forEach((i, a_) -> a[ax + indexMap[mx + i]] = a_);
+    /**
+     * Stores this vector into an array using indexes obtained from an index
+     * map.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index, the
+     * lane element at index {@code N} is stored into the array at index
+     * {@code i + indexMap[j + N]}.
+     *
+     * @param a the array
+     * @param i the offset into the array, may be negative if relative
+     * indexes in the index map compensate to produce a value within the
+     * array bounds
+     * @param indexMap the index map
+     * @param j the offset into the index map
+     * @throws IndexOutOfBoundsException if {@code j < 0}, or
+     * {@code j > indexMap.length - this.length()},
+     * or for any vector lane index {@code N} the result of
+     * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
+     */
+    public void intoArray(double[] a, int i, int[] indexMap, int j) {
+        forEach((n, e) -> a[i + indexMap[j + n]] = e);
     }
 
-    public void intoArray(double[] a, int ax, Mask<Double, S> m, int[] indexMap, int mx) {
-        forEach(m, (i, a_) -> a[ax + indexMap[mx + i]] = a_);
+    /**
+     * Stores this vector into an array using indexes obtained from an index
+     * map and using a mask.
+     * <p>
+     * For each vector lane, where {@code N} is the vector lane index,
+     * if the mask lane at index {@code N} is set then the lane element at
+     * index {@code N} is stored into the array at index
+     * {@code i + indexMap[j + N]}.
+     *
+     * @param a the array
+     * @param i the offset into the array, may be negative if relative
+     * indexes in the index map compensate to produce a value within the
+     * array bounds
+     * @param m the mask
+     * @param indexMap the index map
+     * @param j the offset into the index map
+     * @throws IndexOutOfBoundsException if {@code j < 0}, or
+     * {@code j > indexMap.length - this.length()},
+     * or for any vector lane index {@code N} where the mask at lane
+     * {@code N} is set the result of {@code i + indexMap[j + N]} is
+     * {@code < 0} or {@code >= a.length}
+     */
+    public void intoArray(double[] a, int i, Mask<Double, S> m, int[] indexMap, int j) {
+        forEach(m, (n, e) -> a[i + indexMap[j + n]] = e);
     }
 
     // Species
@@ -600,6 +687,13 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     @Override
     public abstract DoubleSpecies<S> species();
 
+    /**
+     * A specialized factory for creating {@link DoubleVector} value of the same
+     * shape, and a {@link Mask} and {@link Shuffle} values of the same shape
+     * and {@code int} element type.
+     *
+     * @param <S> the type of shape of this species
+     */
     public static abstract class DoubleSpecies<S extends Vector.Shape> extends Vector.Species<Double, S> {
         interface FOp {
             double apply(int i);
@@ -742,14 +836,12 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
          * For each vector lane, where {@code N} is the vector lane index,
          * if the mask lane at index {@code N} is set then the array element at
          * index {@code i + indexMap[j + N]} is placed into the resulting vector
-         * at lane index {@code N}, otherwise the default element value is
-         * placed into the resulting vector at lane index {@code N}.
+         * at lane index {@code N}.
          *
          * @param a the array
          * @param i the offset into the array, may be negative if relative
          * indexes in the index map compensate to produce a value within the
          * array bounds
-         * @param m the mask
          * @param indexMap the index map
          * @param j the offset into the index map
          * @return the vector loaded from an array
