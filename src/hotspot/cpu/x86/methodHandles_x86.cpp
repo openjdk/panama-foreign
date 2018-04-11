@@ -35,6 +35,8 @@
 #include "runtime/javaCalls.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
+#include "runtime/frame.inline.hpp"
+#include "utilities/preserveException.hpp"
 
 #define __ _masm->
 

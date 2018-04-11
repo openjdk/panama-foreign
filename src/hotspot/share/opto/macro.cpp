@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "compiler/compileLog.hpp"
+#include "gc/shared/collectedHeap.inline.hpp"
 #include "libadt/vectset.hpp"
 #include "opto/addnode.hpp"
 #include "opto/arraycopynode.hpp"
@@ -2682,7 +2683,6 @@ void PhaseMacroExpand::eliminate_macro_nodes() {
                n->Opcode() == Op_Opaque1   ||
                n->Opcode() == Op_Opaque2   ||
                n->Opcode() == Op_Opaque3   ||
-               n->Opcode() == Op_Opaque4   ||
                n->Opcode() == Op_OpaqueVBox, "unknown node type in macro list");
       }
       assert(success == (C->macro_count() < old_macro_count), "elimination reduces macro count");
@@ -2748,9 +2748,6 @@ bool PhaseMacroExpand::expand_macro_nodes() {
         _igvn.replace_node(n, repl);
         success = true;
 #endif
-      } else if (n->Opcode() == Op_Opaque4) {
-        _igvn.replace_node(n, n->in(2));
-        success = true;
       } else if (n->Opcode() == Op_OuterStripMinedLoop) {
         n->as_OuterStripMinedLoop()->adjust_strip_mined_loop(&_igvn);
         C->remove_macro_node(n);

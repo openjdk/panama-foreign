@@ -29,7 +29,6 @@
 #include "compiler/disassembler.hpp"
 #include "memory/resourceArea.hpp"
 #include "jni.h"
-#include "runtime/interfaceSupport.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/decoder.hpp"
