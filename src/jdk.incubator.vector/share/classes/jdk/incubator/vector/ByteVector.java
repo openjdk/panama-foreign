@@ -381,13 +381,13 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
     @Override
     public void intoByteArray(byte[] a, int ix) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
         intoByteBuffer(bb);
     }
 
     @Override
     public void intoByteArray(byte[] a, int ix, Mask<Byte, S> m) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
         intoByteBuffer(bb, m);
     }
 
@@ -772,13 +772,13 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
         @Override
         public ByteVector<S> fromByteArray(byte[] a, int ix) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
             return fromByteBuffer(bb);
         }
 
         @Override
         public ByteVector<S> fromByteArray(byte[] a, int ix, Mask<Byte, S> m) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
             return fromByteBuffer(bb, m);
         }
 
@@ -803,14 +803,14 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
         @Override
         public ByteVector<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            bb = bb.duplicate().position(ix);
+            bb = bb.duplicate().order(bb.order()).position(ix);
             ByteBuffer fb = bb;
             return op(i -> fb.get(i));
         }
 
         @Override
         public ByteVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte, S> m) {
-            bb = bb.duplicate().position(ix);
+            bb = bb.duplicate().order(bb.order()).position(ix);
             ByteBuffer fb = bb;
             return op(m, i -> fb.get(i));
         }

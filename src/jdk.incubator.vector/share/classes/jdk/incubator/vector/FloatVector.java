@@ -488,13 +488,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
     @Override
     public void intoByteArray(byte[] a, int ix) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
         intoByteBuffer(bb);
     }
 
     @Override
     public void intoByteArray(byte[] a, int ix, Mask<Float, S> m) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
         intoByteBuffer(bb, m);
     }
 
@@ -859,13 +859,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
         @Override
         public FloatVector<S> fromByteArray(byte[] a, int ix) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
             return fromByteBuffer(bb);
         }
 
         @Override
         public FloatVector<S> fromByteArray(byte[] a, int ix, Mask<Float, S> m) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
             return fromByteBuffer(bb, m);
         }
 
@@ -890,14 +890,14 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
         @Override
         public FloatVector<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            bb = bb.duplicate().position(ix);
+            bb = bb.duplicate().order(bb.order()).position(ix);
             FloatBuffer fb = bb.asFloatBuffer();
             return op(i -> fb.get(i));
         }
 
         @Override
         public FloatVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Float, S> m) {
-            bb = bb.duplicate().position(ix);
+            bb = bb.duplicate().order(bb.order()).position(ix);
             FloatBuffer fb = bb.asFloatBuffer();
             return op(m, i -> fb.get(i));
         }

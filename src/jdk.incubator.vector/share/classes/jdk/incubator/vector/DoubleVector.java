@@ -488,13 +488,13 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
 
     @Override
     public void intoByteArray(byte[] a, int ix) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
         intoByteBuffer(bb);
     }
 
     @Override
     public void intoByteArray(byte[] a, int ix, Mask<Double, S> m) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
         intoByteBuffer(bb, m);
     }
 
@@ -859,13 +859,13 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
 
         @Override
         public DoubleVector<S> fromByteArray(byte[] a, int ix) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
             return fromByteBuffer(bb);
         }
 
         @Override
         public DoubleVector<S> fromByteArray(byte[] a, int ix, Mask<Double, S> m) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix);
+            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
             return fromByteBuffer(bb, m);
         }
 
@@ -890,14 +890,14 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
 
         @Override
         public DoubleVector<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            bb = bb.duplicate().position(ix);
+            bb = bb.duplicate().order(bb.order()).position(ix);
             DoubleBuffer fb = bb.asDoubleBuffer();
             return op(i -> fb.get(i));
         }
 
         @Override
         public DoubleVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Double, S> m) {
-            bb = bb.duplicate().position(ix);
+            bb = bb.duplicate().order(bb.order()).position(ix);
             DoubleBuffer fb = bb.asDoubleBuffer();
             return op(m, i -> fb.get(i));
         }

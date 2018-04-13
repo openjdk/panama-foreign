@@ -1049,14 +1049,24 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * size, or appended to with zero bits if the vector bit size is less
          * than this species bit size.
          * <p>
-         * The method behaves as if the input vector is stored into a byte array
-         * and then the returned vector is loaded from the byte array.
+         * The method behaves as if the input vector is stored into a byte buffer
+         * and then the returned vector is loaded from the byte buffer using
+         * native byte ordering. The implication is that ByteBuffer reads bytes
+         * and then composes them based on the byte ordering so the result
+         * depends on this composition.
+         * <p>
+         * For example, on a system with ByteOrder.LITTLE_ENDIAN, loading from
+         * byte array with values {0,1,2,3} and reshaping to int, leads to bytes
+         * being composed in order 0x3 0x2 0x1 0x0 which is decimal value 50462976.
+         * On a system with ByteOrder.BIG_ENDIAN, the value is instead 66051 because
+         * bytes are composed in order 0x0 0x1 0x2 0x3.
+         * <p>
          * The following pseudocode expresses the behaviour:
          * <pre>{@code
-         * int alen = Math.max(v.bitSize(), this.bitSize()) / Byte.SIZE;
-         * byte[] a = new byte[alen];
-         * v.intoByteArray(a, 0);
-         * return this.fromByteArray(a, 0);
+         * int blen = Math.max(v.bitSize(), bitSize()) / Byte.SIZE;
+         * ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+         * v.intoByteBuffer(bb, 0);
+         * return fromByteBuffer(bb, 0);
          * }</pre>
          *
          * @param v the input vector
@@ -1075,13 +1085,23 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * The underlying bits of the input vector are copied without
          * modification to the resulting vector.
          * <p>
-         * The method behaves as if the input vector is stored into a byte array
-         * and then the returned vector is loaded from the byte array.
+         * The method behaves as if the input vector is stored into a byte buffer
+         * and then the returned vector is loaded from the byte buffer using
+         * native byte ordering. The implication is that ByteBuffer reads bytes
+         * and then composes them based on the byte ordering so the result
+         * depends on this composition.
+         * <p>
+         * For example, on a system with ByteOrder.LITTLE_ENDIAN, loading from
+         * byte array with values {0,1,2,3} and rebracketing to int, leads to bytes
+         * being composed in order 0x3 0x2 0x1 0x0 which is decimal value 50462976.
+         * On a system with ByteOrder.BIG_ENDIAN, the value is instead 66051 because
+         * bytes are composed in order 0x0 0x1 0x2 0x3.
+         * <p>
          * The following pseudocode expresses the behaviour:
          * <pre>{@code
-         * byte[] a = new byte[v.bitSize() / Byte.SIZE];
-         * v.intoByteArray(a, 0);
-         * return this.fromByteArray(a, 0);
+         * ByteBuffer bb = ByteBuffer.allocate(v.bitSize()).order(ByteOrder.nativeOrder());
+         * v.intoByteBuffer(bb, 0);
+         * return fromByteBuffer(bb, 0);
          * }</pre>
          *
          * @param v the input vector
