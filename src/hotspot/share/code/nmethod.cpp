@@ -37,7 +37,6 @@
 #include "compiler/compilerDirectives.hpp"
 #include "compiler/directivesParser.hpp"
 #include "compiler/disassembler.hpp"
-#include "gc/shared/gcLocker.hpp"
 #include "interpreter/bytecode.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
@@ -53,6 +52,7 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/os.hpp"
+#include "runtime/safepointVerifiers.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/sweeper.hpp"
 #include "runtime/vmThread.hpp"
@@ -1365,7 +1365,7 @@ void nmethod::flush_dependencies(BoolObjectClosure* is_alive) {
         }
         // During GC the is_alive closure is non-NULL, and is used to
         // determine liveness of dependees that need to be updated.
-        if (is_alive == NULL || klass->is_loader_alive(is_alive)) {
+        if (is_alive == NULL || klass->is_loader_alive()) {
           // The GC defers deletion of this entry, since there might be multiple threads
           // iterating over the _dependencies graph. Other call paths are single-threaded
           // and may delete it immediately.

@@ -32,6 +32,8 @@
 #include "code/codeCache.hpp"
 #include "compiler/methodMatcher.hpp"
 #include "compiler/directivesParser.hpp"
+#include "gc/shared/gcConfig.hpp"
+#include "gc/shared/genCollectedHeap.hpp"
 #include "jvmtifiles/jvmtiEnv.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceShared.hpp"
@@ -61,6 +63,7 @@
 #include "runtime/thread.hpp"
 #include "runtime/threadSMR.hpp"
 #include "runtime/vm_version.hpp"
+#include "services/memoryService.hpp"
 #include "utilities/align.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/elfFile.hpp"
@@ -70,9 +73,9 @@
 #include "prims/cdsoffsets.hpp"
 #endif // INCLUDE_CDS
 #if INCLUDE_ALL_GCS
-#include "gc/g1/concurrentMarkThread.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/g1ConcurrentMark.hpp"
+#include "gc/g1/g1ConcurrentMarkThread.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/parallel/parallelScavengeHeap.inline.hpp"
 #include "gc/parallel/adjoiningGenerations.hpp"
@@ -310,55 +313,24 @@ WB_ENTRY(jint, WB_StressVirtualSpaceResize(JNIEnv* env, jobject o,
                                         (size_t) magnitude, (size_t) iterations);
 WB_END
 
-static const jint serial_code   = 1;
-static const jint parallel_code = 2;
-static const jint cms_code      = 4;
-static const jint g1_code       = 8;
-
-WB_ENTRY(jint, WB_CurrentGC(JNIEnv* env, jobject o, jobject obj))
-  if (UseSerialGC) {
-    return serial_code;
-  } else if (UseParallelGC || UseParallelOldGC) {
-    return parallel_code;
-  } if (UseConcMarkSweepGC) {
-    return cms_code;
-  } else if (UseG1GC) {
-    return g1_code;
-  }
-  ShouldNotReachHere();
-  return 0;
+WB_ENTRY(jboolean, WB_IsGCSupported(JNIEnv* env, jobject o, jint name))
+  return GCConfig::is_gc_supported((CollectedHeap::Name)name);
 WB_END
 
-WB_ENTRY(jint, WB_AllSupportedGC(JNIEnv* env, jobject o, jobject obj))
-#if INCLUDE_ALL_GCS
-  return serial_code | parallel_code | cms_code | g1_code;
-#else
-  return serial_code;
-#endif // INCLUDE_ALL_GCS
+WB_ENTRY(jboolean, WB_IsGCSelected(JNIEnv* env, jobject o, jint name))
+  return GCConfig::is_gc_selected((CollectedHeap::Name)name);
 WB_END
 
-WB_ENTRY(jboolean, WB_GCSelectedByErgo(JNIEnv* env, jobject o, jobject obj))
-  if (UseSerialGC) {
-    return FLAG_IS_ERGO(UseSerialGC);
-  } else if (UseParallelGC) {
-    return FLAG_IS_ERGO(UseParallelGC);
-  } else if (UseParallelOldGC) {
-    return FLAG_IS_ERGO(UseParallelOldGC);
-  } else if (UseConcMarkSweepGC) {
-    return FLAG_IS_ERGO(UseConcMarkSweepGC);
-  } else if (UseG1GC) {
-    return FLAG_IS_ERGO(UseG1GC);
-  }
-  ShouldNotReachHere();
-  return false;
+WB_ENTRY(jboolean, WB_IsGCSelectedErgonomically(JNIEnv* env, jobject o))
+  return GCConfig::is_gc_selected_ergonomically();
 WB_END
 
 WB_ENTRY(jboolean, WB_isObjectInOldGen(JNIEnv* env, jobject o, jobject obj))
   oop p = JNIHandles::resolve(obj);
 #if INCLUDE_ALL_GCS
   if (UseG1GC) {
-    G1CollectedHeap* g1 = G1CollectedHeap::heap();
-    const HeapRegion* hr = g1->heap_region_containing(p);
+    G1CollectedHeap* g1h = G1CollectedHeap::heap();
+    const HeapRegion* hr = g1h->heap_region_containing(p);
     if (hr == NULL) {
       return false;
     }
@@ -427,9 +399,9 @@ WB_END
 #if INCLUDE_ALL_GCS
 WB_ENTRY(jboolean, WB_G1IsHumongous(JNIEnv* env, jobject o, jobject obj))
   if (UseG1GC) {
-    G1CollectedHeap* g1 = G1CollectedHeap::heap();
+    G1CollectedHeap* g1h = G1CollectedHeap::heap();
     oop result = JNIHandles::resolve(obj);
-    const HeapRegion* hr = g1->heap_region_containing(result);
+    const HeapRegion* hr = g1h->heap_region_containing(result);
     return hr->is_humongous();
   }
   THROW_MSG_0(vmSymbols::java_lang_UnsupportedOperationException(), "WB_G1IsHumongous: G1 GC is not enabled");
@@ -437,8 +409,8 @@ WB_END
 
 WB_ENTRY(jboolean, WB_G1BelongsToHumongousRegion(JNIEnv* env, jobject o, jlong addr))
   if (UseG1GC) {
-    G1CollectedHeap* g1 = G1CollectedHeap::heap();
-    const HeapRegion* hr = g1->heap_region_containing((void*) addr);
+    G1CollectedHeap* g1h = G1CollectedHeap::heap();
+    const HeapRegion* hr = g1h->heap_region_containing((void*) addr);
     return hr->is_humongous();
   }
   THROW_MSG_0(vmSymbols::java_lang_UnsupportedOperationException(), "WB_G1BelongsToHumongousRegion: G1 GC is not enabled");
@@ -446,8 +418,8 @@ WB_END
 
 WB_ENTRY(jboolean, WB_G1BelongsToFreeRegion(JNIEnv* env, jobject o, jlong addr))
   if (UseG1GC) {
-    G1CollectedHeap* g1 = G1CollectedHeap::heap();
-    const HeapRegion* hr = g1->heap_region_containing((void*) addr);
+    G1CollectedHeap* g1h = G1CollectedHeap::heap();
+    const HeapRegion* hr = g1h->heap_region_containing((void*) addr);
     return hr->is_free();
   }
   THROW_MSG_0(vmSymbols::java_lang_UnsupportedOperationException(), "WB_G1BelongsToFreeRegion: G1 GC is not enabled");
@@ -455,8 +427,8 @@ WB_END
 
 WB_ENTRY(jlong, WB_G1NumMaxRegions(JNIEnv* env, jobject o))
   if (UseG1GC) {
-    G1CollectedHeap* g1 = G1CollectedHeap::heap();
-    size_t nr = g1->max_regions();
+    G1CollectedHeap* g1h = G1CollectedHeap::heap();
+    size_t nr = g1h->max_regions();
     return (jlong)nr;
   }
   THROW_MSG_0(vmSymbols::java_lang_UnsupportedOperationException(), "WB_G1NumMaxRegions: G1 GC is not enabled");
@@ -464,8 +436,8 @@ WB_END
 
 WB_ENTRY(jlong, WB_G1NumFreeRegions(JNIEnv* env, jobject o))
   if (UseG1GC) {
-    G1CollectedHeap* g1 = G1CollectedHeap::heap();
-    size_t nr = g1->num_free_regions();
+    G1CollectedHeap* g1h = G1CollectedHeap::heap();
+    size_t nr = g1h->num_free_regions();
     return (jlong)nr;
   }
   THROW_MSG_0(vmSymbols::java_lang_UnsupportedOperationException(), "WB_G1NumFreeRegions: G1 GC is not enabled");
@@ -961,8 +933,6 @@ WB_ENTRY(jint, WB_MatchesMethod(JNIEnv* env, jobject o, jobject method, jstring 
   return result;
 WB_END
 
-static AlwaysFalseClosure always_false;
-
 WB_ENTRY(void, WB_ClearMethodState(JNIEnv* env, jobject o, jobject method))
   jmethodID jmid = reflected_method_to_jmid(thread, env, method);
   CHECK_JNI_EXCEPTION(env);
@@ -979,7 +949,7 @@ WB_ENTRY(void, WB_ClearMethodState(JNIEnv* env, jobject o, jobject method))
       mdo->set_arg_modified(i, 0);
     }
     MutexLockerEx mu(mdo->extra_data_lock());
-    mdo->clean_method_data(&always_false);
+    mdo->clean_method_data(/*always_clean*/true);
   }
 
   mh->clear_not_c1_compilable();
@@ -2160,10 +2130,10 @@ static JNINativeMethod methods[] = {
   {CC"handshakeWalkStack", CC"(Ljava/lang/Thread;Z)I", (void*)&WB_HandshakeWalkStack },
   {CC"addCompilerDirective",    CC"(Ljava/lang/String;)I",
                                                       (void*)&WB_AddCompilerDirective },
-  {CC"removeCompilerDirective",   CC"(I)V",             (void*)&WB_RemoveCompilerDirective },
-  {CC"currentGC",                 CC"()I",            (void*)&WB_CurrentGC},
-  {CC"allSupportedGC",            CC"()I",            (void*)&WB_AllSupportedGC},
-  {CC"gcSelectedByErgo",          CC"()Z",            (void*)&WB_GCSelectedByErgo},
+  {CC"removeCompilerDirective",   CC"(I)V",           (void*)&WB_RemoveCompilerDirective },
+  {CC"isGCSupported",             CC"(I)Z",           (void*)&WB_IsGCSupported},
+  {CC"isGCSelected",              CC"(I)Z",           (void*)&WB_IsGCSelected},
+  {CC"isGCSelectedErgonomically", CC"()Z",            (void*)&WB_IsGCSelectedErgonomically},
   {CC"supportsConcurrentGCPhaseControl", CC"()Z",     (void*)&WB_SupportsConcurrentGCPhaseControl},
   {CC"getConcurrentGCPhases",     CC"()[Ljava/lang/String;",
                                                       (void*)&WB_GetConcurrentGCPhases},
