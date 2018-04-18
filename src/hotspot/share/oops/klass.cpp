@@ -35,9 +35,11 @@
 #include "memory/metaspaceShared.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "oops/compressedOops.inline.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/klass.inline.hpp"
 #include "oops/oop.inline.hpp"
+#include "oops/oopHandle.inline.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/orderAccess.inline.hpp"
@@ -61,11 +63,13 @@ bool Klass::is_cloneable() const {
 }
 
 void Klass::set_is_cloneable() {
-  if (name() != vmSymbols::java_lang_invoke_MemberName()) {
-    _access_flags.set_is_cloneable_fast();
-  } else {
+  if (name() == vmSymbols::java_lang_invoke_MemberName()) {
     assert(is_final(), "no subclasses allowed");
     // MemberName cloning should not be intrinsified and always happen in JVM_Clone.
+  } else if (is_instance_klass() && InstanceKlass::cast(this)->reference_type() != REF_NONE) {
+    // Reference cloning should not be intrinsified and always happen in JVM_Clone.
+  } else {
+    _access_flags.set_is_cloneable_fast();
   }
 }
 
@@ -377,22 +381,7 @@ void Klass::append_to_sibling_list() {
   debug_only(verify();)
 }
 
-bool Klass::is_loader_alive(BoolObjectClosure* is_alive) {
-#ifdef ASSERT
-  // The class is alive iff the class loader is alive.
-  oop loader = class_loader();
-  bool loader_alive = (loader == NULL) || is_alive->do_object_b(loader);
-#endif // ASSERT
-
-  // The class is alive if it's mirror is alive (which should be marked if the
-  // loader is alive) unless it's an anoymous class.
-  bool mirror_alive = is_alive->do_object_b(java_mirror());
-  assert(!mirror_alive || loader_alive, "loader must be alive if the mirror is"
-                        " but not the other way around with anonymous classes");
-  return mirror_alive;
-}
-
-void Klass::clean_weak_klass_links(BoolObjectClosure* is_alive, bool clean_alive_klasses) {
+void Klass::clean_weak_klass_links(bool clean_alive_klasses) {
   if (!ClassUnloading) {
     return;
   }
@@ -404,11 +393,11 @@ void Klass::clean_weak_klass_links(BoolObjectClosure* is_alive, bool clean_alive
   while (!stack.is_empty()) {
     Klass* current = stack.pop();
 
-    assert(current->is_loader_alive(is_alive), "just checking, this should be live");
+    assert(current->is_loader_alive(), "just checking, this should be live");
 
     // Find and set the first alive subklass
     Klass* sub = current->subklass();
-    while (sub != NULL && !sub->is_loader_alive(is_alive)) {
+    while (sub != NULL && !sub->is_loader_alive()) {
 #ifndef PRODUCT
       if (log_is_enabled(Trace, class, unload)) {
         ResourceMark rm;
@@ -424,7 +413,7 @@ void Klass::clean_weak_klass_links(BoolObjectClosure* is_alive, bool clean_alive
 
     // Find and set the first alive sibling
     Klass* sibling = current->next_sibling();
-    while (sibling != NULL && !sibling->is_loader_alive(is_alive)) {
+    while (sibling != NULL && !sibling->is_loader_alive()) {
       if (log_is_enabled(Trace, class, unload)) {
         ResourceMark rm;
         log_trace(class, unload)("[Unlinking class (sibling) %s]", sibling->external_name());
@@ -439,12 +428,12 @@ void Klass::clean_weak_klass_links(BoolObjectClosure* is_alive, bool clean_alive
     // Clean the implementors list and method data.
     if (clean_alive_klasses && current->is_instance_klass()) {
       InstanceKlass* ik = InstanceKlass::cast(current);
-      ik->clean_weak_instanceklass_links(is_alive);
+      ik->clean_weak_instanceklass_links();
 
       // JVMTI RedefineClasses creates previous versions that are not in
       // the class hierarchy, so process them here.
       while ((ik = ik->previous_versions()) != NULL) {
-        ik->clean_weak_instanceklass_links(is_alive);
+        ik->clean_weak_instanceklass_links();
       }
     }
   }
@@ -569,7 +558,7 @@ void Klass::restore_unshareable_info(ClassLoaderData* loader_data, Handle protec
 oop Klass::archived_java_mirror_raw() {
   assert(DumpSharedSpaces, "called only during runtime");
   assert(has_raw_archived_mirror(), "must have raw archived mirror");
-  return oopDesc::decode_heap_oop(_archived_mirror);
+  return CompressedOops::decode(_archived_mirror);
 }
 
 // Used at CDS runtime to get the archived mirror from shared class. Uses GC barrier.
@@ -582,7 +571,7 @@ oop Klass::archived_java_mirror() {
 // No GC barrier
 void Klass::set_archived_java_mirror_raw(oop m) {
   assert(DumpSharedSpaces, "called only during runtime");
-  _archived_mirror = oopDesc::encode_heap_oop(m);
+  _archived_mirror = CompressedOops::encode(m);
 }
 #endif // INCLUDE_CDS_JAVA_HEAP
 
