@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -224,15 +225,21 @@ final class AsmCodeFactory extends CodeFactory {
 
         // fields
         Printer dbg = new Printer();
-        cursor.stream()
-                .filter(cx -> cx.kind() == CursorKind.FieldDecl)
-                .forEachOrdered(cx -> addField(cw, cx, cursor.type()));
+        structFields(cursor).forEachOrdered(cx -> addField(cw, cx, cursor.type()));
         // Write class
         try {
             writeClassFile(cw, owner.clsName + "$" + intf);
         } catch (IOException ex) {
             handleException(ex);
         }
+    }
+
+    // A stream of fields of a struct (or union). Note that we have to include
+    // fields from nested annoymous unions and structs in the containing struct.
+    private Stream<Cursor> structFields(Cursor cursor) {
+        return cursor.children()
+            .flatMap(c -> c.isAnonymousStruct()? structFields(c) : Stream.of(c))
+            .filter(c -> c.kind() == CursorKind.FieldDecl);
     }
 
     private void createEnum(Cursor cursor) {
@@ -509,13 +516,13 @@ final class AsmCodeFactory extends CodeFactory {
                     break;
                 default:
                     logger.warning(() -> "Unsupported declaration Cursor:");
-                    logger.fine(() -> Printer.Stringifier(p -> p.dumpCursor(cursor, true)));
+                    logger.warning(() -> Printer.Stringifier(p -> p.dumpCursor(cursor, true)));
                     break;
             }
         } catch (Exception ex) {
             handleException(ex);
             logger.warning("Cursor causing above exception is: " + cursor.spelling());
-            logger.fine(() -> Printer.Stringifier(p -> p.dumpCursor(cursor, true)));
+            logger.warning(() -> Printer.Stringifier(p -> p.dumpCursor(cursor, true)));
         }
         return this;
     }

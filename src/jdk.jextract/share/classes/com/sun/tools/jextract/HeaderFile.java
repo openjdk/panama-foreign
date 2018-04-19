@@ -113,6 +113,28 @@ public final class HeaderFile {
                 }
             }
 
+            // C structs and unions can have nested structs, unions and enums.
+            // And nested types are hoisted to the containing scope - i.e., nested
+            // structs/unions/enums are not scoped types. We recursively visit all
+            // nested types.
+            if (c.kind() == CursorKind.StructDecl ||
+                c.kind() == CursorKind.UnionDecl) {
+                c.children()
+                    .filter(c1 -> c1.isDeclaration() &&
+                         (c1.kind() == CursorKind.StructDecl ||
+                         c1.kind() == CursorKind.UnionDecl ||
+                         c1.kind() == CursorKind.EnumDecl))
+                    .peek(c1 -> logger.finest(
+                         () -> "Cursor: " + c1.spelling() + "@" + c1.USR() + "?" + c1.isDeclaration()))
+                    .forEach(c1 -> processCursor(c1, main, isBuiltIn));
+            }
+
+            // generate nothing for anonymous structs/unions. Fields are generated in the
+            // containing struct or union
+            if (c.isAnonymousStruct()) {
+                return;
+            }
+
             JType jt = dict.computeIfAbsent(t, type -> {
                 logger.fine(() -> "PH: Compute type for " + type.spelling());
                 return define(type);

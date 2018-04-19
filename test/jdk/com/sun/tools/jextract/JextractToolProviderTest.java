@@ -140,6 +140,10 @@ public class JextractToolProviderTest {
         }
     }
 
+    private static Method findStructFieldGet(Class<?> cls, String name) {
+        return findMethod(cls, name + "$get");
+    }
+
     private static Method findFirstMethod(Class<?> cls, String name) {
         try {
             for (Method m : cls.getMethods()) {
@@ -465,6 +469,93 @@ public class JextractToolProviderTest {
             assertNull(findMethod(cls, "junk", Object[].class));
         } finally {
             deleteFile(helloJar);
+        }
+    }
+
+    @Test
+    public void testNestedStructsUnions() {
+        Path nestedJar = getOutputFilePath("nested.jar");
+        deleteFile(nestedJar);
+	Path nestedH = getInputFilePath("nested.h");
+        try {
+            checkSuccess(null, "-o", nestedJar.toString(), nestedH.toString());
+            Class<?> headerCls = loadClass("nested", nestedJar);
+            assertNotNull(headerCls);
+
+            Class<?> fooCls = loadClass("nested$Foo", nestedJar);
+            assertNotNull(fooCls);
+            // struct Foo has no getters for "x", "y" etc.
+            assertNull(findStructFieldGet(fooCls, "x"));
+            assertNull(findStructFieldGet(fooCls, "y"));
+            // struct Foo has getters for bar and color
+            assertNotNull(findStructFieldGet(fooCls, "bar"));
+            assertNotNull(findStructFieldGet(fooCls, "color"));
+            // make sure nested types are handled without nested namespace!
+            assertNotNull(loadClass("nested$Bar", nestedJar));
+            assertNotNull(loadClass("nested$Color", nestedJar));
+
+            Class<?> uCls = loadClass("nested$U", nestedJar);
+            assertNotNull(uCls);
+            // union U has no getters for "x", "y" etc.
+            assertNull(findStructFieldGet(uCls, "x"));
+            assertNull(findStructFieldGet(uCls, "y"));
+            // union U has getters for point, rgb, i
+            assertNotNull(findStructFieldGet(uCls, "point"));
+            assertNotNull(findStructFieldGet(uCls, "rgb"));
+            assertNotNull(findStructFieldGet(uCls, "i"));
+            // make sure nested types are handled without nested namespace!
+            assertNotNull(loadClass("nested$Point", nestedJar));
+            assertNotNull(loadClass("nested$RGB", nestedJar));
+
+            Class<?> myStructCls = loadClass("nested$MyStruct", nestedJar);
+            assertNotNull(findStructFieldGet(myStructCls, "a"));
+            assertNotNull(findStructFieldGet(myStructCls, "b"));
+            assertNotNull(findStructFieldGet(myStructCls, "c"));
+            assertNotNull(findStructFieldGet(myStructCls, "d"));
+            // 'e' is named struct element - should not be in MyStruct
+            assertNull(findStructFieldGet(myStructCls, "e"));
+            assertNotNull(findStructFieldGet(myStructCls, "f"));
+            assertNotNull(findStructFieldGet(myStructCls, "g"));
+            assertNotNull(findStructFieldGet(myStructCls, "h"));
+            // 'i' is named struct element - should not be in MyStruct
+            assertNull(findStructFieldGet(myStructCls, "i"));
+            // 'j' is named struct element - should not be in MyStruct
+            assertNull(findStructFieldGet(myStructCls, "j"));
+            assertNotNull(findStructFieldGet(myStructCls, "k"));
+            // "X", "Y", "Z" are enum constants -should not be in MyStruct
+            assertNull(findStructFieldGet(myStructCls, "X"));
+            assertNull(findStructFieldGet(myStructCls, "Y"));
+            assertNull(findStructFieldGet(myStructCls, "Z"));
+            // anonymous enum constants are hoisted to containing scope
+            assertNotNull(findField(headerCls, "X"));
+            assertNotNull(findField(headerCls, "Y"));
+            assertNotNull(findField(headerCls, "Z"));
+
+            Class<?> myUnionCls = loadClass("nested$MyUnion", nestedJar);
+            assertNotNull(findStructFieldGet(myUnionCls, "a"));
+            assertNotNull(findStructFieldGet(myUnionCls, "b"));
+            assertNotNull(findStructFieldGet(myUnionCls, "c"));
+            assertNotNull(findStructFieldGet(myUnionCls, "d"));
+            // 'e' is named struct element - should not be in MyUnion
+            assertNull(findStructFieldGet(myUnionCls, "e"));
+            assertNotNull(findStructFieldGet(myUnionCls, "f"));
+            assertNotNull(findStructFieldGet(myUnionCls, "g"));
+            assertNotNull(findStructFieldGet(myUnionCls, "h"));
+            // 'i' is named struct element - should not be in MyUnion
+            assertNull(findStructFieldGet(myUnionCls, "i"));
+            // 'j' is named struct element - should not be in MyUnion
+            assertNull(findStructFieldGet(myUnionCls, "j"));
+            assertNotNull(findStructFieldGet(myUnionCls, "k"));
+            // "A", "B", "C" are enum constants -should not be in MyUnion
+            assertNull(findStructFieldGet(myUnionCls, "A"));
+            assertNull(findStructFieldGet(myUnionCls, "B"));
+            assertNull(findStructFieldGet(myUnionCls, "C"));
+            // anonymous enum constants are hoisted to containing scope
+            assertNotNull(findField(headerCls, "A"));
+            assertNotNull(findField(headerCls, "B"));
+            assertNotNull(findField(headerCls, "C"));
+        } finally {
+            deleteFile(nestedJar);
         }
     }
 }

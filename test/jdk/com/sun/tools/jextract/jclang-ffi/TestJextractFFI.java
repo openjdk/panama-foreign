@@ -173,15 +173,22 @@ public class TestJextractFFI {
     }
 
     public static int main(String... args) throws IOException, InterruptedException {
-        final Path src_path = Paths.get(System.getProperty("test.src"));
+        final Path srcPath = Paths.get(System.getProperty("test.src"));
+        final String clangInclude = System.getProperty("clang.include.path");
+        final String clangLib = System.getProperty("clang.lib.path");
 
-        TestJextractFFI test = new TestJextractFFI(
-                Paths.get(System.getProperty("clang.include.path")).toAbsolutePath(),
-                Paths.get(System.getProperty("clang.lib.path")).toAbsolutePath(),
-                src_path.resolve("src").toAbsolutePath()
-        );
+        if (clangInclude != null && clangLib != null) {
+            TestJextractFFI test = new TestJextractFFI(
+                    Paths.get(clangInclude).toAbsolutePath(),
+                    Paths.get(clangLib).toAbsolutePath(),
+                    srcPath.resolve("src").toAbsolutePath()
+            );
 
-        test.run();
+            test.run();
+        } else {
+            // FIXME: we should try to figure out clang paths automatically.
+            System.err.println("WARNING: clang paths not found, vacuously passing");
+        }
         return 0;
     }
 }

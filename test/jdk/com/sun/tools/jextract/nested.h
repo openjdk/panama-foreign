@@ -21,9 +21,74 @@
  * questions.
  */
 
-typedef union {
-    int i;
-    float f;
-} IntOrFloat;
+struct Foo {
+    struct Bar {
+        int x, y;
+    } bar;
 
-void func(IntOrFloat* value);
+    enum Color {
+        red, green, blue
+    } color;
+};
+
+union U {
+    struct Point {
+        short x, y;
+    } point;
+
+    enum RGB {
+        r, g, b
+    } rgb;
+
+    int i;
+};
+
+struct MyStruct {
+    char a;
+    struct {
+        int b;
+        union {
+            int c;
+        };
+        char d;
+        struct MyStruct_Z {
+            char e;
+        } f;
+    };
+    union {
+        int g;
+        long h;
+    };
+    enum {
+        X, Y, Z
+    };
+    struct {
+        int i;
+        int j;
+    } k;
+};
+
+union MyUnion {
+    char a;
+    struct {
+        int b;
+        union {
+            int c;
+        };
+        char d;
+        struct MyUnion_Z {
+            char e;
+        } f;
+    };
+    struct {
+        int g;
+        int h;
+    };
+    enum {
+        A, B, C
+    };
+    union {
+        int i;
+        long j;
+    } k;
+};
