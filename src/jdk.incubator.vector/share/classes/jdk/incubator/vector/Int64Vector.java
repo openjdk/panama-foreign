@@ -359,6 +359,28 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
+    public Int64Vector min(Vector<Integer,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Int64Vector v = (Int64Vector)o;
+        return (Int64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Int64Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int64Vector)v1).bOp(v2, (i, a, b) -> (int) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int64Vector max(Vector<Integer,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Int64Vector v = (Int64Vector)o;
+        return (Int64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Int64Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int64Vector)v1).bOp(v2, (i, a, b) -> (int) ((a > b) ? a : b)));
+        }
+
+    @Override
+    @ForceInline
     public Int64Vector add(Vector<Integer,Shapes.S64Bit> v, Mask<Integer, Shapes.S64Bit> m) {
         // TODO: use better default impl: bOp(o, m, (i, a, b) -> (int)(a + b));
         return blend(add(v), m);

@@ -214,14 +214,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
 
     @Override
     public $abstractvectortype$<S> min(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> (a <= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
     public abstract $abstractvectortype$<S> min($type$ o);
 
     @Override
     public $abstractvectortype$<S> max(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> (a >= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
     public abstract $abstractvectortype$<S> max($type$ o);

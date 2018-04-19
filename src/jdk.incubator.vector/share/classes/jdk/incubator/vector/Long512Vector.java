@@ -340,6 +340,28 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             (v1, v2) -> ((Long512Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Long512Vector min(Vector<Long,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Long512Vector v = (Long512Vector)o;
+        return (Long512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Long512Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long512Vector)v1).bOp(v2, (i, a, b) -> (long) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long512Vector max(Vector<Long,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Long512Vector v = (Long512Vector)o;
+        return (Long512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Long512Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long512Vector)v1).bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

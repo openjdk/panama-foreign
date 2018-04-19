@@ -116,8 +116,8 @@ gen_binary_alu_op "xor" "a ^ b" $template_file "BITWISE"
 #gen_binary_alu_op "subSaturate" "((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b)" $template_file
 
 # Masked reductions.
-gen_binary_op "max" "Math.max(a, b)" $template_file
-gen_binary_op "min" "Math.min(a, b)" $template_file
+gen_binary_op "max" "(a > b) ? a : b" $template_file
+gen_binary_op "min" "(a < b) ? a : b" $template_file
 
 # Reductions.
 gen_reduction_op "andAll" "\&" $template_file "BITWISE" "-1"

@@ -212,14 +212,14 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
     @Override
     public FloatVector<S> min(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (a <= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
     public abstract FloatVector<S> min(float o);
 
     @Override
     public FloatVector<S> max(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (a >= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
     public abstract FloatVector<S> max(float o);

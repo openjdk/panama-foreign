@@ -340,6 +340,28 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             (v1, v2) -> ((Long256Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Long256Vector min(Vector<Long,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Long256Vector v = (Long256Vector)o;
+        return (Long256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Long256Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long256Vector)v1).bOp(v2, (i, a, b) -> (long) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector max(Vector<Long,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Long256Vector v = (Long256Vector)o;
+        return (Long256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Long256Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long256Vector)v1).bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

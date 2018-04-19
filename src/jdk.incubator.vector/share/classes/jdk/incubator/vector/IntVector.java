@@ -212,14 +212,14 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
 
     @Override
     public IntVector<S> min(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (a <= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
     public abstract IntVector<S> min(int o);
 
     @Override
     public IntVector<S> max(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (a >= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
     public abstract IntVector<S> max(int o);

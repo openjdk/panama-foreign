@@ -212,14 +212,14 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
 
     @Override
     public ShortVector<S> min(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (a <= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
     public abstract ShortVector<S> min(short o);
 
     @Override
     public ShortVector<S> max(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (a >= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
     public abstract ShortVector<S> max(short o);

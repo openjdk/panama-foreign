@@ -1657,6 +1657,7 @@ private:
   void evpcmpeqq(KRegister kdst, XMMRegister nds, XMMRegister src, int vector_len);
   void evpcmpeqq(KRegister kdst, XMMRegister nds, Address src, int vector_len);
 
+  void pcmpgtq(XMMRegister dst, XMMRegister src);
   void vpcmpgtq(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
   void pmovmskb(Register dst, XMMRegister src);
@@ -2077,6 +2078,32 @@ private:
   void vpmullw(XMMRegister dst, XMMRegister nds, Address src, int vector_len);
   void vpmulld(XMMRegister dst, XMMRegister nds, Address src, int vector_len);
   void vpmullq(XMMRegister dst, XMMRegister nds, Address src, int vector_len);
+
+  // Minimum of packed integers
+  void pminsb(XMMRegister dst, XMMRegister src);
+  void vpminsb(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void pminsw(XMMRegister dst, XMMRegister src);
+  void vpminsw(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void pminsd(XMMRegister dst, XMMRegister src);
+  void vpminsd(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void vpminsq(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void minps(XMMRegister dst, XMMRegister src);
+  void vminps(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void minpd(XMMRegister dst, XMMRegister src);
+  void vminpd(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+
+  // Maximum of packed integers
+  void pmaxsb(XMMRegister dst, XMMRegister src);
+  void vpmaxsb(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void pmaxsw(XMMRegister dst, XMMRegister src);
+  void vpmaxsw(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void pmaxsd(XMMRegister dst, XMMRegister src);
+  void vpmaxsd(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void vpmaxsq(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void maxps(XMMRegister dst, XMMRegister src);
+  void vmaxps(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
+  void maxpd(XMMRegister dst, XMMRegister src);
+  void vmaxpd(XMMRegister dst, XMMRegister src1, XMMRegister src2, int vector_len);
 
   // Shift left packed integers
   void psllw(XMMRegister dst, int shift);

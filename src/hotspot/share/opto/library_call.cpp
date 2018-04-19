@@ -6990,15 +6990,17 @@ enum {
   OP_SUB     = 5,
   OP_MUL     = 6,
   OP_DIV     = 7,
-  OP_AND     = 8,
-  OP_OR      = 9,
-  OP_XOR     = 10,
+  OP_MIN     = 8,
+  OP_MAX     = 9,
+  OP_AND     = 10,
+  OP_OR      = 11,
+  OP_XOR     = 12,
   // Ternary
-  OP_FMA     = 11,
+  OP_FMA     = 13,
   // Broadcast int
-  OP_LSHIFT  = 12,
-  OP_RSHIFT  = 13,
-  OP_URSHIFT = 14
+  OP_LSHIFT  = 14,
+  OP_RSHIFT  = 15,
+  OP_URSHIFT = 16
 };
 
 static int get_opc(jint op, BasicType bt) {
@@ -7048,6 +7050,30 @@ static int get_opc(jint op, BasicType bt) {
         case T_FLOAT:  return Op_DivF;
         case T_DOUBLE: return Op_DivD;
         default: fatal("DIV: %s", type2name(bt));
+      }
+      break;
+    }
+    case OP_MIN: {
+      switch (bt) {
+        case T_BYTE:
+        case T_SHORT: 
+        case T_INT:    return Op_MinI;
+        case T_LONG:   return Op_MinL;
+        case T_FLOAT:  return Op_MinF;
+        case T_DOUBLE: return Op_MinD;
+        default: fatal("MIN: %s", type2name(bt));
+      }
+      break;
+    }
+    case OP_MAX: {
+      switch (bt) {
+        case T_BYTE:
+        case T_SHORT:  
+        case T_INT:    return Op_MaxI;
+        case T_LONG:   return Op_MaxL;
+        case T_FLOAT:  return Op_MaxF;
+        case T_DOUBLE: return Op_MaxD;
+        default: fatal("MAX: %s", type2name(bt));
       }
       break;
     }

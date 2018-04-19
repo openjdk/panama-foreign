@@ -394,6 +394,28 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Float512Vector min(Vector<Float,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Float512Vector v = (Float512Vector)o;
+        return (Float512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Float512Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Float512Vector max(Vector<Float,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Float512Vector v = (Float512Vector)o;
+        return (Float512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Float512Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float) ((a > b) ? a : b)));
+        }
+
+    @Override
+    @ForceInline
     public Float512Vector add(Vector<Float,Shapes.S512Bit> v, Mask<Float, Shapes.S512Bit> m) {
         // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a + b));
         return blend(add(v), m);

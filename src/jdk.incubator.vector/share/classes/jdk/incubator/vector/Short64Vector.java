@@ -340,6 +340,28 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
             (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Short64Vector min(Vector<Short,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+        return (Short64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Short64Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short64Vector max(Vector<Short,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Short64Vector v = (Short64Vector)o;
+        return (Short64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Short64Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short64Vector)v1).bOp(v2, (i, a, b) -> (short) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

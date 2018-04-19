@@ -212,14 +212,14 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
 
     @Override
     public DoubleVector<S> min(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (a <= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
     public abstract DoubleVector<S> min(double o);
 
     @Override
     public DoubleVector<S> max(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (a >= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
     public abstract DoubleVector<S> max(double o);

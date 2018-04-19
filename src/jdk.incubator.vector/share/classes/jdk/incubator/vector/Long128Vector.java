@@ -340,6 +340,28 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Long128Vector min(Vector<Long,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Long128Vector v = (Long128Vector)o;
+        return (Long128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Long128Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long128Vector max(Vector<Long,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Long128Vector v = (Long128Vector)o;
+        return (Long128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Long128Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

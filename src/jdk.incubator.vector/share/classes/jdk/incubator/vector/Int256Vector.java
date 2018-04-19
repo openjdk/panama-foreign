@@ -359,6 +359,28 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Int256Vector min(Vector<Integer,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Int256Vector v = (Int256Vector)o;
+        return (Int256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Int256Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int256Vector)v1).bOp(v2, (i, a, b) -> (int) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int256Vector max(Vector<Integer,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Int256Vector v = (Int256Vector)o;
+        return (Int256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Int256Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int256Vector)v1).bOp(v2, (i, a, b) -> (int) ((a > b) ? a : b)));
+        }
+
+    @Override
+    @ForceInline
     public Int256Vector add(Vector<Integer,Shapes.S256Bit> v, Mask<Integer, Shapes.S256Bit> m) {
         // TODO: use better default impl: bOp(o, m, (i, a, b) -> (int)(a + b));
         return blend(add(v), m);

@@ -340,6 +340,28 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
             (v1, v2) -> ((Byte64Vector)v1).bOp(v2, (i, a, b) -> (byte)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Byte64Vector min(Vector<Byte,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Byte64Vector v = (Byte64Vector)o;
+        return (Byte64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Byte64Vector.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Byte64Vector)v1).bOp(v2, (i, a, b) -> (byte) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Vector max(Vector<Byte,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Byte64Vector v = (Byte64Vector)o;
+        return (Byte64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Byte64Vector.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Byte64Vector)v1).bOp(v2, (i, a, b) -> (byte) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

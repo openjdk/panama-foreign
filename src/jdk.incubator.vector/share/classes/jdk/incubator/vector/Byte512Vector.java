@@ -340,6 +340,28 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Byte512Vector min(Vector<Byte,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Byte512Vector v = (Byte512Vector)o;
+        return (Byte512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Byte512Vector.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Byte512Vector max(Vector<Byte,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Byte512Vector v = (Byte512Vector)o;
+        return (Byte512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Byte512Vector.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

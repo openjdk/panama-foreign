@@ -105,6 +105,42 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_DivD:
     assert(bt == T_DOUBLE, "must be");
     return Op_DivVD;
+  case Op_MinI:
+    switch (bt) {
+    case T_BOOLEAN:
+    case T_CHAR:   return 0;
+    case T_BYTE:
+    case T_SHORT:
+    case T_INT:    return Op_MinV;
+    default:       ShouldNotReachHere(); return 0;
+    }
+  case Op_MinL:
+    assert(bt == T_LONG, "must be");
+    return Op_MinV;
+  case Op_MinF:
+    assert(bt == T_FLOAT, "must be");
+    return Op_MinV;
+  case Op_MinD:
+    assert(bt == T_DOUBLE, "must be");
+    return Op_MinV;
+  case Op_MaxI:
+    switch (bt) {
+    case T_BOOLEAN:
+    case T_CHAR:   return 0;
+    case T_BYTE:
+    case T_SHORT:
+    case T_INT:    return Op_MaxV;
+    default:       ShouldNotReachHere(); return 0;
+    }
+  case Op_MaxL:
+    assert(bt == T_LONG, "must be");
+    return Op_MaxV;
+  case Op_MaxF:
+    assert(bt == T_FLOAT, "must be");
+    return Op_MaxV;
+  case Op_MaxD:
+    assert(bt == T_DOUBLE, "must be");
+    return Op_MaxV;
   case Op_AbsI:
     assert(bt == T_INT, "must be");
     return Op_AbsVI;
@@ -226,6 +262,8 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_MulVD:
   case Op_DivVF:
   case Op_DivVD:
+  case Op_MinV:
+  case Op_MaxV:
   case Op_AbsVI:
   case Op_AbsVF:
   case Op_AbsVD:
@@ -402,6 +440,9 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
 
   case Op_DivVF: return new DivVFNode(n1, n2, vt);
   case Op_DivVD: return new DivVDNode(n1, n2, vt);
+
+  case Op_MinV: return new MinVNode(n1, n2, vt);
+  case Op_MaxV: return new MaxVNode(n1, n2, vt);
 
   case Op_AbsVI: return new AbsVINode(n1, vt);
   case Op_AbsVF: return new AbsVFNode(n1, vt);

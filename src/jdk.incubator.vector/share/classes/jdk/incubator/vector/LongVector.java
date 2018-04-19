@@ -212,14 +212,14 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
 
     @Override
     public LongVector<S> min(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> (a <= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
     public abstract LongVector<S> min(long o);
 
     @Override
     public LongVector<S> max(Vector<Long,S> o) {
-        return bOp(o, (i, a, b) -> (a >= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
     public abstract LongVector<S> max(long o);

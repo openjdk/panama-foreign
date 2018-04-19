@@ -340,6 +340,28 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             (v1, v2) -> ((Byte256Vector)v1).bOp(v2, (i, a, b) -> (byte)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Byte256Vector min(Vector<Byte,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Byte256Vector v = (Byte256Vector)o;
+        return (Byte256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Byte256Vector.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Byte256Vector)v1).bOp(v2, (i, a, b) -> (byte) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Byte256Vector max(Vector<Byte,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Byte256Vector v = (Byte256Vector)o;
+        return (Byte256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Byte256Vector.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Byte256Vector)v1).bOp(v2, (i, a, b) -> (byte) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

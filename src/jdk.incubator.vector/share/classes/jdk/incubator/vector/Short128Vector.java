@@ -340,6 +340,28 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Short128Vector min(Vector<Short,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+        return (Short128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Short128Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short128Vector max(Vector<Short,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Short128Vector v = (Short128Vector)o;
+        return (Short128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Short128Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short128Vector)v1).bOp(v2, (i, a, b) -> (short) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

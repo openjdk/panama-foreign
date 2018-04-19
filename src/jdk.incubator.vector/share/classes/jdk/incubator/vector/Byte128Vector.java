@@ -340,6 +340,28 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             (v1, v2) -> ((Byte128Vector)v1).bOp(v2, (i, a, b) -> (byte)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Byte128Vector min(Vector<Byte,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Byte128Vector v = (Byte128Vector)o;
+        return (Byte128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Byte128Vector.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Byte128Vector)v1).bOp(v2, (i, a, b) -> (byte) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Byte128Vector max(Vector<Byte,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Byte128Vector v = (Byte128Vector)o;
+        return (Byte128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Byte128Vector.class, byte.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Byte128Vector)v1).bOp(v2, (i, a, b) -> (byte) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

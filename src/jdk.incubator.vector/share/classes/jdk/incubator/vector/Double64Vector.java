@@ -394,6 +394,28 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
+    public Double64Vector min(Vector<Double,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Double64Vector v = (Double64Vector)o;
+        return (Double64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Double64Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Double64Vector max(Vector<Double,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Double64Vector v = (Double64Vector)o;
+        return (Double64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Double64Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double) ((a > b) ? a : b)));
+        }
+
+    @Override
+    @ForceInline
     public Double64Vector add(Vector<Double,Shapes.S64Bit> v, Mask<Double, Shapes.S64Bit> m) {
         // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a + b));
         return blend(add(v), m);

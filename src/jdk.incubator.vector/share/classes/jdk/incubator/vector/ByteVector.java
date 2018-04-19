@@ -211,14 +211,14 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
     @Override
     public ByteVector<S> min(Vector<Byte,S> o) {
-        return bOp(o, (i, a, b) -> (a <= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
     public abstract ByteVector<S> min(byte o);
 
     @Override
     public ByteVector<S> max(Vector<Byte,S> o) {
-        return bOp(o, (i, a, b) -> (a >= b) ? a : b);
+        return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
     public abstract ByteVector<S> max(byte o);

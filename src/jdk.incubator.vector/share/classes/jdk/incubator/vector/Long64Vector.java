@@ -340,6 +340,28 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Long64Vector min(Vector<Long,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Long64Vector v = (Long64Vector)o;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector max(Vector<Long,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Long64Vector v = (Long64Vector)o;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
+        }
+
 
 
     @Override

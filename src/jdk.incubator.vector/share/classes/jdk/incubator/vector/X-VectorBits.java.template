@@ -445,6 +445,28 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public $vectortype$ min(Vector<$Boxtype$,Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+        return ($vectortype$) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ max(Vector<$Boxtype$,Shapes.$shape$> o) {
+        Objects.requireNonNull(o);
+        $vectortype$ v = ($vectortype$)o;
+        return ($vectortype$) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
+            this, v,
+            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$) ((a > b) ? a : b)));
+        }
+
 #if[intOrFP]
     @Override
     @ForceInline

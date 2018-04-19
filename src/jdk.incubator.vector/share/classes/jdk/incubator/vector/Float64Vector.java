@@ -394,6 +394,28 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
+    public Float64Vector min(Vector<Float,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Float64Vector v = (Float64Vector)o;
+        return (Float64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Float64Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float64Vector)v1).bOp(v2, (i, a, b) -> (float) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Float64Vector max(Vector<Float,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Float64Vector v = (Float64Vector)o;
+        return (Float64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Float64Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float64Vector)v1).bOp(v2, (i, a, b) -> (float) ((a > b) ? a : b)));
+        }
+
+    @Override
+    @ForceInline
     public Float64Vector add(Vector<Float,Shapes.S64Bit> v, Mask<Float, Shapes.S64Bit> m) {
         // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a + b));
         return blend(add(v), m);

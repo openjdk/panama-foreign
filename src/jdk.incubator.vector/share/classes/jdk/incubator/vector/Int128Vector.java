@@ -359,6 +359,28 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public Int128Vector min(Vector<Integer,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Int128Vector v = (Int128Vector)o;
+        return (Int128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Int128Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int128Vector)v1).bOp(v2, (i, a, b) -> (int) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int128Vector max(Vector<Integer,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Int128Vector v = (Int128Vector)o;
+        return (Int128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Int128Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int128Vector)v1).bOp(v2, (i, a, b) -> (int) ((a > b) ? a : b)));
+        }
+
+    @Override
+    @ForceInline
     public Int128Vector add(Vector<Integer,Shapes.S128Bit> v, Mask<Integer, Shapes.S128Bit> m) {
         // TODO: use better default impl: bOp(o, m, (i, a, b) -> (int)(a + b));
         return blend(add(v), m);

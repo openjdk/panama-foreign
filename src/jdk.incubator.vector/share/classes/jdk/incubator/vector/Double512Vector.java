@@ -394,6 +394,28 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Double512Vector min(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Vector max(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double) ((a > b) ? a : b)));
+        }
+
+    @Override
+    @ForceInline
     public Double512Vector add(Vector<Double,Shapes.S512Bit> v, Mask<Double, Shapes.S512Bit> m) {
         // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a + b));
         return blend(add(v), m);

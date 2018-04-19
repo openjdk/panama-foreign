@@ -21,18 +21,20 @@ import java.util.function.*;
     static final int VECTOR_OP_SUB  = 5;
     static final int VECTOR_OP_MUL  = 6;
     static final int VECTOR_OP_DIV  = 7;
+    static final int VECTOR_OP_MIN  = 8;
+    static final int VECTOR_OP_MAX  = 9;
 
-    static final int VECTOR_OP_AND  = 8;
-    static final int VECTOR_OP_OR   = 9;
-    static final int VECTOR_OP_XOR  = 10;
+    static final int VECTOR_OP_AND  = 10;
+    static final int VECTOR_OP_OR   = 11;
+    static final int VECTOR_OP_XOR  = 12;
 
     // Ternary
-    static final int VECTOR_OP_FMA  = 11;
+    static final int VECTOR_OP_FMA  = 13;
 
     // Broadcast int
-    static final int VECTOR_OP_LSHIFT  = 12;
-    static final int VECTOR_OP_RSHIFT  = 13;
-    static final int VECTOR_OP_URSHIFT = 14;
+    static final int VECTOR_OP_LSHIFT  = 14;
+    static final int VECTOR_OP_RSHIFT  = 15;
+    static final int VECTOR_OP_URSHIFT = 16;
 
     // Copied from open/src/hotspot/cpu/x86/assembler_x86.hpp
     // enum Condition { // The x86 condition codes used for conditional jumps/moves.

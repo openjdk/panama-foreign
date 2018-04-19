@@ -340,6 +340,28 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             (v1, v2) -> ((Short256Vector)v1).bOp(v2, (i, a, b) -> (short)(a * b)));
     }
 
+    @Override
+    @ForceInline
+    public Short256Vector min(Vector<Short,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Short256Vector v = (Short256Vector)o;
+        return (Short256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MIN, Short256Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short256Vector)v1).bOp(v2, (i, a, b) -> (short) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short256Vector max(Vector<Short,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Short256Vector v = (Short256Vector)o;
+        return (Short256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_MAX, Short256Vector.class, short.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Short256Vector)v1).bOp(v2, (i, a, b) -> (short) ((a > b) ? a : b)));
+        }
+
 
 
     @Override
