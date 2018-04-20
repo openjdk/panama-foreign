@@ -43,7 +43,7 @@ void ciNativeEntryPoint::init() {
   VM_ENTRY_MARK;
   // Copy name
   oop name_str = java_lang_invoke_NativeEntryPoint::name(get_oop());
-  if (!oopDesc::is_null(name_str)) {
+  if (name_str != NULL) {
     char* temp_name = java_lang_String::as_quoted_ascii(name_str);
     size_t len = strlen(temp_name) + 1;
     char* name = (char*)CURRENT_ENV->arena()->Amalloc(len);
