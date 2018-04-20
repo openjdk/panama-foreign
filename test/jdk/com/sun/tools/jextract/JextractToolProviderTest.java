@@ -30,6 +30,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nicl.metadata.Header;
 import java.nicl.metadata.LibraryDependencies;
+import java.nicl.types.Pointer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -141,6 +142,10 @@ public class JextractToolProviderTest {
     }
 
     private static Method findStructFieldGet(Class<?> cls, String name) {
+        return findMethod(cls, name + "$get");
+    }
+
+    private static Method findGlobalVariableGet(Class<?> cls, String name) {
         return findMethod(cls, name + "$get");
     }
 
@@ -556,6 +561,22 @@ public class JextractToolProviderTest {
             assertNotNull(findField(headerCls, "C"));
         } finally {
             deleteFile(nestedJar);
+        }
+    }
+
+    @Test
+    public void testAnonymousStructTypeGlobalVar() {
+        Path elaboratedTypeJar = getOutputFilePath("elaboratedtype.jar");
+        deleteFile(elaboratedTypeJar);
+        Path elaboratedTypeH = getInputFilePath("elaboratedtype.h");
+        try {
+            checkSuccess(null, "-o", elaboratedTypeJar.toString(), elaboratedTypeH.toString());
+            Class<?> headerCls = loadClass("elaboratedtype", elaboratedTypeJar);
+            assertNotNull(findGlobalVariableGet(headerCls, "point"));
+            assertNotNull(findGlobalVariableGet(headerCls, "long_or_int"));
+            assertNotNull(findMethod(headerCls, "func", Pointer.class));
+        } finally {
+            deleteFile(elaboratedTypeJar);
         }
     }
 }

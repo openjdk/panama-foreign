@@ -220,6 +220,7 @@ public final class HeaderFile {
         logger.fine("Define " + t.kind() + ":" + t.spelling() + " for TD " + pkgName);
         switch (t.kind()) {
             case Unexposed:
+            case Elaborated:
                 jt = define(t.canonicalType());
                 break;
             case ConstantArray:
