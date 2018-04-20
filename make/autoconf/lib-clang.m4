@@ -61,7 +61,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
         LIBCLANG_CPPFLAGS=""
     fi
     if test "x$CLANG_LIB_PATH" != "x"; then
-        LIBCLANG_LDFLAGS="-L$CLANG_LIB_PATH -Wl,-rpath,$CLANG_LIB_PATH"
+        LIBCLANG_LDFLAGS="-L$CLANG_LIB_PATH"
     else
         LIBCLANG_LDFLAGS=""
     fi

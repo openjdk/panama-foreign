@@ -52,4 +52,11 @@ ifeq ($(ENABLE_LIBCLANG), yes)
 
   TARGETS += $(BUILD_LIBJCLANG)
 
+  $(eval $(call SetupCopyFiles, COPY_CLANG_LIB, \
+      FILES := $(CLANG_LIB_PATH)/$(LIBRARY_PREFIX)clang$(SHARED_LIBRARY_SUFFIX), \
+      DEST := $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE), \
+  ))
+
+  TARGETS += $(COPY_CLANG_LIB)
+
 endif
