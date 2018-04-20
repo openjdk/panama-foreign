@@ -2075,7 +2075,12 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_c2_type(VectorBlendNode, VectorNode)                            \
   declare_c2_type(VectorMaskWrapperNode, VectorNode)                      \
   declare_c2_type(VectorMaskCmpNode, VectorNode)                          \
-  declare_c2_type(ConvertVF2VDNode, VectorNode)                           \
+  declare_c2_type(VectorCastB2XNode, VectorNode)                          \
+  declare_c2_type(VectorCastS2XNode, VectorNode)                          \
+  declare_c2_type(VectorCastI2XNode, VectorNode)                          \
+  declare_c2_type(VectorCastL2XNode, VectorNode)                          \
+  declare_c2_type(VectorCastF2XNode, VectorNode)                          \
+  declare_c2_type(VectorCastD2XNode, VectorNode)                          \
   declare_c2_type(VectorUnboxNode, VectorNode)                            \
   declare_c2_type(VectorReinterpretNode, VectorNode)                      \
   declare_c2_type(VectorBoxNode, Node)                                    \

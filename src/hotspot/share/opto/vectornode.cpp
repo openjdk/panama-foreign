@@ -295,6 +295,16 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_AndV:
   case Op_OrV:
   case Op_XorV:
+  case Op_VectorBlend:
+  case Op_VectorReinterpret:
+  case Op_VectorTest:
+  case Op_VectorMaskCmp:
+  case Op_VectorCastB2X:
+  case Op_VectorCastS2X:
+  case Op_VectorCastI2X:
+  case Op_VectorCastL2X:
+  case Op_VectorCastF2X:
+  case Op_VectorCastD2X:
     // When op is already vectorized, return that directly.
     return sopc;
 
@@ -483,11 +493,14 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_AndV: return new AndVNode(n1, n2, vt);
   case Op_OrV:  return new OrVNode (n1, n2, vt);
   case Op_XorV: return new XorVNode(n1, n2, vt);
-  
-  case Op_ConvertVF2VD:
-    if (bt == T_DOUBLE) {
-      return new ConvertVF2VDNode(n1, vt);
-    }
+
+  case Op_VectorCastB2X: return new VectorCastB2XNode(n1, vt);
+  case Op_VectorCastS2X: return new VectorCastS2XNode(n1, vt);
+  case Op_VectorCastI2X: return new VectorCastI2XNode(n1, vt);
+  case Op_VectorCastL2X: return new VectorCastL2XNode(n1, vt);
+  case Op_VectorCastF2X: return new VectorCastF2XNode(n1, vt);
+  case Op_VectorCastD2X: return new VectorCastD2XNode(n1, vt);
+
   default:
     fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
     return NULL;

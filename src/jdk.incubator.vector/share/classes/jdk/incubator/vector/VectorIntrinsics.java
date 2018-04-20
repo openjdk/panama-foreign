@@ -224,6 +224,21 @@ import java.util.function.*;
 
     /* ============================================================================ */
 
+    interface VectorCastOp<VT, VF> {
+        VT apply(VF v, Class<?> elementType);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static
+    <VT, VF>
+    VT cast(Class<VF> fromVectorClass, Class<?> fromElementType, int fromVLen,
+            Class<?> toElementType, int toVLen, VF v,
+            VectorCastOp<VT,VF> defaultImpl) {
+        return defaultImpl.apply(v, toElementType);
+    }
+
+    /* ============================================================================ */
+
     @HotSpotIntrinsicCandidate
     static <V> V maybeRebox(V v) {
         // The fence is added here to avoid memory aliasing problems in C2 between scalar & vector accesses.

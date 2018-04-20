@@ -1215,7 +1215,11 @@ int HandlerImpl::emit_deopt_handler(CodeBuffer& cbuf) {
   static address vector_all_bits_set() { return StubRoutines::x86::vector_all_bits_set(); }
   static address vector_byte_bitset() { return StubRoutines::x86::vector_byte_bitset(); }
   static address vector_long_perm_mask() { return StubRoutines::x86::vector_long_perm_mask(); }
-  static address vector_byte_saturationmask() { return StubRoutines::x86::vector_byte_saturation_mask(); }
+  static address vector_short_to_byte_mask() { return StubRoutines::x86::vector_short_to_byte_mask(); }
+  static address vector_int_to_byte_mask() { return StubRoutines::x86::vector_int_to_byte_mask(); }
+  static address vector_int_to_short_mask() { return StubRoutines::x86::vector_int_to_short_mask(); }
+  static address vector_32_bit_mask() { return StubRoutines::x86::vector_32_bit_mask(); }
+  static address vector_64_bit_mask() { return StubRoutines::x86::vector_64_bit_mask(); }
 #else
   static address float_signmask()  { return (address)float_signmask_pool; }
   static address float_signflip()  { return (address)float_signflip_pool; }
@@ -1388,6 +1392,41 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           if (UseAVX < 2) { ret_value = false; } // Implementation limitation
           else if (vlen == 1 || vlen == 2) { ret_value = false; } // Implementation limitation
           else if (size_in_bits == 512 && !VM_Version::supports_avx512bw()) { ret_value = false; } // Implementation limitation
+          break;
+        case Op_VectorCastB2X:
+          if (UseAVX <= 0) { ret_value = false; }
+          else if (size_in_bits >= 256 && UseAVX < 2) { ret_value = false; }
+          break;
+        case Op_VectorCastS2X:
+          if (UseAVX <= 0) { ret_value = false; }
+          else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          else if (is_integral_type(bt) && vlen * type2aelembytes(T_SHORT) * BitsPerByte == 256 && UseAVX < 2) { ret_value = false; }
+          break;
+        case Op_VectorCastI2X:
+          if (UseAVX <= 0) { ret_value = false; }
+          else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          else if (is_integral_type(bt) && vlen * type2aelembytes(T_INT) * BitsPerByte == 256 && UseAVX < 2) { ret_value = false; }
+          break;
+        case Op_VectorCastL2X:
+          if (UseAVX <= 0) { ret_value = false; }
+          else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          else if (is_integral_type(bt) && vlen * type2aelembytes(T_LONG) * BitsPerByte == 256 && UseAVX < 2) { ret_value = false; }
+          else if (!is_integral_type(bt) && !VM_Version::supports_avx512dq()) { ret_value = false; }
+          break;
+        case Op_VectorCastF2X:
+          // Casts from FP to integral types require special fixup logic not easily
+          // implementable with vectors.
+          if (UseAVX <= 0) { ret_value = false; }
+          else if (bt != T_DOUBLE) { ret_value = false; } // Implementation limitation
+          break;
+        case Op_VectorCastD2X:
+          // Casts from FP to integral types require special fixup logic not easily
+          // implementable with vectors.
+          if (UseAVX <= 0) { ret_value = false; }
+          else if (bt != T_FLOAT) { ret_value = false; } // Implementation limitation
+          break;
+        case Op_VectorReinterpret:
+          if (size_in_bits >= 256 && UseAVX < 2) { ret_value = false; }
           break;
         default:
           break;
@@ -2822,56 +2861,80 @@ instruct reinterpretS(vecS dst) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretS2D(vecD dst, vecS src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+instruct reinterpretS2D(vecD dst, vecS src, rRegL scratch) %{
+  predicate(UseAVX == 0 && n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
-  effect(TEMP dst);
+  effect(TEMP dst, TEMP scratch);
   format %{ " # reinterpret $dst,$src" %}
   ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, ExternalAddress(vector_32_bit_mask()), $scratch$$Register);
+    __ pand($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretS2X(vecX dst, vecS src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+instruct reinterpretS2D_avx(vecD dst, vecS src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->length_in_bytes() == 8 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
-  effect(TEMP dst);
+  effect(TEMP dst, TEMP scratch);
   format %{ " # reinterpret $dst,$src" %}
   ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    int vector_len = 0;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_32_bit_mask()), vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretS2Y(vecY dst, vecS src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+instruct reinterpretS2X(vecX dst, vecS src, rRegL scratch) %{
+  predicate(UseAVX == 0 && n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
-  effect(TEMP dst);
+  effect(TEMP dst, TEMP scratch);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    __ movdqu($dst$$XMMRegister, ExternalAddress(vector_32_bit_mask()), $scratch$$Register);
+    __ pand($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretS2X_avx(vecX dst, vecS src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP scratch);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_32_bit_mask()), vector_len, $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretS2Y(vecY dst, vecS src, rRegL scratch) %{
+  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP scratch);
   format %{ " # reinterpret $dst,$src" %}
   ins_encode %{
     int vector_len = 1;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_32_bit_mask()), vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretS2Z(vecZ dst, vecS src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
+instruct reinterpretS2Z(vecZ dst, vecS src, rRegL scratch) %{
+  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 4);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
-  effect(TEMP dst);
+  effect(TEMP scratch);
   format %{ " # reinterpret $dst,$src" %}
   ins_encode %{
     int vector_len = 2;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_32_bit_mask()), vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -2901,43 +2964,54 @@ instruct reinterpretD(vecD dst) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretD2X(vecX dst, vecD src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+instruct reinterpretD2X(vecX dst, vecD src, rRegL scratch) %{
+  predicate(UseAVX == 0 && n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
-  effect(TEMP dst);
+  effect(TEMP dst, TEMP scratch);
   format %{ " # reinterpret $dst,$src" %}
   ins_encode %{
-    __ pxor($dst$$XMMRegister, $dst$$XMMRegister);
-    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, ExternalAddress(vector_64_bit_mask()), $scratch$$Register);
+    __ pand($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretD2Y(vecY dst, vecD src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+instruct reinterpretD2X_avx(vecX dst, vecD src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->length_in_bytes() == 16 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
-  effect(TEMP dst);
+  effect(TEMP dst, TEMP scratch);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_64_bit_mask()), vector_len, $scratch$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct reinterpretD2Y(vecY dst, vecD src, rRegL scratch) %{
+  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->length_in_bytes() == 32 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(125);
+  effect(TEMP scratch);
   format %{ " # reinterpret $dst,$src" %}
   ins_encode %{
     int vector_len = 1;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_64_bit_mask()), vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct reinterpretD2Z(vecZ dst, vecD src) %{
-  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+instruct reinterpretD2Z(vecZ dst, vecD src, rRegL scratch) %{
+  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->length_in_bytes() == 64 && n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
   match(Set dst (VectorReinterpret src));
   ins_cost(125);
-  effect(TEMP dst);
+  effect(TEMP scratch);
   format %{ " # reinterpret $dst,$src" %}
   ins_encode %{
     int vector_len = 2;
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_64_bit_mask()), vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -2990,7 +3064,7 @@ instruct reinterpretX2Y(vecY dst, vecX src) %{
   ins_encode %{
     int vector_len = 1;
     __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);  // just 128-bits need moved
   %}
   ins_pipe( pipe_slow );
 %}
@@ -3004,7 +3078,7 @@ instruct reinterpretX2Z(vecZ dst, vecX src) %{
   ins_encode %{
     int vector_len = 2;
     __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);  // just 128-bits need moved
   %}
   ins_pipe( pipe_slow );
 %}
@@ -9135,7 +9209,7 @@ instruct mul4B_reg(vecS dst, vecS src1, vecS src2, vecS tmp2, vecS tmp) %{
     __ pmovsxbw($tmp$$XMMRegister, $src1$$XMMRegister);
     __ pmovsxbw($tmp2$$XMMRegister, $src2$$XMMRegister);
     __ pmullw($tmp$$XMMRegister, $tmp2$$XMMRegister);
-    __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_byte_saturationmask()));
+    __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()));
     __ pand($tmp$$XMMRegister, $tmp2$$XMMRegister);
     __ packuswb($tmp$$XMMRegister, $tmp$$XMMRegister);
     __ movss($dst$$XMMRegister, $tmp$$XMMRegister);
@@ -9158,7 +9232,7 @@ instruct mul8B_reg(vecD dst, vecD src1, vecD src2, vecD tmp2, vecD tmp) %{
     __ pmovsxbw($tmp$$XMMRegister, $src1$$XMMRegister);
     __ pmovsxbw($tmp2$$XMMRegister, $src2$$XMMRegister);
     __ pmullw($tmp$$XMMRegister, $tmp2$$XMMRegister);
-    __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_byte_saturationmask()));
+    __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()));
     __ pand($tmp$$XMMRegister, $tmp2$$XMMRegister);
     __ packuswb($tmp$$XMMRegister, $tmp$$XMMRegister);
     __ movsd($dst$$XMMRegister, $tmp$$XMMRegister);
@@ -9192,7 +9266,7 @@ instruct mul16B_reg(vecX dst, vecX src1, vecX src2, vecX tmp3, vecX tmp2, vecX t
     __ pmovsxbw($tmp2$$XMMRegister, $tmp2$$XMMRegister);
     __ pmovsxbw($tmp3$$XMMRegister, $tmp3$$XMMRegister);
     __ pmullw($tmp2$$XMMRegister, $tmp3$$XMMRegister);
-    __ movdqu($tmp3$$XMMRegister, ExternalAddress(vector_byte_saturationmask()));
+    __ movdqu($tmp3$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()));
     __ pand($tmp$$XMMRegister, $tmp3$$XMMRegister);
     __ pand($tmp2$$XMMRegister, $tmp3$$XMMRegister);
     __ packuswb($tmp$$XMMRegister, $tmp2$$XMMRegister);
@@ -9217,7 +9291,7 @@ instruct vmul16B_reg_avx(vecX dst, vecX src1, vecX src2, vecY tmp2, vecY tmp) %{
     __ vpmovsxbw($tmp$$XMMRegister, $src1$$XMMRegister, vector_len);
     __ vpmovsxbw($tmp2$$XMMRegister, $src2$$XMMRegister, vector_len);
     __ vpmullw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
-    __ vmovdqu($tmp2$$XMMRegister, ExternalAddress(vector_byte_saturationmask()));
+    __ vmovdqu($tmp2$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()));
     __ vpand($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ vextracti128_high($tmp2$$XMMRegister, $tmp$$XMMRegister);
     __ vpackuswb($dst$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, 0);
@@ -9253,7 +9327,7 @@ instruct vmul32B_reg_avx(vecY dst, vecY src1, vecY src2, vecY tmp1, vecY tmp2, v
     __ vpmovsxbw($tmp2$$XMMRegister, $src1$$XMMRegister, vector_len);
     __ vpmovsxbw($tmp3$$XMMRegister, $src2$$XMMRegister, vector_len);
     __ vpmullw($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
-    __ vmovdqu($tmp3$$XMMRegister, ExternalAddress(vector_byte_saturationmask()));
+    __ vmovdqu($tmp3$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()));
     __ vpbroadcastd($tmp3$$XMMRegister, $tmp3$$XMMRegister);
     __ vpand($tmp1$$XMMRegister, $tmp1$$XMMRegister, $tmp3$$XMMRegister, vector_len);
     __ vpand($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
@@ -13894,9 +13968,821 @@ instruct vxor64B_mem(vecZ dst, vecZ src, memory mem) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct vcvt4Bto4S_reg(vecD dst, vecS src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbw   $dst,$src\t! convert 4B to 4S vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Bto8S_reg(vecX dst, vecD src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbw   $dst,$src\t! convert 8B to 8S vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt16Bto16S_reg(vecY dst, vecX src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbw   $dst,$src\t! convert 16B to 16S vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt32Bto32S_reg(vecZ dst, vecY src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbw   $dst,$src\t! convert 32B to 32S vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Bto4I_reg(vecX dst, vecS src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbd   $dst,$src\t! convert 4B to 4I vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Bto8I_reg(vecY dst, vecD src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbd   $dst,$src\t! convert 8B to 8I vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt16Bto16I_reg(vecZ dst, vecX src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbd   $dst,$src\t! convert 16B to 16I vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Bto4L_reg(vecY dst, vecS src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbq   $dst,$src\t! convert 4B to 4L vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxbq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Bto8L_reg(vecZ dst, vecD src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbq   $dst,$src\t! convert 8B to 8L vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxbq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Bto4F_reg(vecX dst, vecS src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbd   $dst,$src\n\t"
+            "vcvtdq2ps   $dst,$dst\t! convert 4B to 4F vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Bto8F_reg(vecY dst, vecD src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbd   $dst,$src\n\t"
+            "vcvtdq2ps   $dst,$dst\t! convert 8B to 8F vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt16Bto16F_reg(vecZ dst, vecX src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbd   $dst,$src\n\t"
+            "vcvtdq2ps   $dst,$dst\t! convert 16B to 16F vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Bto4D_reg(vecY dst, vecS src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbq   $dst,$src\n\t"
+            "vcvtdq2pd   $dst,$dst\t! convert 4B to 4D vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Bto8D_reg(vecZ dst, vecD src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastB2X src));
+  format %{ "vpmovsxbq   $dst,$src\n\t"
+            "vcvtdq2pd   $dst,$dst\t! convert 8B to 8D vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Sto4B_reg(vecS dst, vecD src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  effect(TEMP scratch);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpand      $dst,$src,[0x00FF00FF00FF00FF]\n\t"
+            "vpackuswb  $dst,$dst\t! convert 4S to 4B vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()), vector_len, $scratch$$Register);
+    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Sto8B_reg(vecD dst, vecX src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  effect(TEMP scratch);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpand      $dst,$src,[0x00FF00FF00FF00FF]\n\t"
+            "vpackuswb  $dst,$dst\t! convert 8S to 8B vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()), vector_len, $scratch$$Register);
+    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt16Sto16B_reg(vecX dst, vecY src, vecY tmp, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  effect(TEMP scratch, TEMP tmp);
+  match(Set dst (VectorCastS2X src));
+    format %{ "vpand      $dst,$src,[0x00FF00FF00FF00FF]\n\t"
+              "vextracti128 $tmp,$dst,0x1\n\t"
+              "vpackuswb  $dst,$dst,$tmp\t! convert 16S to 16B vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()), vector_len, $scratch$$Register);
+    __ vextracti128($tmp$$XMMRegister, $dst$$XMMRegister, 0x1);
+    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt32Sto32B_reg(vecY dst, vecZ src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorCastS2X src));
+    format %{ "evpmovwb   $dst,$src\t! convert 32S to 32B vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpmovwb($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Sto2I_reg(vecD dst, vecS src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\t! convert 2S to 2I vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Sto4I_reg(vecX dst, vecD src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\t! convert 4S to 4I vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Sto8I_reg(vecY dst, vecX src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\t! convert 8S to 8I vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt16Sto16I_reg(vecZ dst, vecY src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\t! convert 16S to 16I vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Sto2L_reg(vecX dst, vecS src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwq   $dst,$src\t! convert 2S to 2L vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxwq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Sto4L_reg(vecY dst, vecD src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwq   $dst,$src\t! convert 4S to 4L vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxwq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Sto8L_reg(vecZ dst, vecX src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwq   $dst,$src\t! convert 8S to 8L vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxwq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Sto2F_reg(vecD dst, vecS src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\n\t"
+            "vcvtdq2ps   $dst,$dst\t! convert 2S to 2F vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Sto4F_reg(vecX dst, vecD src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\n\t"
+            "vcvtdq2ps   $dst,$dst\t! convert 4S to 4F vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Sto8F_reg(vecY dst, vecX src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\n\t"
+            "vcvtdq2ps   $dst,$dst\t! convert 8S to 8F vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt16Sto16F_reg(vecZ dst, vecY src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\n\t"
+            "vcvtdq2ps   $dst,$dst\t! convert 16S to 16F vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2ps($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Sto2D_reg(vecX dst, vecS src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\n\t"
+            "vcvtdq2pd   $dst,$dst\t! convert 2S to 2D vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Sto4D_reg(vecY dst, vecD src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\n\t"
+            "vcvtdq2pd   $dst,$dst\t! convert 4S to 4D vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Sto8D_reg(vecZ dst, vecX src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastS2X src));
+  format %{ "vpmovsxwd   $dst,$src\n\t"
+            "vcvtdq2pd   $dst,$dst\t! convert 8S to 8D vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxwd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Ito4B_reg(vecS dst, vecX src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  effect(TEMP scratch);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vpand      $dst,$src,[0x000000FF000000FF]\n\t"
+            "vpackusdw  $dst,$dst\n\t"
+            "vpackuswb  $dst,$dst\t! convert 4I to 4B vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_int_to_byte_mask()), vector_len, $scratch$$Register);
+    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Ito8B_reg(vecD dst, vecY src, vecY tmp, rRegL scratch) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  effect(TEMP scratch, TEMP tmp);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vpand      $dst,$src,[0x000000FF000000FF]\n\t"
+            "vextracti128 $tmp,$dst,0x1\n\t"
+            "vpackusdw  $dst,$dst,$tmp\n\t"
+            "vpackuswb  $dst,$dst\t! convert 8I to 8B vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_int_to_byte_mask()), vector_len, $scratch$$Register);
+    __ vextracti128($tmp$$XMMRegister, $dst$$XMMRegister, 0x1);
+    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, 0);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt16Ito16B_reg(vecX dst, vecZ src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorCastI2X src));
+    format %{ "evpmovdb   $dst,$src\t! convert 16I to 16B vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpmovdb($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Ito2S_reg(vecS dst, vecD src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  effect(TEMP scratch);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vpand      $dst,$src,[0x0000FFFF0000FFFF]\n\t"
+            "vpackusdw  $dst,$dst\t! convert 2I to 2S vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_int_to_short_mask()), vector_len, $scratch$$Register);
+    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Ito4S_reg(vecD dst, vecX src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  effect(TEMP scratch);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vpand      $dst,$src,[0x0000FFFF0000FFFF]\n\t"
+            "vpackusdw  $dst,$dst\t! convert 4I to 4S vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_int_to_short_mask()), vector_len, $scratch$$Register);
+    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Ito8S_reg(vecX dst, vecY src, vecY tmp, rRegL scratch) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  effect(TEMP scratch, TEMP tmp);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vpand      $dst,$src,[0x0000FFFF0000FFFF]\n\t"
+            "vextracti128 $tmp,$dst,0x1\n\t"
+            "vpackusdw  $dst,$dst,$tmp\t! convert 8I to 8S vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpand($dst$$XMMRegister, $src$$XMMRegister, ExternalAddress(vector_int_to_short_mask()), vector_len, $scratch$$Register);
+    __ vextracti128($tmp$$XMMRegister, $dst$$XMMRegister, 0x1);
+    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt16Ito16S_reg(vecY dst, vecZ src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorCastI2X src));
+    format %{ "evpmovdw   $dst,$src\t! convert 16I to 16S vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpmovdw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Ito2L_reg(vecX dst, vecD src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vpmovsxdq   $dst,$src\t! convert 2I to 2L vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmovsxdq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Ito4L_reg(vecY dst, vecX src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vpmovsxdq   $dst,$src\t! convert 4I to 4L vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxdq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Ito8L_reg(vecZ dst, vecY src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vpmovsxdq   $dst,$src\t! convert 8I to 8L vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxdq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Ito2F_reg(vecD dst, vecD src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vcvtdq2ps   $dst,$src\t! convert 2I to 2F vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vcvtdq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Ito4F_reg(vecX dst, vecX src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vcvtdq2ps   $dst,$src\t! convert 4I to 4F vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vcvtdq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Ito8F_reg(vecY dst, vecY src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vcvtdq2ps   $dst,$src\t! convert 8I to 8F vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vcvtdq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt16Ito16F_reg(vecY dst, vecY src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vcvtdq2ps   $dst,$src\t! convert 16I to 16F vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vcvtdq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Ito2D_reg(vecX dst, vecD src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vcvtdq2pd   $dst,$src\t! convert 2I to 2D vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vcvtdq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Ito4D_reg(vecY dst, vecX src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vcvtdq2pd   $dst,$src\t! convert 4I to 4D vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vcvtdq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Ito8D_reg(vecZ dst, vecY src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastI2X src));
+  format %{ "vcvtdq2pd   $dst,$src\t! convert 8I to 8D vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vcvtdq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Lto4B_reg(vecS dst, vecY src, rRegL scratch) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorCastL2X src));
+  effect(TEMP scratch);
+  format %{ "vpermilps  $dst,$src,8\n\t"
+            "vpermpd    $dst,$dst,8\n\t"
+            "vpand      $dst,$dst,[0x000000FF000000FF]\n\t"
+            "vpackusdw  $dst,$dst\n\t"
+            "vpackuswb  $dst,$dst\t! convert 4L to 4B vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpermilps($dst$$XMMRegister, $src$$XMMRegister, 8, vector_len);
+    __ vpermpd($dst$$XMMRegister, $dst$$XMMRegister, 8, vector_len);
+    // Since cast to int has been done, do rest of operations in 128.
+    vector_len = 0;
+    __ vpand($dst$$XMMRegister, $dst$$XMMRegister, ExternalAddress(vector_int_to_byte_mask()), vector_len, $scratch$$Register);
+    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Lto8B_reg(vecD dst, vecZ src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorCastL2X src));
+    format %{ "evpmovqb   $dst,$src\t! convert 8L to 8B vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpmovqb($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Lto2S_reg(vecS dst, vecX src, rRegL scratch) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorCastL2X src));
+  effect(TEMP scratch);
+  format %{ "vpshufd    $dst,$src,8\n\t"
+            "vpand      $dst,$dst,[0x0000FFFF0000FFFF]\n\t"
+            "vpackusdw  $dst,$dst\t! convert 2L to 2S vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpshufd($dst$$XMMRegister, $src$$XMMRegister, 8, vector_len);
+    __ vpand($dst$$XMMRegister, $dst$$XMMRegister, ExternalAddress(vector_int_to_short_mask()), vector_len, $scratch$$Register);
+    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Lto4S_reg(vecD dst, vecY src, rRegL scratch) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorCastL2X src));
+  effect(TEMP scratch);
+  format %{ "vpermilps  $dst,$src,8\n\t"
+            "vpermpd    $dst,$dst,8\n\t"
+            "vpand      $dst,$dst,[0x0000FFFF0000FFFF]\n\t"
+            "vpackusdw  $dst,$dst\t! convert 4L to 4S vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpermilps($dst$$XMMRegister, $src$$XMMRegister, 8, vector_len);
+    __ vpermpd($dst$$XMMRegister, $dst$$XMMRegister, 8, vector_len);
+    // Since cast to int has been done, do rest of operations in 128.
+    vector_len = 0;
+    __ vpand($dst$$XMMRegister, $dst$$XMMRegister, ExternalAddress(vector_int_to_short_mask()), vector_len, $scratch$$Register);
+    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Lto8S_reg(vecX dst, vecZ src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorCastL2X src));
+    format %{ "evpmovqw   $dst,$src\t! convert 8L to 8S vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpmovqw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt1Lto1I_reg(vecS dst, vecD src) %{
+  predicate(n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastL2X src));
+  format %{ "movdqu   $dst,$src\t! convert 1L to 1I vector" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Lto2I_reg(vecD dst, vecX src) %{
+  predicate(UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastL2X src));
+  format %{ "pshufd   $dst,$src,8\t! convert 2L to 2I vector" %}
+  ins_encode %{
+    __ pshufd($dst$$XMMRegister, $src$$XMMRegister, 8);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Lto2I_reg_avx(vecD dst, vecX src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastL2X src));
+  format %{ "vpshufd   $dst,$src,8\t! convert 2L to 2I vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpshufd($dst$$XMMRegister, $src$$XMMRegister, 8, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Lto4I_reg(vecX dst, vecY src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastL2X src));
+  format %{ "vpermilps  $dst,$src,8\n\t"
+          "vpermpd  $dst,$dst,8\t! convert 4L to 4I vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpermilps($dst$$XMMRegister, $src$$XMMRegister, 8, vector_len);
+    __ vpermpd($dst$$XMMRegister, $dst$$XMMRegister, 8, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Lto8I_reg(vecY dst, vecZ src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (VectorCastL2X src));
+    format %{ "evpmovqd   $dst,$src\t! convert 8L to 8I vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpmovqd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Lto2F_reg(vecD dst, vecX src) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastL2X src));
+  format %{ "vcvtqq2ps   $dst,$src\t! convert 2L to 2F vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ evcvtqq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Lto4F_reg(vecX dst, vecY src) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastL2X src));
+  format %{ "vcvtqq2ps   $dst,$src\t! convert 4L to 4F vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ evcvtqq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Lto8F_reg(vecY dst, vecZ src) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastL2X src));
+  format %{ "vcvtqq2ps   $dst,$src\t! convert 8L to 8F vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evcvtqq2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt1Lto1D_reg(vecD dst, vecD src) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastL2X src));
+  format %{ "vcvtqq2pd   $dst,$src\t! convert 1L to 1D vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ evcvtqq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Lto2D_reg(vecX dst, vecX src) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastL2X src));
+  format %{ "vcvtqq2pd   $dst,$src\t! convert 2L to 2D vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ evcvtqq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Lto4D_reg(vecY dst, vecY src) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastL2X src));
+  format %{ "vcvtqq2pd   $dst,$src\t! convert 4L to 4D vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ evcvtqq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Lto8D_reg(vecZ dst, vecZ src) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512dq() && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastL2X src));
+  format %{ "vcvtqq2pd   $dst,$src\t! convert 8L to 8D vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evcvtqq2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct vcvt2Fto2D_reg(vecX dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length_in_bytes() == 16);
-  match(Set dst (ConvertVF2VD src));
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastF2X src));
   format %{ "vcvtps2pd   $dst,$src\t! convert 2F to 2D vector" %}
   ins_encode %{
     int vector_len = 0;
@@ -13906,8 +14792,8 @@ instruct vcvt2Fto2D_reg(vecX dst, vecD src) %{
 %}
 
 instruct vcvt4Fto4D_reg(vecY dst, vecX src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length_in_bytes() == 32);
-  match(Set dst (ConvertVF2VD src));
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastF2X src));
   format %{ "vcvtps2pd   $dst,$src\t! convert 4F to 4D vector" %}
   ins_encode %{
     int vector_len = 1;
@@ -13916,24 +14802,46 @@ instruct vcvt4Fto4D_reg(vecY dst, vecX src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt8Fto4D_reg(vecY dst, vecY src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length_in_bytes() == 32);
-  match(Set dst (ConvertVF2VD src));
-  format %{ "vcvtps2pd   $dst,$src\t! convert 8F to 4D vector" %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vcvtps2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
 instruct vcvt8Fto8D_reg(vecZ dst, vecY src) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length_in_bytes() == 64);
-  match(Set dst (ConvertVF2VD src));
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorCastF2X src));
   format %{ "evcvtps2pd   $dst,$src\t! convert 8F to 8D vector" %}
   ins_encode %{
     int vector_len = 2;
     __ evcvtps2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt2Dto2F_reg(vecD dst, vecX src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastD2X src));
+  format %{ "vcvtpd2ps   $dst,$src\t! convert 2D to 2F vector" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vcvtpd2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt4Dto4F_reg(vecX dst, vecY src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastD2X src));
+  format %{ "vcvtpd2ps   $dst,$src\t! convert 4D to 4F vector" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vcvtpd2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vcvt8Dto8F_reg(vecY dst, vecZ src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorCastD2X src));
+  format %{ "evcvtpd2ps   $dst,$src\t! convert 8D to 8F vector" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evcvtpd2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}

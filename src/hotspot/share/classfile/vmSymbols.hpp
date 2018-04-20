@@ -1487,11 +1487,16 @@
                                           "Ljdk/incubator/vector/VectorIntrinsics$VectorBroadcastIntOp;)Ljdk/incubator/vector/Vector;")        \
    do_name(vector_broadcast_int_name, "broadcastInt")                                                                                          \
                                                                                                                                                \
-  do_intrinsic(_VectorReinterpret, jdk_incubator_vector_VectorIntrinsics, vector_reinterpret_name, vector_reinterpret_sig, F_S)                      \
-   do_signature(vector_reinterpret_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                   \
-                                      "Ljava/lang/Class;ILjava/lang/Object;"                                                                    \
-                                      "Ljdk/incubator/vector/VectorIntrinsics$VectorReinterpretOp;)Ljava/lang/Object;")                          \
-   do_name(vector_reinterpret_name, "reinterpret")                                                                                                 \
+  do_intrinsic(_VectorReinterpret, jdk_incubator_vector_VectorIntrinsics, vector_reinterpret_name, vector_reinterpret_sig, F_S)                \
+   do_signature(vector_reinterpret_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                 \
+                                      "Ljava/lang/Class;ILjava/lang/Object;"                                                                   \
+                                      "Ljdk/incubator/vector/VectorIntrinsics$VectorReinterpretOp;)Ljava/lang/Object;")                        \
+   do_name(vector_reinterpret_name, "reinterpret")                                                                                             \
+                                                                                                                                               \
+   do_intrinsic(_VectorCast, jdk_incubator_vector_VectorIntrinsics, Class_cast_name, vector_cast_sig, F_S)                                     \
+    do_signature(vector_cast_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                       \
+                                  "Ljava/lang/Class;ILjava/lang/Object;"                                                                       \
+                                  "Ljdk/incubator/vector/VectorIntrinsics$VectorCastOp;)Ljava/lang/Object;")                                   \
                                                                                                                                                \
   do_intrinsic(_VectorRebox, jdk_incubator_vector_VectorIntrinsics, vector_rebox_name, vector_rebox_sig, F_S)                                  \
    do_alias(vector_rebox_sig, object_object_signature)                                                                                         \
@@ -1683,7 +1688,7 @@ class vmIntrinsics: AllStatic {
     #undef VM_INTRINSIC_ENUM
 
     ID_LIMIT,
-    LAST_COMPILER_INLINE = _VectorReinterpret,
+    LAST_COMPILER_INLINE = _VectorCast,
     FIRST_VECTOR_API     = _VectorUnaryOp,
     LAST_VECTOR_API      = _VectorRebox,
     FIRST_MH_SIG_POLY    = _invokeGeneric,

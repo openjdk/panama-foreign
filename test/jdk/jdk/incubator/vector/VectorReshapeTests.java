@@ -694,10 +694,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((float)input[i], output[i]);
+            Assert.assertEquals(output[i], (float)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((float)0, output[i]);
+            Assert.assertEquals(output[i], (float)0);
         }
     }
 
@@ -712,10 +712,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((float)input[i], output[i]);
+            Assert.assertEquals(output[i], (float)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((float)0, output[i]);
+            Assert.assertEquals(output[i], (float)0);
         }
     }
 
@@ -730,10 +730,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((float)input[i], output[i]);
+            Assert.assertEquals(output[i], (float)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((float)0, output[i]);
+            Assert.assertEquals(output[i], (float)0);
         }
     }
 
@@ -748,10 +748,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((float)input[i], output[i]);
+            Assert.assertEquals(output[i], (float)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((float)0, output[i]);
+            Assert.assertEquals(output[i], (float)0);
         }
     }
 
@@ -766,10 +766,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((float)input[i], output[i]);
+            Assert.assertEquals(output[i], (float)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((float)0, output[i]);
+            Assert.assertEquals(output[i], (float)0);
         }
     }
 
@@ -784,10 +784,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((float)input[i], output[i]);
+            Assert.assertEquals(output[i], (float)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((float)0, output[i]);
+            Assert.assertEquals(output[i], (float)0);
         }
     }
 
@@ -802,10 +802,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((byte)input[i], output[i]);
+            Assert.assertEquals(output[i], (byte)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((byte)0, output[i]);
+            Assert.assertEquals(output[i], (byte)0);
         }
     }
 
@@ -820,10 +820,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((byte)input[i], output[i]);
+            Assert.assertEquals(output[i], (byte)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((byte)0, output[i]);
+            Assert.assertEquals(output[i], (byte)0);
         }
     }
 
@@ -838,10 +838,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((byte)input[i], output[i]);
+            Assert.assertEquals(output[i], (byte)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((byte)0, output[i]);
+            Assert.assertEquals(output[i], (byte)0);
         }
     }
 
@@ -856,10 +856,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((byte)input[i], output[i]);
+            Assert.assertEquals(output[i], (byte)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((byte)0, output[i]);
+            Assert.assertEquals(output[i], (byte)0);
         }
     }
 
@@ -874,10 +874,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((byte)input[i], output[i]);
+            Assert.assertEquals(output[i], (byte)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((byte)0, output[i]);
+            Assert.assertEquals(output[i], (byte)0);
         }
     }
 
@@ -892,10 +892,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((byte)input[i], output[i]);
+            Assert.assertEquals(output[i], (byte)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((byte)0, output[i]);
+            Assert.assertEquals(output[i], (byte)0);
         }
     }
 
@@ -910,10 +910,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((short)input[i], output[i]);
+            Assert.assertEquals(output[i], (short)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((short)0, output[i]);
+            Assert.assertEquals(output[i], (short)0);
         }
     }
 
@@ -928,10 +928,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((short)input[i], output[i]);
+            Assert.assertEquals(output[i], (short)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((short)0, output[i]);
+            Assert.assertEquals(output[i], (short)0);
         }
     }
 
@@ -946,10 +946,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((short)input[i], output[i]);
+            Assert.assertEquals(output[i], (short)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((short)0, output[i]);
+            Assert.assertEquals(output[i], (short)0);
         }
     }
 
@@ -964,10 +964,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((short)input[i], output[i]);
+            Assert.assertEquals(output[i], (short)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((short)0, output[i]);
+            Assert.assertEquals(output[i], (short)0);
         }
     }
 
@@ -982,10 +982,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((short)input[i], output[i]);
+            Assert.assertEquals(output[i], (short)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((short)0, output[i]);
+            Assert.assertEquals(output[i], (short)0);
         }
     }
 
@@ -1000,10 +1000,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((short)input[i], output[i]);
+            Assert.assertEquals(output[i], (short)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((short)0, output[i]);
+            Assert.assertEquals(output[i], (short)0);
         }
     }
 
@@ -1018,10 +1018,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((int)input[i], output[i]);
+            Assert.assertEquals(output[i], (int)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((int)0, output[i]);
+            Assert.assertEquals(output[i], (int)0);
         }
     }
 
@@ -1036,10 +1036,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((int)input[i], output[i]);
+            Assert.assertEquals(output[i], (int)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((int)0, output[i]);
+            Assert.assertEquals(output[i], (int)0);
         }
     }
 
@@ -1054,10 +1054,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((int)input[i], output[i]);
+            Assert.assertEquals(output[i], (int)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((int)0, output[i]);
+            Assert.assertEquals(output[i], (int)0);
         }
     }
 
@@ -1072,10 +1072,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((int)input[i], output[i]);
+            Assert.assertEquals(output[i], (int)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((int)0, output[i]);
+            Assert.assertEquals(output[i], (int)0);
         }
     }
 
@@ -1090,10 +1090,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((int)input[i], output[i]);
+            Assert.assertEquals(output[i], (int)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((int)0, output[i]);
+            Assert.assertEquals(output[i], (int)0);
         }
     }
 
@@ -1108,10 +1108,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((int)input[i], output[i]);
+            Assert.assertEquals(output[i], (int)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((int)0, output[i]);
+            Assert.assertEquals(output[i], (int)0);
         }
     }
 
@@ -1126,10 +1126,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((long)input[i], output[i]);
+            Assert.assertEquals(output[i], (long)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((long)0, output[i]);
+            Assert.assertEquals(output[i], (long)0);
         }
     }
 
@@ -1144,10 +1144,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((long)input[i], output[i]);
+            Assert.assertEquals(output[i], (long)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((long)0, output[i]);
+            Assert.assertEquals(output[i], (long)0);
         }
     }
 
@@ -1162,10 +1162,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((long)input[i], output[i]);
+            Assert.assertEquals(output[i], (long)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((long)0, output[i]);
+            Assert.assertEquals(output[i], (long)0);
         }
     }
 
@@ -1180,10 +1180,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((long)input[i], output[i]);
+            Assert.assertEquals(output[i], (long)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((long)0, output[i]);
+            Assert.assertEquals(output[i], (long)0);
         }
     }
 
@@ -1198,10 +1198,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((long)input[i], output[i]);
+            Assert.assertEquals(output[i], (long)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((long)0, output[i]);
+            Assert.assertEquals(output[i], (long)0);
         }
     }
 
@@ -1216,10 +1216,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((long)input[i], output[i]);
+            Assert.assertEquals(output[i], (long)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((long)0, output[i]);
+            Assert.assertEquals(output[i], (long)0);
         }
     }
 
@@ -1234,10 +1234,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((double)input[i], output[i]);
+            Assert.assertEquals(output[i], (double)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((double)0, output[i]);
+            Assert.assertEquals(output[i], (double)0);
         }
     }
 
@@ -1252,10 +1252,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((double)input[i], output[i]);
+            Assert.assertEquals(output[i], (double)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((double)0, output[i]);
+            Assert.assertEquals(output[i], (double)0);
         }
     }
 
@@ -1270,10 +1270,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((double)input[i], output[i]);
+            Assert.assertEquals(output[i], (double)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((double)0, output[i]);
+            Assert.assertEquals(output[i], (double)0);
         }
     }
 
@@ -1288,10 +1288,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((double)input[i], output[i]);
+            Assert.assertEquals(output[i], (double)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((double)0, output[i]);
+            Assert.assertEquals(output[i], (double)0);
         }
     }
 
@@ -1306,10 +1306,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((double)input[i], output[i]);
+            Assert.assertEquals(output[i], (double)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((double)0, output[i]);
+            Assert.assertEquals(output[i], (double)0);
         }
     }
 
@@ -1324,10 +1324,10 @@ public class VectorReshapeTests {
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
-            Assert.assertEquals((double)input[i], output[i]);
+            Assert.assertEquals(output[i], (double)input[i]);
         }
         for(int i = input.length; i < output.length; i++) {
-            Assert.assertEquals((double)0, output[i]);
+            Assert.assertEquals(output[i], (double)0);
         }
     }
 

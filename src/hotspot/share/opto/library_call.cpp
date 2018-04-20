@@ -340,7 +340,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_vector_blend();
   bool inline_vector_compare();
   bool inline_vector_broadcast_int();
-  bool inline_vector_reinterpret();
+  bool inline_vector_cast_reinterpret(bool is_cast);
   Node* box_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
   Node* unbox_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
   Node* shift_count(Node* cnt, int shift_op, BasicType bt, int num_elem);
@@ -910,7 +910,9 @@ bool LibraryCallKit::try_to_inline(int predicate) {
   case vmIntrinsics::_VectorBroadcastInt:
     return inline_vector_broadcast_int();
   case vmIntrinsics::_VectorReinterpret:
-    return inline_vector_reinterpret();
+    return inline_vector_cast_reinterpret(/*is_cast*/ false);
+  case vmIntrinsics::_VectorCast:
+    return inline_vector_cast_reinterpret(/*is_cast*/ true);
 
   default:
     // If you get here, it may be that someone has added a new intrinsic
@@ -7716,7 +7718,7 @@ bool LibraryCallKit::inline_vector_broadcast_int() {
   return true;
 }
 
-bool LibraryCallKit::inline_vector_reinterpret() {
+bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
   const TypeInstPtr* vector_klass_from = gvn().type(argument(0))->is_instptr();
   const TypeInstPtr* elem_klass_from   = gvn().type(argument(1))->is_instptr();
   const TypeInt*     vlen_from         = gvn().type(argument(2))->is_int();
@@ -7760,7 +7762,8 @@ bool LibraryCallKit::inline_vector_reinterpret() {
     elem_bt_to = getMaskBasicType(elem_bt_to);
   }
 
-  // Check whether we can unbox to appropriate size.
+  // Check whether we can unbox to appropriate size. Even with casting, checking for reinterpret is needed
+  // since we may need to change size.
   if (!arch_supports_vector(Op_VectorReinterpret,
                             num_elem_from,
                             elem_bt_from,
@@ -7776,6 +7779,46 @@ bool LibraryCallKit::inline_vector_reinterpret() {
     return false;
   }
 
+  // At this point, we know that both input and output vector registers are supported
+  // by the architecture. Next check if the casted type is simply to same type - which means
+  // that it is actually a resize and not a cast.
+  if (is_cast && elem_bt_from == elem_bt_to) {
+    is_cast = false;
+  }
+
+  int cast_vopc = 0;
+  if (is_cast) {
+    assert(!is_mask, "masks cannot be casted");
+    switch (elem_bt_from) {
+      case T_BYTE:
+        cast_vopc = Op_VectorCastB2X;
+        break;
+      case T_SHORT:
+        cast_vopc = Op_VectorCastS2X;
+        break;
+      case T_INT:
+        cast_vopc = Op_VectorCastI2X;
+        break;
+      case T_LONG:
+        cast_vopc = Op_VectorCastL2X;
+        break;
+      case T_FLOAT:
+        cast_vopc = Op_VectorCastF2X;
+        break;
+      case T_DOUBLE:
+        cast_vopc = Op_VectorCastD2X;
+        break;
+      default:
+        Unimplemented();
+    }
+    assert(cast_vopc != 0, "need to find vector cast operand");
+
+    // Make sure that cast is implemented to particular type/size combination.
+    if (!arch_supports_vector(cast_vopc, num_elem_to, elem_bt_to, VecMaskNotUsed)) {
+      return false;
+    }
+  }
+
   const TypeInstPtr* vbox_type_from = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass_from);
 
   Node* opd1 = unbox_vector(argument(5), vbox_type_from, elem_bt_from, num_elem_from);
@@ -7783,20 +7826,61 @@ bool LibraryCallKit::inline_vector_reinterpret() {
     return false;
   }
 
-  // Can assert when Phi merges vectors of different types:
-  // #  Internal Error (/Users/vlivanov/ws/jdk/panama-dev/open/src/hotspot/share/opto/type.cpp:2291), pid=67536, tid=14083
-  // #  Error: assert(length() == v->length()) failed
   const TypeVect* src_type = TypeVect::make(elem_bt_from, num_elem_from);
   const TypeVect* dst_type = TypeVect::make(elem_bt_to,   num_elem_to);
+
   Node* op = opd1;
-  if (Type::cmp(src_type, dst_type) != 0) {
+  if (is_cast) {
+    if (num_elem_from < num_elem_to) {
+      // Since input and output number of elements are not consistent, we need to make sure we
+      // properly size. Thus, first make a cast that retains the number of elements from source.
+      // In case the size exceeds the arch size, we do the minimum.
+      int num_elem_for_cast = MIN2(num_elem_from, Matcher::max_vector_size(elem_bt_to));
+
+      // It is possible that arch does not support this intermediate vector size
+      // TODO More complex logic required here to handle this corner case for the sizes.
+      if (!arch_supports_vector(cast_vopc, num_elem_for_cast, elem_bt_to, VecMaskNotUsed)) {
+        return false;
+      }
+
+      op = _gvn.transform(VectorNode::make(cast_vopc, op, NULL, num_elem_for_cast, elem_bt_to));
+      // Now ensure that the destination gets properly resized to needed size.
+      op = _gvn.transform(new VectorReinterpretNode(op, op->bottom_type()->is_vect(), dst_type));
+    } else if (num_elem_from > num_elem_to) {
+      // Since number elements from input is larger than output, simply reduce size of input (we are supposed to
+      // drop top elements anyway).
+      int num_elem_for_resize = MAX2(num_elem_to, Matcher::min_vector_size(elem_bt_to));
+
+      // It is possible that arch does not support this intermediate vector size
+      // TODO More complex logic required here to handle this corner case for the sizes.
+      if (!arch_supports_vector(Op_VectorReinterpret,
+                                num_elem_for_resize,
+                                elem_bt_from,
+                                VecMaskNotUsed)) {
+        return false;
+      }
+
+      op = _gvn.transform(new VectorReinterpretNode(op,
+                                                    src_type,
+                                                    TypeVect::make(elem_bt_from,
+                                                                   num_elem_for_resize)));
+      op = _gvn.transform(VectorNode::make(cast_vopc, op, NULL, num_elem_to, elem_bt_to));
+    } else {
+      // Since input and output number of elements match, and since we know this vector size is
+      // supported, simply do a cast with no resize needed.
+      op = _gvn.transform(VectorNode::make(cast_vopc, op, NULL, num_elem_to, elem_bt_to));
+    }
+  } else if (Type::cmp(src_type, dst_type) != 0) {
+    assert(!is_cast, "must be reinterpret");
     op = _gvn.transform(new VectorReinterpretNode(op, src_type, dst_type));
   }
+
   ciKlass* vbox_klass_to = get_exact_klass_for_vector_box(vbox_klass_from, elem_type_to->basic_type(),
                                                           num_elem_to, is_mask ? VECAPI_MASK : VECAPI_VECTOR);
   const TypeInstPtr* vbox_type_to = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass_to);
   Node* vbox = box_vector(op, vbox_type_to, elem_bt_to, num_elem_to);
   set_vector_result(vbox);
+  C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem_to * type2aelembytes(elem_bt_to))));
   return true;
 }
 

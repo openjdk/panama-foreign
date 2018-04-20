@@ -1094,9 +1094,11 @@ private:
 
   // Convert Packed Signed Doubleword Integers to Packed Double-Precision Floating-Point Value
   void cvtdq2pd(XMMRegister dst, XMMRegister src);
+  void vcvtdq2pd(XMMRegister dst, XMMRegister src, int vector_len);
 
   // Convert Packed Signed Doubleword Integers to Packed Single-Precision Floating-Point Value
   void cvtdq2ps(XMMRegister dst, XMMRegister src);
+  void vcvtdq2ps(XMMRegister dst, XMMRegister src, int vector_len);
 
   // Convert Scalar Single-Precision Floating-Point Value to Scalar Double-Precision Floating-Point Value
   void cvtss2sd(XMMRegister dst, XMMRegister src);
@@ -1111,11 +1113,26 @@ private:
   void cvttss2sil(Register dst, XMMRegister src);
   void cvttss2siq(Register dst, XMMRegister src);
 
+  // Convert vector double to int
   void cvttpd2dq(XMMRegister dst, XMMRegister src);
 
   // Convert vector float and double
   void vcvtps2pd(XMMRegister dst, XMMRegister src, int vector_len);
   void evcvtps2pd(XMMRegister dst, XMMRegister src, int vector_len);
+  void vcvtpd2ps(XMMRegister dst, XMMRegister src, int vector_len);
+  void evcvtpd2ps(XMMRegister dst, XMMRegister src, int vector_len);
+
+  // Convert vector long to vector FP
+  void evcvtqq2ps(XMMRegister dst, XMMRegister src, int vector_len);
+  void evcvtqq2pd(XMMRegister dst, XMMRegister src, int vector_len);
+
+  // Evex casts with truncation
+  void evpmovwb(XMMRegister dst, XMMRegister src, int vector_len);
+  void evpmovdw(XMMRegister dst, XMMRegister src, int vector_len);
+  void evpmovdb(XMMRegister dst, XMMRegister src, int vector_len);
+  void evpmovqd(XMMRegister dst, XMMRegister src, int vector_len);
+  void evpmovqb(XMMRegister dst, XMMRegister src, int vector_len);
+  void evpmovqw(XMMRegister dst, XMMRegister src, int vector_len);
 
   //Abs of packed Integer values
   void pabsb(XMMRegister dst, XMMRegister src);
@@ -1621,6 +1638,8 @@ private:
   void vpermd(XMMRegister dst,  XMMRegister nds, Address src);
   void vperm2i128(XMMRegister dst,  XMMRegister nds, XMMRegister src, int imm8);
   void vperm2f128(XMMRegister dst, XMMRegister nds, XMMRegister src, int imm8);
+  void vpermilps(XMMRegister dst, XMMRegister src, int imm8, int vector_len);
+  void vpermpd(XMMRegister dst, XMMRegister src, int imm8, int vector_len);
 
   void pause();
 
@@ -1706,6 +1725,9 @@ private:
   void vpmovsxbd(XMMRegister dst, XMMRegister src, int vector_len);
   void vpmovsxbq(XMMRegister dst, XMMRegister src, int vector_len);
   void vpmovsxbw(XMMRegister dst, XMMRegister src, int vector_len);
+  void vpmovsxwd(XMMRegister dst, XMMRegister src, int vector_len);
+  void vpmovsxwq(XMMRegister dst, XMMRegister src, int vector_len);
+  void vpmovsxdq(XMMRegister dst, XMMRegister src, int vector_len);
 
   void evpmovwb(Address dst, XMMRegister src, int vector_len);
   void evpmovwb(Address dst, KRegister mask, XMMRegister src, int vector_len);

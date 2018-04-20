@@ -984,13 +984,6 @@ public:
   virtual const Type *Value(PhaseGVN *phase) const { return TypeInt::INT; }
 };
 
-// Type conversion nodes
-class ConvertVF2VDNode : public VectorNode {
- public:
-  ConvertVF2VDNode(Node* in, const TypeVect* vt) : VectorNode(in,vt) {}
-  virtual int Opcode() const;
-};
-
 class VectorBoxNode : public Node {
  private:
   const TypeInstPtr* const _box_type;
@@ -1174,6 +1167,54 @@ class VectorReinterpretNode : public VectorNode {
     return VectorNode::cmp(n) && !Type::cmp(_src_vt,((VectorReinterpretNode&)n)._src_vt);
   }
 
+  virtual int Opcode() const;
+};
+
+class VectorCastB2XNode : public VectorNode {
+public:
+  VectorCastB2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+    assert(in->bottom_type()->is_vect()->element_basic_type() == T_BYTE, "must be byte");
+  }
+  virtual int Opcode() const;
+};
+
+class VectorCastS2XNode : public VectorNode {
+public:
+  VectorCastS2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+    assert(in->bottom_type()->is_vect()->element_basic_type() == T_SHORT, "must be short");
+  }
+  virtual int Opcode() const;
+};
+
+class VectorCastI2XNode : public VectorNode {
+public:
+  VectorCastI2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+    assert(in->bottom_type()->is_vect()->element_basic_type() == T_INT, "must be int");
+  }
+  virtual int Opcode() const;
+};
+
+class VectorCastL2XNode : public VectorNode {
+public:
+  VectorCastL2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+    assert(in->bottom_type()->is_vect()->element_basic_type() == T_LONG, "must be long");
+  }
+  virtual int Opcode() const;
+};
+
+class VectorCastF2XNode : public VectorNode {
+public:
+  VectorCastF2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+    assert(in->bottom_type()->is_vect()->element_basic_type() == T_FLOAT, "must be float");
+  }
+  virtual int Opcode() const;
+};
+
+class VectorCastD2XNode : public VectorNode {
+public:
+  VectorCastD2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+    assert(in->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE, "must be double");
+  }
   virtual int Opcode() const;
 };
 
