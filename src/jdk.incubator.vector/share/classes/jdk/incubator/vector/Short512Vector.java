@@ -295,6 +295,15 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
     // Unary operations
 
+    @Override
+    @ForceInline
+    public Short512Vector abs() {
+        return (Short512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Short512Vector.class, short.class, LENGTH,
+            this,
+            v1 -> ((Short512Vector)v1).uOp((i, a) -> (short) Math.abs(a)));
+    }
+
 
 
     @Override

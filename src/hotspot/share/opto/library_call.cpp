@@ -7081,6 +7081,7 @@ static int get_opc(jint op, BasicType bt) {
       switch (bt) {
         case T_BYTE:   // fall-through
         case T_SHORT:  // fall-through
+        case T_LONG:   // fall-through
         case T_INT:    return Op_AbsI;
         case T_FLOAT:  return Op_AbsF;
         case T_DOUBLE: return Op_AbsD;
