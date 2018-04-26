@@ -295,6 +295,15 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     // Unary operations
 
+    @Override
+    @ForceInline
+    public Byte64Vector abs() {
+        return (Byte64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Byte64Vector.class, byte.class, LENGTH,
+            this,
+            v1 -> ((Byte64Vector)v1).uOp((i, a) -> (byte) Math.abs(a)));
+    }
+
 
 
     @Override

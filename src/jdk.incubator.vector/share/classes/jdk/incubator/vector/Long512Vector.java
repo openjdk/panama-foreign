@@ -295,6 +295,15 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     // Unary operations
 
+    @Override
+    @ForceInline
+    public Long512Vector abs() {
+        return (Long512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Long512Vector.class, long.class, LENGTH,
+            this,
+            v1 -> ((Long512Vector)v1).uOp((i, a) -> (long) Math.abs(a)));
+    }
+
 
 
     @Override

@@ -295,6 +295,15 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     // Unary operations
 
+    @Override
+    @ForceInline
+    public Long128Vector abs() {
+        return (Long128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Long128Vector.class, long.class, LENGTH,
+            this,
+            v1 -> ((Long128Vector)v1).uOp((i, a) -> (long) Math.abs(a)));
+    }
+
 
 
     @Override

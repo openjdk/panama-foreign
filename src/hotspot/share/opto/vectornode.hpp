@@ -406,11 +406,11 @@ public:
   virtual int Opcode() const;
 };
 
-//------------------------------AbsVINode--------------------------------------
-// Vector Abs int
-class AbsVINode : public VectorNode {
+//------------------------------AbsVNode--------------------------------------
+// Vector Abs
+class AbsVNode : public VectorNode {
 public:
-  AbsVINode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  AbsVNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
   virtual int Opcode() const;
 };
 

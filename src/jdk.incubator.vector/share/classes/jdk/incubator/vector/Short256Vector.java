@@ -295,6 +295,15 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
 
     // Unary operations
 
+    @Override
+    @ForceInline
+    public Short256Vector abs() {
+        return (Short256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Short256Vector.class, short.class, LENGTH,
+            this,
+            v1 -> ((Short256Vector)v1).uOp((i, a) -> (short) Math.abs(a)));
+    }
+
 
 
     @Override

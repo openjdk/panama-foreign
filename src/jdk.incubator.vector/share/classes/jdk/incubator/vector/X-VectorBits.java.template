@@ -358,7 +358,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     // Unary operations
 
-#if[intOrFP]
     @Override
     @ForceInline
     public $vectortype$ abs() {
@@ -368,6 +367,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.abs(a)));
     }
 
+#if[intOrFP]
     @Override
     @ForceInline
     public $vectortype$ neg() {

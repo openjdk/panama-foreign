@@ -7081,6 +7081,7 @@ static int get_opc(jint op, BasicType bt) {
       switch (bt) {
         case T_BYTE:   // fall-through
         case T_SHORT:  // fall-through
+        case T_LONG:   // fall-through
         case T_INT:    return Op_AbsI;
         case T_FLOAT:  return Op_AbsF;
         case T_DOUBLE: return Op_AbsD;
@@ -7791,7 +7792,7 @@ bool LibraryCallKit::inline_vector_reinterpret() {
   if (Type::cmp(src_type, dst_type) != 0) {
     op = _gvn.transform(new VectorReinterpretNode(op, src_type, dst_type));
   }
-  ciKlass* vbox_klass_to = get_exact_klass_for_vector_box(vbox_klass_from, elem_bt_to,
+  ciKlass* vbox_klass_to = get_exact_klass_for_vector_box(vbox_klass_from, elem_type_to->basic_type(),
                                                           num_elem_to, is_mask ? VECAPI_MASK : VECAPI_VECTOR);
   const TypeInstPtr* vbox_type_to = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass_to);
   Node* vbox = box_vector(op, vbox_type_to, elem_bt_to, num_elem_to);

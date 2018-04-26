@@ -295,6 +295,15 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
 
     // Unary operations
 
+    @Override
+    @ForceInline
+    public Byte512Vector abs() {
+        return (Byte512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ABS, Byte512Vector.class, byte.class, LENGTH,
+            this,
+            v1 -> ((Byte512Vector)v1).uOp((i, a) -> (byte) Math.abs(a)));
+    }
+
 
 
     @Override

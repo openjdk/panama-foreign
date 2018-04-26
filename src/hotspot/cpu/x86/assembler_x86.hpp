@@ -1118,11 +1118,16 @@ private:
   void evcvtps2pd(XMMRegister dst, XMMRegister src, int vector_len);
 
   //Abs of packed Integer values
+  void pabsb(XMMRegister dst, XMMRegister src);
+  void pabsw(XMMRegister dst, XMMRegister src);
   void pabsd(XMMRegister dst, XMMRegister src);
   void vpabsb(XMMRegister dst, XMMRegister src, int vector_len);
   void vpabsw(XMMRegister dst, XMMRegister src, int vector_len);
   void vpabsd(XMMRegister dst, XMMRegister src, int vector_len);
+  void evpabsb(XMMRegister dst, XMMRegister src, int vector_len);
+  void evpabsw(XMMRegister dst, XMMRegister src, int vector_len);
   void evpabsd(XMMRegister dst, XMMRegister src, int vector_len);
+  void evpabsq(XMMRegister dst, XMMRegister src, int vector_len);
 
   // Divide Scalar Double-Precision Floating-Point Values
   void divsd(XMMRegister dst, Address src);

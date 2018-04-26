@@ -1975,7 +1975,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_c2_type(ReverseBytesLNode, Node)                                \
   declare_c2_type(ReductionNode, Node)                                    \
   declare_c2_type(VectorNode, Node)                                       \
-  declare_c2_type(AbsVINode, VectorNode)                                  \
+  declare_c2_type(AbsVNode, VectorNode)                                   \
   declare_c2_type(AbsVFNode, VectorNode)                                  \
   declare_c2_type(AbsVDNode, VectorNode)                                  \
   declare_c2_type(AddVBNode, VectorNode)                                  \
