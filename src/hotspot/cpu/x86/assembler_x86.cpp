@@ -6617,6 +6617,56 @@ void Assembler::vpsrad(XMMRegister dst, XMMRegister src, XMMRegister shift, int 
   emit_int8((unsigned char)(0xC0 | encode));
 }
 
+//Variable Shift packed integers logically left.
+void Assembler::vpsllvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
+  assert(UseAVX > 1, "requires AVX2");
+  InstructionAttr attributes(vector_len, /* vex_w */ false, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  int encode = vex_prefix_and_encode(dst->encoding(), src->encoding(), shift->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
+  emit_int8(0x47);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
+
+void Assembler::vpsllvq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
+  assert(UseAVX > 1, "requires AVX2");
+  InstructionAttr attributes(vector_len, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  int encode = vex_prefix_and_encode(dst->encoding(), src->encoding(), shift->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
+  emit_int8(0x47);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
+
+//Variable Shift packed integers logically right.
+void Assembler::vpsrlvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
+  assert(UseAVX > 1, "requires AVX2");
+  InstructionAttr attributes(vector_len, /* vex_w */ false, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  int encode = vex_prefix_and_encode(dst->encoding(), src->encoding(), shift->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
+  emit_int8(0x45);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
+
+void Assembler::vpsrlvq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
+  assert(UseAVX > 1, "requires AVX2");
+  InstructionAttr attributes(vector_len, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  int encode = vex_prefix_and_encode(dst->encoding(), src->encoding(), shift->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
+  emit_int8(0x45);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
+
+//Variable right Shift arithmetic packed integers .
+void Assembler::vpsravd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
+  assert(UseAVX > 1, "requires AVX2");
+  InstructionAttr attributes(vector_len, /* vex_w */ false, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  int encode = vex_prefix_and_encode(dst->encoding(), src->encoding(), shift->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
+  emit_int8(0x46);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
+
+void Assembler::vpsravq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
+  assert(UseAVX > 1, "requires AVX2");
+  InstructionAttr attributes(vector_len, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  int encode = vex_prefix_and_encode(dst->encoding(), src->encoding(), shift->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
+  emit_int8(0x46);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
 
 // logical operations packed integers
 void Assembler::pand(XMMRegister dst, XMMRegister src) {

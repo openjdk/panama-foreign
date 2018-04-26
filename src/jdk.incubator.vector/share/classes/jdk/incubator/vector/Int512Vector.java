@@ -479,6 +479,35 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             (v, i) -> v.uOp((__, a) -> (int) (a >> i)));
     }
 
+    @Override
+    @ForceInline
+    public Int512Vector shiftL(Vector<Integer,Shapes.S512Bit> s) {
+        Int512Vector v = (Int512Vector)s;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_LSHIFT, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2,(i,a, b) -> (int) (a << b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int512Vector shiftR(Vector<Integer,Shapes.S512Bit> s) {
+        Int512Vector v = (Int512Vector)s;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_URSHIFT, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2,(i,a, b) -> (int) (a >>> b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int512Vector ashiftR(Vector<Integer,Shapes.S512Bit> s) {
+        Int512Vector v = (Int512Vector)s;
+        return (Int512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_RSHIFT, Int512Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int512Vector)v1).bOp(v2,(i,a, b) -> (int) (a >> b)));
+    }
     // Ternary operations
 
 

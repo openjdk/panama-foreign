@@ -479,6 +479,35 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
             (v, i) -> v.uOp((__, a) -> (int) (a >> i)));
     }
 
+    @Override
+    @ForceInline
+    public Int256Vector shiftL(Vector<Integer,Shapes.S256Bit> s) {
+        Int256Vector v = (Int256Vector)s;
+        return (Int256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_LSHIFT, Int256Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int256Vector)v1).bOp(v2,(i,a, b) -> (int) (a << b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int256Vector shiftR(Vector<Integer,Shapes.S256Bit> s) {
+        Int256Vector v = (Int256Vector)s;
+        return (Int256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_URSHIFT, Int256Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int256Vector)v1).bOp(v2,(i,a, b) -> (int) (a >>> b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int256Vector ashiftR(Vector<Integer,Shapes.S256Bit> s) {
+        Int256Vector v = (Int256Vector)s;
+        return (Int256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_RSHIFT, Int256Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int256Vector)v1).bOp(v2,(i,a, b) -> (int) (a >> b)));
+    }
     // Ternary operations
 
 

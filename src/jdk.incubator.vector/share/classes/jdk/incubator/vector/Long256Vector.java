@@ -442,6 +442,35 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             (v, i) -> v.uOp((__, a) -> (long) (a >> i)));
     }
 
+    @Override
+    @ForceInline
+    public Long256Vector shiftL(Vector<Long,Shapes.S256Bit> s) {
+        Long256Vector v = (Long256Vector)s;
+        return (Long256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_LSHIFT, Long256Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long256Vector)v1).bOp(v2,(i,a, b) -> (long) (a << b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector shiftR(Vector<Long,Shapes.S256Bit> s) {
+        Long256Vector v = (Long256Vector)s;
+        return (Long256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_URSHIFT, Long256Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long256Vector)v1).bOp(v2,(i,a, b) -> (long) (a >>> b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector ashiftR(Vector<Long,Shapes.S256Bit> s) {
+        Long256Vector v = (Long256Vector)s;
+        return (Long256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_RSHIFT, Long256Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long256Vector)v1).bOp(v2,(i,a, b) -> (long) (a >> b)));
+    }
     // Ternary operations
 
 

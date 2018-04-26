@@ -442,6 +442,35 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             (v, i) -> v.uOp((__, a) -> (long) (a >> i)));
     }
 
+    @Override
+    @ForceInline
+    public Long128Vector shiftL(Vector<Long,Shapes.S128Bit> s) {
+        Long128Vector v = (Long128Vector)s;
+        return (Long128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_LSHIFT, Long128Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long128Vector)v1).bOp(v2,(i,a, b) -> (long) (a << b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long128Vector shiftR(Vector<Long,Shapes.S128Bit> s) {
+        Long128Vector v = (Long128Vector)s;
+        return (Long128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_URSHIFT, Long128Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long128Vector)v1).bOp(v2,(i,a, b) -> (long) (a >>> b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long128Vector ashiftR(Vector<Long,Shapes.S128Bit> s) {
+        Long128Vector v = (Long128Vector)s;
+        return (Long128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_RSHIFT, Long128Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long128Vector)v1).bOp(v2,(i,a, b) -> (long) (a >> b)));
+    }
     // Ternary operations
 
 

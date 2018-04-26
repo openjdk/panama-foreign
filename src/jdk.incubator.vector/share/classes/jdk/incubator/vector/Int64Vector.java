@@ -479,6 +479,35 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
             (v, i) -> v.uOp((__, a) -> (int) (a >> i)));
     }
 
+    @Override
+    @ForceInline
+    public Int64Vector shiftL(Vector<Integer,Shapes.S64Bit> s) {
+        Int64Vector v = (Int64Vector)s;
+        return (Int64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_LSHIFT, Int64Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int64Vector)v1).bOp(v2,(i,a, b) -> (int) (a << b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int64Vector shiftR(Vector<Integer,Shapes.S64Bit> s) {
+        Int64Vector v = (Int64Vector)s;
+        return (Int64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_URSHIFT, Int64Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int64Vector)v1).bOp(v2,(i,a, b) -> (int) (a >>> b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int64Vector ashiftR(Vector<Integer,Shapes.S64Bit> s) {
+        Int64Vector v = (Int64Vector)s;
+        return (Int64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_RSHIFT, Int64Vector.class, int.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Int64Vector)v1).bOp(v2,(i,a, b) -> (int) (a >> b)));
+    }
     // Ternary operations
 
 

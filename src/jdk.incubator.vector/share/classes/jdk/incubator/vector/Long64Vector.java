@@ -442,6 +442,35 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             (v, i) -> v.uOp((__, a) -> (long) (a >> i)));
     }
 
+    @Override
+    @ForceInline
+    public Long64Vector shiftL(Vector<Long,Shapes.S64Bit> s) {
+        Long64Vector v = (Long64Vector)s;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_LSHIFT, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2,(i,a, b) -> (long) (a << b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector shiftR(Vector<Long,Shapes.S64Bit> s) {
+        Long64Vector v = (Long64Vector)s;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_URSHIFT, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2,(i,a, b) -> (long) (a >>> b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long64Vector ashiftR(Vector<Long,Shapes.S64Bit> s) {
+        Long64Vector v = (Long64Vector)s;
+        return (Long64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_RSHIFT, Long64Vector.class, long.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Long64Vector)v1).bOp(v2,(i,a, b) -> (long) (a >> b)));
+    }
     // Ternary operations
 
 

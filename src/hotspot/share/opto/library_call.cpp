@@ -6925,7 +6925,7 @@ enum VectorMaskUseType {
   VecMaskNotUsed
 };
 
-static bool arch_supports_vector(int op, int num_elem, BasicType type, VectorMaskUseType mask_use_type) {
+static bool arch_supports_vector(int op, int num_elem, BasicType type, VectorMaskUseType mask_use_type, int op_arity = 0) {
   // Check that the operation is valid.
   if (op <= 0) {
 #ifndef PRODUCT
@@ -6937,7 +6937,7 @@ static bool arch_supports_vector(int op, int num_elem, BasicType type, VectorMas
   }
 
   // Check that architecture supports this op-size-type combination.
-  if (!Matcher::match_rule_supported_vector(op, num_elem, type)) {
+  if (!Matcher::match_rule_supported_vector(op, num_elem, type, op_arity)) {
 #ifndef PRODUCT
     if (DebugVectorApi) {
       tty->print_cr("Rejected vector op (%s,%s,%d) because architecture does not support it",
@@ -7250,7 +7250,7 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
   // TODO When mask usage is supported, VecMaskNotUsed needs to be VecMaskUseLoad.
-  if (!arch_supports_vector(sopc, num_elem, elem_bt, vbox_klass->is_vectormask() ? VecMaskUseAll : VecMaskNotUsed)) {
+  if (!arch_supports_vector(sopc, num_elem, elem_bt, vbox_klass->is_vectormask() ? VecMaskUseAll : VecMaskNotUsed, n)) {
     return false; // not supported
   }
 
