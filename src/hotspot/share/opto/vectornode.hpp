@@ -1188,6 +1188,7 @@ class VectorReinterpretNode : public VectorNode {
   virtual uint cmp( const Node &n ) const {
     return VectorNode::cmp(n) && !Type::cmp(_src_vt,((VectorReinterpretNode&)n)._src_vt);
   }
+  virtual Node *Identity(PhaseGVN *phase);
 
   virtual int Opcode() const;
 };

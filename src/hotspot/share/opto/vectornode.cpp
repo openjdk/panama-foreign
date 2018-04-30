@@ -871,6 +871,16 @@ Node* VectorUnboxNode::Identity(PhaseGVN *phase) {
   return this;
 }
 
+Node* VectorReinterpretNode::Identity(PhaseGVN *phase) {
+  Node* n = in(1);
+  if (n->Opcode() == Op_VectorReinterpret) {
+    if (Type::cmp(bottom_type(), n->in(1)->bottom_type()) == 0) {
+      return n->in(1);
+    }
+  }
+  return this;
+}
+
 const TypeFunc* VectorBoxNode::vec_box_type(const TypeInstPtr* box_type) {
   const Type** fields = TypeTuple::fields(0);
   const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms, fields);

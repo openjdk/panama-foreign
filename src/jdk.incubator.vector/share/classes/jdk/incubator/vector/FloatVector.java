@@ -489,13 +489,20 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     @Override
     public void intoByteArray(byte[] a, int ix) {
         ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        intoByteBuffer(bb);
+        FloatBuffer fb = bb.asFloatBuffer();
+        forEach((i, e) -> fb.put(e));
     }
 
     @Override
     public void intoByteArray(byte[] a, int ix, Mask<Float, S> m) {
         ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        intoByteBuffer(bb, m);
+        FloatBuffer fb = bb.asFloatBuffer();
+        forEach((i, e) -> {
+            if (m.getElement(i))
+                fb.put(e);
+            else
+                fb.position(fb.position() + 1);
+        });
     }
 
     @Override
@@ -860,13 +867,22 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         @Override
         public FloatVector<S> fromByteArray(byte[] a, int ix) {
             ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            return fromByteBuffer(bb);
+            FloatBuffer fb = bb.asFloatBuffer();
+            return op(i -> fb.get());
         }
 
         @Override
         public FloatVector<S> fromByteArray(byte[] a, int ix, Mask<Float, S> m) {
             ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            return fromByteBuffer(bb, m);
+            FloatBuffer fb = bb.asFloatBuffer();
+            return op(i -> {
+                if(m.getElement(i))
+                    return fb.get();
+                else {
+                    fb.position(fb.position() + 1);
+                    return (float) 0;
+                }
+            });
         }
 
         @Override

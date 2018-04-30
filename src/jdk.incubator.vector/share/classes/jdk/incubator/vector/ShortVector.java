@@ -383,13 +383,20 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     @Override
     public void intoByteArray(byte[] a, int ix) {
         ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        intoByteBuffer(bb);
+        ShortBuffer fb = bb.asShortBuffer();
+        forEach((i, e) -> fb.put(e));
     }
 
     @Override
     public void intoByteArray(byte[] a, int ix, Mask<Short, S> m) {
         ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        intoByteBuffer(bb, m);
+        ShortBuffer fb = bb.asShortBuffer();
+        forEach((i, e) -> {
+            if (m.getElement(i))
+                fb.put(e);
+            else
+                fb.position(fb.position() + 1);
+        });
     }
 
     @Override
@@ -774,13 +781,22 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
         @Override
         public ShortVector<S> fromByteArray(byte[] a, int ix) {
             ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            return fromByteBuffer(bb);
+            ShortBuffer fb = bb.asShortBuffer();
+            return op(i -> fb.get());
         }
 
         @Override
         public ShortVector<S> fromByteArray(byte[] a, int ix, Mask<Short, S> m) {
             ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            return fromByteBuffer(bb, m);
+            ShortBuffer fb = bb.asShortBuffer();
+            return op(i -> {
+                if(m.getElement(i))
+                    return fb.get();
+                else {
+                    fb.position(fb.position() + 1);
+                    return (short) 0;
+                }
+            });
         }
 
         @Override

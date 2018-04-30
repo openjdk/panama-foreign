@@ -25,6 +25,7 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 import jdk.internal.vm.annotation.ForceInline;
@@ -492,7 +493,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Short64Vector.class, short.class, LENGTH,
                                a, ix, this,
-                               (arr, idx, v) -> v.forEach((i, a_) -> ((short[])arr)[idx + i] = a_));
+                               (arr, idx) -> super.intoArray((short[]) arr, idx));
     }
 
     @Override
@@ -502,6 +503,69 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         Short64Vector oldVal = SPECIES.fromArray(a, ax);
         Short64Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteArray(byte[] a, int ix) {
+        Objects.requireNonNull(a);
+        ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
+        VectorIntrinsics.store(Short64Vector.class, short.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteArray(byte[] a, int ix, Mask<Short, Shapes.S64Bit> m) {
+        Short64Vector oldVal = SPECIES.fromByteArray(a, ix);
+        Short64Vector newVal = oldVal.blend(this, m);
+        newVal.intoByteArray(a, ix);
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb) {
+        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+            int num_bytes = bitSize() / Byte.SIZE;
+            int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
+            VectorIntrinsics.store(Short64Vector.class, short.class, LENGTH,
+                                   bb.array(), ix, this,
+                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+        } else {
+            super.intoByteBuffer(bb);
+        }
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb, Mask<Short, Shapes.S64Bit> m) {
+        int idx = bb.position();
+        Short64Vector oldVal = SPECIES.fromByteBuffer(bb, idx);
+        Short64Vector newVal = oldVal.blend(this, m);
+        newVal.intoByteBuffer(bb, idx);
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb, int ix) {
+        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+            int num_bytes = bitSize() / Byte.SIZE;
+            int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
+            VectorIntrinsics.store(Short64Vector.class, short.class, LENGTH,
+                                   bb.array(), ax, this,
+                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+        } else {
+            super.intoByteBuffer(bb, ix);
+        }
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Short, Shapes.S64Bit> m) {
+        Short64Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
+        Short64Vector newVal = oldVal.blend(this, m);
+        newVal.intoByteBuffer(bb, ix);
     }
 
     //
@@ -1025,6 +1089,16 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
+        public Short64Vector scalars(short... es) {
+            Objects.requireNonNull(es);
+            int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
+            return (Short64Vector) VectorIntrinsics.load(Short64Vector.class, short.class, LENGTH,
+                                                        es, ix,
+                                                        (arr, idx) -> super.fromArray((short[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
         public Short64Vector fromArray(short[] a, int ix) {
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
@@ -1037,6 +1111,62 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         @ForceInline
         public Short64Vector fromArray(short[] a, int ax, Mask<Short, Shapes.S64Bit> m) {
             return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
+        }
+
+        @Override
+        @ForceInline
+        public Short64Vector fromByteArray(byte[] a, int ix) {
+            Objects.requireNonNull(a);
+            ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
+            return (Short64Vector) VectorIntrinsics.load(Short64Vector.class, short.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Short64Vector fromByteArray(byte[] a, int ix, Mask<Short, Shapes.S64Bit> m) {
+            return zero().blend(fromByteArray(a, ix), m);
+        }
+
+        @Override
+        @ForceInline
+        public Short64Vector fromByteBuffer(ByteBuffer bb) {
+            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+                int num_bytes = bitSize() / Byte.SIZE;
+                int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
+                return (Short64Vector) VectorIntrinsics.load(Short64Vector.class, short.class, LENGTH,
+                                                            bb.array(), ix,
+                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+            } else {
+                return (Short64Vector)super.fromByteBuffer(bb);
+            }
+        }
+
+        @Override
+        @ForceInline
+        public Short64Vector fromByteBuffer(ByteBuffer bb, Mask<Short, Shapes.S64Bit> m) {
+            return zero().blend(fromByteBuffer(bb), m);
+        }
+
+        @Override
+        @ForceInline
+        public Short64Vector fromByteBuffer(ByteBuffer bb, int ix) {
+            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+                int num_bytes = bitSize() / Byte.SIZE;
+                int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
+                return (Short64Vector) VectorIntrinsics.load(Short64Vector.class, short.class, LENGTH,
+                                                            bb.array(), ax,
+                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+            } else {
+                return (Short64Vector)super.fromByteBuffer(bb, ix);
+            }
+        }
+
+        @Override
+        @ForceInline
+        public Short64Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Short, Shapes.S64Bit> m) {
+            return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @ForceInline

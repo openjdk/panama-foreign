@@ -25,6 +25,7 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 import jdk.internal.vm.annotation.ForceInline;
@@ -548,7 +549,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Long512Vector.class, long.class, LENGTH,
                                a, ix, this,
-                               (arr, idx, v) -> v.forEach((i, a_) -> ((long[])arr)[idx + i] = a_));
+                               (arr, idx) -> super.intoArray((long[]) arr, idx));
     }
 
     @Override
@@ -558,6 +559,69 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         Long512Vector oldVal = SPECIES.fromArray(a, ax);
         Long512Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteArray(byte[] a, int ix) {
+        Objects.requireNonNull(a);
+        ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
+        VectorIntrinsics.store(Long512Vector.class, long.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteArray(byte[] a, int ix, Mask<Long, Shapes.S512Bit> m) {
+        Long512Vector oldVal = SPECIES.fromByteArray(a, ix);
+        Long512Vector newVal = oldVal.blend(this, m);
+        newVal.intoByteArray(a, ix);
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb) {
+        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+            int num_bytes = bitSize() / Byte.SIZE;
+            int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
+            VectorIntrinsics.store(Long512Vector.class, long.class, LENGTH,
+                                   bb.array(), ix, this,
+                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+        } else {
+            super.intoByteBuffer(bb);
+        }
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb, Mask<Long, Shapes.S512Bit> m) {
+        int idx = bb.position();
+        Long512Vector oldVal = SPECIES.fromByteBuffer(bb, idx);
+        Long512Vector newVal = oldVal.blend(this, m);
+        newVal.intoByteBuffer(bb, idx);
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb, int ix) {
+        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+            int num_bytes = bitSize() / Byte.SIZE;
+            int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
+            VectorIntrinsics.store(Long512Vector.class, long.class, LENGTH,
+                                   bb.array(), ax, this,
+                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+        } else {
+            super.intoByteBuffer(bb, ix);
+        }
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Long, Shapes.S512Bit> m) {
+        Long512Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
+        Long512Vector newVal = oldVal.blend(this, m);
+        newVal.intoByteBuffer(bb, ix);
     }
 
     //
@@ -1089,6 +1153,16 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
+        public Long512Vector scalars(long... es) {
+            Objects.requireNonNull(es);
+            int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
+            return (Long512Vector) VectorIntrinsics.load(Long512Vector.class, long.class, LENGTH,
+                                                        es, ix,
+                                                        (arr, idx) -> super.fromArray((long[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
         public Long512Vector fromArray(long[] a, int ix) {
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
@@ -1101,6 +1175,62 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         @ForceInline
         public Long512Vector fromArray(long[] a, int ax, Mask<Long, Shapes.S512Bit> m) {
             return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
+        }
+
+        @Override
+        @ForceInline
+        public Long512Vector fromByteArray(byte[] a, int ix) {
+            Objects.requireNonNull(a);
+            ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
+            return (Long512Vector) VectorIntrinsics.load(Long512Vector.class, long.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Long512Vector fromByteArray(byte[] a, int ix, Mask<Long, Shapes.S512Bit> m) {
+            return zero().blend(fromByteArray(a, ix), m);
+        }
+
+        @Override
+        @ForceInline
+        public Long512Vector fromByteBuffer(ByteBuffer bb) {
+            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+                int num_bytes = bitSize() / Byte.SIZE;
+                int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
+                return (Long512Vector) VectorIntrinsics.load(Long512Vector.class, long.class, LENGTH,
+                                                            bb.array(), ix,
+                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+            } else {
+                return (Long512Vector)super.fromByteBuffer(bb);
+            }
+        }
+
+        @Override
+        @ForceInline
+        public Long512Vector fromByteBuffer(ByteBuffer bb, Mask<Long, Shapes.S512Bit> m) {
+            return zero().blend(fromByteBuffer(bb), m);
+        }
+
+        @Override
+        @ForceInline
+        public Long512Vector fromByteBuffer(ByteBuffer bb, int ix) {
+            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+                int num_bytes = bitSize() / Byte.SIZE;
+                int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
+                return (Long512Vector) VectorIntrinsics.load(Long512Vector.class, long.class, LENGTH,
+                                                            bb.array(), ax,
+                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+            } else {
+                return (Long512Vector)super.fromByteBuffer(bb, ix);
+            }
+        }
+
+        @Override
+        @ForceInline
+        public Long512Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Long, Shapes.S512Bit> m) {
+            return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @ForceInline

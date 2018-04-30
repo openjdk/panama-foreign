@@ -25,6 +25,7 @@
 package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 import jdk.internal.vm.annotation.ForceInline;
@@ -508,7 +509,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
                                a, ix, this,
-                               (arr, idx, v) -> v.forEach((i, a_) -> ((double[])arr)[idx + i] = a_));
+                               (arr, idx) -> super.intoArray((double[]) arr, idx));
     }
 
     @Override
@@ -518,6 +519,69 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         Double512Vector oldVal = SPECIES.fromArray(a, ax);
         Double512Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteArray(byte[] a, int ix) {
+        Objects.requireNonNull(a);
+        ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
+        VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
+                               a, ix, this,
+                               (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteArray(byte[] a, int ix, Mask<Double, Shapes.S512Bit> m) {
+        Double512Vector oldVal = SPECIES.fromByteArray(a, ix);
+        Double512Vector newVal = oldVal.blend(this, m);
+        newVal.intoByteArray(a, ix);
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb) {
+        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+            int num_bytes = bitSize() / Byte.SIZE;
+            int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
+            VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
+                                   bb.array(), ix, this,
+                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+        } else {
+            super.intoByteBuffer(bb);
+        }
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb, Mask<Double, Shapes.S512Bit> m) {
+        int idx = bb.position();
+        Double512Vector oldVal = SPECIES.fromByteBuffer(bb, idx);
+        Double512Vector newVal = oldVal.blend(this, m);
+        newVal.intoByteBuffer(bb, idx);
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb, int ix) {
+        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+            int num_bytes = bitSize() / Byte.SIZE;
+            int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
+            VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
+                                   bb.array(), ax, this,
+                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+        } else {
+            super.intoByteBuffer(bb, ix);
+        }
+    }
+
+    @Override
+    @ForceInline
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Double, Shapes.S512Bit> m) {
+        Double512Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
+        Double512Vector newVal = oldVal.blend(this, m);
+        newVal.intoByteBuffer(bb, ix);
     }
 
     //
@@ -1049,6 +1113,16 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
+        public Double512Vector scalars(double... es) {
+            Objects.requireNonNull(es);
+            int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
+            return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
+                                                        es, ix,
+                                                        (arr, idx) -> super.fromArray((double[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
         public Double512Vector fromArray(double[] a, int ix) {
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
@@ -1061,6 +1135,62 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         @ForceInline
         public Double512Vector fromArray(double[] a, int ax, Mask<Double, Shapes.S512Bit> m) {
             return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
+        }
+
+        @Override
+        @ForceInline
+        public Double512Vector fromByteArray(byte[] a, int ix) {
+            Objects.requireNonNull(a);
+            ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
+            return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
+                                                        a, ix,
+                                                        (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+        }
+
+        @Override
+        @ForceInline
+        public Double512Vector fromByteArray(byte[] a, int ix, Mask<Double, Shapes.S512Bit> m) {
+            return zero().blend(fromByteArray(a, ix), m);
+        }
+
+        @Override
+        @ForceInline
+        public Double512Vector fromByteBuffer(ByteBuffer bb) {
+            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+                int num_bytes = bitSize() / Byte.SIZE;
+                int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
+                return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
+                                                            bb.array(), ix,
+                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+            } else {
+                return (Double512Vector)super.fromByteBuffer(bb);
+            }
+        }
+
+        @Override
+        @ForceInline
+        public Double512Vector fromByteBuffer(ByteBuffer bb, Mask<Double, Shapes.S512Bit> m) {
+            return zero().blend(fromByteBuffer(bb), m);
+        }
+
+        @Override
+        @ForceInline
+        public Double512Vector fromByteBuffer(ByteBuffer bb, int ix) {
+            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
+                int num_bytes = bitSize() / Byte.SIZE;
+                int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
+                return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
+                                                            bb.array(), ax,
+                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+            } else {
+                return (Double512Vector)super.fromByteBuffer(bb, ix);
+            }
+        }
+
+        @Override
+        @ForceInline
+        public Double512Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Double, Shapes.S512Bit> m) {
+            return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @ForceInline

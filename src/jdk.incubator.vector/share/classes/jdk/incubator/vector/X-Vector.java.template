@@ -603,13 +603,20 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     @Override
     public void intoByteArray(byte[] a, int ix) {
         ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        intoByteBuffer(bb);
+        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+        forEach((i, e) -> fb.put(e));
     }
 
     @Override
     public void intoByteArray(byte[] a, int ix, Mask<$Boxtype$, S> m) {
         ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        intoByteBuffer(bb, m);
+        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+        forEach((i, e) -> {
+            if (m.getElement(i))
+                fb.put(e);
+            else
+                fb.position(fb.position() + 1);
+        });
     }
 
     @Override
@@ -1012,13 +1019,22 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         @Override
         public $abstractvectortype$<S> fromByteArray(byte[] a, int ix) {
             ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            return fromByteBuffer(bb);
+            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+            return op(i -> fb.get());
         }
 
         @Override
         public $abstractvectortype$<S> fromByteArray(byte[] a, int ix, Mask<$Boxtype$, S> m) {
             ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            return fromByteBuffer(bb, m);
+            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+            return op(i -> {
+                if(m.getElement(i))
+                    return fb.get();
+                else {
+                    fb.position(fb.position() + 1);
+                    return ($type$) 0;
+                }
+            });
         }
 
         @Override
