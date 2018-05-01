@@ -1340,7 +1340,7 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           break;
         case Op_MaxV:
         case Op_MinV:
-          if ((UseSSE < 4 && (bt == T_BYTE || bt == T_INT)) || (UseAVX < 1 && bt == T_LONG))  
+          if (UseSSE < 4 && (bt == T_BYTE || bt == T_INT || bt == T_LONG))
             ret_value = false;
           break;
         case Op_LShiftVI:
@@ -10567,7 +10567,7 @@ instruct min16I_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 // Long vector Min
 instruct minL_reg(vecD dst, vecD src1, vecD src2, rxmm0 tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  predicate(UseAVX == 0 && UseSSE >= 4 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst, TEMP tmp);
   format %{ "movsd     $tmp,$src1\n\t"
@@ -10583,8 +10583,22 @@ instruct minL_reg(vecD dst, vecD src1, vecD src2, rxmm0 tmp) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct min1L_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MinV src1 src2));
+  effect(TEMP dst);
+  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t"
+            "vblendvpd  $dst,$src1,$src2,$dst\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpcmpgtq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vblendvpd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct min2L_reg(vecX dst, vecX src1, vecX src2, rxmm0 tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  predicate(UseAVX == 0 && UseSSE >= 4 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst, TEMP tmp);
   format %{ "movdqu    $tmp,$src1\n\t"
@@ -10604,7 +10618,7 @@ instruct min2L_reg_avx(vecX dst, vecX src1, vecX src2) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t" 
+  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t"
             "vblendvpd  $dst,$src1,$src2,$dst\t! " %}
   ins_encode %{
     int vector_len = 0;
@@ -11073,7 +11087,7 @@ instruct max16I_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 // Long Vector Max
 instruct maxL_reg(vecD dst, vecD src1, vecD src2, rxmm0 tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  predicate(UseAVX == 0 && UseSSE >= 4 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst, TEMP tmp);
   format %{ "movsd     $tmp,$src1\n\t"
@@ -11089,8 +11103,22 @@ instruct maxL_reg(vecD dst, vecD src1, vecD src2, rxmm0 tmp) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct max1L_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MaxV src1 src2));
+  effect(TEMP dst);
+  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t"
+            "vblendvpd  $dst,$src2,$src1,$dst\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpcmpgtq($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vblendvpd($dst$$XMMRegister, $src2$$XMMRegister, $src1$$XMMRegister, $dst$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct max2L_reg(vecX dst, vecX src1, vecX src2, rxmm0 tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  predicate(UseAVX == 0 && UseSSE >= 4 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst, TEMP tmp);
   format %{ "movdqu    $tmp,$src1\n\t"
@@ -11110,7 +11138,7 @@ instruct max2L_reg_avx(vecX dst, vecX src1, vecX src2) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t" 
+  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t"
             "vblendvpd  $dst,$src2,$src1,$dst\t! " %}
   ins_encode %{
     int vector_len = 0;
