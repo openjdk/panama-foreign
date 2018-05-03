@@ -342,6 +342,8 @@ class LibraryCallKit : public GraphKit {
   bool inline_vector_compare();
   bool inline_vector_broadcast_int();
   bool inline_vector_cast_reinterpret(bool is_cast);
+  bool inline_vector_extract();
+  bool inline_vector_insert();
   Node* box_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
   Node* unbox_vector(Node* in, const TypeInstPtr* vbox_type, BasicType bt, int num_elem);
   Node* shift_count(Node* cnt, int shift_op, BasicType bt, int num_elem);
@@ -914,6 +916,10 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     return inline_vector_cast_reinterpret(/*is_cast*/ false);
   case vmIntrinsics::_VectorCast:
     return inline_vector_cast_reinterpret(/*is_cast*/ true);
+  case vmIntrinsics::_VectorInsert:
+    return inline_vector_insert();
+  case vmIntrinsics::_VectorExtract:
+    return inline_vector_extract();
 
   default:
     // If you get here, it may be that someone has added a new intrinsic
@@ -7899,6 +7905,128 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
   Node* vbox = box_vector(op, vbox_type_to, elem_bt_to, num_elem_to);
   set_vector_result(vbox);
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem_to * type2aelembytes(elem_bt_to))));
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_insert() {
+  const TypeInstPtr* vector_klass = gvn().type(argument(0))->is_instptr();
+  const TypeInstPtr* elem_klass   = gvn().type(argument(1))->is_instptr();
+  const TypeInt* vlen             = gvn().type(argument(2))->is_int();
+  const TypeInt* idx              = gvn().type(argument(4))->is_int();
+
+  if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con() || !idx->is_con()) {
+    return false; // not enough info for intrinsification
+  }
+  ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
+  if (!elem_type->is_primitive_type()) {
+    return false; // should be primitive type
+  }
+  BasicType elem_bt = elem_type->basic_type();
+  int num_elem = vlen->get_con();
+  if (!arch_supports_vector(Op_VectorInsert, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false; // not supported
+  }
+
+  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
+
+  Node* opd = unbox_vector(argument(3), vbox_type, elem_bt, num_elem);
+  if (opd == NULL) {
+    return false;
+  }
+
+  Node* insert_val = argument(5);
+  assert(gvn().type(insert_val)->isa_long() != NULL, "expected to be long");
+
+  // Convert insert value back to its appropriate type.
+  switch (elem_bt) {
+    case T_BYTE:
+      insert_val = gvn().transform(new ConvL2INode(insert_val));
+      insert_val = gvn().transform(new CastIINode(insert_val, TypeInt::BYTE));
+      break;
+    case T_SHORT:
+      insert_val = gvn().transform(new ConvL2INode(insert_val));
+      insert_val = gvn().transform(new CastIINode(insert_val, TypeInt::SHORT));
+      break;
+    case T_INT:
+      insert_val = gvn().transform(new ConvL2INode(insert_val));
+      break;
+    case T_FLOAT:
+      insert_val = gvn().transform(new ConvL2INode(insert_val));
+      insert_val = gvn().transform(new MoveI2FNode(insert_val));
+      break;
+    case T_DOUBLE:
+      insert_val = gvn().transform(new MoveL2DNode(insert_val));
+      break;
+    case T_LONG:
+      // no conversion needed
+      break;
+    default: fatal("%s", type2name(elem_bt)); break;
+  }
+
+  Node* operation = VectorInsertNode::make(opd, insert_val, idx->get_con());
+  operation = box_vector(operation, vbox_type, elem_bt, num_elem);
+  set_vector_result(operation);
+
+  C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_extract() {
+  const TypeInstPtr* vector_klass = gvn().type(argument(0))->is_instptr();
+  const TypeInstPtr* elem_klass   = gvn().type(argument(1))->is_instptr();
+  const TypeInt* vlen             = gvn().type(argument(2))->is_int();
+  const TypeInt* idx              = gvn().type(argument(4))->is_int();
+
+  if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || !vlen->is_con() || !idx->is_con()) {
+    return false; // not enough info for intrinsification
+  }
+  ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
+  if (!elem_type->is_primitive_type()) {
+    return false; // should be primitive type
+  }
+  BasicType elem_bt = elem_type->basic_type();
+  int num_elem = vlen->get_con();
+  int vopc = ExtractNode::opcode(elem_bt);
+  if (!arch_supports_vector(vopc, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false; // not supported
+  }
+
+  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
+
+  Node* opd = unbox_vector(argument(3), vbox_type, elem_bt, num_elem);
+  if (opd == NULL) {
+    return false;
+  }
+
+  Node* operation = ExtractNode::make(opd, idx->get_con(), elem_bt);
+
+  Node* bits = NULL;
+  switch (elem_bt) {
+    case T_BYTE:
+    case T_SHORT:
+    case T_INT: {
+      bits = gvn().transform(new ConvI2LNode(operation));
+      break;
+    }
+    case T_FLOAT: {
+      bits = gvn().transform(new MoveF2INode(operation));
+      bits = gvn().transform(new ConvI2LNode(bits));
+      break;
+    }
+    case T_DOUBLE: {
+      bits = gvn().transform(new MoveD2LNode(operation));
+      break;
+    }
+    case T_LONG: {
+      bits = operation; // no conversion needed
+      break;
+    }
+    default: fatal("%s", type2name(elem_bt));
+  }
+
+  set_vector_result(bits);
   return true;
 }
 

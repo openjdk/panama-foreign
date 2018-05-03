@@ -862,15 +862,32 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     public float get(int i) {
-        float[] vec = getElements();
-        return vec[i];
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        int bits = (int) VectorIntrinsics.extract(
+                                Float512Vector.class, float.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    float[] vecarr = vec.getElements();
+                                    return (long)Float.floatToIntBits(vecarr[ix]);
+                                });
+        return Float.intBitsToFloat(bits);
     }
 
     @Override
     public Float512Vector with(int i, float e) {
-        float[] res = vec.clone();
-        res[i] = e;
-        return new Float512Vector(res);
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                Float512Vector.class, float.class, LENGTH,
+                                this, i, (long)Float.floatToIntBits(e),
+                                (v, ix, bits) -> {
+                                    float[] res = v.getElements().clone();
+                                    res[ix] = Float.intBitsToFloat((int)bits);
+                                    return new Float512Vector(res);
+                                });
     }
 
     // Mask

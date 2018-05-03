@@ -79,6 +79,8 @@ import java.util.function.*;
         return defaultImpl.apply(bits);
     }
 
+    /* ============================================================================ */
+
     @HotSpotIntrinsicCandidate
     static
     <V extends Vector<?,?>>
@@ -86,6 +88,35 @@ import java.util.function.*;
                           V v,
                           Function<V,Long> defaultImpl) {
         return defaultImpl.apply(v);
+    }
+
+    /* ============================================================================ */
+
+    interface VecExtractOp<V> {
+        long apply(V v1, int idx);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static
+    <V extends Vector<?,?>>
+    long extract(Class<?> vectorClass, Class<?> elementType, int vlen,
+                 V vec, int ix,
+                 VecExtractOp<V> defaultImpl) {
+        return defaultImpl.apply(vec, ix);
+    }
+
+    /* ============================================================================ */
+
+    interface VecInsertOp<V> {
+        V apply(V v1, int idx, long val);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static <V extends Vector<?,?>>
+    V insert(Class<V> vectorClass, Class<?> elementType, int vlen,
+                        V vec, int ix, long val,
+                        VecInsertOp<V> defaultImpl) {
+        return defaultImpl.apply(vec, ix, val);
     }
 
     /* ============================================================================ */

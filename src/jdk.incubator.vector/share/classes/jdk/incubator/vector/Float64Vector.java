@@ -862,15 +862,32 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
 
     @Override
     public float get(int i) {
-        float[] vec = getElements();
-        return vec[i];
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        int bits = (int) VectorIntrinsics.extract(
+                                Float64Vector.class, float.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    float[] vecarr = vec.getElements();
+                                    return (long)Float.floatToIntBits(vecarr[ix]);
+                                });
+        return Float.intBitsToFloat(bits);
     }
 
     @Override
     public Float64Vector with(int i, float e) {
-        float[] res = vec.clone();
-        res[i] = e;
-        return new Float64Vector(res);
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                Float64Vector.class, float.class, LENGTH,
+                                this, i, (long)Float.floatToIntBits(e),
+                                (v, ix, bits) -> {
+                                    float[] res = v.getElements().clone();
+                                    res[ix] = Float.intBitsToFloat((int)bits);
+                                    return new Float64Vector(res);
+                                });
     }
 
     // Mask

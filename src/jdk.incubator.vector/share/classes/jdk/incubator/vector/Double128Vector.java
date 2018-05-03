@@ -862,15 +862,32 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     public double get(int i) {
-        double[] vec = getElements();
-        return vec[i];
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        long bits = (long) VectorIntrinsics.extract(
+                                Double128Vector.class, double.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    double[] vecarr = vec.getElements();
+                                    return (long)Double.doubleToLongBits(vecarr[ix]);
+                                });
+        return Double.longBitsToDouble(bits);
     }
 
     @Override
     public Double128Vector with(int i, double e) {
-        double[] res = vec.clone();
-        res[i] = e;
-        return new Double128Vector(res);
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                Double128Vector.class, double.class, LENGTH,
+                                this, i, (long)Double.doubleToLongBits(e),
+                                (v, ix, bits) -> {
+                                    double[] res = v.getElements().clone();
+                                    res[ix] = Double.longBitsToDouble((long)bits);
+                                    return new Double128Vector(res);
+                                });
     }
 
     // Mask

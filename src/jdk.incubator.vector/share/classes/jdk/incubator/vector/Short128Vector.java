@@ -853,15 +853,31 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
 
     @Override
     public short get(int i) {
-        short[] vec = getElements();
-        return vec[i];
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return (short) VectorIntrinsics.extract(
+                                Short128Vector.class, short.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    short[] vecarr = vec.getElements();
+                                    return (long)vecarr[ix];
+                                });
     }
 
     @Override
     public Short128Vector with(int i, short e) {
-        short[] res = vec.clone();
-        res[i] = e;
-        return new Short128Vector(res);
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                Short128Vector.class, short.class, LENGTH,
+                                this, i, (long)e,
+                                (v, ix, bits) -> {
+                                    short[] res = v.getElements().clone();
+                                    res[ix] = (short)bits;
+                                    return new Short128Vector(res);
+                                });
     }
 
     // Mask

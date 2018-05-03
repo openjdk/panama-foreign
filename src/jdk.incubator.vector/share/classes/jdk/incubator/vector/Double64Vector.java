@@ -862,15 +862,32 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
     @Override
     public double get(int i) {
-        double[] vec = getElements();
-        return vec[i];
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        long bits = (long) VectorIntrinsics.extract(
+                                Double64Vector.class, double.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    double[] vecarr = vec.getElements();
+                                    return (long)Double.doubleToLongBits(vecarr[ix]);
+                                });
+        return Double.longBitsToDouble(bits);
     }
 
     @Override
     public Double64Vector with(int i, double e) {
-        double[] res = vec.clone();
-        res[i] = e;
-        return new Double64Vector(res);
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                Double64Vector.class, double.class, LENGTH,
+                                this, i, (long)Double.doubleToLongBits(e),
+                                (v, ix, bits) -> {
+                                    double[] res = v.getElements().clone();
+                                    res[ix] = Double.longBitsToDouble((long)bits);
+                                    return new Double64Vector(res);
+                                });
     }
 
     // Mask

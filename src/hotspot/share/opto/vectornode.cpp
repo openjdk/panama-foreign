@@ -643,6 +643,30 @@ StoreVectorNode* StoreVectorNode::make(int opc, Node* ctl, Node* mem,
   return new StoreVectorNode(ctl, mem, adr, atyp, val);
 }
 
+int ExtractNode::opcode(BasicType bt) {
+  switch (bt) {
+    case T_BOOLEAN:
+      return Op_ExtractUB;
+    case T_BYTE:
+      return Op_ExtractB;
+    case T_CHAR:
+      return Op_ExtractC;
+    case T_SHORT:
+      return Op_ExtractS;
+    case T_INT:
+      return Op_ExtractI;
+    case T_LONG:
+      return Op_ExtractL;
+    case T_FLOAT:
+      return Op_ExtractF;
+    case T_DOUBLE:
+      return Op_ExtractD;
+    default:
+      fatal("Type '%s' is not supported for vectors", type2name(bt));
+      return 0;
+  }
+}
+
 // Extract a scalar element of vector.
 Node* ExtractNode::make(Node* v, uint position, BasicType bt) {
   assert((int)position < Matcher::max_vector_size(bt), "pos in range");
@@ -1010,4 +1034,10 @@ Node* SubReductionVNode::Ideal(PhaseGVN* phase, bool can_reshape) {
     Unimplemented();
     return NULL;
   } 
+}
+
+Node* VectorInsertNode::make(Node* vec, Node* new_val, int position) {
+  assert(position < (int)vec->bottom_type()->is_vect()->length(), "pos in range");
+  ConINode* pos = ConINode::make(position);
+  return new VectorInsertNode(vec, new_val, pos, vec->bottom_type()->is_vect());
 }

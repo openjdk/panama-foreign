@@ -852,15 +852,31 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
 
     @Override
     public byte get(int i) {
-        byte[] vec = getElements();
-        return vec[i];
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return (byte) VectorIntrinsics.extract(
+                                Byte128Vector.class, byte.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    byte[] vecarr = vec.getElements();
+                                    return (long)vecarr[ix];
+                                });
     }
 
     @Override
     public Byte128Vector with(int i, byte e) {
-        byte[] res = vec.clone();
-        res[i] = e;
-        return new Byte128Vector(res);
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                Byte128Vector.class, byte.class, LENGTH,
+                                this, i, (long)e,
+                                (v, ix, bits) -> {
+                                    byte[] res = v.getElements().clone();
+                                    res[ix] = (byte)bits;
+                                    return new Byte128Vector(res);
+                                });
     }
 
     // Mask

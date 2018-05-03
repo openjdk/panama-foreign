@@ -1036,6 +1036,7 @@ class ExtractNode : public Node {
   uint  pos() const { return in(2)->get_int(); }
 
   static Node* make(Node* v, uint position, BasicType bt);
+  static int opcode(BasicType bt);
 };
 
 //------------------------------ExtractBNode-----------------------------------
@@ -1362,6 +1363,19 @@ public:
     assert(in->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE, "must be double");
   }
   virtual int Opcode() const;
+};
+
+class VectorInsertNode : public VectorNode {
+ public:
+  VectorInsertNode(Node* vsrc, Node* new_val, ConINode* pos, const TypeVect* vt) : VectorNode(vsrc, new_val, (Node*)pos, vt) {
+   assert(pos->get_int() >= 0, "positive constants");
+   assert(pos->get_int() < (int)vt->length(), "index must be less than vector length");
+   assert(Type::cmp(vt, vsrc->bottom_type()) == 0, "input and output must be same type");
+  }
+  virtual int Opcode() const;
+  uint pos() const { return in(3)->get_int(); }
+
+  static Node* make(Node* vec, Node* new_val, int position);
 };
 
 #endif // SHARE_VM_OPTO_VECTORNODE_HPP

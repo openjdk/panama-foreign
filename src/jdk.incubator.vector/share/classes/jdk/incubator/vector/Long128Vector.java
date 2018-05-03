@@ -917,15 +917,31 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     public long get(int i) {
-        long[] vec = getElements();
-        return vec[i];
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return (long) VectorIntrinsics.extract(
+                                Long128Vector.class, long.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    long[] vecarr = vec.getElements();
+                                    return (long)vecarr[ix];
+                                });
     }
 
     @Override
     public Long128Vector with(int i, long e) {
-        long[] res = vec.clone();
-        res[i] = e;
-        return new Long128Vector(res);
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                Long128Vector.class, long.class, LENGTH,
+                                this, i, (long)e,
+                                (v, ix, bits) -> {
+                                    long[] res = v.getElements().clone();
+                                    res[ix] = (long)bits;
+                                    return new Long128Vector(res);
+                                });
     }
 
     // Mask

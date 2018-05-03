@@ -937,15 +937,31 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
 
     @Override
     public int get(int i) {
-        int[] vec = getElements();
-        return vec[i];
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return (int) VectorIntrinsics.extract(
+                                Int64Vector.class, int.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    int[] vecarr = vec.getElements();
+                                    return (long)vecarr[ix];
+                                });
     }
 
     @Override
     public Int64Vector with(int i, int e) {
-        int[] res = vec.clone();
-        res[i] = e;
-        return new Int64Vector(res);
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                Int64Vector.class, int.class, LENGTH,
+                                this, i, (long)e,
+                                (v, ix, bits) -> {
+                                    int[] res = v.getElements().clone();
+                                    res[ix] = (int)bits;
+                                    return new Int64Vector(res);
+                                });
     }
 
     // Mask

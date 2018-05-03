@@ -1141,18 +1141,66 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     // Accessors
 
+#if[FP]
     @Override
     public $type$ get(int i) {
-        $type$[] vec = getElements();
-        return vec[i];
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        $bitstype$ bits = ($bitstype$) VectorIntrinsics.extract(
+                                $vectortype$.class, $type$.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    $type$[] vecarr = vec.getElements();
+                                    return (long)$Type$.$type$To$Bitstype$Bits(vecarr[ix]);
+                                });
+        return $Type$.$bitstype$BitsTo$Fptype$(bits);
     }
 
     @Override
     public $vectortype$ with(int i, $type$ e) {
-        $type$[] res = vec.clone();
-        res[i] = e;
-        return new $vectortype$(res);
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                $vectortype$.class, $type$.class, LENGTH,
+                                this, i, (long)$Type$.$type$To$Bitstype$Bits(e),
+                                (v, ix, bits) -> {
+                                    $type$[] res = v.getElements().clone();
+                                    res[ix] = $Type$.$bitstype$BitsTo$Type$(($bitstype$)bits);
+                                    return new $vectortype$(res);
+                                });
     }
+#else[FP]
+    @Override
+    public $type$ get(int i) {
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return ($type$) VectorIntrinsics.extract(
+                                $vectortype$.class, $type$.class, LENGTH,
+                                this, i,
+                                (vec, ix) -> {
+                                    $type$[] vecarr = vec.getElements();
+                                    return (long)vecarr[ix];
+                                });
+    }
+
+    @Override
+    public $vectortype$ with(int i, $type$ e) {
+        if (i < 0 || i >= LENGTH) {
+            throw new IllegalArgumentException("Index " + i + " must be zero or positive, and less than " + LENGTH);
+        }
+        return VectorIntrinsics.insert(
+                                $vectortype$.class, $type$.class, LENGTH,
+                                this, i, (long)e,
+                                (v, ix, bits) -> {
+                                    $type$[] res = v.getElements().clone();
+                                    res[ix] = ($type$)bits;
+                                    return new $vectortype$(res);
+                                });
+    }
+#end[FP]
 
     // Mask
 

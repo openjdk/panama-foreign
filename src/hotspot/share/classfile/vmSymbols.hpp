@@ -1482,6 +1482,18 @@
                                     "Ljdk/incubator/vector/VectorIntrinsics$VectorCompareOp;)Ljdk/incubator/vector/Vector$Mask;")              \
    do_name(vector_compare_name, "compare")                                                                                                     \
                                                                                                                                                \
+  do_intrinsic(_VectorExtract, jdk_incubator_vector_VectorIntrinsics, vector_extract_name, vector_extract_sig, F_S)                            \
+   do_signature(vector_extract_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                     \
+                                    "Ljdk/incubator/vector/Vector;I"                                                                           \
+                                    "Ljdk/incubator/vector/VectorIntrinsics$VecExtractOp;)J")                                                  \
+   do_name(vector_extract_name, "extract")                                                                                                     \
+                                                                                                                                               \
+ do_intrinsic(_VectorInsert, jdk_incubator_vector_VectorIntrinsics, vector_insert_name, vector_insert_sig, F_S)                                \
+   do_signature(vector_insert_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                      \
+                                     "Ljdk/incubator/vector/Vector;IJ"                                                                         \
+                                     "Ljdk/incubator/vector/VectorIntrinsics$VecInsertOp;)Ljdk/incubator/vector/Vector;")                      \
+   do_name(vector_insert_name, "insert")                                                                                                       \
+                                                                                                                                               \
   do_intrinsic(_VectorBroadcastInt, jdk_incubator_vector_VectorIntrinsics, vector_broadcast_int_name, vector_broadcast_int_sig, F_S)           \
    do_signature(vector_broadcast_int_sig, "(ILjava/lang/Class;Ljava/lang/Class;I"                                                              \
                                           "Ljdk/incubator/vector/Vector;I"                                                                     \

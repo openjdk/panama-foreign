@@ -1075,6 +1075,8 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      *
      * @param i the lane index
      * @return the lane element at lane index {@code i}
+     * @throws IllegalArgumentException if the index is is out of range
+     * ({@code < 0 || >= length()})
      */
     public abstract long get(int i);
 
@@ -1082,8 +1084,8 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * Replaces the lane element of this vector at lane index {@code i} with
      * value {@code e}.
      * <p>
-     * This is a cross-lane operation and behaves it returns the result of
-     * blending this vector with an input vector that is the result of
+     * This is a cross-lane operation and behaves as if it returns the result
+     * of blending this vector with an input vector that is the result of
      * broadcasting {@code e} and a mask that has only one lane set at lane
      * index {@code i}.
      *
@@ -1091,6 +1093,8 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @param e the value to be placed
      * @return the result of replacing the lane element of this vector at lane
      * index {@code i} with value {@code e}.
+     * @throws IllegalArgumentException if the index is is out of range
+     * ({@code < 0 || >= length()})
      */
     public abstract LongVector<S> with(int i, long e);
 
