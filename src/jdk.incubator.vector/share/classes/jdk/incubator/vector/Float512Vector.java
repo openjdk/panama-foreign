@@ -475,6 +475,19 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public float subAll() {
+        int bits = (int) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_SUB, Float512Vector.class, float.class, LENGTH,
+                                this,
+                                v -> {
+                                    float r = v.rOp((float) 0, (i, a, b) -> (float) (a - b));
+                                    return (long)Float.floatToIntBits(r);
+                                });
+        return Float.intBitsToFloat(bits);
+    }
+
+    @Override
+    @ForceInline
     public float mulAll() {
         int bits = (int) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MUL, Float512Vector.class, float.class, LENGTH,
