@@ -647,6 +647,15 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v -> (long) v.rOp(($type$) -1, (i, a, b) -> ($type$) (a & b)));
     }
+
+    @Override
+    @ForceInline
+    public $type$ subAll() {
+        return ($type$) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_SUB, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a - b)));
+    }
 #end[BITWISE]
 #if[intOrLong]
 
@@ -675,15 +684,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             VECTOR_OP_XOR, $vectortype$.class, $type$.class, LENGTH,
             this,
             v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public $type$ subAll() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_SUB, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a - b)));
     }
 #end[intOrLong]
 #if[FP]

@@ -533,6 +533,15 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public int subAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_SUB, Int512Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a - b)));
+    }
+
+    @Override
+    @ForceInline
     public int mulAll() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Int512Vector.class, int.class, LENGTH,
@@ -556,15 +565,6 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             VECTOR_OP_XOR, Int512Vector.class, int.class, LENGTH,
             this,
             v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public int subAll() {
-        return (int) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_SUB, Int512Vector.class, int.class, LENGTH,
-            this,
-            v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a - b)));
     }
 
     // Memory operations

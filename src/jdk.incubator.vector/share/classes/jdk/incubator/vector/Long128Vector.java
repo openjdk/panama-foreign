@@ -505,6 +505,15 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public long subAll() {
+        return (long) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_SUB, Long128Vector.class, long.class, LENGTH,
+            this,
+            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a - b)));
+    }
+
+    @Override
+    @ForceInline
     public long mulAll() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Long128Vector.class, long.class, LENGTH,
@@ -528,15 +537,6 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             VECTOR_OP_XOR, Long128Vector.class, long.class, LENGTH,
             this,
             v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a ^ b)));
-    }
-
-    @Override
-    @ForceInline
-    public long subAll() {
-        return (long) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_SUB, Long128Vector.class, long.class, LENGTH,
-            this,
-            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a - b)));
     }
 
     // Memory operations
