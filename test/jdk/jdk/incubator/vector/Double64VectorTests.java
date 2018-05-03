@@ -419,7 +419,7 @@ public class Double64VectorTests extends AbstractVectorTest {
 
 
     static double max(double a, double b) {
-        return (double)(Math.max(a, b));
+        return (double)((a > b) ? a : b);
     }
 
     @Test(dataProvider = "doubleBinaryOpProvider")
@@ -439,7 +439,7 @@ public class Double64VectorTests extends AbstractVectorTest {
     }
 
     static double min(double a, double b) {
-        return (double)(Math.min(a, b));
+        return (double)((a < b) ? a : b);
     }
 
     @Test(dataProvider = "doubleBinaryOpProvider")

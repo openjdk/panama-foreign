@@ -419,7 +419,7 @@ public class Float512VectorTests extends AbstractVectorTest {
 
 
     static float max(float a, float b) {
-        return (float)(Math.max(a, b));
+        return (float)((a > b) ? a : b);
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
@@ -439,7 +439,7 @@ public class Float512VectorTests extends AbstractVectorTest {
     }
 
     static float min(float a, float b) {
-        return (float)(Math.min(a, b));
+        return (float)((a < b) ? a : b);
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")

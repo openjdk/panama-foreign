@@ -499,7 +499,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
 
     static short max(short a, short b) {
-        return (short)(Math.max(a, b));
+        return (short)((a > b) ? a : b);
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")
@@ -519,7 +519,7 @@ public class Short64VectorTests extends AbstractVectorTest {
     }
 
     static short min(short a, short b) {
-        return (short)(Math.min(a, b));
+        return (short)((a < b) ? a : b);
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")

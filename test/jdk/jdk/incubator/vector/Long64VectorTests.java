@@ -499,7 +499,7 @@ public class Long64VectorTests extends AbstractVectorTest {
 
 
     static long max(long a, long b) {
-        return (long)(Math.max(a, b));
+        return (long)((a > b) ? a : b);
     }
 
     @Test(dataProvider = "longBinaryOpProvider")
@@ -519,7 +519,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     }
 
     static long min(long a, long b) {
-        return (long)(Math.min(a, b));
+        return (long)((a < b) ? a : b);
     }
 
     @Test(dataProvider = "longBinaryOpProvider")

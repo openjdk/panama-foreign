@@ -499,7 +499,7 @@ public class Int128VectorTests extends AbstractVectorTest {
 
 
     static int max(int a, int b) {
-        return (int)(Math.max(a, b));
+        return (int)((a > b) ? a : b);
     }
 
     @Test(dataProvider = "intBinaryOpProvider")
@@ -519,7 +519,7 @@ public class Int128VectorTests extends AbstractVectorTest {
     }
 
     static int min(int a, int b) {
-        return (int)(Math.min(a, b));
+        return (int)((a < b) ? a : b);
     }
 
     @Test(dataProvider = "intBinaryOpProvider")

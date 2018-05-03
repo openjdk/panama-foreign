@@ -10321,14 +10321,11 @@ instruct vdiv8D_mem(vecZ dst, vecZ src, memory mem) %{
 // ------------------------------ Min ---------------------------------------
 // Byte vector Min
 instruct min8B_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinV src1 src2));
-  effect(TEMP dst);
-  format %{ "movsd  $dst,$src1\n\t"
-            "pminsb  $dst,$src2\t!  " %}
+  format %{ "vpminsb  $dst,$src1,$src2\t!  " %}
   ins_encode %{
-    __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
-    __ pminsb($dst$$XMMRegister, $src2$$XMMRegister);
+    __ vpminsb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, 0);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -10403,14 +10400,12 @@ instruct min64B_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 //Short vector Min
 instruct min4S_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 1 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd  $dst,$src1\n\t" 
-            "pminsw  $dst,$src2\t! " %}
+  format %{ "vpminsw  $dst,$src1,$src2\t! " %}
   ins_encode %{
-    __ movsd($src1$$XMMRegister, $src2$$XMMRegister);
-    __ pminsw($dst$$XMMRegister, $src1$$XMMRegister);
+    __ vpminsw($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, 0);
   %}
   ins_pipe( pipe_slow );
 %}

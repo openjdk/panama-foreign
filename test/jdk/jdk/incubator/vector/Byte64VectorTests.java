@@ -499,7 +499,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
 
 
     static byte max(byte a, byte b) {
-        return (byte)(Math.max(a, b));
+        return (byte)((a > b) ? a : b);
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
@@ -519,7 +519,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
     }
 
     static byte min(byte a, byte b) {
-        return (byte)(Math.min(a, b));
+        return (byte)((a < b) ? a : b);
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
