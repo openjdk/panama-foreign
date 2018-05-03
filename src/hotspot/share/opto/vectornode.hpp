@@ -239,7 +239,7 @@ class SubVDNode : public VectorNode {
 };
 
 //------------------------------SubReductionVNode--------------------------------------
-// Vector and int, long as a reduction
+// Vector sub int, long as a reduction
 class SubReductionVNode : public ReductionNode {
 public:
   SubReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) { 
@@ -252,6 +252,28 @@ public:
   virtual const Type* bottom_type() const { if (in(1)->bottom_type()->basic_type() == T_INT) 
                                               return TypeInt::INT; else return TypeLong::LONG; }
   virtual uint ideal_reg() const { return in(1)->bottom_type()->basic_type() == T_INT ? Op_RegI : Op_RegL; }
+};
+
+
+//------------------------------SubReductionVFPNode--------------------------------------
+// Vector sub float, double as a reduction
+class SubReductionVFPNode : public ReductionNode {
+public:
+  SubReductionVFPNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {
+    assert(in1->bottom_type()->basic_type() == T_FLOAT ||
+           in1->bottom_type()->basic_type() == T_DOUBLE, "");
+  }
+
+  virtual int Opcode() const;
+  virtual const Type* bottom_type() const {
+    if (in(1)->bottom_type()->basic_type() == T_FLOAT) {
+      return Type::FLOAT;
+    } else {
+      return Type::DOUBLE;
+    }
+  }
+
+  virtual uint ideal_reg() const { return in(1)->bottom_type()->basic_type() == T_FLOAT ? Op_RegF : Op_RegD; }
 };
 
 //------------------------------MulVBNode--------------------------------------

@@ -702,6 +702,19 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
+    public $type$ subAll() {
+        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_SUB, $vectortype$.class, $type$.class, LENGTH,
+                                this,
+                                v -> {
+                                    $type$ r = v.rOp(($type$) 0, (i, a, b) -> ($type$) (a - b));
+                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
+                                });
+        return $Type$.$bitstype$BitsTo$Fptype$(bits);
+    }
+
+    @Override
+    @ForceInline
     public $type$ mulAll() {
         $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,

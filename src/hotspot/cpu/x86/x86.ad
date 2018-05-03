@@ -5838,6 +5838,269 @@ instruct rvadd8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct rvsub2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (SubReductionVFP dst src2));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vsubss  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "vsubss  $dst,$dst,$tmp\t! sub reduction2F" %}
+  ins_encode %{
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rssub4F_reduction_reg(regF dst, vecX src2, regF tmp) %{
+  predicate(UseSSE >= 1 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (SubReductionVFP dst src2));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "subss   $dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "subss   $dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x02\n\t"
+            "subss   $dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x03\n\t"
+            "subss   $dst,$tmp\t! sub reduction4F" %}
+  ins_encode %{
+    __ subss($dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ subss($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x02);
+    __ subss($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x03);
+    __ subss($dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvsub4F_reduction_reg(regF dst, vecX src2, regF tmp) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (SubReductionVFP dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "vsubss  $dst,dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x02\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x03\n\t"
+            "vsubss  $dst,$dst,$tmp\t! sub reduction4F" %}
+  ins_encode %{
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x02);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x03);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsub8F_reduction_reg(regF dst, vecY src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (SubReductionVFP dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vsubss  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x02\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x03\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "vextractf128_high  $tmp2,$src2\n\t"
+            "vsubss  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vsubss  $dst,$dst,$tmp\t! sub reduction8F" %}
+  ins_encode %{
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x02);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x03);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ vextractf128_high($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsub16F_reduction_reg(regF dst, vecZ src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (AddReductionVF dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vsubss  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x02\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x03\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x1\n\t"
+            "vsubss  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x2\n\t"
+            "vsubss  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x3\n\t"
+            "vsubss  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vsubss  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vsubss  $dst,$dst,$tmp\t! sub reduction16F" %}
+  ins_encode %{
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x02);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x03);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vsubss($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rssub2D_reduction_reg(regD dst, vecX src2, regD tmp) %{
+  predicate(UseSSE >= 1 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (SubReductionVFP dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "subsd   $dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "subsd   $dst,$tmp\t! sub reduction2D" %}
+  ins_encode %{
+    __ subsd($dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ subsd($dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvsub2D_reduction_reg(regD dst, vecX src2, regD tmp) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (SubReductionVFP dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "vsubsd  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "vsubsd  $dst,$dst,$tmp\t! sub reduction2D" %}
+  ins_encode %{
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvsub4D_reduction_reg(regD dst, vecY src2, regD tmp, regD tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (SubReductionVFP dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vsubsd  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "vsubsd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x1\n\t"
+            "vsubsd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vsubsd  $dst,$dst,$tmp\t! sub reduction4D" %}
+  ins_encode %{
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvsub8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (SubReductionVFP dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vsubsd  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "vsubsd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x1\n\t"
+            "vsubsd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vsubsd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x2\n\t"
+            "vsubsd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vsubsd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x3\n\t"
+            "vsubsd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vsubsd  $dst,$dst,$tmp\t! sub reduction8D" %}
+  ins_encode %{
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vsubsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct rsmul2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp2) %{
   predicate(UseSSE > 3 && UseAVX == 0);
   match(Set dst (MulReductionVI src1 src2));

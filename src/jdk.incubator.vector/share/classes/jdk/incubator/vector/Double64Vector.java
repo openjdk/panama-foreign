@@ -475,6 +475,19 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
+    public double subAll() {
+        long bits = (long) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_SUB, Double64Vector.class, double.class, LENGTH,
+                                this,
+                                v -> {
+                                    double r = v.rOp((double) 0, (i, a, b) -> (double) (a - b));
+                                    return (long)Double.doubleToLongBits(r);
+                                });
+        return Double.longBitsToDouble(bits);
+    }
+
+    @Override
+    @ForceInline
     public double mulAll() {
         long bits = (long) VectorIntrinsics.reductionCoerced(
                                 VECTOR_OP_MUL, Double64Vector.class, double.class, LENGTH,
