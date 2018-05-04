@@ -839,7 +839,14 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Double128Mask not() {
+            return (Double128Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Double128Mask.class, long.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

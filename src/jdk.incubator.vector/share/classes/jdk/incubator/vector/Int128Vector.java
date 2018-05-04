@@ -907,7 +907,14 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Int128Mask not() {
+            return (Int128Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Int128Mask.class, int.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

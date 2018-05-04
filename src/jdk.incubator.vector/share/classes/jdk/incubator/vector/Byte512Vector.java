@@ -815,7 +815,14 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Byte512Mask not() {
+            return (Byte512Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Byte512Mask.class, byte.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

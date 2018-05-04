@@ -879,7 +879,14 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Long128Mask not() {
+            return (Long128Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Long128Mask.class, long.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

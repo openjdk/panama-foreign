@@ -907,7 +907,14 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Int64Mask not() {
+            return (Int64Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Int64Mask.class, int.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

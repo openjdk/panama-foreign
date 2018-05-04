@@ -839,7 +839,14 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Double64Mask not() {
+            return (Double64Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Double64Mask.class, long.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

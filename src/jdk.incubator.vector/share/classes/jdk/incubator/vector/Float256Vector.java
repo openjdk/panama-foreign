@@ -839,7 +839,14 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Float256Mask not() {
+            return (Float256Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Float256Mask.class, int.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

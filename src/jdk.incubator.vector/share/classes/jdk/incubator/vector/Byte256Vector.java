@@ -815,7 +815,14 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Byte256Mask not() {
+            return (Byte256Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Byte256Mask.class, byte.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

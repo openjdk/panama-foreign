@@ -879,7 +879,14 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Long512Mask not() {
+            return (Long512Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Long512Mask.class, long.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

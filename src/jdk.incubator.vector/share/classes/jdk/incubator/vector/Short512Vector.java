@@ -815,7 +815,14 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Short512Mask not() {
+            return (Short512Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Short512Mask.class, short.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

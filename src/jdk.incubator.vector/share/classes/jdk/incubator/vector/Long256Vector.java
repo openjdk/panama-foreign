@@ -879,7 +879,14 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Long256Mask not() {
+            return (Long256Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Long256Mask.class, long.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

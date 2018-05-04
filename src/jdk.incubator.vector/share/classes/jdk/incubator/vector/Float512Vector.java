@@ -839,7 +839,14 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Float512Mask not() {
+            return (Float512Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Float512Mask.class, int.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

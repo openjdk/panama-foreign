@@ -839,7 +839,14 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Double512Mask not() {
+            return (Double512Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Double512Mask.class, long.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

@@ -1079,7 +1079,14 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public $masktype$ not() {
+            return ($masktype$) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, $masktype$.class, $bitstype$.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

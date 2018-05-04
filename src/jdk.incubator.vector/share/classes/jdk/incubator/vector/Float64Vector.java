@@ -839,7 +839,14 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Float64Mask not() {
+            return (Float64Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Float64Mask.class, int.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

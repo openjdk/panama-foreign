@@ -815,7 +815,14 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Short64Mask not() {
+            return (Short64Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Short64Mask.class, short.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

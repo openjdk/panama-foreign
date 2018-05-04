@@ -839,7 +839,14 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Double256Mask not() {
+            return (Double256Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Double256Mask.class, long.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 

@@ -907,7 +907,14 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         // Unary operations
 
-        //Mask<E, S> not();
+        @Override
+        @ForceInline
+        public Int256Mask not() {
+            return (Int256Mask) VectorIntrinsics.unaryOp(
+                                             VECTOR_OP_NOT, Int256Mask.class, int.class, LENGTH,
+                                             this,
+                                             (m1) -> m1.uOp((i, a) -> !a));
+        }
 
         // Binary operations
 
