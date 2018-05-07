@@ -23,6 +23,8 @@
  */
 
 #include "precompiled.hpp"
+#include "asm/macroAssembler.hpp"
+#include "ci/ciUtilities.inline.hpp"
 #include "compiler/disassembler.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "opto/machnode.hpp"

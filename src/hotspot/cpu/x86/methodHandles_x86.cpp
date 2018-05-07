@@ -32,6 +32,7 @@
 #include "oops/arrayOop.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/methodHandles.hpp"
+#include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"

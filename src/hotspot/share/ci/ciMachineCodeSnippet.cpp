@@ -26,7 +26,7 @@
 #include "ci/ciClassList.hpp"
 #include "ci/ciMethodType.hpp"
 #include "ci/ciMachineCodeSnippet.hpp"
-#include "ci/ciUtilities.hpp"
+#include "ci/ciUtilities.inline.hpp"
 #include "classfile/javaClasses.hpp"
 #include "oops/oop.inline.hpp"
 
@@ -46,6 +46,6 @@ ciObject* ciMachineCodeSnippet::generator() const {
 }
 
 jint ciMachineCodeSnippet::flags() const {
-  //VM_ENTRY_MARK;
+  VM_ENTRY_MARK;
   return java_lang_invoke_MachineCodeSnippet::flags(get_oop());
 }

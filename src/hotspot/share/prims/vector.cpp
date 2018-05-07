@@ -26,6 +26,7 @@
 #include "classfile/javaClasses.hpp"
 #include "oops/oop.inline.hpp"
 #include "jni.h"
+#include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "utilities/exceptions.hpp"
 
@@ -159,19 +160,21 @@ static JNINativeMethod methodsL8[] = {
 // This one function is exported, used by NativeLookup.
 
 JVM_ENTRY(void, JVM_RegisterVectorMethods(JNIEnv *env, jclass cls)) {
-  ThreadToNativeFromVM ttnfv(thread);
-  int res = 0;
-
   jclass clsL2 = (jclass) JNIHandles::make_local(env, SystemDictionary::Long2_klass()->java_mirror());
-  res = env->RegisterNatives(clsL2, methodsL2, sizeof(methodsL2)/sizeof(JNINativeMethod));
-  guarantee(res == 0, "register Long2 natives");
-
   jclass clsL4 = (jclass) JNIHandles::make_local(SystemDictionary::Long4_klass()->java_mirror());
-  res = env->RegisterNatives(clsL4, methodsL4, sizeof(methodsL4)/sizeof(JNINativeMethod));
-  guarantee(res == 0, "register Long4 natives");
-
   jclass clsL8 = (jclass) JNIHandles::make_local(env, SystemDictionary::Long8_klass()->java_mirror());
-  res = env->RegisterNatives(clsL8, methodsL8, sizeof(methodsL8)/sizeof(JNINativeMethod));
-  guarantee(res == 0, "register Long8 natives");
+
+  { ThreadToNativeFromVM ttnfv(thread);
+    int res = 0;
+
+    res = env->RegisterNatives(clsL2, methodsL2, sizeof(methodsL2)/sizeof(JNINativeMethod));
+    guarantee(res == 0, "register Long2 natives");
+
+    res = env->RegisterNatives(clsL4, methodsL4, sizeof(methodsL4)/sizeof(JNINativeMethod));
+    guarantee(res == 0, "register Long4 natives");
+
+    res = env->RegisterNatives(clsL8, methodsL8, sizeof(methodsL8)/sizeof(JNINativeMethod));
+    guarantee(res == 0, "register Long8 natives");
+  }
 }
 JVM_END

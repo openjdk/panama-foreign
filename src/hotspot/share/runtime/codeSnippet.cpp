@@ -29,6 +29,7 @@
 #include "compiler/disassembler.hpp"
 #include "memory/resourceArea.hpp"
 #include "jni.h"
+#include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/decoder.hpp"
@@ -44,7 +45,7 @@
 // TODO: class CodeSnippetBlob: public BufferBlob { ... };
 
 JVM_ENTRY(jlong, MCS_install(JNIEnv* env, jobject igcls, jstring name, jobject code_jh, jobject method_type_jh)) {
-  ThreadToNativeFromVM ttnfv(thread);
+  //ThreadToNativeFromVM ttnfv(thread);
   ResourceMark rm;
 
   typeArrayHandle code(THREAD, (typeArrayOop)JNIHandles::resolve_non_null(code_jh));
@@ -52,6 +53,7 @@ JVM_ENTRY(jlong, MCS_install(JNIEnv* env, jobject igcls, jstring name, jobject c
 
   char* utfName = NULL;
   if (name != NULL) {
+    ThreadToNativeFromVM ttnfv(thread);
     uint len = env->GetStringUTFLength(name);
     int unicode_len = env->GetStringLength(name);
     utfName = NEW_C_HEAP_ARRAY(char, len + 1, mtInternal);

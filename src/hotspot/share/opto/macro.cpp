@@ -2853,9 +2853,9 @@ void PhaseMacroExpand::expand_vbox_node(VBoxNode *vbox) {
   Node* box  = vbox->in(VBoxNode::Box);
   Node* val  = vbox->in(VBoxNode::Value);
 
-  Node* ctrlproj = vbox->proj_out(TypeFunc::Control);
-  Node* memproj  = vbox->proj_out(TypeFunc::Memory);
-  Node* parmproj = vbox->proj_out(TypeFunc::Parms);
+  Node* ctrlproj = vbox->proj_out_or_null(TypeFunc::Control);
+  Node* memproj  = vbox->proj_out_or_null(TypeFunc::Memory);
+  Node* parmproj = vbox->proj_out_or_null(TypeFunc::Parms);
 
   if (parmproj != NULL) {
     // If the boxed version is used, update the value.
