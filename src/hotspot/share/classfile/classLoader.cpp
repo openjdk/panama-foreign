@@ -37,8 +37,6 @@
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "compiler/compileBroker.hpp"
-#include "gc/shared/collectedHeap.inline.hpp"
-#include "gc/shared/generation.hpp"
 #include "interpreter/bytecodeStream.hpp"
 #include "interpreter/oopMapCache.hpp"
 #include "logging/log.hpp"
@@ -74,19 +72,18 @@
 #include "utilities/hashtable.inline.hpp"
 #include "utilities/macros.hpp"
 #if INCLUDE_CDS
-#include "classfile/sharedClassUtil.hpp"
 #include "classfile/sharedPathsMiscInfo.hpp"
 #endif
 
 // Entry points in zip.dll for loading zip/jar file entries
 
-typedef void * * (JNICALL *ZipOpen_t)(const char *name, char **pmsg);
-typedef void (JNICALL *ZipClose_t)(jzfile *zip);
-typedef jzentry* (JNICALL *FindEntry_t)(jzfile *zip, const char *name, jint *sizeP, jint *nameLen);
-typedef jboolean (JNICALL *ReadEntry_t)(jzfile *zip, jzentry *entry, unsigned char *buf, char *namebuf);
-typedef jzentry* (JNICALL *GetNextEntry_t)(jzfile *zip, jint n);
-typedef jboolean (JNICALL *ZipInflateFully_t)(void *inBuf, jlong inLen, void *outBuf, jlong outLen, char **pmsg);
-typedef jint     (JNICALL *Crc32_t)(jint crc, const jbyte *buf, jint len);
+typedef void * * (*ZipOpen_t)(const char *name, char **pmsg);
+typedef void (*ZipClose_t)(jzfile *zip);
+typedef jzentry* (*FindEntry_t)(jzfile *zip, const char *name, jint *sizeP, jint *nameLen);
+typedef jboolean (*ReadEntry_t)(jzfile *zip, jzentry *entry, unsigned char *buf, char *namebuf);
+typedef jzentry* (*GetNextEntry_t)(jzfile *zip, jint n);
+typedef jboolean (*ZipInflateFully_t)(void *inBuf, jlong inLen, void *outBuf, jlong outLen, char **pmsg);
+typedef jint     (*Crc32_t)(jint crc, const jbyte *buf, jint len);
 
 static ZipOpen_t         ZipOpen            = NULL;
 static ZipClose_t        ZipClose           = NULL;
@@ -270,14 +267,6 @@ ClassFileStream* ClassPathDirEntry::open_stream(const char* name, TRAPS) {
   // check if file exists
   struct stat st;
   if (os::stat(path, &st) == 0) {
-#if INCLUDE_CDS
-    if (DumpSharedSpaces) {
-      // We have already check in ClassLoader::check_shared_classpath() that the directory is empty, so
-      // we should never find a file underneath it -- unless user has added a new file while we are running
-      // the dump, in which case let's quit!
-      ShouldNotReachHere();
-    }
-#endif
     // found file, open it
     int file_handle = os::open(path, 0, 0);
     if (file_handle != -1) {
@@ -644,24 +633,6 @@ void ClassLoader::trace_class_path(const char* msg, const char* name) {
   }
 }
 
-#if INCLUDE_CDS
-void ClassLoader::check_shared_classpath(const char *path) {
-  if (strcmp(path, "") == 0) {
-    exit_with_path_failure("Cannot have empty path in archived classpaths", NULL);
-  }
-
-  struct stat st;
-  if (os::stat(path, &st) == 0) {
-    if ((st.st_mode & S_IFMT) != S_IFREG) { // is not a regular file
-      if (!os::dir_is_empty(path)) {
-        tty->print_cr("Error: non-empty directory '%s'", path);
-        exit_with_path_failure("CDS allows only empty directories in archived classpaths", NULL);
-      }
-    }
-  }
-}
-#endif
-
 void ClassLoader::setup_bootstrap_search_path() {
   const char* sys_class_path = Arguments::get_sysclasspath();
   if (PrintSharedArchiveAndExit) {
@@ -688,7 +659,7 @@ void* ClassLoader::get_shared_paths_misc_info() {
 }
 
 bool ClassLoader::check_shared_paths_misc_info(void *buf, int size) {
-  SharedPathsMiscInfo* checker = SharedClassUtil::allocate_shared_paths_misc_info((char*)buf, size);
+  SharedPathsMiscInfo* checker = new SharedPathsMiscInfo((char*)buf, size);
   bool result = checker->check();
   delete checker;
   return result;
@@ -712,8 +683,6 @@ void ClassLoader::setup_app_search_path(const char *class_path) {
     char* path = NEW_RESOURCE_ARRAY(char, end - start + 1);
     strncpy(path, &class_path[start], end - start);
     path[end - start] = '\0';
-
-    check_shared_classpath(path);
 
     update_class_path_entry_list(path, false, false);
 
@@ -757,7 +726,6 @@ void ClassLoader::update_module_path_entry_list(const char *path, TRAPS) {
 }
 
 void ClassLoader::setup_module_search_path(const char* path, TRAPS) {
-  check_shared_classpath(path);
   update_module_path_entry_list(path, THREAD);
 }
 #endif // INCLUDE_CDS
@@ -886,11 +854,6 @@ void ClassLoader::setup_boot_search_path(const char *class_path) {
       update_class_path_entry_list(path, false, true);
     }
 
-#if INCLUDE_CDS
-    if (DumpSharedSpaces) {
-      check_shared_classpath(path);
-    }
-#endif
     while (class_path[end] == os::path_separator()[0]) {
       end++;
     }
@@ -1082,11 +1045,6 @@ void ClassLoader::add_to_app_classpath_entries(const char* path,
 
   if (entry->is_jar_file()) {
     ClassLoaderExt::process_jar_manifest(entry, check_for_duplicates);
-  } else {
-    if (!os::dir_is_empty(path)) {
-      tty->print_cr("Error: non-empty directory '%s'", path);
-      exit_with_path_failure("Cannot have non-empty directory in app classpaths", NULL);
-    }
   }
 #endif
 }
@@ -1447,8 +1405,6 @@ InstanceKlass* ClassLoader::load_class(Symbol* name, bool search_append_only, TR
                                                          name->utf8_length());
   assert(file_name != NULL, "invariant");
 
-  ClassLoaderExt::Context context(class_name, file_name, THREAD);
-
   // Lookup stream for parsing .class file
   ClassFileStream* stream = NULL;
   s2 classpath_index = 0;
@@ -1521,7 +1477,7 @@ InstanceKlass* ClassLoader::load_class(Symbol* name, bool search_append_only, TR
     return NULL;
   }
 
-  stream->set_verify(context.should_verify(classpath_index));
+  stream->set_verify(ClassLoaderExt::should_verify(classpath_index));
 
   ClassLoaderData* loader_data = ClassLoaderData::the_null_class_loader_data();
   Handle protection_domain;
@@ -1669,8 +1625,7 @@ void ClassLoader::record_result(InstanceKlass* ik, const ClassFileStream* stream
                                                          ik->name()->utf8_length());
   assert(file_name != NULL, "invariant");
 
-  ClassLoaderExt::Context context(class_name, file_name, CATCH);
-  context.record_result(ik->name(), classpath_index, ik, THREAD);
+  ClassLoaderExt::record_result(classpath_index, ik, THREAD);
 }
 #endif // INCLUDE_CDS
 
@@ -1740,7 +1695,7 @@ void ClassLoader::initialize() {
 #if INCLUDE_CDS
   // initialize search path
   if (DumpSharedSpaces) {
-    _shared_paths_misc_info = SharedClassUtil::allocate_shared_paths_misc_info();
+    _shared_paths_misc_info = new SharedPathsMiscInfo();
   }
 #endif
   setup_bootstrap_search_path();

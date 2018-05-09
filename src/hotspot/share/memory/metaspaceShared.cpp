@@ -29,7 +29,6 @@
 #include "classfile/dictionary.hpp"
 #include "classfile/loaderConstraints.hpp"
 #include "classfile/placeholders.hpp"
-#include "classfile/sharedClassUtil.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/systemDictionary.hpp"
@@ -63,7 +62,7 @@
 #include "utilities/align.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/hashtable.inline.hpp"
-#if INCLUDE_ALL_GCS
+#if INCLUDE_G1GC
 #include "gc/g1/g1Allocator.inline.hpp"
 #include "gc/g1/g1CollectedHeap.hpp"
 #endif
@@ -323,6 +322,46 @@ void MetaspaceShared::initialize_dumptime_shared_and_meta_spaces() {
                 _shared_rs.size(), p2i(_shared_rs.base()));
 }
 
+// Called by universe_post_init()
+void MetaspaceShared::post_initialize(TRAPS) {
+  if (UseSharedSpaces) {
+    int size = FileMapInfo::get_number_of_shared_paths();
+    if (size > 0) {
+      SystemDictionaryShared::allocate_shared_data_arrays(size, THREAD);
+      FileMapInfo::FileMapHeader* header = FileMapInfo::current_info()->header();
+      ClassLoaderExt::init_paths_start_index(header->_app_class_paths_start_index);
+      ClassLoaderExt::init_app_module_paths_start_index(header->_app_module_paths_start_index);
+    }
+  }
+
+  if (DumpSharedSpaces) {
+    if (SharedArchiveConfigFile) {
+      read_extra_data(SharedArchiveConfigFile, THREAD);
+    }
+  }
+}
+
+void MetaspaceShared::read_extra_data(const char* filename, TRAPS) {
+  HashtableTextDump reader(filename);
+  reader.check_version("VERSION: 1.0");
+
+  while (reader.remain() > 0) {
+    int utf8_length;
+    int prefix_type = reader.scan_prefix(&utf8_length);
+    ResourceMark rm(THREAD);
+    char* utf8_buffer = NEW_RESOURCE_ARRAY(char, utf8_length);
+    reader.get_utf8(utf8_buffer, utf8_length);
+
+    if (prefix_type == HashtableTextDump::SymbolPrefix) {
+      SymbolTable::new_symbol(utf8_buffer, utf8_length, THREAD);
+    } else{
+      assert(prefix_type == HashtableTextDump::StringPrefix, "Sanity");
+      utf8_buffer[utf8_length] = '\0';
+      oop s = StringTable::intern(utf8_buffer, THREAD);
+    }
+  }
+}
+
 void MetaspaceShared::commit_shared_space_to(char* newtop) {
   assert(DumpSharedSpaces, "dump-time only");
   char* base = _shared_rs.base();
@@ -454,11 +493,6 @@ static void collect_array_classes(Klass* k) {
 
 class CollectClassesClosure : public KlassClosure {
   void do_klass(Klass* k) {
-    if (!UseAppCDS && !k->class_loader_data()->is_the_null_class_loader_data()) {
-      // AppCDS is not enabled. Let's omit non-boot classes.
-      return;
-    }
-
     if (!(k->is_instance_klass() && InstanceKlass::cast(k)->is_in_error_state())) {
       if (k->is_instance_klass() && InstanceKlass::cast(k)->signers() != NULL) {
         // Mark any class with signers and don't add to the _global_klass_objects
@@ -1327,6 +1361,8 @@ char* VM_PopulateDumpSharedSpace::dump_read_only_tables() {
 void VM_PopulateDumpSharedSpace::doit() {
   Thread* THREAD = VMThread::vm_thread();
 
+  FileMapInfo::check_nonempty_dir_in_shared_path_table();
+
   NOT_PRODUCT(SystemDictionary::verify();)
   // The following guarantee is meant to ensure that no loader constraints
   // exist yet, since the constraints table is not shared.  This becomes
@@ -1884,6 +1920,10 @@ void MetaspaceShared::archive_klass_objects(Thread* THREAD) {
       ik->constants()->archive_resolved_references(THREAD);
     }
   }
+}
+
+bool MetaspaceShared::is_archive_object(oop p) {
+  return (p == NULL) ? false : G1ArchiveAllocator::is_archive_object(p);
 }
 
 void MetaspaceShared::fixup_mapped_heap_regions() {

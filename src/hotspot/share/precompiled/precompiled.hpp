@@ -84,8 +84,6 @@
 # include "compiler/disassembler.hpp"
 # include "compiler/methodLiveness.hpp"
 # include "compiler/oopMap.hpp"
-# include "gc/serial/cSpaceCounters.hpp"
-# include "gc/serial/defNewGeneration.hpp"
 # include "gc/shared/adaptiveSizePolicy.hpp"
 # include "gc/shared/ageTable.hpp"
 # include "gc/shared/barrierSet.hpp"
@@ -101,6 +99,7 @@
 # include "gc/shared/genCollectedHeap.hpp"
 # include "gc/shared/generation.hpp"
 # include "gc/shared/generationCounters.hpp"
+# include "gc/shared/jvmFlagConstraintsGC.hpp"
 # include "gc/shared/modRefBarrierSet.hpp"
 # include "gc/shared/referencePolicy.hpp"
 # include "gc/shared/referenceProcessor.hpp"
@@ -163,6 +162,13 @@
 # include "runtime/extendedPC.hpp"
 # include "runtime/fieldDescriptor.hpp"
 # include "runtime/fieldType.hpp"
+# include "runtime/flags/flagSetting.hpp"
+# include "runtime/flags/jvmFlag.hpp"
+# include "runtime/flags/jvmFlagConstraintList.hpp"
+# include "runtime/flags/jvmFlagConstraintsCompiler.hpp"
+# include "runtime/flags/jvmFlagConstraintsRuntime.hpp"
+# include "runtime/flags/jvmFlagRangeList.hpp"
+# include "runtime/flags/jvmFlagWriteableList.hpp"
 # include "runtime/frame.hpp"
 # include "runtime/frame.inline.hpp"
 # include "runtime/globals.hpp"
@@ -286,23 +292,30 @@
 #if INCLUDE_JVMCI
 # include "jvmci/jvmci_globals.hpp"
 #endif // INCLUDE_JVMCI
-#if INCLUDE_ALL_GCS
+#if INCLUDE_CMSGC
 # include "gc/cms/allocationStats.hpp"
 # include "gc/cms/compactibleFreeListSpace.hpp"
 # include "gc/cms/concurrentMarkSweepGeneration.hpp"
 # include "gc/cms/freeChunk.hpp"
 # include "gc/cms/gSpaceCounters.hpp"
+# include "gc/cms/jvmFlagConstraintsCMS.hpp"
 # include "gc/cms/parOopClosures.hpp"
 # include "gc/cms/promotionInfo.hpp"
 # include "gc/cms/yieldingWorkgroup.hpp"
+#endif // INCLUDE_CMSGC
+#if INCLUDE_G1GC
 # include "gc/g1/dirtyCardQueue.hpp"
 # include "gc/g1/g1BlockOffsetTable.hpp"
 # include "gc/g1/g1OopClosures.hpp"
 # include "gc/g1/g1_globals.hpp"
+# include "gc/g1/jvmFlagConstraintsG1.hpp"
 # include "gc/g1/ptrQueue.hpp"
 # include "gc/g1/satbMarkQueue.hpp"
+#endif // INCLUDE_G1GC
+#if INCLUDE_PARALLELGC
 # include "gc/parallel/gcAdaptivePolicyCounters.hpp"
 # include "gc/parallel/immutableSpace.hpp"
+# include "gc/parallel/jvmFlagConstraintsParallel.hpp"
 # include "gc/parallel/mutableSpace.hpp"
 # include "gc/parallel/objectStartArray.hpp"
 # include "gc/parallel/parMarkBitMap.hpp"
@@ -315,8 +328,10 @@
 # include "gc/parallel/psVirtualspace.hpp"
 # include "gc/parallel/psYoungGen.hpp"
 # include "gc/parallel/spaceCounters.hpp"
-# include "gc/shared/gcPolicyCounters.hpp"
-# include "gc/shared/plab.hpp"
-#endif // INCLUDE_ALL_GCS
+#endif // INCLUDE_PARALLELGC
+#if INCLUDE_SERIALGC
+# include "gc/serial/cSpaceCounters.hpp"
+# include "gc/serial/defNewGeneration.hpp"
+#endif // INCLUDE_SERIALGC
 
 #endif // !DONT_USE_PRECOMPILED_HEADER

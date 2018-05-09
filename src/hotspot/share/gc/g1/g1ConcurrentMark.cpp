@@ -1389,15 +1389,6 @@ void G1ConcurrentMark::cleanup() {
   }
 }
 
-// Supporting Object and Oop closures for reference discovery
-// and processing in during marking
-
-bool G1CMIsAliveClosure::do_object_b(oop obj) {
-  HeapWord* addr = (HeapWord*)obj;
-  return addr != NULL &&
-         (!_g1h->is_in_g1_reserved(addr) || !_g1h->is_obj_ill(obj));
-}
-
 // 'Keep Alive' oop closure used by both serial parallel reference processing.
 // Uses the G1CMTask associated with a worker thread (for serial reference
 // processing the G1CMTask for worker 0 is used) to preserve (mark) and
@@ -1665,7 +1656,7 @@ void G1ConcurrentMark::weak_refs_work(bool clear_all_soft_refs) {
     // Reference lists are balanced (see balance_all_queues() and balance_queues()).
     rp->set_active_mt_degree(active_workers);
 
-    ReferenceProcessorPhaseTimes pt(_gc_timer_cm, rp->num_q());
+    ReferenceProcessorPhaseTimes pt(_gc_timer_cm, rp->num_queues());
 
     // Process the weak references.
     const ReferenceProcessorStats& stats =
@@ -1684,23 +1675,10 @@ void G1ConcurrentMark::weak_refs_work(bool clear_all_soft_refs) {
     assert(has_overflown() || _global_mark_stack.is_empty(),
            "Mark stack should be empty (unless it has overflown)");
 
-    assert(rp->num_q() == active_workers, "why not");
-
-    rp->enqueue_discovered_references(executor, &pt);
+    assert(rp->num_queues() == active_workers, "why not");
 
     rp->verify_no_references_recorded();
-
-    pt.print_enqueue_phase();
-
     assert(!rp->discovery_enabled(), "Post condition");
-  }
-
-  assert(has_overflown() || _global_mark_stack.is_empty(),
-         "Mark stack should be empty (unless it has overflown)");
-
-  {
-    GCTraceTime(Debug, gc, phases) debug("Weak Processing", _gc_timer_cm);
-    WeakProcessor::weak_oops_do(&g1_is_alive, &do_nothing_cl);
   }
 
   if (has_overflown()) {
@@ -1709,6 +1687,11 @@ void G1ConcurrentMark::weak_refs_work(bool clear_all_soft_refs) {
   }
 
   assert(_global_mark_stack.is_empty(), "Marking should have completed");
+
+  {
+    GCTraceTime(Debug, gc, phases) debug("Weak Processing", _gc_timer_cm);
+    WeakProcessor::weak_oops_do(&g1_is_alive, &do_nothing_cl);
+  }
 
   // Unload Klasses, String, Symbols, Code Cache, etc.
   if (ClassUnloadingWithConcurrentMark) {

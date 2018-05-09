@@ -30,7 +30,7 @@
 #include "interpreter/bytecodes.hpp"
 #include "memory/universe.hpp"
 #include "prims/methodHandles.hpp"
-#include "runtime/globals.hpp"
+#include "runtime/flags/jvmFlag.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/icache.hpp"
 #include "runtime/init.hpp"
@@ -46,7 +46,7 @@ void eventlog_init();
 void mutex_init();
 void chunkpool_init();
 void perfMemory_init();
-void SuspendibleThreadSet_init() NOT_ALL_GCS_RETURN;
+void SuspendibleThreadSet_init();
 
 // Initialization done by Java thread in init_globals()
 void management_init();
@@ -62,7 +62,6 @@ jint universe_init();          // depends on codeCache_init and stubRoutines_ini
 void gc_barrier_stubs_init();
 void interpreter_init();       // before any methods loaded
 void invocationCounter_init(); // before any methods loaded
-void marksweep_init();
 void accessFlags_init();
 void templateTable_init();
 void InterfaceSupport_init();
@@ -117,7 +116,6 @@ jint init_globals() {
   gc_barrier_stubs_init();   // depends on universe_init, must be before interpreter_init
   interpreter_init();        // before any methods loaded
   invocationCounter_init();  // before any methods loaded
-  marksweep_init();
   accessFlags_init();
   templateTable_init();
   InterfaceSupport_init();
@@ -155,7 +153,7 @@ jint init_globals() {
   // All the flags that get adjusted by VM_Version_init and os::init_2
   // have been set so dump the flags now.
   if (PrintFlagsFinal || PrintFlagsRanges) {
-    CommandLineFlags::printFlags(tty, false, PrintFlagsRanges);
+    JVMFlag::printFlags(tty, false, PrintFlagsRanges);
   }
 
   return JNI_OK;

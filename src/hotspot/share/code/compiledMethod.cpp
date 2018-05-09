@@ -389,22 +389,24 @@ static void check_class(Metadata* md) {
 
 void CompiledMethod::clean_ic_if_metadata_is_dead(CompiledIC *ic) {
   if (ic->is_icholder_call()) {
-    // The only exception is compiledICHolder oops which may
+    // The only exception is compiledICHolder metdata which may
     // yet be marked below. (We check this further below).
-    CompiledICHolder* cichk_oop = ic->cached_icholder();
+    CompiledICHolder* cichk_metdata = ic->cached_icholder();
 
-    if (cichk_oop->is_loader_alive()) {
+    if (cichk_metdata->is_loader_alive()) {
       return;
     }
   } else {
-    Metadata* ic_oop = ic->cached_metadata();
-    if (ic_oop != NULL) {
-      if (ic_oop->is_klass()) {
-        if (((Klass*)ic_oop)->is_loader_alive()) {
+    Metadata* ic_metdata = ic->cached_metadata();
+    if (ic_metdata != NULL) {
+      if (ic_metdata->is_klass()) {
+        if (((Klass*)ic_metdata)->is_loader_alive()) {
           return;
         }
-      } else if (ic_oop->is_method()) {
-        if (((Method*)ic_oop)->method_holder()->is_loader_alive()) {
+      } else if (ic_metdata->is_method()) {
+        Method* method = (Method*)ic_metdata;
+        assert(!method->is_old(), "old method should have been cleaned");
+        if (method->method_holder()->is_loader_alive()) {
           return;
         }
       } else {
@@ -493,16 +495,6 @@ void CompiledMethod::do_unloading(BoolObjectClosure* is_alive, bool unloading_oc
     // (See comment above.)
   }
 
-  // The RedefineClasses() API can cause the class unloading invariant
-  // to no longer be true. See jvmtiExport.hpp for details.
-  // Also, leave a debugging breadcrumb in local flag.
-  if (JvmtiExport::has_redefined_a_class()) {
-    // This set of the unloading_occurred flag is done before the
-    // call to post_compiled_method_unload() so that the unloading
-    // of this nmethod is reported.
-    unloading_occurred = true;
-  }
-
   // Exception cache
   clean_exception_cache();
 
@@ -525,7 +517,7 @@ void CompiledMethod::do_unloading(BoolObjectClosure* is_alive, bool unloading_oc
   }
 
 #if INCLUDE_JVMCI
-  if (do_unloading_jvmci(is_alive, unloading_occurred)) {
+  if (do_unloading_jvmci(unloading_occurred)) {
     return;
   }
 #endif
@@ -535,7 +527,7 @@ void CompiledMethod::do_unloading(BoolObjectClosure* is_alive, bool unloading_oc
 }
 
 template <class CompiledICorStaticCall>
-static bool clean_if_nmethod_is_unloaded(CompiledICorStaticCall *ic, address addr, BoolObjectClosure *is_alive, CompiledMethod* from) {
+static bool clean_if_nmethod_is_unloaded(CompiledICorStaticCall *ic, address addr, CompiledMethod* from) {
   // Ok, to lookup references to zombies here
   CodeBlob *cb = CodeCache::find_blob_unsafe(addr);
   CompiledMethod* nm = (cb != NULL) ? cb->as_compiled_method_or_null() : NULL;
@@ -555,12 +547,12 @@ static bool clean_if_nmethod_is_unloaded(CompiledICorStaticCall *ic, address add
   return false;
 }
 
-static bool clean_if_nmethod_is_unloaded(CompiledIC *ic, BoolObjectClosure *is_alive, CompiledMethod* from) {
-  return clean_if_nmethod_is_unloaded(ic, ic->ic_destination(), is_alive, from);
+static bool clean_if_nmethod_is_unloaded(CompiledIC *ic, CompiledMethod* from) {
+  return clean_if_nmethod_is_unloaded(ic, ic->ic_destination(), from);
 }
 
-static bool clean_if_nmethod_is_unloaded(CompiledStaticCall *csc, BoolObjectClosure *is_alive, CompiledMethod* from) {
-  return clean_if_nmethod_is_unloaded(csc, csc->destination(), is_alive, from);
+static bool clean_if_nmethod_is_unloaded(CompiledStaticCall *csc, CompiledMethod* from) {
+  return clean_if_nmethod_is_unloaded(csc, csc->destination(), from);
 }
 
 bool CompiledMethod::do_unloading_parallel(BoolObjectClosure* is_alive, bool unloading_occurred) {
@@ -581,16 +573,6 @@ bool CompiledMethod::do_unloading_parallel(BoolObjectClosure* is_alive, bool unl
     // (See comment above.)
   }
 
-  // The RedefineClasses() API can cause the class unloading invariant
-  // to no longer be true. See jvmtiExport.hpp for details.
-  // Also, leave a debugging breadcrumb in local flag.
-  if (JvmtiExport::has_redefined_a_class()) {
-    // This set of the unloading_occurred flag is done before the
-    // call to post_compiled_method_unload() so that the unloading
-    // of this nmethod is reported.
-    unloading_occurred = true;
-  }
-
   // Exception cache
   clean_exception_cache();
 
@@ -608,15 +590,15 @@ bool CompiledMethod::do_unloading_parallel(BoolObjectClosure* is_alive, bool unl
         clean_ic_if_metadata_is_dead(CompiledIC_at(&iter));
       }
 
-      postponed |= clean_if_nmethod_is_unloaded(CompiledIC_at(&iter), is_alive, this);
+      postponed |= clean_if_nmethod_is_unloaded(CompiledIC_at(&iter), this);
       break;
 
     case relocInfo::opt_virtual_call_type:
-      postponed |= clean_if_nmethod_is_unloaded(CompiledIC_at(&iter), is_alive, this);
+      postponed |= clean_if_nmethod_is_unloaded(CompiledIC_at(&iter), this);
       break;
 
     case relocInfo::static_call_type:
-      postponed |= clean_if_nmethod_is_unloaded(compiledStaticCall_at(iter.reloc()), is_alive, this);
+      postponed |= clean_if_nmethod_is_unloaded(compiledStaticCall_at(iter.reloc()), this);
       break;
 
     case relocInfo::oop_type:
@@ -636,7 +618,7 @@ bool CompiledMethod::do_unloading_parallel(BoolObjectClosure* is_alive, bool unl
   }
 
 #if INCLUDE_JVMCI
-  if (do_unloading_jvmci(is_alive, unloading_occurred)) {
+  if (do_unloading_jvmci(unloading_occurred)) {
     return postponed;
   }
 #endif
@@ -647,7 +629,7 @@ bool CompiledMethod::do_unloading_parallel(BoolObjectClosure* is_alive, bool unl
   return postponed;
 }
 
-void CompiledMethod::do_unloading_parallel_postponed(BoolObjectClosure* is_alive, bool unloading_occurred) {
+void CompiledMethod::do_unloading_parallel_postponed() {
   ResourceMark rm;
 
   // Make sure the oop's ready to receive visitors
@@ -671,15 +653,15 @@ void CompiledMethod::do_unloading_parallel_postponed(BoolObjectClosure* is_alive
     switch (iter.type()) {
 
     case relocInfo::virtual_call_type:
-      clean_if_nmethod_is_unloaded(CompiledIC_at(&iter), is_alive, this);
+      clean_if_nmethod_is_unloaded(CompiledIC_at(&iter), this);
       break;
 
     case relocInfo::opt_virtual_call_type:
-      clean_if_nmethod_is_unloaded(CompiledIC_at(&iter), is_alive, this);
+      clean_if_nmethod_is_unloaded(CompiledIC_at(&iter), this);
       break;
 
     case relocInfo::static_call_type:
-      clean_if_nmethod_is_unloaded(compiledStaticCall_at(iter.reloc()), is_alive, this);
+      clean_if_nmethod_is_unloaded(compiledStaticCall_at(iter.reloc()), this);
       break;
 
     default:

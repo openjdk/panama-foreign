@@ -87,7 +87,6 @@ class MarkSweep : AllStatic {
   friend class AdjustPointerClosure;
   friend class KeepAliveClosure;
   friend class VM_MarkSweep;
-  friend void marksweep_init();
 
   //
   // Vars
@@ -117,6 +116,8 @@ class MarkSweep : AllStatic {
   static KeepAliveClosure keep_alive;
 
  public:
+  static void initialize();
+
   // Public closures
   static IsAliveClosure       is_alive;
   static FollowRootClosure    follow_root_closure;
@@ -184,8 +185,8 @@ public:
   virtual void do_cld(ClassLoaderData* cld);
   void do_cld_nv(ClassLoaderData* cld);
 
-  void set_ref_processor(ReferenceProcessor* rp) {
-    set_ref_processor_internal(rp);
+  void set_ref_discoverer(ReferenceDiscoverer* rd) {
+    set_ref_discoverer_internal(rd);
   }
 };
 
