@@ -43,6 +43,15 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
  * file.
  */
 final class AsmCodeFactory extends CodeFactory {
+    private static final String ANNOTATION_PKG_PREFIX = "Ljava/nicl/metadata/";
+    private static final String ARRAY = ANNOTATION_PKG_PREFIX + "Array;";
+    private static final String C = ANNOTATION_PKG_PREFIX + "C;";
+    private static final String CALLING_CONVENTION = ANNOTATION_PKG_PREFIX + "CallingConvention;";
+    private static final String HEADER = ANNOTATION_PKG_PREFIX + "Header;";
+    private static final String LIBRARY_DEPENDENCIES = ANNOTATION_PKG_PREFIX + "LibraryDependencies;";
+    private static final String NATIVE_TYPE = ANNOTATION_PKG_PREFIX + "NativeType;";
+    private static final String OFFSET = ANNOTATION_PKG_PREFIX + "Offset;";
+
     private final Context ctx;
     private final ClassWriter global_cw;
     private final String internal_name;
@@ -65,13 +74,11 @@ final class AsmCodeFactory extends CodeFactory {
         global_cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
                 internal_name,
                 null, "java/lang/Object", null);
-        AnnotationVisitor av = global_cw.visitAnnotation(
-                "Ljava/nicl/metadata/Header;", true);
+        AnnotationVisitor av = global_cw.visitAnnotation(HEADER, true);
         av.visit("path", owner.path.toAbsolutePath().toString());
         av.visitEnd();
         if (owner.libraries != null && !owner.libraries.isEmpty()) {
-            AnnotationVisitor deps = global_cw.visitAnnotation(
-                "Ljava/nicl/metadata/LibraryDependencies;", true);
+            AnnotationVisitor deps = global_cw.visitAnnotation(LIBRARY_DEPENDENCIES, true);
             AnnotationVisitor libNames = deps.visitArray("names");
             for (String name : owner.libraries) {
                 libNames.visit(null, name);
@@ -96,8 +103,7 @@ final class AsmCodeFactory extends CodeFactory {
     }
 
     private void annotateC(ClassVisitor cw, Cursor dcl) {
-        AnnotationVisitor av = cw.visitAnnotation(
-                "Ljava/nicl/metadata/C;", true);
+        AnnotationVisitor av = cw.visitAnnotation(C, true);
         SourceLocation src = dcl.getSourceLocation();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
@@ -131,8 +137,7 @@ final class AsmCodeFactory extends CodeFactory {
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$get",
                 "()" + jt.getDescriptor(), "()" + jt.getSignature(), null);
 
-        AnnotationVisitor av = mv.visitAnnotation(
-                "Ljava/nicl/metadata/C;", true);
+        AnnotationVisitor av = mv.visitAnnotation(C, true);
         SourceLocation src = c.getSourceLocation();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
@@ -142,8 +147,7 @@ final class AsmCodeFactory extends CodeFactory {
         av.visit("USR", c.USR());
         av.visitEnd();
 
-        av = mv.visitAnnotation(
-                "Ljava/nicl/metadata/NativeType;", true);
+        av = mv.visitAnnotation(NATIVE_TYPE, true);
         av.visit("layout", Utils.getLayout(t));
         av.visit("ctype", t.spelling());
         av.visit("size", t.size());
@@ -152,7 +156,7 @@ final class AsmCodeFactory extends CodeFactory {
 
         if (t.kind() == TypeKind.ConstantArray || t.kind() == TypeKind.IncompleteArray) {
             logger.finer(() -> "Array field " + fieldName + ", type " + t.kind().name());
-            av = mv.visitAnnotation("Ljava/nicl/metadata/Array;", true);
+            av = mv.visitAnnotation(ARRAY, true);
             av.visit("elementType", t.getElementType().canonicalType().spelling());
             av.visit("elementSize", t.getElementType().canonicalType().size());
             if (t.kind() == TypeKind.ConstantArray) {
@@ -163,8 +167,7 @@ final class AsmCodeFactory extends CodeFactory {
 
         if (parentType != null) {
             long offset = parentType.getOffsetOf(fieldName);
-            av = mv.visitAnnotation(
-                    "Ljava/nicl/metadata/Offset;", true);
+            av = mv.visitAnnotation(OFFSET,  true);
             av.visit("offset", offset);
             if (c.isBitField()) {
                 av.visit("bits", c.getBitFieldWidth());
@@ -214,8 +217,7 @@ final class AsmCodeFactory extends CodeFactory {
                 name, "Ljava/lang/Object;Ljava/nicl/types/Reference<L" + name + ";>;",
                 "java/lang/Object", new String[] {"java/nicl/types/Reference"});
         annotateC(cw, cursor);
-        AnnotationVisitor av = cw.visitAnnotation(
-                "Ljava/nicl/metadata/NativeType;", true);
+        AnnotationVisitor av = cw.visitAnnotation(NATIVE_TYPE, true);
         av.visit("layout", Utils.getLayout(t));
         av.visit("ctype", t.spelling());
         av.visit("size", t.size());
@@ -273,8 +275,7 @@ final class AsmCodeFactory extends CodeFactory {
                 name, null, "java/lang/Object", superAnno);
         annotateC(cw, dcl);
         Type t = dcl.type().canonicalType();
-        AnnotationVisitor av = cw.visitAnnotation(
-                "Ljava/nicl/metadata/NativeType;", true);
+        AnnotationVisitor av = cw.visitAnnotation(NATIVE_TYPE, true);
         av.visit("layout", Utils.getLayout(t));
         av.visit("ctype", t.spelling());
         av.visit("size", t.size());
@@ -318,15 +319,13 @@ final class AsmCodeFactory extends CodeFactory {
         // add the method
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, "fn",
                 fn.getDescriptor(), fn.getSignature(), null);
-        av = mv.visitAnnotation(
-                "Ljava/nicl/metadata/NativeType;", true);
+        av = mv.visitAnnotation(NATIVE_TYPE, true);
         av.visit("layout", nDesc);
         av.visit("ctype", "N/A");
         av.visit("size", -1);
         av.visitEnd();
         // FIXME: We need calling convention
-        av = mv.visitAnnotation(
-                "Ljava/nicl/metadata/CallingConvention;", true);
+        av = mv.visitAnnotation(CALLING_CONVENTION, true);
         av.visit("value", jt2.getCallingConvention());
         av.visitEnd();
 
@@ -371,15 +370,13 @@ final class AsmCodeFactory extends CodeFactory {
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, "fn",
                 fn.getDescriptor(), fn.getSignature(), null);
         if (dcl != null) {
-            av = mv.visitAnnotation(
-                    "Ljava/nicl/metadata/NativeType;", true);
+            av = mv.visitAnnotation(NATIVE_TYPE, true);
             Type t = dcl.type().canonicalType();
             av.visit("layout", Utils.getLayout(t));
             av.visit("ctype", t.spelling());
             av.visit("size", t.size());
             av.visitEnd();
-            av = mv.visitAnnotation(
-                    "Ljava/nicl/metadata/CallingConvention;", true);
+            av = mv.visitAnnotation(CALLING_CONVENTION, true);
             av.visit("value", t.getCallingConvention().value());
             av.visitEnd();
         }
@@ -419,8 +416,7 @@ final class AsmCodeFactory extends CodeFactory {
             logger.finer(() -> "  arg " + tmp + ": " + name);
             mv.visitParameter(name, 0);
         }
-        AnnotationVisitor av = mv.visitAnnotation(
-                "Ljava/nicl/metadata/C;", true);
+        AnnotationVisitor av = mv.visitAnnotation(C, true);
         SourceLocation src = dcl.getSourceLocation();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
@@ -429,16 +425,14 @@ final class AsmCodeFactory extends CodeFactory {
         av.visit("column", loc.column());
         av.visit("USR", dcl.USR());
         av.visitEnd();
-        av = mv.visitAnnotation(
-                "Ljava/nicl/metadata/NativeType;", true);
+        av = mv.visitAnnotation(NATIVE_TYPE, true);
         Type t = dcl.type();
         av.visit("layout", Utils.getLayout(t));
         av.visit("ctype", t.spelling());
         av.visit("name", dcl.spelling());
         av.visit("size", t.size());
         av.visitEnd();
-        av = mv.visitAnnotation(
-                "Ljava/nicl/metadata/CallingConvention;", true);
+        av = mv.visitAnnotation(CALLING_CONVENTION, true);
         av.visit("value", t.getCallingConvention().value());
         av.visitEnd();
 
@@ -668,7 +662,7 @@ final class AsmCodeFactory extends CodeFactory {
         String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(l.type().getTypeClass()));
         MethodVisitor mv = global_cw.visitMethod(flags, macroName, sig, sig, null);
 
-        AnnotationVisitor av = mv.visitAnnotation("Ljava/nicl/metadata/C;", true);
+        AnnotationVisitor av = mv.visitAnnotation(C, true);
         SourceLocation src = cursor.getSourceLocation();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
