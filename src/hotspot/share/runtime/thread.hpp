@@ -26,11 +26,13 @@
 #define SHARE_VM_RUNTIME_THREAD_HPP
 
 #include "jni.h"
+#include "gc/shared/gcThreadLocalData.hpp"
 #include "gc/shared/threadLocalAllocBuffer.hpp"
 #include "memory/allocation.hpp"
 #include "oops/oop.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "runtime/frame.hpp"
+#include "runtime/globals.hpp"
 #include "runtime/handshake.hpp"
 #include "runtime/javaFrameAnchor.hpp"
 #include "runtime/jniHandles.hpp"
@@ -47,18 +49,14 @@
 #include "utilities/align.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/macros.hpp"
-#if INCLUDE_ALL_GCS
-#include "gc/g1/dirtyCardQueue.hpp"
-#include "gc/g1/satbMarkQueue.hpp"
-#endif // INCLUDE_ALL_GCS
 #ifdef ZERO
 # include "stack_zero.hpp"
 #endif
 
+class SafeThreadsListPtr;
 class ThreadSafepointState;
 class ThreadsList;
 class ThreadsSMRSupport;
-class NestedThreadsList;
 
 class JvmtiThreadState;
 class JvmtiGetLoadedClassesClosure;
@@ -112,6 +110,22 @@ class Thread: public ThreadShadow {
   static THREAD_LOCAL_DECL Thread* _thr_current;
 #endif
 
+ private:
+  // Thread local data area available to the GC. The internal
+  // structure and contents of this data area is GC-specific.
+  // Only GC and GC barrier code should access this data area.
+  GCThreadLocalData _gc_data;
+
+ public:
+  static ByteSize gc_data_offset() {
+    return byte_offset_of(Thread, _gc_data);
+  }
+
+  template <typename T> T* gc_data() {
+    STATIC_ASSERT(sizeof(T) <= sizeof(_gc_data));
+    return reinterpret_cast<T*>(&_gc_data);
+  }
+
   // Exception handling
   // (Note: _pending_exception and friends are in ThreadShadow)
   //oop       _pending_exception;                // pending exception for current thread
@@ -122,13 +136,14 @@ class Thread: public ThreadShadow {
   void*       _real_malloc_address;
 
   // JavaThread lifecycle support:
+  friend class SafeThreadsListPtr;  // for _threads_list_ptr, cmpxchg_threads_hazard_ptr(), {dec_,inc_,}nested_threads_hazard_ptr_cnt(), {g,s}et_threads_hazard_ptr(), inc_nested_handle_cnt(), tag_hazard_ptr() access
   friend class ScanHazardPtrGatherProtectedThreadsClosure;  // for cmpxchg_threads_hazard_ptr(), get_threads_hazard_ptr(), is_hazard_ptr_tagged() access
-  friend class ScanHazardPtrGatherThreadsListClosure;  // for get_nested_threads_hazard_ptr(), get_threads_hazard_ptr(), untag_hazard_ptr() access
+  friend class ScanHazardPtrGatherThreadsListClosure;  // for get_threads_hazard_ptr(), untag_hazard_ptr() access
   friend class ScanHazardPtrPrintMatchingThreadsClosure;  // for get_threads_hazard_ptr(), is_hazard_ptr_tagged() access
-  friend class ThreadsListSetter;  // for get_threads_hazard_ptr() access
-  friend class ThreadsSMRSupport;  // for get_threads_hazard_ptr() access
+  friend class ThreadsSMRSupport;  // for _nested_threads_hazard_ptr_cnt, _threads_hazard_ptr, _threads_list_ptr access
 
   ThreadsList* volatile _threads_hazard_ptr;
+  SafeThreadsListPtr*   _threads_list_ptr;
   ThreadsList*          cmpxchg_threads_hazard_ptr(ThreadsList* exchange_value, ThreadsList* compare_value);
   ThreadsList*          get_threads_hazard_ptr();
   void                  set_threads_hazard_ptr(ThreadsList* new_list);
@@ -140,15 +155,6 @@ class Thread: public ThreadShadow {
   }
   static ThreadsList*   untag_hazard_ptr(ThreadsList* list) {
     return (ThreadsList*)(intptr_t(list) & ~intptr_t(1));
-  }
-  NestedThreadsList* _nested_threads_hazard_ptr;
-  NestedThreadsList* get_nested_threads_hazard_ptr() {
-    return _nested_threads_hazard_ptr;
-  }
-  void set_nested_threads_hazard_ptr(NestedThreadsList* value) {
-    assert(Threads_lock->owned_by_self(),
-           "must own Threads_lock for _nested_threads_hazard_ptr to be valid.");
-    _nested_threads_hazard_ptr = value;
   }
   // This field is enabled via -XX:+EnableThreadSMRStatistics:
   uint _nested_threads_hazard_ptr_cnt;
@@ -292,6 +298,14 @@ class Thread: public ThreadShadow {
   // claimed as a task.
   int _oops_do_parity;
 
+  // Support for GlobalCounter
+ private:
+  volatile uintx _rcu_counter;
+ public:
+  volatile uintx* get_rcu_counter() {
+    return &_rcu_counter;
+  }
+
  public:
   void set_last_handle_mark(HandleMark* mark)   { _last_handle_mark = mark; }
   HandleMark* last_handle_mark() const          { return _last_handle_mark; }
@@ -365,7 +379,7 @@ class Thread: public ThreadShadow {
   void initialize_thread_current();
   void clear_thread_current(); // TLS cleanup needed before threads terminate
 
-  public:
+ public:
   // thread entry point
   virtual void run();
 
@@ -619,7 +633,6 @@ protected:
 
   // Printing
   virtual void print_on(outputStream* st) const;
-  virtual void print_nested_threads_hazard_ptrs_on(outputStream* st) const;
   void print() const { print_on(tty); }
   virtual void print_on_error(outputStream* st, char* buf, int buflen) const;
   void print_value_on(outputStream* st) const;
@@ -1058,18 +1071,6 @@ class JavaThread: public Thread {
     int _line;
   }   _jmp_ring[jump_ring_buffer_size];
 #endif // PRODUCT
-
-#if INCLUDE_ALL_GCS
-  // Support for G1 barriers
-
-  SATBMarkQueue _satb_mark_queue;        // Thread-local log for SATB barrier.
-  // Set of all such queues.
-  static SATBMarkQueueSet _satb_mark_queue_set;
-
-  DirtyCardQueue _dirty_card_queue;      // Thread-local log for dirty cards.
-  // Set of all such queues.
-  static DirtyCardQueueSet _dirty_card_queue_set;
-#endif // INCLUDE_ALL_GCS
 
   friend class VMThread;
   friend class ThreadWaitTransition;
@@ -1670,11 +1671,6 @@ class JavaThread: public Thread {
     return byte_offset_of(JavaThread, _should_post_on_exceptions_flag);
   }
 
-#if INCLUDE_ALL_GCS
-  static ByteSize satb_mark_queue_offset()       { return byte_offset_of(JavaThread, _satb_mark_queue); }
-  static ByteSize dirty_card_queue_offset()      { return byte_offset_of(JavaThread, _dirty_card_queue); }
-#endif // INCLUDE_ALL_GCS
-
   // Returns the jni environment for this thread
   JNIEnv* jni_environment()                      { return &_jni_environment; }
 
@@ -1945,20 +1941,6 @@ class JavaThread: public Thread {
     _stack_size_at_create = value;
   }
 
-#if INCLUDE_ALL_GCS
-  // SATB marking queue support
-  SATBMarkQueue& satb_mark_queue() { return _satb_mark_queue; }
-  static SATBMarkQueueSet& satb_mark_queue_set() {
-    return _satb_mark_queue_set;
-  }
-
-  // Dirty card queue support
-  DirtyCardQueue& dirty_card_queue() { return _dirty_card_queue; }
-  static DirtyCardQueueSet& dirty_card_queue_set() {
-    return _dirty_card_queue_set;
-  }
-#endif // INCLUDE_ALL_GCS
-
   // Machine dependent stuff
 #include OS_CPU_HEADER(thread)
 
@@ -2039,12 +2021,14 @@ class CompilerThread : public JavaThread {
   BufferBlob*           _buffer_blob;
 
   AbstractCompiler*     _compiler;
+  TimeStamp             _idle_time;
 
  public:
 
   static CompilerThread* current();
 
   CompilerThread(CompileQueue* queue, CompilerCounters* counters);
+  ~CompilerThread();
 
   bool is_Compiler_thread() const                { return true; }
 
@@ -2072,6 +2056,11 @@ class CompilerThread : public JavaThread {
     // Set once, for good.
     assert(_log == NULL, "set only once");
     _log = log;
+  }
+
+  void start_idle_timer()                        { _idle_time.update(); }
+  jlong idle_time_millis() {
+    return TimeHelper::counter_to_millis(_idle_time.ticks_since_update());
   }
 
 #ifndef PRODUCT
@@ -2114,6 +2103,9 @@ class Threads: AllStatic {
   // thread to the thread list before allocating its thread object
   static void add(JavaThread* p, bool force_daemon = false);
   static void remove(JavaThread* p);
+  static void non_java_threads_do(ThreadClosure* tc);
+  static void java_threads_do(ThreadClosure* tc);
+  static void java_threads_and_vm_thread_do(ThreadClosure* tc);
   static void threads_do(ThreadClosure* tc);
   static void possibly_parallel_threads_do(bool is_par, ThreadClosure* tc);
 
@@ -2152,10 +2144,6 @@ class Threads: AllStatic {
   static void oops_do(OopClosure* f, CodeBlobClosure* cf);
   // This version may be called by sequential or parallel code.
   static void possibly_parallel_oops_do(bool is_par, OopClosure* f, CodeBlobClosure* cf);
-  // This creates a list of GCTasks, one per thread.
-  static void create_thread_roots_tasks(GCTaskQueue* q);
-  // This creates a list of GCTasks, one per thread, for marking objects.
-  static void create_thread_roots_marking_tasks(GCTaskQueue* q);
 
   // Apply "f->do_oop" to roots in all threads that
   // are part of compiled frames

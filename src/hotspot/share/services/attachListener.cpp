@@ -31,6 +31,7 @@
 #include "oops/typeArrayOop.inline.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "runtime/arguments.hpp"
+#include "runtime/flags/jvmFlag.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/java.hpp"
@@ -275,9 +276,9 @@ static jint set_flag(AttachOperation* op, outputStream* out) {
 
   FormatBuffer<80> err_msg("%s", "");
 
-  int ret = WriteableFlags::set_flag(op->arg(0), op->arg(1), Flag::ATTACH_ON_DEMAND, err_msg);
-  if (ret != Flag::SUCCESS) {
-    if (ret == Flag::NON_WRITABLE) {
+  int ret = WriteableFlags::set_flag(op->arg(0), op->arg(1), JVMFlag::ATTACH_ON_DEMAND, err_msg);
+  if (ret != JVMFlag::SUCCESS) {
+    if (ret == JVMFlag::NON_WRITABLE) {
       // if the flag is not manageable try to change it through
       // the platform dependent implementation
       return AttachListener::pd_set_flag(op, out);
@@ -298,7 +299,7 @@ static jint print_flag(AttachOperation* op, outputStream* out) {
     out->print_cr("flag name is missing");
     return JNI_ERR;
   }
-  Flag* f = Flag::find_flag((char*)name, strlen(name));
+  JVMFlag* f = JVMFlag::find_flag((char*)name, strlen(name));
   if (f) {
     f->print_as_flag(out);
     out->cr();
@@ -334,7 +335,9 @@ static AttachOperationFunctionInfo funcs[] = {
 static void attach_listener_thread_entry(JavaThread* thread, TRAPS) {
   os::set_priority(thread, NearMaxPriority);
 
-  thread->record_stack_base_and_size();
+  assert(thread == Thread::current(), "Must be");
+  assert(thread->stack_base() != NULL && thread->stack_size() > 0,
+         "Should already be setup");
 
   if (AttachListener::pd_init() != 0) {
     return;
