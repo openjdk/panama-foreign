@@ -53,9 +53,9 @@ ifeq ($(ENABLE_LIBCLANG), yes)
   TARGETS += $(BUILD_LIBJCLANG)
 
   $(eval $(call SetupCopyFiles, COPY_CLANG_LIB, \
-      FILES := $(CLANG_LIB_PATH)/$(LIBRARY_PREFIX)clang$(SHARED_LIBRARY_SUFFIX), \
+      FILES := $(wildcard $(CLANG_LIB_PATH)/$(LIBRARY_PREFIX)clang$(SHARED_LIBRARY_SUFFIX)*), \
       DEST := $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE), \
-      MACRO := install-file-nolink, \
+      LINK_MACRO := link-file-relative \
   ))
 
   TARGETS += $(COPY_CLANG_LIB)
