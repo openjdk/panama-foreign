@@ -921,6 +921,8 @@ class java_lang_ref_Reference: AllStatic {
   static inline void set_discovered(oop ref, oop value);
   static inline void set_discovered_raw(oop ref, oop value);
   static inline HeapWord* discovered_addr_raw(oop ref);
+  static inline oop queue(oop ref);
+  static inline void set_queue(oop ref, oop value);
   static bool is_referent_field(oop obj, ptrdiff_t offset);
   static inline bool is_phantom(oop ref);
 };
@@ -1305,6 +1307,12 @@ class java_lang_ClassLoader : AllStatic {
   // Debugging
   friend class JavaClasses;
   friend class ClassFileParser; // access to number_of_fake_fields
+
+  // Describe ClassLoader for exceptions, tracing ...
+  // Prints "<name>" (instance of <classname>, child of "<name>" <classname>).
+  // If a classloader has no name, it prints <unnamed> instead. The output
+  // for well known loaders (system/platform) is abbreviated.
+  static const char* describe_external(const oop loader);
 };
 
 

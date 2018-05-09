@@ -37,6 +37,18 @@ public:
                                   Register src, Register dst, Register count) {}
   virtual void arraycopy_epilogue(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
                                   Register src, Register dst, Register count) {}
+
+  virtual void store_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
+                        Register src, Address dst, Register tmp);
+
+  virtual void load_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
+                       Address src, Register dst, Register tmp);
+
+  // Support for jniFastGetField to try resolving a jobject/jweak in native
+  virtual void try_resolve_jobject_in_native(MacroAssembler* masm, Register jni_env,
+                                             Register obj, Register tmp, Label& slowpath);
+
+  virtual void barrier_stubs_init() {}
 };
 
 #endif // CPU_SPARC_GC_SHARED_BARRIERSETASSEMBLER_SPARC_HPP

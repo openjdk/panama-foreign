@@ -33,6 +33,7 @@
 #include "gc/shared/gcTrace.hpp"
 #include "gc/shared/taskqueue.inline.hpp"
 #include "memory/allocation.inline.hpp"
+#include "oops/access.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/prefetch.inline.hpp"
 
@@ -42,11 +43,15 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint worker_id,
     _dcq(&g1h->dirty_card_queue_set()),
     _ct(g1h->card_table()),
     _closures(NULL),
+    _plab_allocator(NULL),
+    _age_table(false),
+    _tenuring_threshold(g1h->g1_policy()->tenuring_threshold()),
+    _scanner(g1h, this),
     _hash_seed(17),
     _worker_id(worker_id),
-    _tenuring_threshold(g1h->g1_policy()->tenuring_threshold()),
-    _age_table(false),
-    _scanner(g1h, this),
+    _stack_trim_upper_threshold(GCDrainStackTargetSize * 2 + 1),
+    _stack_trim_lower_threshold(GCDrainStackTargetSize),
+    _trim_ticks(),
     _old_gen_is_full(false)
 {
   // we allocate G1YoungSurvRateNumRegions plus one entries, since
@@ -65,7 +70,7 @@ G1ParScanThreadState::G1ParScanThreadState(G1CollectedHeap* g1h, uint worker_id,
   _surviving_young_words = _surviving_young_words_base + PADDING_ELEM_NUM;
   memset(_surviving_young_words, 0, real_length * sizeof(size_t));
 
-  _plab_allocator = new G1DefaultPLABAllocator(_g1h->allocator());
+  _plab_allocator = new G1PLABAllocator(_g1h->allocator());
 
   _dest[InCSetState::NotInCSet]    = InCSetState::NotInCSet;
   // The dest for Young is used when the objects are aged enough to
@@ -104,7 +109,7 @@ bool G1ParScanThreadState::verify_ref(narrowOop* ref) const {
   assert(ref != NULL, "invariant");
   assert(UseCompressedOops, "sanity");
   assert(!has_partial_array_mask(ref), "ref=" PTR_FORMAT, p2i(ref));
-  oop p = oopDesc::load_decode_heap_oop(ref);
+  oop p = RawAccess<>::oop_load(ref);
   assert(_g1h->is_in_g1_reserved(p),
          "ref=" PTR_FORMAT " p=" PTR_FORMAT, p2i(ref), p2i(p));
   return true;
@@ -118,7 +123,7 @@ bool G1ParScanThreadState::verify_ref(oop* ref) const {
     assert(_g1h->is_in_cset(p),
            "ref=" PTR_FORMAT " p=" PTR_FORMAT, p2i(ref), p2i(p));
   } else {
-    oop p = oopDesc::load_decode_heap_oop(ref);
+    oop p = RawAccess<>::oop_load(ref);
     assert(_g1h->is_in_g1_reserved(p),
            "ref=" PTR_FORMAT " p=" PTR_FORMAT, p2i(ref), p2i(p));
   }
@@ -137,16 +142,8 @@ bool G1ParScanThreadState::verify_task(StarTask ref) const {
 void G1ParScanThreadState::trim_queue() {
   StarTask ref;
   do {
-    // Drain the overflow stack first, so other threads can steal.
-    while (_refs->pop_overflow(ref)) {
-      if (!_refs->try_push_to_taskqueue(ref)) {
-        dispatch_reference(ref);
-      }
-    }
-
-    while (_refs->pop_local(ref)) {
-      dispatch_reference(ref);
-    }
+    // Fully drain the queue.
+    trim_queue_to_threshold(0);
   } while (!_refs->is_empty());
 }
 
@@ -281,15 +278,15 @@ oop G1ParScanThreadState::copy_to_survivor_space(InCSetState const state,
         // In this case, we have to install the mark word first,
         // otherwise obj looks to be forwarded (the old mark word,
         // which contains the forward pointer, was copied)
-        obj->set_mark(old_mark);
+        obj->set_mark_raw(old_mark);
         markOop new_mark = old_mark->displaced_mark_helper()->set_age(age);
         old_mark->set_displaced_mark_helper(new_mark);
       } else {
-        obj->set_mark(old_mark->set_age(age));
+        obj->set_mark_raw(old_mark->set_age(age));
       }
       _age_table.add(age, word_sz);
     } else {
-      obj->set_mark(old_mark);
+      obj->set_mark_raw(old_mark);
     }
 
     if (G1StringDedup::is_enabled()) {
@@ -313,7 +310,7 @@ oop G1ParScanThreadState::copy_to_survivor_space(InCSetState const state,
       // length field of the from-space object.
       arrayOop(obj)->set_length(0);
       oop* old_p = set_partial_array_mask(old);
-      push_on_queue(old_p);
+      do_oop_partial_array(old_p);
     } else {
       HeapRegion* const to_region = _g1h->heap_region_containing(obj_ptr);
       _scanner.set_region(to_region);
