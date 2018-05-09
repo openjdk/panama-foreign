@@ -79,7 +79,7 @@ class G1RemSet;
 class G1YoungRemSetSamplingThread;
 class HeapRegionRemSetIterator;
 class G1ConcurrentMark;
-class ConcurrentMarkThread;
+class G1ConcurrentMarkThread;
 class G1ConcurrentRefine;
 class GenerationCounters;
 class STWGCTimer;
@@ -107,10 +107,17 @@ typedef int CardIdx_t;     // needs to hold [ 0..CardsPerRegion )
 // (optional) _is_alive_non_header closure in the STW
 // reference processor. It is also extensively used during
 // reference processing during STW evacuation pauses.
-class G1STWIsAliveClosure: public BoolObjectClosure {
-  G1CollectedHeap* _g1;
+class G1STWIsAliveClosure : public BoolObjectClosure {
+  G1CollectedHeap* _g1h;
 public:
-  G1STWIsAliveClosure(G1CollectedHeap* g1) : _g1(g1) {}
+  G1STWIsAliveClosure(G1CollectedHeap* g1h) : _g1h(g1h) {}
+  bool do_object_b(oop p);
+};
+
+class G1STWSubjectToDiscoveryClosure : public BoolObjectClosure {
+  G1CollectedHeap* _g1h;
+public:
+  G1STWSubjectToDiscoveryClosure(G1CollectedHeap* g1h) : _g1h(g1h) {}
   bool do_object_b(oop p);
 };
 
@@ -162,11 +169,6 @@ private:
   MemoryPool* _old_pool;
 
   static size_t _humongous_object_threshold_in_words;
-
-  // The secondary free list which contains regions that have been
-  // freed up during the cleanup process. This will be appended to
-  // the master free list when appropriate.
-  FreeRegionList _secondary_free_list;
 
   // It keeps track of the old regions.
   HeapRegionSet _old_set;
@@ -266,8 +268,6 @@ private:
   // Stores whether during humongous object registration we found candidate regions.
   // If not, we can skip a few steps.
   bool _has_humongous_reclaim_candidates;
-
-  volatile uint _gc_time_stamp;
 
   G1HRPrinter _hr_printer;
 
@@ -380,13 +380,6 @@ private:
 
   G1CollectionSet _collection_set;
 
-  // This is the second level of trying to allocate a new region. If
-  // new_region() didn't find a region on the free_list, this call will
-  // check whether there's anything available on the
-  // secondary_free_list and/or wait for more regions to appear on
-  // that list, if _free_regions_coming is set.
-  HeapRegion* new_region_try_secondary_free_list(bool is_old);
-
   // Try to allocate a single non-humongous HeapRegion sufficient for
   // an allocation of the given word_size. If do_expand is true,
   // attempt to expand the heap if necessary to satisfy the allocation
@@ -434,7 +427,9 @@ private:
   //   humongous allocation requests should go to mem_allocate() which
   //   will satisfy them with a special path.
 
-  virtual HeapWord* allocate_new_tlab(size_t word_size);
+  virtual HeapWord* allocate_new_tlab(size_t min_size,
+                                      size_t requested_size,
+                                      size_t* actual_size);
 
   virtual HeapWord* mem_allocate(size_t word_size,
                                  bool*  gc_overhead_limit_was_exceeded);
@@ -442,7 +437,9 @@ private:
   // First-level mutator allocation attempt: try to allocate out of
   // the mutator alloc region without taking the Heap_lock. This
   // should only be used for non-humongous allocations.
-  inline HeapWord* attempt_allocation(size_t word_size);
+  inline HeapWord* attempt_allocation(size_t min_word_size,
+                                      size_t desired_word_size,
+                                      size_t* actual_word_size);
 
   // Second-level mutator allocation attempt: take the Heap_lock and
   // retry the allocation attempt, potentially scheduling a GC
@@ -516,16 +513,13 @@ private:
   // allocated block, or else "NULL".
   HeapWord* expand_and_allocate(size_t word_size);
 
-  // Preserve any referents discovered by concurrent marking that have not yet been
-  // copied by the STW pause.
-  void preserve_cm_referents(G1ParScanThreadStateSet* per_thread_states);
-  // Process any reference objects discovered during
-  // an incremental evacuation pause.
+  // Process any reference objects discovered.
   void process_discovered_references(G1ParScanThreadStateSet* per_thread_states);
 
-  // Enqueue any remaining discovered references
-  // after processing.
-  void enqueue_discovered_references(G1ParScanThreadStateSet* per_thread_states);
+  // If during an initial mark pause we may install a pending list head which is not
+  // otherwise reachable ensure that it is marked in the bitmap for concurrent marking
+  // to discover.
+  void make_pending_list_reachable();
 
   // Merges the information gathered on a per-thread basis for all worker threads
   // during GC into global variables.
@@ -563,6 +557,9 @@ public:
   // Do anything common to GC's.
   void gc_prologue(bool full);
   void gc_epilogue(bool full);
+
+  // Does the given region fulfill remembered set based eager reclaim candidate requirements?
+  bool is_potential_eager_reclaim_candidate(HeapRegion* r) const;
 
   // Modify the reclaim candidate set and test for presence.
   // These are only valid for starts_humongous regions.
@@ -654,12 +651,11 @@ public:
   // and calling free_region() for each of them. The freed regions
   // will be added to the free list that's passed as a parameter (this
   // is usually a local list which will be appended to the master free
-  // list later). The used bytes of freed regions are accumulated in
-  // pre_used. If skip_remset is true, the region's RSet will not be freed
-  // up. The assumption is that this will be done later.
+  // list later).
+  // The method assumes that only a single thread is ever calling
+  // this for a particular region at once.
   void free_humongous_region(HeapRegion* hr,
-                             FreeRegionList* free_list,
-                             bool skip_remset);
+                             FreeRegionList* free_list);
 
   // Facility for allocating in 'archive' regions in high heap memory and
   // recording the allocated ranges. These should all be called from the
@@ -778,7 +774,7 @@ private:
 
   // The concurrent marker (and the thread it runs in.)
   G1ConcurrentMark* _cm;
-  ConcurrentMarkThread* _cmThread;
+  G1ConcurrentMarkThread* _cm_thread;
 
   // The concurrent refiner.
   G1ConcurrentRefine* _cr;
@@ -824,9 +820,9 @@ private:
   // Set whether G1EvacuationFailureALot should be in effect
   // for the current GC (based upon the type of GC and which
   // command line flags are set);
-  inline bool evacuation_failure_alot_for_gc_type(bool gcs_are_young,
+  inline bool evacuation_failure_alot_for_gc_type(bool for_young_gc,
                                                   bool during_initial_mark,
-                                                  bool during_marking);
+                                                  bool mark_or_rebuild_in_progress);
 
   inline void set_evacuation_failure_alot_for_current_gc();
 
@@ -905,6 +901,8 @@ private:
   // the discovered lists during reference discovery.
   G1STWIsAliveClosure _is_alive_closure_stw;
 
+  G1STWSubjectToDiscoveryClosure _is_subject_to_discovery_stw;
+
   // The (concurrent marking) reference processor...
   ReferenceProcessor* _ref_processor_cm;
 
@@ -916,8 +914,7 @@ private:
   // discovery.
   G1CMIsAliveClosure _is_alive_closure_cm;
 
-  volatile bool _free_regions_coming;
-
+  G1CMSubjectToDiscoveryClosure _is_subject_to_discovery_cm;
 public:
 
   RefToScanQueue *task_queue(uint i) const;
@@ -955,7 +952,7 @@ public:
   void ref_processing_init();
 
   virtual Name kind() const {
-    return CollectedHeap::G1CollectedHeap;
+    return CollectedHeap::G1;
   }
 
   virtual const char* name() const {
@@ -983,21 +980,6 @@ public:
 
   // Try to minimize the remembered set.
   void scrub_rem_set();
-
-  uint get_gc_time_stamp() {
-    return _gc_time_stamp;
-  }
-
-  inline void reset_gc_time_stamp();
-
-  void check_gc_time_stamps() PRODUCT_RETURN;
-
-  inline void increment_gc_time_stamp();
-
-  // Reset the given region's GC timestamp. If it's starts humongous,
-  // also reset the GC timestamp of its corresponding
-  // continues humongous regions too.
-  void reset_gc_time_stamps(HeapRegion* hr);
 
   // Apply the given closure on all cards in the Hot Card Cache, emptying it.
   void iterate_hcc_closure(CardTableEntryClosure* cl, uint worker_i);
@@ -1063,37 +1045,12 @@ public:
   }
 #endif // ASSERT
 
-  // Wrapper for the region list operations that can be called from
-  // methods outside this class.
-
-  void secondary_free_list_add(FreeRegionList* list) {
-    _secondary_free_list.add_ordered(list);
-  }
-
-  void append_secondary_free_list() {
-    _hrm.insert_list_into_free_list(&_secondary_free_list);
-  }
-
-  void append_secondary_free_list_if_not_empty_with_lock() {
-    // If the secondary free list looks empty there's no reason to
-    // take the lock and then try to append it.
-    if (!_secondary_free_list.is_empty()) {
-      MutexLockerEx x(SecondaryFreeList_lock, Mutex::_no_safepoint_check_flag);
-      append_secondary_free_list();
-    }
-  }
-
   inline void old_set_add(HeapRegion* hr);
   inline void old_set_remove(HeapRegion* hr);
 
   size_t non_young_capacity_bytes() {
     return (_old_set.length() + _humongous_set.length()) * HeapRegion::GrainBytes;
   }
-
-  void set_free_regions_coming();
-  void reset_free_regions_coming();
-  bool free_regions_coming() { return _free_regions_coming; }
-  void wait_while_free_regions_coming();
 
   // Determine whether the given region is one that we are using as an
   // old GC alloc region.
@@ -1305,9 +1262,9 @@ public:
   // functions.
   // This performs a concurrent marking of the live objects in a
   // bitmap off to the side.
-  void doConcurrentMark();
+  void do_concurrent_mark();
 
-  bool isMarkedNext(oop obj) const;
+  bool is_marked_next(oop obj) const;
 
   // Determine if an object is dead, given the object and also
   // the region to which the object belongs. An object is dead
@@ -1325,7 +1282,7 @@ public:
   bool is_obj_ill(const oop obj, const HeapRegion* hr) const {
     return
       !hr->obj_allocated_since_next_marking(obj) &&
-      !isMarkedNext(obj) &&
+      !is_marked_next(obj) &&
       !hr->is_archive();
   }
 
@@ -1380,6 +1337,9 @@ public:
   // Redirty logged cards in the refinement queue.
   void redirty_logged_cards();
   // Verification
+
+  // Deduplicate the string
+  virtual void deduplicate_string(oop str);
 
   // Perform any cleanup actions necessary before allowing a verification.
   virtual void prepare_for_verify();

@@ -47,6 +47,9 @@
 #include "opto/subnode.hpp"
 #include "opto/type.hpp"
 #include "runtime/sharedRuntime.hpp"
+#if INCLUDE_G1GC
+#include "gc/g1/g1ThreadLocalData.hpp"
+#endif // INCLUDE_G1GC
 
 
 //
@@ -243,7 +246,9 @@ void PhaseMacroExpand::eliminate_card_mark(Node* p2x) {
       assert(mem->is_Store(), "store required");
       _igvn.replace_node(mem, mem->in(MemNode::Memory));
     }
-  } else {
+  }
+#if INCLUDE_G1GC
+  else {
     // G1 pre/post barriers
     assert(p2x->outcnt() <= 2, "expects 1 or 2 users: Xor and URShift nodes");
     // It could be only one user, URShift node, in Object.clone() intrinsic
@@ -292,8 +297,7 @@ void PhaseMacroExpand::eliminate_card_mark(Node* p2x) {
               cmpx->is_Cmp() && cmpx->in(2) == intcon(0) &&
               cmpx->in(1)->is_Load()) {
             Node* adr = cmpx->in(1)->as_Load()->in(MemNode::Address);
-            const int marking_offset = in_bytes(JavaThread::satb_mark_queue_offset() +
-                                                SATBMarkQueue::byte_offset_of_active());
+            const int marking_offset = in_bytes(G1ThreadLocalData::satb_mark_queue_active_offset());
             if (adr->is_AddP() && adr->in(AddPNode::Base) == top() &&
                 adr->in(AddPNode::Address)->Opcode() == Op_ThreadLocal &&
                 adr->in(AddPNode::Offset) == MakeConX(marking_offset)) {
@@ -324,6 +328,7 @@ void PhaseMacroExpand::eliminate_card_mark(Node* p2x) {
     assert(p2x->outcnt() == 0 || p2x->unique_out()->Opcode() == Op_URShiftX, "");
     _igvn.replace_node(p2x, top());
   }
+#endif // INCLUDE_G1GC
 }
 
 // Search for a memory operation for the specified memory slice.
