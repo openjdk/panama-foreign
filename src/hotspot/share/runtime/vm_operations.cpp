@@ -235,7 +235,7 @@ void VM_PrintJNI::doit() {
 }
 
 void VM_PrintMetadata::doit() {
-  MetaspaceUtils::print_metadata_for_nmt(_out, _scale);
+  MetaspaceUtils::print_report(_out, _scale, _flags);
 }
 
 VM_FindDeadlocks::~VM_FindDeadlocks() {
@@ -417,7 +417,7 @@ ThreadSnapshot* VM_ThreadDump::snapshot_thread(JavaThread* java_thread, ThreadCo
 }
 
 volatile bool VM_Exit::_vm_exited = false;
-Thread * VM_Exit::_shutdown_thread = NULL;
+Thread * volatile VM_Exit::_shutdown_thread = NULL;
 
 int VM_Exit::set_vm_exited() {
 

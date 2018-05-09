@@ -35,6 +35,15 @@ public:
                                   Register addr, Register count, RegSet saved_regs) {}
   virtual void arraycopy_epilogue(MacroAssembler* masm, DecoratorSet decorators, bool is_oop,
                                   Register start, Register end, Register tmp, RegSet saved_regs) {}
+  virtual void load_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
+                       Register dst, Address src, Register tmp1, Register tmp_thread);
+  virtual void store_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
+                        Address dst, Register val, Register tmp1, Register tmp2);
+
+  virtual void try_resolve_jobject_in_native(MacroAssembler* masm, Register jni_env,
+                                             Register obj, Register tmp, Label& slowpath);
+
+  virtual void barrier_stubs_init() {}
 };
 
 #endif // CPU_AARCH64_GC_SHARED_BARRIERSETASSEMBLER_AARCH64_HPP

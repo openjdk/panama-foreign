@@ -29,7 +29,7 @@
 #include "classfile/classLoaderData.hpp"
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/klassFactory.hpp"
-#include "classfile/sharedClassUtil.hpp"
+#include "memory/filemap.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/jvmtiEnvBase.hpp"
@@ -84,7 +84,7 @@ InstanceKlass* KlassFactory::check_shared_class_file_load_hook(
         }
       } else {
         SharedClassPathEntry* ent =
-          (SharedClassPathEntry*)FileMapInfo::shared_classpath(path_index);
+          (SharedClassPathEntry*)FileMapInfo::shared_path(path_index);
         pathname = ent == NULL ? NULL : ent->name();
       }
       ClassFileStream* stream = new ClassFileStream(ptr,
@@ -232,7 +232,7 @@ InstanceKlass* KlassFactory::create_from_stream(ClassFileStream* stream,
 
 #if INCLUDE_CDS
   if (DumpSharedSpaces) {
-    ClassLoader::record_result(result, stream);
+    ClassLoader::record_result(result, stream, THREAD);
 #if INCLUDE_JVMTI
     assert(cached_class_file == NULL, "Sanity");
     // Archive the class stream data into the optional data section

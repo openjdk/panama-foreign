@@ -32,19 +32,17 @@
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
 #include "code/dependencies.hpp"
-#include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "gc/shared/gcArguments.hpp"
-#include "gc/shared/gcLocker.inline.hpp"
-#include "gc/shared/generation.hpp"
+#include "gc/shared/gcConfig.hpp"
 #include "gc/shared/gcTraceTime.inline.hpp"
-#include "gc/shared/space.hpp"
 #include "interpreter/interpreter.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/filemap.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceClosure.hpp"
+#include "memory/metaspaceCounters.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
@@ -61,7 +59,8 @@
 #include "prims/resolvedMethodTable.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/atomic.hpp"
-#include "runtime/commandLineFlagConstraintList.hpp"
+#include "runtime/flags/flagSetting.hpp"
+#include "runtime/flags/jvmFlagConstraintList.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/init.hpp"
@@ -82,9 +81,6 @@
 #include "utilities/macros.hpp"
 #include "utilities/ostream.hpp"
 #include "utilities/preserveException.hpp"
-#if INCLUDE_CDS
-#include "classfile/sharedClassUtil.hpp"
-#endif
 
 // Known objects
 Klass* Universe::_boolArrayKlassObj                 = NULL;
@@ -315,7 +311,7 @@ void initialize_basic_type_klass(Klass* k, TRAPS) {
   } else
 #endif
   {
-    k->initialize_supers(ok, CHECK);
+    k->initialize_supers(ok, NULL, CHECK);
   }
   k->append_to_sibling_list();
 }
@@ -602,12 +598,12 @@ bool Universe::should_fill_in_stack_trace(Handle throwable) {
   // preallocated errors with backtrace have been consumed. Also need to avoid
   // a potential loop which could happen if an out of memory occurs when attempting
   // to allocate the backtrace.
-  return ((throwable() != Universe::_out_of_memory_error_java_heap) &&
-          (throwable() != Universe::_out_of_memory_error_metaspace)  &&
-          (throwable() != Universe::_out_of_memory_error_class_metaspace)  &&
-          (throwable() != Universe::_out_of_memory_error_array_size) &&
-          (throwable() != Universe::_out_of_memory_error_gc_overhead_limit) &&
-          (throwable() != Universe::_out_of_memory_error_realloc_objects));
+  return ((!oopDesc::equals(throwable(), Universe::_out_of_memory_error_java_heap)) &&
+          (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_metaspace))  &&
+          (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_class_metaspace))  &&
+          (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_array_size)) &&
+          (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_gc_overhead_limit)) &&
+          (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_realloc_objects)));
 }
 
 
@@ -688,6 +684,8 @@ jint universe_init() {
     return status;
   }
 
+  SystemDictionary::initialize_oop_storage();
+
   Metaspace::global_initialize();
 
   // Initialize performance counters for metaspaces
@@ -697,7 +695,7 @@ jint universe_init() {
   AOTLoader::universe_init();
 
   // Checks 'AfterMemoryInit' constraints.
-  if (!CommandLineFlagConstraintList::check_constraints(CommandLineFlagConstraint::AfterMemoryInit)) {
+  if (!JVMFlagConstraintList::check_constraints(JVMFlagConstraint::AfterMemoryInit)) {
     return JNI_EINVAL;
   }
 
@@ -745,8 +743,7 @@ jint universe_init() {
 
 CollectedHeap* Universe::create_heap() {
   assert(_collectedHeap == NULL, "Heap already created");
-  assert(GCArguments::is_initialized(), "GC must be initialized here");
-  return GCArguments::arguments()->create_heap();
+  return GCConfig::arguments()->create_heap();
 }
 
 // Choose the heap base address and oop encoding mode
@@ -765,7 +762,6 @@ jint Universe::initialize_heap() {
   }
   log_info(gc)("Using %s", _collectedHeap->name());
 
-  GCArguments::arguments()->post_heap_initialize();
   ThreadLocalAllocBuffer::set_max_size(Universe::heap()->max_tlab_size());
 
 #ifdef _LP64
@@ -784,6 +780,7 @@ jint Universe::initialize_heap() {
       // Did reserve heap below 32Gb. Can use base == 0;
       Universe::set_narrow_oop_base(0);
     }
+    AOTLoader::set_narrow_oop_shift();
 
     Universe::set_narrow_ptrs_base(Universe::narrow_oop_base());
 
@@ -1094,7 +1091,7 @@ bool universe_post_init() {
 
   MemoryService::set_universe_heap(Universe::heap());
 #if INCLUDE_CDS
-  SharedClassUtil::initialize(CHECK_false);
+  MetaspaceShared::post_initialize(CHECK_false);
 #endif
   return true;
 }

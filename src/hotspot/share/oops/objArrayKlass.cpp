@@ -220,7 +220,7 @@ oop ObjArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
 // Either oop or narrowOop depending on UseCompressedOops.
 template <class T> void ObjArrayKlass::do_copy(arrayOop s, T* src,
                                arrayOop d, T* dst, int length, TRAPS) {
-  if (s == d) {
+  if (oopDesc::equals(s, d)) {
     // since source and destination are equal we do not need conversion checks.
     assert(length > 0, "sanity check");
     HeapAccess<>::oop_arraycopy(s, d, src, dst, length);
@@ -331,7 +331,9 @@ bool ObjArrayKlass::can_be_primary_super_slow() const {
     return Klass::can_be_primary_super_slow();
 }
 
-GrowableArray<Klass*>* ObjArrayKlass::compute_secondary_supers(int num_extra_slots) {
+GrowableArray<Klass*>* ObjArrayKlass::compute_secondary_supers(int num_extra_slots,
+                                                               Array<Klass*>* transitive_interfaces) {
+  assert(transitive_interfaces == NULL, "sanity");
   // interfaces = { cloneable_klass, serializable_klass, elemSuper[], ... };
   Array<Klass*>* elem_supers = element_klass()->secondary_supers();
   int num_elem_supers = elem_supers == NULL ? 0 : elem_supers->length();

@@ -94,7 +94,6 @@ public class GraalWithLimitedMetaspace {
             "-XX:+EagerJVMCI",
             "-cp",
             TESTJAR,
-            "-XX:+UseAppCDS",
             TESTNAME,
             TEST_OUT));
 
@@ -117,7 +116,6 @@ public class GraalWithLimitedMetaspace {
           TestCommon.makeCommandLineForAppCDS(
             "-cp",
             TESTJAR,
-            "-XX:+UseAppCDS",
             "-XX:SharedClassListFile=" + CLASSLIST_FILE,
             "-XX:SharedArchiveFile=" + ARCHIVE_FILE,
             "-Xlog:cds",
@@ -125,8 +123,14 @@ public class GraalWithLimitedMetaspace {
             "-XX:MetaspaceSize=12M",
             "-XX:MaxMetaspaceSize=12M"));
 
-        OutputAnalyzer output = TestCommon.executeAndLog(pb, "dump-archive")
-            .shouldHaveExitValue(1)
-            .shouldContain("Failed allocating metaspace object type");
+        OutputAnalyzer output = TestCommon.executeAndLog(pb, "dump-archive");
+        int exitValue = output.getExitValue();
+        if (exitValue == 1) {
+            output.shouldContain("Failed allocating metaspace object type");
+        } else if (exitValue == 0) {
+            output.shouldContain("Loading classes to share");
+        } else {
+            throw new RuntimeException("Unexpected exit value " + exitValue);
+        }
     }
 }
