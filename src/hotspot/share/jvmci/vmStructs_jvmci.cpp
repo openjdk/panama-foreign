@@ -35,12 +35,12 @@
 #include "oops/oop.hpp"
 #include "oops/oopHandle.hpp"
 #include "oops/objArrayKlass.hpp"
+#include "runtime/flags/jvmFlag.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/thread.hpp"
 #include "runtime/vm_version.hpp"
-
-#if INCLUDE_ALL_GCS
+#if INCLUDE_G1GC
 #include "gc/g1/g1BarrierSet.hpp"
 #include "gc/g1/g1CardTable.hpp"
 #include "gc/g1/heapRegion.hpp"
@@ -146,16 +146,16 @@
   nonstatic_field(Deoptimization::UnrollBlock, _initial_info,                          intptr_t)                                     \
   nonstatic_field(Deoptimization::UnrollBlock, _unpack_kind,                           int)                                          \
                                                                                                                                      \
-  nonstatic_field(ExceptionTableElement,       start_pc,                                       u2)                                   \
-  nonstatic_field(ExceptionTableElement,       end_pc,                                         u2)                                   \
-  nonstatic_field(ExceptionTableElement,       handler_pc,                                     u2)                                   \
-  nonstatic_field(ExceptionTableElement,       catch_type_index,                               u2)                                   \
+  nonstatic_field(ExceptionTableElement,       start_pc,                                      u2)                                    \
+  nonstatic_field(ExceptionTableElement,       end_pc,                                        u2)                                    \
+  nonstatic_field(ExceptionTableElement,       handler_pc,                                    u2)                                    \
+  nonstatic_field(ExceptionTableElement,       catch_type_index,                              u2)                                    \
                                                                                                                                      \
-  nonstatic_field(Flag,                        _type,                                          const char*)                          \
-  nonstatic_field(Flag,                        _name,                                          const char*)                          \
-  unchecked_nonstatic_field(Flag,              _addr,                                          sizeof(void*))                        \
-  nonstatic_field(Flag,                        _flags,                                         Flag::Flags)                          \
-  static_field(Flag,                           flags,                                          Flag*)                                \
+  nonstatic_field(JVMFlag,                     _type,                                         const char*)                           \
+  nonstatic_field(JVMFlag,                     _name,                                         const char*)                           \
+  unchecked_nonstatic_field(JVMFlag,           _addr,                                         sizeof(void*))                         \
+  nonstatic_field(JVMFlag,                     _flags,                                        JVMFlag::Flags)                        \
+  static_field(JVMFlag,                        flags,                                         JVMFlag*)                              \
                                                                                                                                      \
   nonstatic_field(InstanceKlass,               _fields,                                       Array<u2>*)                            \
   nonstatic_field(InstanceKlass,               _constants,                                    ConstantPool*)                         \
@@ -345,8 +345,8 @@
   declare_toplevel_type(BasicLock)                                        \
   declare_toplevel_type(CompilerToVM)                                     \
   declare_toplevel_type(ExceptionTableElement)                            \
-  declare_toplevel_type(Flag)                                             \
-  declare_toplevel_type(Flag*)                                            \
+  declare_toplevel_type(JVMFlag)                                          \
+  declare_toplevel_type(JVMFlag*)                                         \
   declare_toplevel_type(InvocationCounter)                                \
   declare_toplevel_type(JVMCIEnv)                                         \
   declare_toplevel_type(LocalVariableTableElement)                        \
@@ -625,6 +625,8 @@
   declare_function(JVMCIRuntime::exception_handler_for_pc) \
   declare_function(JVMCIRuntime::monitorenter) \
   declare_function(JVMCIRuntime::monitorexit) \
+  declare_function(JVMCIRuntime::object_notify) \
+  declare_function(JVMCIRuntime::object_notifyAll) \
   declare_function(JVMCIRuntime::throw_and_post_jvmti_exception) \
   declare_function(JVMCIRuntime::throw_klass_external_name_exception) \
   declare_function(JVMCIRuntime::throw_class_cast_exception) \
@@ -633,14 +635,14 @@
   declare_function(JVMCIRuntime::log_printf) \
   declare_function(JVMCIRuntime::vm_error) \
   declare_function(JVMCIRuntime::load_and_clear_exception) \
-  ALL_GCS_ONLY(declare_function(JVMCIRuntime::write_barrier_pre)) \
-  ALL_GCS_ONLY(declare_function(JVMCIRuntime::write_barrier_post)) \
+  G1GC_ONLY(declare_function(JVMCIRuntime::write_barrier_pre)) \
+  G1GC_ONLY(declare_function(JVMCIRuntime::write_barrier_post)) \
   declare_function(JVMCIRuntime::validate_object) \
   \
   declare_function(JVMCIRuntime::test_deoptimize_call_int)
 
 
-#if INCLUDE_ALL_GCS
+#if INCLUDE_G1GC
 
 #define VM_STRUCTS_JVMCI_G1GC(nonstatic_field, static_field) \
   static_field(HeapRegion, LogOfHRGrainBytes, int)
@@ -653,7 +655,7 @@
   declare_constant_with_value("G1ThreadLocalData::dirty_card_queue_index_offset", in_bytes(G1ThreadLocalData::dirty_card_queue_index_offset())) \
   declare_constant_with_value("G1ThreadLocalData::dirty_card_queue_buffer_offset", in_bytes(G1ThreadLocalData::dirty_card_queue_buffer_offset()))
 
-#endif // INCLUDE_ALL_GCS
+#endif // INCLUDE_G1GC
 
 
 #ifdef LINUX
@@ -869,7 +871,7 @@ VMStructEntry JVMCIVMStructs::localHotSpotVMStructs[] = {
                  GENERATE_C1_UNCHECKED_STATIC_VM_STRUCT_ENTRY,
                  GENERATE_C2_UNCHECKED_STATIC_VM_STRUCT_ENTRY)
 
-#if INCLUDE_ALL_GCS
+#if INCLUDE_G1GC
   VM_STRUCTS_JVMCI_G1GC(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
                         GENERATE_STATIC_VM_STRUCT_ENTRY)
 #endif
@@ -921,7 +923,7 @@ VMIntConstantEntry JVMCIVMStructs::localHotSpotVMIntConstants[] = {
                        GENERATE_C2_VM_INT_CONSTANT_ENTRY,
                        GENERATE_C2_PREPROCESSOR_VM_INT_CONSTANT_ENTRY)
 
-#if INCLUDE_ALL_GCS
+#if INCLUDE_G1GC
   VM_INT_CONSTANTS_JVMCI_G1GC(GENERATE_VM_INT_CONSTANT_ENTRY,
                               GENERATE_VM_INT_CONSTANT_WITH_VALUE_ENTRY,
                               GENERATE_PREPROCESSOR_VM_INT_CONSTANT_ENTRY)

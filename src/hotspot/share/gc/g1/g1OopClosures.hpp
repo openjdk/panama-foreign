@@ -57,6 +57,8 @@ public:
   // This closure needs special handling for InstanceRefKlass.
   virtual ReferenceIterationMode reference_iteration_mode() { return DO_DISCOVERED_AND_DISCOVERY; }
   void set_region(HeapRegion* from) { _from = from; }
+
+  inline void trim_queue_partially();
 };
 
 // Used during the Update RS phase to refine remaining cards in the DCQ during garbage collection.
@@ -96,8 +98,8 @@ public:
   virtual void do_oop(oop* p)          { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p)    { do_oop_nv(p); }
 
-  void set_ref_processor(ReferenceProcessor* rp) {
-    set_ref_processor_internal(rp);
+  void set_ref_discoverer(ReferenceDiscoverer* rd) {
+    set_ref_discoverer_internal(rd);
   }
 };
 
@@ -126,6 +128,8 @@ protected:
  public:
   void set_scanned_cld(ClassLoaderData* cld) { _scanned_cld = cld; }
   inline void do_cld_barrier(oop new_obj);
+
+  inline void trim_queue_partially();
 };
 
 enum G1Barrier {

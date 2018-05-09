@@ -211,7 +211,7 @@ void MarkSweep::preserve_mark(oop obj, markOop mark) {
 
 void MarkSweep::set_ref_processor(ReferenceProcessor* rp) {
   _ref_processor = rp;
-  mark_and_push_closure.set_ref_processor(_ref_processor);
+  mark_and_push_closure.set_ref_discoverer(_ref_processor);
 }
 
 AdjustPointerClosure MarkSweep::adjust_pointer_closure;
@@ -265,7 +265,7 @@ MarkSweep::KeepAliveClosure MarkSweep::keep_alive;
 void MarkSweep::KeepAliveClosure::do_oop(oop* p)       { MarkSweep::KeepAliveClosure::do_oop_work(p); }
 void MarkSweep::KeepAliveClosure::do_oop(narrowOop* p) { MarkSweep::KeepAliveClosure::do_oop_work(p); }
 
-void marksweep_init() {
+void MarkSweep::initialize() {
   MarkSweep::_gc_timer = new (ResourceObj::C_HEAP, mtGC) STWGCTimer();
   MarkSweep::_gc_tracer = new (ResourceObj::C_HEAP, mtGC) SerialOldTracer();
 }

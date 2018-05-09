@@ -34,6 +34,7 @@
 #include "runtime/javaCalls.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
+#include "runtime/flags/flagSetting.hpp"
 #include "runtime/frame.inline.hpp"
 #include "utilities/preserveException.hpp"
 

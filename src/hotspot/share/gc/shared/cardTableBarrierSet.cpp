@@ -34,15 +34,22 @@
 #include "services/memTracker.hpp"
 #include "utilities/align.hpp"
 #include "utilities/macros.hpp"
+#ifdef COMPILER1
+#include "gc/shared/c1/cardTableBarrierSetC1.hpp"
+#endif
+
+class CardTableBarrierSetC1;
 
 // This kind of "BarrierSet" allows a "CollectedHeap" to detect and
 // enumerate ref fields that have been modified (since the last
 // enumeration.)
 
 CardTableBarrierSet::CardTableBarrierSet(BarrierSetAssembler* barrier_set_assembler,
+                                         BarrierSetC1* barrier_set_c1,
                                          CardTable* card_table,
                                          const BarrierSet::FakeRtti& fake_rtti) :
   ModRefBarrierSet(barrier_set_assembler,
+                   barrier_set_c1,
                    fake_rtti.add_tag(BarrierSet::CardTableBarrierSet)),
   _defer_initial_card_mark(false),
   _card_table(card_table)
@@ -50,6 +57,7 @@ CardTableBarrierSet::CardTableBarrierSet(BarrierSetAssembler* barrier_set_assemb
 
 CardTableBarrierSet::CardTableBarrierSet(CardTable* card_table) :
   ModRefBarrierSet(make_barrier_set_assembler<CardTableBarrierSetAssembler>(),
+                   make_barrier_set_c1<CardTableBarrierSetC1>(),
                    BarrierSet::FakeRtti(BarrierSet::CardTableBarrierSet)),
   _defer_initial_card_mark(false),
   _card_table(card_table)
@@ -118,7 +126,7 @@ void CardTableBarrierSet::print_on(outputStream* st) const {
 // that specific collector in mind, and the documentation above suitably
 // extended and updated.
 void CardTableBarrierSet::on_slowpath_allocation_exit(JavaThread* thread, oop new_obj) {
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   if (!ReduceInitialCardMarks) {
     return;
   }
@@ -140,13 +148,13 @@ void CardTableBarrierSet::on_slowpath_allocation_exit(JavaThread* thread, oop ne
       invalidate(mr);
     }
   }
-#endif // COMPILER2 || JVMCI
+#endif // COMPILER2_OR_JVMCI
 }
 
 void CardTableBarrierSet::initialize_deferred_card_mark_barriers() {
   // Used for ReduceInitialCardMarks (when COMPILER2 or JVMCI is used);
   // otherwise remains unused.
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   _defer_initial_card_mark = is_server_compilation_mode_vm() && ReduceInitialCardMarks && can_elide_tlab_store_barriers()
                              && (DeferInitialCardMark || card_mark_must_follow_store());
 #else
@@ -155,7 +163,7 @@ void CardTableBarrierSet::initialize_deferred_card_mark_barriers() {
 }
 
 void CardTableBarrierSet::flush_deferred_card_mark_barrier(JavaThread* thread) {
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   MemRegion deferred = thread->deferred_card_mark();
   if (!deferred.is_empty()) {
     assert(_defer_initial_card_mark, "Otherwise should be empty");

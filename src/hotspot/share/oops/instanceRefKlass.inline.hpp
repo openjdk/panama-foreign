@@ -63,14 +63,14 @@ void InstanceRefKlass::do_discovered(oop obj, OopClosureType* closure, Contains&
 
 template <typename T, class OopClosureType>
 bool InstanceRefKlass::try_discover(oop obj, ReferenceType type, OopClosureType* closure) {
-  ReferenceProcessor* rp = closure->ref_processor();
-  if (rp != NULL) {
+  ReferenceDiscoverer* rd = closure->ref_discoverer();
+  if (rd != NULL) {
     T referent_oop = RawAccess<>::oop_load((T*)java_lang_ref_Reference::referent_addr_raw(obj));
     if (!CompressedOops::is_null(referent_oop)) {
       oop referent = CompressedOops::decode_not_null(referent_oop);
       if (!referent->is_gc_marked()) {
         // Only try to discover if not yet marked.
-        return rp->discover_reference(obj, type);
+        return rd->discover_reference(obj, type);
       }
     }
   }
@@ -171,14 +171,14 @@ void InstanceRefKlass::oop_oop_iterate(oop obj, OopClosureType* closure) {
   oop_oop_iterate_ref_processing<nv>(obj, closure);
 }
 
-#if INCLUDE_ALL_GCS
+#if INCLUDE_OOP_OOP_ITERATE_BACKWARDS
 template <bool nv, class OopClosureType>
 void InstanceRefKlass::oop_oop_iterate_reverse(oop obj, OopClosureType* closure) {
   InstanceKlass::oop_oop_iterate_reverse<nv>(obj, closure);
 
   oop_oop_iterate_ref_processing<nv>(obj, closure);
 }
-#endif // INCLUDE_ALL_GCS
+#endif // INCLUDE_OOP_OOP_ITERATE_BACKWARDS
 
 
 template <bool nv, class OopClosureType>

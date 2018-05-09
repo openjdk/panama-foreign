@@ -81,11 +81,9 @@ void G1Arguments::initialize() {
     vm_exit_during_initialization("The flag -XX:+UseG1GC can not be combined with -XX:ParallelGCThreads=0", NULL);
   }
 
-#if INCLUDE_ALL_GCS
   if (FLAG_IS_DEFAULT(G1ConcRefinementThreads)) {
     FLAG_SET_ERGO(uint, G1ConcRefinementThreads, ParallelGCThreads);
   }
-#endif
 
   // MarkStackSize will be set (if it hasn't been set by the user)
   // when concurrent marking is initialized.
@@ -125,6 +123,11 @@ void G1Arguments::initialize() {
   }
 
   log_trace(gc)("MarkStackSize: %uk  MarkStackSizeMax: %uk", (unsigned int) (MarkStackSize / K), (uint) (MarkStackSizeMax / K));
+
+  // By default do not let the target stack size to be more than 1/4 of the entries
+  if (FLAG_IS_DEFAULT(GCDrainStackTargetSize)) {
+    FLAG_SET_ERGO(uintx, GCDrainStackTargetSize, MIN2(GCDrainStackTargetSize, (uintx)TASKQUEUE_SIZE / 4));
+  }
 
 #ifdef COMPILER2
   // Enable loop strip mining to offer better pause time guarantees

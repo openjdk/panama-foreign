@@ -32,9 +32,6 @@
 #include "runtime/handles.inline.hpp"
 #include "runtime/thread.inline.hpp"
 #include "utilities/copy.hpp"
-#if INCLUDE_ALL_GCS
-#include "gc/g1/g1Allocator.inline.hpp"
-#endif
 
 bool always_do_update_barrier = false;
 
@@ -122,10 +119,9 @@ unsigned int oopDesc::new_hash(juint seed) {
 
 // used only for asserts and guarantees
 bool oopDesc::is_oop(oop obj, bool ignore_mark_word) {
-  if (!check_obj_alignment(obj)) return false;
-  if (!Universe::heap()->is_in_reserved(obj)) return false;
-  // obj is aligned and accessible in heap
-  if (Universe::heap()->is_in_reserved(obj->klass_or_null())) return false;
+  if (!Universe::heap()->is_oop(obj)) {
+    return false;
+  }
 
   // Header verification: the mark is typically non-NULL. If we're
   // at a safepoint, it must not be null.
@@ -215,9 +211,3 @@ void oopDesc::release_float_field_put(int offset, jfloat value)       { HeapAcce
 
 jdouble oopDesc::double_field_acquire(int offset) const               { return HeapAccess<MO_ACQUIRE>::load_at(as_oop(), offset); }
 void oopDesc::release_double_field_put(int offset, jdouble value)     { HeapAccess<MO_RELEASE>::store_at(as_oop(), offset, value); }
-
-#if INCLUDE_CDS_JAVA_HEAP
-bool oopDesc::is_archive_object(oop p) {
-  return (p == NULL) ? false : G1ArchiveAllocator::is_archive_object(p);
-}
-#endif
