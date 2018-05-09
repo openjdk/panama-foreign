@@ -317,7 +317,6 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     }
 
 
-
     // Unary operations
 
     @Override

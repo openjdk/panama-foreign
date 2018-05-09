@@ -293,6 +293,11 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Short64Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
             this,
             v1 -> ((Short64Vector)v1).uOp((i, a) -> (short) Math.abs(a)));
     }
-
 
 
     @Override

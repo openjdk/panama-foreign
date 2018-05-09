@@ -293,6 +293,11 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Int512Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -303,15 +308,6 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             VECTOR_OP_ABS, Int512Vector.class, int.class, LENGTH,
             this,
             v1 -> ((Int512Vector)v1).uOp((i, a) -> (int) Math.abs(a)));
-    }
-
-    @Override
-    @ForceInline
-    public Int512Vector neg() {
-        return (Int512Vector) VectorIntrinsics.unaryOp(
-            VECTOR_OP_NEG, Int512Vector.class, int.class, LENGTH,
-            this,
-            v1 -> ((Int512Vector)v1).uOp((i, a) -> (int) -a));
     }
 
 

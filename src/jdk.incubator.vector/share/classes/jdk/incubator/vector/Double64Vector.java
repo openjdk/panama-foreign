@@ -317,7 +317,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     }
 
 
-
     // Unary operations
 
     @Override

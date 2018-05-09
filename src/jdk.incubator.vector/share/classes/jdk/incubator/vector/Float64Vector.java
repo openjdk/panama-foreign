@@ -317,7 +317,6 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     }
 
 
-
     // Unary operations
 
     @Override

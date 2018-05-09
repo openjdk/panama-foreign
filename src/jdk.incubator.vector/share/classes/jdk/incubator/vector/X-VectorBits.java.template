@@ -354,8 +354,13 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     public $abstractvectortype$<Shapes.$shape$> xor($type$ o, Mask<$Boxtype$,Shapes.$shape$> m) {
         return xor(SPECIES.broadcast(o), m);
     }
-#end[BITWISE]
 
+    @Override
+    @ForceInline
+    public $vectortype$ neg() {
+        return SPECIES.zero().sub(this);
+    }
+#end[BITWISE]
 
     // Unary operations
 
@@ -368,7 +373,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.abs(a)));
     }
 
-#if[intOrFP]
+#if[FP]
     @Override
     @ForceInline
     public $vectortype$ neg() {
@@ -377,9 +382,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) -a));
     }
-#end[intOrFP]
 
-#if[FP]
     @Override
     @ForceInline
     public $vectortype$ div(Vector<$Boxtype$,Shapes.$shape$> o) {

@@ -293,6 +293,11 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Byte64Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
             this,
             v1 -> ((Byte64Vector)v1).uOp((i, a) -> (byte) Math.abs(a)));
     }
-
 
 
     @Override

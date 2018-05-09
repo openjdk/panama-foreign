@@ -293,6 +293,11 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Byte128Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             this,
             v1 -> ((Byte128Vector)v1).uOp((i, a) -> (byte) Math.abs(a)));
     }
-
 
 
     @Override

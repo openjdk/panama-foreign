@@ -293,6 +293,11 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Int256Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -303,15 +308,6 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
             VECTOR_OP_ABS, Int256Vector.class, int.class, LENGTH,
             this,
             v1 -> ((Int256Vector)v1).uOp((i, a) -> (int) Math.abs(a)));
-    }
-
-    @Override
-    @ForceInline
-    public Int256Vector neg() {
-        return (Int256Vector) VectorIntrinsics.unaryOp(
-            VECTOR_OP_NEG, Int256Vector.class, int.class, LENGTH,
-            this,
-            v1 -> ((Int256Vector)v1).uOp((i, a) -> (int) -a));
     }
 
 

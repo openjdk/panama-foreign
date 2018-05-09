@@ -317,7 +317,6 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     }
 
 
-
     // Unary operations
 
     @Override

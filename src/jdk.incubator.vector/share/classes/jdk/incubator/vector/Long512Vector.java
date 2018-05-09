@@ -293,6 +293,11 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Long512Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             this,
             v1 -> ((Long512Vector)v1).uOp((i, a) -> (long) Math.abs(a)));
     }
-
 
 
     @Override

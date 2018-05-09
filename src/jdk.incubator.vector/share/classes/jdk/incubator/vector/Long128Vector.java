@@ -293,6 +293,11 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Long128Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             this,
             v1 -> ((Long128Vector)v1).uOp((i, a) -> (long) Math.abs(a)));
     }
-
 
 
     @Override

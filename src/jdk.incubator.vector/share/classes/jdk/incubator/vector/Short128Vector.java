@@ -293,6 +293,11 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Short128Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             this,
             v1 -> ((Short128Vector)v1).uOp((i, a) -> (short) Math.abs(a)));
     }
-
 
 
     @Override

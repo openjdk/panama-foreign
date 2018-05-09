@@ -293,6 +293,11 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Short512Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
             this,
             v1 -> ((Short512Vector)v1).uOp((i, a) -> (short) Math.abs(a)));
     }
-
 
 
     @Override

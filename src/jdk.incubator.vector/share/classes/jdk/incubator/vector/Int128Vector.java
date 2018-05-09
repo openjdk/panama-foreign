@@ -293,6 +293,11 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Int128Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -303,15 +308,6 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
             VECTOR_OP_ABS, Int128Vector.class, int.class, LENGTH,
             this,
             v1 -> ((Int128Vector)v1).uOp((i, a) -> (int) Math.abs(a)));
-    }
-
-    @Override
-    @ForceInline
-    public Int128Vector neg() {
-        return (Int128Vector) VectorIntrinsics.unaryOp(
-            VECTOR_OP_NEG, Int128Vector.class, int.class, LENGTH,
-            this,
-            v1 -> ((Int128Vector)v1).uOp((i, a) -> (int) -a));
     }
 
 

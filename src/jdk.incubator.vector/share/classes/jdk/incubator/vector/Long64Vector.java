@@ -293,6 +293,11 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Long64Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             this,
             v1 -> ((Long64Vector)v1).uOp((i, a) -> (long) Math.abs(a)));
     }
-
 
 
     @Override

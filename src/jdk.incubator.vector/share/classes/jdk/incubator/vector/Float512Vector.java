@@ -317,7 +317,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     }
 
 
-
     // Unary operations
 
     @Override

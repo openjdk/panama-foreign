@@ -293,6 +293,11 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Byte512Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             this,
             v1 -> ((Byte512Vector)v1).uOp((i, a) -> (byte) Math.abs(a)));
     }
-
 
 
     @Override

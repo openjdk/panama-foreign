@@ -293,6 +293,11 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Int64Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -303,15 +308,6 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
             VECTOR_OP_ABS, Int64Vector.class, int.class, LENGTH,
             this,
             v1 -> ((Int64Vector)v1).uOp((i, a) -> (int) Math.abs(a)));
-    }
-
-    @Override
-    @ForceInline
-    public Int64Vector neg() {
-        return (Int64Vector) VectorIntrinsics.unaryOp(
-            VECTOR_OP_NEG, Int64Vector.class, int.class, LENGTH,
-            this,
-            v1 -> ((Int64Vector)v1).uOp((i, a) -> (int) -a));
     }
 
 

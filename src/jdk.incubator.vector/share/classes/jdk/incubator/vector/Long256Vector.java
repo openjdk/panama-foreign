@@ -293,6 +293,11 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         return xor(SPECIES.broadcast(o), m);
     }
 
+    @Override
+    @ForceInline
+    public Long256Vector neg() {
+        return SPECIES.zero().sub(this);
+    }
 
     // Unary operations
 
@@ -304,7 +309,6 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             this,
             v1 -> ((Long256Vector)v1).uOp((i, a) -> (long) Math.abs(a)));
     }
-
 
 
     @Override

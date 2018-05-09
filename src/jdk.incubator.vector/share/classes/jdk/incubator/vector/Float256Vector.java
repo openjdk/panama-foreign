@@ -317,7 +317,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     }
 
 
-
     // Unary operations
 
     @Override
