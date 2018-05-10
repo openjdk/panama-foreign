@@ -488,6 +488,24 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             v -> (long) v.rOp((byte) 0, (i, a, b) -> (byte) (a - b)));
     }
 
+    @Override
+    @ForceInline
+    public byte orAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_OR, Byte256Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp((byte) 0, (i, a, b) -> (byte) (a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public byte xorAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_XOR, Byte256Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp((byte) 0, (i, a, b) -> (byte) (a ^ b)));
+    }
+
     // Memory operations
 
     @Override

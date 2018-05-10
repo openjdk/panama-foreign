@@ -510,20 +510,20 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public long subAll() {
-        return (long) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_SUB, Long256Vector.class, long.class, LENGTH,
-            this,
-            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a - b)));
-    }
-
-    @Override
-    @ForceInline
     public long mulAll() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Long256Vector.class, long.class, LENGTH,
             this,
             v -> (long) v.rOp((long) 1, (i, a, b) -> (long) (a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public long subAll() {
+        return (long) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_SUB, Long256Vector.class, long.class, LENGTH,
+            this,
+            v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a - b)));
     }
 
     @Override

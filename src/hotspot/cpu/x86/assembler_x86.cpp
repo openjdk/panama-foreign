@@ -3624,6 +3624,16 @@ void Assembler::notl(Register dst) {
   emit_int8((unsigned char)(0xD0 | encode));
 }
 
+void Assembler::orb(Register dst, Register src) {
+  (void)prefix_and_encode(dst->encoding(), src->encoding());
+  emit_arith(0x0A, 0xC0, dst, src);
+}
+
+void Assembler::orw(Register dst, Register src) {
+  (void)prefix_and_encode(dst->encoding(), src->encoding());
+  emit_arith(0x0B, 0xC0, dst, src);
+}
+
 void Assembler::orl(Address dst, int32_t imm32) {
   InstructionMark im(this);
   prefix(dst);
@@ -5331,6 +5341,16 @@ void Assembler::xorb(Register dst, Address src) {
   prefix(src, dst);
   emit_int8(0x32);
   emit_operand(dst, src);
+}
+
+void Assembler::xorb(Register dst, Register src) {
+  (void)prefix_and_encode(dst->encoding(), src->encoding());
+  emit_arith(0x32, 0xC0, dst, src);
+}
+
+void Assembler::xorw(Register dst, Register src) {
+  (void)prefix_and_encode(dst->encoding(), src->encoding());
+  emit_arith(0x33, 0xC0, dst, src);
 }
 
 // AVX 3-operands scalar float-point arithmetic instructions

@@ -488,6 +488,24 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
             v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a - b)));
     }
 
+    @Override
+    @ForceInline
+    public short orAll() {
+        return (short) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_OR, Short512Vector.class, short.class, LENGTH,
+            this,
+            v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public short xorAll() {
+        return (short) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_XOR, Short512Vector.class, short.class, LENGTH,
+            this,
+            v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a ^ b)));
+    }
+
     // Memory operations
 
     @Override

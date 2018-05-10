@@ -730,16 +730,32 @@ int ReductionNode::opcode(int opc, BasicType bt) {
       vopc = Op_AndReductionV;
       break;
     case Op_OrI:
-      assert(bt == T_INT, "must be");
-      vopc = Op_OrReductionV;
+      switch(bt) {
+      case T_BOOLEAN:
+      case T_CHAR: return 0;
+      case T_BYTE:
+      case T_SHORT:
+      case T_INT:
+        vopc = Op_OrReductionV;
+        break;
+      default:  ShouldNotReachHere(); return 0;
+      }
       break;
     case Op_OrL:
       assert(bt == T_LONG, "must be");
       vopc = Op_OrReductionV;
       break;
     case Op_XorI:
-      assert(bt == T_INT, "must be");
-      vopc = Op_XorReductionV;
+      switch(bt) {
+      case T_BOOLEAN:
+      case T_CHAR: return 0;
+      case T_BYTE:
+      case T_SHORT:
+      case T_INT:
+        vopc = Op_XorReductionV;
+        break;
+      default:  ShouldNotReachHere(); return 0;
+      }
       break;
     case Op_XorL:
       assert(bt == T_LONG, "must be");

@@ -488,6 +488,24 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a - b)));
     }
 
+    @Override
+    @ForceInline
+    public short orAll() {
+        return (short) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_OR, Short128Vector.class, short.class, LENGTH,
+            this,
+            v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a | b)));
+    }
+
+    @Override
+    @ForceInline
+    public short xorAll() {
+        return (short) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_XOR, Short128Vector.class, short.class, LENGTH,
+            this,
+            v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a ^ b)));
+    }
+
     // Memory operations
 
     @Override

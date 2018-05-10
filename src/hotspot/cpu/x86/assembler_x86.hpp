@@ -1614,6 +1614,9 @@ private:
   void notq(Register dst);
 #endif
 
+  void orb(Register dst, Register src);
+  void orw(Register dst, Register src);
+
   void orl(Address dst, int32_t imm32);
   void orl(Register dst, int32_t imm32);
   void orl(Register dst, Address src);
@@ -1966,6 +1969,8 @@ private:
   void xorl(Register dst, Register src);
 
   void xorb(Register dst, Address src);
+  void xorb(Register dst, Register src);
+  void xorw(Register dst, Register src);
 
   void xorq(Register dst, Address src);
   void xorq(Register dst, Register src);
