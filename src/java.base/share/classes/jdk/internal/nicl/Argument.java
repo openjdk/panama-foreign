@@ -22,23 +22,23 @@
  */
 package jdk.internal.nicl;
 
-import jdk.internal.nicl.types.Type;
+import java.nicl.layout.Layout;
 import java.lang.invoke.MethodType;
 
 public class Argument {
     private final int argumentIndex; // index of argument (in argument list)
-    private final Type type;
+    private final Layout type;
 
     // for testing/debugging, also serves as indicator that argument is named (as opposed to elipsis/varargs arg)
     private final String name;
 
-    public Argument(int argumentIndex, Type type, String name) {
+    public Argument(int argumentIndex, Layout type, String name) {
         this.argumentIndex = argumentIndex;
         this.type = type;
         this.name = name;
     }
 
-    public Argument(int index, Type type) {
+    public Argument(int index, Layout type) {
         this(index, type, null);
     }
 
@@ -46,7 +46,7 @@ public class Argument {
         return argumentIndex;
     }
 
-    public Type getType() {
+    public Layout getType() {
         return type;
     }
 

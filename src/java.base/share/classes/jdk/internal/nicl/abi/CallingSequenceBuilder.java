@@ -26,7 +26,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import jdk.internal.nicl.Argument;
-import jdk.internal.nicl.types.Type;
+import java.nicl.layout.Layout;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,14 +46,14 @@ public class CallingSequenceBuilder {
     /**
      * Add an anonymous argument
      */
-    public CallingSequenceBuilder addArgument(Type type) {
+    public CallingSequenceBuilder addArgument(Layout type) {
         return addArgument(type, null);
     }
 
     /**
      * Add a named argument
      */
-    public CallingSequenceBuilder addArgument(Type type, String name) {
+    public CallingSequenceBuilder addArgument(Layout type, String name) {
         arguments.add(new Argument(curArgIndex++, type, name));
         return this;
     }
@@ -62,7 +62,7 @@ public class CallingSequenceBuilder {
         return arguments;
     }
 
-    public CallingSequenceBuilder setReturnType(Type type) {
+    public CallingSequenceBuilder setReturnType(Layout type) {
         returned = new Argument(-1, type, DUMMY_RETURN_VARIABLE_NAME);
         return this;
     }

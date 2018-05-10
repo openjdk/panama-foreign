@@ -24,6 +24,9 @@ package jdk.internal.nicl.types;
 
 import jdk.internal.nicl.Platform;
 
+import java.nicl.layout.Function;
+import java.nicl.layout.Layout;
+import java.nicl.layout.Value;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -51,18 +54,18 @@ public class BindingRegistry {
 
     public static final <T> boolean register(String nativeDescriptor, Class<T> carrierClass,
             N2J<T> native2java, J2N<T> java2native) {
-        Type nt = new DescriptorParser(nativeDescriptor).parseLayout().findFirst().get();
+        Layout nt = new DescriptorParser(nativeDescriptor).parseLayout().findFirst().get();
         BindingRegistry registry = BindingRegistry.getInstance();
         return registry.register(nt, carrierClass, native2java, java2native);
     }
 
     private final class NativeBinding<T> {
-        final jdk.internal.nicl.types.Type nativeType;
+        final Layout nativeType;
         final Class<T> carrierClass;
         final N2J<T> native2java;
         final J2N<T> java2native;
 
-        NativeBinding(jdk.internal.nicl.types.Type nativeType,
+        NativeBinding(Layout nativeType,
                 Class<T> carrierClass, N2J<T> n2j, J2N<T> j2n) {
             this.nativeType = nativeType;
             this.carrierClass = carrierClass;
@@ -71,7 +74,7 @@ public class BindingRegistry {
         }
     }
 
-    private final Map<Type, LinkedHashMap<java.lang.reflect.Type, NativeBinding<?>>> registry;
+    private final Map<Layout, LinkedHashMap<java.lang.reflect.Type, NativeBinding<?>>> registry;
 
     private BindingRegistry() {
         registry = new HashMap<>();
@@ -141,10 +144,10 @@ public class BindingRegistry {
         register(Types.INT32, int.class, mr -> mr.getInt(0), (v, mr) -> mr.putInt(0, v));
         register(Types.INT64, long.class, mr -> mr.getLong(0), (v, mr) -> mr.putLong(0, v));
 
-        if (Platform.getInstance().defaultEndianness() == Type.Endianness.LITTLE) {
+        if (Platform.getInstance().defaultEndianness() == Value.Endianness.LITTLE_ENDIAN) {
             initLE();
         } else {
-            assert (Platform.getInstance().defaultEndianness() == Type.Endianness.BIG);
+            assert (Platform.getInstance().defaultEndianness() == Value.Endianness.BIG_ENDIAN);
             initBE();
         }
     }
@@ -160,7 +163,7 @@ public class BindingRegistry {
         return theOne;
     }
 
-    public final <T> boolean register(final jdk.internal.nicl.types.Type nativeType,
+    public final <T> boolean register(final Layout nativeType,
             final Class<T> carrierClass, final N2J<T> native2java, final J2N<T> java2native) {
         LinkedHashMap<java.lang.reflect.Type, NativeBinding<?>> carriers =
             registry.computeIfAbsent(nativeType, nt -> new LinkedHashMap<>());
@@ -168,7 +171,7 @@ public class BindingRegistry {
             new NativeBinding<T>(nativeType, carrierClass, native2java, java2native));
     }
 
-    public Stream<java.lang.reflect.Type> getCarrierTypes(Type nativeType) {
+    public Stream<java.lang.reflect.Type> getCarrierTypes(Layout nativeType) {
         Map<java.lang.reflect.Type, NativeBinding<?>> carriers = registry.get(nativeType);
         if (carriers == null) {
             return Stream.empty();
@@ -176,7 +179,7 @@ public class BindingRegistry {
         return carriers.keySet().stream();
     }
 
-    public java.lang.reflect.Type getCarrierType(Type nativeType) {
+    public java.lang.reflect.Type getCarrierType(Layout nativeType) {
         return getCarrierTypes(nativeType).findFirst().get();
     }
 

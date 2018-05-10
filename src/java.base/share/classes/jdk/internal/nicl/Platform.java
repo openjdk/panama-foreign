@@ -26,29 +26,27 @@
 package jdk.internal.nicl;
 
 import java.nicl.Library;
-import jdk.internal.nicl.types.Type;
+import java.nicl.layout.Value;
+
 import jdk.internal.nicl.abi.SystemABI;
 import jdk.internal.nicl.abi.sysv.x64.SysVx64ABI;
 
 public abstract class Platform {
-    private final Type.DataModel dataModel;
-    private final Type.Endianness endianness;
+    private final Value.Endianness endianness;
     private final LibraryLoader loader;
     private final SystemABI abi;
 
-    protected Platform(Type.DataModel dataModel, Type.Endianness endianness, LibraryLoader loader) {
-        this(dataModel, endianness, loader, new SysVx64ABI());
+    protected Platform(Value.Endianness endianness, LibraryLoader loader) {
+        this(endianness, loader, new SysVx64ABI());
     }
 
-    protected Platform(Type.DataModel dataModel, Type.Endianness endianness, LibraryLoader loader, SystemABI abi) {
-        this.dataModel = dataModel;
+    protected Platform(Value.Endianness endianness, LibraryLoader loader, SystemABI abi) {
         this.endianness = endianness;
         this.loader = loader;
         this.abi = abi;
     }
 
-    public Type.DataModel defaultDataModel() { return dataModel; }
-    public Type.Endianness defaultEndianness() { return endianness; }
+    public Value.Endianness defaultEndianness() { return endianness; }
     public SystemABI getABI() { return abi; }
 
     abstract String mapLibraryName(String name);

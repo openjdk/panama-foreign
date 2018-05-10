@@ -23,13 +23,15 @@
 package java.nicl.types;
 
 import jdk.internal.nicl.types.LayoutTypeImpl;
-import jdk.internal.nicl.types.Type;
+
+import java.nicl.layout.Layout;
 
 public interface LayoutType<T> {
     LayoutType<?> getInnerType();
     Class<T> getCarrierType();
     String getTypeDescriptor();
     long getNativeTypeSize();
+    Layout getLayout();
 
     LayoutType<Pointer<T>> ptrType();
 

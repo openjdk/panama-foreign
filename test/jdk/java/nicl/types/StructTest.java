@@ -33,7 +33,7 @@ import java.nicl.types.*;
 public class StructTest {
     public static final boolean DEBUG = Boolean.getBoolean("StructTest.DEBUG");
 
-    public static final long TOTAL_SIZE = 128;
+    public static final long TOTAL_SIZE = 16;
     public static final long A_OFFSET  = 0;
     public static final long A_LENGTH  = 4;
     public static final long M_OFFSET  = 256;
@@ -45,7 +45,7 @@ public class StructTest {
     }
 
     @C(file="dummy", line=47, column=11, USR="c:@S@MyStruct")
-    @NativeType(layout="[4i=256v2=256v]", ctype="struct MyStruct", size=128l, isRecordType=true)
+    @NativeType(layout="[4i]", ctype="struct MyStruct", size=16l, isRecordType=true)
     static interface MyStruct extends Reference<MyStruct> {
         @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@field1")
         @NativeType(layout="4i", ctype="off_t", size=4l)

@@ -31,12 +31,13 @@ import jdk.internal.nicl.abi.CallingSequence;
 import jdk.internal.nicl.abi.Storage;
 import jdk.internal.nicl.abi.StorageClass;
 import jdk.internal.nicl.abi.SystemABI;
-import jdk.internal.nicl.types.Array;
-import jdk.internal.nicl.types.BitFields;
-import jdk.internal.nicl.types.Container;
-import jdk.internal.nicl.types.Pointer;
-import jdk.internal.nicl.types.Scalar;
-import jdk.internal.nicl.types.Type;
+
+import java.nicl.layout.Address;
+import java.nicl.layout.Sequence;
+import java.nicl.layout.Group;
+import java.nicl.layout.Group.Kind;
+import java.nicl.layout.Layout;
+import java.nicl.layout.Value;
 import java.util.ArrayList;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
@@ -93,81 +94,37 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         }
     }
 
-    private ArrayList<ArgumentClass> classifyScalarType(Scalar type, boolean named) {
+    private ArrayList<ArgumentClass> classifyValueType(Value type, boolean named) {
         ArrayList<ArgumentClass> classes = new ArrayList<>();
 
-        switch (type.typeCode()) {
-            case 'e':
-            case 'E':
-                classes.add(ArgumentClass.X87);
-                classes.add(ArgumentClass.X87UP);
-                return classes;
-
-            case 'i':
-            case 'I':
-                if (type.getSize() > 16) {
-                    throw new UnsupportedOperationException("Type " + type + " not supported");
-                }
-
+        switch (type.kind()) {
+            case INTEGRAL_SIGNED: case INTEGRAL_UNSIGNED:
                 classes.add(ArgumentClass.INTEGER);
                 // int128
-                if (type.getSize() > 8) {
+                long left = (type.bitsSize() / 8) - 8;
+                while (left > 0) {
                     classes.add(ArgumentClass.INTEGER);
+                    left -= 8;
                 }
                 return classes;
-
-            case 'o':
-            case 'O':
-            case 's':
-            case 'S':
-            case 'l':
-            case 'L':
-            case 'q':
-            case 'Q':
-            case 'B':
-            case 'c':
-                classes.add(ArgumentClass.INTEGER);
-                return classes;
-
-            case 'f':
-            case 'F':
-            case 'd':
-            case 'D':
-                classes.add(ArgumentClass.SSE);
-                return classes;
-
-            case 'v':
-                // unnamed (varargs) __m256 and __m512 arguments are passed in MEMORY
-                if (type.getSize() > 16 && !named) {
-                    for (int i = 0; i < type.getSize(); i += 8) {
-                        classes.add(ArgumentClass.MEMORY);
-                    }
+            case FLOATING_POINT:
+                if ((type.bitsSize() / 8) > 8) {
+                    classes.add(ArgumentClass.X87);
+                    classes.add(ArgumentClass.X87UP);
+                    return classes;
+                } else {
+                    classes.add(ArgumentClass.SSE);
                     return classes;
                 }
-
-                if (type.getSize() > 64) {
-                    throw new IllegalArgumentException((type.getSize() * 8) + "-bit vector types not supported");
-                }
-
-                classes.add(ArgumentClass.SSE);
-                if (type.getSize() <= 8) {
-                    return classes;
-                }
-
-                for (int i = 8; i < type.getSize(); i += 8) {
-                    classes.add(ArgumentClass.SSEUP);
-                }
-
-                return classes;
             default:
-                throw new IllegalArgumentException("Type " + type.typeCode() + " is not yet supported");
+                throw new IllegalArgumentException("Type " + type + " is not yet supported");
         }
     }
 
-    private ArrayList<ArgumentClass> classifyArrayType(Array type, boolean named) {
+    private ArrayList<ArgumentClass> classifyArrayType(Sequence type, boolean named) {
         SystemABI abi = Platform.getInstance().getABI();
 
-        long nWords = Util.alignUp(type.getSize(), 8) / 8;
+        long nWords = Util.alignUp((type.bitsSize() / 8), 8) / 8;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
             return createMemoryClassArray(nWords);
         }
@@ -179,9 +136,9 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         }
 
         long offset = 0;
-        final long count = type.getOccurrence();
+        final long count = type.elementsSize();
         for (long idx = 0; idx < count; idx++) {
-            Type t = type.getElementType();
+            Layout t = type.element();
             offset = abi.align(t, false, offset);
             ArrayList<ArgumentClass> subclasses = classifyType(t, named);
             if (subclasses.isEmpty()) {
@@ -194,7 +151,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                 classes.set(i + pos, newClass);
             }
 
-            offset += t.getSize();
+            offset += t.bitsSize() / 8;
         }
 
         for (int i = 0; i < classes.size(); i++) {
@@ -232,15 +189,15 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
 
     // TODO: handle zero length arrays
     // TODO: Handle nested structs (and primitives)
-    private ArrayList<ArgumentClass> classifyStructType(Container type, boolean named) {
-        if (type.isUnion()) {
+    private ArrayList<ArgumentClass> classifyStructType(Group type, boolean named) {
+        if (type.kind() == Kind.UNION) {
             // TODO: how to deal with union?
             throw new UnsupportedOperationException("Union is not yet supported.");
         }
 
         SystemABI abi = Platform.getInstance().getABI();
 
-        long nWords = Util.alignUp(type.getSize(), 8) / 8;
+        long nWords = Util.alignUp((type.bitsSize() / 8), 8) / 8;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
             return createMemoryClassArray(nWords);
         }
@@ -254,9 +211,9 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         // TODO: handle zero length arrays here
 
         long offset = 0;
-        final int count = type.memberCount();
+        final int count = type.elements().size();
         for (int idx = 0; idx < count; idx++) {
-            Type t = type.getMember(idx);
+            Layout t = type.elements().get(idx);
             offset = abi.align(t, false, offset);
             ArrayList<ArgumentClass> subclasses = classifyType(t, named);
             if (subclasses.isEmpty()) {
@@ -269,7 +226,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                 classes.set(i + pos, newClass);
             }
 
-            offset += t.getSize();
+            offset += t.bitsSize() / 8;
         }
 
         for (int i = 0; i < classes.size(); i++) {
@@ -305,19 +262,17 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         return classes;
     }
 
-    private ArrayList<ArgumentClass> classifyType(Type type, boolean named) {
-        if (type instanceof Scalar) {
-            return classifyScalarType((Scalar) type, named);
-        } else if (type instanceof Pointer) {
+    private ArrayList<ArgumentClass> classifyType(Layout type, boolean named) {
+        if (type instanceof Value) {
+            return classifyValueType((Value) type, named);
+        } else if (type instanceof Address) {
             ArrayList<ArgumentClass> classes = new ArrayList<>();
             classes.add(ArgumentClass.INTEGER);
             return classes;
-        } else if (type instanceof Array) {
-            return classifyArrayType((Array) type, named);
-        } else if (type instanceof Container) {
-            return classifyStructType((Container) type, named);
-        } else if (type instanceof BitFields) {
-            return classifyScalarType(((BitFields) type).getStorage(), named);
+        } else if (type instanceof Sequence) {
+            return classifyArrayType((Sequence) type, named);
+        } else if (type instanceof Group) {
+            return classifyStructType((Group) type, named);
         } else {
             throw new IllegalArgumentException("Unhandled type " + type);
         }
@@ -332,7 +287,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         return classes;
     }
 
-    private ArgumentInfo examineArgument(Type type, boolean named) {
+    private ArgumentInfo examineArgument(Layout type, boolean named) {
         ArrayList<ArgumentClass> classes = classifyType(type, named);
         if (classes.isEmpty()) {
             return null;
@@ -405,7 +360,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                     tmpStackOffset += 8;
                 }
 
-                stackOffset += arg.getType().getSize();
+                stackOffset += arg.getType().bitsSize() / 8;
             } else {
                 // regs
                 for (int i = 0; i < info.getClasses().size(); i++) {
@@ -466,7 +421,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         boolean returnsInMemory = false;
 
         if (returned != null) {
-            Type returnType = returned.getType();
+            Layout returnType = returned.getType();
 
             returnsInMemory = examineArgument(returnType, returned.isNamed()).inMemory();
 
@@ -474,7 +429,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
             if (returnsInMemory) {
                 args = new ArrayList<>();
 
-                Argument returnPointer = new Argument(-1, new Pointer(returned.getType()), returned.getName());
+                Argument returnPointer = new Argument(-1, Address.ofLayout(64, returned.getType()), returned.getName());
                 args.add(returnPointer);
                 args.addAll(this.arguments);
 

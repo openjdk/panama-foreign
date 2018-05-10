@@ -1,5 +1,7 @@
 package java.nicl.layout;
 
+import jdk.internal.nicl.types.DescriptorParser;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -56,4 +58,8 @@ public interface Layout {
 
     @Override
     String toString();
+
+    static Layout of(String s) {
+        return new DescriptorParser(s).parseLayout().findFirst().get();
+    }
 }

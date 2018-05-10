@@ -25,7 +25,6 @@
 
 package jdk.internal.nicl;
 
-import jdk.internal.nicl.types.Type;
 import java.nicl.Library;
 
 public final class NativeOS extends OS {

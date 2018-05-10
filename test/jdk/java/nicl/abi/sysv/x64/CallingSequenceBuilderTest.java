@@ -31,9 +31,10 @@ import jdk.internal.nicl.abi.CallingSequenceBuilder;
 import jdk.internal.nicl.abi.StorageClass;
 import jdk.internal.nicl.abi.sysv.x64.CallingSequenceBuilderImpl;
 import jdk.internal.nicl.abi.sysv.x64.Constants;
-import jdk.internal.nicl.types.Container;
-import jdk.internal.nicl.types.Type;
 import jdk.internal.nicl.types.Types;
+
+import java.nicl.layout.Group;
+import java.nicl.layout.Layout;
 
 public class CallingSequenceBuilderTest {
     public CallingSequenceBuilderTest() {
@@ -149,7 +150,7 @@ public class CallingSequenceBuilderTest {
      * m(s);
      */
     public void testAbiExample() {
-        Container structparm = new Container(false, Types.INT32, Types.INT32, Types.DOUBLE);
+        Group structparm = Group.struct(Types.INT32, Types.INT32, Types.DOUBLE);
 
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
@@ -286,7 +287,7 @@ public class CallingSequenceBuilderTest {
      * m(s);
      */
     public void testStruct8() {
-        Container structparm = new Container(false, Types.UNSIGNED.INT64);
+        Group structparm = Group.struct(Types.UNSIGNED.INT64);
 
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
@@ -314,7 +315,7 @@ public class CallingSequenceBuilderTest {
      * m(s);
      */
     public void testStruct16() {
-        Container structparm = new Container(false, Types.UNSIGNED.INT64, Types.UNSIGNED.INT64);
+        Group structparm = Group.struct(Types.UNSIGNED.INT64, Types.UNSIGNED.INT64);
 
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
@@ -346,7 +347,7 @@ public class CallingSequenceBuilderTest {
      * m(s);
      */
     public void testStruct24() {
-        Container structparm = new Container(false, Types.UNSIGNED.INT64, Types.UNSIGNED.INT64, Types.UNSIGNED.INT64);
+        Group structparm = Group.struct(Types.UNSIGNED.INT64, Types.UNSIGNED.INT64, Types.UNSIGNED.INT64);
 
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
@@ -382,7 +383,7 @@ public class CallingSequenceBuilderTest {
      * m(s);
      */
     public void testStruct32() {
-        Type structparm = Type.of("[=64I=64I=64I=64I]");
+        Layout structparm = Layout.of("[=64I=64I=64I=64I]");
 
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
@@ -424,7 +425,7 @@ public class CallingSequenceBuilderTest {
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
         CallingSequence recipe = builder
-            .addArgument(Type.of("p:(V)V"), "f")
+            .addArgument(Layout.of("p:()V"), "f")
                 .build();
 
         assertEquals(false, recipe.returnsInMemory());
@@ -474,7 +475,7 @@ public class CallingSequenceBuilderTest {
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
         CallingSequence recipe = builder
-                .addArgument(Type.of("[=64i=64i]"), "s1")
+                .addArgument(Layout.of("[=64i=64i]"), "s1")
                 .build();
 
         assertEquals(false, recipe.returnsInMemory());

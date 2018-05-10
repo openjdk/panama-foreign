@@ -89,6 +89,7 @@ module java.base {
     exports java.nicl;
     exports java.nicl.metadata;
     exports java.nicl.types;
+    exports java.nicl.layout;
     exports java.nio;
     exports java.nio.channels;
     exports java.nio.channels.spi;

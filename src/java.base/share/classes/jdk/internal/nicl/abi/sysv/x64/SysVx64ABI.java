@@ -24,68 +24,37 @@
  */
 package jdk.internal.nicl.abi.sysv.x64;
 
-import jdk.internal.nicl.types.Type;
-import jdk.internal.nicl.types.Types;
-import jdk.internal.nicl.types.Function;
+import java.nicl.layout.Function;
+import java.nicl.layout.Layout;
+import java.nicl.layout.Value;
+
 import jdk.internal.nicl.abi.AbstractABI;
 import jdk.internal.nicl.abi.CallingSequence;
 import jdk.internal.nicl.abi.CallingSequenceBuilder;
+import jdk.internal.nicl.types.Types;
 
 /**
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
 public class SysVx64ABI extends AbstractABI {
     @Override
-    public long definedSize(char typeCode) {
-        switch (typeCode) {
-            case 'c':
-            case 'o':
-            case 'O':
-            case 'x':
-            case 'B':
-                return 1;
-            case 's':
-            case 'S':
-                return 2;
-            case 'i':
-            case 'I':
-                return 4;
-            case 'l':
-            case 'L':
-            case 'q':
-            case 'Q':
-                return 8;
-            case 'f':
-            case 'F':
-                return 4;
-            case 'd':
-            case 'D':
-                return 8;
-            case 'e':
-            case 'E':
-                return 16;
-            case 'p':
-                return 8;
-            case 'V':
-                return 0;
-            default:
-                throw new IllegalArgumentException("Invalid type descriptor " + typeCode);
-        }
+    public long definedSize(Value s) {
+        return s.bitsSize() / 8;
     }
 
     @Override
     public CallingSequence arrangeCall(Function f) {
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
-        for (int i = 0; i < f.argumentCount(); i++) {
-            Type type = f.getArgumentType(i);
+        for (int i = 0; i < f.argumentLayouts().size(); i++) {
+            Layout type = f.argumentLayouts().get(i);
             builder.addArgument(type, "arg" + i);
         }
-        if (f.isVarArg()) {
+        if (f.isVariadic()) {
             builder.addArgument(Types.POINTER, null);
         }
 
-        if (! f.getReturnType().equals(Types.VOID)) {
-            builder.setReturnType(f.getReturnType());
+        if (f.returnLayout().isPresent()) {
+            builder.setReturnType(f.returnLayout().get());
         }
 
         return builder.build();

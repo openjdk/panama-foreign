@@ -26,7 +26,6 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
 import jdk.internal.nicl.types.DescriptorParser;
-import jdk.internal.nicl.types.Function;
 import jdk.internal.nicl.types.LayoutTypeImpl;
 import jdk.internal.nicl.types.Types;
 import jdk.internal.nicl.types.UncheckedPointer;
@@ -38,6 +37,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.nicl.Library.Symbol;
 import java.nicl.Scope;
+import java.nicl.layout.Address;
+import java.nicl.layout.Function;
+import java.nicl.layout.Layout;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.NativeType;
@@ -81,13 +83,11 @@ public final class Util {
         return clz.isAnnotationPresent(CallingConvention.class);
     }
 
-    private static jdk.internal.nicl.types.Type typeof2(java.lang.reflect.Type t) {
+    private static Layout typeof2(java.lang.reflect.Type t) {
         if (t instanceof Class) {
             Class<?> c = (Class<?>) t;
             if (c.isPrimitive()) {
                 switch (Type.getDescriptor(c)) {
-                    case "V":
-                        return Types.VOID;
                     case "Z":
                         return Types.BOOLEAN;
                     case "B":
@@ -121,49 +121,64 @@ public final class Util {
             Class<?> rawType = (Class<?>)pt.getRawType();
 
             if (Pointer.class.isAssignableFrom(rawType)) {
-                jdk.internal.nicl.types.Type pointeeType = typeof2(pt.getActualTypeArguments()[0]);
-                return new jdk.internal.nicl.types.Pointer(pointeeType);
+                Layout pointeeType = typeof2(pt.getActualTypeArguments()[0]);
+                return Address.ofLayout(64, pointeeType);
             } else {
                 throw new IllegalArgumentException("Unhandled type: " + t);
             }
         }
     }
 
-    public static jdk.internal.nicl.types.Function typeof(MethodType methodType) {
-        return new Function(
-                Stream.of(methodType.parameterArray()).map(Util::typeof2).toArray(jdk.internal.nicl.types.Type[]::new),
-                typeof2(methodType.returnType()), false);
+    public static Function typeof(MethodType methodType) {
+        boolean isVoid = methodType.returnType().equals(void.class);
+        Layout[] args = Stream.of(methodType.parameterArray()).map(Util::typeof2).toArray(Layout[]::new);
+        if (!isVoid) {
+            return Function.of(typeof2(methodType.returnType()), false, args);
+        } else {
+            return Function.ofVoid(false, args);
+        }
     }
 
-    private static jdk.internal.nicl.types.Type typeof(NativeType nt) {
+    private static Layout typeof(NativeType nt) {
         return new DescriptorParser(nt.layout()).parseLayout().findFirst().get();
     }
 
-    private static jdk.internal.nicl.types.Type typeofFunctionalInterfaceMethod(Class<?> clz) {
-        Method m = findFunctionalInterfaceMethod(clz);
-        if (m == null) {
-            throw new IllegalArgumentException("Failed to look up FunctionalInterface method for class " + clz);
-        }
-
-        if (!m.isAnnotationPresent(NativeType.class)) {
-            throw new IllegalArgumentException("FunctionalInterface method for class " + clz + " has no NativeType annotation");
-        }
-
-        return typeof(m.getAnnotation(NativeType.class));
+    private static Function functionof(NativeType nt) {
+        return (Function)new DescriptorParser(nt.layout()).parseDescriptorOrLayouts().findFirst().get();
     }
 
-    public static jdk.internal.nicl.types.Type typeof(Class<?> clz) {
-        if (!isCType(clz)) {
-            if (clz.isAnnotationPresent(C.class) && clz.isAnnotationPresent(FunctionalInterface.class)) {
-                return typeofFunctionalInterfaceMethod(clz);
+    public static Function functionof(Class<?> clz) {
+        if (clz.isAnnotationPresent(C.class) && clz.isAnnotationPresent(FunctionalInterface.class)) {
+            Method m = findFunctionalInterfaceMethod(clz);
+            if (m == null) {
+                throw new IllegalArgumentException("Failed to look up FunctionalInterface method for class " + clz);
             }
+
+            if (!m.isAnnotationPresent(NativeType.class)) {
+                throw new IllegalArgumentException("FunctionalInterface method for class " + clz + " has no NativeType annotation");
+            }
+
+            return functionof(m.getAnnotation(NativeType.class));
+        } else {
             throw new IllegalArgumentException();
         }
+    }
+
+    public static Layout typeof(Class<?> clz) {
         return typeof(clz.getAnnotation(NativeType.class));
     }
 
-    public static jdk.internal.nicl.types.Type typeof(Method m) {
-        return typeof(m.getAnnotation(NativeType.class));
+    public static Function typeof(Method m) {
+        return functionof(m.getAnnotation(NativeType.class));
+    }
+
+    public static boolean isFunction(Method m) {
+        try {
+            typeof(m);
+            return true;
+        } catch (Throwable ex) {
+            return false;
+        }
     }
 
     private static long sizeofPrimitive(Class<?> cls) {

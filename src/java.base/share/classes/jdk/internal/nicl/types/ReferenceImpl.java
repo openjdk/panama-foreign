@@ -25,6 +25,8 @@ package jdk.internal.nicl.types;
 import jdk.internal.nicl.UpcallHandler;
 import jdk.internal.nicl.Util;
 
+import java.nicl.layout.Layout;
+import java.nicl.layout.Value;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 
@@ -51,13 +53,13 @@ class ReferenceImpl<T> implements Reference<T> {
     }
 
     private long getLongBits() throws IllegalAccessException {
-        Type t = Type.of(type.getTypeDescriptor());
+        Layout t = type.getLayout();
 
         boolean isSigned = true;
-        if (t instanceof Scalar) {
-            isSigned = ((Scalar)t).isSigned();
+        if (t instanceof Value) {
+            isSigned = ((Value)t).kind() != Value.Kind.INTEGRAL_UNSIGNED;
         }
-        return region.getBits(offset, t.getSize(), isSigned);
+        return region.getBits(offset, type.getNativeTypeSize(), isSigned);
     }
 
     private void putLongBits(long value) throws IllegalAccessException {

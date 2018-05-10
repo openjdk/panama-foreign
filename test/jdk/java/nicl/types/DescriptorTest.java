@@ -39,6 +39,7 @@ import static org.testng.Assert.*;
 
 /*
  * @test
+ * @ignore this test relies too much on the toString representation of layouts
  * @summary Unit test for Type Descriptor
  * @modules java.base/jdk.internal.nicl.types
  * @run testng DescriptorTest

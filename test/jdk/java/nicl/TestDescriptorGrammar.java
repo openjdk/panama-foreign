@@ -111,6 +111,22 @@ public class TestDescriptorGrammar {
         }
     }
 
+    enum ReturnType implements Template {
+        ELEMENT_TYPE() {
+            @Override
+            public Stream<String> generate(int depth) {
+                return generateAll(depth, ElementType.class);
+            }
+        },
+
+        VOID() {
+            @Override
+            public Stream<String> generate(int depth) {
+                return Stream.of("V");
+            }
+        }
+    }
+
     enum ContainerType implements Template {
         PLAIN() {
             @Override
@@ -169,14 +185,14 @@ public class TestDescriptorGrammar {
         PLAIN() {
             @Override
             public Stream<String> generate(int depth) {
-                return sample(generateAll(depth, ElementType.class))
+                return sample(generateAll(depth, ReturnType.class))
                         .flatMap(r -> generateAll(depth, ArgListInternal.class).map(al -> "(" + al + ")" + r));
             }
         },
         VARARGS() {
             @Override
             public Stream<String> generate(int depth) {
-                return sample(generateAll(depth, ElementType.class))
+                return sample(generateAll(depth, ReturnType.class))
                         .flatMap(r -> generateAll(depth, ArgListInternal.class).map(al -> "(" + al + "*)" + r));
             }
         }
@@ -226,7 +242,6 @@ public class TestDescriptorGrammar {
 
     enum MiscType implements Template {
         BOOLEAN('B'),
-        VOID('V'),
         PADDING('x'),
         CHAR('c');
 
@@ -340,7 +355,23 @@ public class TestDescriptorGrammar {
             public Stream<String> generate(int depth) {
                 return depth == 0 ?
                         PLAIN.generate(depth) :
-                        sample(generateAll(depth - 1, Descriptor.class)).map(e -> "p:" + e);
+                        sample(generateAll(depth - 1, PointeeType.class)).map(e -> "p:" + e);
+            }
+        }
+    }
+
+    enum PointeeType implements Template {
+        DESCRIPTOR() {
+            @Override
+            public Stream<String> generate(int depth) {
+                return generateAll(depth, Descriptor.class);
+            }
+        },
+
+        VOID() {
+            @Override
+            public Stream<String> generate(int depth) {
+                return Stream.of("V");
             }
         }
     }
@@ -491,7 +522,7 @@ public class TestDescriptorGrammar {
 
     static void testDescriptor(String layout) {
         try {
-            new DescriptorParser(layout).parseLayout();
+            new DescriptorParser(layout).parseDescriptorOrLayouts();
             checks++;
         } catch (Throwable t) {
             throw new AssertionError("Cannot parse: " + layout, t);

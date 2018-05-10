@@ -25,6 +25,8 @@ package jdk.internal.nicl.types;
 import jdk.internal.nicl.Util;
 
 import java.lang.reflect.ParameterizedType;
+import java.nicl.layout.Address;
+import java.nicl.layout.Layout;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.util.Arrays;
@@ -36,7 +38,7 @@ public class LayoutTypeImpl<T> implements LayoutType<T> {
         privilegedGetProperty("LayoutTypeImpl.QUIET"));
 
     private final java.lang.reflect.Type carrierType;
-    private final Type type;
+    private final Layout type;
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <S> LayoutTypeImpl<S> create(Class<S> c) {
@@ -80,7 +82,7 @@ public class LayoutTypeImpl<T> implements LayoutType<T> {
         } else if (Util.isCStruct(c)) {
             return new LayoutTypeImpl<>(c, Util.typeof(c));
         } else if (Util.isFunctionalInterface(c)) {
-            return new LayoutTypeImpl<>(c, Util.typeof(c));
+            return new LayoutTypeImpl<>(c, Address.ofFunction(64, Util.functionof(c)));
         } else {
             switch (c.getName()) {
             case "java.lang.Object": // FIXME: what does this really mean?
@@ -117,7 +119,7 @@ public class LayoutTypeImpl<T> implements LayoutType<T> {
         }
     }
 
-    public LayoutTypeImpl(java.lang.reflect.Type carrierType, Type type) {
+    public LayoutTypeImpl(java.lang.reflect.Type carrierType, Layout type) {
         this.carrierType = carrierType;
         this.type = type;
     }
@@ -134,7 +136,7 @@ public class LayoutTypeImpl<T> implements LayoutType<T> {
         }
 
         @SuppressWarnings("rawtypes")
-        LayoutTypeImpl<?> lt = new LayoutTypeImpl(pt.getActualTypeArguments()[0], ((jdk.internal.nicl.types.Pointer)type).getPointeeType());
+        LayoutTypeImpl<?> lt = new LayoutTypeImpl(pt.getActualTypeArguments()[0], ((Address)type).addresseeInfo().get().layout());
 
         return lt;
     }
@@ -155,16 +157,21 @@ public class LayoutTypeImpl<T> implements LayoutType<T> {
 
     @Override
     public long getNativeTypeSize() {
-        return type.getSize();
+        return type.bitsSize() / 8;
     }
 
-    public Type getType() {
+    public Layout getType() {
         return type;
+    }
+
+    @Override
+    public Layout getLayout() {
+        return getType();
     }
 
     @SuppressWarnings("unchecked")
     public LayoutType<Pointer<T>> ptrType() {
-        return new LayoutTypeImpl<>(new PointerType(carrierType), new jdk.internal.nicl.types.Pointer(type));
+        return new LayoutTypeImpl<>(new PointerType(carrierType), Address.ofLayout(64, type));
     }
 
     public static class PointerType implements ParameterizedType {

@@ -34,6 +34,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.nicl.Scope;
+import java.nicl.layout.Function;
+import java.nicl.layout.Layout;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 import java.util.ArrayList;
@@ -81,16 +83,16 @@ public class UpcallHandler {
         }
 
         Method ficMethod = Util.findFunctionalInterfaceMethod(c);
-        jdk.internal.nicl.types.Type ftype = Util.typeof(ficMethod);
-        if (ftype instanceof jdk.internal.nicl.types.Pointer) {
-            ftype = ((jdk.internal.nicl.types.Pointer) ftype).getPointeeType();
-        }
+        Function ftype = Util.typeof(ficMethod);
+//        if (ftype instanceof jdk.internal.nicl.types.Pointer) { //???
+//            ftype = ((jdk.internal.nicl.types.Pointer) ftype).getPointeeType();
+//        }
 
         MethodType mt = MethodHandles.publicLookup().unreflect(ficMethod).type().dropParameterTypes(0, 1);
 
         MethodHandle mh = MethodHandles.publicLookup().findVirtual(c, "fn", mt);
 
-        return UpcallHandler.make(mh.bindTo(o), (Function) ftype);
+        return UpcallHandler.make(mh.bindTo(o), ftype);
     }
 
     private static UpcallHandler make(MethodHandle mh, Function ftype) throws Throwable {
@@ -337,7 +339,7 @@ public class UpcallHandler {
 
             dst.lvalue().set(addr);
         } else if (Util.isCStruct(c)) {
-            Function ft = new Function(new jdk.internal.nicl.types.Type[0], Util.typeof(c), false);
+            Function ft = Function.of(Util.typeof(c), false, new Layout[0]);
             boolean returnsInMemory = Platform.getInstance().getABI().arrangeCall(ft).returnsInMemory();
 
             Reference<?> struct = (Reference<?>) o;

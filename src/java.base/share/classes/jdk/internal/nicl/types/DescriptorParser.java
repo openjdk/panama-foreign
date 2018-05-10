@@ -26,8 +26,16 @@
 package jdk.internal.nicl.types;
 
 import jdk.internal.nicl.types.DescriptorParser.DescriptorScanner.Token;
-import jdk.internal.nicl.types.Type.Endianness;
 
+import java.nicl.layout.Address;
+import java.nicl.layout.Sequence;
+import java.nicl.layout.Function;
+import java.nicl.layout.Group;
+import java.nicl.layout.Layout;
+import java.nicl.layout.Value;
+import java.nicl.layout.Value.Endianness;
+
+import java.nicl.layout.Value.Kind;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -54,37 +62,36 @@ public class DescriptorParser {
     /**
      * layout = 1*elementType / functionType
      */
-    public Stream<Type> parseLayout() {
+    public Stream<? extends Object> parseDescriptorOrLayouts() {
         if (token == Token.LPAREN) {
             return Stream.of(parseFunction());
         } else {
-            List<Type> types = new ArrayList<>();
-            while (token != Token.END) {
-                types.add(parseElementType());
-            }
-            if (types.size() == 0) {
-                throw scanner.error("At least one element type should be present in a layout string");
-            }
-            return types.stream();
+            return parseLayout();
         }
     }
 
-    /**
-     * descriptor = scalarType / arrayType / containerType / functionType
-     */
-    private Type parseDescriptor() {
-        return token == Token.LPAREN ?
-            parseFunction() :
-            parseElementType();
+    public Stream<Layout> parseLayout() {
+        List<Layout> types = new ArrayList<>();
+        loop: while (true) {
+            switch (token) {
+                case END: break loop;
+                default:
+                    types.add(parseElementType());
+            }
+        }
+        if (types.size() == 0) {
+            throw scanner.error("At least one element type should be present in a layout string");
+        }
+        return types.stream();
     }
 
     /**
      * functionType = '(' *elementType ['*'] ')' elementType
      */
-    private Type parseFunction() {
+    private Function parseFunction() {
         nextToken(); // LPAREN
         boolean varargs = false;
-        List<Type> params = new ArrayList<>();
+        List<Layout> params = new ArrayList<>();
         while (token != Token.RPAREN &&
                 (token != Token.ANY_SIZE || scanner.peek() != Token.RPAREN)) {
             params.add(parseElementType());
@@ -94,13 +101,18 @@ public class DescriptorParser {
             nextToken(); // ANY_SIZE
         }
         nextToken(); //RPAREN
-        return new Function(params.toArray(new Type[0]), parseElementType(), varargs);
+        if (token == Token.VOID) {
+            nextToken();
+            return Function.ofVoid(varargs, params.toArray(new Layout[0]));
+        } else {
+            return Function.of(parseElementType(), varargs, params.toArray(new Layout[0]));
+        }
     }
 
     /**
      * elementType = *separator (scalarType / arrayType / pointerType / containerType) *separator
      */
-    private Type parseElementType() {
+    private Layout parseElementType() {
         skipSpacesOrComments();
         Optional<Endianness> prevEndianness = endianness;
         try {
@@ -145,25 +157,31 @@ public class DescriptorParser {
     /**
      * arrayType = arraySize elementType
      */
-    Type parseArray() {
+    Layout parseArray() {
         int occurrences = token == Token.ANY_SIZE ?
-                -1 : parseNumber(2);
+                0 : parseNumber(2);
         nextToken(); // size
-        Type elemType = parseElementType();
-        return new Array(elemType, occurrences);
+        Layout elemType = parseElementType();
+        return Sequence.of(occurrences, elemType);
     }
 
     /**
      * pointerType = p [':' descriptor ]
      */
-    Type parsePointer() {
+    Layout parsePointer() {
         nextToken();
-        Type pointee = null;
         if (token == Token.BREAKDOWN) {
             nextToken();
-            pointee = parseDescriptor();
+            if (token == Token.LPAREN) {
+                return Address.ofFunction(64, parseFunction());
+            } else if (token != Token.VOID) {
+                return Address.ofLayout(64, parseElementType());
+            } else {
+                //skip VOID
+                nextToken();
+            }
         }
-        return new Pointer(pointee);
+        return Address.ofVoid(64);
     }
 
     /**
@@ -178,42 +196,54 @@ public class DescriptorParser {
      * bitFields = integerType ':' 1*bitField
      * bitField = [number] 'b'
      */
-    Type parseScalar() {
-        Type result;
-        Endianness e = endianness.orElse(Endianness.NATIVE);
+    Layout parseScalar() {
+        Value result;
+        Endianness e = endianness.orElse(Endianness.LITTLE_ENDIAN);
+        int size;
+        char tag;
         if (token == Token.SIZE_SELECTOR) {
             nextToken(); // SIZE_SELECTOR
             switch (token) {
                 case NUMERIC:
-                    int size = parseNumber(1);
+                    size = parseNumber(1);
                     nextToken();
-                    result = new Scalar(scanner.lastScalarTag(), e, size);
+                    tag = scanner.lastScalarTag();
                     break;
                 case STANDARD_SIZED_SCALAR:
-                    char tag = scanner.lastScalarTag();
-                    result = new Scalar(scalarTag(tag), e, scalarSize(tag, -1));
+                    tag = scanner.lastScalarTag();
+                    size = scalarStandardSize(tag, -1);
                     break;
                 default:
                     throw scanner.error("Unexpected token: " + token);
             }
         } else {
-            char tag = scanner.lastScalarTag;
-            if (tag == 'v') {
-                throw scanner.error("Unsized vector scalar");
-            }
-            result = new Scalar(scanner.lastScalarTag(), e);
+            tag = scanner.lastScalarTag;
+            size = definedSize(tag) * 8;
+        }
+        switch (scalarKind(tag)) {
+            case FLOATING_POINT:
+                result = Value.ofFloatingPoint(e, size);
+                break;
+            case INTEGRAL_SIGNED:
+                result = Value.ofSignedInt(e, size);
+                break;
+            case INTEGRAL_UNSIGNED:
+                result = Value.ofUnsignedInt(e, size);
+                break;
+            default:
+                throw new IllegalStateException();
         }
         nextToken(); //scalar tag
         if (token == Token.BREAKDOWN) {
             //bitfield
-            result = parseBitFields((Scalar)result);
+            result = result.withContents(parseBitFields(result));
         }
         return result;
     }
 
-    private BitFields parseBitFields(Scalar scalar) {
-        if (!isValidBitfieldTag(scalar.type)) {
-            throw scanner.error("BitFields not supported on type tag '" + scalar.type + "'");
+    private Group parseBitFields(Value scalar) {
+        if (!isValidBitfieldKind(scalar.kind())) {
+            throw scanner.error("BitFields not supported on type tag '" + scalar.kind() + "'");
         }
         nextToken(); // BREAKDOWN
         List<Integer> fields = new ArrayList<>();
@@ -234,10 +264,10 @@ public class DescriptorParser {
         if (fields.isEmpty()) {
             throw scanner.error("Empty bitfield");
         }
-        return new BitFields(scalar, fields.stream().mapToInt(x -> x).toArray());
+        return Group.struct(fields.stream().map(i -> Value.ofUnsignedInt(i)).toArray(Layout[]::new));
     }
 
-    private int scalarSize(char type, int size) {
+    private int scalarStandardSize(char type, int size) {
         switch (type) {
             case 'o': case 'O':
                 return 8;
@@ -252,14 +282,53 @@ public class DescriptorParser {
         }
     }
 
-    private char scalarTag(char type) {
+    private int definedSize(char type) {
         switch (type) {
-            case 'o': case 's': case 'l': case 'q':
-                return 'i';
-            case 'O': case 'S': case 'L': case 'Q':
-                return 'I';
+            case 'c':
+            case 'o':
+            case 'O':
+            case 'x':
+            case 'B':
+                return 1;
+            case 's':
+            case 'S':
+                return 2;
+            case 'i':
+            case 'I':
+                return 4;
+            case 'l':
+            case 'L':
+            case 'q':
+            case 'Q':
+                return 8;
+            case 'f':
+            case 'F':
+                return 4;
+            case 'd':
+            case 'D':
+                return 8;
+            case 'e':
+            case 'E':
+                return 16;
+            case 'p':
+                return 8;
+            case 'V':
+                return 0;
             default:
-                return type;
+                throw new IllegalStateException();
+        }
+    }
+
+    private Value.Kind scalarKind(char type) {
+        switch (type) {
+            case 'f': case 'F': case 'd': case 'D': case 'e': case 'E':
+                return Kind.FLOATING_POINT;
+            case 'c': case 'o': case 's': case 'i': case 'l': case 'q':
+                return Kind.INTEGRAL_SIGNED;
+            case 'x': case 'B': case 'O': case 'S': case 'I': case 'L': case 'Q':
+                return Kind.INTEGRAL_UNSIGNED;
+            default:
+                throw new IllegalArgumentException("Invalid type descriptor " + type);
         }
     }
 
@@ -271,10 +340,9 @@ public class DescriptorParser {
         return num;
     }
 
-    private boolean isValidBitfieldTag(char ch) {
-        switch (ch) {
-            case 'o': case 's': case 'l': case 'q': case 'i':
-            case 'O': case 'S': case 'L': case 'Q': case 'I':
+    private boolean isValidBitfieldKind(Value.Kind kind) {
+        switch (kind) {
+            case INTEGRAL_SIGNED: case INTEGRAL_UNSIGNED:
                 return true;
             default:
                 return false;
@@ -289,13 +357,13 @@ public class DescriptorParser {
         switch (token) {
             case BIG_ENDIAN:
                 nextToken();
-                return Optional.of(Endianness.BIG);
+                return Optional.of(Endianness.BIG_ENDIAN);
             case LITTLE_ENDIAN:
                 nextToken();
-                return Optional.of(Endianness.LITTLE);
+                return Optional.of(Endianness.LITTLE_ENDIAN);
             case NATIVE_ENDIAN:
                 nextToken();
-                return Optional.of(Endianness.NATIVE);
+                return Optional.of(Endianness.LITTLE_ENDIAN);
             default:
                 return Optional.empty();
         }
@@ -304,9 +372,9 @@ public class DescriptorParser {
     /**
      * containerType = [endianness] '[' elementType *(elementType / unionMember) ']'
      */
-    Type parseContainer() {
+    Layout parseContainer() {
         nextToken(); // LBRACE
-        List<Type> components = new ArrayList<>();
+        List<Layout> components = new ArrayList<>();
         boolean isUnion = false;
         while (token != Token.RBRACE) {
             components.add(parseElementType());
@@ -319,7 +387,9 @@ public class DescriptorParser {
             throw scanner.error("Empty container");
         }
         nextToken(); //RBRACE
-        return new Container(isUnion, components.toArray(new Type[0]));
+        return isUnion ?
+                Group.union(components.toArray(new Layout[0])) :
+                Group.struct(components.toArray(new Layout[0]));
     }
 
     /**
@@ -348,6 +418,7 @@ public class DescriptorParser {
             UNION,
             ANY_SIZE,
             NUMERIC,
+            VOID,
             SEPARATOR,
             END;
         }
@@ -391,9 +462,12 @@ public class DescriptorParser {
                         res = Token.EXPLICIT_SIZED_SCALAR;
                         break;
                     case 'd': case 'e': case 'D': case 'E':
-                    case 'c': case 'B': case 'V': case 'x': case 'v':
+                    case 'c': case 'B': case 'v': case 'x':
                         lastScalarTag = ch;
                         res = Token.OTHER_SCALAR;
+                        break;
+                    case 'V':
+                        res = Token.VOID;
                         break;
                     case ' ': case '\t': case '\n': case '\r':
                         res = Token.SEPARATOR;

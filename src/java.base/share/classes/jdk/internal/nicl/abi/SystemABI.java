@@ -24,41 +24,43 @@
  */
 package jdk.internal.nicl.abi;
 
-import jdk.internal.nicl.types.Container;
 import jdk.internal.nicl.types.ContainerSizeInfo;
-import jdk.internal.nicl.types.Type;
-import jdk.internal.nicl.types.Function;
+
+import java.nicl.layout.Function;
+import java.nicl.layout.Group;
+import java.nicl.layout.Layout;
+import java.nicl.layout.Value;
 
 public interface SystemABI {
     /**
      * The size in bytes for a type as defined by the ABI
      */
-    long definedSize(char typeCode);
+    long definedSize(Value scalar);
 
     /**
      * The alignment requirement for a type as defined by the ABI
      */
-    long definedAlignment(char typeCode);
+    long definedAlignment(Value scalar);
 
     /**
      * The alignment requirement for a given type
      * @param isVar indicate if the type is a standalone variable. This change how
      * array is aligned. for example.
      */
-    long alignment(Type t, boolean isVar);
+    long alignment(Layout t, boolean isVar);
 
     /**
      * The size of a given type considering alignment requirement
      */
-    long sizeof(Type t);
+    long sizeof(Layout t);
 
     /**
      * Align the specified type from a given address
      * @return The address the data should be at based on alignment requirement
      */
-    long align(Type t, boolean isVar, long addr);
+    long align(Layout t, boolean isVar, long addr);
 
-    ContainerSizeInfo layout(Container c, long pack);
+    ContainerSizeInfo layout(Group c, long pack);
 
     CallingSequence arrangeCall(Function f);
 }

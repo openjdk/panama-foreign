@@ -27,6 +27,14 @@ package jdk.internal.nicl.abi;
 
 import jdk.internal.nicl.types.*;
 
+import java.nicl.layout.Address;
+import java.nicl.layout.Sequence;
+import java.nicl.layout.Group;
+import java.nicl.layout.Group.Kind;
+import java.nicl.layout.Layout;
+import java.nicl.layout.Value;
+import java.nicl.layout.Value;
+
 /**
  * Base class implements default rules for ABI. Mostly base on System V AMD64
  * ABI convention.
@@ -35,9 +43,9 @@ import jdk.internal.nicl.types.*;
  */
 public abstract class AbstractABI implements SystemABI {
     @Override
-    public long definedAlignment(char typeCode) {
+    public long definedAlignment(Value scalar) {
         // default to same as size, which happen to be the case for AMD64
-        return definedSize(typeCode);
+        return scalar.bitsSize() / 8;
     }
 
     private long alignUp(long addr, long alignment) {
@@ -48,60 +56,51 @@ public abstract class AbstractABI implements SystemABI {
         return addr & ~(alignment - 1);
     }
 
-    protected long alignmentOfScalar(Scalar st) {
-        switch (st.typeCode()) {
-            case 'v':
-                return st.getSize();
-            case 'i':
-                return st.getSize();
-            default:
-                return definedAlignment(st.typeCode());
-        }
+    protected long alignmentOfScalar(Value st) {
+        return definedAlignment(st);
     }
 
-    protected long alignmentOfArray(Array ar, boolean isVar) {
-        if (ar.getOccurrence() < 0) {
+    protected long alignmentOfArray(Sequence ar, boolean isVar) {
+        if (ar.elementsSize() == 0) {
             // VLA or incomplete
             return 16;
-        } else if (ar.getSize() >= 16 && isVar) {
+        } else if ((ar.bitsSize() / 8) >= 16 && isVar) {
             return 16;
         } else {
             // align as element type
-            Type elementType = ar.getElementType();
+            Layout elementType = ar.element();
             return alignment(elementType, false);
         }
     }
 
-    protected long alignmentOfContainer(Container ct) {
+    protected long alignmentOfContainer(Group ct) {
         // Most strict member
-        return ct.getMembers().mapToLong(t -> alignment(t, false)).max().orElse(1);
+        return ct.elements().stream().mapToLong(t -> alignment(t, false)).max().orElse(1);
     }
 
     @Override
-    public long alignment(Type t, boolean isVar) {
-        if (t instanceof Scalar) {
-            return alignmentOfScalar((Scalar) t);
-        } else if (t instanceof Array) {
+    public long alignment(Layout t, boolean isVar) {
+        if (t instanceof Value) {
+            return alignmentOfScalar((Value) t);
+        } else if (t instanceof Sequence) {
             // when array is used alone
-            return alignmentOfArray((Array) t, isVar);
-        } else if (t instanceof Container) {
-            return alignmentOfContainer((Container) t);
-        } else if (t instanceof BitFields) {
-            return alignmentOfScalar(((BitFields) t).getStorage());
-        } else if (t instanceof Pointer) {
-            return definedAlignment('p');
+            return alignmentOfArray((Sequence) t, isVar);
+        } else if (t instanceof Group) {
+            return alignmentOfContainer((Group) t);
+        } else if (t instanceof Address) {
+            return 8;
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);
         }
     }
 
-    public long sizeOfArray(Array ar) {
-        long occurrence = ar.getOccurrence();
-        if (occurrence < 0) {
+    public long sizeOfArray(Sequence ar) {
+        long occurrence = ar.elementsSize();
+        if (occurrence == 0) {
             // VLA or incomplete, unknown size with negative value
             return occurrence;
         } else {
-            Type elementType = ar.getElementType();
+            Layout elementType = ar.element();
             return occurrence * alignment(elementType, false);
         }
     }
@@ -113,25 +112,25 @@ public abstract class AbstractABI implements SystemABI {
         private long size = 0;
         private long alignment_of_container = 0;
 
-        ContainerSizeCalculator(Container ct, long pack) {
-            this.isUnion = ct.isUnion();
+        ContainerSizeCalculator(Group ct, long pack) {
+            this.isUnion = ct.kind() == Kind.UNION;
             this.pack = pack;
-            offsets = new long[ct.memberCount()];
+            offsets = new long[ct.elements().size()];
             for (int i = 0; i < offsets.length; i++) {
-                offsets[i] = calculate(ct.getMember(i));
+                offsets[i] = calculate(ct.elements().get(i));
             }
         }
 
-        private long calculate(Type t) {
+        private long calculate(Layout t) {
             long offset = 0;
             long alignment = (pack <= 0) ? AbstractABI.this.alignment(t, false) : pack;
             if (isUnion) {
-                if (t.getSize() > size) {
-                    size = t.getSize();
+                if ((t.bitsSize() / 8) > size) {
+                    size = t.bitsSize() / 8;
                 }
             } else {
                 offset = AbstractABI.this.alignUp(size, alignment);
-                size = offset + t.getSize();
+                size = offset + (t.bitsSize() / 8);
             }
 
             if (alignment > alignment_of_container) {
@@ -164,29 +163,27 @@ public abstract class AbstractABI implements SystemABI {
     }
 
     @Override
-    public ContainerSizeInfo layout(Container ct, long pack) {
+    public ContainerSizeInfo layout(Group ct, long pack) {
         return new ContainerSizeCalculator(ct, pack);
     }
 
     @Override
-    public long sizeof(Type t) {
-        if (t instanceof Scalar) {
-            return t.getSize();
-        } else if (t instanceof Array) {
-            return sizeOfArray((Array) t);
-        } else if (t instanceof Container) {
-            return layout((Container) t, -1).size();
-        } else if (t instanceof BitFields) {
-            return definedSize(((BitFields) t).getStorage().typeCode());
-        } else if (t instanceof Pointer) {
-            return definedSize('p');
+    public long sizeof(Layout t) {
+        if (t instanceof Value) {
+            return t.bitsSize() / 8;
+        } else if (t instanceof Sequence) {
+            return sizeOfArray((Sequence) t);
+        } else if (t instanceof Group) {
+            return layout((Group) t, -1).size();
+        } else if (t instanceof Address) {
+            return definedSize((Address)t);
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);
         }
     }
 
     @Override
-    public long align(Type t, boolean isVar, long addr) {
+    public long align(Layout t, boolean isVar, long addr) {
         return alignUp(addr, alignment(t, isVar));
     }
 }

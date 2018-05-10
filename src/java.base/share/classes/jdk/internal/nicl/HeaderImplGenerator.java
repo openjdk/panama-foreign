@@ -22,7 +22,6 @@
  */
 package jdk.internal.nicl;
 
-import jdk.internal.nicl.types.Function;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
@@ -734,7 +733,7 @@ class HeaderImplGenerator extends ClassGenerator {
             }
 
             generateBridgeMethod(ctxt, method);
-        } else if (method.isAnnotationPresent(NativeType.class) && !(Util.typeof(method) instanceof Function)) {
+        } else if (method.isAnnotationPresent(NativeType.class) && !Util.isFunction(method)) {
             /*
              * Native type is not a function, so this must be a global
              * variable (typically an extern variable of some sort).
