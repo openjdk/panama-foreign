@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 public class Float512VectorTests extends AbstractVectorTest {
 
     static final FloatVector.FloatSpecies<Shapes.S512Bit> SPECIES =
-                FloatVector.speciesInstance(Shapes.S_512_BIT);
+                FloatVector.species(Shapes.S_512_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 

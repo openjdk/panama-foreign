@@ -64,7 +64,7 @@ public class VectorRuns {
 
 
     static int countRunAscendingVector(int[] a) {
-        IntVector.IntSpecies<Shapes.S256Bit> species = IntVector.speciesInstance(Shapes.S_256_BIT);
+        IntVector.IntSpecies<Shapes.S256Bit> species = IntVector.species(Shapes.S_256_BIT);
 
         int r = 1;
         if (r >= a.length)

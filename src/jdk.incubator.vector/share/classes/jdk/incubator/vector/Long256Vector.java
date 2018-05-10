@@ -1000,7 +1000,7 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
     // Shuffle
 
     static final class Long256Shuffle extends AbstractShuffle<Long, Shapes.S256Bit> {
-        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_256_BIT);
+        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = IntVector.species(Shapes.S_256_BIT);
 
         public Long256Shuffle(int[] reorder) {
             super(reorder);

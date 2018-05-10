@@ -955,7 +955,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     // Shuffle
 
     static final class Float64Shuffle extends AbstractShuffle<Float, Shapes.S64Bit> {
-        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_64_BIT);
+        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = IntVector.species(Shapes.S_64_BIT);
 
         public Float64Shuffle(int[] reorder) {
             super(reorder);

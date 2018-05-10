@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 public class Double64VectorTests extends AbstractVectorTest {
 
     static final DoubleVector.DoubleSpecies<Shapes.S64Bit> SPECIES =
-                DoubleVector.speciesInstance(Shapes.S_64_BIT);
+                DoubleVector.species(Shapes.S_64_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 

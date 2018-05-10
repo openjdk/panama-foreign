@@ -931,8 +931,8 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the preferred species for an element type of {@code long}
      */
     @SuppressWarnings("unchecked")
-    public static LongSpecies<?> preferredSpeciesInstance() {
-        return (LongSpecies<?>) Vector.preferredSpeciesInstance(long.class);
+    public static LongSpecies<?> preferredSpecies() {
+        return (LongSpecies<?>) Vector.preferredSpecies(long.class);
     }
 
     /**
@@ -944,7 +944,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @throws IllegalArgumentException if no such species exists for the shape
      */
     @SuppressWarnings("unchecked")
-    public static <S extends Shape> LongSpecies<S> speciesInstance(S s) {
+    public static <S extends Shape> LongSpecies<S> species(S s) {
         Objects.requireNonNull(s);
         if (s == Shapes.S_64_BIT) {
             return (LongSpecies<S>) Long64Vector.SPECIES;

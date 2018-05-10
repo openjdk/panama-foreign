@@ -21,8 +21,6 @@
  * questions.
  */
 
-import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.Vector;
 import jdk.internal.misc.Unsafe;
 import org.testng.Assert;
@@ -53,7 +51,7 @@ public class PreferredSpeciesTest {
     @Test(dataProvider = "classesProvider")
     void testVectorLength(Class<?> c) {
         Vector.Species<?, ?> species =
-                Vector.preferredSpeciesInstance(c);
+                Vector.preferredSpecies(c);
 
         Assert.assertEquals(species.length(), U.getMaxVectorSize(c));
     }

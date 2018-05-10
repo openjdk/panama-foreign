@@ -955,7 +955,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     // Shuffle
 
     static final class Double512Shuffle extends AbstractShuffle<Double, Shapes.S512Bit> {
-        static final IntVector.IntSpecies<Shapes.S512Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_512_BIT);
+        static final IntVector.IntSpecies<Shapes.S512Bit> INT_SPECIES = IntVector.species(Shapes.S_512_BIT);
 
         public Double512Shuffle(int[] reorder) {
             super(reorder);

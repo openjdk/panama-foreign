@@ -20,33 +20,33 @@ public class VectorReshapeTests {
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
     static final int NUM_ITER = 200 * INVOC_COUNT;
 
-    static final IntVector.IntSpecies<Shapes.S64Bit> ispec64 = IntVector.speciesInstance(Shapes.S_64_BIT);
-    static final FloatVector.FloatSpecies<Shapes.S64Bit> fspec64 = FloatVector.speciesInstance(Shapes.S_64_BIT);
-    static final LongVector.LongSpecies<Shapes.S64Bit> lspec64 = LongVector.speciesInstance(Shapes.S_64_BIT);
-    static final DoubleVector.DoubleSpecies<Shapes.S64Bit> dspec64 = DoubleVector.speciesInstance(Shapes.S_64_BIT);
-    static final ByteVector.ByteSpecies<Shapes.S64Bit> bspec64 = ByteVector.speciesInstance(Shapes.S_64_BIT);
-    static final ShortVector.ShortSpecies<Shapes.S64Bit> sspec64 = ShortVector.speciesInstance(Shapes.S_64_BIT);
+    static final IntVector.IntSpecies<Shapes.S64Bit> ispec64 = IntVector.species(Shapes.S_64_BIT);
+    static final FloatVector.FloatSpecies<Shapes.S64Bit> fspec64 = FloatVector.species(Shapes.S_64_BIT);
+    static final LongVector.LongSpecies<Shapes.S64Bit> lspec64 = LongVector.species(Shapes.S_64_BIT);
+    static final DoubleVector.DoubleSpecies<Shapes.S64Bit> dspec64 = DoubleVector.species(Shapes.S_64_BIT);
+    static final ByteVector.ByteSpecies<Shapes.S64Bit> bspec64 = ByteVector.species(Shapes.S_64_BIT);
+    static final ShortVector.ShortSpecies<Shapes.S64Bit> sspec64 = ShortVector.species(Shapes.S_64_BIT);
 
-    static final IntVector.IntSpecies<Shapes.S128Bit> ispec128 = IntVector.speciesInstance(Shapes.S_128_BIT);
-    static final FloatVector.FloatSpecies<Shapes.S128Bit> fspec128 = FloatVector.speciesInstance(Shapes.S_128_BIT);
-    static final LongVector.LongSpecies<Shapes.S128Bit> lspec128 = LongVector.speciesInstance(Shapes.S_128_BIT);
-    static final DoubleVector.DoubleSpecies<Shapes.S128Bit> dspec128 = DoubleVector.speciesInstance(Shapes.S_128_BIT);
-    static final ByteVector.ByteSpecies<Shapes.S128Bit> bspec128 = ByteVector.speciesInstance(Shapes.S_128_BIT);
-    static final ShortVector.ShortSpecies<Shapes.S128Bit> sspec128 = ShortVector.speciesInstance(Shapes.S_128_BIT);
+    static final IntVector.IntSpecies<Shapes.S128Bit> ispec128 = IntVector.species(Shapes.S_128_BIT);
+    static final FloatVector.FloatSpecies<Shapes.S128Bit> fspec128 = FloatVector.species(Shapes.S_128_BIT);
+    static final LongVector.LongSpecies<Shapes.S128Bit> lspec128 = LongVector.species(Shapes.S_128_BIT);
+    static final DoubleVector.DoubleSpecies<Shapes.S128Bit> dspec128 = DoubleVector.species(Shapes.S_128_BIT);
+    static final ByteVector.ByteSpecies<Shapes.S128Bit> bspec128 = ByteVector.species(Shapes.S_128_BIT);
+    static final ShortVector.ShortSpecies<Shapes.S128Bit> sspec128 = ShortVector.species(Shapes.S_128_BIT);
 
-    static final IntVector.IntSpecies<Shapes.S256Bit> ispec256 = IntVector.speciesInstance(Shapes.S_256_BIT);
-    static final FloatVector.FloatSpecies<Shapes.S256Bit> fspec256 = FloatVector.speciesInstance(Shapes.S_256_BIT);
-    static final LongVector.LongSpecies<Shapes.S256Bit> lspec256 = LongVector.speciesInstance(Shapes.S_256_BIT);
-    static final DoubleVector.DoubleSpecies<Shapes.S256Bit> dspec256 = DoubleVector.speciesInstance(Shapes.S_256_BIT);
-    static final ByteVector.ByteSpecies<Shapes.S256Bit> bspec256 = ByteVector.speciesInstance(Shapes.S_256_BIT);
-    static final ShortVector.ShortSpecies<Shapes.S256Bit> sspec256 = ShortVector.speciesInstance(Shapes.S_256_BIT);
+    static final IntVector.IntSpecies<Shapes.S256Bit> ispec256 = IntVector.species(Shapes.S_256_BIT);
+    static final FloatVector.FloatSpecies<Shapes.S256Bit> fspec256 = FloatVector.species(Shapes.S_256_BIT);
+    static final LongVector.LongSpecies<Shapes.S256Bit> lspec256 = LongVector.species(Shapes.S_256_BIT);
+    static final DoubleVector.DoubleSpecies<Shapes.S256Bit> dspec256 = DoubleVector.species(Shapes.S_256_BIT);
+    static final ByteVector.ByteSpecies<Shapes.S256Bit> bspec256 = ByteVector.species(Shapes.S_256_BIT);
+    static final ShortVector.ShortSpecies<Shapes.S256Bit> sspec256 = ShortVector.species(Shapes.S_256_BIT);
 
-    static final IntVector.IntSpecies<Shapes.S512Bit> ispec512 = IntVector.speciesInstance(Shapes.S_512_BIT);
-    static final FloatVector.FloatSpecies<Shapes.S512Bit> fspec512 = FloatVector.speciesInstance(Shapes.S_512_BIT);
-    static final LongVector.LongSpecies<Shapes.S512Bit> lspec512 = LongVector.speciesInstance(Shapes.S_512_BIT);
-    static final DoubleVector.DoubleSpecies<Shapes.S512Bit> dspec512 = DoubleVector.speciesInstance(Shapes.S_512_BIT);
-    static final ByteVector.ByteSpecies<Shapes.S512Bit> bspec512 = ByteVector.speciesInstance(Shapes.S_512_BIT);
-    static final ShortVector.ShortSpecies<Shapes.S512Bit> sspec512 = ShortVector.speciesInstance(Shapes.S_512_BIT);
+    static final IntVector.IntSpecies<Shapes.S512Bit> ispec512 = IntVector.species(Shapes.S_512_BIT);
+    static final FloatVector.FloatSpecies<Shapes.S512Bit> fspec512 = FloatVector.species(Shapes.S_512_BIT);
+    static final LongVector.LongSpecies<Shapes.S512Bit> lspec512 = LongVector.species(Shapes.S_512_BIT);
+    static final DoubleVector.DoubleSpecies<Shapes.S512Bit> dspec512 = DoubleVector.species(Shapes.S_512_BIT);
+    static final ByteVector.ByteSpecies<Shapes.S512Bit> bspec512 = ByteVector.species(Shapes.S_512_BIT);
+    static final ShortVector.ShortSpecies<Shapes.S512Bit> sspec512 = ShortVector.species(Shapes.S_512_BIT);
 
     static <T> IntFunction<T> withToString(String s, IntFunction<T> f) {
         return new IntFunction<T>() {

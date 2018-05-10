@@ -910,8 +910,8 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @return the preferred species for an element type of {@code short}
      */
     @SuppressWarnings("unchecked")
-    public static ShortSpecies<?> preferredSpeciesInstance() {
-        return (ShortSpecies<?>) Vector.preferredSpeciesInstance(short.class);
+    public static ShortSpecies<?> preferredSpecies() {
+        return (ShortSpecies<?>) Vector.preferredSpecies(short.class);
     }
 
     /**
@@ -923,7 +923,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @throws IllegalArgumentException if no such species exists for the shape
      */
     @SuppressWarnings("unchecked")
-    public static <S extends Shape> ShortSpecies<S> speciesInstance(S s) {
+    public static <S extends Shape> ShortSpecies<S> species(S s) {
         Objects.requireNonNull(s);
         if (s == Shapes.S_64_BIT) {
             return (ShortSpecies<S>) Short64Vector.SPECIES;

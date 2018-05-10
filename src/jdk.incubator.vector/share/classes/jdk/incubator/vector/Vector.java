@@ -27,7 +27,6 @@ package jdk.incubator.vector;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 /**
@@ -74,12 +73,12 @@ import java.nio.ByteBuffer;
  * factory called a {@link Species}.  A Species has an
  * element type and shape and creates Vector values of the same element type
  * and shape.
- * A species can be {@link #speciesInstance obtained} given an element type and
- * shape, or a preferred species can be {@link #speciesInstance obtained} given
- * just an element type where the most optimal shape is selected for the current
- * platform.  It is recommended that Species instances be held in
- * {@code static final} fields for optimal creation and usage of Vector values
- * by the runtime compiler.
+ * A species can be {@link #species(Class, Shape)} obtained} given an element
+ * type and shape, or a preferred species can be
+ * {@link #preferredSpecies obtained} given just an element type where the most
+ * optimal shape is selected for the current platform.  It is recommended that
+ * Species instances be held in {@code static final} fields for optimal creation
+ * and usage of Vector values by the runtime compiler.
  * <p>
  * Vector operations can be grouped into various categories and their behaviour
  * generally specified as follows:
@@ -1830,13 +1829,13 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * element type
      */
     @SuppressWarnings("unchecked")
-    public static <E> Vector.Species<E, ?> preferredSpeciesInstance(Class<E> c) {
+    public static <E> Vector.Species<E, ?> preferredSpecies(Class<E> c) {
         Unsafe u = Unsafe.getUnsafe();
 
         int vectorLength = u.getMaxVectorSize(c);
         int vectorBitSize = bitSizeForVectorLength(c, vectorLength);
         Shape s = shapeForVectorBitSize(vectorBitSize);
-        return speciesInstance(c, s);
+        return species(c, s);
     }
 
     // @@@ public static method on Species?
@@ -1892,24 +1891,24 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * element type and/or shape
      */
     @SuppressWarnings("unchecked")
-    public static <E, S extends Shape> Vector.Species<E, S> speciesInstance(Class<E> c, S s) {
+    public static <E, S extends Shape> Vector.Species<E, S> species(Class<E> c, S s) {
         if (c == float.class) {
-            return (Vector.Species<E, S>) FloatVector.speciesInstance(s);
+            return (Vector.Species<E, S>) FloatVector.species(s);
         }
         else if (c == double.class) {
-            return (Vector.Species<E, S>) DoubleVector.speciesInstance(s);
+            return (Vector.Species<E, S>) DoubleVector.species(s);
         }
         else if (c == byte.class) {
-            return (Vector.Species<E, S>) ByteVector.speciesInstance(s);
+            return (Vector.Species<E, S>) ByteVector.species(s);
         }
         else if (c == short.class) {
-            return (Vector.Species<E, S>) ShortVector.speciesInstance(s);
+            return (Vector.Species<E, S>) ShortVector.species(s);
         }
         else if (c == int.class) {
-            return (Vector.Species<E, S>) IntVector.speciesInstance(s);
+            return (Vector.Species<E, S>) IntVector.species(s);
         }
         else if (c == long.class) {
-            return (Vector.Species<E, S>) LongVector.speciesInstance(s);
+            return (Vector.Species<E, S>) LongVector.species(s);
         }
         else {
             throw new IllegalArgumentException("Bad vector element type: " + c.getName());

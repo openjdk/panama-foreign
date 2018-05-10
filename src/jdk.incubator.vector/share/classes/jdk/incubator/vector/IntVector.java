@@ -931,8 +931,8 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the preferred species for an element type of {@code int}
      */
     @SuppressWarnings("unchecked")
-    public static IntSpecies<?> preferredSpeciesInstance() {
-        return (IntSpecies<?>) Vector.preferredSpeciesInstance(int.class);
+    public static IntSpecies<?> preferredSpecies() {
+        return (IntSpecies<?>) Vector.preferredSpecies(int.class);
     }
 
     /**
@@ -944,7 +944,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @throws IllegalArgumentException if no such species exists for the shape
      */
     @SuppressWarnings("unchecked")
-    public static <S extends Shape> IntSpecies<S> speciesInstance(S s) {
+    public static <S extends Shape> IntSpecies<S> species(S s) {
         Objects.requireNonNull(s);
         if (s == Shapes.S_64_BIT) {
             return (IntSpecies<S>) Int64Vector.SPECIES;

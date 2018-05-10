@@ -996,8 +996,8 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * @return the preferred species for an element type of {@code double}
      */
     @SuppressWarnings("unchecked")
-    public static DoubleSpecies<?> preferredSpeciesInstance() {
-        return (DoubleSpecies<?>) Vector.preferredSpeciesInstance(double.class);
+    public static DoubleSpecies<?> preferredSpecies() {
+        return (DoubleSpecies<?>) Vector.preferredSpecies(double.class);
     }
 
     /**
@@ -1009,7 +1009,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * @throws IllegalArgumentException if no such species exists for the shape
      */
     @SuppressWarnings("unchecked")
-    public static <S extends Shape> DoubleSpecies<S> speciesInstance(S s) {
+    public static <S extends Shape> DoubleSpecies<S> species(S s) {
         Objects.requireNonNull(s);
         if (s == Shapes.S_64_BIT) {
             return (DoubleSpecies<S>) Double64Vector.SPECIES;

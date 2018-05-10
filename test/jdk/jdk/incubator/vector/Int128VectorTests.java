@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 public class Int128VectorTests extends AbstractVectorTest {
 
     static final IntVector.IntSpecies<Shapes.S128Bit> SPECIES =
-                IntVector.speciesInstance(Shapes.S_128_BIT);
+                IntVector.species(Shapes.S_128_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 

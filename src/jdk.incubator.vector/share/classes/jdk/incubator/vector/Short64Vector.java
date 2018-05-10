@@ -954,7 +954,7 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
     // Shuffle
 
     static final class Short64Shuffle extends AbstractShuffle<Short, Shapes.S64Bit> {
-        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_64_BIT);
+        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = IntVector.species(Shapes.S_64_BIT);
 
         public Short64Shuffle(int[] reorder) {
             super(reorder);

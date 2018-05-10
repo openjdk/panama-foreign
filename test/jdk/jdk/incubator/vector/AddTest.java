@@ -35,7 +35,7 @@ import java.util.stream.IntStream;
 
 public class AddTest {
     static final FloatVector.FloatSpecies<Shapes.S256Bit> SPECIES =
-            FloatVector.speciesInstance(Shapes.S_256_BIT);
+            FloatVector.species(Shapes.S_256_BIT);
 
     static final int SIZE = 1024;
     static float[] a = new float[SIZE];

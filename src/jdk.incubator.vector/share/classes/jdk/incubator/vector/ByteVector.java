@@ -909,8 +909,8 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @return the preferred species for an element type of {@code byte}
      */
     @SuppressWarnings("unchecked")
-    public static ByteSpecies<?> preferredSpeciesInstance() {
-        return (ByteSpecies<?>) Vector.preferredSpeciesInstance(byte.class);
+    public static ByteSpecies<?> preferredSpecies() {
+        return (ByteSpecies<?>) Vector.preferredSpecies(byte.class);
     }
 
     /**
@@ -922,7 +922,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @throws IllegalArgumentException if no such species exists for the shape
      */
     @SuppressWarnings("unchecked")
-    public static <S extends Shape> ByteSpecies<S> speciesInstance(S s) {
+    public static <S extends Shape> ByteSpecies<S> species(S s) {
         Objects.requireNonNull(s);
         if (s == Shapes.S_64_BIT) {
             return (ByteSpecies<S>) Byte64Vector.SPECIES;

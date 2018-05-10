@@ -954,7 +954,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
     // Shuffle
 
     static final class Byte256Shuffle extends AbstractShuffle<Byte, Shapes.S256Bit> {
-        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = IntVector.speciesInstance(Shapes.S_256_BIT);
+        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = IntVector.species(Shapes.S_256_BIT);
 
         public Byte256Shuffle(int[] reorder) {
             super(reorder);

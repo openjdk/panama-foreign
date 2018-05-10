@@ -996,8 +996,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * @return the preferred species for an element type of {@code float}
      */
     @SuppressWarnings("unchecked")
-    public static FloatSpecies<?> preferredSpeciesInstance() {
-        return (FloatSpecies<?>) Vector.preferredSpeciesInstance(float.class);
+    public static FloatSpecies<?> preferredSpecies() {
+        return (FloatSpecies<?>) Vector.preferredSpecies(float.class);
     }
 
     /**
@@ -1009,7 +1009,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * @throws IllegalArgumentException if no such species exists for the shape
      */
     @SuppressWarnings("unchecked")
-    public static <S extends Shape> FloatSpecies<S> speciesInstance(S s) {
+    public static <S extends Shape> FloatSpecies<S> species(S s) {
         Objects.requireNonNull(s);
         if (s == Shapes.S_64_BIT) {
             return (FloatSpecies<S>) Float64Vector.SPECIES;

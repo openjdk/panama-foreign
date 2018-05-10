@@ -176,18 +176,18 @@ public class VectorHash {
     }
 
     static final IntVector.IntSpecies<Shapes.S512Bit> INT_512_SPECIES =
-            IntVector.speciesInstance(Shapes.S_512_BIT);
+            IntVector.species(Shapes.S_512_BIT);
     static final IntVector.IntSpecies<Shapes.S256Bit> INT_256_SPECIES =
-            IntVector.speciesInstance(Shapes.S_256_BIT);
+            IntVector.species(Shapes.S_256_BIT);
     static final int COEFF_31_TO_16;
     static final IntVector<Shapes.S512Bit> H_COEFF_16;
 
     static final ByteVector.ByteSpecies<Shapes.S512Bit> BYTE_512_SPECIES =
-            ByteVector.speciesInstance(Shapes.S_512_BIT);
+            ByteVector.species(Shapes.S_512_BIT);
     static final ByteVector.ByteSpecies<Shapes.S128Bit> BYTE_128_SPECIES =
-            ByteVector.speciesInstance(Shapes.S_128_BIT);
+            ByteVector.species(Shapes.S_128_BIT);
     static final ByteVector.ByteSpecies<Shapes.S64Bit> BYTE_64_SPECIES =
-            ByteVector.speciesInstance(Shapes.S_64_BIT);
+            ByteVector.species(Shapes.S_64_BIT);
     static final int COEFF_31_TO_8;
     static final IntVector<Shapes.S256Bit> H_COEFF_8;
 

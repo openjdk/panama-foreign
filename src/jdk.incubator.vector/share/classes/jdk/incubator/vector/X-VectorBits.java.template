@@ -632,8 +632,8 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 #end[FP]
 
     // Type specific horizontal reductions
-
 #if[BITWISE]
+
     @Override
     @ForceInline
     public $type$ addAll() {
@@ -651,6 +651,17 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v -> (long) v.rOp(($type$) -1, (i, a, b) -> ($type$) (a & b)));
     }
+#if[intOrLong]
+
+    @Override
+    @ForceInline
+    public $type$ mulAll() {
+        return ($type$) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v -> (long) v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b)));
+    }
+#end[intOrLong]
 
     @Override
     @ForceInline
@@ -669,17 +680,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a | b)));
     }
-#end[BITWISE]
-#if[intOrLong]
-
-    @Override
-    @ForceInline
-    public $type$ mulAll() {
-        return ($type$) VectorIntrinsics.reductionCoerced(
-            VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
-            this,
-            v -> (long) v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b)));
-    }
 
     @Override
     @ForceInline
@@ -689,7 +689,8 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a ^ b)));
     }
-#end[intOrLong]
+#end[BITWISE]
+
 #if[FP]
     @Override
     @ForceInline
@@ -729,8 +730,8 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                                 });
         return $Type$.$bitstype$BitsTo$Fptype$(bits);
     }
-#end[FP]
 
+#end[FP]
     // Memory operations
 
     @Override
@@ -1199,7 +1200,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     // Shuffle
 
     static final class $shuffletype$ extends AbstractShuffle<$Boxtype$, Shapes.$shape$> {
-        static final IntVector.IntSpecies<Shapes.$shape$> INT_SPECIES = IntVector.speciesInstance(Shapes.$Shape$);
+        static final IntVector.IntSpecies<Shapes.$shape$> INT_SPECIES = IntVector.species(Shapes.$Shape$);
 
         public $shuffletype$(int[] reorder) {
             super(reorder);

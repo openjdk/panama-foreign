@@ -1148,8 +1148,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the preferred species for an element type of {@code $type$}
      */
     @SuppressWarnings("unchecked")
-    public static $Type$Species<?> preferredSpeciesInstance() {
-        return ($Type$Species<?>) Vector.preferredSpeciesInstance($type$.class);
+    public static $Type$Species<?> preferredSpecies() {
+        return ($Type$Species<?>) Vector.preferredSpecies($type$.class);
     }
 
     /**
@@ -1161,7 +1161,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @throws IllegalArgumentException if no such species exists for the shape
      */
     @SuppressWarnings("unchecked")
-    public static <S extends Shape> $Type$Species<S> speciesInstance(S s) {
+    public static <S extends Shape> $Type$Species<S> species(S s) {
         Objects.requireNonNull(s);
         if (s == Shapes.S_64_BIT) {
             return ($Type$Species<S>) $Type$64Vector.SPECIES;
