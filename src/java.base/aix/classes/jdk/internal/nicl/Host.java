@@ -28,13 +28,13 @@ package jdk.internal.nicl;
 import java.nicl.layout.Value;
 import java.nicl.Library;
 
-public final class NativeOS extends OS {
+public final class Host extends Platform {
     private final static String LIB_PREFIX = "lib";
     private final static String LIB_SUFFIX = ".so";
     private final static LibraryFactory loader = new LdLoader();
     private final static NativeOS instance = new NativeOS();
 
-    private NativeOS() {
+    private Host() {
         // FIXME: Need to get Endianness from CPU arch
         super(Value.Endianness.LITTLE_ENDIAN, loader);
     }
@@ -44,7 +44,7 @@ public final class NativeOS extends OS {
         return LIB_PREFIX + name + LIB_SUFFIX;
     }
 
-    public static NativeOS getInstance() {
+    public static Host getInstance() {
         return instance;
     }
 }
