@@ -25,6 +25,7 @@
 
 package jdk.internal.nicl;
 
+import java.nicl.layout.Value;
 import java.nicl.Library;
 
 public final class Host extends Platform {
@@ -35,7 +36,7 @@ public final class Host extends Platform {
 
     private Host() {
         // FIXME: Need to get Endianness from CPU arch
-        super(Type.DataModel.LP, Type.Endianness.LITTLE, loader);
+        super(Value.Endianness.LITTLE_ENDIAN, loader);
     }
 
     @Override

@@ -25,6 +25,7 @@
 
 package jdk.internal.nicl;
 
+import java.nicl.layout.Value;
 import java.nicl.Library;
 
 public final class NativeOS extends OS {
@@ -35,7 +36,7 @@ public final class NativeOS extends OS {
 
     private NativeOS() {
         // FIXME: Need to get Endianness from CPU arch
-        super(Type.DataModel.LP, Type.Endianness.LITTLE, loader);
+        super(Value.Endianness.LITTLE_ENDIAN, loader);
     }
 
     @Override
