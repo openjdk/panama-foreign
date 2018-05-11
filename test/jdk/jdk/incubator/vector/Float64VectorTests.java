@@ -128,7 +128,54 @@ public class Float64VectorTests extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
-    
+    static boolean isWithin1Ulp(float actual, float expected) {
+        if (Float.isNaN(expected) && !Float.isNaN(actual)) {
+            return false;
+        } else if (!Float.isNaN(expected) && Float.isNaN(actual)) {
+            return false;
+        }
+
+        float low = Math.nextDown(expected);
+        float high = Math.nextUp(expected);
+
+        if (Float.compare(low, expected) > 0) {
+            return false;
+        }
+
+        if (Float.compare(high, expected) < 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static void assertArraysEqualsWithinOneUlp(float[] a, float[] r, FUnOp mathf, FUnOp strictmathf) {
+        int i = 0;
+        try {
+            // Check that result is within 1 ulp of strict math or equivalent to math implementation.
+            for (; i < a.length; i++) {
+                Assert.assertTrue(Float.compare(r[i], mathf.apply(a[i])) == 0 ||
+                                    isWithin1Ulp(r[i], strictmathf.apply(a[i])));
+            }
+        } catch (AssertionError e) {
+            Assert.assertTrue(Float.compare(r[i], mathf.apply(a[i])) == 0, "at index #" + i);
+            Assert.assertTrue(isWithin1Ulp(r[i], strictmathf.apply(a[i])), "at index #" + i);
+        }
+    }
+
+    static void assertArraysEqualsWithinOneUlp(float[] a, float[] b, float[] r, FBinOp mathf, FBinOp strictmathf) {
+        int i = 0;
+        try {
+            // Check that result is within 1 ulp of strict math or equivalent to math implementation.
+            for (; i < a.length; i++) {
+                Assert.assertTrue(Float.compare(r[i], mathf.apply(a[i], b[i])) == 0 ||
+                                    isWithin1Ulp(r[i], strictmathf.apply(a[i], b[i])));
+            }
+        } catch (AssertionError e) {
+            Assert.assertTrue(Float.compare(r[i], mathf.apply(a[i], b[i])) == 0, "at index #" + i);
+            Assert.assertTrue(isWithin1Ulp(r[i], strictmathf.apply(a[i], b[i])), "at index #" + i);
+        }
+    }
     static final List<IntFunction<float[]>> FLOAT_GENERATORS = List.of(
             withToString("float[i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -716,6 +763,426 @@ public class Float64VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Float64VectorTests::blend);
     }
+
+    static float sin(float a) {
+        return (float)(Math.sin((double)a));
+    }
+
+    static float strictsin(float a) {
+        return (float)(StrictMath.sin((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void sinFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.sin().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::sin, Float64VectorTests::strictsin);
+    }
+
+
+    static float exp(float a) {
+        return (float)(Math.exp((double)a));
+    }
+
+    static float strictexp(float a) {
+        return (float)(StrictMath.exp((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void expFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.exp().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::exp, Float64VectorTests::strictexp);
+    }
+
+
+    static float log1p(float a) {
+        return (float)(Math.log1p((double)a));
+    }
+
+    static float strictlog1p(float a) {
+        return (float)(StrictMath.log1p((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void log1pFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.log1p().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::log1p, Float64VectorTests::strictlog1p);
+    }
+
+
+    static float log(float a) {
+        return (float)(Math.log((double)a));
+    }
+
+    static float strictlog(float a) {
+        return (float)(StrictMath.log((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void logFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.log().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::log, Float64VectorTests::strictlog);
+    }
+
+
+    static float log10(float a) {
+        return (float)(Math.log10((double)a));
+    }
+
+    static float strictlog10(float a) {
+        return (float)(StrictMath.log10((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void log10Float64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.log10().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::log10, Float64VectorTests::strictlog10);
+    }
+
+
+    static float expm1(float a) {
+        return (float)(Math.expm1((double)a));
+    }
+
+    static float strictexpm1(float a) {
+        return (float)(StrictMath.expm1((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void expm1Float64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.expm1().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::expm1, Float64VectorTests::strictexpm1);
+    }
+
+
+    static float cos(float a) {
+        return (float)(Math.cos((double)a));
+    }
+
+    static float strictcos(float a) {
+        return (float)(StrictMath.cos((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void cosFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.cos().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::cos, Float64VectorTests::strictcos);
+    }
+
+
+    static float tan(float a) {
+        return (float)(Math.tan((double)a));
+    }
+
+    static float stricttan(float a) {
+        return (float)(StrictMath.tan((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void tanFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.tan().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::tan, Float64VectorTests::stricttan);
+    }
+
+
+    static float sinh(float a) {
+        return (float)(Math.sinh((double)a));
+    }
+
+    static float strictsinh(float a) {
+        return (float)(StrictMath.sinh((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void sinhFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.sinh().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::sinh, Float64VectorTests::strictsinh);
+    }
+
+
+    static float cosh(float a) {
+        return (float)(Math.cosh((double)a));
+    }
+
+    static float strictcosh(float a) {
+        return (float)(StrictMath.cosh((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void coshFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.cosh().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::cosh, Float64VectorTests::strictcosh);
+    }
+
+
+    static float tanh(float a) {
+        return (float)(Math.tanh((double)a));
+    }
+
+    static float stricttanh(float a) {
+        return (float)(StrictMath.tanh((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void tanhFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.tanh().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::tanh, Float64VectorTests::stricttanh);
+    }
+
+
+    static float asin(float a) {
+        return (float)(Math.asin((double)a));
+    }
+
+    static float strictasin(float a) {
+        return (float)(StrictMath.asin((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void asinFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.asin().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::asin, Float64VectorTests::strictasin);
+    }
+
+
+    static float acos(float a) {
+        return (float)(Math.acos((double)a));
+    }
+
+    static float strictacos(float a) {
+        return (float)(StrictMath.acos((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void acosFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.acos().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::acos, Float64VectorTests::strictacos);
+    }
+
+
+    static float atan(float a) {
+        return (float)(Math.atan((double)a));
+    }
+
+    static float strictatan(float a) {
+        return (float)(StrictMath.atan((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void atanFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.atan().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::atan, Float64VectorTests::strictatan);
+    }
+
+
+    static float cbrt(float a) {
+        return (float)(Math.cbrt((double)a));
+    }
+
+    static float strictcbrt(float a) {
+        return (float)(StrictMath.cbrt((double)a));
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void cbrtFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.cbrt().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Float64VectorTests::cbrt, Float64VectorTests::strictcbrt);
+    }
+
+
+    static float hypot(float a, float b) {
+        return (float)(Math.hypot((double)a, (double)b));
+    }
+
+    static float stricthypot(float a, float b) {
+        return (float)(StrictMath.hypot((double)a, (double)b));
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void hypotFloat64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length()); 
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                FloatVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                av.hypot(bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, b, r, Float64VectorTests::hypot, Float64VectorTests::stricthypot);
+    }
+
+
+    static float pow(float a, float b) {
+        return (float)(Math.pow((double)a, (double)b));
+    }
+
+    static float strictpow(float a, float b) {
+        return (float)(StrictMath.pow((double)a, (double)b));
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void powFloat64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length()); 
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                FloatVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                av.pow(bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, b, r, Float64VectorTests::pow, Float64VectorTests::strictpow);
+    }
+
+
+    static float atan2(float a, float b) {
+        return (float)(Math.atan2((double)a, (double)b));
+    }
+
+    static float strictatan2(float a, float b) {
+        return (float)(StrictMath.atan2((double)a, (double)b));
+    }
+
+    @Test(dataProvider = "floatBinaryOpProvider")
+    static void atan2Float64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length()); 
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                FloatVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                av.atan2(bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, b, r, Float64VectorTests::atan2, Float64VectorTests::strictatan2);
+    }
+
 
     static float neg(float a) {
         return (float)(-((float)a));

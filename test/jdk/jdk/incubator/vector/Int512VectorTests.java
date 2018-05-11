@@ -128,7 +128,6 @@ public class Int512VectorTests extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
-    
     static final List<IntFunction<int[]>> INT_GENERATORS = List.of(
             withToString("int[i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -868,6 +867,24 @@ public class Int512VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Int512VectorTests::blend);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     static int neg(int a) {
         return (int)(-((int)a));

@@ -128,7 +128,6 @@ public class Short256VectorTests extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
-    
     static final List<IntFunction<short[]>> SHORT_GENERATORS = List.of(
             withToString("short[i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -868,6 +867,24 @@ public class Short256VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Short256VectorTests::blend);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     static short neg(short a) {
         return (short)(-((short)a));

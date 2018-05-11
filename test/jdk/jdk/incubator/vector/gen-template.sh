@@ -38,6 +38,8 @@ reduction_scalar="$TEMPLATE_FOLDER/Reduction-Scalar-op.template"
 reduction_template="$TEMPLATE_FOLDER/Reduction-op.template"
 reduction_min_template="$TEMPLATE_FOLDER/Reduction-Scalar-Min-op.template"
 reduction_max_template="$TEMPLATE_FOLDER/Reduction-Scalar-Max-op.template"
+unary_math_template="$TEMPLATE_FOLDER/Unary-op-math.template"
+binary_math_template="$TEMPLATE_FOLDER/Binary-op-math.template"
 
 function gen_op_tmpl { 
   template=$1
@@ -153,6 +155,26 @@ gen_op_tmpl $compare_template "greaterThanEq" ">=" $template_file
 
 # Blend.
 gen_op_tmpl $blend "blend" "" $template_file
+
+# Math
+gen_op_tmpl $unary_math_template "sin" "Math.sin((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "exp" "Math.exp((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "log1p" "Math.log1p((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "log" "Math.log((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "log10" "Math.log10((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "expm1" "Math.expm1((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "cos" "Math.cos((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "tan" "Math.tan((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "sinh" "Math.sinh((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "cosh" "Math.cosh((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "tanh" "Math.tanh((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "asin" "Math.asin((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "acos" "Math.acos((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "atan" "Math.atan((double)a)" $template_file "FP"
+gen_op_tmpl $unary_math_template "cbrt" "Math.cbrt((double)a)" $template_file "FP"
+gen_op_tmpl $binary_math_template "hypot" "Math.hypot((double)a, (double)b)" $template_file "FP"
+gen_op_tmpl $binary_math_template "pow" "Math.pow((double)a, (double)b)" $template_file "FP"
+gen_op_tmpl $binary_math_template "atan2" "Math.atan2((double)a, (double)b)" $template_file "FP"
 
 # Unary operations.
 gen_unary_alu_op "neg" "-((\$type\$)a)" $template_file

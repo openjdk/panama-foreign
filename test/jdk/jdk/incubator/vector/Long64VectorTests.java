@@ -128,7 +128,6 @@ public class Long64VectorTests extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
-    
     static final List<IntFunction<long[]>> LONG_GENERATORS = List.of(
             withToString("long[i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -868,6 +867,24 @@ public class Long64VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Long64VectorTests::blend);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     static long neg(long a) {
         return (long)(-((long)a));

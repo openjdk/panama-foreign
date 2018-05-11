@@ -128,7 +128,6 @@ public class Byte512VectorTests extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
-    
     static final List<IntFunction<byte[]>> BYTE_GENERATORS = List.of(
             withToString("byte[i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -868,6 +867,24 @@ public class Byte512VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Byte512VectorTests::blend);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     static byte neg(byte a) {
         return (byte)(-((byte)a));

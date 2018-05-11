@@ -145,7 +145,56 @@ public class $vectorteststype$ extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
-    
+#if[FP]
+    static boolean isWithin1Ulp($type$ actual, $type$ expected) {
+        if ($Type$.isNaN(expected) && !$Type$.isNaN(actual)) {
+            return false;
+        } else if (!$Type$.isNaN(expected) && $Type$.isNaN(actual)) {
+            return false;
+        }
+
+        $type$ low = Math.nextDown(expected);
+        $type$ high = Math.nextUp(expected);
+
+        if ($Type$.compare(low, expected) > 0) {
+            return false;
+        }
+
+        if ($Type$.compare(high, expected) < 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static void assertArraysEqualsWithinOneUlp($type$[] a, $type$[] r, FUnOp mathf, FUnOp strictmathf) {
+        int i = 0;
+        try {
+            // Check that result is within 1 ulp of strict math or equivalent to math implementation.
+            for (; i < a.length; i++) {
+                Assert.assertTrue($Type$.compare(r[i], mathf.apply(a[i])) == 0 ||
+                                    isWithin1Ulp(r[i], strictmathf.apply(a[i])));
+            }
+        } catch (AssertionError e) {
+            Assert.assertTrue($Type$.compare(r[i], mathf.apply(a[i])) == 0, "at index #" + i);
+            Assert.assertTrue(isWithin1Ulp(r[i], strictmathf.apply(a[i])), "at index #" + i);
+        }
+    }
+
+    static void assertArraysEqualsWithinOneUlp($type$[] a, $type$[] b, $type$[] r, FBinOp mathf, FBinOp strictmathf) {
+        int i = 0;
+        try {
+            // Check that result is within 1 ulp of strict math or equivalent to math implementation.
+            for (; i < a.length; i++) {
+                Assert.assertTrue($Type$.compare(r[i], mathf.apply(a[i], b[i])) == 0 ||
+                                    isWithin1Ulp(r[i], strictmathf.apply(a[i], b[i])));
+            }
+        } catch (AssertionError e) {
+            Assert.assertTrue($Type$.compare(r[i], mathf.apply(a[i], b[i])) == 0, "at index #" + i);
+            Assert.assertTrue(isWithin1Ulp(r[i], strictmathf.apply(a[i], b[i])), "at index #" + i);
+        }
+    }
+#end[FP]
     static final List<IntFunction<$type$[]>> $TYPE$_GENERATORS = List.of(
             withToString("$type$[i * 5]", (int s) -> {
                 return fill(s * 1000,

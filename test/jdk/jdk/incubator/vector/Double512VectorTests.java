@@ -128,7 +128,54 @@ public class Double512VectorTests extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
-    
+    static boolean isWithin1Ulp(double actual, double expected) {
+        if (Double.isNaN(expected) && !Double.isNaN(actual)) {
+            return false;
+        } else if (!Double.isNaN(expected) && Double.isNaN(actual)) {
+            return false;
+        }
+
+        double low = Math.nextDown(expected);
+        double high = Math.nextUp(expected);
+
+        if (Double.compare(low, expected) > 0) {
+            return false;
+        }
+
+        if (Double.compare(high, expected) < 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    static void assertArraysEqualsWithinOneUlp(double[] a, double[] r, FUnOp mathf, FUnOp strictmathf) {
+        int i = 0;
+        try {
+            // Check that result is within 1 ulp of strict math or equivalent to math implementation.
+            for (; i < a.length; i++) {
+                Assert.assertTrue(Double.compare(r[i], mathf.apply(a[i])) == 0 ||
+                                    isWithin1Ulp(r[i], strictmathf.apply(a[i])));
+            }
+        } catch (AssertionError e) {
+            Assert.assertTrue(Double.compare(r[i], mathf.apply(a[i])) == 0, "at index #" + i);
+            Assert.assertTrue(isWithin1Ulp(r[i], strictmathf.apply(a[i])), "at index #" + i);
+        }
+    }
+
+    static void assertArraysEqualsWithinOneUlp(double[] a, double[] b, double[] r, FBinOp mathf, FBinOp strictmathf) {
+        int i = 0;
+        try {
+            // Check that result is within 1 ulp of strict math or equivalent to math implementation.
+            for (; i < a.length; i++) {
+                Assert.assertTrue(Double.compare(r[i], mathf.apply(a[i], b[i])) == 0 ||
+                                    isWithin1Ulp(r[i], strictmathf.apply(a[i], b[i])));
+            }
+        } catch (AssertionError e) {
+            Assert.assertTrue(Double.compare(r[i], mathf.apply(a[i], b[i])) == 0, "at index #" + i);
+            Assert.assertTrue(isWithin1Ulp(r[i], strictmathf.apply(a[i], b[i])), "at index #" + i);
+        }
+    }
     static final List<IntFunction<double[]>> DOUBLE_GENERATORS = List.of(
             withToString("double[i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -716,6 +763,426 @@ public class Double512VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Double512VectorTests::blend);
     }
+
+    static double sin(double a) {
+        return (double)(Math.sin((double)a));
+    }
+
+    static double strictsin(double a) {
+        return (double)(StrictMath.sin((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void sinDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.sin().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::sin, Double512VectorTests::strictsin);
+    }
+
+
+    static double exp(double a) {
+        return (double)(Math.exp((double)a));
+    }
+
+    static double strictexp(double a) {
+        return (double)(StrictMath.exp((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void expDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.exp().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::exp, Double512VectorTests::strictexp);
+    }
+
+
+    static double log1p(double a) {
+        return (double)(Math.log1p((double)a));
+    }
+
+    static double strictlog1p(double a) {
+        return (double)(StrictMath.log1p((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void log1pDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.log1p().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::log1p, Double512VectorTests::strictlog1p);
+    }
+
+
+    static double log(double a) {
+        return (double)(Math.log((double)a));
+    }
+
+    static double strictlog(double a) {
+        return (double)(StrictMath.log((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void logDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.log().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::log, Double512VectorTests::strictlog);
+    }
+
+
+    static double log10(double a) {
+        return (double)(Math.log10((double)a));
+    }
+
+    static double strictlog10(double a) {
+        return (double)(StrictMath.log10((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void log10Double512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.log10().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::log10, Double512VectorTests::strictlog10);
+    }
+
+
+    static double expm1(double a) {
+        return (double)(Math.expm1((double)a));
+    }
+
+    static double strictexpm1(double a) {
+        return (double)(StrictMath.expm1((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void expm1Double512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.expm1().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::expm1, Double512VectorTests::strictexpm1);
+    }
+
+
+    static double cos(double a) {
+        return (double)(Math.cos((double)a));
+    }
+
+    static double strictcos(double a) {
+        return (double)(StrictMath.cos((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void cosDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.cos().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::cos, Double512VectorTests::strictcos);
+    }
+
+
+    static double tan(double a) {
+        return (double)(Math.tan((double)a));
+    }
+
+    static double stricttan(double a) {
+        return (double)(StrictMath.tan((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void tanDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.tan().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::tan, Double512VectorTests::stricttan);
+    }
+
+
+    static double sinh(double a) {
+        return (double)(Math.sinh((double)a));
+    }
+
+    static double strictsinh(double a) {
+        return (double)(StrictMath.sinh((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void sinhDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.sinh().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::sinh, Double512VectorTests::strictsinh);
+    }
+
+
+    static double cosh(double a) {
+        return (double)(Math.cosh((double)a));
+    }
+
+    static double strictcosh(double a) {
+        return (double)(StrictMath.cosh((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void coshDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.cosh().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::cosh, Double512VectorTests::strictcosh);
+    }
+
+
+    static double tanh(double a) {
+        return (double)(Math.tanh((double)a));
+    }
+
+    static double stricttanh(double a) {
+        return (double)(StrictMath.tanh((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void tanhDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.tanh().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::tanh, Double512VectorTests::stricttanh);
+    }
+
+
+    static double asin(double a) {
+        return (double)(Math.asin((double)a));
+    }
+
+    static double strictasin(double a) {
+        return (double)(StrictMath.asin((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void asinDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.asin().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::asin, Double512VectorTests::strictasin);
+    }
+
+
+    static double acos(double a) {
+        return (double)(Math.acos((double)a));
+    }
+
+    static double strictacos(double a) {
+        return (double)(StrictMath.acos((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void acosDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.acos().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::acos, Double512VectorTests::strictacos);
+    }
+
+
+    static double atan(double a) {
+        return (double)(Math.atan((double)a));
+    }
+
+    static double strictatan(double a) {
+        return (double)(StrictMath.atan((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void atanDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.atan().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::atan, Double512VectorTests::strictatan);
+    }
+
+
+    static double cbrt(double a) {
+        return (double)(Math.cbrt((double)a));
+    }
+
+    static double strictcbrt(double a) {
+        return (double)(StrictMath.cbrt((double)a));
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void cbrtDouble512VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.cbrt().intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, r, Double512VectorTests::cbrt, Double512VectorTests::strictcbrt);
+    }
+
+
+    static double hypot(double a, double b) {
+        return (double)(Math.hypot((double)a, (double)b));
+    }
+
+    static double stricthypot(double a, double b) {
+        return (double)(StrictMath.hypot((double)a, (double)b));
+    }
+
+    @Test(dataProvider = "doubleBinaryOpProvider")
+    static void hypotDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length()); 
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S512Bit> bv = SPECIES.fromArray(b, i);
+                av.hypot(bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, b, r, Double512VectorTests::hypot, Double512VectorTests::stricthypot);
+    }
+
+
+    static double pow(double a, double b) {
+        return (double)(Math.pow((double)a, (double)b));
+    }
+
+    static double strictpow(double a, double b) {
+        return (double)(StrictMath.pow((double)a, (double)b));
+    }
+
+    @Test(dataProvider = "doubleBinaryOpProvider")
+    static void powDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length()); 
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S512Bit> bv = SPECIES.fromArray(b, i);
+                av.pow(bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, b, r, Double512VectorTests::pow, Double512VectorTests::strictpow);
+    }
+
+
+    static double atan2(double a, double b) {
+        return (double)(Math.atan2((double)a, (double)b));
+    }
+
+    static double strictatan2(double a, double b) {
+        return (double)(StrictMath.atan2((double)a, (double)b));
+    }
+
+    @Test(dataProvider = "doubleBinaryOpProvider")
+    static void atan2Double512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length()); 
+        double[] r = new double[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Shapes.S512Bit> bv = SPECIES.fromArray(b, i);
+                av.atan2(bv).intoArray(r, i);
+            }
+        }
+
+        assertArraysEqualsWithinOneUlp(a, b, r, Double512VectorTests::atan2, Double512VectorTests::strictatan2);
+    }
+
 
     static double neg(double a) {
         return (double)(-((double)a));
