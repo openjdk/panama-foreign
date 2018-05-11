@@ -104,7 +104,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     }
 
     /**
-     * Adds this vector to the result of broadcasting an input scalar.
+     * Adds this vector to the broadcast of an input scalar.
      * <p>
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
@@ -121,13 +121,13 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     }
 
     /**
-     * Adds this vector to the result of broadcasting an input scalar,
+     * Adds this vector to broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      * <p>
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param b the input scalar
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the broadcast of an input
      * scalar
@@ -153,14 +153,36 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
         return bOp(o, (i, a, b) -> (long) (a - b));
     }
 
-    public abstract LongVector<S> sub(long o);
+    /**
+     * Subtracts the broadcast of an input scalar from this vector.
+     * <p>
+     * This is a vector binary operation where the primitive subtraction
+     * operation ({@code -}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of subtracting the broadcast of an input
+     * scalar from this vector
+     */
+    public abstract LongVector<S> sub(long b);
 
     @Override
     public LongVector<S> sub(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a - b));
     }
 
-    public abstract LongVector<S> sub(long o, Mask<Long, S> m);
+    /**
+     * Subtracts the broadcast of an input scalar from this vector, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive subtraction
+     * operation ({@code -}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of subtracting the broadcast of an input
+     * scalar from this vector
+     */
+    public abstract LongVector<S> sub(long b, Mask<Long, S> m);
 
     @Override
     public LongVector<S> subSaturate(Vector<Long,S> o) {
@@ -181,14 +203,36 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
         return bOp(o, (i, a, b) -> (long) (a * b));
     }
 
-    public abstract LongVector<S> mul(long o);
+    /**
+     * Multiplies this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive multiplication
+     * operation ({@code *}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of multiplying this vector with the broadcast of an
+     * input scalar
+     */
+    public abstract LongVector<S> mul(long b);
 
     @Override
     public LongVector<S> mul(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, m, (i, a, b) -> (long) (a * b));
     }
 
-    public abstract LongVector<S> mul(long o, Mask<Long, S> m);
+    /**
+     * Multiplies this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive multiplication
+     * operation ({@code *}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of multiplying this vector with the broadcast of an
+     * input scalar
+     */
+    public abstract LongVector<S> mul(long b, Mask<Long, S> m);
 
     @Override
     public LongVector<S> neg() {
@@ -215,63 +259,157 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
         return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
-    public abstract LongVector<S> min(long o);
+    /**
+     * Returns the minimum of this vector and the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the minimum of this vector and the broadcast of an input scalar
+     */
+    public abstract LongVector<S> min(long b);
 
     @Override
     public LongVector<S> max(Vector<Long,S> o) {
         return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
-    public abstract LongVector<S> max(long o);
+    /**
+     * Returns the maximum of this vector and the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the maximum of this vector and the broadcast of an input scalar
+     */
+    public abstract LongVector<S> max(long b);
 
     @Override
     public Mask<Long, S> equal(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a == b);
     }
 
-    public abstract Mask<Long, S> equal(long o);
+    /**
+     * Tests if this vector is equal to the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive equals
+     * operation ({@code ==}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result mask of testing if this vector is equal to the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Long, S> equal(long b);
 
     @Override
     public Mask<Long, S> notEqual(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a != b);
     }
 
-    public abstract Mask<Long, S> notEqual(long o);
+    /**
+     * Tests if this vector is not equal to the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive not equals
+     * operation ({@code !=}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result mask of testing if this vector is not equal to the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Long, S> notEqual(long b);
 
     @Override
     public Mask<Long, S> lessThan(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a < b);
     }
 
-    public abstract Mask<Long, S> lessThan(long o);
+    /**
+     * Tests if this vector is less than the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive less than
+     * operation ({@code <}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is less than the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Long, S> lessThan(long b);
 
     @Override
     public Mask<Long, S> lessThanEq(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a <= b);
     }
 
-    public abstract Mask<Long, S> lessThanEq(long o);
+    /**
+     * Tests if this vector is less or equal to the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive less than
+     * or equal to operation ({@code <=}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is less than or equal
+     * to the broadcast of an input scalar
+     */
+    public abstract Mask<Long, S> lessThanEq(long b);
 
     @Override
     public Mask<Long, S> greaterThan(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a > b);
     }
 
-    public abstract Mask<Long, S> greaterThan(long o);
+    /**
+     * Tests if this vector is greater than the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive greater than
+     * operation ({@code >}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is greater than the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Long, S> greaterThan(long b);
 
     @Override
     public Mask<Long, S> greaterThanEq(Vector<Long,S> o) {
         return bTest(o, (i, a, b) -> a >= b);
     }
 
-    public abstract Mask<Long, S> greaterThanEq(long o);
+    /**
+     * Tests if this vector is greater than or equal to the broadcast of an
+     * input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive greater than
+     * or equal to operation ({@code >=}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is greater than or
+     * equal to the broadcast of an input scalar
+     */
+    public abstract Mask<Long, S> greaterThanEq(long b);
 
     @Override
     public LongVector<S> blend(Vector<Long,S> o, Mask<Long, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
-    public abstract LongVector<S> blend(long o, Mask<Long, S> m);
+    /**
+     * Blends the lane elements of this vector with those of the broadcast of an
+     * input scalar, selecting lanes controlled by a mask.
+     * <p>
+     * For each lane of the mask, at lane index {@code N}, if the mask lane
+     * is set then the lane element at {@code N} from the input vector is
+     * selected and placed into the resulting vector at {@code N},
+     * otherwise the the lane element at {@code N} from this input vector is
+     * selected and placed into the resulting vector at {@code N}.
+     *
+     * @param b the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of blending the lane elements of this vector with
+     * those of the broadcast of an input scalar
+     */
+    public abstract LongVector<S> blend(long b, Mask<Long, S> m);
 
     @Override
     public abstract LongVector<S> shuffle(Vector<Long,S> o, Shuffle<Long, S> m);

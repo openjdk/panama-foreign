@@ -103,7 +103,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     }
 
     /**
-     * Adds this vector to the result of broadcasting an input scalar.
+     * Adds this vector to the broadcast of an input scalar.
      * <p>
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
@@ -120,13 +120,13 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     }
 
     /**
-     * Adds this vector to the result of broadcasting an input scalar,
+     * Adds this vector to broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      * <p>
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param b the input scalar
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the broadcast of an input
      * scalar
@@ -152,14 +152,36 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
         return bOp(o, (i, a, b) -> (byte) (a - b));
     }
 
-    public abstract ByteVector<S> sub(byte o);
+    /**
+     * Subtracts the broadcast of an input scalar from this vector.
+     * <p>
+     * This is a vector binary operation where the primitive subtraction
+     * operation ({@code -}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of subtracting the broadcast of an input
+     * scalar from this vector
+     */
+    public abstract ByteVector<S> sub(byte b);
 
     @Override
     public ByteVector<S> sub(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a - b));
     }
 
-    public abstract ByteVector<S> sub(byte o, Mask<Byte, S> m);
+    /**
+     * Subtracts the broadcast of an input scalar from this vector, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive subtraction
+     * operation ({@code -}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of subtracting the broadcast of an input
+     * scalar from this vector
+     */
+    public abstract ByteVector<S> sub(byte b, Mask<Byte, S> m);
 
     @Override
     public ByteVector<S> subSaturate(Vector<Byte,S> o) {
@@ -180,14 +202,36 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
         return bOp(o, (i, a, b) -> (byte) (a * b));
     }
 
-    public abstract ByteVector<S> mul(byte o);
+    /**
+     * Multiplies this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive multiplication
+     * operation ({@code *}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of multiplying this vector with the broadcast of an
+     * input scalar
+     */
+    public abstract ByteVector<S> mul(byte b);
 
     @Override
     public ByteVector<S> mul(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, m, (i, a, b) -> (byte) (a * b));
     }
 
-    public abstract ByteVector<S> mul(byte o, Mask<Byte, S> m);
+    /**
+     * Multiplies this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive multiplication
+     * operation ({@code *}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of multiplying this vector with the broadcast of an
+     * input scalar
+     */
+    public abstract ByteVector<S> mul(byte b, Mask<Byte, S> m);
 
     @Override
     public ByteVector<S> neg() {
@@ -214,63 +258,157 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
         return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
-    public abstract ByteVector<S> min(byte o);
+    /**
+     * Returns the minimum of this vector and the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the minimum of this vector and the broadcast of an input scalar
+     */
+    public abstract ByteVector<S> min(byte b);
 
     @Override
     public ByteVector<S> max(Vector<Byte,S> o) {
         return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
-    public abstract ByteVector<S> max(byte o);
+    /**
+     * Returns the maximum of this vector and the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the maximum of this vector and the broadcast of an input scalar
+     */
+    public abstract ByteVector<S> max(byte b);
 
     @Override
     public Mask<Byte, S> equal(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a == b);
     }
 
-    public abstract Mask<Byte, S> equal(byte o);
+    /**
+     * Tests if this vector is equal to the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive equals
+     * operation ({@code ==}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result mask of testing if this vector is equal to the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Byte, S> equal(byte b);
 
     @Override
     public Mask<Byte, S> notEqual(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a != b);
     }
 
-    public abstract Mask<Byte, S> notEqual(byte o);
+    /**
+     * Tests if this vector is not equal to the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive not equals
+     * operation ({@code !=}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result mask of testing if this vector is not equal to the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Byte, S> notEqual(byte b);
 
     @Override
     public Mask<Byte, S> lessThan(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a < b);
     }
 
-    public abstract Mask<Byte, S> lessThan(byte o);
+    /**
+     * Tests if this vector is less than the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive less than
+     * operation ({@code <}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is less than the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Byte, S> lessThan(byte b);
 
     @Override
     public Mask<Byte, S> lessThanEq(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a <= b);
     }
 
-    public abstract Mask<Byte, S> lessThanEq(byte o);
+    /**
+     * Tests if this vector is less or equal to the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive less than
+     * or equal to operation ({@code <=}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is less than or equal
+     * to the broadcast of an input scalar
+     */
+    public abstract Mask<Byte, S> lessThanEq(byte b);
 
     @Override
     public Mask<Byte, S> greaterThan(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a > b);
     }
 
-    public abstract Mask<Byte, S> greaterThan(byte o);
+    /**
+     * Tests if this vector is greater than the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive greater than
+     * operation ({@code >}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is greater than the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Byte, S> greaterThan(byte b);
 
     @Override
     public Mask<Byte, S> greaterThanEq(Vector<Byte,S> o) {
         return bTest(o, (i, a, b) -> a >= b);
     }
 
-    public abstract Mask<Byte, S> greaterThanEq(byte o);
+    /**
+     * Tests if this vector is greater than or equal to the broadcast of an
+     * input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive greater than
+     * or equal to operation ({@code >=}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is greater than or
+     * equal to the broadcast of an input scalar
+     */
+    public abstract Mask<Byte, S> greaterThanEq(byte b);
 
     @Override
     public ByteVector<S> blend(Vector<Byte,S> o, Mask<Byte, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
-    public abstract ByteVector<S> blend(byte o, Mask<Byte, S> m);
+    /**
+     * Blends the lane elements of this vector with those of the broadcast of an
+     * input scalar, selecting lanes controlled by a mask.
+     * <p>
+     * For each lane of the mask, at lane index {@code N}, if the mask lane
+     * is set then the lane element at {@code N} from the input vector is
+     * selected and placed into the resulting vector at {@code N},
+     * otherwise the the lane element at {@code N} from this input vector is
+     * selected and placed into the resulting vector at {@code N}.
+     *
+     * @param b the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of blending the lane elements of this vector with
+     * those of the broadcast of an input scalar
+     */
+    public abstract ByteVector<S> blend(byte b, Mask<Byte, S> m);
 
     @Override
     public abstract ByteVector<S> shuffle(Vector<Byte,S> o, Shuffle<Byte, S> m);

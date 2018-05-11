@@ -104,7 +104,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     /**
-     * Adds this vector to the result of broadcasting an input scalar.
+     * Adds this vector to the broadcast of an input scalar.
      * <p>
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
@@ -121,13 +121,13 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     /**
-     * Adds this vector to the result of broadcasting an input scalar,
+     * Adds this vector to broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
      * <p>
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param b the input scalar
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the broadcast of an input
      * scalar
@@ -153,14 +153,36 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         return bOp(o, (i, a, b) -> (int) (a - b));
     }
 
-    public abstract IntVector<S> sub(int o);
+    /**
+     * Subtracts the broadcast of an input scalar from this vector.
+     * <p>
+     * This is a vector binary operation where the primitive subtraction
+     * operation ({@code -}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of subtracting the broadcast of an input
+     * scalar from this vector
+     */
+    public abstract IntVector<S> sub(int b);
 
     @Override
     public IntVector<S> sub(Vector<Integer,S> o, Mask<Integer, S> m) {
         return bOp(o, m, (i, a, b) -> (int) (a - b));
     }
 
-    public abstract IntVector<S> sub(int o, Mask<Integer, S> m);
+    /**
+     * Subtracts the broadcast of an input scalar from this vector, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive subtraction
+     * operation ({@code -}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of subtracting the broadcast of an input
+     * scalar from this vector
+     */
+    public abstract IntVector<S> sub(int b, Mask<Integer, S> m);
 
     @Override
     public IntVector<S> subSaturate(Vector<Integer,S> o) {
@@ -181,14 +203,36 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         return bOp(o, (i, a, b) -> (int) (a * b));
     }
 
-    public abstract IntVector<S> mul(int o);
+    /**
+     * Multiplies this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive multiplication
+     * operation ({@code *}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result of multiplying this vector with the broadcast of an
+     * input scalar
+     */
+    public abstract IntVector<S> mul(int b);
 
     @Override
     public IntVector<S> mul(Vector<Integer,S> o, Mask<Integer, S> m) {
         return bOp(o, m, (i, a, b) -> (int) (a * b));
     }
 
-    public abstract IntVector<S> mul(int o, Mask<Integer, S> m);
+    /**
+     * Multiplies this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive multiplication
+     * operation ({@code *}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of multiplying this vector with the broadcast of an
+     * input scalar
+     */
+    public abstract IntVector<S> mul(int b, Mask<Integer, S> m);
 
     @Override
     public IntVector<S> neg() {
@@ -215,63 +259,157 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         return bOp(o, (i, a, b) -> (a < b) ? a : b);
     }
 
-    public abstract IntVector<S> min(int o);
+    /**
+     * Returns the minimum of this vector and the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the minimum of this vector and the broadcast of an input scalar
+     */
+    public abstract IntVector<S> min(int b);
 
     @Override
     public IntVector<S> max(Vector<Integer,S> o) {
         return bOp(o, (i, a, b) -> (a > b) ? a : b);
     }
 
-    public abstract IntVector<S> max(int o);
+    /**
+     * Returns the maximum of this vector and the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the maximum of this vector and the broadcast of an input scalar
+     */
+    public abstract IntVector<S> max(int b);
 
     @Override
     public Mask<Integer, S> equal(Vector<Integer,S> o) {
         return bTest(o, (i, a, b) -> a == b);
     }
 
-    public abstract Mask<Integer, S> equal(int o);
+    /**
+     * Tests if this vector is equal to the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive equals
+     * operation ({@code ==}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result mask of testing if this vector is equal to the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Integer, S> equal(int b);
 
     @Override
     public Mask<Integer, S> notEqual(Vector<Integer,S> o) {
         return bTest(o, (i, a, b) -> a != b);
     }
 
-    public abstract Mask<Integer, S> notEqual(int o);
+    /**
+     * Tests if this vector is not equal to the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive not equals
+     * operation ({@code !=}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the result mask of testing if this vector is not equal to the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Integer, S> notEqual(int b);
 
     @Override
     public Mask<Integer, S> lessThan(Vector<Integer,S> o) {
         return bTest(o, (i, a, b) -> a < b);
     }
 
-    public abstract Mask<Integer, S> lessThan(int o);
+    /**
+     * Tests if this vector is less than the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive less than
+     * operation ({@code <}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is less than the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Integer, S> lessThan(int b);
 
     @Override
     public Mask<Integer, S> lessThanEq(Vector<Integer,S> o) {
         return bTest(o, (i, a, b) -> a <= b);
     }
 
-    public abstract Mask<Integer, S> lessThanEq(int o);
+    /**
+     * Tests if this vector is less or equal to the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive less than
+     * or equal to operation ({@code <=}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is less than or equal
+     * to the broadcast of an input scalar
+     */
+    public abstract Mask<Integer, S> lessThanEq(int b);
 
     @Override
     public Mask<Integer, S> greaterThan(Vector<Integer,S> o) {
         return bTest(o, (i, a, b) -> a > b);
     }
 
-    public abstract Mask<Integer, S> greaterThan(int o);
+    /**
+     * Tests if this vector is greater than the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive greater than
+     * operation ({@code >}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is greater than the
+     * broadcast of an input scalar
+     */
+    public abstract Mask<Integer, S> greaterThan(int b);
 
     @Override
     public Mask<Integer, S> greaterThanEq(Vector<Integer,S> o) {
         return bTest(o, (i, a, b) -> a >= b);
     }
 
-    public abstract Mask<Integer, S> greaterThanEq(int o);
+    /**
+     * Tests if this vector is greater than or equal to the broadcast of an
+     * input scalar.
+     * <p>
+     * This is a vector binary test operation where the primitive greater than
+     * or equal to operation ({@code >=}) is applied to lane elements.
+     *
+     * @param b the input scalar
+     * @return the mask result of testing if this vector is greater than or
+     * equal to the broadcast of an input scalar
+     */
+    public abstract Mask<Integer, S> greaterThanEq(int b);
 
     @Override
     public IntVector<S> blend(Vector<Integer,S> o, Mask<Integer, S> m) {
         return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
-    public abstract IntVector<S> blend(int o, Mask<Integer, S> m);
+    /**
+     * Blends the lane elements of this vector with those of the broadcast of an
+     * input scalar, selecting lanes controlled by a mask.
+     * <p>
+     * For each lane of the mask, at lane index {@code N}, if the mask lane
+     * is set then the lane element at {@code N} from the input vector is
+     * selected and placed into the resulting vector at {@code N},
+     * otherwise the the lane element at {@code N} from this input vector is
+     * selected and placed into the resulting vector at {@code N}.
+     *
+     * @param b the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of blending the lane elements of this vector with
+     * those of the broadcast of an input scalar
+     */
+    public abstract IntVector<S> blend(int b, Mask<Integer, S> m);
 
     @Override
     public abstract IntVector<S> shuffle(Vector<Integer,S> o, Shuffle<Integer, S> m);

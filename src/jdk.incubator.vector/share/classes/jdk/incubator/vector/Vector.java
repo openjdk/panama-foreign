@@ -327,79 +327,202 @@ public abstract class Vector<E, S extends Vector.Shape> {
 
     public abstract Vector<E, S> addSaturate(Vector<E, S> o, Mask<E, S> m);
 
-    public abstract Vector<E, S> sub(Vector<E, S> o);
+    /**
+     * Subtracts an input vector from this vector.
+     * <p>
+     * This is a vector binary operation where the primitive subtraction
+     * operation ({@code -}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @return the result of subtracting the input vector from this vector
+     */
+    public abstract Vector<E, S> sub(Vector<E, S> b);
 
-    public abstract Vector<E, S> sub(Vector<E, S> o, Mask<E, S> m);
+    /**
+     * Subtracts an input vector from this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive subtraction
+     * operation ({@code -}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of subtracting the input vector from this vector
+     */
+    public abstract Vector<E, S> sub(Vector<E, S> b, Mask<E, S> m);
 
     public abstract Vector<E, S> subSaturate(Vector<E, S> o);
 
     public abstract Vector<E, S> subSaturate(Vector<E, S> o, Mask<E, S> m);
 
-    public abstract Vector<E, S> mul(Vector<E, S> o);
+    /**
+     * Multiplies this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive multiplication
+     * operation ({@code *}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @return the result of multiplying this vector with the input vector
+     */
+    public abstract Vector<E, S> mul(Vector<E, S> b);
 
-    public abstract Vector<E, S> mul(Vector<E, S> o, Mask<E, S> m);
+    /**
+     * Multiplies this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive multiplication
+     * operation ({@code *}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of multiplying this vector with the input vector
+     */
+    public abstract Vector<E, S> mul(Vector<E, S> b, Mask<E, S> m);
 
     /**
      * Negates this vector.
      * <p>
      * This is a vector unary operation where the primitive negation operation
-     * ({@code -})is applied to lane elements.
+     * ({@code -}) is applied to lane elements.
      *
-     * @return the result of negating this vector
+     * @return the negation this vector
      */
     public abstract Vector<E, S> neg();
 
+    /**
+     * Negates this vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the primitive negation operation
+     * ({@code -})is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the negation this vector
+     */
     public abstract Vector<E, S> neg(Mask<E, S> m);
 
-    //Maths from java.math
-    public abstract Vector<E, S> abs();
-
-    public abstract Vector<E, S> abs(Mask<E, S> m);
-
-    public abstract Vector<E, S> min(Vector<E, S> o);
-
-    public abstract Vector<E, S> max(Vector<E, S> o);
-
-    //TODO: Parity
-
-    //Comparisons
-
-    //TODO: N.B. Floating point NaN behaviors?
-    //TODO: Check the JLS
+    // Maths from java.math
 
     /**
-     * Tests if this vector is equal to the given vector.
+     * Returns the modulus of this vector.
+     * <p>
+     * This is a vector unary operation where the operation
+     * {@code (a) -> (a < 0) ? -a : a} is applied to lane elements.
+     *
+     * @return the modulus this vector
+     */
+    public abstract Vector<E, S> abs();
+
+    /**
+     * Returns the modulus of this vector, selecting lane elements controlled by
+     * a mask.
+     * <p>
+     * This is a vector unary operation where the operation
+     * {@code (a) -> (a < 0) ? -a : a} is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the modulus this vector
+     */
+    public abstract Vector<E, S> abs(Mask<E, S> m);
+
+    /**
+     * Returns the minimum of this vector and an input vector.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
+     *
+     * @param b the input vector
+     * @return the minimum of this vector and the input vector
+     */
+    public abstract Vector<E, S> min(Vector<E, S> b);
+    // TODO mask variant?
+
+    /**
+     * Returns the maximum of this vector and an input vector.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
+     *
+     * @param b the input vector
+     * @return the maximum of this vector and the input vector
+     */
+    public abstract Vector<E, S> max(Vector<E, S> b);
+    // TODO mask variant?
+
+    // Comparisons
+
+    /**
+     * Tests if this vector is equal to an input vector.
      * <p>
      * This is a vector binary test operation where the primitive equals
      * operation ({@code ==}) is applied to lane elements.
      *
-     * @param b the given vector
-     * @return the result mask of testing if this vector is equal to the given
+     * @param b the input vector
+     * @return the result mask of testing if this vector is equal to the input
      * vector
      */
     public abstract Mask<E, S> equal(Vector<E, S> b);
 
-    public abstract Mask<E, S> notEqual(Vector<E, S> o);
+    /**
+     * Tests if this vector is not equal to an input vector.
+     * <p>
+     * This is a vector binary test operation where the primitive not equals
+     * operation ({@code !=}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @return the result mask of testing if this vector is not equal to the
+     * input vector
+     */
+    public abstract Mask<E, S> notEqual(Vector<E, S> b);
 
     /**
-     * Tests if this vector is less than the given vector.
+     * Tests if this vector is less than an input vector.
      * <p>
      * This is a vector binary test operation where the primitive less than
      * operation ({@code <}) is applied to lane elements.
      *
-     * @param b the given vector
-     * @return the mask result of testing if this vector is less than the given
+     * @param b the input vector
+     * @return the mask result of testing if this vector is less than the input
      * vector
      */
     public abstract Mask<E, S> lessThan(Vector<E, S> b);
 
-    public abstract Mask<E, S> lessThanEq(Vector<E, S> o);
+    /**
+     * Tests if this vector is less or equal to an input vector.
+     * <p>
+     * This is a vector binary test operation where the primitive less than
+     * or equal to operation ({@code <=}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @return the mask result of testing if this vector is less than or equal
+     * to the input vector
+     */
+    public abstract Mask<E, S> lessThanEq(Vector<E, S> b);
 
-    public abstract Mask<E, S> greaterThan(Vector<E, S> o);
+    /**
+     * Tests if this vector is greater than an input vector.
+     * <p>
+     * This is a vector binary test operation where the primitive greater than
+     * operation ({@code >}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @return the mask result of testing if this vector is greater than the
+     * input vector
+     */
+    public abstract Mask<E, S> greaterThan(Vector<E, S> b);
 
-    public abstract Mask<E, S> greaterThanEq(Vector<E, S> o);
+    /**
+     * Tests if this vector is greater than or equal to an input vector.
+     * <p>
+     * This is a vector binary test operation where the primitive greater than
+     * or equal to operation ({@code >=}) is applied to lane elements.
+     *
+     * @param b the input vector
+     * @return the mask result of testing if this vector is greater than or
+     * equal to the given vector
+     */
+    public abstract Mask<E, S> greaterThanEq(Vector<E, S> b);
 
-    //Elemental shifting
+    // Elemental shifting
 
     /**
      * Rotates left the lane elements of this vector by the given number of
@@ -408,14 +531,14 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a cross-lane operation that permutes the lane elements of this
      * vector.
      * For each lane of the input vector, at lane index {@code N}, the lane
-     * element is assigned to the result vector at lane index
+     * element is placed into to the result vector at lane index
      * {@code (i + N) % this.length()}.
      *
      * @param i the number of lanes to rotate left
      * @return the result of rotating left lane elements of this vector by the
      * given number of lanes
      */
-    public abstract Vector<E, S> rotateEL(int i); //Rotate elements left
+    public abstract Vector<E, S> rotateEL(int i);
 
     /**
      * Rotates right the lane elements of this vector by the given number of
@@ -429,11 +552,39 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the result of rotating right lane elements of this vector by the
      * given number of lanes
      */
-    public abstract Vector<E, S> rotateER(int i); //Rotate elements right
+    public abstract Vector<E, S> rotateER(int i);
 
-    public abstract Vector<E, S> shiftEL(int i); //shift elements left
+    /**
+     * Shift left the lane elements of this vector by the given number of
+     * lanes, {@code i}, modulus the vector length.
+     * <p>
+     * This is a cross-lane operation that permutes the lane elements of this
+     * vector and behaves as if rotating left the lane elements by {@code i},
+     * and then the zero value is placed into the result vector at lane indexes
+     * less than {@code i % this.length()}.
+     *
+     * @param i the number of lanes to shift left
+     * @return the result of shifting left lane elements of this vector by the
+     * given number of lanes
+     * @throws IllegalArgumentException if {@code i} is {@code < 0}.
+     */
+    public abstract Vector<E, S> shiftEL(int i);
 
-    public abstract Vector<E, S> shiftER(int i); //shift elements right
+    /**
+     * Shift right the lane elements of this vector by the given number of
+     * lanes, {@code i}, modulus the vector length.
+     * <p>
+     * This is a cross-lane operation that permutes the lane elements of this
+     * vector and behaves as if rotating right the lane elements by {@code i},
+     * and then the zero value is placed into the result vector at lane indexes
+     * greater or equal to {@code this.length() - (i % this.length())}.
+     *
+     * @param i the number of lanes to shift left
+     * @return the result of shifting left lane elements of this vector by the
+     * given number of lanes
+     * @throws IllegalArgumentException if {@code i} is {@code < 0}.
+     */
+    public abstract Vector<E, S> shiftER(int i);
 
     /**
      * Blends the lane elements of this vector with those of an input vector,
