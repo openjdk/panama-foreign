@@ -26,6 +26,7 @@ import jdk.internal.nicl.abi.ArgumentBinding;
 import jdk.internal.nicl.abi.CallingSequence;
 import jdk.internal.nicl.abi.ShuffleRecipe;
 import jdk.internal.nicl.abi.StorageClass;
+import jdk.internal.nicl.abi.SystemABI;
 import jdk.internal.nicl.abi.sysv.x64.Constants;
 import jdk.internal.nicl.types.*;
 
@@ -169,7 +170,7 @@ class NativeInvoker {
     }
 
     private Object invokeNormal(Object[] args) throws Throwable {
-        CallingSequence callingSequence = Platform.getInstance().getABI().arrangeCall(Util.typeof(methodType));
+        CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(Util.typeof(methodType));
         ShuffleRecipe shuffleRecipe = ShuffleRecipe.make(callingSequence);
 
         Reference<?> returnStruct = null;

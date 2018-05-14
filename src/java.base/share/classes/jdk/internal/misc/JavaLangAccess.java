@@ -26,10 +26,12 @@
 package jdk.internal.misc;
 
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandles;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.nicl.Library;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.util.Iterator;
@@ -273,4 +275,24 @@ public interface JavaLangAccess {
      * @throws IllegalArgumentException for malformed surrogates
      */
     byte[] getBytesUTF8NoRepl(String s);
+
+    //Panama
+
+    /**
+     * Panama: find a native library.
+     * @param lookup the lookup object.
+     * @param libname the name of the library.
+     * @return the found library
+     * @throws     UnsatisfiedLinkError if either the libname argument
+     *             contains a file path, the native library is not statically
+     *             linked with the VM,  or the library cannot be mapped to a
+     *             native library image by the host system.
+     */
+    Library findLibrary(MethodHandles.Lookup lookup, String libname);
+
+    /**
+     * Panama: lookup default library
+     * @return defauult library.
+     */
+    Library defaultLibrary();
 }

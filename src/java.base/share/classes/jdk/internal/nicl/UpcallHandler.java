@@ -26,6 +26,7 @@ import jdk.internal.nicl.abi.ArgumentBinding;
 import jdk.internal.nicl.abi.CallingSequence;
 import jdk.internal.nicl.abi.Storage;
 import jdk.internal.nicl.abi.StorageClass;
+import jdk.internal.nicl.abi.SystemABI;
 import jdk.internal.nicl.abi.sysv.x64.Constants;
 import jdk.internal.nicl.types.*;
 
@@ -340,7 +341,7 @@ public class UpcallHandler {
             dst.lvalue().set(addr);
         } else if (Util.isCStruct(c)) {
             Function ft = Function.of(Util.typeof(c), false, new Layout[0]);
-            boolean returnsInMemory = Platform.getInstance().getABI().arrangeCall(ft).returnsInMemory();
+            boolean returnsInMemory = SystemABI.getInstance().arrangeCall(ft).returnsInMemory();
 
             Reference<?> struct = (Reference<?>) o;
 
@@ -375,7 +376,7 @@ public class UpcallHandler {
     private void invoke(UpcallContext context) {
         try (Scope scope = new NativeScope()) {
             // FIXME: Handle varargs upcalls here
-            CallingSequence callingSequence = Platform.getInstance().getABI().arrangeCall(ftype);
+            CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(ftype);
 
             if (DEBUG) {
                 System.err.println("=== UpcallHandler.invoke ===");

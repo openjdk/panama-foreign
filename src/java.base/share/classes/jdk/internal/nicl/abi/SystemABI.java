@@ -24,10 +24,9 @@
  */
 package jdk.internal.nicl.abi;
 
-import jdk.internal.nicl.types.ContainerSizeInfo;
+import jdk.internal.nicl.abi.sysv.x64.SysVx64ABI;
 
 import java.nicl.layout.Function;
-import java.nicl.layout.Group;
 import java.nicl.layout.Layout;
 import java.nicl.layout.Value;
 
@@ -60,7 +59,9 @@ public interface SystemABI {
      */
     long align(Layout t, boolean isVar, long addr);
 
-    ContainerSizeInfo layout(Group c, long pack);
-
     CallingSequence arrangeCall(Function f);
+
+    static SystemABI getInstance() {
+        return SysVx64ABI.getInstance();
+    }
 }

@@ -24,8 +24,10 @@
 /*
  * @test
  * @modules java.base/jdk.internal.misc
+ * @run main/othervm StructUpcall
  */
 
+import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
@@ -123,7 +125,7 @@ public class StructUpcall {
     }
 
     public void test() {
-        Index i = Libraries.bindRaw(Index.class, Libraries.loadLibrary("Upcall"));
+        Index i = Libraries.bindRaw(Index.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
 
         try (Scope scope = Scope.newNativeScope()) {
             Reference<Index.MyStruct> s = scope.allocateStruct(LayoutType.create(Index.MyStruct.class));

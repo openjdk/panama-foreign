@@ -22,10 +22,14 @@
  */
 package jdk.internal.nicl;
 
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.org.objectweb.asm.Type;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.io.File;
 import java.nicl.Library;
@@ -43,6 +47,9 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 public class LibrariesHelper {
+
+    static JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
+
     enum ImplType {
         HEADER, CIVILIZED;
 
@@ -145,18 +152,8 @@ public class LibrariesHelper {
         return getOrCreateImpl(ImplType.CIVILIZED, c, new CivilizedHeaderImplGenerator<>(c, implClassName, c, rawInstance));
     }
 
-    private static Library loadLibrary(String name, boolean isAbsolute) {
-        return Platform.getInstance().loadLibrary(name, isAbsolute);
-    }
-
-    public static Library loadLibrary(String name) {
-        assert name.indexOf(File.separatorChar) == -1;
-        return loadLibrary(name, false);
-    }
-
-    public static Library load(String path) {
-        assert new File(path).isAbsolute();
-        return loadLibrary(path, true);
+    public static Library loadLibrary(Lookup lookup, String name) {
+        return jlAccess.findLibrary(lookup, name);
     }
 
     // return the absolute path of the library of given name by searching
@@ -168,23 +165,23 @@ public class LibrariesHelper {
     }
 
     // used by jextract tool to load libraries for symbol checks.
-    public static Library[] loadLibraries(String[] pathStrs, String[] names) {
+    public static Library[] loadLibraries(Lookup lookup, String[] pathStrs, String[] names) {
         if (pathStrs == null || pathStrs.length == 0) {
             return Arrays.stream(names).map(
-                Libraries::loadLibrary).toArray(Library[]::new);
+                name -> Libraries.loadLibrary(lookup, name)).toArray(Library[]::new);
         } else {
             Path[] paths = Arrays.stream(pathStrs).map(Paths::get).toArray(Path[]::new);
             return Arrays.stream(names).map(libName -> {
                 Optional<Path> absPath = findLibraryPath(paths, libName);
                 return absPath.isPresent() ?
-                    Libraries.load(absPath.get().toString()) :
-                    Libraries.loadLibrary(libName);
+                    Libraries.load(lookup, absPath.get().toString()) :
+                    Libraries.loadLibrary(lookup, libName);
             }).toArray(Library[]::new);
         }
     }
 
-    private static Library[] loadLibraries(LibraryDependencies deps) {
-        return loadLibraries(deps.paths(), deps.names());
+    private static Library[] loadLibraries(Lookup lookup, LibraryDependencies deps) {
+        return loadLibraries(lookup, deps.paths(), deps.names());
     }
 
     private static LibraryDependencies getLibraryDependenciesForClass(Class<?> c) {
@@ -206,14 +203,14 @@ public class LibrariesHelper {
             // throw new IllegalArgumentException("No @LibraryDependencies annotation on class " + c.getName());
             libs = new Library[] { getDefaultLibrary() };
         } else {
-            libs = loadLibraries(deps);
+            libs = loadLibraries(MethodHandles.publicLookup().in(c), deps);
         }
 
         return new SymbolLookup(libs);
     }
 
     public static Library getDefaultLibrary() {
-        return Platform.getInstance().defaultLibrary();
+        return jlAccess.defaultLibrary();
     }
 
     public static <T> T bindRaw(Class<T> c, Library lib) {

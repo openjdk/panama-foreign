@@ -23,13 +23,14 @@
 package java.nicl;
 
 import java.io.File;
-import jdk.internal.nicl.Errno;
+
 import jdk.internal.nicl.LibrariesHelper;
+import jdk.internal.reflect.CallerSensitive;
+
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Objects;
 
 public final class Libraries {
-    private static final Errno ERRNO = Errno.platformHasErrno() ? new Errno() : null;
-
     // don't create
     private Libraries() {}
 
@@ -101,7 +102,8 @@ public final class Libraries {
      * dependent manner.
      * <p>
      *
-     * @param      libname   the name of the library.
+     * @param      lookup     the lookup object
+     * @param      filename   the name of the library.
      * @exception  SecurityException  if a security manager exists and its
      *             <code>checkLink</code> method doesn't allow
      *             loading of the specified dynamic library
@@ -113,23 +115,28 @@ public final class Libraries {
      *             <code>null</code>
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
-    public static Library loadLibrary(String filename) {
+    public static Library loadLibrary(Lookup lookup, String filename) {
         Objects.requireNonNull(filename);
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(filename);
         }
+//Fixme:
+//        if (!lookup.hasPrivateAccess()) {
+//            throw new IllegalArgumentException("Lookup object must be private");
+//        }
         if (filename.indexOf(File.separatorChar) != -1) {
             throw new UnsatisfiedLinkError(
                 "Directory separator should not appear in library name: " + filename);
         }
-        return LibrariesHelper.loadLibrary(filename);
+        return LibrariesHelper.loadLibrary(lookup, filename);
     }
 
     /**
      * Loads the native library specified by the filename argument.  The filename
      * argument must be an absolute path name.
      *
+     * @param      lookup     the lookup object
      * @param      filename   the file to load.
      * @exception  SecurityException  if a security manager exists and its
      *             <code>checkLink</code> method doesn't allow
@@ -142,17 +149,21 @@ public final class Libraries {
      *             <code>null</code>
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
-    public static Library load(String filename) {
+    public static Library load(Lookup lookup, String filename) {
         Objects.requireNonNull(filename);
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(filename);
         }
+//Fixme:
+//        if (!lookup.hasPrivateAccess()) {
+//            throw new IllegalArgumentException("Lookup object must be private");
+//        }
         if (!(new File(filename).isAbsolute())) {
             throw new UnsatisfiedLinkError(
                 "Expecting an absolute path of the library: " + filename);
         }
-        return LibrariesHelper.load(filename);
+        return LibrariesHelper.loadLibrary(lookup, filename);
     }
 
     public static Library getDefaultLibrary() {
@@ -161,21 +172,5 @@ public final class Libraries {
             security.checkPermission(new RuntimePermission("java.nicl.getDefaultLibrary"));
         }
         return LibrariesHelper.getDefaultLibrary();
-    }
-
-    public static int errno() {
-        if (ERRNO == null) {
-            throw new UnsupportedOperationException();
-        }
-
-        return ERRNO.errno();
-    }
-
-    public static void throwErrnoException(String msg) throws Exception {
-        throw new Exception(msg + ": " + ERRNO.strerror(errno()));
-    }
-
-    public static void throwErrnoException() throws Exception {
-        throw new Exception(ERRNO.strerror(errno()));
     }
 }

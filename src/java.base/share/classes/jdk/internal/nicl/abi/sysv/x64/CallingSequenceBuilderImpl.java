@@ -23,7 +23,6 @@
 package jdk.internal.nicl.abi.sysv.x64;
 
 import jdk.internal.nicl.Argument;
-import jdk.internal.nicl.Platform;
 import jdk.internal.nicl.Util;
 import jdk.internal.nicl.abi.AbstractCallingSequenceBuilderImpl;
 import jdk.internal.nicl.abi.ArgumentBinding;
@@ -122,7 +121,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
     }
 
     private ArrayList<ArgumentClass> classifyArrayType(Sequence type, boolean named) {
-        SystemABI abi = Platform.getInstance().getABI();
+        SystemABI abi = SystemABI.getInstance();
 
         long nWords = Util.alignUp((type.bitsSize() / 8), 8) / 8;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
@@ -195,7 +194,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
             throw new UnsupportedOperationException("Union is not yet supported.");
         }
 
-        SystemABI abi = Platform.getInstance().getABI();
+        SystemABI abi = SystemABI.getInstance();
 
         long nWords = Util.alignUp((type.bitsSize() / 8), 8) / 8;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
@@ -338,7 +337,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                     nVectorRegs + info.getVectorRegs() > (forArguments ? Constants.MAX_VECTOR_ARGUMENT_REGISTERS : Constants.MAX_VECTOR_RETURN_REGISTERS)) {
                 // stack
 
-                long alignment = Math.max(Platform.getInstance().getABI().alignment(arg.getType(), true), 8);
+                long alignment = Math.max(SystemABI.getInstance().alignment(arg.getType(), true), 8);
 
                 long newStackOffset = Util.alignUp(stackOffset, alignment);
 

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.lang.invoke.MethodHandles;
 import java.nicl.Library;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -288,7 +289,7 @@ public final class Context {
 
     public void parse(Function<HeaderFile, CodeFactory> fn) {
         if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
-            Library[] libs = LibrariesHelper.loadLibraries(
+            Library[] libs = LibrariesHelper.loadLibraries(MethodHandles.lookup(),
                 linkCheckPaths.toArray(new String[0]),
                 libraryNames.toArray(new String[0]));
 

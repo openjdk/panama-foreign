@@ -50,6 +50,10 @@ public class UnixSystem {
         @CallingConvention(value=1)
         public abstract Pointer<Byte> strerror(int errno);
 
+        @C(file="dummy", line=1, column=1, USR="c:@errno")
+        @NativeType(layout="(i", ctype="dummy", size=4)
+        public abstract int errno$get();
+
         @C(file="dummy", line=1, column=1, USR="c:@environ")
         @NativeType(layout="p:p:V", ctype="dummy", size=8, name="environ")
         public abstract Pointer<Pointer<Byte>> environ$get();
@@ -161,7 +165,7 @@ public class UnixSystem {
 
             int res = i.__xstat(1, scope.toCString(path), p);
             if (res != 0) {
-                Libraries.throwErrnoException("Call to __xstat failed");
+                throwErrnoException("Call to __xstat failed");
             }
 
             return s.st_size$get();
@@ -179,10 +183,20 @@ public class UnixSystem {
 
             int res = i.stat$INODE64(scope.toCString(path), p);
             if (res != 0) {
-                Libraries.throwErrnoException("Call to stat failed");
+                throwErrnoException("Call to stat failed");
             }
 
             return (int)s.st_size$get();
+        }
+    }
+
+    private static void throwErrnoException(String msg) {
+        try {
+            system sys = Libraries.bindRaw(system.class);
+            Pointer<Byte> p = sys.strerror(sys.errno$get());
+            throw new Exception(msg + ": " + Pointer.toString(p));
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
         }
     }
 

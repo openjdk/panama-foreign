@@ -25,6 +25,8 @@
  * @test
  */
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.nicl.*;
 import java.nicl.types.*;
 import java.nicl.metadata.*;
@@ -98,7 +100,7 @@ public class GlobalVariable {
 
     private final globvar i;
     {
-        i = Libraries.bindRaw(globvar.class, Libraries.loadLibrary("GlobalVariable"));
+        i = Libraries.bindRaw(globvar.class, Libraries.loadLibrary(MethodHandles.lookup(), "GlobalVariable"));
         i.init();
     }
 

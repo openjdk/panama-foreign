@@ -25,14 +25,11 @@
 
 package jdk.internal.nicl.abi;
 
-import jdk.internal.nicl.types.*;
-
 import java.nicl.layout.Address;
 import java.nicl.layout.Sequence;
 import java.nicl.layout.Group;
 import java.nicl.layout.Group.Kind;
 import java.nicl.layout.Layout;
-import java.nicl.layout.Value;
 import java.nicl.layout.Value;
 
 /**
@@ -105,14 +102,14 @@ public abstract class AbstractABI implements SystemABI {
         }
     }
 
-    class ContainerSizeCalculator implements ContainerSizeInfo {
+    class ContainerSizeInfo {
         private final boolean isUnion;
         private final long pack;
         private long[] offsets;
         private long size = 0;
         private long alignment_of_container = 0;
 
-        ContainerSizeCalculator(Group ct, long pack) {
+        ContainerSizeInfo(Group ct, long pack) {
             this.isUnion = ct.kind() == Kind.UNION;
             this.pack = pack;
             offsets = new long[ct.elements().size()];
@@ -140,31 +137,22 @@ public abstract class AbstractABI implements SystemABI {
             return offset;
         }
 
-        @Override
         public long alignment() {
             return alignment_of_container;
         }
 
-        @Override
         public long size() {
             // need to be multiple of alignment requirement
             return AbstractABI.this.alignUp(size, alignment_of_container);
         }
 
-        @Override
         public long[] offsets() {
             return offsets;
         }
 
-        @Override
         public long offset(int index) {
             return offsets[index];
         }
-    }
-
-    @Override
-    public ContainerSizeInfo layout(Group ct, long pack) {
-        return new ContainerSizeCalculator(ct, pack);
     }
 
     @Override
@@ -174,7 +162,7 @@ public abstract class AbstractABI implements SystemABI {
         } else if (t instanceof Sequence) {
             return sizeOfArray((Sequence) t);
         } else if (t instanceof Group) {
-            return layout((Group) t, -1).size();
+            return new ContainerSizeInfo((Group) t, -1).size();
         } else if (t instanceof Address) {
             return definedSize((Address)t);
         } else {

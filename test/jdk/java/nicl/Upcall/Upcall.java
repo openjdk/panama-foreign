@@ -23,8 +23,10 @@
 
 /*
  * @test
+ * @run main/othervm Upcall
  */
 
+import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
@@ -69,7 +71,7 @@ public class Upcall {
     }
 
     public void test() {
-        upcall i = Libraries.bindRaw(upcall.class, Libraries.loadLibrary("Upcall"));
+        upcall i = Libraries.bindRaw(upcall.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
         visitorImpl v = new visitorImpl();
 
         i.do_upcall(v, MAGIC_INTEGER);

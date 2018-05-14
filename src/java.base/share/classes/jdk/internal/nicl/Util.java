@@ -28,7 +28,6 @@ import jdk.internal.nicl.types.BoundedPointer;
 import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.nicl.types.LayoutTypeImpl;
 import jdk.internal.nicl.types.Types;
-import jdk.internal.nicl.types.UncheckedPointer;
 import jdk.internal.org.objectweb.asm.Type;
 
 import java.lang.invoke.MethodHandle;
@@ -319,8 +318,7 @@ public final class Util {
                     throw new AssertionError();
                 } else {
                     return new Symbol(name,
-                            new UncheckedPointer<>(LayoutTypeImpl.create(void.class),
-                            NativeInvoker.findNativeAddress(name)));
+                            BoundedPointer.createNativeVoidPointer(NativeInvoker.findNativeAddress(name)));
                 }
             });
         return new NativeInvoker(mt, false, lookup, sym).getBoundMethodHandle();

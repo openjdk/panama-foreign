@@ -37,6 +37,16 @@ import jdk.internal.nicl.types.Types;
  * ABI implementation based on System V ABI AMD64 supplement v.0.99.6
  */
 public class SysVx64ABI extends AbstractABI {
+
+    private static SysVx64ABI instance;
+
+    public static SysVx64ABI getInstance() {
+        if (instance == null) {
+            instance = new SysVx64ABI();
+        }
+        return instance;
+    }
+
     @Override
     public long definedSize(Value s) {
         return s.bitsSize() / 8;

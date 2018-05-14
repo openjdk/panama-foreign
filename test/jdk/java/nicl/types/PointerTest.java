@@ -26,6 +26,7 @@
  * @modules java.base/jdk.internal.misc
  */
 
+import java.lang.invoke.MethodHandles;
 import java.nicl.*;
 import java.nicl.metadata.*;
 import java.nicl.types.*;
@@ -43,7 +44,7 @@ public class PointerTest {
     };
 
     static {
-        lib = Libraries.loadLibrary("Pointers");
+        lib = Libraries.loadLibrary(MethodHandles.lookup(), "Pointers");
         ptrs = Libraries.bindRaw(pointers.class, lib);
     }
 

@@ -23,6 +23,8 @@
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
 
 /**
@@ -31,17 +33,20 @@ import java.nicl.Libraries;
  * @summary Tests for loadLibrary method(s) security checks
  */
 public class LoadLibraryTest {
+    
+    static MethodHandles.Lookup lookup = MethodHandles.lookup();
+    
     @Test
     public void testLoadLibrary() {
         checkSecurityException(() -> {
-            Libraries.loadLibrary("mylibrary.so");
+            Libraries.loadLibrary(lookup, "mylibrary.so");
         });
     }
 
     @Test
     public void testLoad() {
         checkSecurityException(() -> {
-            Libraries.load("/usr/lib/mylibrary.so");
+            Libraries.load(lookup, "/usr/lib/mylibrary.so");
         });
     }
 

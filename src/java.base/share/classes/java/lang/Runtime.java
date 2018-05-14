@@ -26,7 +26,12 @@
 package java.lang;
 
 import java.io.*;
+import java.lang.ClassLoader.NativeLibrary;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.math.BigInteger;
+import java.nicl.Library;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,6 +41,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
+import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
@@ -817,7 +823,23 @@ public class Runtime {
         loadLibrary0(Reflection.getCallerClass(), libname);
     }
 
-    synchronized void loadLibrary0(Class<?> fromClass, String libname) {
+    /**
+     * Panama specific: find library given name and lookup.
+     * See {@link jdk.internal.misc.JavaLangAccess#findLibrary(Lookup, String)}.
+     */
+    Library findLibrary(MethodHandles.Lookup lookup, String libname) {
+        return loadLibrary0(lookup.lookupClass(), libname);
+    }
+
+    /**
+     * Panama specific: find default system library.
+     * See {@link JavaLangAccess#defaultLibrary()}.
+     */
+    Library defaultLibrary() {
+        return NativeLibrary.defaultLibrary;
+    }
+
+    synchronized NativeLibrary loadLibrary0(Class<?> fromClass, String libname) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(libname);
@@ -826,7 +848,7 @@ public class Runtime {
             throw new UnsatisfiedLinkError(
     "Directory separator should not appear in library name: " + libname);
         }
-        ClassLoader.loadLibrary(fromClass, libname, false);
+        return ClassLoader.loadLibrary(fromClass, libname, false);
     }
 
     /**
