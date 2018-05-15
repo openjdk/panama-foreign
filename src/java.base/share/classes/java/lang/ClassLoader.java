@@ -2427,6 +2427,11 @@ public abstract class ClassLoader {
         }
 
         static NativeLibrary defaultLibrary = new NativeLibrary(Object.class, "<default>", true) {
+
+            {
+                handle = defaultHandle();
+            }
+
             @Override
             boolean load() {
                 throw new UnsupportedOperationException("Cannot load default library");
@@ -2540,6 +2545,9 @@ public abstract class ClassLoader {
         // JNI FindClass expects the caller class if invoked from JNI_OnLoad
         // and JNI_OnUnload is NativeLibrary class
         static native void unload(String name, boolean isBuiltin, long handle);
+
+        // find handle of the default library
+        static native long defaultHandle();
     }
 
     // The paths searched for libraries

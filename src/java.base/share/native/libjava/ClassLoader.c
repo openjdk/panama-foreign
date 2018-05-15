@@ -520,3 +520,16 @@ Java_java_lang_ClassLoader_findBuiltinLib
     free(libName);
     return NULL;
 }
+
+/*
+ * Class:     java_lang_ClassLoader_NativeLibrary
+ * Method:    defaultHandle
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL
+Java_java_lang_ClassLoader_00024NativeLibrary_defaultHandle
+  (JNIEnv *env, jobject this)
+{
+    return ptr_to_jlong(getDefaultHandle());
+}
+

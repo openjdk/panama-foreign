@@ -46,6 +46,11 @@ void* getProcessHandle() {
     return (void*)GetModuleHandle(NULL);
 }
 
+void* getDefaultHandle() {
+    // FIXME: This is not yet tested on Windows.
+    return getProcessHandle();
+}
+
 /*
  * Windows symbols can be simple like JNI_OnLoad or __stdcall format
  * like _JNI_OnLoad@8. We need to handle both.
