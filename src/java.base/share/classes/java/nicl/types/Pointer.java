@@ -39,53 +39,11 @@ public interface Pointer<T> extends Resource {
     Reference<T> lvalue();
     T deref();
 
-    // These static utility methods are invoked from generated code
-
-    // Pointer utilities
-    public static <T> Reference<T> buildRef(Pointer<?> p, long offset, LayoutType<T> type) {
-        return buildPtr(p, offset, type).lvalue();
-    }
-
-    private static <T> Pointer<T> buildPtr(Pointer<?> p, long offset, LayoutType<T> type) {
-        return p
-                .cast(LayoutType.create(byte.class))
-                .offset(offset)
-                .cast(type);
-    }
-
-    public static void copyFromArray(int[] src, Pointer<?> p, long offset, int nElems) {
-        Pointer<Integer> dst = buildPtr(p, offset, LayoutType.create(int.class));
-        for (int i = 0; i < nElems; i++) {
-            dst.offset(i).lvalue().set(src[i]);
-        }
-    }
-
-    public static void copyToArray(Pointer<?> p, long offset, int[] dst, int nElems) {
-        Pointer<Integer> src = buildPtr(p, offset, LayoutType.create(int.class));
-        for (int i = 0; i < nElems; i++) {
-            dst[i] = src.offset(i).lvalue().get();
-        }
-    }
-
-    public static <T> void copyFromArray(T[] src, Pointer<?> p, long offset, int nElems, Class<T> elementType) {
-        Pointer<T> dst = buildPtr(p, offset, LayoutType.create(elementType));
-        for (int i = 0; i < nElems; i++) {
-            dst.offset(i).lvalue().set(src[i]);
-        }
-    }
-
-    public static <T> void copyToArray(Pointer<?> p, long offset, T[] dst, int nElems, Class<T> elementType) {
-        Pointer<T> src = buildPtr(p, offset, LayoutType.create(elementType));
-        for (int i = 0; i < nElems; i++) {
-            dst[i] = src.offset(i).lvalue().get();
-        }
-    }
-
-    public static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
+    static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
         Util.copy(src, dst, bytes);
     }
 
-    public static String toString(Pointer<Byte> cstr) {
+    static String toString(Pointer<Byte> cstr) {
         if (cstr == null || cstr.isNull()) {
             return null;
         }

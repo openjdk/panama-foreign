@@ -46,6 +46,13 @@ class HeaderImplGenerator extends ClassGenerator {
     // name of pointer field, only used for record types
     private static final String POINTER_FIELD_NAME = "ptr";
 
+    // names of helper methods defined in the RuntimeSupport class
+    private static final String BUILD_REF_NAME = "buildRef";
+    private static final String PTR_COPY_TO_ARRAY_OBJECT = "ptrCopyToArrayObject";
+    private static final String PTR_COPY_TO_ARRAY_INT = "ptrCopyToArrayInt";
+    private static final String PTR_COPY_FROM_ARRAY_OBJECT = "ptrCopyFromArrayObject";
+    private static final String PTR_COPY_FROM_ARRAY_INT = "ptrCopyFromArrayInt";
+
     // the interface to implement
     private final Class<?> c;
 
@@ -195,6 +202,11 @@ class HeaderImplGenerator extends ClassGenerator {
         allocArray(mv, componentType, length);
         mv.visitVarInsn(ASTORE, 1);
 
+        //load receiver MH
+        mv.visitFieldInsn(GETSTATIC, implClassName, componentType.isPrimitive() ?
+                PTR_COPY_TO_ARRAY_INT : PTR_COPY_TO_ARRAY_OBJECT,
+                Type.getDescriptor(MethodHandle.class));
+
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
         mv.visitLdcInsn(offset);
@@ -206,7 +218,7 @@ class HeaderImplGenerator extends ClassGenerator {
         if (componentType.isPrimitive()) {
             switch (PrimitiveClassType.typeof(componentType)) {
                 case INT:
-                    mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "copyToArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(int[].class), Type.INT_TYPE), true);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(int[].class), Type.INT_TYPE), false);
                     break;
 
                 // FIXME: Add other primitives here
@@ -215,7 +227,7 @@ class HeaderImplGenerator extends ClassGenerator {
             }
         } else {
             mv.visitLdcInsn(Type.getType(componentType));
-            mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "copyToArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(Object[].class), Type.INT_TYPE, Type.getType(Class.class)), true);
+            mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(Object[].class), Type.INT_TYPE, Type.getType(Class.class)), false);
         }
 
         mv.visitVarInsn(ALOAD, 1);
@@ -232,6 +244,11 @@ class HeaderImplGenerator extends ClassGenerator {
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName().replace("$get", "$set"), Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(method.getReturnType())), null, null);
         mv.visitCode();
 
+        //load receiver MH
+        mv.visitFieldInsn(GETSTATIC, implClassName, componentType.isPrimitive() ?
+                PTR_COPY_FROM_ARRAY_INT : PTR_COPY_FROM_ARRAY_OBJECT,
+                Type.getDescriptor(MethodHandle.class));
+
         mv.visitVarInsn(ALOAD, 1);
 
         mv.visitVarInsn(ALOAD, 0);
@@ -243,7 +260,7 @@ class HeaderImplGenerator extends ClassGenerator {
         if (componentType.isPrimitive()) {
             switch (PrimitiveClassType.typeof(componentType)) {
                 case INT:
-                    mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "copyFromArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(int[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE), true);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(int[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE), false);
                     break;
 
                 // FIXME: Add other primitives here
@@ -252,7 +269,7 @@ class HeaderImplGenerator extends ClassGenerator {
             }
         } else {
             mv.visitLdcInsn(Type.getType(componentType));
-            mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "copyFromArray", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE, Type.getType(Class.class)), true);
+            mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE, Type.getType(Class.class)), false);
         }
 
         mv.visitInsn(RETURN);
@@ -518,21 +535,69 @@ class HeaderImplGenerator extends ClassGenerator {
 
     private void generateRefHelper(ClassGeneratorContext ctxt) {
         /*
+         * MethodHandle buildRef = <buildRef>
          * private <T> Reference<T> ref(long offset, LayoutType<T> t) {
-         *     return Pointer.buildRef(p, offset, t);
+         *     return buildRef.invokeExact(p, offset, t);
          * }
          */
         ClassWriter cw = ctxt.getClassWriter();
         MethodVisitor mv = cw.visitMethod(ACC_PRIVATE, "ref", Type.getMethodDescriptor(Type.getType(Reference.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), null, null);
         mv.visitCode();
+        mv.visitFieldInsn(GETSTATIC, implClassName, BUILD_REF_NAME, Type.getDescriptor(MethodHandle.class));
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
         mv.visitVarInsn(LLOAD, 1);
         mv.visitVarInsn(ALOAD, 3);
-        mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pointer.class), "buildRef", Type.getMethodDescriptor(Type.getType(Reference.class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), true);
+        mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.getType(Reference.class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), false);
         mv.visitInsn(ARETURN);
         mv.visitMaxs(0, 0);
         mv.visitEnd();
+    }
+
+    private void generateHelperHandles(ClassGeneratorContext ctxt) {
+        try {
+            ctxt.getFieldsBuilder().add(new FieldGenerator(BUILD_REF_NAME, true,
+                    MethodHandles.lookup().findStatic(RuntimeSupport.class, "buildRef", MethodType.methodType(Reference.class, Pointer.class, long.class, LayoutType.class))) {
+                @Override
+                public void generate(ClassWriter cw) {
+                    cw.visitField(ACC_PRIVATE | ACC_FINAL | ACC_STATIC, getName(), Type.getDescriptor(MethodHandle.class), null, null);
+                }
+            });
+
+            ctxt.getFieldsBuilder().add(new FieldGenerator(PTR_COPY_TO_ARRAY_INT, true,
+                    MethodHandles.lookup().findStatic(RuntimeSupport.class, "copyToArray", MethodType.methodType(void.class, Pointer.class, long.class, int[].class, int.class))) {
+                @Override
+                public void generate(ClassWriter cw) {
+                    cw.visitField(ACC_PRIVATE | ACC_FINAL | ACC_STATIC, getName(), Type.getDescriptor(MethodHandle.class), null, null);
+                }
+            });
+
+            ctxt.getFieldsBuilder().add(new FieldGenerator(PTR_COPY_TO_ARRAY_OBJECT, true,
+                    MethodHandles.lookup().findStatic(RuntimeSupport.class, "copyToArray", MethodType.methodType(void.class, Pointer.class, long.class, Object[].class, int.class, Class.class))) {
+                @Override
+                public void generate(ClassWriter cw) {
+                    cw.visitField(ACC_PRIVATE | ACC_FINAL | ACC_STATIC, getName(), Type.getDescriptor(MethodHandle.class), null, null);
+                }
+            });
+
+            ctxt.getFieldsBuilder().add(new FieldGenerator(PTR_COPY_FROM_ARRAY_INT, true,
+                    MethodHandles.lookup().findStatic(RuntimeSupport.class, "copyFromArray", MethodType.methodType(void.class, int[].class, Pointer.class, long.class, int.class))) {
+                @Override
+                public void generate(ClassWriter cw) {
+                    cw.visitField(ACC_PRIVATE | ACC_FINAL | ACC_STATIC, getName(), Type.getDescriptor(MethodHandle.class), null, null);
+                }
+            });
+
+            ctxt.getFieldsBuilder().add(new FieldGenerator(PTR_COPY_FROM_ARRAY_OBJECT, true,
+                    MethodHandles.lookup().findStatic(RuntimeSupport.class, "copyFromArray", MethodType.methodType(void.class, Object[].class, Pointer.class, long.class, int.class, Class.class))) {
+                @Override
+                public void generate(ClassWriter cw) {
+                    cw.visitField(ACC_PRIVATE | ACC_FINAL | ACC_STATIC, getName(), Type.getDescriptor(MethodHandle.class), null, null);
+                }
+            });
+        } catch (Throwable ex) {
+            throw new IllegalStateException();
+        }
     }
 
     private void generatePointerField(ClassGeneratorContext ctxt) {
@@ -622,6 +687,7 @@ class HeaderImplGenerator extends ClassGenerator {
         if (isRecordType) {
             generateConstructor(ctxt);
             generateRefHelper(ctxt);
+            generateHelperHandles(ctxt);
             generatePointerGetter(ctxt);
 
             generateReferenceImpl(ctxt);
