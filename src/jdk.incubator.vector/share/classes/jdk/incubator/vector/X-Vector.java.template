@@ -62,9 +62,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         $type$ apply(int i, $type$ a, $type$ b);
     }
 
-    abstract $abstractvectortype$<S> bOp(Vector<$Boxtype$,S> o, FBinOp f);
+    abstract $abstractvectortype$<S> bOp(Vector<$Boxtype$,S> v, FBinOp f);
 
-    abstract $abstractvectortype$<S> bOp(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m, FBinOp f);
+    abstract $abstractvectortype$<S> bOp(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m, FBinOp f);
 
     // Trinary operator
 
@@ -72,9 +72,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         $type$ apply(int i, $type$ a, $type$ b, $type$ c);
     }
 
-    abstract $abstractvectortype$<S> tOp(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2, FTriOp f);
+    abstract $abstractvectortype$<S> tOp(Vector<$Boxtype$,S> v1, Vector<$Boxtype$,S> v2, FTriOp f);
 
-    abstract $abstractvectortype$<S> tOp(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2, Mask<$Boxtype$, S> m, FTriOp f);
+    abstract $abstractvectortype$<S> tOp(Vector<$Boxtype$,S> v1, Vector<$Boxtype$,S> v2, Mask<$Boxtype$, S> m, FTriOp f);
 
     // Reduction operator
 
@@ -86,7 +86,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         boolean apply(int i, $type$ a, $type$ b);
     }
 
-    abstract Mask<$Boxtype$, S> bTest(Vector<$Boxtype$,S> o, FBinTest f);
+    abstract Mask<$Boxtype$, S> bTest(Vector<$Boxtype$,S> v, FBinTest f);
 
     // Foreach
 
@@ -101,8 +101,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     //
 
     @Override
-    public $abstractvectortype$<S> add(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a + b));
+    public $abstractvectortype$<S> add(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a + b));
     }
 
     /**
@@ -111,15 +111,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract $abstractvectortype$<S> add($type$ b);
+    public abstract $abstractvectortype$<S> add($type$ s);
 
     @Override
-    public $abstractvectortype$<S> add(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a + b));
+    public $abstractvectortype$<S> add(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a + b));
     }
 
     /**
@@ -129,30 +129,30 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract $abstractvectortype$<S> add($type$ b, Mask<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> add($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract $abstractvectortype$<S> addSaturate($type$ o);
+    public abstract $abstractvectortype$<S> addSaturate($type$ s);
 
     @Override
-    public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract $abstractvectortype$<S> addSaturate($type$ o, Mask<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> addSaturate($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a - b));
+    public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a - b));
     }
 
     /**
@@ -161,15 +161,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract $abstractvectortype$<S> sub($type$ b);
+    public abstract $abstractvectortype$<S> sub($type$ s);
 
     @Override
-    public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a - b));
+    public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a - b));
     }
 
     /**
@@ -179,30 +179,30 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract $abstractvectortype$<S> sub($type$ b, Mask<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> sub($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
+    public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
     }
 
-    public abstract $abstractvectortype$<S> subSaturate($type$ o);
+    public abstract $abstractvectortype$<S> subSaturate($type$ s);
 
     @Override
-    public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
+    public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
     }
 
-    public abstract $abstractvectortype$<S> subSaturate($type$ o, Mask<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> subSaturate($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a * b));
+    public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a * b));
     }
 
     /**
@@ -211,15 +211,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract $abstractvectortype$<S> mul($type$ b);
+    public abstract $abstractvectortype$<S> mul($type$ s);
 
     @Override
-    public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a * b));
+    public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a * b));
     }
 
     /**
@@ -229,12 +229,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract $abstractvectortype$<S> mul($type$ b, Mask<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> mul($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
     public $abstractvectortype$<S> neg() {
@@ -257,8 +257,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     }
 
     @Override
-    public $abstractvectortype$<S> min(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> (a < b) ? a : b);
+    public $abstractvectortype$<S> min(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> (a < b) ? a : b);
     }
 
     /**
@@ -267,14 +267,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the minimum of this vector and the broadcast of an input scalar
      */
-    public abstract $abstractvectortype$<S> min($type$ b);
+    public abstract $abstractvectortype$<S> min($type$ s);
 
     @Override
-    public $abstractvectortype$<S> max(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> (a > b) ? a : b);
+    public $abstractvectortype$<S> max(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> (a > b) ? a : b);
     }
 
     /**
@@ -283,14 +283,14 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the maximum of this vector and the broadcast of an input scalar
      */
-    public abstract $abstractvectortype$<S> max($type$ b);
+    public abstract $abstractvectortype$<S> max($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> equal(Vector<$Boxtype$,S> o) {
-        return bTest(o, (i, a, b) -> a == b);
+    public Mask<$Boxtype$, S> equal(Vector<$Boxtype$,S> v) {
+        return bTest(v, (i, a, b) -> a == b);
     }
 
     /**
@@ -299,15 +299,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary test operation where the primitive equals
      * operation ({@code ==}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<$Boxtype$, S> equal($type$ b);
+    public abstract Mask<$Boxtype$, S> equal($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> notEqual(Vector<$Boxtype$,S> o) {
-        return bTest(o, (i, a, b) -> a != b);
+    public Mask<$Boxtype$, S> notEqual(Vector<$Boxtype$,S> v) {
+        return bTest(v, (i, a, b) -> a != b);
     }
 
     /**
@@ -316,15 +316,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary test operation where the primitive not equals
      * operation ({@code !=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is not equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<$Boxtype$, S> notEqual($type$ b);
+    public abstract Mask<$Boxtype$, S> notEqual($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> lessThan(Vector<$Boxtype$,S> o) {
-        return bTest(o, (i, a, b) -> a < b);
+    public Mask<$Boxtype$, S> lessThan(Vector<$Boxtype$,S> v) {
+        return bTest(v, (i, a, b) -> a < b);
     }
 
     /**
@@ -333,15 +333,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary test operation where the primitive less than
      * operation ({@code <}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than the
      * broadcast of an input scalar
      */
-    public abstract Mask<$Boxtype$, S> lessThan($type$ b);
+    public abstract Mask<$Boxtype$, S> lessThan($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> lessThanEq(Vector<$Boxtype$,S> o) {
-        return bTest(o, (i, a, b) -> a <= b);
+    public Mask<$Boxtype$, S> lessThanEq(Vector<$Boxtype$,S> v) {
+        return bTest(v, (i, a, b) -> a <= b);
     }
 
     /**
@@ -350,15 +350,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary test operation where the primitive less than
      * or equal to operation ({@code <=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than or equal
      * to the broadcast of an input scalar
      */
-    public abstract Mask<$Boxtype$, S> lessThanEq($type$ b);
+    public abstract Mask<$Boxtype$, S> lessThanEq($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> greaterThan(Vector<$Boxtype$,S> o) {
-        return bTest(o, (i, a, b) -> a > b);
+    public Mask<$Boxtype$, S> greaterThan(Vector<$Boxtype$,S> v) {
+        return bTest(v, (i, a, b) -> a > b);
     }
 
     /**
@@ -367,15 +367,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary test operation where the primitive greater than
      * operation ({@code >}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than the
      * broadcast of an input scalar
      */
-    public abstract Mask<$Boxtype$, S> greaterThan($type$ b);
+    public abstract Mask<$Boxtype$, S> greaterThan($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> greaterThanEq(Vector<$Boxtype$,S> o) {
-        return bTest(o, (i, a, b) -> a >= b);
+    public Mask<$Boxtype$, S> greaterThanEq(Vector<$Boxtype$,S> v) {
+        return bTest(v, (i, a, b) -> a >= b);
     }
 
     /**
@@ -385,15 +385,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * This is a vector binary test operation where the primitive greater than
      * or equal to operation ({@code >=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than or
      * equal to the broadcast of an input scalar
      */
-    public abstract Mask<$Boxtype$, S> greaterThanEq($type$ b);
+    public abstract Mask<$Boxtype$, S> greaterThanEq($type$ s);
 
     @Override
-    public $abstractvectortype$<S> blend(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
+    public $abstractvectortype$<S> blend(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
     /**
@@ -406,15 +406,15 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * otherwise the the lane element at {@code N} from this input vector is
      * selected and placed into the resulting vector at {@code N}.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of blending the lane elements of this vector with
      * those of the broadcast of an input scalar
      */
-    public abstract $abstractvectortype$<S> blend($type$ b, Mask<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> blend($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public abstract $abstractvectortype$<S> shuffle(Vector<$Boxtype$,S> o, Shuffle<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> shuffle(Vector<$Boxtype$,S> v, Shuffle<$Boxtype$, S> m);
 
     @Override
     public abstract $abstractvectortype$<S> swizzle(Shuffle<$Boxtype$, S> m);
@@ -438,17 +438,17 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> shiftER(int i);
 
 #if[FP]
-    public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a / b));
+    public $abstractvectortype$<S> div(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a / b));
     }
 
-    public abstract $abstractvectortype$<S> div($type$ o);
+    public abstract $abstractvectortype$<S> div($type$ s);
 
-    public $abstractvectortype$<S> div(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a / b));
+    public $abstractvectortype$<S> div(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a / b));
     }
 
-    public abstract $abstractvectortype$<S> div($type$ o, Mask<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> div($type$ s, Mask<$Boxtype$, S> m);
 
     public $abstractvectortype$<S> sqrt() {
         return uOp((i, a) -> ($type$) Math.sqrt((double) a));
@@ -530,17 +530,17 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return uOp(m, (i, a) -> ($type$) Math.atan((double) a));
     }
 
-    public $abstractvectortype$<S> atan2(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
+    public $abstractvectortype$<S> atan2(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
     }
 
-    public abstract $abstractvectortype$<S> atan2($type$ o);
+    public abstract $abstractvectortype$<S> atan2($type$ s);
 
-    public $abstractvectortype$<S> atan2(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
+    public $abstractvectortype$<S> atan2(Vector<$Boxtype$,S> v, Mask<$Boxtype$,S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
     }
 
-    public abstract $abstractvectortype$<S> atan2($type$ o, Mask<$Boxtype$,S> m);
+    public abstract $abstractvectortype$<S> atan2($type$ s, Mask<$Boxtype$,S> m);
 
     public $abstractvectortype$<S> cbrt() {
         return uOp((i, a) -> ($type$) Math.cbrt((double) a));
@@ -574,17 +574,17 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return uOp(m, (i, a) -> ($type$) Math.log1p((double) a));
     }
 
-    public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
+    public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
     }
 
-    public abstract $abstractvectortype$<S> pow($type$ o);
+    public abstract $abstractvectortype$<S> pow($type$ s);
 
-    public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
+    public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> v, Mask<$Boxtype$,S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
     }
 
-    public abstract $abstractvectortype$<S> pow($type$ o, Mask<$Boxtype$,S> m);
+    public abstract $abstractvectortype$<S> pow($type$ s, Mask<$Boxtype$,S> m);
 
     public $abstractvectortype$<S> exp() {
         return uOp((i, a) -> ($type$) Math.exp((double) a));
@@ -602,139 +602,462 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return uOp(m, (i, a) -> ($type$) Math.expm1((double) a));
     }
 
-    public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2) {
-        return tOp(o1, o2, (i, a, b, c) -> Math.fma(a, b, c));
+    public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> v1, Vector<$Boxtype$,S> v2) {
+        return tOp(v1, v2, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
-    public abstract $abstractvectortype$<S> fma($type$ o1, $type$ o2);
+    public abstract $abstractvectortype$<S> fma($type$ s1, $type$ s2);
 
-    public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> o1, Vector<$Boxtype$,S> o2, Mask<$Boxtype$,S> m) {
-        return tOp(o1, o2, m, (i, a, b, c) -> Math.fma(a, b, c));
+    public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> v1, Vector<$Boxtype$,S> v2, Mask<$Boxtype$,S> m) {
+        return tOp(v1, v2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
-    public abstract $abstractvectortype$<S> fma($type$ o1, $type$ o2, Mask<$Boxtype$,S> m);
+    public abstract $abstractvectortype$<S> fma($type$ s1, $type$ s2, Mask<$Boxtype$,S> m);
 
-    public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
+    public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
     }
 
-    public abstract $abstractvectortype$<S> hypot($type$ o);
+    public abstract $abstractvectortype$<S> hypot($type$ s);
 
-    public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> o, Mask<$Boxtype$,S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
+    public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> v, Mask<$Boxtype$,S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
     }
 
-    public abstract $abstractvectortype$<S> hypot($type$ o, Mask<$Boxtype$,S> m);
+    public abstract $abstractvectortype$<S> hypot($type$ s, Mask<$Boxtype$,S> m);
 #end[FP]
 
 #if[BITWISE]
-    public $abstractvectortype$<S> and(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a & b));
+
+    /**
+     * Bitwise ANDs this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the bitwise AND of this vector with the input vector
+     */
+    public $abstractvectortype$<S> and(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a & b));
     }
 
-    public abstract $abstractvectortype$<S> and($type$ o);
+    /**
+     * Bitwise ANDs this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the bitwise AND of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract $abstractvectortype$<S> and($type$ s);
 
-    public $abstractvectortype$<S> and(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a & b));
+    /**
+     * Bitwise ANDs this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the bitwise AND of this vector with the input vector
+     */
+    public $abstractvectortype$<S> and(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a & b));
     }
 
-    public abstract $abstractvectortype$<S> and($type$ o, Mask<$Boxtype$, S> m);
+    /**
+     * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the bitwise AND of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract $abstractvectortype$<S> and($type$ s, Mask<$Boxtype$, S> m);
 
-    public $abstractvectortype$<S> or(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a | b));
+    /**
+     * Bitwise ORs this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the bitwise OR of this vector with the input vector
+     */
+    public $abstractvectortype$<S> or(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a | b));
     }
 
-    public abstract $abstractvectortype$<S> or($type$ o);
+    /**
+     * Bitwise ORs this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the bitwise OR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract $abstractvectortype$<S> or($type$ s);
 
-    public $abstractvectortype$<S> or(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a | b));
+    /**
+     * Bitwise ORs this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the bitwise OR of this vector with the input vector
+     */
+    public $abstractvectortype$<S> or(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a | b));
     }
 
-    public abstract $abstractvectortype$<S> or($type$ o, Mask<$Boxtype$, S> m);
+    /**
+     * Bitwise ORs this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the bitwise OR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract $abstractvectortype$<S> or($type$ s, Mask<$Boxtype$, S> m);
 
-    public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a ^ b));
+    /**
+     * Bitwise XORs this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the bitwise XOR of this vector with the input vector
+     */
+    public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a ^ b));
     }
 
-    public abstract $abstractvectortype$<S> xor($type$ o);
+    /**
+     * Bitwise XORs this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the bitwise XOR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract $abstractvectortype$<S> xor($type$ s);
 
-    public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a ^ b));
+    /**
+     * Bitwise XORs this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the bitwise XOR of this vector with the input vector
+     */
+    public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a ^ b));
     }
 
-    public abstract $abstractvectortype$<S> xor($type$ o, Mask<$Boxtype$, S> m);
+    /**
+     * Bitwise XORs this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the bitwise XOR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract $abstractvectortype$<S> xor($type$ s, Mask<$Boxtype$, S> m);
 
+    /**
+     * Bitwise NOTs this vector.
+     * <p>
+     * This is a vector unary operation where the primitive bitwise NOT
+     * operation ({@code ~}) is applied to lane elements.
+     *
+     * @return the bitwise NOT of this vector
+     */
     public $abstractvectortype$<S> not() {
         return uOp((i, a) -> ($type$) (~a));
     }
 
+    /**
+     * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the primitive bitwise NOT
+     * operation ({@code ~}) is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the bitwise NOT of this vector
+     */
     public $abstractvectortype$<S> not(Mask<$Boxtype$, S> m) {
         return uOp(m, (i, a) -> ($type$) (~a));
     }
 
-    // logical shift left
+/*
+@@@ Check the shift operations against the JLS definition and vector
+    instructions.
+
+    How to define byte and short? in Java the values are promoted
+    to int values.
+
+    For int values (promoted or otherwise) the low 5 bits of s are used.
+    For long values the low 6 bits of s are used.
+ */
+
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @return the result of logically left shifting left this vector by the
+     * broadcast of an input scalar
+     */
     public $abstractvectortype$<S> shiftL(int s) {
         return uOp((i, a) -> ($type$) (a << s));
     }
 
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting this vector by the
+     * broadcast of an input scalar
+     */
     public $abstractvectortype$<S> shiftL(int s, Mask<$Boxtype$, S> m) {
         return uOp(m, (i, a) -> ($type$) (a << s));
     }
 
 #if[intOrLong]
-    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a << b));
+    /**
+     * Logically left shifts this vector by an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the result of logically left shifting this vector by the input
+     * vector
+     */
+    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a << b));
     }
 
-    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a << b));
+    /**
+     * Logically left shifts this vector by an input vector, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting this vector by the input
+     * vector
+     */
+    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a << b));
     }
 #end[intOrLong]
 
     // logical, or unsigned, shift right
+
+
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public $abstractvectortype$<S> shiftR(int s) {
         return uOp((i, a) -> ($type$) (a >>> s));
     }
 
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public $abstractvectortype$<S> shiftR(int s, Mask<$Boxtype$, S> m) {
         return uOp(m, (i, a) -> ($type$) (a >>> s));
     }
 
 #if[intOrLong]
-    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a >>> b));
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by an
+     * input vector.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the result of logically right shifting this vector by the
+     * input vector
+     */
+    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a >>> b));
     }
 
-    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a >>> b));
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by an
+     * input vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of logically right shifting this vector by the
+     * input vector
+     */
+    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a >>> b));
     }
 #end[intOrLong]
 
-    // arithmetic, or signed, shift right
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public $abstractvectortype$<S> aShiftR(int s) {
         return uOp((i, a) -> ($type$) (a >> s));
     }
 
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public $abstractvectortype$<S> aShiftR(int s, Mask<$Boxtype$, S> m) {
         return uOp(m, (i, a) -> ($type$) (a >> s));
     }
 
 #if[intOrLong]
-    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> o) {
-        return bOp(o, (i, a, b) -> ($type$) (a >> b));
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by an
+     * input vector.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the result of arithmetically right shifting this vector by the
+     * input vector
+     */
+    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> v) {
+        return bOp(v, (i, a, b) -> ($type$) (a >> b));
     }
 
-    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> o, Mask<$Boxtype$, S> m) {
-        return bOp(o, m, (i, a, b) -> ($type$) (a >> b));
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by an
+     * input vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * input vector
+     */
+    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+        return bOp(v, m, (i, a, b) -> ($type$) (a >> b));
     }
 #end[intOrLong]
 
-    public $abstractvectortype$<S> rotateL(int j) {
-        return uOp((i, a) -> ($type$) $Wideboxtype$.rotateLeft(a, j));
+// @@@ Should the rotateL/R operations be on int and long only?
+//     Currently short and byte promote to int, bits rotated, then downcast,
+//     thus bits will be truncated and not correctly rotated
+// @@@ Mask versions?
+
+    /**
+     * Rotates left this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@link $Wideboxtype$#rotateLeft} is applied to lane elements and where
+     * lane elements of this vector apply to the first argument, and lane
+     * elements of the broadcast vector apply to the second argument (the
+     * rotation distance).
+     *
+     * @param s the input scalar; the number of the bits to rotate left
+     * @return the result of rotating left this vector by the broadcast of an
+     * input scalar
+     */
+    public $abstractvectortype$<S> rotateL(int s) {
+        return uOp((i, a) -> ($type$) $Wideboxtype$.rotateLeft(a, s));
     }
 
-    public $abstractvectortype$<S> rotateR(int j) {
-        return uOp((i, a) -> ($type$) $Wideboxtype$.rotateRight(a, j));
+    /**
+     * Rotates right this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@link $Wideboxtype$#rotateRight} is applied to lane elements and where
+     * lane elements of this vector apply to the first argument, and lane
+     * elements of the broadcast vector apply to the second argument (the
+     * rotation distance).
+     *
+     * @param s the input scalar; the number of the bits to rotate right
+     * @return the result of rotating right this vector by the broadcast of an
+     * input scalar
+     */
+    public $abstractvectortype$<S> rotateR(int s) {
+        return uOp((i, a) -> ($type$) $Wideboxtype$.rotateRight(a, s));
     }
 #end[BITWISE]
 
@@ -791,46 +1114,115 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
 
     // Type specific horizontal reductions
 
-#if[BITWISE]
+// @@@ For floating point vectors order matters for reproducibility
+//     with equivalent sequential reduction. Some order needs to be specified
+//     by default. If that default is sequential encounter order then there
+//     could be a "go faster" option that is unspecified, essentially giving
+//     implementation flexibility at the expense of reproducibility and/or
+//     accuracy.
+// @@@ Mask versions?
+
     /**
-     * Sums all lane elements of this vector.
+     * Adds all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the addition
-     * operation ({@code +}) is applied to lane elements, and the identity value
-     * is {@code 0}.
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
      *
-     * @return the sum of all the lane elements of this vector
+     * @return the addition of all the lane elements of this vector
      */
-#end[BITWISE]
     public $type$ addAll() {
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a + b));
     }
 
+    /**
+     * Subtracts all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the subtraction of all the lane elements of this vector
+     */
     public $type$ subAll() {
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a - b));
     }
 
+    /**
+     * Multiplies all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @return the multiplication of all the lane elements of this vector
+     */
     public $type$ mulAll() {
         return rOp(($type$) 1, (i, a, b) -> ($type$) (a * b));
     }
 
+    /**
+     * Returns the minimum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link $Boxtype$.MAX_VALUE}.
+     *
+     * @return the minimum lane element of this vector
+     */
     public $type$ minAll() {
         return rOp($Boxtype$.MAX_VALUE, (i, a, b) -> a > b ? b : a);
     }
 
+    /**
+     * Returns the maximum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link $Boxtype$.MIN_VALUE}.
+     *
+     * @return the maximum lane element of this vector
+     */
     public $type$ maxAll() {
         return rOp($Boxtype$.MIN_VALUE, (i, a, b) -> a < b ? b : a);
     }
 
 #if[BITWISE]
+    /**
+     * Logically ORs all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the logical OR
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the logical OR all the lane elements of this vector
+     */
     public $type$ orAll() {
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a | b));
     }
 
+    /**
+     * Logically ANDs all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the logical AND
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code -1}.
+     *
+     * @return the logical AND all the lane elements of this vector
+     */
     public $type$ andAll() {
         return rOp(($type$) -1, (i, a, b) -> ($type$) (a & b));
     }
 
+    /**
+     * Logically XORs all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the logical XOR
+     * operation ({@code ^}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the logical XOR all the lane elements of this vector
+     */
     public $type$ xorAll() {
         return rOp(($type$) 0, (i, a, b) -> ($type$) (a ^ b));
     }

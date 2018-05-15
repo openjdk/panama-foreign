@@ -60,9 +60,9 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         int apply(int i, int a, int b);
     }
 
-    abstract IntVector<S> bOp(Vector<Integer,S> o, FBinOp f);
+    abstract IntVector<S> bOp(Vector<Integer,S> v, FBinOp f);
 
-    abstract IntVector<S> bOp(Vector<Integer,S> o, Mask<Integer, S> m, FBinOp f);
+    abstract IntVector<S> bOp(Vector<Integer,S> v, Mask<Integer, S> m, FBinOp f);
 
     // Trinary operator
 
@@ -70,9 +70,9 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         int apply(int i, int a, int b, int c);
     }
 
-    abstract IntVector<S> tOp(Vector<Integer,S> o1, Vector<Integer,S> o2, FTriOp f);
+    abstract IntVector<S> tOp(Vector<Integer,S> v1, Vector<Integer,S> v2, FTriOp f);
 
-    abstract IntVector<S> tOp(Vector<Integer,S> o1, Vector<Integer,S> o2, Mask<Integer, S> m, FTriOp f);
+    abstract IntVector<S> tOp(Vector<Integer,S> v1, Vector<Integer,S> v2, Mask<Integer, S> m, FTriOp f);
 
     // Reduction operator
 
@@ -84,7 +84,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         boolean apply(int i, int a, int b);
     }
 
-    abstract Mask<Integer, S> bTest(Vector<Integer,S> o, FBinTest f);
+    abstract Mask<Integer, S> bTest(Vector<Integer,S> v, FBinTest f);
 
     // Foreach
 
@@ -99,8 +99,8 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     //
 
     @Override
-    public IntVector<S> add(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a + b));
+    public IntVector<S> add(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) (a + b));
     }
 
     /**
@@ -109,15 +109,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> add(int b);
+    public abstract IntVector<S> add(int s);
 
     @Override
-    public IntVector<S> add(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a + b));
+    public IntVector<S> add(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) (a + b));
     }
 
     /**
@@ -127,30 +127,30 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> add(int b, Mask<Integer, S> m);
+    public abstract IntVector<S> add(int s, Mask<Integer, S> m);
 
     @Override
-    public IntVector<S> addSaturate(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public IntVector<S> addSaturate(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract IntVector<S> addSaturate(int o);
+    public abstract IntVector<S> addSaturate(int s);
 
     @Override
-    public IntVector<S> addSaturate(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public IntVector<S> addSaturate(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract IntVector<S> addSaturate(int o, Mask<Integer, S> m);
+    public abstract IntVector<S> addSaturate(int s, Mask<Integer, S> m);
 
     @Override
-    public IntVector<S> sub(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a - b));
+    public IntVector<S> sub(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) (a - b));
     }
 
     /**
@@ -159,15 +159,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract IntVector<S> sub(int b);
+    public abstract IntVector<S> sub(int s);
 
     @Override
-    public IntVector<S> sub(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a - b));
+    public IntVector<S> sub(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) (a - b));
     }
 
     /**
@@ -177,30 +177,30 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract IntVector<S> sub(int b, Mask<Integer, S> m);
+    public abstract IntVector<S> sub(int s, Mask<Integer, S> m);
 
     @Override
-    public IntVector<S> subSaturate(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
+    public IntVector<S> subSaturate(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
     }
 
-    public abstract IntVector<S> subSaturate(int o);
+    public abstract IntVector<S> subSaturate(int s);
 
     @Override
-    public IntVector<S> subSaturate(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
+    public IntVector<S> subSaturate(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
     }
 
-    public abstract IntVector<S> subSaturate(int o, Mask<Integer, S> m);
+    public abstract IntVector<S> subSaturate(int s, Mask<Integer, S> m);
 
     @Override
-    public IntVector<S> mul(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a * b));
+    public IntVector<S> mul(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) (a * b));
     }
 
     /**
@@ -209,15 +209,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract IntVector<S> mul(int b);
+    public abstract IntVector<S> mul(int s);
 
     @Override
-    public IntVector<S> mul(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a * b));
+    public IntVector<S> mul(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) (a * b));
     }
 
     /**
@@ -227,12 +227,12 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract IntVector<S> mul(int b, Mask<Integer, S> m);
+    public abstract IntVector<S> mul(int s, Mask<Integer, S> m);
 
     @Override
     public IntVector<S> neg() {
@@ -255,8 +255,8 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     @Override
-    public IntVector<S> min(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (a < b) ? a : b);
+    public IntVector<S> min(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (a < b) ? a : b);
     }
 
     /**
@@ -265,14 +265,14 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the minimum of this vector and the broadcast of an input scalar
      */
-    public abstract IntVector<S> min(int b);
+    public abstract IntVector<S> min(int s);
 
     @Override
-    public IntVector<S> max(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (a > b) ? a : b);
+    public IntVector<S> max(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (a > b) ? a : b);
     }
 
     /**
@@ -281,14 +281,14 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the maximum of this vector and the broadcast of an input scalar
      */
-    public abstract IntVector<S> max(int b);
+    public abstract IntVector<S> max(int s);
 
     @Override
-    public Mask<Integer, S> equal(Vector<Integer,S> o) {
-        return bTest(o, (i, a, b) -> a == b);
+    public Mask<Integer, S> equal(Vector<Integer,S> v) {
+        return bTest(v, (i, a, b) -> a == b);
     }
 
     /**
@@ -297,15 +297,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary test operation where the primitive equals
      * operation ({@code ==}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> equal(int b);
+    public abstract Mask<Integer, S> equal(int s);
 
     @Override
-    public Mask<Integer, S> notEqual(Vector<Integer,S> o) {
-        return bTest(o, (i, a, b) -> a != b);
+    public Mask<Integer, S> notEqual(Vector<Integer,S> v) {
+        return bTest(v, (i, a, b) -> a != b);
     }
 
     /**
@@ -314,15 +314,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary test operation where the primitive not equals
      * operation ({@code !=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is not equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> notEqual(int b);
+    public abstract Mask<Integer, S> notEqual(int s);
 
     @Override
-    public Mask<Integer, S> lessThan(Vector<Integer,S> o) {
-        return bTest(o, (i, a, b) -> a < b);
+    public Mask<Integer, S> lessThan(Vector<Integer,S> v) {
+        return bTest(v, (i, a, b) -> a < b);
     }
 
     /**
@@ -331,15 +331,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary test operation where the primitive less than
      * operation ({@code <}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> lessThan(int b);
+    public abstract Mask<Integer, S> lessThan(int s);
 
     @Override
-    public Mask<Integer, S> lessThanEq(Vector<Integer,S> o) {
-        return bTest(o, (i, a, b) -> a <= b);
+    public Mask<Integer, S> lessThanEq(Vector<Integer,S> v) {
+        return bTest(v, (i, a, b) -> a <= b);
     }
 
     /**
@@ -348,15 +348,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary test operation where the primitive less than
      * or equal to operation ({@code <=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than or equal
      * to the broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> lessThanEq(int b);
+    public abstract Mask<Integer, S> lessThanEq(int s);
 
     @Override
-    public Mask<Integer, S> greaterThan(Vector<Integer,S> o) {
-        return bTest(o, (i, a, b) -> a > b);
+    public Mask<Integer, S> greaterThan(Vector<Integer,S> v) {
+        return bTest(v, (i, a, b) -> a > b);
     }
 
     /**
@@ -365,15 +365,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary test operation where the primitive greater than
      * operation ({@code >}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> greaterThan(int b);
+    public abstract Mask<Integer, S> greaterThan(int s);
 
     @Override
-    public Mask<Integer, S> greaterThanEq(Vector<Integer,S> o) {
-        return bTest(o, (i, a, b) -> a >= b);
+    public Mask<Integer, S> greaterThanEq(Vector<Integer,S> v) {
+        return bTest(v, (i, a, b) -> a >= b);
     }
 
     /**
@@ -383,15 +383,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * This is a vector binary test operation where the primitive greater than
      * or equal to operation ({@code >=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than or
      * equal to the broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> greaterThanEq(int b);
+    public abstract Mask<Integer, S> greaterThanEq(int s);
 
     @Override
-    public IntVector<S> blend(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
+    public IntVector<S> blend(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
     /**
@@ -404,15 +404,15 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * otherwise the the lane element at {@code N} from this input vector is
      * selected and placed into the resulting vector at {@code N}.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of blending the lane elements of this vector with
      * those of the broadcast of an input scalar
      */
-    public abstract IntVector<S> blend(int b, Mask<Integer, S> m);
+    public abstract IntVector<S> blend(int s, Mask<Integer, S> m);
 
     @Override
-    public abstract IntVector<S> shuffle(Vector<Integer,S> o, Shuffle<Integer, S> m);
+    public abstract IntVector<S> shuffle(Vector<Integer,S> v, Shuffle<Integer, S> m);
 
     @Override
     public abstract IntVector<S> swizzle(Shuffle<Integer, S> m);
@@ -436,107 +436,430 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> shiftER(int i);
 
 
-    public IntVector<S> and(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a & b));
+
+    /**
+     * Bitwise ANDs this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the bitwise AND of this vector with the input vector
+     */
+    public IntVector<S> and(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) (a & b));
     }
 
-    public abstract IntVector<S> and(int o);
+    /**
+     * Bitwise ANDs this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the bitwise AND of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract IntVector<S> and(int s);
 
-    public IntVector<S> and(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a & b));
+    /**
+     * Bitwise ANDs this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the bitwise AND of this vector with the input vector
+     */
+    public IntVector<S> and(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) (a & b));
     }
 
-    public abstract IntVector<S> and(int o, Mask<Integer, S> m);
+    /**
+     * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the bitwise AND of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract IntVector<S> and(int s, Mask<Integer, S> m);
 
-    public IntVector<S> or(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a | b));
+    /**
+     * Bitwise ORs this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the bitwise OR of this vector with the input vector
+     */
+    public IntVector<S> or(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) (a | b));
     }
 
-    public abstract IntVector<S> or(int o);
+    /**
+     * Bitwise ORs this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the bitwise OR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract IntVector<S> or(int s);
 
-    public IntVector<S> or(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a | b));
+    /**
+     * Bitwise ORs this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the bitwise OR of this vector with the input vector
+     */
+    public IntVector<S> or(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) (a | b));
     }
 
-    public abstract IntVector<S> or(int o, Mask<Integer, S> m);
+    /**
+     * Bitwise ORs this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the bitwise OR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract IntVector<S> or(int s, Mask<Integer, S> m);
 
-    public IntVector<S> xor(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a ^ b));
+    /**
+     * Bitwise XORs this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the bitwise XOR of this vector with the input vector
+     */
+    public IntVector<S> xor(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) (a ^ b));
     }
 
-    public abstract IntVector<S> xor(int o);
+    /**
+     * Bitwise XORs this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the bitwise XOR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract IntVector<S> xor(int s);
 
-    public IntVector<S> xor(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a ^ b));
+    /**
+     * Bitwise XORs this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the bitwise XOR of this vector with the input vector
+     */
+    public IntVector<S> xor(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) (a ^ b));
     }
 
-    public abstract IntVector<S> xor(int o, Mask<Integer, S> m);
+    /**
+     * Bitwise XORs this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the bitwise XOR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract IntVector<S> xor(int s, Mask<Integer, S> m);
 
+    /**
+     * Bitwise NOTs this vector.
+     * <p>
+     * This is a vector unary operation where the primitive bitwise NOT
+     * operation ({@code ~}) is applied to lane elements.
+     *
+     * @return the bitwise NOT of this vector
+     */
     public IntVector<S> not() {
         return uOp((i, a) -> (int) (~a));
     }
 
+    /**
+     * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the primitive bitwise NOT
+     * operation ({@code ~}) is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the bitwise NOT of this vector
+     */
     public IntVector<S> not(Mask<Integer, S> m) {
         return uOp(m, (i, a) -> (int) (~a));
     }
 
-    // logical shift left
+/*
+@@@ Check the shift operations against the JLS definition and vector
+    instructions.
+
+    How to define byte and short? in Java the values are promoted
+    to int values.
+
+    For int values (promoted or otherwise) the low 5 bits of s are used.
+    For long values the low 6 bits of s are used.
+ */
+
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @return the result of logically left shifting left this vector by the
+     * broadcast of an input scalar
+     */
     public IntVector<S> shiftL(int s) {
         return uOp((i, a) -> (int) (a << s));
     }
 
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting this vector by the
+     * broadcast of an input scalar
+     */
     public IntVector<S> shiftL(int s, Mask<Integer, S> m) {
         return uOp(m, (i, a) -> (int) (a << s));
     }
 
-    public IntVector<S> shiftL(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a << b));
+    /**
+     * Logically left shifts this vector by an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the result of logically left shifting this vector by the input
+     * vector
+     */
+    public IntVector<S> shiftL(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) (a << b));
     }
 
-    public IntVector<S> shiftL(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a << b));
+    /**
+     * Logically left shifts this vector by an input vector, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting this vector by the input
+     * vector
+     */
+    public IntVector<S> shiftL(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) (a << b));
     }
 
     // logical, or unsigned, shift right
+
+
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public IntVector<S> shiftR(int s) {
         return uOp((i, a) -> (int) (a >>> s));
     }
 
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public IntVector<S> shiftR(int s, Mask<Integer, S> m) {
         return uOp(m, (i, a) -> (int) (a >>> s));
     }
 
-    public IntVector<S> shiftR(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a >>> b));
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by an
+     * input vector.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the result of logically right shifting this vector by the
+     * input vector
+     */
+    public IntVector<S> shiftR(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) (a >>> b));
     }
 
-    public IntVector<S> shiftR(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a >>> b));
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by an
+     * input vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of logically right shifting this vector by the
+     * input vector
+     */
+    public IntVector<S> shiftR(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) (a >>> b));
     }
 
-    // arithmetic, or signed, shift right
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public IntVector<S> aShiftR(int s) {
         return uOp((i, a) -> (int) (a >> s));
     }
 
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public IntVector<S> aShiftR(int s, Mask<Integer, S> m) {
         return uOp(m, (i, a) -> (int) (a >> s));
     }
 
-    public IntVector<S> ashiftR(Vector<Integer,S> o) {
-        return bOp(o, (i, a, b) -> (int) (a >> b));
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by an
+     * input vector.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the result of arithmetically right shifting this vector by the
+     * input vector
+     */
+    public IntVector<S> ashiftR(Vector<Integer,S> v) {
+        return bOp(v, (i, a, b) -> (int) (a >> b));
     }
 
-    public IntVector<S> ashiftR(Vector<Integer,S> o, Mask<Integer, S> m) {
-        return bOp(o, m, (i, a, b) -> (int) (a >> b));
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by an
+     * input vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * input vector
+     */
+    public IntVector<S> ashiftR(Vector<Integer,S> v, Mask<Integer, S> m) {
+        return bOp(v, m, (i, a, b) -> (int) (a >> b));
     }
 
-    public IntVector<S> rotateL(int j) {
-        return uOp((i, a) -> (int) Integer.rotateLeft(a, j));
+// @@@ Should the rotateL/R operations be on int and long only?
+//     Currently short and byte promote to int, bits rotated, then downcast,
+//     thus bits will be truncated and not correctly rotated
+// @@@ Mask versions?
+
+    /**
+     * Rotates left this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@link Integer#rotateLeft} is applied to lane elements and where
+     * lane elements of this vector apply to the first argument, and lane
+     * elements of the broadcast vector apply to the second argument (the
+     * rotation distance).
+     *
+     * @param s the input scalar; the number of the bits to rotate left
+     * @return the result of rotating left this vector by the broadcast of an
+     * input scalar
+     */
+    public IntVector<S> rotateL(int s) {
+        return uOp((i, a) -> (int) Integer.rotateLeft(a, s));
     }
 
-    public IntVector<S> rotateR(int j) {
-        return uOp((i, a) -> (int) Integer.rotateRight(a, j));
+    /**
+     * Rotates right this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@link Integer#rotateRight} is applied to lane elements and where
+     * lane elements of this vector apply to the first argument, and lane
+     * elements of the broadcast vector apply to the second argument (the
+     * rotation distance).
+     *
+     * @param s the input scalar; the number of the bits to rotate right
+     * @return the result of rotating right this vector by the broadcast of an
+     * input scalar
+     */
+    public IntVector<S> rotateR(int s) {
+        return uOp((i, a) -> (int) Integer.rotateRight(a, s));
     }
 
     @Override
@@ -592,43 +915,113 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
 
     // Type specific horizontal reductions
 
+// @@@ For floating point vectors order matters for reproducibility
+//     with equivalent sequential reduction. Some order needs to be specified
+//     by default. If that default is sequential encounter order then there
+//     could be a "go faster" option that is unspecified, essentially giving
+//     implementation flexibility at the expense of reproducibility and/or
+//     accuracy.
+
     /**
-     * Sums all lane elements of this vector.
+     * Adds all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the addition
-     * operation ({@code +}) is applied to lane elements, and the identity value
-     * is {@code 0}.
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
      *
-     * @return the sum of all the lane elements of this vector
+     * @return the addition of all the lane elements of this vector
      */
     public int addAll() {
         return rOp((int) 0, (i, a, b) -> (int) (a + b));
     }
 
+    /**
+     * Subtracts all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the subtraction of all the lane elements of this vector
+     */
     public int subAll() {
         return rOp((int) 0, (i, a, b) -> (int) (a - b));
     }
 
+    /**
+     * Multiplies all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @return the multiplication of all the lane elements of this vector
+     */
     public int mulAll() {
         return rOp((int) 1, (i, a, b) -> (int) (a * b));
     }
 
+    /**
+     * Returns the minimum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Integer.MAX_VALUE}.
+     *
+     * @return the minimum lane element of this vector
+     */
     public int minAll() {
         return rOp(Integer.MAX_VALUE, (i, a, b) -> a > b ? b : a);
     }
 
+    /**
+     * Returns the maximum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Integer.MIN_VALUE}.
+     *
+     * @return the maximum lane element of this vector
+     */
     public int maxAll() {
         return rOp(Integer.MIN_VALUE, (i, a, b) -> a < b ? b : a);
     }
 
+    /**
+     * Logically ORs all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the logical OR
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the logical OR all the lane elements of this vector
+     */
     public int orAll() {
         return rOp((int) 0, (i, a, b) -> (int) (a | b));
     }
 
+    /**
+     * Logically ANDs all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the logical AND
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code -1}.
+     *
+     * @return the logical AND all the lane elements of this vector
+     */
     public int andAll() {
         return rOp((int) -1, (i, a, b) -> (int) (a & b));
     }
 
+    /**
+     * Logically XORs all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the logical XOR
+     * operation ({@code ^}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the logical XOR all the lane elements of this vector
+     */
     public int xorAll() {
         return rOp((int) 0, (i, a, b) -> (int) (a ^ b));
     }

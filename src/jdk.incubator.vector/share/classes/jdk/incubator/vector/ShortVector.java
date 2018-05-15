@@ -60,9 +60,9 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
         short apply(int i, short a, short b);
     }
 
-    abstract ShortVector<S> bOp(Vector<Short,S> o, FBinOp f);
+    abstract ShortVector<S> bOp(Vector<Short,S> v, FBinOp f);
 
-    abstract ShortVector<S> bOp(Vector<Short,S> o, Mask<Short, S> m, FBinOp f);
+    abstract ShortVector<S> bOp(Vector<Short,S> v, Mask<Short, S> m, FBinOp f);
 
     // Trinary operator
 
@@ -70,9 +70,9 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
         short apply(int i, short a, short b, short c);
     }
 
-    abstract ShortVector<S> tOp(Vector<Short,S> o1, Vector<Short,S> o2, FTriOp f);
+    abstract ShortVector<S> tOp(Vector<Short,S> v1, Vector<Short,S> v2, FTriOp f);
 
-    abstract ShortVector<S> tOp(Vector<Short,S> o1, Vector<Short,S> o2, Mask<Short, S> m, FTriOp f);
+    abstract ShortVector<S> tOp(Vector<Short,S> v1, Vector<Short,S> v2, Mask<Short, S> m, FTriOp f);
 
     // Reduction operator
 
@@ -84,7 +84,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
         boolean apply(int i, short a, short b);
     }
 
-    abstract Mask<Short, S> bTest(Vector<Short,S> o, FBinTest f);
+    abstract Mask<Short, S> bTest(Vector<Short,S> v, FBinTest f);
 
     // Foreach
 
@@ -99,8 +99,8 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     //
 
     @Override
-    public ShortVector<S> add(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a + b));
+    public ShortVector<S> add(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (short) (a + b));
     }
 
     /**
@@ -109,15 +109,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract ShortVector<S> add(short b);
+    public abstract ShortVector<S> add(short s);
 
     @Override
-    public ShortVector<S> add(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a + b));
+    public ShortVector<S> add(Vector<Short,S> v, Mask<Short, S> m) {
+        return bOp(v, m, (i, a, b) -> (short) (a + b));
     }
 
     /**
@@ -127,30 +127,30 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract ShortVector<S> add(short b, Mask<Short, S> m);
+    public abstract ShortVector<S> add(short s, Mask<Short, S> m);
 
     @Override
-    public ShortVector<S> addSaturate(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public ShortVector<S> addSaturate(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (short) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract ShortVector<S> addSaturate(short o);
+    public abstract ShortVector<S> addSaturate(short s);
 
     @Override
-    public ShortVector<S> addSaturate(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public ShortVector<S> addSaturate(Vector<Short,S> v, Mask<Short, S> m) {
+        return bOp(v, m, (i, a, b) -> (short) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract ShortVector<S> addSaturate(short o, Mask<Short, S> m);
+    public abstract ShortVector<S> addSaturate(short s, Mask<Short, S> m);
 
     @Override
-    public ShortVector<S> sub(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a - b));
+    public ShortVector<S> sub(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (short) (a - b));
     }
 
     /**
@@ -159,15 +159,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract ShortVector<S> sub(short b);
+    public abstract ShortVector<S> sub(short s);
 
     @Override
-    public ShortVector<S> sub(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a - b));
+    public ShortVector<S> sub(Vector<Short,S> v, Mask<Short, S> m) {
+        return bOp(v, m, (i, a, b) -> (short) (a - b));
     }
 
     /**
@@ -177,30 +177,30 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract ShortVector<S> sub(short b, Mask<Short, S> m);
+    public abstract ShortVector<S> sub(short s, Mask<Short, S> m);
 
     @Override
-    public ShortVector<S> subSaturate(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
+    public ShortVector<S> subSaturate(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (short) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
     }
 
-    public abstract ShortVector<S> subSaturate(short o);
+    public abstract ShortVector<S> subSaturate(short s);
 
     @Override
-    public ShortVector<S> subSaturate(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
+    public ShortVector<S> subSaturate(Vector<Short,S> v, Mask<Short, S> m) {
+        return bOp(v, m, (i, a, b) -> (short) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
     }
 
-    public abstract ShortVector<S> subSaturate(short o, Mask<Short, S> m);
+    public abstract ShortVector<S> subSaturate(short s, Mask<Short, S> m);
 
     @Override
-    public ShortVector<S> mul(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a * b));
+    public ShortVector<S> mul(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (short) (a * b));
     }
 
     /**
@@ -209,15 +209,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract ShortVector<S> mul(short b);
+    public abstract ShortVector<S> mul(short s);
 
     @Override
-    public ShortVector<S> mul(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a * b));
+    public ShortVector<S> mul(Vector<Short,S> v, Mask<Short, S> m) {
+        return bOp(v, m, (i, a, b) -> (short) (a * b));
     }
 
     /**
@@ -227,12 +227,12 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract ShortVector<S> mul(short b, Mask<Short, S> m);
+    public abstract ShortVector<S> mul(short s, Mask<Short, S> m);
 
     @Override
     public ShortVector<S> neg() {
@@ -255,8 +255,8 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     }
 
     @Override
-    public ShortVector<S> min(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (a < b) ? a : b);
+    public ShortVector<S> min(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (a < b) ? a : b);
     }
 
     /**
@@ -265,14 +265,14 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the minimum of this vector and the broadcast of an input scalar
      */
-    public abstract ShortVector<S> min(short b);
+    public abstract ShortVector<S> min(short s);
 
     @Override
-    public ShortVector<S> max(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (a > b) ? a : b);
+    public ShortVector<S> max(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (a > b) ? a : b);
     }
 
     /**
@@ -281,14 +281,14 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the maximum of this vector and the broadcast of an input scalar
      */
-    public abstract ShortVector<S> max(short b);
+    public abstract ShortVector<S> max(short s);
 
     @Override
-    public Mask<Short, S> equal(Vector<Short,S> o) {
-        return bTest(o, (i, a, b) -> a == b);
+    public Mask<Short, S> equal(Vector<Short,S> v) {
+        return bTest(v, (i, a, b) -> a == b);
     }
 
     /**
@@ -297,15 +297,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary test operation where the primitive equals
      * operation ({@code ==}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Short, S> equal(short b);
+    public abstract Mask<Short, S> equal(short s);
 
     @Override
-    public Mask<Short, S> notEqual(Vector<Short,S> o) {
-        return bTest(o, (i, a, b) -> a != b);
+    public Mask<Short, S> notEqual(Vector<Short,S> v) {
+        return bTest(v, (i, a, b) -> a != b);
     }
 
     /**
@@ -314,15 +314,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary test operation where the primitive not equals
      * operation ({@code !=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is not equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Short, S> notEqual(short b);
+    public abstract Mask<Short, S> notEqual(short s);
 
     @Override
-    public Mask<Short, S> lessThan(Vector<Short,S> o) {
-        return bTest(o, (i, a, b) -> a < b);
+    public Mask<Short, S> lessThan(Vector<Short,S> v) {
+        return bTest(v, (i, a, b) -> a < b);
     }
 
     /**
@@ -331,15 +331,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary test operation where the primitive less than
      * operation ({@code <}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Short, S> lessThan(short b);
+    public abstract Mask<Short, S> lessThan(short s);
 
     @Override
-    public Mask<Short, S> lessThanEq(Vector<Short,S> o) {
-        return bTest(o, (i, a, b) -> a <= b);
+    public Mask<Short, S> lessThanEq(Vector<Short,S> v) {
+        return bTest(v, (i, a, b) -> a <= b);
     }
 
     /**
@@ -348,15 +348,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary test operation where the primitive less than
      * or equal to operation ({@code <=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than or equal
      * to the broadcast of an input scalar
      */
-    public abstract Mask<Short, S> lessThanEq(short b);
+    public abstract Mask<Short, S> lessThanEq(short s);
 
     @Override
-    public Mask<Short, S> greaterThan(Vector<Short,S> o) {
-        return bTest(o, (i, a, b) -> a > b);
+    public Mask<Short, S> greaterThan(Vector<Short,S> v) {
+        return bTest(v, (i, a, b) -> a > b);
     }
 
     /**
@@ -365,15 +365,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary test operation where the primitive greater than
      * operation ({@code >}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Short, S> greaterThan(short b);
+    public abstract Mask<Short, S> greaterThan(short s);
 
     @Override
-    public Mask<Short, S> greaterThanEq(Vector<Short,S> o) {
-        return bTest(o, (i, a, b) -> a >= b);
+    public Mask<Short, S> greaterThanEq(Vector<Short,S> v) {
+        return bTest(v, (i, a, b) -> a >= b);
     }
 
     /**
@@ -383,15 +383,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * This is a vector binary test operation where the primitive greater than
      * or equal to operation ({@code >=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than or
      * equal to the broadcast of an input scalar
      */
-    public abstract Mask<Short, S> greaterThanEq(short b);
+    public abstract Mask<Short, S> greaterThanEq(short s);
 
     @Override
-    public ShortVector<S> blend(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
+    public ShortVector<S> blend(Vector<Short,S> v, Mask<Short, S> m) {
+        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
     /**
@@ -404,15 +404,15 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * otherwise the the lane element at {@code N} from this input vector is
      * selected and placed into the resulting vector at {@code N}.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of blending the lane elements of this vector with
      * those of the broadcast of an input scalar
      */
-    public abstract ShortVector<S> blend(short b, Mask<Short, S> m);
+    public abstract ShortVector<S> blend(short s, Mask<Short, S> m);
 
     @Override
-    public abstract ShortVector<S> shuffle(Vector<Short,S> o, Shuffle<Short, S> m);
+    public abstract ShortVector<S> shuffle(Vector<Short,S> v, Shuffle<Short, S> m);
 
     @Override
     public abstract ShortVector<S> swizzle(Shuffle<Short, S> m);
@@ -436,86 +436,341 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> shiftER(int i);
 
 
-    public ShortVector<S> and(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a & b));
+
+    /**
+     * Bitwise ANDs this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the bitwise AND of this vector with the input vector
+     */
+    public ShortVector<S> and(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (short) (a & b));
     }
 
-    public abstract ShortVector<S> and(short o);
+    /**
+     * Bitwise ANDs this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the bitwise AND of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract ShortVector<S> and(short s);
 
-    public ShortVector<S> and(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a & b));
+    /**
+     * Bitwise ANDs this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the bitwise AND of this vector with the input vector
+     */
+    public ShortVector<S> and(Vector<Short,S> v, Mask<Short, S> m) {
+        return bOp(v, m, (i, a, b) -> (short) (a & b));
     }
 
-    public abstract ShortVector<S> and(short o, Mask<Short, S> m);
+    /**
+     * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise AND
+     * operation ({@code &}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the bitwise AND of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract ShortVector<S> and(short s, Mask<Short, S> m);
 
-    public ShortVector<S> or(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a | b));
+    /**
+     * Bitwise ORs this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the bitwise OR of this vector with the input vector
+     */
+    public ShortVector<S> or(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (short) (a | b));
     }
 
-    public abstract ShortVector<S> or(short o);
+    /**
+     * Bitwise ORs this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the bitwise OR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract ShortVector<S> or(short s);
 
-    public ShortVector<S> or(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a | b));
+    /**
+     * Bitwise ORs this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the bitwise OR of this vector with the input vector
+     */
+    public ShortVector<S> or(Vector<Short,S> v, Mask<Short, S> m) {
+        return bOp(v, m, (i, a, b) -> (short) (a | b));
     }
 
-    public abstract ShortVector<S> or(short o, Mask<Short, S> m);
+    /**
+     * Bitwise ORs this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise OR
+     * operation ({@code |}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the bitwise OR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract ShortVector<S> or(short s, Mask<Short, S> m);
 
-    public ShortVector<S> xor(Vector<Short,S> o) {
-        return bOp(o, (i, a, b) -> (short) (a ^ b));
+    /**
+     * Bitwise XORs this vector with an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the bitwise XOR of this vector with the input vector
+     */
+    public ShortVector<S> xor(Vector<Short,S> v) {
+        return bOp(v, (i, a, b) -> (short) (a ^ b));
     }
 
-    public abstract ShortVector<S> xor(short o);
+    /**
+     * Bitwise XORs this vector with the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the bitwise XOR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract ShortVector<S> xor(short s);
 
-    public ShortVector<S> xor(Vector<Short,S> o, Mask<Short, S> m) {
-        return bOp(o, m, (i, a, b) -> (short) (a ^ b));
+    /**
+     * Bitwise XORs this vector with an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the bitwise XOR of this vector with the input vector
+     */
+    public ShortVector<S> xor(Vector<Short,S> v, Mask<Short, S> m) {
+        return bOp(v, m, (i, a, b) -> (short) (a ^ b));
     }
 
-    public abstract ShortVector<S> xor(short o, Mask<Short, S> m);
+    /**
+     * Bitwise XORs this vector with the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive bitwise XOR
+     * operation ({@code ^}) is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the bitwise XOR of this vector with the broadcast of an input
+     * scalar
+     */
+    public abstract ShortVector<S> xor(short s, Mask<Short, S> m);
 
+    /**
+     * Bitwise NOTs this vector.
+     * <p>
+     * This is a vector unary operation where the primitive bitwise NOT
+     * operation ({@code ~}) is applied to lane elements.
+     *
+     * @return the bitwise NOT of this vector
+     */
     public ShortVector<S> not() {
         return uOp((i, a) -> (short) (~a));
     }
 
+    /**
+     * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the primitive bitwise NOT
+     * operation ({@code ~}) is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the bitwise NOT of this vector
+     */
     public ShortVector<S> not(Mask<Short, S> m) {
         return uOp(m, (i, a) -> (short) (~a));
     }
 
-    // logical shift left
+/*
+@@@ Check the shift operations against the JLS definition and vector
+    instructions.
+
+    How to define byte and short? in Java the values are promoted
+    to int values.
+
+    For int values (promoted or otherwise) the low 5 bits of s are used.
+    For long values the low 6 bits of s are used.
+ */
+
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @return the result of logically left shifting left this vector by the
+     * broadcast of an input scalar
+     */
     public ShortVector<S> shiftL(int s) {
         return uOp((i, a) -> (short) (a << s));
     }
 
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting this vector by the
+     * broadcast of an input scalar
+     */
     public ShortVector<S> shiftL(int s, Mask<Short, S> m) {
         return uOp(m, (i, a) -> (short) (a << s));
     }
 
 
     // logical, or unsigned, shift right
+
+
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public ShortVector<S> shiftR(int s) {
         return uOp((i, a) -> (short) (a >>> s));
     }
 
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public ShortVector<S> shiftR(int s, Mask<Short, S> m) {
         return uOp(m, (i, a) -> (short) (a >>> s));
     }
 
 
-    // arithmetic, or signed, shift right
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public ShortVector<S> aShiftR(int s) {
         return uOp((i, a) -> (short) (a >> s));
     }
 
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
     public ShortVector<S> aShiftR(int s, Mask<Short, S> m) {
         return uOp(m, (i, a) -> (short) (a >> s));
     }
 
 
-    public ShortVector<S> rotateL(int j) {
-        return uOp((i, a) -> (short) Integer.rotateLeft(a, j));
+// @@@ Should the rotateL/R operations be on int and long only?
+//     Currently short and byte promote to int, bits rotated, then downcast,
+//     thus bits will be truncated and not correctly rotated
+// @@@ Mask versions?
+
+    /**
+     * Rotates left this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@link Integer#rotateLeft} is applied to lane elements and where
+     * lane elements of this vector apply to the first argument, and lane
+     * elements of the broadcast vector apply to the second argument (the
+     * rotation distance).
+     *
+     * @param s the input scalar; the number of the bits to rotate left
+     * @return the result of rotating left this vector by the broadcast of an
+     * input scalar
+     */
+    public ShortVector<S> rotateL(int s) {
+        return uOp((i, a) -> (short) Integer.rotateLeft(a, s));
     }
 
-    public ShortVector<S> rotateR(int j) {
-        return uOp((i, a) -> (short) Integer.rotateRight(a, j));
+    /**
+     * Rotates right this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@link Integer#rotateRight} is applied to lane elements and where
+     * lane elements of this vector apply to the first argument, and lane
+     * elements of the broadcast vector apply to the second argument (the
+     * rotation distance).
+     *
+     * @param s the input scalar; the number of the bits to rotate right
+     * @return the result of rotating right this vector by the broadcast of an
+     * input scalar
+     */
+    public ShortVector<S> rotateR(int s) {
+        return uOp((i, a) -> (short) Integer.rotateRight(a, s));
     }
 
     @Override
@@ -571,43 +826,113 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
 
     // Type specific horizontal reductions
 
+// @@@ For floating point vectors order matters for reproducibility
+//     with equivalent sequential reduction. Some order needs to be specified
+//     by default. If that default is sequential encounter order then there
+//     could be a "go faster" option that is unspecified, essentially giving
+//     implementation flexibility at the expense of reproducibility and/or
+//     accuracy.
+
     /**
-     * Sums all lane elements of this vector.
+     * Adds all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the addition
-     * operation ({@code +}) is applied to lane elements, and the identity value
-     * is {@code 0}.
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
      *
-     * @return the sum of all the lane elements of this vector
+     * @return the addition of all the lane elements of this vector
      */
     public short addAll() {
         return rOp((short) 0, (i, a, b) -> (short) (a + b));
     }
 
+    /**
+     * Subtracts all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the subtraction of all the lane elements of this vector
+     */
     public short subAll() {
         return rOp((short) 0, (i, a, b) -> (short) (a - b));
     }
 
+    /**
+     * Multiplies all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @return the multiplication of all the lane elements of this vector
+     */
     public short mulAll() {
         return rOp((short) 1, (i, a, b) -> (short) (a * b));
     }
 
+    /**
+     * Returns the minimum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Short.MAX_VALUE}.
+     *
+     * @return the minimum lane element of this vector
+     */
     public short minAll() {
         return rOp(Short.MAX_VALUE, (i, a, b) -> a > b ? b : a);
     }
 
+    /**
+     * Returns the maximum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Short.MIN_VALUE}.
+     *
+     * @return the maximum lane element of this vector
+     */
     public short maxAll() {
         return rOp(Short.MIN_VALUE, (i, a, b) -> a < b ? b : a);
     }
 
+    /**
+     * Logically ORs all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the logical OR
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the logical OR all the lane elements of this vector
+     */
     public short orAll() {
         return rOp((short) 0, (i, a, b) -> (short) (a | b));
     }
 
+    /**
+     * Logically ANDs all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the logical AND
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code -1}.
+     *
+     * @return the logical AND all the lane elements of this vector
+     */
     public short andAll() {
         return rOp((short) -1, (i, a, b) -> (short) (a & b));
     }
 
+    /**
+     * Logically XORs all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the logical XOR
+     * operation ({@code ^}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the logical XOR all the lane elements of this vector
+     */
     public short xorAll() {
         return rOp((short) 0, (i, a, b) -> (short) (a ^ b));
     }

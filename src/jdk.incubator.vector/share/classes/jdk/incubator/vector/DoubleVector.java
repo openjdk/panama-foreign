@@ -60,9 +60,9 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         double apply(int i, double a, double b);
     }
 
-    abstract DoubleVector<S> bOp(Vector<Double,S> o, FBinOp f);
+    abstract DoubleVector<S> bOp(Vector<Double,S> v, FBinOp f);
 
-    abstract DoubleVector<S> bOp(Vector<Double,S> o, Mask<Double, S> m, FBinOp f);
+    abstract DoubleVector<S> bOp(Vector<Double,S> v, Mask<Double, S> m, FBinOp f);
 
     // Trinary operator
 
@@ -70,9 +70,9 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         double apply(int i, double a, double b, double c);
     }
 
-    abstract DoubleVector<S> tOp(Vector<Double,S> o1, Vector<Double,S> o2, FTriOp f);
+    abstract DoubleVector<S> tOp(Vector<Double,S> v1, Vector<Double,S> v2, FTriOp f);
 
-    abstract DoubleVector<S> tOp(Vector<Double,S> o1, Vector<Double,S> o2, Mask<Double, S> m, FTriOp f);
+    abstract DoubleVector<S> tOp(Vector<Double,S> v1, Vector<Double,S> v2, Mask<Double, S> m, FTriOp f);
 
     // Reduction operator
 
@@ -84,7 +84,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         boolean apply(int i, double a, double b);
     }
 
-    abstract Mask<Double, S> bTest(Vector<Double,S> o, FBinTest f);
+    abstract Mask<Double, S> bTest(Vector<Double,S> v, FBinTest f);
 
     // Foreach
 
@@ -99,8 +99,8 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     //
 
     @Override
-    public DoubleVector<S> add(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) (a + b));
+    public DoubleVector<S> add(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (double) (a + b));
     }
 
     /**
@@ -109,15 +109,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract DoubleVector<S> add(double b);
+    public abstract DoubleVector<S> add(double s);
 
     @Override
-    public DoubleVector<S> add(Vector<Double,S> o, Mask<Double, S> m) {
-        return bOp(o, m, (i, a, b) -> (double) (a + b));
+    public DoubleVector<S> add(Vector<Double,S> v, Mask<Double, S> m) {
+        return bOp(v, m, (i, a, b) -> (double) (a + b));
     }
 
     /**
@@ -127,30 +127,30 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract DoubleVector<S> add(double b, Mask<Double, S> m);
+    public abstract DoubleVector<S> add(double s, Mask<Double, S> m);
 
     @Override
-    public DoubleVector<S> addSaturate(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public DoubleVector<S> addSaturate(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (double) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract DoubleVector<S> addSaturate(double o);
+    public abstract DoubleVector<S> addSaturate(double s);
 
     @Override
-    public DoubleVector<S> addSaturate(Vector<Double,S> o, Mask<Double, S> m) {
-        return bOp(o, m, (i, a, b) -> (double) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public DoubleVector<S> addSaturate(Vector<Double,S> v, Mask<Double, S> m) {
+        return bOp(v, m, (i, a, b) -> (double) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract DoubleVector<S> addSaturate(double o, Mask<Double, S> m);
+    public abstract DoubleVector<S> addSaturate(double s, Mask<Double, S> m);
 
     @Override
-    public DoubleVector<S> sub(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) (a - b));
+    public DoubleVector<S> sub(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (double) (a - b));
     }
 
     /**
@@ -159,15 +159,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract DoubleVector<S> sub(double b);
+    public abstract DoubleVector<S> sub(double s);
 
     @Override
-    public DoubleVector<S> sub(Vector<Double,S> o, Mask<Double, S> m) {
-        return bOp(o, m, (i, a, b) -> (double) (a - b));
+    public DoubleVector<S> sub(Vector<Double,S> v, Mask<Double, S> m) {
+        return bOp(v, m, (i, a, b) -> (double) (a - b));
     }
 
     /**
@@ -177,30 +177,30 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract DoubleVector<S> sub(double b, Mask<Double, S> m);
+    public abstract DoubleVector<S> sub(double s, Mask<Double, S> m);
 
     @Override
-    public DoubleVector<S> subSaturate(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) ((a >= Double.MIN_VALUE || Double.MIN_VALUE + b > a) ? Double.MAX_VALUE : a - b));
+    public DoubleVector<S> subSaturate(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (double) ((a >= Double.MIN_VALUE || Double.MIN_VALUE + b > a) ? Double.MAX_VALUE : a - b));
     }
 
-    public abstract DoubleVector<S> subSaturate(double o);
+    public abstract DoubleVector<S> subSaturate(double s);
 
     @Override
-    public DoubleVector<S> subSaturate(Vector<Double,S> o, Mask<Double, S> m) {
-        return bOp(o, m, (i, a, b) -> (double) ((a >= Double.MIN_VALUE || Double.MIN_VALUE + b > a) ? Double.MAX_VALUE : a - b));
+    public DoubleVector<S> subSaturate(Vector<Double,S> v, Mask<Double, S> m) {
+        return bOp(v, m, (i, a, b) -> (double) ((a >= Double.MIN_VALUE || Double.MIN_VALUE + b > a) ? Double.MAX_VALUE : a - b));
     }
 
-    public abstract DoubleVector<S> subSaturate(double o, Mask<Double, S> m);
+    public abstract DoubleVector<S> subSaturate(double s, Mask<Double, S> m);
 
     @Override
-    public DoubleVector<S> mul(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) (a * b));
+    public DoubleVector<S> mul(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (double) (a * b));
     }
 
     /**
@@ -209,15 +209,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract DoubleVector<S> mul(double b);
+    public abstract DoubleVector<S> mul(double s);
 
     @Override
-    public DoubleVector<S> mul(Vector<Double,S> o, Mask<Double, S> m) {
-        return bOp(o, m, (i, a, b) -> (double) (a * b));
+    public DoubleVector<S> mul(Vector<Double,S> v, Mask<Double, S> m) {
+        return bOp(v, m, (i, a, b) -> (double) (a * b));
     }
 
     /**
@@ -227,12 +227,12 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract DoubleVector<S> mul(double b, Mask<Double, S> m);
+    public abstract DoubleVector<S> mul(double s, Mask<Double, S> m);
 
     @Override
     public DoubleVector<S> neg() {
@@ -255,8 +255,8 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     }
 
     @Override
-    public DoubleVector<S> min(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (a < b) ? a : b);
+    public DoubleVector<S> min(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (a < b) ? a : b);
     }
 
     /**
@@ -265,14 +265,14 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the minimum of this vector and the broadcast of an input scalar
      */
-    public abstract DoubleVector<S> min(double b);
+    public abstract DoubleVector<S> min(double s);
 
     @Override
-    public DoubleVector<S> max(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (a > b) ? a : b);
+    public DoubleVector<S> max(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (a > b) ? a : b);
     }
 
     /**
@@ -281,14 +281,14 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the maximum of this vector and the broadcast of an input scalar
      */
-    public abstract DoubleVector<S> max(double b);
+    public abstract DoubleVector<S> max(double s);
 
     @Override
-    public Mask<Double, S> equal(Vector<Double,S> o) {
-        return bTest(o, (i, a, b) -> a == b);
+    public Mask<Double, S> equal(Vector<Double,S> v) {
+        return bTest(v, (i, a, b) -> a == b);
     }
 
     /**
@@ -297,15 +297,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary test operation where the primitive equals
      * operation ({@code ==}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Double, S> equal(double b);
+    public abstract Mask<Double, S> equal(double s);
 
     @Override
-    public Mask<Double, S> notEqual(Vector<Double,S> o) {
-        return bTest(o, (i, a, b) -> a != b);
+    public Mask<Double, S> notEqual(Vector<Double,S> v) {
+        return bTest(v, (i, a, b) -> a != b);
     }
 
     /**
@@ -314,15 +314,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary test operation where the primitive not equals
      * operation ({@code !=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is not equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Double, S> notEqual(double b);
+    public abstract Mask<Double, S> notEqual(double s);
 
     @Override
-    public Mask<Double, S> lessThan(Vector<Double,S> o) {
-        return bTest(o, (i, a, b) -> a < b);
+    public Mask<Double, S> lessThan(Vector<Double,S> v) {
+        return bTest(v, (i, a, b) -> a < b);
     }
 
     /**
@@ -331,15 +331,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary test operation where the primitive less than
      * operation ({@code <}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Double, S> lessThan(double b);
+    public abstract Mask<Double, S> lessThan(double s);
 
     @Override
-    public Mask<Double, S> lessThanEq(Vector<Double,S> o) {
-        return bTest(o, (i, a, b) -> a <= b);
+    public Mask<Double, S> lessThanEq(Vector<Double,S> v) {
+        return bTest(v, (i, a, b) -> a <= b);
     }
 
     /**
@@ -348,15 +348,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary test operation where the primitive less than
      * or equal to operation ({@code <=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than or equal
      * to the broadcast of an input scalar
      */
-    public abstract Mask<Double, S> lessThanEq(double b);
+    public abstract Mask<Double, S> lessThanEq(double s);
 
     @Override
-    public Mask<Double, S> greaterThan(Vector<Double,S> o) {
-        return bTest(o, (i, a, b) -> a > b);
+    public Mask<Double, S> greaterThan(Vector<Double,S> v) {
+        return bTest(v, (i, a, b) -> a > b);
     }
 
     /**
@@ -365,15 +365,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary test operation where the primitive greater than
      * operation ({@code >}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Double, S> greaterThan(double b);
+    public abstract Mask<Double, S> greaterThan(double s);
 
     @Override
-    public Mask<Double, S> greaterThanEq(Vector<Double,S> o) {
-        return bTest(o, (i, a, b) -> a >= b);
+    public Mask<Double, S> greaterThanEq(Vector<Double,S> v) {
+        return bTest(v, (i, a, b) -> a >= b);
     }
 
     /**
@@ -383,15 +383,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary test operation where the primitive greater than
      * or equal to operation ({@code >=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than or
      * equal to the broadcast of an input scalar
      */
-    public abstract Mask<Double, S> greaterThanEq(double b);
+    public abstract Mask<Double, S> greaterThanEq(double s);
 
     @Override
-    public DoubleVector<S> blend(Vector<Double,S> o, Mask<Double, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
+    public DoubleVector<S> blend(Vector<Double,S> v, Mask<Double, S> m) {
+        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
     /**
@@ -404,15 +404,15 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * otherwise the the lane element at {@code N} from this input vector is
      * selected and placed into the resulting vector at {@code N}.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of blending the lane elements of this vector with
      * those of the broadcast of an input scalar
      */
-    public abstract DoubleVector<S> blend(double b, Mask<Double, S> m);
+    public abstract DoubleVector<S> blend(double s, Mask<Double, S> m);
 
     @Override
-    public abstract DoubleVector<S> shuffle(Vector<Double,S> o, Shuffle<Double, S> m);
+    public abstract DoubleVector<S> shuffle(Vector<Double,S> v, Shuffle<Double, S> m);
 
     @Override
     public abstract DoubleVector<S> swizzle(Shuffle<Double, S> m);
@@ -435,17 +435,17 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     @Override
     public abstract DoubleVector<S> shiftER(int i);
 
-    public DoubleVector<S> div(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) (a / b));
+    public DoubleVector<S> div(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (double) (a / b));
     }
 
-    public abstract DoubleVector<S> div(double o);
+    public abstract DoubleVector<S> div(double s);
 
-    public DoubleVector<S> div(Vector<Double,S> o, Mask<Double, S> m) {
-        return bOp(o, m, (i, a, b) -> (double) (a / b));
+    public DoubleVector<S> div(Vector<Double,S> v, Mask<Double, S> m) {
+        return bOp(v, m, (i, a, b) -> (double) (a / b));
     }
 
-    public abstract DoubleVector<S> div(double o, Mask<Double, S> m);
+    public abstract DoubleVector<S> div(double s, Mask<Double, S> m);
 
     public DoubleVector<S> sqrt() {
         return uOp((i, a) -> (double) Math.sqrt((double) a));
@@ -527,17 +527,17 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         return uOp(m, (i, a) -> (double) Math.atan((double) a));
     }
 
-    public DoubleVector<S> atan2(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) Math.atan2((double) a, (double) b));
+    public DoubleVector<S> atan2(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (double) Math.atan2((double) a, (double) b));
     }
 
-    public abstract DoubleVector<S> atan2(double o);
+    public abstract DoubleVector<S> atan2(double s);
 
-    public DoubleVector<S> atan2(Vector<Double,S> o, Mask<Double,S> m) {
-        return bOp(o, m, (i, a, b) -> (double) Math.atan2((double) a, (double) b));
+    public DoubleVector<S> atan2(Vector<Double,S> v, Mask<Double,S> m) {
+        return bOp(v, m, (i, a, b) -> (double) Math.atan2((double) a, (double) b));
     }
 
-    public abstract DoubleVector<S> atan2(double o, Mask<Double,S> m);
+    public abstract DoubleVector<S> atan2(double s, Mask<Double,S> m);
 
     public DoubleVector<S> cbrt() {
         return uOp((i, a) -> (double) Math.cbrt((double) a));
@@ -571,17 +571,17 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         return uOp(m, (i, a) -> (double) Math.log1p((double) a));
     }
 
-    public DoubleVector<S> pow(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) Math.pow((double) a, (double) b));
+    public DoubleVector<S> pow(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (double) Math.pow((double) a, (double) b));
     }
 
-    public abstract DoubleVector<S> pow(double o);
+    public abstract DoubleVector<S> pow(double s);
 
-    public DoubleVector<S> pow(Vector<Double,S> o, Mask<Double,S> m) {
-        return bOp(o, m, (i, a, b) -> (double) Math.pow((double) a, (double) b));
+    public DoubleVector<S> pow(Vector<Double,S> v, Mask<Double,S> m) {
+        return bOp(v, m, (i, a, b) -> (double) Math.pow((double) a, (double) b));
     }
 
-    public abstract DoubleVector<S> pow(double o, Mask<Double,S> m);
+    public abstract DoubleVector<S> pow(double s, Mask<Double,S> m);
 
     public DoubleVector<S> exp() {
         return uOp((i, a) -> (double) Math.exp((double) a));
@@ -599,29 +599,29 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         return uOp(m, (i, a) -> (double) Math.expm1((double) a));
     }
 
-    public DoubleVector<S> fma(Vector<Double,S> o1, Vector<Double,S> o2) {
-        return tOp(o1, o2, (i, a, b, c) -> Math.fma(a, b, c));
+    public DoubleVector<S> fma(Vector<Double,S> v1, Vector<Double,S> v2) {
+        return tOp(v1, v2, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
-    public abstract DoubleVector<S> fma(double o1, double o2);
+    public abstract DoubleVector<S> fma(double s1, double s2);
 
-    public DoubleVector<S> fma(Vector<Double,S> o1, Vector<Double,S> o2, Mask<Double,S> m) {
-        return tOp(o1, o2, m, (i, a, b, c) -> Math.fma(a, b, c));
+    public DoubleVector<S> fma(Vector<Double,S> v1, Vector<Double,S> v2, Mask<Double,S> m) {
+        return tOp(v1, v2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
-    public abstract DoubleVector<S> fma(double o1, double o2, Mask<Double,S> m);
+    public abstract DoubleVector<S> fma(double s1, double s2, Mask<Double,S> m);
 
-    public DoubleVector<S> hypot(Vector<Double,S> o) {
-        return bOp(o, (i, a, b) -> (double) Math.hypot((double) a, (double) b));
+    public DoubleVector<S> hypot(Vector<Double,S> v) {
+        return bOp(v, (i, a, b) -> (double) Math.hypot((double) a, (double) b));
     }
 
-    public abstract DoubleVector<S> hypot(double o);
+    public abstract DoubleVector<S> hypot(double s);
 
-    public DoubleVector<S> hypot(Vector<Double,S> o, Mask<Double,S> m) {
-        return bOp(o, m, (i, a, b) -> (double) Math.hypot((double) a, (double) b));
+    public DoubleVector<S> hypot(Vector<Double,S> v, Mask<Double,S> m) {
+        return bOp(v, m, (i, a, b) -> (double) Math.hypot((double) a, (double) b));
     }
 
-    public abstract DoubleVector<S> hypot(double o, Mask<Double,S> m);
+    public abstract DoubleVector<S> hypot(double s, Mask<Double,S> m);
 
 
     @Override
@@ -677,22 +677,74 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
 
     // Type specific horizontal reductions
 
+// @@@ For floating point vectors order matters for reproducibility
+//     with equivalent sequential reduction. Some order needs to be specified
+//     by default. If that default is sequential encounter order then there
+//     could be a "go faster" option that is unspecified, essentially giving
+//     implementation flexibility at the expense of reproducibility and/or
+//     accuracy.
+
+    /**
+     * Adds all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the addition of all the lane elements of this vector
+     */
     public double addAll() {
         return rOp((double) 0, (i, a, b) -> (double) (a + b));
     }
 
+    /**
+     * Subtracts all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the subtraction of all the lane elements of this vector
+     */
     public double subAll() {
         return rOp((double) 0, (i, a, b) -> (double) (a - b));
     }
 
+    /**
+     * Multiplies all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @return the multiplication of all the lane elements of this vector
+     */
     public double mulAll() {
         return rOp((double) 1, (i, a, b) -> (double) (a * b));
     }
 
+    /**
+     * Returns the minimum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Double.MAX_VALUE}.
+     *
+     * @return the minimum lane element of this vector
+     */
     public double minAll() {
         return rOp(Double.MAX_VALUE, (i, a, b) -> a > b ? b : a);
     }
 
+    /**
+     * Returns the maximum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Double.MIN_VALUE}.
+     *
+     * @return the maximum lane element of this vector
+     */
     public double maxAll() {
         return rOp(Double.MIN_VALUE, (i, a, b) -> a < b ? b : a);
     }

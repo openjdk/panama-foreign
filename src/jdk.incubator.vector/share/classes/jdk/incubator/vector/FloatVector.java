@@ -60,9 +60,9 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         float apply(int i, float a, float b);
     }
 
-    abstract FloatVector<S> bOp(Vector<Float,S> o, FBinOp f);
+    abstract FloatVector<S> bOp(Vector<Float,S> v, FBinOp f);
 
-    abstract FloatVector<S> bOp(Vector<Float,S> o, Mask<Float, S> m, FBinOp f);
+    abstract FloatVector<S> bOp(Vector<Float,S> v, Mask<Float, S> m, FBinOp f);
 
     // Trinary operator
 
@@ -70,9 +70,9 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         float apply(int i, float a, float b, float c);
     }
 
-    abstract FloatVector<S> tOp(Vector<Float,S> o1, Vector<Float,S> o2, FTriOp f);
+    abstract FloatVector<S> tOp(Vector<Float,S> v1, Vector<Float,S> v2, FTriOp f);
 
-    abstract FloatVector<S> tOp(Vector<Float,S> o1, Vector<Float,S> o2, Mask<Float, S> m, FTriOp f);
+    abstract FloatVector<S> tOp(Vector<Float,S> v1, Vector<Float,S> v2, Mask<Float, S> m, FTriOp f);
 
     // Reduction operator
 
@@ -84,7 +84,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         boolean apply(int i, float a, float b);
     }
 
-    abstract Mask<Float, S> bTest(Vector<Float,S> o, FBinTest f);
+    abstract Mask<Float, S> bTest(Vector<Float,S> v, FBinTest f);
 
     // Foreach
 
@@ -99,8 +99,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     //
 
     @Override
-    public FloatVector<S> add(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) (a + b));
+    public FloatVector<S> add(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (float) (a + b));
     }
 
     /**
@@ -109,15 +109,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract FloatVector<S> add(float b);
+    public abstract FloatVector<S> add(float s);
 
     @Override
-    public FloatVector<S> add(Vector<Float,S> o, Mask<Float, S> m) {
-        return bOp(o, m, (i, a, b) -> (float) (a + b));
+    public FloatVector<S> add(Vector<Float,S> v, Mask<Float, S> m) {
+        return bOp(v, m, (i, a, b) -> (float) (a + b));
     }
 
     /**
@@ -127,30 +127,30 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract FloatVector<S> add(float b, Mask<Float, S> m);
+    public abstract FloatVector<S> add(float s, Mask<Float, S> m);
 
     @Override
-    public FloatVector<S> addSaturate(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public FloatVector<S> addSaturate(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (float) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract FloatVector<S> addSaturate(float o);
+    public abstract FloatVector<S> addSaturate(float s);
 
     @Override
-    public FloatVector<S> addSaturate(Vector<Float,S> o, Mask<Float, S> m) {
-        return bOp(o, m, (i, a, b) -> (float) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
+    public FloatVector<S> addSaturate(Vector<Float,S> v, Mask<Float, S> m) {
+        return bOp(v, m, (i, a, b) -> (float) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
     }
 
-    public abstract FloatVector<S> addSaturate(float o, Mask<Float, S> m);
+    public abstract FloatVector<S> addSaturate(float s, Mask<Float, S> m);
 
     @Override
-    public FloatVector<S> sub(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) (a - b));
+    public FloatVector<S> sub(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (float) (a - b));
     }
 
     /**
@@ -159,15 +159,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract FloatVector<S> sub(float b);
+    public abstract FloatVector<S> sub(float s);
 
     @Override
-    public FloatVector<S> sub(Vector<Float,S> o, Mask<Float, S> m) {
-        return bOp(o, m, (i, a, b) -> (float) (a - b));
+    public FloatVector<S> sub(Vector<Float,S> v, Mask<Float, S> m) {
+        return bOp(v, m, (i, a, b) -> (float) (a - b));
     }
 
     /**
@@ -177,30 +177,30 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract FloatVector<S> sub(float b, Mask<Float, S> m);
+    public abstract FloatVector<S> sub(float s, Mask<Float, S> m);
 
     @Override
-    public FloatVector<S> subSaturate(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) ((a >= Float.MIN_VALUE || Float.MIN_VALUE + b > a) ? Float.MAX_VALUE : a - b));
+    public FloatVector<S> subSaturate(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (float) ((a >= Float.MIN_VALUE || Float.MIN_VALUE + b > a) ? Float.MAX_VALUE : a - b));
     }
 
-    public abstract FloatVector<S> subSaturate(float o);
+    public abstract FloatVector<S> subSaturate(float s);
 
     @Override
-    public FloatVector<S> subSaturate(Vector<Float,S> o, Mask<Float, S> m) {
-        return bOp(o, m, (i, a, b) -> (float) ((a >= Float.MIN_VALUE || Float.MIN_VALUE + b > a) ? Float.MAX_VALUE : a - b));
+    public FloatVector<S> subSaturate(Vector<Float,S> v, Mask<Float, S> m) {
+        return bOp(v, m, (i, a, b) -> (float) ((a >= Float.MIN_VALUE || Float.MIN_VALUE + b > a) ? Float.MAX_VALUE : a - b));
     }
 
-    public abstract FloatVector<S> subSaturate(float o, Mask<Float, S> m);
+    public abstract FloatVector<S> subSaturate(float s, Mask<Float, S> m);
 
     @Override
-    public FloatVector<S> mul(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) (a * b));
+    public FloatVector<S> mul(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (float) (a * b));
     }
 
     /**
@@ -209,15 +209,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract FloatVector<S> mul(float b);
+    public abstract FloatVector<S> mul(float s);
 
     @Override
-    public FloatVector<S> mul(Vector<Float,S> o, Mask<Float, S> m) {
-        return bOp(o, m, (i, a, b) -> (float) (a * b));
+    public FloatVector<S> mul(Vector<Float,S> v, Mask<Float, S> m) {
+        return bOp(v, m, (i, a, b) -> (float) (a * b));
     }
 
     /**
@@ -227,12 +227,12 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract FloatVector<S> mul(float b, Mask<Float, S> m);
+    public abstract FloatVector<S> mul(float s, Mask<Float, S> m);
 
     @Override
     public FloatVector<S> neg() {
@@ -255,8 +255,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     }
 
     @Override
-    public FloatVector<S> min(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (a < b) ? a : b);
+    public FloatVector<S> min(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (a < b) ? a : b);
     }
 
     /**
@@ -265,14 +265,14 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the minimum of this vector and the broadcast of an input scalar
      */
-    public abstract FloatVector<S> min(float b);
+    public abstract FloatVector<S> min(float s);
 
     @Override
-    public FloatVector<S> max(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (a > b) ? a : b);
+    public FloatVector<S> max(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (a > b) ? a : b);
     }
 
     /**
@@ -281,14 +281,14 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the maximum of this vector and the broadcast of an input scalar
      */
-    public abstract FloatVector<S> max(float b);
+    public abstract FloatVector<S> max(float s);
 
     @Override
-    public Mask<Float, S> equal(Vector<Float,S> o) {
-        return bTest(o, (i, a, b) -> a == b);
+    public Mask<Float, S> equal(Vector<Float,S> v) {
+        return bTest(v, (i, a, b) -> a == b);
     }
 
     /**
@@ -297,15 +297,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary test operation where the primitive equals
      * operation ({@code ==}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Float, S> equal(float b);
+    public abstract Mask<Float, S> equal(float s);
 
     @Override
-    public Mask<Float, S> notEqual(Vector<Float,S> o) {
-        return bTest(o, (i, a, b) -> a != b);
+    public Mask<Float, S> notEqual(Vector<Float,S> v) {
+        return bTest(v, (i, a, b) -> a != b);
     }
 
     /**
@@ -314,15 +314,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary test operation where the primitive not equals
      * operation ({@code !=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the result mask of testing if this vector is not equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Float, S> notEqual(float b);
+    public abstract Mask<Float, S> notEqual(float s);
 
     @Override
-    public Mask<Float, S> lessThan(Vector<Float,S> o) {
-        return bTest(o, (i, a, b) -> a < b);
+    public Mask<Float, S> lessThan(Vector<Float,S> v) {
+        return bTest(v, (i, a, b) -> a < b);
     }
 
     /**
@@ -331,15 +331,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary test operation where the primitive less than
      * operation ({@code <}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Float, S> lessThan(float b);
+    public abstract Mask<Float, S> lessThan(float s);
 
     @Override
-    public Mask<Float, S> lessThanEq(Vector<Float,S> o) {
-        return bTest(o, (i, a, b) -> a <= b);
+    public Mask<Float, S> lessThanEq(Vector<Float,S> v) {
+        return bTest(v, (i, a, b) -> a <= b);
     }
 
     /**
@@ -348,15 +348,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary test operation where the primitive less than
      * or equal to operation ({@code <=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is less than or equal
      * to the broadcast of an input scalar
      */
-    public abstract Mask<Float, S> lessThanEq(float b);
+    public abstract Mask<Float, S> lessThanEq(float s);
 
     @Override
-    public Mask<Float, S> greaterThan(Vector<Float,S> o) {
-        return bTest(o, (i, a, b) -> a > b);
+    public Mask<Float, S> greaterThan(Vector<Float,S> v) {
+        return bTest(v, (i, a, b) -> a > b);
     }
 
     /**
@@ -365,15 +365,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary test operation where the primitive greater than
      * operation ({@code >}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Float, S> greaterThan(float b);
+    public abstract Mask<Float, S> greaterThan(float s);
 
     @Override
-    public Mask<Float, S> greaterThanEq(Vector<Float,S> o) {
-        return bTest(o, (i, a, b) -> a >= b);
+    public Mask<Float, S> greaterThanEq(Vector<Float,S> v) {
+        return bTest(v, (i, a, b) -> a >= b);
     }
 
     /**
@@ -383,15 +383,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * This is a vector binary test operation where the primitive greater than
      * or equal to operation ({@code >=}) is applied to lane elements.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @return the mask result of testing if this vector is greater than or
      * equal to the broadcast of an input scalar
      */
-    public abstract Mask<Float, S> greaterThanEq(float b);
+    public abstract Mask<Float, S> greaterThanEq(float s);
 
     @Override
-    public FloatVector<S> blend(Vector<Float,S> o, Mask<Float, S> m) {
-        return bOp(o, (i, a, b) -> m.getElement(i) ? b : a);
+    public FloatVector<S> blend(Vector<Float,S> v, Mask<Float, S> m) {
+        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
     }
 
     /**
@@ -404,15 +404,15 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * otherwise the the lane element at {@code N} from this input vector is
      * selected and placed into the resulting vector at {@code N}.
      *
-     * @param b the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of blending the lane elements of this vector with
      * those of the broadcast of an input scalar
      */
-    public abstract FloatVector<S> blend(float b, Mask<Float, S> m);
+    public abstract FloatVector<S> blend(float s, Mask<Float, S> m);
 
     @Override
-    public abstract FloatVector<S> shuffle(Vector<Float,S> o, Shuffle<Float, S> m);
+    public abstract FloatVector<S> shuffle(Vector<Float,S> v, Shuffle<Float, S> m);
 
     @Override
     public abstract FloatVector<S> swizzle(Shuffle<Float, S> m);
@@ -435,17 +435,17 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     @Override
     public abstract FloatVector<S> shiftER(int i);
 
-    public FloatVector<S> div(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) (a / b));
+    public FloatVector<S> div(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (float) (a / b));
     }
 
-    public abstract FloatVector<S> div(float o);
+    public abstract FloatVector<S> div(float s);
 
-    public FloatVector<S> div(Vector<Float,S> o, Mask<Float, S> m) {
-        return bOp(o, m, (i, a, b) -> (float) (a / b));
+    public FloatVector<S> div(Vector<Float,S> v, Mask<Float, S> m) {
+        return bOp(v, m, (i, a, b) -> (float) (a / b));
     }
 
-    public abstract FloatVector<S> div(float o, Mask<Float, S> m);
+    public abstract FloatVector<S> div(float s, Mask<Float, S> m);
 
     public FloatVector<S> sqrt() {
         return uOp((i, a) -> (float) Math.sqrt((double) a));
@@ -527,17 +527,17 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         return uOp(m, (i, a) -> (float) Math.atan((double) a));
     }
 
-    public FloatVector<S> atan2(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) Math.atan2((double) a, (double) b));
+    public FloatVector<S> atan2(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (float) Math.atan2((double) a, (double) b));
     }
 
-    public abstract FloatVector<S> atan2(float o);
+    public abstract FloatVector<S> atan2(float s);
 
-    public FloatVector<S> atan2(Vector<Float,S> o, Mask<Float,S> m) {
-        return bOp(o, m, (i, a, b) -> (float) Math.atan2((double) a, (double) b));
+    public FloatVector<S> atan2(Vector<Float,S> v, Mask<Float,S> m) {
+        return bOp(v, m, (i, a, b) -> (float) Math.atan2((double) a, (double) b));
     }
 
-    public abstract FloatVector<S> atan2(float o, Mask<Float,S> m);
+    public abstract FloatVector<S> atan2(float s, Mask<Float,S> m);
 
     public FloatVector<S> cbrt() {
         return uOp((i, a) -> (float) Math.cbrt((double) a));
@@ -571,17 +571,17 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         return uOp(m, (i, a) -> (float) Math.log1p((double) a));
     }
 
-    public FloatVector<S> pow(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) Math.pow((double) a, (double) b));
+    public FloatVector<S> pow(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (float) Math.pow((double) a, (double) b));
     }
 
-    public abstract FloatVector<S> pow(float o);
+    public abstract FloatVector<S> pow(float s);
 
-    public FloatVector<S> pow(Vector<Float,S> o, Mask<Float,S> m) {
-        return bOp(o, m, (i, a, b) -> (float) Math.pow((double) a, (double) b));
+    public FloatVector<S> pow(Vector<Float,S> v, Mask<Float,S> m) {
+        return bOp(v, m, (i, a, b) -> (float) Math.pow((double) a, (double) b));
     }
 
-    public abstract FloatVector<S> pow(float o, Mask<Float,S> m);
+    public abstract FloatVector<S> pow(float s, Mask<Float,S> m);
 
     public FloatVector<S> exp() {
         return uOp((i, a) -> (float) Math.exp((double) a));
@@ -599,29 +599,29 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         return uOp(m, (i, a) -> (float) Math.expm1((double) a));
     }
 
-    public FloatVector<S> fma(Vector<Float,S> o1, Vector<Float,S> o2) {
-        return tOp(o1, o2, (i, a, b, c) -> Math.fma(a, b, c));
+    public FloatVector<S> fma(Vector<Float,S> v1, Vector<Float,S> v2) {
+        return tOp(v1, v2, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
-    public abstract FloatVector<S> fma(float o1, float o2);
+    public abstract FloatVector<S> fma(float s1, float s2);
 
-    public FloatVector<S> fma(Vector<Float,S> o1, Vector<Float,S> o2, Mask<Float,S> m) {
-        return tOp(o1, o2, m, (i, a, b, c) -> Math.fma(a, b, c));
+    public FloatVector<S> fma(Vector<Float,S> v1, Vector<Float,S> v2, Mask<Float,S> m) {
+        return tOp(v1, v2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
-    public abstract FloatVector<S> fma(float o1, float o2, Mask<Float,S> m);
+    public abstract FloatVector<S> fma(float s1, float s2, Mask<Float,S> m);
 
-    public FloatVector<S> hypot(Vector<Float,S> o) {
-        return bOp(o, (i, a, b) -> (float) Math.hypot((double) a, (double) b));
+    public FloatVector<S> hypot(Vector<Float,S> v) {
+        return bOp(v, (i, a, b) -> (float) Math.hypot((double) a, (double) b));
     }
 
-    public abstract FloatVector<S> hypot(float o);
+    public abstract FloatVector<S> hypot(float s);
 
-    public FloatVector<S> hypot(Vector<Float,S> o, Mask<Float,S> m) {
-        return bOp(o, m, (i, a, b) -> (float) Math.hypot((double) a, (double) b));
+    public FloatVector<S> hypot(Vector<Float,S> v, Mask<Float,S> m) {
+        return bOp(v, m, (i, a, b) -> (float) Math.hypot((double) a, (double) b));
     }
 
-    public abstract FloatVector<S> hypot(float o, Mask<Float,S> m);
+    public abstract FloatVector<S> hypot(float s, Mask<Float,S> m);
 
 
     @Override
@@ -677,22 +677,74 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
     // Type specific horizontal reductions
 
+// @@@ For floating point vectors order matters for reproducibility
+//     with equivalent sequential reduction. Some order needs to be specified
+//     by default. If that default is sequential encounter order then there
+//     could be a "go faster" option that is unspecified, essentially giving
+//     implementation flexibility at the expense of reproducibility and/or
+//     accuracy.
+
+    /**
+     * Adds all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the addition of all the lane elements of this vector
+     */
     public float addAll() {
         return rOp((float) 0, (i, a, b) -> (float) (a + b));
     }
 
+    /**
+     * Subtracts all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @return the subtraction of all the lane elements of this vector
+     */
     public float subAll() {
         return rOp((float) 0, (i, a, b) -> (float) (a - b));
     }
 
+    /**
+     * Multiplies all lane elements of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @return the multiplication of all the lane elements of this vector
+     */
     public float mulAll() {
         return rOp((float) 1, (i, a, b) -> (float) (a * b));
     }
 
+    /**
+     * Returns the minimum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Float.MAX_VALUE}.
+     *
+     * @return the minimum lane element of this vector
+     */
     public float minAll() {
         return rOp(Float.MAX_VALUE, (i, a, b) -> a > b ? b : a);
     }
 
+    /**
+     * Returns the maximum lane element of this vector.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Float.MIN_VALUE}.
+     *
+     * @return the maximum lane element of this vector
+     */
     public float maxAll() {
         return rOp(Float.MIN_VALUE, (i, a, b) -> a < b ? b : a);
     }

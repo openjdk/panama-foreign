@@ -305,10 +305,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the result of adding this vector to the input vector
      */
-    public abstract Vector<E, S> add(Vector<E, S> b);
+    public abstract Vector<E, S> add(Vector<E, S> v);
 
     /**
      * Adds this vector to an input vector, selecting lane elements
@@ -317,15 +317,15 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary operation where the primitive addition operation
      * ({@code +}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the given vector
      */
-    public abstract Vector<E, S> add(Vector<E, S> b, Mask<E, S> m);
+    public abstract Vector<E, S> add(Vector<E, S> v, Mask<E, S> m);
 
-    public abstract Vector<E, S> addSaturate(Vector<E, S> o);
+    public abstract Vector<E, S> addSaturate(Vector<E, S> v);
 
-    public abstract Vector<E, S> addSaturate(Vector<E, S> o, Mask<E, S> m);
+    public abstract Vector<E, S> addSaturate(Vector<E, S> v, Mask<E, S> m);
 
     /**
      * Subtracts an input vector from this vector.
@@ -333,10 +333,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the result of subtracting the input vector from this vector
      */
-    public abstract Vector<E, S> sub(Vector<E, S> b);
+    public abstract Vector<E, S> sub(Vector<E, S> v);
 
     /**
      * Subtracts an input vector from this vector, selecting lane elements
@@ -345,15 +345,15 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary operation where the primitive subtraction
      * operation ({@code -}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of subtracting the input vector from this vector
      */
-    public abstract Vector<E, S> sub(Vector<E, S> b, Mask<E, S> m);
+    public abstract Vector<E, S> sub(Vector<E, S> v, Mask<E, S> m);
 
-    public abstract Vector<E, S> subSaturate(Vector<E, S> o);
+    public abstract Vector<E, S> subSaturate(Vector<E, S> v);
 
-    public abstract Vector<E, S> subSaturate(Vector<E, S> o, Mask<E, S> m);
+    public abstract Vector<E, S> subSaturate(Vector<E, S> v, Mask<E, S> m);
 
     /**
      * Multiplies this vector with an input vector.
@@ -361,10 +361,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the result of multiplying this vector with the input vector
      */
-    public abstract Vector<E, S> mul(Vector<E, S> b);
+    public abstract Vector<E, S> mul(Vector<E, S> v);
 
     /**
      * Multiplies this vector with an input vector, selecting lane elements
@@ -373,11 +373,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary operation where the primitive multiplication
      * operation ({@code *}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of multiplying this vector with the input vector
      */
-    public abstract Vector<E, S> mul(Vector<E, S> b, Mask<E, S> m);
+    public abstract Vector<E, S> mul(Vector<E, S> v, Mask<E, S> m);
 
     /**
      * Negates this vector.
@@ -430,10 +430,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the minimum of this vector and the input vector
      */
-    public abstract Vector<E, S> min(Vector<E, S> b);
+    public abstract Vector<E, S> min(Vector<E, S> v);
     // TODO mask variant?
 
     /**
@@ -442,10 +442,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary operation where the operation
      * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the maximum of this vector and the input vector
      */
-    public abstract Vector<E, S> max(Vector<E, S> b);
+    public abstract Vector<E, S> max(Vector<E, S> v);
     // TODO mask variant?
 
     // Comparisons
@@ -456,11 +456,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary test operation where the primitive equals
      * operation ({@code ==}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the result mask of testing if this vector is equal to the input
      * vector
      */
-    public abstract Mask<E, S> equal(Vector<E, S> b);
+    public abstract Mask<E, S> equal(Vector<E, S> v);
 
     /**
      * Tests if this vector is not equal to an input vector.
@@ -468,11 +468,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary test operation where the primitive not equals
      * operation ({@code !=}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the result mask of testing if this vector is not equal to the
      * input vector
      */
-    public abstract Mask<E, S> notEqual(Vector<E, S> b);
+    public abstract Mask<E, S> notEqual(Vector<E, S> v);
 
     /**
      * Tests if this vector is less than an input vector.
@@ -480,11 +480,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary test operation where the primitive less than
      * operation ({@code <}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the mask result of testing if this vector is less than the input
      * vector
      */
-    public abstract Mask<E, S> lessThan(Vector<E, S> b);
+    public abstract Mask<E, S> lessThan(Vector<E, S> v);
 
     /**
      * Tests if this vector is less or equal to an input vector.
@@ -492,11 +492,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary test operation where the primitive less than
      * or equal to operation ({@code <=}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the mask result of testing if this vector is less than or equal
      * to the input vector
      */
-    public abstract Mask<E, S> lessThanEq(Vector<E, S> b);
+    public abstract Mask<E, S> lessThanEq(Vector<E, S> v);
 
     /**
      * Tests if this vector is greater than an input vector.
@@ -504,11 +504,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary test operation where the primitive greater than
      * operation ({@code >}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the mask result of testing if this vector is greater than the
      * input vector
      */
-    public abstract Mask<E, S> greaterThan(Vector<E, S> b);
+    public abstract Mask<E, S> greaterThan(Vector<E, S> v);
 
     /**
      * Tests if this vector is greater than or equal to an input vector.
@@ -516,11 +516,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * This is a vector binary test operation where the primitive greater than
      * or equal to operation ({@code >=}) is applied to lane elements.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @return the mask result of testing if this vector is greater than or
      * equal to the given vector
      */
-    public abstract Mask<E, S> greaterThanEq(Vector<E, S> b);
+    public abstract Mask<E, S> greaterThanEq(Vector<E, S> v);
 
     // Elemental shifting
 
@@ -596,12 +596,12 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * otherwise the the lane element at {@code N} from this input vector is
      * selected and placed into the resulting vector at {@code N}.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @param m the mask controlling lane selection
      * @return the result of blending the lane elements of this vector with
      * those of an input vector
      */
-    public abstract Vector<E, S> blend(Vector<E, S> b, Mask<E, S> m);
+    public abstract Vector<E, S> blend(Vector<E, S> v, Mask<E, S> m);
 
     /**
      * Shuffles the lane elements of this vector and those of an input vector,
@@ -616,14 +616,14 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * {@code I - this.length()} from the input vector is selected and placed
      * into the resulting vector at {@code N}.
      *
-     * @param b the input vector
+     * @param v the input vector
      * @param s the shuffle controlling lane index selection
      * @return the result of shuffling the lane elements of this vector and
      * those of an input vector
      * @throws IndexOutOfBoundsException if any lane element is {@code < 0} or
      * {@code >= 2 * this.length())
      */
-    public abstract Vector<E, S> shuffle(Vector<E, S> b, Shuffle<E, S> s);
+    public abstract Vector<E, S> shuffle(Vector<E, S> v, Shuffle<E, S> s);
 
     /**
      * Shuffles the lane elements of this vector selecting lane indexes
