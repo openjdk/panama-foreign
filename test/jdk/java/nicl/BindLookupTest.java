@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,62 +22,71 @@
  */
 
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.nicl.*;
-import java.nicl.types.*;
 import java.nicl.metadata.*;
 
 /**
  * @test
- * @run testng/othervm/policy=bindtest.policy BindTest
- * @summary Tests for bind method(s) security checks
+ * @run testng/othervm BindLookupTest
+ * @summary Tests for bind method(s) lookup checks
  */
-public class BindTest {
+public class BindLookupTest {
     @Header(path="dummy")
-    static interface system {
+    public static interface system {
         @C(file="dummy", line=1, column=1, USR="c:@F@getpid")
         @NativeType(layout="()i", ctype="dummy", size=1)
         @CallingConvention(value=1)
         public abstract int getpid();
     }
 
-    @Test
-    public void testBindRaw() {
-        checkSecurityException(()-> {
-            system i = Libraries.bindRaw(MethodHandles.lookup(), system.class);
-         });
+    @Test(dataProvider = "Lookups")
+    public void testBindRaw(Lookup lookup, Class<?> exceptionClass) {
+        checkIllegalArgumentException(()-> {
+            system i = Libraries.bindRaw(lookup, system.class);
+         }, exceptionClass);
     }
 
-    @Test
-    public void testBind() {
-        checkSecurityException(()-> {
-            Libraries.bind(MethodHandles.lookup(), system.class);
-         });
+    @Test(dataProvider = "Lookups")
+    public void testBind(Lookup lookup, Class<?> exceptionClass) {
+        checkIllegalArgumentException(()-> {
+            Libraries.bind(lookup, system.class);
+         }, exceptionClass);
     }
 
     @Test
     public void testBindRawWithLibrary() {
-        checkSecurityException(()-> {
+        checkIllegalArgumentException(()-> {
             system i = Libraries.bindRaw(system.class, Libraries.getDefaultLibrary());
-         });
+         }, null);
     }
 
     @Test
     public void testBindWithLibrary() {
-        checkSecurityException(()-> {
+        checkIllegalArgumentException(()-> {
             system i = Libraries.bindRaw(system.class, Libraries.getDefaultLibrary());
-         });
+         }, null);
     }
 
-    private static void checkSecurityException(Runnable test) {
+    @DataProvider(name = "Lookups")
+    public static Object[][] lookups() {
+        return new Object[][] {
+                { null, NullPointerException.class },
+                { MethodHandles.lookup(), null },
+                { MethodHandles.publicLookup(), IllegalArgumentException.class }};
+    }
+
+    private static void checkIllegalArgumentException(Runnable test, Class<?> exceptionClass) {
         try {
             test.run();
-            Assert.fail("should not reach here");
-        } catch (SecurityException se) {
-            Assert.assertTrue(true, "Got security exception as expected");
-            se.printStackTrace();
+            Assert.assertNull(exceptionClass, "should not reach here");
+        } catch (Throwable t) {
+            Assert.assertTrue(t.getClass().equals(exceptionClass), "Got exception as expected");
+            t.printStackTrace();
         }
     }
 }

@@ -52,29 +52,33 @@ public final class Libraries {
     /**
      * Create a raw, uncivilized version of the interface
      *
+     * @param lookup the lookup object (used for implicit native library lookup)
      * @param c the class to bind
      * @return
      */
-    public static <T> T bindRaw(Class<T> c) {
+    public static <T> T bindRaw(Lookup lookup, Class<T> c) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.bindRaw"));
         }
-        return LibrariesHelper.bindRaw(c);
+        checkLookup(lookup);
+        return LibrariesHelper.bindRaw(lookup, c);
     }
 
     /**
      * Create a civilized version of the interface
      *
+     * @param lookup the lookup object (used for implicit native library lookup)
      * @param c the raw, uncivilized version of the interface
      * @return
      */
-    public static Object bind(Class<?> c) {
+    public static Object bind(Lookup lookup, Class<?> c) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.bind"));
         }
-        return LibrariesHelper.bind(c);
+        checkLookup(lookup);
+        return LibrariesHelper.bind(lookup, c);
     }
 
     /**
@@ -116,15 +120,13 @@ public final class Libraries {
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
     public static Library loadLibrary(Lookup lookup, String filename) {
+        checkLookup(lookup);
         Objects.requireNonNull(filename);
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(filename);
         }
-//Fixme:
-//        if (!lookup.hasPrivateAccess()) {
-//            throw new IllegalArgumentException("Lookup object must be private");
-//        }
+        checkLookup(lookup);
         if (filename.indexOf(File.separatorChar) != -1) {
             throw new UnsatisfiedLinkError(
                 "Directory separator should not appear in library name: " + filename);
@@ -155,10 +157,7 @@ public final class Libraries {
         if (security != null) {
             security.checkLink(filename);
         }
-//Fixme:
-//        if (!lookup.hasPrivateAccess()) {
-//            throw new IllegalArgumentException("Lookup object must be private");
-//        }
+        checkLookup(lookup);
         if (!(new File(filename).isAbsolute())) {
             throw new UnsatisfiedLinkError(
                 "Expecting an absolute path of the library: " + filename);
@@ -172,5 +171,11 @@ public final class Libraries {
             security.checkPermission(new RuntimePermission("java.nicl.getDefaultLibrary"));
         }
         return LibrariesHelper.getDefaultLibrary();
+    }
+
+    private static void checkLookup(Lookup lookup) {
+        if (!Objects.requireNonNull(lookup).hasPrivateAccess()) {
+            throw new IllegalArgumentException("Attempt to use non-private lookup object");
+        }
     }
 }

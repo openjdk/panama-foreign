@@ -25,6 +25,7 @@
  * @test
  */
 
+import java.lang.invoke.MethodHandles;
 import java.nicl.*;
 import java.nicl.types.*;
 import java.nicl.metadata.*;
@@ -42,7 +43,7 @@ public class Hello {
     public static void main(String[] args) {
         // "hello" library mentioned already in annotation (LibraryDependencies)
         // No need to explicitly call Libraries.loadLibrary!
-        hello i = Libraries.bindRaw(hello.class);
+        hello i = Libraries.bindRaw(MethodHandles.lookup(), hello.class);
         int value = i.func();
         if (value != 42) {
             throw new RuntimeException("Expected 42, but got " + i);

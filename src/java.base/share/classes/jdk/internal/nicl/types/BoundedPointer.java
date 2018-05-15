@@ -68,7 +68,7 @@ public class BoundedPointer<T> implements Pointer<T> {
     @Override
     public T deref() {
         if (Util.isCStruct(type.getCarrierType())) {
-            Class<? extends T> c = LibrariesHelper.getImplClass(type.getCarrierType());
+            Class<? extends T> c = LibrariesHelper.getStructImplClass(type.getCarrierType());
 
             try {
                 return c.getConstructor(Pointer.class).newInstance(this);

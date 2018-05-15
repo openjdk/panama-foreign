@@ -74,8 +74,8 @@ public class LibrariesHelper {
         return Type.getInternalName(c) + "$" + type.getImplName() + "Impl";
     }
 
-    public static <T> Class<? extends T> getImplClass(Class<T> c) {
-        return getOrCreateImpl(c, getSymbolLookupForClass(c));
+    public static <T> Class<? extends T> getStructImplClass(Class<T> c) {
+        return getOrCreateImpl(c, SymbolLookup.NO_LOOKUP);
     }
 
     /**
@@ -192,7 +192,7 @@ public class LibrariesHelper {
         }
     }
 
-    private static SymbolLookup getSymbolLookupForClass(Class<?> c) {
+    private static SymbolLookup getSymbolLookupForClass(Lookup lookup, Class<?> c) {
         LibraryDependencies deps = getLibraryDependenciesForClass(c);
 
         Library[] libs;
@@ -203,7 +203,7 @@ public class LibrariesHelper {
             // throw new IllegalArgumentException("No @LibraryDependencies annotation on class " + c.getName());
             libs = new Library[] { getDefaultLibrary() };
         } else {
-            libs = loadLibraries(MethodHandles.publicLookup().in(c), deps);
+            libs = loadLibraries(lookup, deps);
         }
 
         return new SymbolLookup(libs);
@@ -214,7 +214,7 @@ public class LibrariesHelper {
     }
 
     public static <T> T bindRaw(Class<T> c, Library lib) {
-        return bindRaw(c, new SymbolLookup(new Library[] { lib }));
+        return bindRaw(c, new SymbolLookup(lib));
     }
 
     private static <T> T bindRaw(Class<T> c, SymbolLookup lookup) {
@@ -230,13 +230,13 @@ public class LibrariesHelper {
         }
     }
 
-    public static <T> T bindRaw(Class<T> c) {
-        return bindRaw(c, getSymbolLookupForClass(c));
+    public static <T> T bindRaw(Lookup lookup, Class<T> c) {
+        return bindRaw(c, getSymbolLookupForClass(lookup, c));
     }
 
     private static <T> Object bind(Class<T> c, SymbolLookup lookup) {
         try {
-            T rawInstance = bindRaw(c);
+            T rawInstance = bindRaw(c, lookup);
 
             Class<?> civilizedCls = LibrariesHelper.getOrCreateCivilizedImpl(c, rawInstance);
 
@@ -250,8 +250,8 @@ public class LibrariesHelper {
         return bind(c, new SymbolLookup(lib));
     }
 
-    public static <T> Object bind(Class<T> c) {
-        return bind(c, getSymbolLookupForClass(c));
+    public static <T> Object bind(Lookup lookup, Class<T> c) {
+        return bind(c, getSymbolLookupForClass(lookup, c));
     }
 
     public static MethodHandle lookupNativeMethod(Library[] libs, String symbolName, MethodType methodType, boolean isVarArgs) throws NoSuchMethodException, IllegalAccessException {
