@@ -438,192 +438,772 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> shiftER(int i);
 
 #if[FP]
+    /**
+     * Divides this vector by an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive division
+     * operation ({@code /}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the result of dividing this vector by the input vector
+     */
     public $abstractvectortype$<S> div(Vector<$Boxtype$,S> v) {
         return bOp(v, (i, a, b) -> ($type$) (a / b));
     }
 
+    /**
+     * Divides this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive division
+     * operation ({@code /}) is applied to lane elements.
+     *
+     * @param v the input scalar
+     * @return the result of dividing this vector by the broadcast of an input
+     * scalar
+     */
     public abstract $abstractvectortype$<S> div($type$ s);
 
+    /**
+     * Divides this vector by an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive division
+     * operation ({@code /}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of dividing this vector by the input vector
+     */
     public $abstractvectortype$<S> div(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
         return bOp(v, m, (i, a, b) -> ($type$) (a / b));
     }
 
+    /**
+     * Divides this vector by the broadcast of an input scalar, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive division
+     * operation ({@code /}) is applied to lane elements.
+     *
+     * @param v the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of dividing this vector by the broadcast of an input
+     * scalar
+     */
     public abstract $abstractvectortype$<S> div($type$ s, Mask<$Boxtype$, S> m);
 
+// @@@ Many methods are refer to Math or StrictMath functions that only accept
+//     double values, what should be the behaviour for lane elements of float
+//     vectors? down and then upcast? Or will some numeric algorithms differ?
+//     The answers might also depend if strict definitions are required
+//     to ensure portability.
+//     Leveraging the existing defintions in Math/StrictMath is very convenient
+//     but its unclear if it is t
+
+    /**
+     * Calculates the square root of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sqrt} operation
+     * is applied to lane elements.
+     *
+     * @return the square root of this vector
+     */
     public $abstractvectortype$<S> sqrt() {
         return uOp((i, a) -> ($type$) Math.sqrt((double) a));
     }
 
+    /**
+     * Calculates the square root of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sqrt} operation
+     * ({@code -}) is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the square root of this vector
+     */
     public $abstractvectortype$<S> sqrt(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.sqrt((double) a));
     }
 
+    /**
+     * Calculates the trigonometric tangent of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#tan} operation
+     * is applied to lane elements.
+     *
+     * @return the tangent of this vector
+     */
     public $abstractvectortype$<S> tan() {
         return uOp((i, a) -> ($type$) Math.tan((double) a));
     }
 
+    /**
+     * Calculates the trigonometric tangent of this vector, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#tan} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the tangent of this vector
+     */
     public $abstractvectortype$<S> tan(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.tan((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic tangent of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#tanh} operation
+     * is applied to lane elements.
+     *
+     * @return the hyperbolic tangent of this vector
+     */
     public $abstractvectortype$<S> tanh() {
         return uOp((i, a) -> ($type$) Math.tanh((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic tangent of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#tanh} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the hyperbolic tangent of this vector
+     */
     public $abstractvectortype$<S> tanh(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.tanh((double) a));
     }
 
+    /**
+     * Calculates the trigonometric sine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sin} operation
+     * is applied to lane elements.
+     *
+     * @return the sine of this vector
+     */
     public $abstractvectortype$<S> sin() {
         return uOp((i, a) -> ($type$) Math.sin((double) a));
     }
 
+    /**
+     * Calculates the trigonometric sine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sin} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the sine of this vector
+     */
     public $abstractvectortype$<S> sin(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.sin((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic sine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sinh} operation
+     * is applied to lane elements.
+     *
+     * @return the hyperbolic sine of this vector
+     */
     public $abstractvectortype$<S> sinh() {
         return uOp((i, a) -> ($type$) Math.sinh((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic sine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sinh} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the hyperbolic sine of this vector
+     */
     public $abstractvectortype$<S> sinh(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.sinh((double) a));
     }
 
+    /**
+     * Calculates the trigonometric cosine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cos} operation
+     * is applied to lane elements.
+     *
+     * @return the cosine of this vector
+     */
     public $abstractvectortype$<S> cos() {
         return uOp((i, a) -> ($type$) Math.cos((double) a));
     }
 
+    /**
+     * Calculates the trigonometric cosine of this vector, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cos} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the cosine of this vector
+     */
     public $abstractvectortype$<S> cos(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.cos((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic cosine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cosh} operation
+     * is applied to lane elements.
+     *
+     * @return the hyperbolic cosine of this vector
+     */
     public $abstractvectortype$<S> cosh() {
         return uOp((i, a) -> ($type$) Math.cosh((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic cosine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cosh} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the hyperbolic cosine of this vector
+     */
     public $abstractvectortype$<S> cosh(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.cosh((double) a));
     }
 
+    /**
+     * Calculates the arc sine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#asin} operation
+     * is applied to lane elements.
+     *
+     * @return the arc sine of this vector
+     */
     public $abstractvectortype$<S> asin() {
         return uOp((i, a) -> ($type$) Math.asin((double) a));
     }
 
+    /**
+     * Calculates the arc sine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#asin} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the arc sine of this vector
+     */
     public $abstractvectortype$<S> asin(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.asin((double) a));
     }
 
+    /**
+     * Calculates the arc cosine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#acos} operation
+     * is applied to lane elements.
+     *
+     * @return the arc cosine of this vector
+     */
     public $abstractvectortype$<S> acos() {
         return uOp((i, a) -> ($type$) Math.acos((double) a));
     }
 
+    /**
+     * Calculates the arc cosine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#acos} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the arc cosine of this vector
+     */
     public $abstractvectortype$<S> acos(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.acos((double) a));
     }
 
+    /**
+     * Calculates the arc tangent of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#atan} operation
+     * is applied to lane elements.
+     *
+     * @return the arc tangent of this vector
+     */
     public $abstractvectortype$<S> atan() {
         return uOp((i, a) -> ($type$) Math.atan((double) a));
     }
 
+    /**
+     * Calculates the arc tangent of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#atan} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the arc tangent of this vector
+     */
     public $abstractvectortype$<S> atan(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.atan((double) a));
     }
 
+    /**
+     * Calculates the arc tangent of this vector divided by an input vector.
+     * <p>
+     * This is a vector binary operation where the {@link Math#atan2} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the arc tangent of this vector divided by the input vector
+     */
     public $abstractvectortype$<S> atan2(Vector<$Boxtype$,S> v) {
         return bOp(v, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
     }
 
+    /**
+     * Calculates the arc tangent of this vector divided by the broadcast of an
+     * an input scalar.
+     * <p>
+     * This is a vector binary operation where the {@link Math#atan2} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the arc tangent of this vector over the input vector
+     */
     public abstract $abstractvectortype$<S> atan2($type$ s);
 
+    /**
+     * Calculates the arc tangent of this vector divided by an input vector,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the {@link Math#atan2} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the arc tangent of this vector divided by the input vector
+     */
     public $abstractvectortype$<S> atan2(Vector<$Boxtype$,S> v, Mask<$Boxtype$,S> m) {
         return bOp(v, m, (i, a, b) -> ($type$) Math.atan2((double) a, (double) b));
     }
 
+    /**
+     * Calculates the arc tangent of this vector divided by the broadcast of an
+     * an input scalar, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the {@link Math#atan2} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the arc tangent of this vector over the input vector
+     */
     public abstract $abstractvectortype$<S> atan2($type$ s, Mask<$Boxtype$,S> m);
 
+    /**
+     * Calculates the cube root of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cbrt} operation
+     * is applied to lane elements.
+     *
+     * @return the cube root of this vector
+     */
     public $abstractvectortype$<S> cbrt() {
         return uOp((i, a) -> ($type$) Math.cbrt((double) a));
     }
 
+    /**
+     * Calculates the cube root of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cbrt} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the cube root of this vector
+     */
     public $abstractvectortype$<S> cbrt(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.cbrt((double) a));
     }
 
+    /**
+     * Calculates the natural logarithm of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log} operation
+     * is applied to lane elements.
+     *
+     * @return the natural logarithm of this vector
+     */
     public $abstractvectortype$<S> log() {
         return uOp((i, a) -> ($type$) Math.log((double) a));
     }
 
+    /**
+     * Calculates the natural logarithm of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the natural logarithm of this vector
+     */
     public $abstractvectortype$<S> log(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.log((double) a));
     }
 
+    /**
+     * Calculates the base 10 logarithm of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log10} operation
+     * is applied to lane elements.
+     *
+     * @return the base 10 logarithm of this vector
+     */
     public $abstractvectortype$<S> log10() {
         return uOp((i, a) -> ($type$) Math.log10((double) a));
     }
 
+    /**
+     * Calculates the base 10 logarithm of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log10} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the base 10 logarithm of this vector
+     */
     public $abstractvectortype$<S> log10(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.log10((double) a));
     }
 
+    /**
+     * Calculates the natural logarithm of the sum of this vector and the
+     * broadcast of {@code 1}.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log1p} operation
+     * is applied to lane elements.
+     *
+     * @return the natural logarithm of the sum of this vector and the broadcast
+     * of {@code 1}
+     */
     public $abstractvectortype$<S> log1p() {
         return uOp((i, a) -> ($type$) Math.log1p((double) a));
     }
 
+    /**
+     * Calculates the natural logarithm of the sum of this vector and the
+     * broadcast of {@code 1}, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log1p} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the natural logarithm of the sum of this vector and the broadcast
+     * of {@code 1}
+     */
     public $abstractvectortype$<S> log1p(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.log1p((double) a));
     }
 
+    /**
+     * Calculates this vector raised to the power of an input vector.
+     * <p>
+     * This is a vector binary operation where the {@link Math#pow} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return this vector raised to the power of an input vector
+     */
     public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> v) {
         return bOp(v, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
     }
 
+    /**
+     * Calculates this vector raised to the power of the broadcast of an input
+     * scalar.
+     * <p>
+     * This is a vector binary operation where the {@link Math#pow} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return this vector raised to the power of the broadcast of an input
+     * scalar.
+     */
     public abstract $abstractvectortype$<S> pow($type$ s);
 
+    /**
+     * Calculates this vector raised to the power of an input vector, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the {@link Math#pow} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return this vector raised to the power of an input vector
+     */
     public $abstractvectortype$<S> pow(Vector<$Boxtype$,S> v, Mask<$Boxtype$,S> m) {
         return bOp(v, m, (i, a, b) -> ($type$) Math.pow((double) a, (double) b));
     }
 
+    /**
+     * Calculates this vector raised to the power of the broadcast of an input
+     * scalar, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the {@link Math#pow} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return this vector raised to the power of the broadcast of an input
+     * scalar.
+     */
     public abstract $abstractvectortype$<S> pow($type$ s, Mask<$Boxtype$,S> m);
 
+    /**
+     * Calculates the broadcast of Euler's number {@code e} raised to the power
+     * of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#exp} operation
+     * is applied to lane elements.
+     *
+     * @return the broadcast of Euler's number {@code e} raised to the power of
+     * this vector
+     */
     public $abstractvectortype$<S> exp() {
         return uOp((i, a) -> ($type$) Math.exp((double) a));
     }
 
+    /**
+     * Calculates the broadcast of Euler's number {@code e} raised to the power
+     * of this vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#exp} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the broadcast of Euler's number {@code e} raised to the power of
+     * this vector
+     */
     public $abstractvectortype$<S> exp(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.exp((double) a));
     }
 
+    /**
+     * Calculates the broadcast of Euler's number {@code e} raised to the power
+     * of this vector minus the broadcast of {@code -1}.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.exp().sub(this.species().broadcast(1))
+     * }</pre>
+     * <p>
+     * This is a vector unary operation where the {@link Math#expm1} operation
+     * is applied to lane elements.
+     *
+     * @return the broadcast of Euler's number {@code e} raised to the power of
+     * this vector minus the broadcast of {@code -1}
+     */
     public $abstractvectortype$<S> expm1() {
         return uOp((i, a) -> ($type$) Math.expm1((double) a));
     }
 
+    /**
+     * Calculates the broadcast of Euler's number {@code e} raised to the power
+     * of this vector minus the broadcast of {@code -1}, selecting lane elements
+     * controlled by a mask
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.exp(m).sub(this.species().broadcast(1), m)
+     * }</pre>
+     * <p>
+     * This is a vector unary operation where the {@link Math#expm1} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the broadcast of Euler's number {@code e} raised to the power of
+     * this vector minus the broadcast of {@code -1}
+     */
     public $abstractvectortype$<S> expm1(Mask<$Boxtype$,S> m) {
         return uOp(m, (i, a) -> ($type$) Math.expm1((double) a));
     }
 
+    /**
+     * Calculates the product of this vector and a first input vector summed
+     * with a second input vector.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(v1).add(v2)
+     * }</pre>
+     * <p>
+     * This is a vector ternary operation where the {@link Math#fma} operation
+     * is applied to lane elements.
+     *
+     * @param v1 the first input vector
+     * @param v2 the second input vector
+     * @return the product of this vector and the first input vector summed with
+     * the second input vector
+     */
     public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> v1, Vector<$Boxtype$,S> v2) {
         return tOp(v1, v2, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
+    /**
+     * Calculates the product of this vector and the broadcast of a first input
+     * scalar summed with the broadcast of a second input scalar.
+     * More specifically as if the following:
+     * <pre>{@code
+     *   this.fma(this.species().broadcast(s1), this.species().broadcast(s2))
+     * }</pre>
+     * <p>
+     * This is a vector ternary operation where the {@link Math#fma} operation
+     * is applied to lane elements.
+     *
+     * @param s1 the first input scalar
+     * @param s2 the second input scalar
+     * @return the product of this vector and the broadcast of a first input
+     * scalar summed with the broadcast of a second input scalar
+     */
     public abstract $abstractvectortype$<S> fma($type$ s1, $type$ s2);
 
+    /**
+     * Calculates the product of this vector and a first input vector summed
+     * with a second input vector, selecting lane elements controlled by a mask.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(v1, m).add(v2, m)
+     * }</pre>
+     * <p>
+     * This is a vector ternary operation where the {@link Math#fma} operation
+     * is applied to lane elements.
+     *
+     * @param v1 the first input vector
+     * @param v2 the second input vector
+     * @param m the mask controlling lane selection
+     * @return the product of this vector and the first input vector summed with
+     * the second input vector
+     */
     public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> v1, Vector<$Boxtype$,S> v2, Mask<$Boxtype$,S> m) {
         return tOp(v1, v2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
+    /**
+     * Calculates the product of this vector and the broadcast of a first input
+     * scalar summed with the broadcast of a second input scalar, selecting lane
+     * elements controlled by a mask
+     * More specifically as if the following:
+     * <pre>{@code
+     *   this.fma(this.species().broadcast(s1), this.species().broadcast(s2), m)
+     * }</pre>
+     * <p>
+     * This is a vector ternary operation where the {@link Math#fma} operation
+     * is applied to lane elements.
+     *
+     * @param s1 the first input scalar
+     * @param s2 the second input scalar
+     * @param m the mask controlling lane selection
+     * @return the product of this vector and the broadcast of a first input
+     * scalar summed with the broadcast of a second input scalar
+     */
     public abstract $abstractvectortype$<S> fma($type$ s1, $type$ s2, Mask<$Boxtype$,S> m);
 
+// Computes the square root of the sum of the squares of x and y
+
+    /**
+     * Calculates square root of the sum of the squares of this vector and an
+     * input vector.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(this).add(v.mul(v)).sqrt()
+     * }</pre>
+     * <p>
+     * This is a vector binary operation where the {@link Math#hypot} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return square root of the sum of the squares of this vector and an input
+     * vector
+     */
     public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> v) {
         return bOp(v, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
     }
 
+    /**
+     * Calculates square root of the sum of the squares of this vector and the
+     * broadcast of an input scalar.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(this).add(this.species().broadcast(v * v)).sqrt()
+     * }</pre>
+     * <p>
+     * This is a vector binary operation where the {@link Math#hypot} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return square root of the sum of the squares of this vector and the
+     * broadcast of an input scalar
+     */
     public abstract $abstractvectortype$<S> hypot($type$ s);
 
+    /**
+     * Calculates square root of the sum of the squares of this vector and an
+     * input vector, selecting lane elements controlled by a mask.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(this, m).add(v.mul(v), m).sqrt(m)
+     * }</pre>
+     * <p>
+     * This is a vector binary operation where the {@link Math#hypot} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return square root of the sum of the squares of this vector and an input
+     * vector
+     */
     public $abstractvectortype$<S> hypot(Vector<$Boxtype$,S> v, Mask<$Boxtype$,S> m) {
         return bOp(v, m, (i, a, b) -> ($type$) Math.hypot((double) a, (double) b));
     }
 
+    /**
+     * Calculates square root of the sum of the squares of this vector and the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(this, m).add(this.species().broadcast(v * v), m).sqrt(m)
+     * }</pre>
+     * <p>
+     * This is a vector binary operation where the {@link Math#hypot} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return square root of the sum of the squares of this vector and the
+     * broadcast of an input scalar
+     */
     public abstract $abstractvectortype$<S> hypot($type$ s, Mask<$Boxtype$,S> m);
 #end[FP]
 

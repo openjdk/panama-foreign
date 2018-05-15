@@ -435,192 +435,772 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     @Override
     public abstract FloatVector<S> shiftER(int i);
 
+    /**
+     * Divides this vector by an input vector.
+     * <p>
+     * This is a vector binary operation where the primitive division
+     * operation ({@code /}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the result of dividing this vector by the input vector
+     */
     public FloatVector<S> div(Vector<Float,S> v) {
         return bOp(v, (i, a, b) -> (float) (a / b));
     }
 
+    /**
+     * Divides this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive division
+     * operation ({@code /}) is applied to lane elements.
+     *
+     * @param v the input scalar
+     * @return the result of dividing this vector by the broadcast of an input
+     * scalar
+     */
     public abstract FloatVector<S> div(float s);
 
+    /**
+     * Divides this vector by an input vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive division
+     * operation ({@code /}) is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the result of dividing this vector by the input vector
+     */
     public FloatVector<S> div(Vector<Float,S> v, Mask<Float, S> m) {
         return bOp(v, m, (i, a, b) -> (float) (a / b));
     }
 
+    /**
+     * Divides this vector by the broadcast of an input scalar, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive division
+     * operation ({@code /}) is applied to lane elements.
+     *
+     * @param v the input scalar
+     * @param m the mask controlling lane selection
+     * @return the result of dividing this vector by the broadcast of an input
+     * scalar
+     */
     public abstract FloatVector<S> div(float s, Mask<Float, S> m);
 
+// @@@ Many methods are refer to Math or StrictMath functions that only accept
+//     double values, what should be the behaviour for lane elements of float
+//     vectors? down and then upcast? Or will some numeric algorithms differ?
+//     The answers might also depend if strict definitions are required
+//     to ensure portability.
+//     Leveraging the existing defintions in Math/StrictMath is very convenient
+//     but its unclear if it is t
+
+    /**
+     * Calculates the square root of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sqrt} operation
+     * is applied to lane elements.
+     *
+     * @return the square root of this vector
+     */
     public FloatVector<S> sqrt() {
         return uOp((i, a) -> (float) Math.sqrt((double) a));
     }
 
+    /**
+     * Calculates the square root of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sqrt} operation
+     * ({@code -}) is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the square root of this vector
+     */
     public FloatVector<S> sqrt(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.sqrt((double) a));
     }
 
+    /**
+     * Calculates the trigonometric tangent of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#tan} operation
+     * is applied to lane elements.
+     *
+     * @return the tangent of this vector
+     */
     public FloatVector<S> tan() {
         return uOp((i, a) -> (float) Math.tan((double) a));
     }
 
+    /**
+     * Calculates the trigonometric tangent of this vector, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#tan} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the tangent of this vector
+     */
     public FloatVector<S> tan(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.tan((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic tangent of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#tanh} operation
+     * is applied to lane elements.
+     *
+     * @return the hyperbolic tangent of this vector
+     */
     public FloatVector<S> tanh() {
         return uOp((i, a) -> (float) Math.tanh((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic tangent of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#tanh} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the hyperbolic tangent of this vector
+     */
     public FloatVector<S> tanh(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.tanh((double) a));
     }
 
+    /**
+     * Calculates the trigonometric sine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sin} operation
+     * is applied to lane elements.
+     *
+     * @return the sine of this vector
+     */
     public FloatVector<S> sin() {
         return uOp((i, a) -> (float) Math.sin((double) a));
     }
 
+    /**
+     * Calculates the trigonometric sine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sin} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the sine of this vector
+     */
     public FloatVector<S> sin(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.sin((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic sine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sinh} operation
+     * is applied to lane elements.
+     *
+     * @return the hyperbolic sine of this vector
+     */
     public FloatVector<S> sinh() {
         return uOp((i, a) -> (float) Math.sinh((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic sine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#sinh} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the hyperbolic sine of this vector
+     */
     public FloatVector<S> sinh(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.sinh((double) a));
     }
 
+    /**
+     * Calculates the trigonometric cosine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cos} operation
+     * is applied to lane elements.
+     *
+     * @return the cosine of this vector
+     */
     public FloatVector<S> cos() {
         return uOp((i, a) -> (float) Math.cos((double) a));
     }
 
+    /**
+     * Calculates the trigonometric cosine of this vector, selecting lane
+     * elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cos} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the cosine of this vector
+     */
     public FloatVector<S> cos(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.cos((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic cosine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cosh} operation
+     * is applied to lane elements.
+     *
+     * @return the hyperbolic cosine of this vector
+     */
     public FloatVector<S> cosh() {
         return uOp((i, a) -> (float) Math.cosh((double) a));
     }
 
+    /**
+     * Calculates the hyperbolic cosine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cosh} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the hyperbolic cosine of this vector
+     */
     public FloatVector<S> cosh(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.cosh((double) a));
     }
 
+    /**
+     * Calculates the arc sine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#asin} operation
+     * is applied to lane elements.
+     *
+     * @return the arc sine of this vector
+     */
     public FloatVector<S> asin() {
         return uOp((i, a) -> (float) Math.asin((double) a));
     }
 
+    /**
+     * Calculates the arc sine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#asin} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the arc sine of this vector
+     */
     public FloatVector<S> asin(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.asin((double) a));
     }
 
+    /**
+     * Calculates the arc cosine of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#acos} operation
+     * is applied to lane elements.
+     *
+     * @return the arc cosine of this vector
+     */
     public FloatVector<S> acos() {
         return uOp((i, a) -> (float) Math.acos((double) a));
     }
 
+    /**
+     * Calculates the arc cosine of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#acos} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the arc cosine of this vector
+     */
     public FloatVector<S> acos(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.acos((double) a));
     }
 
+    /**
+     * Calculates the arc tangent of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#atan} operation
+     * is applied to lane elements.
+     *
+     * @return the arc tangent of this vector
+     */
     public FloatVector<S> atan() {
         return uOp((i, a) -> (float) Math.atan((double) a));
     }
 
+    /**
+     * Calculates the arc tangent of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#atan} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the arc tangent of this vector
+     */
     public FloatVector<S> atan(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.atan((double) a));
     }
 
+    /**
+     * Calculates the arc tangent of this vector divided by an input vector.
+     * <p>
+     * This is a vector binary operation where the {@link Math#atan2} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return the arc tangent of this vector divided by the input vector
+     */
     public FloatVector<S> atan2(Vector<Float,S> v) {
         return bOp(v, (i, a, b) -> (float) Math.atan2((double) a, (double) b));
     }
 
+    /**
+     * Calculates the arc tangent of this vector divided by the broadcast of an
+     * an input scalar.
+     * <p>
+     * This is a vector binary operation where the {@link Math#atan2} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return the arc tangent of this vector over the input vector
+     */
     public abstract FloatVector<S> atan2(float s);
 
+    /**
+     * Calculates the arc tangent of this vector divided by an input vector,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the {@link Math#atan2} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the arc tangent of this vector divided by the input vector
+     */
     public FloatVector<S> atan2(Vector<Float,S> v, Mask<Float,S> m) {
         return bOp(v, m, (i, a, b) -> (float) Math.atan2((double) a, (double) b));
     }
 
+    /**
+     * Calculates the arc tangent of this vector divided by the broadcast of an
+     * an input scalar, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the {@link Math#atan2} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return the arc tangent of this vector over the input vector
+     */
     public abstract FloatVector<S> atan2(float s, Mask<Float,S> m);
 
+    /**
+     * Calculates the cube root of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cbrt} operation
+     * is applied to lane elements.
+     *
+     * @return the cube root of this vector
+     */
     public FloatVector<S> cbrt() {
         return uOp((i, a) -> (float) Math.cbrt((double) a));
     }
 
+    /**
+     * Calculates the cube root of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#cbrt} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the cube root of this vector
+     */
     public FloatVector<S> cbrt(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.cbrt((double) a));
     }
 
+    /**
+     * Calculates the natural logarithm of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log} operation
+     * is applied to lane elements.
+     *
+     * @return the natural logarithm of this vector
+     */
     public FloatVector<S> log() {
         return uOp((i, a) -> (float) Math.log((double) a));
     }
 
+    /**
+     * Calculates the natural logarithm of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the natural logarithm of this vector
+     */
     public FloatVector<S> log(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.log((double) a));
     }
 
+    /**
+     * Calculates the base 10 logarithm of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log10} operation
+     * is applied to lane elements.
+     *
+     * @return the base 10 logarithm of this vector
+     */
     public FloatVector<S> log10() {
         return uOp((i, a) -> (float) Math.log10((double) a));
     }
 
+    /**
+     * Calculates the base 10 logarithm of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log10} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the base 10 logarithm of this vector
+     */
     public FloatVector<S> log10(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.log10((double) a));
     }
 
+    /**
+     * Calculates the natural logarithm of the sum of this vector and the
+     * broadcast of {@code 1}.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log1p} operation
+     * is applied to lane elements.
+     *
+     * @return the natural logarithm of the sum of this vector and the broadcast
+     * of {@code 1}
+     */
     public FloatVector<S> log1p() {
         return uOp((i, a) -> (float) Math.log1p((double) a));
     }
 
+    /**
+     * Calculates the natural logarithm of the sum of this vector and the
+     * broadcast of {@code 1}, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#log1p} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the natural logarithm of the sum of this vector and the broadcast
+     * of {@code 1}
+     */
     public FloatVector<S> log1p(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.log1p((double) a));
     }
 
+    /**
+     * Calculates this vector raised to the power of an input vector.
+     * <p>
+     * This is a vector binary operation where the {@link Math#pow} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return this vector raised to the power of an input vector
+     */
     public FloatVector<S> pow(Vector<Float,S> v) {
         return bOp(v, (i, a, b) -> (float) Math.pow((double) a, (double) b));
     }
 
+    /**
+     * Calculates this vector raised to the power of the broadcast of an input
+     * scalar.
+     * <p>
+     * This is a vector binary operation where the {@link Math#pow} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return this vector raised to the power of the broadcast of an input
+     * scalar.
+     */
     public abstract FloatVector<S> pow(float s);
 
+    /**
+     * Calculates this vector raised to the power of an input vector, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the {@link Math#pow} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return this vector raised to the power of an input vector
+     */
     public FloatVector<S> pow(Vector<Float,S> v, Mask<Float,S> m) {
         return bOp(v, m, (i, a, b) -> (float) Math.pow((double) a, (double) b));
     }
 
+    /**
+     * Calculates this vector raised to the power of the broadcast of an input
+     * scalar, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the {@link Math#pow} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return this vector raised to the power of the broadcast of an input
+     * scalar.
+     */
     public abstract FloatVector<S> pow(float s, Mask<Float,S> m);
 
+    /**
+     * Calculates the broadcast of Euler's number {@code e} raised to the power
+     * of this vector.
+     * <p>
+     * This is a vector unary operation where the {@link Math#exp} operation
+     * is applied to lane elements.
+     *
+     * @return the broadcast of Euler's number {@code e} raised to the power of
+     * this vector
+     */
     public FloatVector<S> exp() {
         return uOp((i, a) -> (float) Math.exp((double) a));
     }
 
+    /**
+     * Calculates the broadcast of Euler's number {@code e} raised to the power
+     * of this vector, selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector unary operation where the {@link Math#exp} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the broadcast of Euler's number {@code e} raised to the power of
+     * this vector
+     */
     public FloatVector<S> exp(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.exp((double) a));
     }
 
+    /**
+     * Calculates the broadcast of Euler's number {@code e} raised to the power
+     * of this vector minus the broadcast of {@code -1}.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.exp().sub(this.species().broadcast(1))
+     * }</pre>
+     * <p>
+     * This is a vector unary operation where the {@link Math#expm1} operation
+     * is applied to lane elements.
+     *
+     * @return the broadcast of Euler's number {@code e} raised to the power of
+     * this vector minus the broadcast of {@code -1}
+     */
     public FloatVector<S> expm1() {
         return uOp((i, a) -> (float) Math.expm1((double) a));
     }
 
+    /**
+     * Calculates the broadcast of Euler's number {@code e} raised to the power
+     * of this vector minus the broadcast of {@code -1}, selecting lane elements
+     * controlled by a mask
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.exp(m).sub(this.species().broadcast(1), m)
+     * }</pre>
+     * <p>
+     * This is a vector unary operation where the {@link Math#expm1} operation
+     * is applied to lane elements.
+     *
+     * @param m the mask controlling lane selection
+     * @return the broadcast of Euler's number {@code e} raised to the power of
+     * this vector minus the broadcast of {@code -1}
+     */
     public FloatVector<S> expm1(Mask<Float,S> m) {
         return uOp(m, (i, a) -> (float) Math.expm1((double) a));
     }
 
+    /**
+     * Calculates the product of this vector and a first input vector summed
+     * with a second input vector.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(v1).add(v2)
+     * }</pre>
+     * <p>
+     * This is a vector ternary operation where the {@link Math#fma} operation
+     * is applied to lane elements.
+     *
+     * @param v1 the first input vector
+     * @param v2 the second input vector
+     * @return the product of this vector and the first input vector summed with
+     * the second input vector
+     */
     public FloatVector<S> fma(Vector<Float,S> v1, Vector<Float,S> v2) {
         return tOp(v1, v2, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
+    /**
+     * Calculates the product of this vector and the broadcast of a first input
+     * scalar summed with the broadcast of a second input scalar.
+     * More specifically as if the following:
+     * <pre>{@code
+     *   this.fma(this.species().broadcast(s1), this.species().broadcast(s2))
+     * }</pre>
+     * <p>
+     * This is a vector ternary operation where the {@link Math#fma} operation
+     * is applied to lane elements.
+     *
+     * @param s1 the first input scalar
+     * @param s2 the second input scalar
+     * @return the product of this vector and the broadcast of a first input
+     * scalar summed with the broadcast of a second input scalar
+     */
     public abstract FloatVector<S> fma(float s1, float s2);
 
+    /**
+     * Calculates the product of this vector and a first input vector summed
+     * with a second input vector, selecting lane elements controlled by a mask.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(v1, m).add(v2, m)
+     * }</pre>
+     * <p>
+     * This is a vector ternary operation where the {@link Math#fma} operation
+     * is applied to lane elements.
+     *
+     * @param v1 the first input vector
+     * @param v2 the second input vector
+     * @param m the mask controlling lane selection
+     * @return the product of this vector and the first input vector summed with
+     * the second input vector
+     */
     public FloatVector<S> fma(Vector<Float,S> v1, Vector<Float,S> v2, Mask<Float,S> m) {
         return tOp(v1, v2, m, (i, a, b, c) -> Math.fma(a, b, c));
     }
 
+    /**
+     * Calculates the product of this vector and the broadcast of a first input
+     * scalar summed with the broadcast of a second input scalar, selecting lane
+     * elements controlled by a mask
+     * More specifically as if the following:
+     * <pre>{@code
+     *   this.fma(this.species().broadcast(s1), this.species().broadcast(s2), m)
+     * }</pre>
+     * <p>
+     * This is a vector ternary operation where the {@link Math#fma} operation
+     * is applied to lane elements.
+     *
+     * @param s1 the first input scalar
+     * @param s2 the second input scalar
+     * @param m the mask controlling lane selection
+     * @return the product of this vector and the broadcast of a first input
+     * scalar summed with the broadcast of a second input scalar
+     */
     public abstract FloatVector<S> fma(float s1, float s2, Mask<Float,S> m);
 
+// Computes the square root of the sum of the squares of x and y
+
+    /**
+     * Calculates square root of the sum of the squares of this vector and an
+     * input vector.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(this).add(v.mul(v)).sqrt()
+     * }</pre>
+     * <p>
+     * This is a vector binary operation where the {@link Math#hypot} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @return square root of the sum of the squares of this vector and an input
+     * vector
+     */
     public FloatVector<S> hypot(Vector<Float,S> v) {
         return bOp(v, (i, a, b) -> (float) Math.hypot((double) a, (double) b));
     }
 
+    /**
+     * Calculates square root of the sum of the squares of this vector and the
+     * broadcast of an input scalar.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(this).add(this.species().broadcast(v * v)).sqrt()
+     * }</pre>
+     * <p>
+     * This is a vector binary operation where the {@link Math#hypot} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @return square root of the sum of the squares of this vector and the
+     * broadcast of an input scalar
+     */
     public abstract FloatVector<S> hypot(float s);
 
+    /**
+     * Calculates square root of the sum of the squares of this vector and an
+     * input vector, selecting lane elements controlled by a mask.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(this, m).add(v.mul(v), m).sqrt(m)
+     * }</pre>
+     * <p>
+     * This is a vector binary operation where the {@link Math#hypot} operation
+     * is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return square root of the sum of the squares of this vector and an input
+     * vector
+     */
     public FloatVector<S> hypot(Vector<Float,S> v, Mask<Float,S> m) {
         return bOp(v, m, (i, a, b) -> (float) Math.hypot((double) a, (double) b));
     }
 
+    /**
+     * Calculates square root of the sum of the squares of this vector and the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * More specifically as if the following (ignoring any differences in
+     * numerical accuracy):
+     * <pre>{@code
+     *   this.mul(this, m).add(this.species().broadcast(v * v), m).sqrt(m)
+     * }</pre>
+     * <p>
+     * This is a vector binary operation where the {@link Math#hypot} operation
+     * is applied to lane elements.
+     *
+     * @param s the input scalar
+     * @param m the mask controlling lane selection
+     * @return square root of the sum of the squares of this vector and the
+     * broadcast of an input scalar
+     */
     public abstract FloatVector<S> hypot(float s, Mask<Float,S> m);
 
 
@@ -683,6 +1263,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 //     could be a "go faster" option that is unspecified, essentially giving
 //     implementation flexibility at the expense of reproducibility and/or
 //     accuracy.
+// @@@ Mask versions?
 
     /**
      * Adds all lane elements of this vector.

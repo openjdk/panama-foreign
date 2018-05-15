@@ -832,6 +832,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
 //     could be a "go faster" option that is unspecified, essentially giving
 //     implementation flexibility at the expense of reproducibility and/or
 //     accuracy.
+// @@@ Mask versions?
 
     /**
      * Adds all lane elements of this vector.
