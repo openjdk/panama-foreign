@@ -32,7 +32,7 @@ import java.nicl.types.*;
 import java.nicl.metadata.*;
 
 public class GlobalVariable {
-    @Header(path="dummy")
+    @NativeHeader
     static interface globvar {
         @C(file="dummy", line=1, column=1, USR="c:@F@init")
         @NativeType(layout="()V", ctype="dummy", size=1)

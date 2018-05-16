@@ -47,8 +47,7 @@ final class AsmCodeFactory extends CodeFactory {
     private static final String ARRAY = ANNOTATION_PKG_PREFIX + "Array;";
     private static final String C = ANNOTATION_PKG_PREFIX + "C;";
     private static final String CALLING_CONVENTION = ANNOTATION_PKG_PREFIX + "CallingConvention;";
-    private static final String HEADER = ANNOTATION_PKG_PREFIX + "Header;";
-    private static final String LIBRARY_DEPENDENCIES = ANNOTATION_PKG_PREFIX + "LibraryDependencies;";
+    private static final String NATIVE_HEADER = ANNOTATION_PKG_PREFIX + "NativeHeader;";
     private static final String NATIVE_TYPE = ANNOTATION_PKG_PREFIX + "NativeType;";
     private static final String OFFSET = ANNOTATION_PKG_PREFIX + "Offset;";
 
@@ -74,25 +73,23 @@ final class AsmCodeFactory extends CodeFactory {
         global_cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
                 internal_name,
                 null, "java/lang/Object", null);
-        AnnotationVisitor av = global_cw.visitAnnotation(HEADER, true);
-        av.visit("path", owner.path.toAbsolutePath().toString());
-        av.visitEnd();
+        AnnotationVisitor av = global_cw.visitAnnotation(NATIVE_HEADER, true);
+        av.visit("headerPath", owner.path.toAbsolutePath().toString());
         if (owner.libraries != null && !owner.libraries.isEmpty()) {
-            AnnotationVisitor deps = global_cw.visitAnnotation(LIBRARY_DEPENDENCIES, true);
-            AnnotationVisitor libNames = deps.visitArray("names");
+            AnnotationVisitor libNames = av.visitArray("libraries");
             for (String name : owner.libraries) {
                 libNames.visit(null, name);
             }
             libNames.visitEnd();
             if (owner.libraryPaths != null && !owner.libraryPaths.isEmpty()) {
-                AnnotationVisitor libPaths = deps.visitArray("paths");
+                AnnotationVisitor libPaths = av.visitArray("libraryPaths");
                 for (String path : owner.libraryPaths) {
                     libPaths.visit(null, path);
                 }
                 libPaths.visitEnd();
             }
-            deps.visitEnd();
         }
+        av.visitEnd();
     }
 
     private void handleException(Exception ex) {

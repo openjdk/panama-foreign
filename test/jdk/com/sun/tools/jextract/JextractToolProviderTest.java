@@ -28,8 +28,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nicl.metadata.Header;
-import java.nicl.metadata.LibraryDependencies;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.types.Pointer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -213,10 +212,10 @@ public class JextractToolProviderTest {
         checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
         try {
             Class<?> cls = loadClass("hello", helloJar);
-            // check header annotation
-            Header header = cls.getAnnotation(Header.class);
+            // check NativeHeader annotation
+            NativeHeader header = cls.getAnnotation(NativeHeader.class);
             assertNotNull(header);
-            assertEquals(header.path(), helloH.toString());
+            assertEquals(header.headerPath(), helloH.toString());
 
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
@@ -232,10 +231,10 @@ public class JextractToolProviderTest {
         checkSuccess(null, targetPkgOption, "com.acme", "-o", helloJar.toString(), helloH.toString());
         try {
             Class<?> cls = loadClass("com.acme.hello", helloJar);
-            // check header annotation
-            Header header = cls.getAnnotation(Header.class);
+            // check NativeHeader annotation
+            NativeHeader header = cls.getAnnotation(NativeHeader.class);
             assertNotNull(header);
-            assertEquals(header.path(), helloH.toString());
+            assertEquals(header.headerPath(), helloH.toString());
 
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
@@ -321,13 +320,13 @@ public class JextractToolProviderTest {
         checkSuccess(null, "-l", "hello", "-o", helloJar.toString(), helloH.toString());
         try {
             Class<?> cls = loadClass("hello", helloJar);
-            // check LibraryDependencies annotation capture -l value
-            LibraryDependencies libDeps = cls.getAnnotation(LibraryDependencies.class);
-            assertNotNull(libDeps);
-            assertEquals(libDeps.names().length, 1);
-            assertEquals(libDeps.names()[0], "hello");
+            // check that NativeHeader annotation captures -l value
+            NativeHeader header = cls.getAnnotation(NativeHeader.class);
+            assertNotNull(header);
+            assertEquals(header.libraries().length, 1);
+            assertEquals(header.libraries()[0], "hello");
             // no library paths (rpath) set
-            assertEquals(libDeps.paths().length, 0);
+            assertEquals(header.libraryPaths().length, 0);
         } finally {
             deleteFile(helloJar);
         }
@@ -343,13 +342,13 @@ public class JextractToolProviderTest {
              "-o", helloJar.toString(), helloH.toString());
         try {
             Class<?> cls = loadClass("hello", helloJar);
-            // check LibraryDependencies annotation captures -l and -rpath values
-            LibraryDependencies libDeps = cls.getAnnotation(LibraryDependencies.class);
-            assertNotNull(libDeps);
-            assertEquals(libDeps.names().length, 1);
-            assertEquals(libDeps.names()[0], "hello");
-            assertEquals(libDeps.paths().length, 1);
-            assertEquals(libDeps.paths()[0], rpathDir.toString());
+            // check that NativeHeader annotation captures -l and -rpath values
+            NativeHeader header = cls.getAnnotation(NativeHeader.class);
+            assertNotNull(header);
+            assertEquals(header.libraries().length, 1);
+            assertEquals(header.libraries()[0], "hello");
+            assertEquals(header.libraryPaths().length, 1);
+            assertEquals(header.libraryPaths()[0], rpathDir.toString());
         } finally {
             deleteFile(helloJar);
         }

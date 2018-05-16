@@ -30,7 +30,7 @@ import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 
 public class Upcall {
@@ -38,7 +38,7 @@ public class Upcall {
 
     private static final int MAGIC_INTEGER = 4711;
 
-    @Header(path="dummy")
+    @NativeHeader
     public static interface upcall {
         @FunctionalInterface
         static interface visitor {

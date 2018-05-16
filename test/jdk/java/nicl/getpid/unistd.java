@@ -24,10 +24,10 @@
 
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 
-@Header(path="unistd.h")
+@NativeHeader(headerPath="unistd.h")
 public interface unistd {
     @C(file="unistd.h", line=47, column=11, USR="c:@F@getpid")
     @NativeType(layout="()i", ctype="int (void)", size=1)

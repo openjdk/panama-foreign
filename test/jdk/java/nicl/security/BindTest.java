@@ -35,7 +35,7 @@ import java.nicl.metadata.*;
  * @summary Tests for bind method(s) security checks
  */
 public class BindTest {
-    @Header(path="dummy")
+    @NativeHeader
     static interface system {
         @C(file="dummy", line=1, column=1, USR="c:@F@getpid")
         @NativeType(layout="()i", ctype="dummy", size=1)

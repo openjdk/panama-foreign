@@ -1,7 +1,7 @@
 package com.acme;
 
 import java.nicl.metadata.Offset;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.C;
@@ -13,7 +13,7 @@ import java.nicl.types.Reference;
  * This test is platform dependent, as the C type size may vary on platform.
  * Current value is based on x64 with __LP64__.
  */
-@Header(path="simple.h")
+@NativeHeader(headerPath="simple.h")
 public interface simple {
     @C(file="simple.h", line=1, column=5, USR="")
     @NativeType(name="global", layout="i", ctype="int", size=4)

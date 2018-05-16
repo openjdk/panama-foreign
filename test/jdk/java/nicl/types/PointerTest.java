@@ -48,7 +48,7 @@ public class PointerTest {
         ptrs = Libraries.bindRaw(pointers.class, lib);
     }
 
-    @Header(path="dummy")
+    @NativeHeader
     static interface pointers {
         @C(file="dummy", line=47, column=11, USR="c:@F@get_strings")
         @CallingConvention(value=1)

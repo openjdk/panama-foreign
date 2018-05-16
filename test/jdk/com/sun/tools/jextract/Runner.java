@@ -23,7 +23,7 @@
 
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 import java.nicl.metadata.Offset;
 import java.nio.file.Files;
@@ -217,12 +217,12 @@ public class Runner {
             assertNotNull(ac);
             verifyAnnotationC(ac, expected.getAnnotation(C.class));
         } else {
-            Header ah = actual.getAnnotation(Header.class);
+            NativeHeader ah = actual.getAnnotation(NativeHeader.class);
             assertNotNull(ah);
-            Header eh = actual.getAnnotation(Header.class);
+            NativeHeader eh = actual.getAnnotation(NativeHeader.class);
             assertNotNull(eh);
-            assertEquals(Paths.get(ah.path()).getFileName(),
-                    Paths.get(eh.path()).getFileName());
+            assertEquals(Paths.get(ah.headerPath()).getFileName(),
+                    Paths.get(eh.headerPath()).getFileName());
         }
 
     }

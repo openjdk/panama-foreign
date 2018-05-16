@@ -30,13 +30,13 @@ import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 
 public class DoubleUpcall {
     private static final boolean DEBUG = false;
 
-    @Header(path="dummy")
+    @NativeHeader
     public static interface upcall {
         @FunctionalInterface
         static interface cb {

@@ -31,7 +31,7 @@ import java.nicl.Libraries;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
@@ -42,7 +42,7 @@ public class CallbackSort {
     private static final boolean DEBUG = Boolean.getBoolean("CallbackSort.DEBUG");
     private boolean upcallCalled = false;
 
-    @Header(path="dummy")
+    @NativeHeader
     public static interface stdlib {
         @FunctionalInterface
         static interface compar {

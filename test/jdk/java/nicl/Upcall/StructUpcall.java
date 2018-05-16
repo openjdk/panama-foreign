@@ -32,7 +32,7 @@ import java.nicl.Libraries;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 import java.nicl.metadata.Offset;
 import java.nicl.types.LayoutType;
@@ -42,7 +42,7 @@ import java.nicl.types.Reference;
 public class StructUpcall {
     private static final boolean DEBUG = false;
 
-    @Header(path="dummy")
+    @NativeHeader
     public static interface Index {
         @NativeType(layout="[iiippp]", ctype="dummy", size=40, isRecordType=true)
         @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")

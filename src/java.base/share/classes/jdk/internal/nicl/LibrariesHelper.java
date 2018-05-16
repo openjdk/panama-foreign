@@ -34,7 +34,7 @@ import java.lang.invoke.MethodType;
 import java.io.File;
 import java.nicl.Library;
 import java.nicl.Libraries;
-import java.nicl.metadata.LibraryDependencies;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -120,15 +120,15 @@ public class LibrariesHelper {
     /**
      * Generate an implementation class for a header type
      *
-     * @param c an interface representing a header file - must have an @Header annotation
+     * @param c an interface representing a header file - must have an @NativeHeader annotation
      * @param lookup the symbol lookup to use to look up native symbols
      * @return a class implementing the header
      */
     private static <T> Class<? extends T> getOrCreateImpl(Class<T> c, SymbolLookup lookup)
             throws SecurityException, InternalError {
         /*
-        if (!c.isAnnotationPresent(Header.class)) {
-            throw new IllegalArgumentException("No @Header annotation on class " + c);
+        if (!c.isAnnotationPresent(NativeHeader.class)) {
+            throw new IllegalArgumentException("No @NativeHeader annotation on class " + c);
         }
         */
 
@@ -142,8 +142,8 @@ public class LibrariesHelper {
     private static <T> Class<? extends T> getOrCreateCivilizedImpl(Class<T> c, T rawInstance)
             throws SecurityException, InternalError {
         /*
-        if (!c.isAnnotationPresent(Header.class)) {
-            throw new IllegalArgumentException("No @Header annotation on class " + c);
+        if (!c.isAnnotationPresent(NativeHeader.class)) {
+            throw new IllegalArgumentException("No @NativeHeader annotation on class " + c);
         }
         */
 
@@ -180,31 +180,15 @@ public class LibrariesHelper {
         }
     }
 
-    private static Library[] loadLibraries(Lookup lookup, LibraryDependencies deps) {
-        return loadLibraries(lookup, deps.paths(), deps.names());
-    }
-
-    private static LibraryDependencies getLibraryDependenciesForClass(Class<?> c) {
-        if (c.isAnnotationPresent(LibraryDependencies.class)) {
-            return c.getAnnotation(LibraryDependencies.class);
-        } else {
-            return null;
-        }
+    private static Library[] loadLibraries(Lookup lookup, NativeHeader nativeHeader) {
+        return loadLibraries(lookup, nativeHeader.libraryPaths(), nativeHeader.libraries());
     }
 
     private static SymbolLookup getSymbolLookupForClass(Lookup lookup, Class<?> c) {
-        LibraryDependencies deps = getLibraryDependenciesForClass(c);
-
-        Library[] libs;
-
-        if (deps == null) {
-            // FIXME: Require @LibraryDependencies on all relevant classes
-            // System.err.println("WARNING: No @LibraryDependencies annotation on class " + c.getName());
-            // throw new IllegalArgumentException("No @LibraryDependencies annotation on class " + c.getName());
-            libs = new Library[] { getDefaultLibrary() };
-        } else {
-            libs = loadLibraries(lookup, deps);
-        }
+        NativeHeader nativeHeader = c.getAnnotation(NativeHeader.class);
+        Library[] libs = nativeHeader == null || nativeHeader.libraries().length == 0 ?
+            new Library[] { getDefaultLibrary() } :
+            loadLibraries(lookup, nativeHeader);
 
         return new SymbolLookup(libs);
     }
@@ -252,10 +236,5 @@ public class LibrariesHelper {
 
     public static <T> Object bind(Lookup lookup, Class<T> c) {
         return bind(c, getSymbolLookupForClass(lookup, c));
-    }
-
-    public static MethodHandle lookupNativeMethod(Library[] libs, String symbolName, MethodType methodType, boolean isVarArgs) throws NoSuchMethodException, IllegalAccessException {
-        NativeInvoker invoker = new NativeInvoker(methodType, isVarArgs, new SymbolLookup(libs), symbolName);
-        return invoker.getBoundMethodHandle().asCollector(Object[].class, methodType.parameterCount());
     }
 }

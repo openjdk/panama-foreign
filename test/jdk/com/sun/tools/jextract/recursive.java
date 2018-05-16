@@ -1,7 +1,7 @@
 package com.acme;
 
 import java.nicl.metadata.Offset;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.C;
@@ -13,7 +13,7 @@ import java.nicl.types.Reference;
  * This test is platform dependent, as the C type size may vary on platform.
  * Current value is based on x64 with __LP64__.
  */
-@Header(path="recursive.h")
+@NativeHeader(headerPath="recursive.h")
 public interface recursive {
 
     @C(file="recursive.h", line=1, column=8, USR="")

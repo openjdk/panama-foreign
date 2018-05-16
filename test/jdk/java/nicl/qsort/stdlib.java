@@ -24,11 +24,11 @@
 
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 import java.nicl.types.Pointer;
 
-@Header(path="stdlib.h")
+@NativeHeader(headerPath="stdlib.h")
 public interface stdlib {
     @FunctionalInterface
     static interface compar {

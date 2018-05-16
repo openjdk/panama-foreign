@@ -24,11 +24,11 @@
 
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
-import java.nicl.metadata.Header;
+import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
 import java.nicl.types.Pointer;
 
-@Header(path="/usr/include/stdio.h")
+@NativeHeader(headerPath="/usr/include/stdio.h")
 public interface stdio {
     @C(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@getpid")
     @NativeType(layout="(p:c*)i", ctype="int (const char*, ...)", size=1)

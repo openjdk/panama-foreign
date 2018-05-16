@@ -34,7 +34,7 @@ import java.nicl.types.*;
 import java.nicl.metadata.*;
 
 public class UnixSystem {
-    @Header(path="dummy")
+    @NativeHeader
     static interface system {
         @C(file="dummy", line=1, column=1, USR="c:@F@getpid")
         @NativeType(layout="()i", ctype="dummy", size=1)
@@ -62,7 +62,7 @@ public class UnixSystem {
         public abstract Reference<Pointer<Pointer<Byte>>> environ$ref();
     }
 
-    @Header(path="dummy")
+    @NativeHeader
     static interface LinuxSystem {
         @C(file="dummy", line=1, column=1, USR="c:@F@__xstat")
         @NativeType(layout="(ip:cp:[iiiiiiiiiiiii])i", ctype="dummy", size=1)
@@ -80,7 +80,7 @@ public class UnixSystem {
         }
     }
 
-    @Header(path="dummy")
+    @NativeHeader
     static interface MacOSXSystem {
         @C(file="dummy", line=1, column=1, USR="c:@F@stat")
         @NativeType(layout="(ip:cp:[iiiiiiiiiiiiiiiiiiiiii])i", ctype="dummy", size=1)
