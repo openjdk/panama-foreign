@@ -101,7 +101,7 @@ public class UnixSystem {
     private static final String OS = System.getProperty("os.name");
 
     public void testGetpid() {
-        system i = Libraries.bindRaw(MethodHandles.lookup(), system.class);
+        system i = Libraries.bind(MethodHandles.lookup(), system.class);
 
         long actual = i.getpid();
         long expected = ProcessHandle.current().pid();
@@ -130,7 +130,7 @@ public class UnixSystem {
     }
 
     public void testPrintf() {
-        system i = Libraries.bindRaw(MethodHandles.lookup(), system.class);
+        system i = Libraries.bind(MethodHandles.lookup(), system.class);
 
         int n;
 
@@ -156,7 +156,7 @@ public class UnixSystem {
     }
 
     private int getSizeUsingStat_Linux(String path) throws Exception {
-        LinuxSystem i = Libraries.bindRaw(MethodHandles.lookup(), LinuxSystem.class);
+        LinuxSystem i = Libraries.bind(MethodHandles.lookup(), LinuxSystem.class);
 
         try (Scope scope = Scope.newNativeScope()) {
             LinuxSystem.stat s = scope.allocateStruct(LayoutType.create(LinuxSystem.stat.class));
@@ -174,7 +174,7 @@ public class UnixSystem {
     }
 
     private int getSizeUsingStat_MacOSX(String path) throws Exception {
-        MacOSXSystem i = Libraries.bindRaw(MethodHandles.lookup(), MacOSXSystem.class);
+        MacOSXSystem i = Libraries.bind(MethodHandles.lookup(), MacOSXSystem.class);
 
         try (Scope scope = Scope.newNativeScope()) {
             MacOSXSystem.stat s = scope.allocateStruct(LayoutType.create(MacOSXSystem.stat.class));
@@ -193,7 +193,7 @@ public class UnixSystem {
 
     private static void throwErrnoException(String msg) {
         try {
-            system sys = Libraries.bindRaw(MethodHandles.lookup(), system.class);
+            system sys = Libraries.bind(MethodHandles.lookup(), system.class);
             Pointer<Byte> p = sys.strerror(sys.errno$get());
             throw new Exception(msg + ": " + Pointer.toString(p));
         } catch (Throwable t) {
@@ -202,7 +202,7 @@ public class UnixSystem {
     }
 
     public void testStat() {
-        system i = Libraries.bindRaw(MethodHandles.lookup(), system.class);
+        system i = Libraries.bind(MethodHandles.lookup(), system.class);
 
         int nBytes = 4711;
 
@@ -231,7 +231,7 @@ public class UnixSystem {
 
 
     public void testEnviron() {
-        system i = Libraries.bindRaw(MethodHandles.lookup(), system.class);
+        system i = Libraries.bind(MethodHandles.lookup(), system.class);
 
         {
             // Pointer version

@@ -33,7 +33,7 @@ public class Getpid {
     public void testGetpid() {
         // Request an instance of unistd. This will magically weave an implementation
         // class on the fly (if it't not already there) and return an instance of it
-        unistd unistd = Libraries.bindRaw(MethodHandles.lookup(), unistd.class);
+        unistd unistd = Libraries.bind(MethodHandles.lookup(), unistd.class);
 
         // call getpid(), which will return the pid for the current JVM process
         int pid = unistd.getpid();

@@ -125,7 +125,7 @@ public class StructUpcall {
     }
 
     public void test() {
-        Index i = Libraries.bindRaw(Index.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
+        Index i = Libraries.bind(Index.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
 
         try (Scope scope = Scope.newNativeScope()) {
             Reference<Index.MyStruct> s = scope.allocateStruct(LayoutType.create(Index.MyStruct.class));

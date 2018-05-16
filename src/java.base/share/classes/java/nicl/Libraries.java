@@ -25,7 +25,6 @@ package java.nicl;
 import java.io.File;
 
 import jdk.internal.nicl.LibrariesHelper;
-import jdk.internal.reflect.CallerSensitive;
 
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Objects;
@@ -41,12 +40,12 @@ public final class Libraries {
      * @param lib the library in which to look for native symbols
      * @return
      */
-    public static <T> T bindRaw(Class<T> c, Library lib) {
+    public static <T> T bind(Class<T> c, Library lib) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.bindRaw"));
         }
-        return LibrariesHelper.bindRaw(c, lib);
+        return LibrariesHelper.bind(c, lib);
     }
 
     /**
@@ -56,44 +55,13 @@ public final class Libraries {
      * @param c the class to bind
      * @return
      */
-    public static <T> T bindRaw(Lookup lookup, Class<T> c) {
+    public static <T> T bind(Lookup lookup, Class<T> c) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.nicl.bindRaw"));
         }
         checkLookup(lookup);
-        return LibrariesHelper.bindRaw(lookup, c);
-    }
-
-    /**
-     * Create a civilized version of the interface
-     *
-     * @param lookup the lookup object (used for implicit native library lookup)
-     * @param c the raw, uncivilized version of the interface
-     * @return
-     */
-    public static Object bind(Lookup lookup, Class<?> c) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkPermission(new RuntimePermission("java.nicl.bind"));
-        }
-        checkLookup(lookup);
         return LibrariesHelper.bind(lookup, c);
-    }
-
-    /**
-     * Create a civilized version of the interface
-     *
-     * @param c the raw, uncivilized version of the interface
-     * @param lib the library in which to look for native symbols
-     * @return
-     */
-    public static Object bind(Class<?> c, Library lib) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkPermission(new RuntimePermission("java.nicl.bind"));
-        }
-        return LibrariesHelper.bind(c, lib);
     }
 
     /**

@@ -45,30 +45,16 @@ public class BindLookupTest {
     }
 
     @Test(dataProvider = "Lookups")
-    public void testBindRaw(Lookup lookup, Class<?> exceptionClass) {
-        checkIllegalArgumentException(()-> {
-            system i = Libraries.bindRaw(lookup, system.class);
-         }, exceptionClass);
-    }
-
-    @Test(dataProvider = "Lookups")
     public void testBind(Lookup lookup, Class<?> exceptionClass) {
         checkIllegalArgumentException(()-> {
-            Libraries.bind(lookup, system.class);
+            system i = Libraries.bind(lookup, system.class);
          }, exceptionClass);
-    }
-
-    @Test
-    public void testBindRawWithLibrary() {
-        checkIllegalArgumentException(()-> {
-            system i = Libraries.bindRaw(system.class, Libraries.getDefaultLibrary());
-         }, null);
     }
 
     @Test
     public void testBindWithLibrary() {
         checkIllegalArgumentException(()-> {
-            system i = Libraries.bindRaw(system.class, Libraries.getDefaultLibrary());
+            system i = Libraries.bind(system.class, Libraries.getDefaultLibrary());
          }, null);
     }
 
@@ -85,7 +71,7 @@ public class BindLookupTest {
             test.run();
             Assert.assertNull(exceptionClass, "should not reach here");
         } catch (Throwable t) {
-            Assert.assertTrue(t.getClass().equals(exceptionClass), "Got exception as expected");
+            Assert.assertEquals(t.getClass(), exceptionClass, "Got exception as expected");
             t.printStackTrace();
         }
     }

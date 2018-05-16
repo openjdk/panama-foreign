@@ -26,7 +26,6 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandles;
 import java.nicl.*;
-import java.nicl.types.*;
 import java.nicl.metadata.*;
 
 /**
@@ -44,30 +43,16 @@ public class BindTest {
     }
 
     @Test
-    public void testBindRaw() {
-        checkSecurityException(()-> {
-            system i = Libraries.bindRaw(MethodHandles.lookup(), system.class);
-         });
-    }
-
-    @Test
     public void testBind() {
         checkSecurityException(()-> {
-            Libraries.bind(MethodHandles.lookup(), system.class);
-         });
-    }
-
-    @Test
-    public void testBindRawWithLibrary() {
-        checkSecurityException(()-> {
-            system i = Libraries.bindRaw(system.class, Libraries.getDefaultLibrary());
+            system i = Libraries.bind(MethodHandles.lookup(), system.class);
          });
     }
 
     @Test
     public void testBindWithLibrary() {
         checkSecurityException(()-> {
-            system i = Libraries.bindRaw(system.class, Libraries.getDefaultLibrary());
+            system i = Libraries.bind(system.class, Libraries.getDefaultLibrary());
          });
     }
 

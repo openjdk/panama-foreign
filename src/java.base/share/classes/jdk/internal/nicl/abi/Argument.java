@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.nicl;
+package jdk.internal.nicl.abi;
 
 import java.nicl.layout.Layout;
 import java.lang.invoke.MethodType;

@@ -78,7 +78,7 @@ public class CallbackSort {
     }
 
     private void doSort(NativeIntArray elems) {
-        stdlib i = Libraries.bindRaw(stdlib.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
+        stdlib i = Libraries.bind(stdlib.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
         Pointer<Void> p = elems.getBasePointer().cast(LayoutType.create(void.class));
         i.slowsort(p, elems.size(), elems.getElemSize(), new comparator());
     }

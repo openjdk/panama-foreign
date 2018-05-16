@@ -71,7 +71,7 @@ public class Upcall {
     }
 
     public void test() {
-        upcall i = Libraries.bindRaw(upcall.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
+        upcall i = Libraries.bind(upcall.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
         visitorImpl v = new visitorImpl();
 
         i.do_upcall(v, MAGIC_INTEGER);

@@ -25,7 +25,6 @@ package jdk.internal.nicl.abi;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import jdk.internal.nicl.Argument;
 import java.nicl.layout.Layout;
 import java.util.ArrayList;
 import java.util.List;

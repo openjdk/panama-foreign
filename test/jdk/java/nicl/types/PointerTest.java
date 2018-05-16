@@ -45,7 +45,7 @@ public class PointerTest {
 
     static {
         lib = Libraries.loadLibrary(MethodHandles.lookup(), "Pointers");
-        ptrs = Libraries.bindRaw(pointers.class, lib);
+        ptrs = Libraries.bind(pointers.class, lib);
     }
 
     @NativeHeader

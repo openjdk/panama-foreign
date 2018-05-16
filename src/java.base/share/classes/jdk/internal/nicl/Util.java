@@ -223,67 +223,6 @@ public final class Util {
         return MethodType.methodType(method.getReturnType(), method.getParameterTypes());
     }
 
-    /**
-     * Return the number of (JVM) stack slots consumed by a type
-     *
-     * @param c the type to query
-     * @return the number of stack slots consumed by the type
-     */
-    static int getSlotsForType(Class<?> c) {
-        if (c == long.class || c == double.class) {
-            return 2;
-        }
-        return 1;
-    }
-
-    static int returnInsn(Class<?> cls) {
-        if (cls.isPrimitive()) {
-            switch (PrimitiveClassType.typeof(cls)) {
-                case BOOLEAN: // fallthrough
-                case BYTE: // fallthrough
-                case SHORT: // fallthrough
-                case CHAR: // fallthrough
-                case INT:
-                    return IRETURN;
-                case LONG:
-                    return LRETURN;
-                case FLOAT:
-                    return FRETURN;
-                case DOUBLE:
-                    return DRETURN;
-                case VOID:
-                    return RETURN;
-                default:
-                    throw new Error("Unsupported: " + cls.getName());
-            }
-        } else {
-            return ARETURN;
-        }
-    }
-
-    static int loadInsn(Class<?> cls) {
-        if (cls.isPrimitive()) {
-            switch (PrimitiveClassType.typeof(cls)) {
-                case BOOLEAN: // fallthrough
-                case BYTE: // fallthrough
-                case SHORT: // fallthrough
-                case CHAR: // fallthrough
-                case INT:
-                    return ILOAD;
-                case LONG:
-                    return LLOAD;
-                case FLOAT:
-                    return FLOAD;
-                case DOUBLE:
-                    return DLOAD;
-                default:
-                    throw new Error("Unsupported: " + cls.getName());
-            }
-        } else {
-            return ALOAD;
-        }
-    }
-
     public static boolean isFunctionalInterface(Class<?> c) {
         return c.isAnnotationPresent(FunctionalInterface.class);
     }

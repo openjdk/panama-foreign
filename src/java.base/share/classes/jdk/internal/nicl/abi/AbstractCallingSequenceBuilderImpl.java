@@ -22,7 +22,6 @@
  */
 package jdk.internal.nicl.abi;
 
-import jdk.internal.nicl.Argument;
 import java.util.ArrayList;
 
 public abstract class AbstractCallingSequenceBuilderImpl {

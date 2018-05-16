@@ -22,7 +22,7 @@
  */
 package jdk.internal.nicl.abi.sysv.x64;
 
-import jdk.internal.nicl.Argument;
+import jdk.internal.nicl.abi.Argument;
 import jdk.internal.nicl.Util;
 import jdk.internal.nicl.abi.AbstractCallingSequenceBuilderImpl;
 import jdk.internal.nicl.abi.ArgumentBinding;

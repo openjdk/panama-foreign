@@ -27,11 +27,7 @@ import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.org.objectweb.asm.Type;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.lang.invoke.MethodType;
-import java.io.File;
 import java.nicl.Library;
 import java.nicl.Libraries;
 import java.nicl.metadata.NativeHeader;
@@ -50,28 +46,13 @@ public class LibrariesHelper {
 
     static JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
 
-    enum ImplType {
-        HEADER, CIVILIZED;
-
-        public String getImplName() {
-            return name().charAt(0) + name().substring(1).toLowerCase();
-        }
-    }
-
-    // Map of interface -> impl class (per ImplType)
-    @SuppressWarnings("unchecked")
-    private static final Map<Class<?>, Class<?>>[] IMPLEMENTATIONS = (Map<Class<?>, Class<?>>[]) new Map<?, ?>[ImplType.values().length];
-
-    static {
-        for (int i = 0; i < IMPLEMENTATIONS.length; i++) {
-            IMPLEMENTATIONS[i] = new WeakHashMap<>();
-        }
-    }
+    // Map of interface -> impl class
+    private static final Map<Class<?>, Class<?>> IMPLEMENTATIONS = new WeakHashMap<>();
 
     private static final Unsafe U = Unsafe.getUnsafe();
 
-    private static String generateImplName(Class<?> c, ImplType type) {
-        return Type.getInternalName(c) + "$" + type.getImplName() + "Impl";
+    private static String generateImplName(Class<?> c) {
+        return Type.getInternalName(c) + "$" + "Impl";
     }
 
     public static <T> Class<? extends T> getStructImplClass(Class<T> c) {
@@ -86,13 +67,11 @@ public class LibrariesHelper {
      * @return a class implementing the interface
      */
     @SuppressWarnings("unchecked")
-    private static <T> Class<? extends T> getOrCreateImpl(ImplType type, Class<T> c, ImplGenerator generator) {
+    private static <T> Class<? extends T> getOrCreateImpl(Class<T> c, BinderClassGenerator generator) {
         Class<? extends T> implCls;
 
-        Map<Class<?>, Class<?>> map = IMPLEMENTATIONS[type.ordinal()];
-
-        synchronized (map) {
-            implCls = (Class<? extends T>) map.get(c);
+        synchronized (IMPLEMENTATIONS) {
+            implCls = (Class<? extends T>) IMPLEMENTATIONS.get(c);
         }
 
         if (implCls == null) {
@@ -102,13 +81,13 @@ public class LibrariesHelper {
                         return generator.generate();
                     });
             } catch (Exception e) {
-                throw new RuntimeException("Failed to generate " + type + " for class " + c, e);
+                throw new RuntimeException("Failed to generate implementation for class " + c, e);
             }
 
-            synchronized (map) {
-                implCls = (Class<? extends T>) map.get(c);
+            synchronized (IMPLEMENTATIONS) {
+                implCls = (Class<? extends T>) IMPLEMENTATIONS.get(c);
                 if (implCls == null) {
-                    map.put(c, newCls);
+                    IMPLEMENTATIONS.put(c, newCls);
                     implCls = newCls;
                 }
             }
@@ -132,24 +111,14 @@ public class LibrariesHelper {
         }
         */
 
-        String implClassName = generateImplName(c, ImplType.HEADER);
+        String implClassName = generateImplName(c);
 
         boolean isRecordType = c.isAnnotationPresent(NativeType.class) && c.getAnnotation(NativeType.class).isRecordType();
+        BinderClassGenerator generator = isRecordType ?
+                new StructImplGenerator(c, implClassName, c) :
+                new HeaderImplGenerator(c, implClassName, c, lookup);
 
-        return getOrCreateImpl(ImplType.HEADER, c, new HeaderImplGenerator(c, implClassName, c, lookup, isRecordType));
-    }
-
-    private static <T> Class<? extends T> getOrCreateCivilizedImpl(Class<T> c, T rawInstance)
-            throws SecurityException, InternalError {
-        /*
-        if (!c.isAnnotationPresent(NativeHeader.class)) {
-            throw new IllegalArgumentException("No @NativeHeader annotation on class " + c);
-        }
-        */
-
-        String implClassName = generateImplName(c, ImplType.CIVILIZED);
-
-        return getOrCreateImpl(ImplType.CIVILIZED, c, new CivilizedHeaderImplGenerator<>(c, implClassName, c, rawInstance));
+        return getOrCreateImpl(c, generator);
     }
 
     public static Library loadLibrary(Lookup lookup, String name) {
@@ -197,11 +166,11 @@ public class LibrariesHelper {
         return jlAccess.defaultLibrary();
     }
 
-    public static <T> T bindRaw(Class<T> c, Library lib) {
-        return bindRaw(c, new SymbolLookup(lib));
+    public static <T> T bind(Class<T> c, Library lib) {
+        return bind(c, new SymbolLookup(lib));
     }
 
-    private static <T> T bindRaw(Class<T> c, SymbolLookup lookup) {
+    private static <T> T bind(Class<T> c, SymbolLookup lookup) {
         Class<? extends T> cls = getOrCreateImpl(c, lookup);
 
         try {
@@ -214,27 +183,7 @@ public class LibrariesHelper {
         }
     }
 
-    public static <T> T bindRaw(Lookup lookup, Class<T> c) {
-        return bindRaw(c, getSymbolLookupForClass(lookup, c));
-    }
-
-    private static <T> Object bind(Class<T> c, SymbolLookup lookup) {
-        try {
-            T rawInstance = bindRaw(c, lookup);
-
-            Class<?> civilizedCls = LibrariesHelper.getOrCreateCivilizedImpl(c, rawInstance);
-
-            return U.allocateInstance(civilizedCls);
-        } catch (Throwable t) {
-            throw new RuntimeException(t);
-        }
-    }
-
-    public static <T> Object bind(Class<T> c, Library lib) {
-        return bind(c, new SymbolLookup(lib));
-    }
-
-    public static <T> Object bind(Lookup lookup, Class<T> c) {
+    public static <T> T bind(Lookup lookup, Class<T> c) {
         return bind(c, getSymbolLookupForClass(lookup, c));
     }
 }

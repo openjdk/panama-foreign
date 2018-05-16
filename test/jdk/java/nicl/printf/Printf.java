@@ -38,7 +38,7 @@ public class Printf {
      * Simple printf example using normal method invocation
      */
     public void testPrintf() {
-        stdio i = Libraries.bindRaw(MethodHandles.lookup(), stdio.class);
+        stdio i = Libraries.bind(MethodHandles.lookup(), stdio.class);
 
         // Create a scope to allocate things in
         Scope scope = Scope.newNativeScope();
@@ -59,7 +59,7 @@ public class Printf {
      * Simple printf example using method handle
      */
     public void testPrintfUsingMethodHandle() throws Throwable {
-        stdio i = Libraries.bindRaw(MethodHandles.lookup(), stdio.class);
+        stdio i = Libraries.bind(MethodHandles.lookup(), stdio.class);
 
         // Create a MH for the printf function
         MethodHandle printf = MethodHandles.publicLookup().findVirtual(stdio.class, "printf", MethodType.methodType(int.class, Pointer.class, Object[].class));
@@ -82,7 +82,7 @@ public class Printf {
      * printf with an integer arg
      */
     public void testPrintfWithIntegerArg() throws Throwable {
-        stdio i = Libraries.bindRaw(MethodHandles.lookup(), stdio.class);
+        stdio i = Libraries.bind(MethodHandles.lookup(), stdio.class);
 
         // Lookup a MH for the printf function
         MethodHandle printf = Util.lookup(Util.Function.PRINTF);
@@ -101,7 +101,7 @@ public class Printf {
      * printf with a string argument
      */
     public void testPrintfWithStringArg() throws Throwable {
-        stdio i = Libraries.bindRaw(MethodHandles.lookup(), stdio.class);
+        stdio i = Libraries.bind(MethodHandles.lookup(), stdio.class);
 
         Scope scope = Scope.newNativeScope();
 

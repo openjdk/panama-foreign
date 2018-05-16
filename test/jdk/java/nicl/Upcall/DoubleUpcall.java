@@ -67,7 +67,7 @@ public class DoubleUpcall {
     }
 
     public void test() {
-        upcall i = Libraries.bindRaw(upcall.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
+        upcall i = Libraries.bind(upcall.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
         upcall.cb v = new cbImpl();
 
         double d = i.double_upcall(v, 1.23, 1.11);

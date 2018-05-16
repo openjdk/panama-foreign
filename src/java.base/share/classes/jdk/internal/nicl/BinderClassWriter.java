@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,41 +26,20 @@ import jdk.internal.org.objectweb.asm.ClassWriter;
 
 import java.util.HashMap;
 
-class ClassGeneratorContext {
-    private final ClassWriter cw;
-    private final String implClassName;
-
-    private final FieldsBuilder fields = new FieldsBuilder();
+class BinderClassWriter extends ClassWriter {
 
     private final HashMap<Object, ConstantPoolPatch> cpPatches = new HashMap<>();
     private int curUniquePatchIndex = 0;
 
-    ClassGeneratorContext(ClassWriter cw, String implClassName) {
-        this.cw = cw;
-        this.implClassName = implClassName;
-    }
-
-    public ClassWriter getClassWriter() {
-        return cw;
-    }
-
-    public String getClassName() {
-        return implClassName;
-    }
-
-    public FieldsBuilder getFieldsBuilder() {
-        return fields;
+    BinderClassWriter() {
+        super(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
     }
 
     public String makeConstantPoolPatch(Object o) {
         int myUniqueIndex = curUniquePatchIndex++;
-
         String cpPlaceholder = "CONSTANT_PLACEHOLDER_" + myUniqueIndex;
-
-        int index = cw.newConst(cpPlaceholder);
-
+        int index = newConst(cpPlaceholder);
         cpPatches.put(cpPlaceholder, new ConstantPoolPatch(index, cpPlaceholder, o));
-
         return cpPlaceholder;
     }
 
@@ -73,13 +52,29 @@ class ClassGeneratorContext {
 
         Object[] patches = new Object[size];
         for (ConstantPoolPatch p : cpPatches.values()) {
-            if (p.getIndex() >= size) {
+            if (p.index >= size) {
                 throw new InternalError("Failed to resolve constant pool patch entries");
             }
-
-            patches[p.getIndex()] = p.getValue();
+            patches[p.index] = p.value;
         }
 
         return patches;
+    }
+
+    static class ConstantPoolPatch {
+        final int index;
+        final String placeholder;
+        final Object value;
+
+        ConstantPoolPatch(int index, String placeholder, Object value) {
+            this.index = index;
+            this.placeholder = placeholder;
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return "CpPatch/index="+index+",placeholder="+placeholder+",value="+value;
+        }
     }
 }

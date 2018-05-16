@@ -22,8 +22,6 @@
  */
 package jdk.internal.nicl.abi;
 
-import jdk.internal.nicl.Argument;
-
 public class ArgumentBinding {
     private final Storage storage;
     private final Argument member;
