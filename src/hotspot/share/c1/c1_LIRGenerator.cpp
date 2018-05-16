@@ -42,9 +42,6 @@
 #include "runtime/vm_version.hpp"
 #include "utilities/bitMap.inline.hpp"
 #include "utilities/macros.hpp"
-#ifdef TRACE_HAVE_INTRINSICS
-#include "trace/traceMacros.hpp"
-#endif
 
 #ifdef ASSERT
 #define __ gen()->lir(__FILE__, __LINE__)->
@@ -480,7 +477,7 @@ void LIRGenerator::klass2reg_with_patching(LIR_Opr r, ciMetadata* obj, CodeEmitI
 
 void LIRGenerator::array_range_check(LIR_Opr array, LIR_Opr index,
                                     CodeEmitInfo* null_check_info, CodeEmitInfo* range_check_info) {
-  CodeStub* stub = new RangeCheckStub(range_check_info, index);
+  CodeStub* stub = new RangeCheckStub(range_check_info, index, array);
   if (index->is_constant()) {
     cmp_mem_int(lir_cond_belowEqual, array, arrayOopDesc::length_offset_in_bytes(),
                 index->as_jint(), null_check_info);
@@ -494,7 +491,7 @@ void LIRGenerator::array_range_check(LIR_Opr array, LIR_Opr index,
 
 
 void LIRGenerator::nio_range_check(LIR_Opr buffer, LIR_Opr index, LIR_Opr result, CodeEmitInfo* info) {
-  CodeStub* stub = new RangeCheckStub(info, index, true);
+  CodeStub* stub = new RangeCheckStub(info, index);
   if (index->is_constant()) {
     cmp_mem_int(lir_cond_belowEqual, buffer, java_nio_Buffer::limit_offset(), index->as_jint(), info);
     __ branch(lir_cond_belowEqual, T_INT, stub); // forward branch
@@ -1592,7 +1589,7 @@ void LIRGenerator::do_StoreIndexed(StoreIndexed* x) {
   if (GenerateRangeChecks && needs_range_check) {
     if (use_length) {
       __ cmp(lir_cond_belowEqual, length.result(), index.result());
-      __ branch(lir_cond_belowEqual, T_INT, new RangeCheckStub(range_check_info, index.result()));
+      __ branch(lir_cond_belowEqual, T_INT, new RangeCheckStub(range_check_info, index.result(), array.result()));
     } else {
       array_range_check(array.result(), index.result(), null_check_info, range_check_info);
       // range_check also does the null check
@@ -1756,7 +1753,7 @@ void LIRGenerator::do_NIOCheckIndex(Intrinsic* x) {
   LIR_Opr result = rlock_result(x);
   if (GenerateRangeChecks) {
     CodeEmitInfo* info = state_for(x);
-    CodeStub* stub = new RangeCheckStub(info, index.result(), true);
+    CodeStub* stub = new RangeCheckStub(info, index.result());
     if (index.result()->is_constant()) {
       cmp_mem_int(lir_cond_belowEqual, buf.result(), java_nio_Buffer::limit_offset(), index.result()->as_jint(), info);
       __ branch(lir_cond_belowEqual, T_INT, stub);
@@ -1837,12 +1834,12 @@ void LIRGenerator::do_LoadIndexed(LoadIndexed* x) {
 
   if (GenerateRangeChecks && needs_range_check) {
     if (StressLoopInvariantCodeMotion && range_check_info->deoptimize_on_exception()) {
-      __ branch(lir_cond_always, T_ILLEGAL, new RangeCheckStub(range_check_info, index.result()));
+      __ branch(lir_cond_always, T_ILLEGAL, new RangeCheckStub(range_check_info, index.result(), array.result()));
     } else if (use_length) {
       // TODO: use a (modified) version of array_range_check that does not require a
       //       constant length to be loaded to a register
       __ cmp(lir_cond_belowEqual, length.result(), index.result());
-      __ branch(lir_cond_belowEqual, T_INT, new RangeCheckStub(range_check_info, index.result()));
+      __ branch(lir_cond_belowEqual, T_INT, new RangeCheckStub(range_check_info, index.result(), array.result()));
     } else {
       array_range_check(array.result(), index.result(), null_check_info, range_check_info);
       // The range check performs the null check, so clear it out for the load
@@ -2916,7 +2913,7 @@ void LIRGenerator::do_IfOp(IfOp* x) {
   __ cmove(lir_cond(x->cond()), t_val.result(), f_val.result(), reg, as_BasicType(x->x()->type()));
 }
 
-#ifdef TRACE_HAVE_INTRINSICS
+#ifdef JFR_HAVE_INTRINSICS
 void LIRGenerator::do_ClassIDIntrinsic(Intrinsic* x) {
   CodeEmitInfo* info = state_for(x);
   CodeEmitInfo* info2 = new CodeEmitInfo(info); // Clone for the second null check
@@ -2928,7 +2925,7 @@ void LIRGenerator::do_ClassIDIntrinsic(Intrinsic* x) {
   LIR_Opr klass = new_register(T_METADATA);
   __ move(new LIR_Address(arg.result(), java_lang_Class::klass_offset_in_bytes(), T_ADDRESS), klass, info);
   LIR_Opr id = new_register(T_LONG);
-  ByteSize offset = TRACE_KLASS_TRACE_ID_OFFSET;
+  ByteSize offset = KLASS_TRACE_ID_OFFSET;
   LIR_Address* trace_id_addr = new LIR_Address(klass, in_bytes(offset), T_LONG);
 
   __ move(trace_id_addr, id);
@@ -2938,18 +2935,18 @@ void LIRGenerator::do_ClassIDIntrinsic(Intrinsic* x) {
 #ifdef TRACE_ID_META_BITS
   __ logical_and(id, LIR_OprFact::longConst(~TRACE_ID_META_BITS), id);
 #endif
-#ifdef TRACE_ID_CLASS_SHIFT
-  __ unsigned_shift_right(id, TRACE_ID_CLASS_SHIFT, id);
+#ifdef TRACE_ID_SHIFT
+  __ unsigned_shift_right(id, TRACE_ID_SHIFT, id);
 #endif
 
   __ move(id, rlock_result(x));
 }
 
-void LIRGenerator::do_getBufferWriter(Intrinsic* x) {
+void LIRGenerator::do_getEventWriter(Intrinsic* x) {
   LabelObj* L_end = new LabelObj();
 
   LIR_Address* jobj_addr = new LIR_Address(getThreadPointer(),
-                                           in_bytes(TRACE_THREAD_DATA_WRITER_OFFSET),
+                                           in_bytes(THREAD_LOCAL_WRITER_OFFSET_JFR),
                                            T_OBJECT);
   LIR_Opr result = rlock_result(x);
   __ move_wide(jobj_addr, result);
@@ -2987,15 +2984,15 @@ void LIRGenerator::do_Intrinsic(Intrinsic* x) {
     break;
   }
 
-#ifdef TRACE_HAVE_INTRINSICS
+#ifdef JFR_HAVE_INTRINSICS
   case vmIntrinsics::_getClassId:
     do_ClassIDIntrinsic(x);
     break;
-  case vmIntrinsics::_getBufferWriter:
-    do_getBufferWriter(x);
+  case vmIntrinsics::_getEventWriter:
+    do_getEventWriter(x);
     break;
   case vmIntrinsics::_counterTime:
-    do_RuntimeCall(CAST_FROM_FN_PTR(address, TRACE_TIME_METHOD), x);
+    do_RuntimeCall(CAST_FROM_FN_PTR(address, JFR_TIME_FUNCTION), x);
     break;
 #endif
 
