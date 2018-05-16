@@ -136,7 +136,7 @@ import java.util.function.*;
     }
 
     interface StoreVectorOperation<V extends Vector<?,?>> {
-        void store(Object array, int index);
+        void store(Object array, int index, V v);
     }
 
     @HotSpotIntrinsicCandidate
@@ -145,7 +145,7 @@ import java.util.function.*;
     void store(Class<?> vectorClass, Class<?> elementType, int vlen,
                Object array, int index, V v, /*Vector.Mask<E,S> m*/
                StoreVectorOperation<V> defaultImpl) {
-        defaultImpl.store(array, index);
+        defaultImpl.store(array, index, v);
     }
 
     /* ============================================================================ */

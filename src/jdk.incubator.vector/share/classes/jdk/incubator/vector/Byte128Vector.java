@@ -515,7 +515,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Byte128Vector.class, byte.class, LENGTH,
                                a, ix, this,
-                               (arr, idx) -> super.intoArray((byte[]) arr, idx));
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((byte[])arr)[idx + i] = a_));
     }
 
     @Override
@@ -534,7 +534,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Byte128Vector.class, byte.class, LENGTH,
                                a, ix, this,
-                               (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                               (arr, idx, v) -> {
+                                   byte[] tarr = (byte[])arr;
+                                   ByteBuffer bb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                   ByteBuffer fb = bb;
+                                   v.forEach((i, e) -> fb.put(e));
+                               });
     }
 
     @Override
@@ -553,7 +558,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
             VectorIntrinsics.store(Byte128Vector.class, byte.class, LENGTH,
                                    bb.array(), ix, this,
-                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                                   (arr, idx, v) -> {
+                                       byte[] tarr = (byte[])arr;
+                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                       ByteBuffer fb = lbb;
+                                       v.forEach((i, e) -> fb.put(e));
+                                   });
         } else {
             super.intoByteBuffer(bb);
         }
@@ -576,7 +586,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
             VectorIntrinsics.store(Byte128Vector.class, byte.class, LENGTH,
                                    bb.array(), ax, this,
-                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                                   (arr, idx, v) -> {
+                                       byte[] tarr = (byte[])arr;
+                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                       ByteBuffer fb = lbb;
+                                       v.forEach((i, e) -> fb.put(e));
+                                   });
         } else {
             super.intoByteBuffer(bb, ix);
         }

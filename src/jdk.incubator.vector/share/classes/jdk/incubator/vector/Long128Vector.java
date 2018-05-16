@@ -26,6 +26,7 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.LongBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 import jdk.internal.vm.annotation.ForceInline;
@@ -553,7 +554,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Long128Vector.class, long.class, LENGTH,
                                a, ix, this,
-                               (arr, idx) -> super.intoArray((long[]) arr, idx));
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((long[])arr)[idx + i] = a_));
     }
 
     @Override
@@ -572,7 +573,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Long128Vector.class, long.class, LENGTH,
                                a, ix, this,
-                               (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                               (arr, idx, v) -> {
+                                   byte[] tarr = (byte[])arr;
+                                   ByteBuffer bb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                   LongBuffer fb = bb.asLongBuffer();
+                                   v.forEach((i, e) -> fb.put(e));
+                               });
     }
 
     @Override
@@ -591,7 +597,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
             VectorIntrinsics.store(Long128Vector.class, long.class, LENGTH,
                                    bb.array(), ix, this,
-                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                                   (arr, idx, v) -> {
+                                       byte[] tarr = (byte[])arr;
+                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                       LongBuffer fb = lbb.asLongBuffer();
+                                       v.forEach((i, e) -> fb.put(e));
+                                   });
         } else {
             super.intoByteBuffer(bb);
         }
@@ -614,7 +625,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
             VectorIntrinsics.store(Long128Vector.class, long.class, LENGTH,
                                    bb.array(), ax, this,
-                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                                   (arr, idx, v) -> {
+                                       byte[] tarr = (byte[])arr;
+                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                       LongBuffer fb = lbb.asLongBuffer();
+                                       v.forEach((i, e) -> fb.put(e));
+                                   });
         } else {
             super.intoByteBuffer(bb, ix);
         }

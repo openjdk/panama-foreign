@@ -26,6 +26,9 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+#if[!byte]
+import java.nio.$Type$Buffer;
+#end[!byte]
 import java.util.Arrays;
 import java.util.Objects;
 import jdk.internal.vm.annotation.ForceInline;
@@ -741,7 +744,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
                                a, ix, this,
-                               (arr, idx) -> super.intoArray(($type$[]) arr, idx));
+                               (arr, idx, v) -> v.forEach((i, a_) -> (($type$[])arr)[idx + i] = a_));
     }
 
     @Override
@@ -760,7 +763,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
                                a, ix, this,
-                               (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                               (arr, idx, v) -> {
+                                   byte[] tarr = (byte[])arr;
+                                   ByteBuffer bb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                   $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
+                                   v.forEach((i, e) -> fb.put(e));
+                               });
     }
 
     @Override
@@ -779,7 +787,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
             VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
                                    bb.array(), ix, this,
-                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                                   (arr, idx, v) -> {
+                                       byte[] tarr = (byte[])arr;
+                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                       $Type$Buffer fb = lbb{#if[byte]?;:.as$Type$Buffer();}
+                                       v.forEach((i, e) -> fb.put(e));
+                                   });
         } else {
             super.intoByteBuffer(bb);
         }
@@ -802,7 +815,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
             VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
                                    bb.array(), ax, this,
-                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                                   (arr, idx, v) -> {
+                                       byte[] tarr = (byte[])arr;
+                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                       $Type$Buffer fb = lbb{#if[byte]?;:.as$Type$Buffer();}
+                                       v.forEach((i, e) -> fb.put(e));
+                                   });
         } else {
             super.intoByteBuffer(bb, ix);
         }

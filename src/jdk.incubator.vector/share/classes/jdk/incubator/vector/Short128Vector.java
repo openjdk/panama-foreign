@@ -26,6 +26,7 @@ package jdk.incubator.vector;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 import jdk.internal.vm.annotation.ForceInline;
@@ -515,7 +516,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Short128Vector.class, short.class, LENGTH,
                                a, ix, this,
-                               (arr, idx) -> super.intoArray((short[]) arr, idx));
+                               (arr, idx, v) -> v.forEach((i, a_) -> ((short[])arr)[idx + i] = a_));
     }
 
     @Override
@@ -534,7 +535,12 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Short128Vector.class, short.class, LENGTH,
                                a, ix, this,
-                               (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                               (arr, idx, v) -> {
+                                   byte[] tarr = (byte[])arr;
+                                   ByteBuffer bb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                   ShortBuffer fb = bb.asShortBuffer();
+                                   v.forEach((i, e) -> fb.put(e));
+                               });
     }
 
     @Override
@@ -553,7 +559,12 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
             VectorIntrinsics.store(Short128Vector.class, short.class, LENGTH,
                                    bb.array(), ix, this,
-                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                                   (arr, idx, v) -> {
+                                       byte[] tarr = (byte[])arr;
+                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                       ShortBuffer fb = lbb.asShortBuffer();
+                                       v.forEach((i, e) -> fb.put(e));
+                                   });
         } else {
             super.intoByteBuffer(bb);
         }
@@ -576,7 +587,12 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
             VectorIntrinsics.store(Short128Vector.class, short.class, LENGTH,
                                    bb.array(), ax, this,
-                                   (arr, idx) -> super.intoByteArray((byte[]) arr, idx));
+                                   (arr, idx, v) -> {
+                                       byte[] tarr = (byte[])arr;
+                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
+                                       ShortBuffer fb = lbb.asShortBuffer();
+                                       v.forEach((i, e) -> fb.put(e));
+                                   });
         } else {
             super.intoByteBuffer(bb, ix);
         }
