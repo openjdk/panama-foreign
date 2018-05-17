@@ -42,8 +42,8 @@
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/signature.hpp"
 #include "utilities/macros.hpp"
-#if INCLUDE_TRACE
-#include "trace/traceMacros.hpp"
+#if INCLUDE_JFR
+#include "jfr/jfr.hpp"
 #endif
 
 static void mangle_name_on(outputStream* st, Symbol* name, int begin, int end) {
@@ -137,8 +137,8 @@ static JNINativeMethod lookup_special_native_methods[] = {
   { CC"Java_jdk_vm_ci_hotspot_CompilerToVM_registerNatives",       NULL, FN_PTR(JVM_RegisterJVMCINatives)        },
   { CC"Java_jdk_vm_ci_panama_MachineCodeSnippet_registerNatives",  NULL, FN_PTR(JVM_RegisterMachineCodeSnippetMethods) },
 #endif
-#if INCLUDE_TRACE
-  { CC"Java_jdk_jfr_internal_JVM_registerNatives",                 NULL, TRACE_REGISTER_NATIVES                  },
+#if INCLUDE_JFR
+  { CC"Java_jdk_jfr_internal_JVM_registerNatives",                 NULL, FN_PTR(jfr_register_natives)            },
 #endif
 };
 
