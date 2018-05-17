@@ -135,6 +135,7 @@ module java.base {
     exports com.sun.security.ntlm to
         java.security.sasl;
     exports jdk.internal to // for @HotSpotIntrinsicCandidate
+            jdk.jfr,
             jdk.incubator.vector;
     exports jdk.internal.jimage to
         jdk.jlink;
@@ -150,17 +151,25 @@ module java.base {
         java.logging;
     exports jdk.internal.org.objectweb.asm to
         jdk.jartool,
+        jdk.jfr,
         jdk.jlink,
         jdk.scripting.nashorn,
         jdk.internal.vm.ci;
     exports jdk.internal.org.objectweb.asm.tree to
+        jdk.jfr,
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm.util to
+        jdk.jfr,
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.commons to
+        jdk.jfr,
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
         jdk.scripting.nashorn;
+    exports jdk.internal.org.xml.sax to
+        jdk.jfr;
+    exports jdk.internal.org.xml.sax.helpers to
+        jdk.jfr;
     exports jdk.internal.misc to
         java.desktop,
         java.logging,
@@ -176,6 +185,7 @@ module java.base {
         jdk.incubator.vector,
         java.net.http,
         jdk.jdeps,
+        jdk.jfr,
         jdk.jlink,
         jdk.jshell,
         jdk.net,
@@ -187,6 +197,7 @@ module java.base {
         java.instrument,
         java.management.rmi,
         jdk.jartool,
+        jdk.jfr,
         jdk.jlink;
     exports jdk.internal.perf to
         java.management,
@@ -211,6 +222,10 @@ module java.base {
         jdk.incubator.vector;
     exports jdk.internal.util.jar to
         jdk.jartool;
+    exports jdk.internal.util.xml to
+        jdk.jfr;
+    exports jdk.internal.util.xml.impl to
+        jdk.jfr;
     exports sun.net to
         java.net.http,
         jdk.naming.dns;
