@@ -22,86 +22,145 @@
  */
 package java.nicl;
 
-import java.nicl.types.LayoutType;
-import java.nicl.types.Pointer;
-import java.nicl.types.Reference;
-import java.nicl.types.Resource;
-
-import jdk.internal.nicl.HeapScope;
-import jdk.internal.nicl.NativeScope;
+import jdk.internal.nicl.ScopeImpl;
 import jdk.internal.nicl.Util;
 
+import java.nicl.layout.Layout;
+import java.nicl.types.Array;
+import java.nicl.types.LayoutType;
+import java.nicl.types.Pointer;
+import java.nicl.types.Struct;
+
+/**
+ * A scope models a block of code in a native language. It provides primitive for memory allocation; when the scope
+ * is closed (see {@link AutoCloseable#close()}, the pointers associated with this scope can no longer be used.
+ */
 public interface Scope extends AutoCloseable {
-    void checkAlive();
-
-    @Deprecated
-    void startAllocation();
-
-    @Deprecated
-    void endAllocation();
-
-    <T> Pointer<T> allocate(LayoutType<T> type);
 
     /**
-     * Allocate storage for a number of element of specified type.
-     * @param type The LayoutType of the element
-     * @param count The numbder of elements to be allocated
-     * @return A pointer to the allocated storage points to the first element.
+     * Is this scope alive?
      */
-    <T> Pointer<T> allocateArray(LayoutType<T> type, long count);
+    void checkAlive();
 
-    @Deprecated
-    default <T> Pointer<T> allocate(LayoutType<T> type, long count) {
-        return allocateArray(type, count);
+    /**
+     * Allocate region of memory with given {@code LayoutType}.
+     * @param <X> the carrier type associated with the memory region to be allocated.
+     * @param type the {@code LayoutType}.
+     * @return a pointer to the newly allocated memory region.
+     */
+    <X> Pointer<X> allocate(LayoutType<X> type);
+
+    /**
+     * Allocate region of memory with given layout.
+     * @param type the layout.
+     * @return a pointer to the newly allocated memory region.
+     */
+    default Pointer<?> allocate(Layout type) {
+        return allocate(LayoutType.ofVoid(type));
     }
 
-    // FIXME: When .ptr().deref works as expected for structs (returns
-    // an actual struct instance instead of a ReferenceImpl instance)
-    // this can be removed
-    <T extends Reference<T>> T allocateStruct(LayoutType<T> type);
+    /**
+     * Allocate region of memory as an array of elements with given {@code LayoutType}. This is effectively the same as:
+     * <p>
+     *     <code>
+     *         allocateArray(type, size).elementPointer()
+     *     </code>
+     * </p>
+     * @param <X> the carrier type associated with the element type of the native array to be allocated.
+     * @param elementType the {@code LayoutType} of the array element.
+     * @param size the array size.
+     * @return a pointer to the first element of the array.
+     */
+    default <X> Pointer<X> allocate(LayoutType<X> elementType, long size) {
+        return allocateArray(elementType, size).elementPointer();
+    }
 
-    void free(Resource ptr);
+    /**
+     * Allocate region of memory as an array of elements with given {@code LayoutType}. This is effectively the same as:
+     * <p>
+     *     <code>
+     *         allocate(elementType.array(size)).withLimit()
+     *     </code>
+     * </p>
+     * @param <X> the carrier type associated with the element type of the native array to be allocated.
+     * @param elementType the {@code LayoutType} of the array element.
+     * @param size the array size.
+     * @return an array to the first element of the array.
+     */
+    <X> Array<X> allocateArray(LayoutType<X> elementType, long size);
 
-    void handoff(Resource ptr);
+    /**
+     * Allocate region of memory as an array of elements with given layout. The resulting pointer will have no
+     * carrier information associated with it. This is effectively the same as:
+     * <p>
+     *     <code>
+     *         allocate(LayoutType.ofVoid(elementType).array(size)).withLimit();
+     *     </code>
+     * </p>
+     * @param elementType the {@code LayoutType} of the array element.
+     * @param size the array size.
+     * @return an array to the first element of the array.
+     */
+    default Array<?> allocateArray(Layout elementType, int size) {
+        return allocateArray(LayoutType.ofVoid(elementType), size);
+    }
+
+    /**
+     * Allocate region of memory with given native data.
+     * @param carrier the carrier type modelling the native data.
+     * @param <T> the carrier type.
+     * @return a new struct instance (of type {@link Struct}).
+     * @see Struct
+     */
+    <T extends Struct<T>> T allocateStruct(Class<T> carrier);
 
     @Override
     void close();
 
+
     private Pointer<Byte> toCString(byte[] ar) {
         try {
-            Pointer<Byte> buf = allocateArray(Util.BYTE_TYPE, ar.length + 1);
+            Pointer<Byte> buf = allocate(Util.BYTE_TYPE, ar.length + 1);
             Pointer<Byte> src = Util.createArrayElementsPointer(ar);
             Util.copy(src, buf, ar.length);
-            buf.offset(ar.length).lvalue().set((byte)0);
+            buf.offset(ar.length).set((byte)0);
             return buf;
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e);
         }
     }
 
-    public default Pointer<Byte> toCString(String str) {
+    default Pointer<Byte> toCString(String str) {
         return toCString(str.getBytes());
     }
 
-    public default Pointer<Pointer<Byte>> toCStrArray(String[] ar) {
+    default Pointer<Pointer<Byte>> toCStrArray(String[] ar) {
         if (ar.length == 0) {
             return null;
         }
 
-        Pointer<Pointer<Byte>> ptr = allocateArray(Util.BYTE_PTR_TYPE, ar.length);
+        Pointer<Pointer<Byte>> ptr = allocate(Util.BYTE_PTR_TYPE, ar.length);
         for (int i = 0; i < ar.length; i++) {
             Pointer<Byte> s = toCString(ar[i]);
-            ptr.offset(i).lvalue().set(s);
+            ptr.offset(i).set(s);
         }
 
         return ptr;
     }
 
+    /**
+     * Create a scope backed by off-heap memory.
+     * @return the new native scope.
+     */
     static Scope newNativeScope() {
-        return new NativeScope();
+        return new ScopeImpl.NativeScope();
     }
 
+    /**
+     * Create a scope backed by on-heap memory.
+     * @return the new native scope.
+     */
     static Scope newHeapScope() {
-        return new HeapScope();
+        return new ScopeImpl.HeapScope();
     }
 }

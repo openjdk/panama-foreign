@@ -42,47 +42,47 @@ public class GlobalVariable {
         @NativeType(layout="B", ctype="dummy", size=1, name="global_boolean")
         public abstract boolean global_boolean$get();
         public abstract void global_boolean$set(boolean arg);
-        public abstract Reference<Boolean> global_boolean$ref();
+        public abstract Pointer<Boolean> global_boolean$ptr();
 
         @C(file="dummy", line=1, column=1, USR="c:@global_i8")
         @NativeType(layout="c", ctype="dummy", size=1, name="global_i8")
         public abstract byte global_i8$get();
         public abstract void global_i8$set(byte arg);
-        public abstract Reference<Byte> global_i8$ref();
+        public abstract Pointer<Byte> global_i8$ptr();
 
         @C(file="dummy", line=1, column=1, USR="c:@global_i16")
         @NativeType(layout="s", ctype="dummy", size=2, name="global_i16")
         public abstract short global_i16$get();
         public abstract void global_i16$set(short arg);
-        public abstract Reference<Short> global_i16$ref();
+        public abstract Pointer<Short> global_i16$ptr();
 
         @C(file="dummy", line=1, column=1, USR="c:@global_i32")
         @NativeType(layout="i", ctype="dummy", size=4, name="global_i32")
         public abstract int global_i32$get();
         public abstract void global_i32$set(int arg);
-        public abstract Reference<Integer> global_i32$ref();
+        public abstract Pointer<Integer> global_i32$ptr();
 
         @C(file="dummy", line=1, column=1, USR="c:@global_i64")
         @NativeType(layout="l", ctype="dummy", size=8, name="global_i64")
         public abstract long global_i64$get();
         public abstract void global_i64$set(long arg);
-        public abstract Reference<Long> global_i64$ref();
+        public abstract Pointer<Long> global_i64$ptr();
 
         @C(file="dummy", line=1, column=1, USR="c:@global_f32")
         @NativeType(layout="f", ctype="dummy", size=4, name="global_f32")
         public abstract float global_f32$get();
         public abstract void global_f32$set(float arg);
-        public abstract Reference<Float> global_f32$ref();
+        public abstract Pointer<Float> global_f32$ptr();
 
         @C(file="dummy", line=1, column=1, USR="c:@global_d64")
         @NativeType(layout="d", ctype="dummy", size=8, name="global_d64")
         public abstract double global_d64$get();
         public abstract void global_d64$set(double arg);
-        public abstract Reference<Double> global_d64$ref();
+        public abstract Pointer<Double> global_d64$ptr();
 
         @NativeType(layout="[i]", ctype="dummy", size=4, isRecordType=true)
         @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        static interface MyStruct extends Reference<MyStruct> {
+        static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
             @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@i")
             @NativeType(layout="i", ctype="int", size=4l)
@@ -94,7 +94,7 @@ public class GlobalVariable {
         @NativeType(layout="[i]", ctype="dummy", size=4, name="global_struct")
         public abstract MyStruct global_struct$get();
         public abstract void global_struct$set(MyStruct arg);
-        public abstract Reference<MyStruct> global_struct$ref();
+        public abstract Pointer<MyStruct> global_struct$ptr();
     }
 
     private final globvar i;
@@ -106,87 +106,87 @@ public class GlobalVariable {
     public void testboolean() {
         // boolean
         assertTrue(i.global_boolean$get());
-        assertTrue(i.global_boolean$ref().get());
+        assertTrue(i.global_boolean$ptr().get());
 
         i.global_boolean$set(false);
 
         assertFalse(i.global_boolean$get());
-        assertFalse(i.global_boolean$ref().get());
+        assertFalse(i.global_boolean$ptr().get());
     }
 
 
     public void testi8() {
         // int8_t
         assertEquals(42, i.global_i8$get());
-        assertEquals(42, i.global_i8$ref().get());
+        assertEquals(42, i.global_i8$ptr().get());
 
         i.global_i8$set((byte)47);
 
         assertEquals(47, i.global_i8$get());
-        assertEquals(47, i.global_i8$ref().get());
+        assertEquals(47, i.global_i8$ptr().get());
     }
 
     public void testi16() {
         // int16_t
         assertEquals(42, i.global_i16$get());
-        assertEquals(42, i.global_i16$ref().get());
+        assertEquals(42, i.global_i16$ptr().get());
 
         i.global_i16$set((short)47);
 
         assertEquals(47, i.global_i16$get());
-        assertEquals(47, i.global_i16$ref().get());
+        assertEquals(47, i.global_i16$ptr().get());
     }
 
     public void testi32() {
         // int32_t
         assertEquals(42, i.global_i32$get());
-        assertEquals(42, i.global_i32$ref().get());
+        assertEquals(42, i.global_i32$ptr().get());
 
         i.global_i32$set(47);
 
         assertEquals(47, i.global_i32$get());
-        assertEquals(47, i.global_i32$ref().get());
+        assertEquals(47, i.global_i32$ptr().get());
     }
 
     public void testi64() {
         // int64_t
         assertEquals(42, i.global_i64$get());
-        assertEquals(42, i.global_i64$ref().get());
+        assertEquals(42, i.global_i64$ptr().get());
 
         i.global_i64$set(47);
 
         assertEquals(47, i.global_i64$get());
-        assertEquals(47, i.global_i64$ref().get());
+        assertEquals(47, i.global_i64$ptr().get());
     }
 
     public void testf32() {
         // float
         assertEquals(42f, i.global_f32$get());
-        assertEquals(42f, i.global_f32$ref().get());
+        assertEquals(42f, i.global_f32$ptr().get());
 
         i.global_f32$set(47f);
 
         assertEquals(47f, i.global_f32$get());
-        assertEquals(47f, i.global_f32$ref().get());
+        assertEquals(47f, i.global_f32$ptr().get());
     }
 
     public void testd64() {
         // double
         assertEquals(42.0, i.global_d64$get());
-        assertEquals(42.0, i.global_d64$ref().get());
+        assertEquals(42.0, i.global_d64$ptr().get());
 
         i.global_d64$set(47.0);
 
         assertEquals(47.0, i.global_d64$get());
-        assertEquals(47.0, i.global_d64$ref().get());
+        assertEquals(47.0, i.global_d64$ptr().get());
     }
 
     public void teststruct() {
         assertEquals(42, i.global_struct$get().i$get());
-        assertEquals(42, i.global_struct$ref().get().i$get());
+        assertEquals(42, i.global_struct$ptr().get().i$get());
 
         try (Scope scope = Scope.newNativeScope()) {
-            globvar.MyStruct s = scope.allocateStruct(LayoutType.create(globvar.MyStruct.class));
+            globvar.MyStruct s = scope.allocateStruct(globvar.MyStruct.class);
 
             s.i$set(47);
 
@@ -194,7 +194,7 @@ public class GlobalVariable {
         }
 
         assertEquals(47, i.global_struct$get().i$get());
-        assertEquals(47, i.global_struct$ref().get().i$get());
+        assertEquals(47, i.global_struct$ptr().get().i$get());
     }
 
 

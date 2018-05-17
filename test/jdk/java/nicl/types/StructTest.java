@@ -28,6 +28,7 @@
 
 import java.nicl.*;
 import java.nicl.metadata.*;
+import java.nicl.metadata.Array;
 import java.nicl.types.*;
 
 public class StructTest {
@@ -46,7 +47,7 @@ public class StructTest {
 
     @C(file="dummy", line=47, column=11, USR="c:@S@MyStruct")
     @NativeType(layout="[4i]", ctype="struct MyStruct", size=16l, isRecordType=true)
-    static interface MyStruct extends Reference<MyStruct> {
+    static interface MyStruct extends Struct<MyStruct> {
         @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@field1")
         @NativeType(layout="4i", ctype="off_t", size=4l)
         @Array(elementType="int", elementSize=4l, length=4l)
@@ -139,12 +140,12 @@ public class StructTest {
 
     public void test() {
         try (Scope scope = Scope.newNativeScope()) {
-            MyStruct s = scope.allocateStruct(LayoutType.create(MyStruct.class));
+            MyStruct s = scope.allocateStruct(MyStruct.class);
             long size = TOTAL_SIZE;
-            Pointer<Byte> p = scope.allocate(LayoutType.create(byte.class), size);
+            Pointer<Byte> p = scope.allocate(NativeTypes.UINT8, size);
 
             for (int i = 0; i < size; i++) {
-                p.offset(i).lvalue().set((byte)i);
+                p.offset(i).set((byte)i);
             }
             Pointer.copy(p, s.ptr(), size);
 

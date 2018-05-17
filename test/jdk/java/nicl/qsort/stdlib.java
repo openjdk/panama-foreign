@@ -38,5 +38,5 @@ public interface stdlib {
     @C(file="stdlib.h", line=47, column=11, USR="c:@F@qsort")
     @NativeType(layout="(p:VLLp:(p:Vp:V)i)V", ctype="void (void*, size_t, size_t, int(*)(const void*,const void*))", size=1)
     @CallingConvention(value=1)
-    public abstract void qsort(Pointer<Void> base, long nmemb, long size, compar compar);
+    public abstract void qsort(Pointer<?> base, long nmemb, long size, compar compar);
 }

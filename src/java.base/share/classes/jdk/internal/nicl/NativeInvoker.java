@@ -28,14 +28,17 @@ import jdk.internal.nicl.abi.ShuffleRecipe;
 import jdk.internal.nicl.abi.StorageClass;
 import jdk.internal.nicl.abi.SystemABI;
 import jdk.internal.nicl.abi.sysv.x64.Constants;
-import jdk.internal.nicl.types.*;
 
 import java.lang.annotation.Retention;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.WildcardType;
 import java.nicl.*;
+import java.nicl.layout.Address;
+import java.nicl.layout.Function;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 import java.util.ArrayList;
@@ -47,7 +50,7 @@ class NativeInvoker {
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.nicl.NativeInvoker.DEBUG"));
 
-    private static final LayoutType<Long> LAYOUT_TYPE_LONG = LayoutTypeImpl.create(long.class);
+    private static final LayoutType<Long> LAYOUT_TYPE_LONG = NativeTypes.INT64;
 
     // Unbound MH for the invoke() method
     private static final MethodHandle BRIDGE_METHOD_HANDLE;
@@ -88,16 +91,14 @@ class NativeInvoker {
     private final String debugMethodString;
     private final java.lang.reflect.Type genericReturnType;
     private final MethodHandle targetMethodHandle;
+    private final Function function;
 
-    NativeInvoker(MethodType methodType, Boolean isVarArgs, SymbolLookup lookup, String symbolName, String debugMethodString, java.lang.reflect.Type genericReturnType) throws NoSuchMethodException, IllegalAccessException {
-        this(methodType, isVarArgs, lookupNativeFunction(lookup, symbolName), debugMethodString, genericReturnType);
+    NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, SymbolLookup lookup, String symbolName, String debugMethodString, java.lang.reflect.Type genericReturnType) throws NoSuchMethodException, IllegalAccessException {
+        this(function, methodType, isVarArgs, lookupNativeFunction(lookup, symbolName), debugMethodString, genericReturnType);
     }
 
-    NativeInvoker(MethodType methodType, Boolean isVarArgs, SymbolLookup lookup, String symbolName) throws NoSuchMethodException, IllegalAccessException {
-        this(methodType, isVarArgs, lookup, symbolName, "<unknown>", null);
-    }
-
-    private NativeInvoker(MethodType methodType, Boolean isVarArgs, MethodHandle targetMethodHandle, String debugMethodString, java.lang.reflect.Type genericReturnType) {
+    private NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, MethodHandle targetMethodHandle, String debugMethodString, java.lang.reflect.Type genericReturnType) {
+        this.function = function;
         this.methodType = methodType;
         this.isVarArgs = isVarArgs;
         this.targetMethodHandle = targetMethodHandle;
@@ -170,21 +171,19 @@ class NativeInvoker {
     }
 
     private Object invokeNormal(Object[] args) throws Throwable {
-        CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(Util.typeof(methodType));
+        //Fixme: this should use the function field, not creating the layout via reflection!!!
+        CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(Util.functionof(methodType));
         ShuffleRecipe shuffleRecipe = ShuffleRecipe.make(callingSequence);
 
-        Reference<?> returnStruct = null;
+        Struct<?> returnStruct = null;
         if (Util.isCStruct(methodType.returnType())) {
             // FIXME (STRUCT-LIFECYCLE):
             // Leak the allocated structs for now until the life cycle has been figured out
-            Scope scope = new NativeScope();
+            Scope scope = Scope.newNativeScope();
 
+            Class<?> c = methodType.returnType();
             @SuppressWarnings("unchecked")
-            Class<? extends Reference<?>> c = (Class<? extends Reference<?>>) methodType.returnType();
-            LayoutType<? extends Reference<?>> lt = LayoutType.create(c);
-
-            @SuppressWarnings("unchecked")
-            Reference<?> r = scope.allocateStruct((LayoutType)lt);
+            Struct<?> r = scope.allocateStruct((Class)c);
 
             returnStruct = r;
         }
@@ -245,7 +244,7 @@ class NativeInvoker {
         return processReturnValue(callingSequence, returnValues, returnStruct);
     }
 
-    private Object processReturnValue(CallingSequence callingSequence, long[] returnValues, Reference<?> returnStruct) {
+    private Object processReturnValue(CallingSequence callingSequence, long[] returnValues, Struct<?> returnStruct) {
         if (methodType.returnType() == void.class) {
             return null;
         } else if (methodType.returnType().isPrimitive()) {
@@ -271,7 +270,20 @@ class NativeInvoker {
                     throw new UnsupportedOperationException("NYI: " + methodType.returnType().getName());
             }
         } else if (Pointer.class.isAssignableFrom(methodType.returnType())) {
-            return Util.createPtr(returnValues[0], Util.createLayoutType(genericReturnType).getInnerType());
+            java.lang.reflect.Type ta = void.class;
+            if (genericReturnType instanceof ParameterizedType) {
+                ParameterizedType pt = (ParameterizedType) genericReturnType;
+                java.lang.reflect.Type arg = pt.getActualTypeArguments()[0];
+                if (!(arg instanceof WildcardType)) {
+                    ta = arg;
+                }
+            }
+            Pointer<?> ptr = Util.createPtr(returnValues[0], NativeTypes.VOID);
+            Address a = (Address)function.returnLayout().get();
+            if (a.addresseeInfo().isPresent()) {
+                ptr = ptr.cast(Util.makeType(ta, a.addresseeInfo().get().layout()));
+            }
+            return ptr;
         } else if (Util.isCStruct(methodType.returnType())) {
             if (!callingSequence.returnsInMemory()) {
                 int curValueArrayIndex = 0;
@@ -297,18 +309,18 @@ class NativeInvoker {
         }
     }
 
-    private Pointer<Long> rawStructPointer(Reference<?> struct, long offset) {
-        if ((offset % LAYOUT_TYPE_LONG.getNativeTypeSize()) != 0) {
+    private Pointer<Long> rawStructPointer(Struct<?> struct, long offset) {
+        if ((offset % LAYOUT_TYPE_LONG.bytesSize()) != 0) {
             throw new IllegalArgumentException("Invalid offset: " + offset);
         }
-        return struct.ptr().cast(LAYOUT_TYPE_LONG).offset(offset / LAYOUT_TYPE_LONG.getNativeTypeSize());
+        return struct.ptr().cast(LAYOUT_TYPE_LONG).offset(offset / LAYOUT_TYPE_LONG.bytesSize());
     }
 
-    public void rawStructWrite(Reference<?> struct, long offset, long value) {
-        rawStructPointer(struct, offset).lvalue().set(value);
+    public void rawStructWrite(Struct<?> struct, long offset, long value) {
+        rawStructPointer(struct, offset).set(value);
     }
 
-    private void copyStructReturnValue(Reference<?> structReturn, long structOffset, long[] returnValues, int curReturnValuesIndex, int n) {
+    private void copyStructReturnValue(Struct<?> structReturn, long structOffset, long[] returnValues, int curReturnValuesIndex, int n) {
         for (int i = 0; i < n; i++) {
             long offs = structOffset + i * 8;
             rawStructWrite(structReturn, offs, returnValues[curReturnValuesIndex]);
@@ -346,12 +358,12 @@ class NativeInvoker {
             return new long[] { Util.unpack((Pointer)arg) };
         } else if (Util.isCStruct(carrierType)) {
             long[] values = new long[(int)n];
-            Reference<?> r = (Reference<?>)arg;
+            Struct<?> r = (Struct<?>)arg;
 
-            Pointer<Long> src = r.ptr().cast(LayoutType.create(byte.class)).offset(binding.getOffset()).cast(LayoutType.create(long.class));
+            Pointer<Long> src = r.ptr().cast(NativeTypes.UINT8).offset(binding.getOffset()).cast(NativeTypes.UINT64);
 
             for (int i = 0; i < n; i++) {
-                values[i] = src.offset(i).lvalue().get();
+                values[i] = src.offset(i).get();
             }
             return values;
         } else if (Util.isFunctionalInterface(carrierType)) {
@@ -373,7 +385,7 @@ class NativeInvoker {
 
         MethodType dynamicMethodType = getDynamicMethodType(methodType, unnamedArgs);
 
-        NativeInvoker delegate = new NativeInvoker(dynamicMethodType, false, targetMethodHandle, debugMethodString, genericReturnType);
+        NativeInvoker delegate = new NativeInvoker(function, dynamicMethodType, false, targetMethodHandle, debugMethodString, genericReturnType);
         return delegate.invoke(allArgs);
     }
 

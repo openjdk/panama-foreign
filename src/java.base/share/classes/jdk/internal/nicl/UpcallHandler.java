@@ -34,6 +34,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.nicl.NativeTypes;
 import java.nicl.Scope;
 import java.nicl.layout.Function;
 import java.nicl.layout.Layout;
@@ -46,7 +47,7 @@ public class UpcallHandler {
 
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.nicl.UpcallHandler.DEBUG"));
-    private static final LayoutType<Long> LONG_LAYOUT_TYPE = LayoutType.create(long.class);
+    private static final LayoutType<Long> LONG_LAYOUT_TYPE = NativeTypes.UINT64;
 
     private static final long MAX_STACK_ARG_BYTES = 64 * 1024; // FIXME: Arbitrary limitation for now...
 
@@ -84,7 +85,7 @@ public class UpcallHandler {
         }
 
         Method ficMethod = Util.findFunctionalInterfaceMethod(c);
-        Function ftype = Util.typeof(ficMethod);
+        Function ftype = Util.functionof(Util.methodTypeFor(ficMethod));
 //        if (ftype instanceof jdk.internal.nicl.types.Pointer) { //???
 //            ftype = ((jdk.internal.nicl.types.Pointer) ftype).getPointeeType();
 //        }
@@ -121,7 +122,7 @@ public class UpcallHandler {
             handler = ID2HANDLER.get(id);
         }
 
-        try (Scope scope = new NativeScope()) {
+        try (Scope scope = Scope.newNativeScope()) {
             UpcallContext context = new UpcallContext(scope, integers, vectors, stack, integerReturn, vectorReturn);
             handler.invoke(context);
         }
@@ -133,7 +134,7 @@ public class UpcallHandler {
         this.stub = new UpcallStub(id);
     }
 
-    public Pointer<Void> getNativeEntryPoint() {
+    public Pointer<?> getNativeEntryPoint() {
         return stub.getEntryPoint();
     }
 
@@ -172,7 +173,7 @@ public class UpcallHandler {
         }
     }
 
-    private Object boxArgument(Scope scope, UpcallContext context, Reference<?>[] structs, ArgumentBinding binding) throws IllegalAccessException {
+    private Object boxArgument(Scope scope, UpcallContext context, Struct<?>[] structs, ArgumentBinding binding) throws IllegalAccessException {
         Class<?> carrierType = binding.getMember().getCarrierType(mh.type());
 
         Pointer<Long> src = context.getPtr(binding.getStorage());
@@ -181,55 +182,20 @@ public class UpcallHandler {
             System.err.println("boxArgument carrier type: " + carrierType);
         }
 
-        if (carrierType.isPrimitive()) {
-            switch (PrimitiveClassType.typeof(carrierType)) {
-                case BOOLEAN:
-                    return src.cast(LayoutType.create(boolean.class)).lvalue().get();
 
-                case BYTE:
-                    return src.cast(LayoutType.create(byte.class)).lvalue().get();
-
-                case SHORT:
-                    return src.cast(LayoutType.create(short.class)).lvalue().get();
-
-                case CHAR:
-                    return src.cast(LayoutType.create(char.class)).lvalue().get();
-
-                case INT:
-                    return src.cast(LayoutType.create(int.class)).lvalue().get();
-
-                case LONG:
-                    return src.cast(LayoutType.create(long.class)).lvalue().get();
-
-                case FLOAT:
-                    return src.cast(LayoutType.create(float.class)).lvalue().get();
-
-                case DOUBLE:
-                    return src.cast(LayoutType.create(double.class)).lvalue().get();
-
-                case VOID:
-                default:
-                    throw new UnsupportedOperationException("Unhandled type: " + carrierType.getName());
-            }
-        } else if (Pointer.class.isAssignableFrom(carrierType)) {
-            long addr = src.lvalue().get();
-            if (DEBUG) {
-                System.err.println("Boxing pointer with address: 0x" + Long.toHexString(addr));
-            }
-            return BoundedPointer.createNativeVoidPointer(addr);
-        } else if (Util.isCStruct(carrierType)) {
+        if (Util.isCStruct(carrierType)) {
             int index = binding.getMember().getArgumentIndex();
-            Reference<?> r = structs[index];
+            Struct<?> r = structs[index];
             if (r == null) {
                 /*
                  * FIXME (STRUCT-LIFECYCLE):
                  *
                  * Leak memory for now
                  */
-                scope = new NativeScope();
+                scope = Scope.newNativeScope();
 
                 @SuppressWarnings({"rawtypes", "unchecked"})
-                Reference<?> rtmp = scope.allocateStruct(LayoutType.create((Class)carrierType));
+                Struct<?> rtmp = scope.allocateStruct((Class)carrierType);
 
                 structs[index] = r = rtmp;
             }
@@ -238,27 +204,27 @@ public class UpcallHandler {
                 System.out.println("Populating struct at arg index " + index + " at offset 0x" + Long.toHexString(binding.getOffset()));
             }
 
-            if ((binding.getOffset() % LONG_LAYOUT_TYPE.getNativeTypeSize()) != 0) {
+            if ((binding.getOffset() % LONG_LAYOUT_TYPE.bytesSize()) != 0) {
                 throw new Error("Invalid offset: " + binding.getOffset());
             }
-            Pointer<Long> dst = r.ptr().cast(LONG_LAYOUT_TYPE).offset(binding.getOffset() / LONG_LAYOUT_TYPE.getNativeTypeSize());
+            Pointer<Long> dst = r.ptr().cast(LONG_LAYOUT_TYPE).offset(binding.getOffset() / LONG_LAYOUT_TYPE.bytesSize());
 
             if (DEBUG) {
-                System.err.println("Copying struct data, value: 0x" + Long.toHexString(src.lvalue().get()));
+                System.err.println("Copying struct data, value: 0x" + Long.toHexString(src.get()));
             }
 
             Util.copy(src, dst, binding.getStorage().getSize());
 
             return r;
         } else {
-            throw new UnsupportedOperationException("Unhandled type: " + carrierType.getName());
+            return src.cast(Util.makeType(carrierType, src.type().layout())).get();
         }
     }
 
     private Object[] boxArguments(Scope scope, UpcallContext context, CallingSequence callingSequence) {
         Object[] args = new Object[mh.type().parameterCount()];
 
-        Reference<?>[] structs = new Reference<?>[mh.type().parameterCount()];
+        Struct<?>[] structs = new Struct<?>[mh.type().parameterCount()];
 
         if (DEBUG) {
             System.out.println("boxArguments " + callingSequence.asString());
@@ -284,7 +250,7 @@ public class UpcallHandler {
     }
 
     private void copy(long bits, Pointer<Long> dst) throws IllegalAccessException {
-        try (Scope scope = new NativeScope()) {
+        try (Scope scope = Scope.newNativeScope()) {
             Pointer<Long> src = Util.createArrayElementsPointer(new long[] { bits }, scope);
             Util.copy(src, dst, 8);
         }
@@ -337,19 +303,18 @@ public class UpcallHandler {
             }
         } else if (Pointer.class.isAssignableFrom(c)) {
             long addr = Util.unpack((Pointer<?>) o);
-
-            dst.lvalue().set(addr);
+            dst.set(addr);
         } else if (Util.isCStruct(c)) {
             Function ft = Function.of(Util.typeof(c), false, new Layout[0]);
             boolean returnsInMemory = SystemABI.getInstance().arrangeCall(ft).returnsInMemory();
 
-            Reference<?> struct = (Reference<?>) o;
+            Struct<?> struct = (Struct<?>) o;
 
             Pointer<Long> src = struct.ptr().cast(LONG_LAYOUT_TYPE);
 
             if (returnsInMemory) {
                 // the first integer argument register contains a pointer to caller allocated struct
-                long structAddr = context.getPtr(new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, 0, Constants.INTEGER_REGISTER_SIZE)).lvalue().get();
+                long structAddr = context.getPtr(new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, 0, Constants.INTEGER_REGISTER_SIZE)).get();
 
                 // FIXME: 32-bit support goes here
                 long size = Util.alignUp(Util.sizeof(c), 8);
@@ -359,12 +324,12 @@ public class UpcallHandler {
 
                 // the first integer return register needs to be populated with the (caller supplied) struct addr
                 Pointer<Long> retRegPtr = context.getPtr(new Storage(StorageClass.INTEGER_RETURN_REGISTER, 0, Constants.INTEGER_REGISTER_SIZE));
-                retRegPtr.lvalue().set(structAddr);
+                retRegPtr.set(structAddr);
             } else {
-                if ((binding.getOffset() % LONG_LAYOUT_TYPE.getNativeTypeSize()) != 0) {
+                if ((binding.getOffset() % LONG_LAYOUT_TYPE.bytesSize()) != 0) {
                     throw new Error("Invalid offset: " + binding.getOffset());
                 }
-                Pointer<Long> srcPtr = src.offset(binding.getOffset() / LONG_LAYOUT_TYPE.getNativeTypeSize());
+                Pointer<Long> srcPtr = src.offset(binding.getOffset() / LONG_LAYOUT_TYPE.bytesSize());
 
                 Util.copy(srcPtr, dst, binding.getStorage().getSize());
             }
@@ -374,7 +339,7 @@ public class UpcallHandler {
     }
 
     private void invoke(UpcallContext context) {
-        try (Scope scope = new NativeScope()) {
+        try (Scope scope = Scope.newNativeScope()) {
             // FIXME: Handle varargs upcalls here
             CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(ftype);
 

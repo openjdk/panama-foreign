@@ -174,10 +174,9 @@ final class AsmCodeFactory extends CodeFactory {
         mv.visitEnd();
         cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V", "(" + jt.getSignature() + ")V", null);
-        // Use long for a reference for now
-        JType refType = new ReferenceType(jt);
-        cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ref",
-                "()" + refType.getDescriptor(), "()" + refType.getSignature(), null);
+        JType ptrType = new PointerType(jt);
+        cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
+                "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(), null);
     }
 
     private void addConstant(ClassVisitor cw, Cursor c) {
@@ -211,8 +210,8 @@ final class AsmCodeFactory extends CodeFactory {
         global_cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V1_8, ACC_PUBLIC /*| ACC_STATIC*/ | ACC_INTERFACE | ACC_ABSTRACT,
-                name, "Ljava/lang/Object;Ljava/nicl/types/Reference<L" + name + ";>;",
-                "java/lang/Object", new String[] {"java/nicl/types/Reference"});
+                name, "Ljava/lang/Object;Ljava/nicl/types/Struct<L" + name + ";>;",
+                "java/lang/Object", new String[] {"java/nicl/types/Struct"});
         annotateC(cw, cursor);
         AnnotationVisitor av = cw.visitAnnotation(NATIVE_TYPE, true);
         av.visit("layout", Utils.getLayout(t));

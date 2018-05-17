@@ -40,7 +40,7 @@ public class BoundedMemoryRegion {
     private final Scope scope;
     private final Object base;
     private final long min;
-    private final long length;
+    final long length;
 
     private final int mode;
 
@@ -76,6 +76,10 @@ public class BoundedMemoryRegion {
         this.scope = scope;
     }
 
+    public boolean isAccessibleFor(int mode) {
+        return (this.mode & mode) == mode;
+    }
+
     public long addr() throws UnsupportedOperationException {
         if (base != null) {
             throw new UnsupportedOperationException();
@@ -106,6 +110,13 @@ public class BoundedMemoryRegion {
     private void checkRange(long offset, long length) {
         checkBounds(offset);
         checkBounds(offset + length - 1);
+    }
+
+    BoundedMemoryRegion limit(long newLength) {
+        if (newLength > length) {
+            throw new IllegalArgumentException();
+        }
+        return new BoundedMemoryRegion(base, min, newLength, mode, scope);
     }
 
     public void copyTo(long srcOffset, BoundedMemoryRegion dst, long dstOffset, long length) {
@@ -239,5 +250,12 @@ public class BoundedMemoryRegion {
     @Override
     public String toString() {
         return "{ BoundedMemoryRegion base=" + base + ", min=0x" + Long.toHexString(min) + " length=0x" + Long.toHexString(length) + " mode=" + mode + " }";
+    }
+
+    public void dump(int nbytes) {
+        for (int offset = 0 ; offset < nbytes ; offset++) {
+            byte b = (byte)getBits(offset, 1);
+            System.err.println(Long.toHexString(b & 0xFF));
+        }
     }
 }

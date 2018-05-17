@@ -27,9 +27,9 @@ import java.nicl.types.Pointer;
 public interface Library {
     public static class Symbol {
         private final String name;
-        private final Pointer<Void> address;
+        private final Pointer<?> address;
 
-        public Symbol(String name, Pointer<Void> address) {
+        public Symbol(String name, Pointer<?> address) {
             this.name = name;
             this.address = address;
         }
@@ -38,7 +38,7 @@ public interface Library {
             return name;
         }
     
-        public Pointer<Void> getAddress() {
+        public Pointer<?> getAddress() {
             return address;
         }
     }

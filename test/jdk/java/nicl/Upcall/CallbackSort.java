@@ -28,14 +28,13 @@
 
 import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
+import java.nicl.NativeTypes;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeType;
-import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
-import java.nicl.types.Reference;
 import java.util.Iterator;
 
 public class CallbackSort {
@@ -55,7 +54,7 @@ public class CallbackSort {
         @C(file="dummy", line=47, column=11, USR="c:@F@slowsort")
         @NativeType(layout="(p:VLLp:(p:Vp:V)i)V", ctype="void (void *, size_t, size_t, int (*)(const void *, const void *))", name="slowsort", size=1)
         @CallingConvention(value=1)
-        public abstract void slowsort(Pointer<Void> base, long nmemb, long size, compar compar);
+        public abstract void slowsort(Pointer<?> base, long nmemb, long size, compar compar);
     }
 
     public class comparator implements stdlib.compar {
@@ -63,11 +62,11 @@ public class CallbackSort {
         public int fn(Pointer<Void> e1, Pointer<Void> e2) {
             upcallCalled = true;
 
-            Pointer<Integer> p1 = e1.cast(LayoutType.create(int.class));
-            Pointer<Integer> p2 = e2.cast(LayoutType.create(int.class));
+            Pointer<Integer> p1 = e1.cast(NativeTypes.INT32);
+            Pointer<Integer> p2 = e2.cast(NativeTypes.INT32);
 
-            int i1 = p1.lvalue().get();
-            int i2 = p2.lvalue().get();
+            int i1 = p1.get();
+            int i2 = p2.get();
 
             if (DEBUG) {
                 System.out.println("fn(i1=" + i1 + ", i2=" + i2 + ")");
@@ -79,7 +78,7 @@ public class CallbackSort {
 
     private void doSort(NativeIntArray elems) {
         stdlib i = Libraries.bind(stdlib.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
-        Pointer<Void> p = elems.getBasePointer().cast(LayoutType.create(void.class));
+        Pointer<?> p = elems.getBasePointer().cast(NativeTypes.VOID);
         i.slowsort(p, elems.size(), elems.getElemSize(), new comparator());
     }
 
@@ -137,7 +136,7 @@ public class CallbackSort {
 
         public NativeIntArray(int nelems) {
             this.nelems = nelems;
-            this.base = scope.allocate(LayoutType.create(int.class), nelems * ELEM_SIZE);
+            this.base = scope.allocate(NativeTypes.INT32, nelems * ELEM_SIZE);
         }
 
         public Pointer<Integer> getBasePointer() {
@@ -152,20 +151,20 @@ public class CallbackSort {
             return ELEM_SIZE;
         }
 
-        private Reference<Integer> refAt(int index) {
+        private Pointer<Integer> at(int index) {
             if (index < 0 || index >= nelems) {
                 throw new IndexOutOfBoundsException();
             }
 
-            return base.offset(index).lvalue();
+            return base.offset(index);
         }
 
         public int getAt(int index) {
-            return refAt(index).get();
+            return at(index).get();
         }
 
         public void setAt(int index, int value) {
-            refAt(index).set(value);
+            at(index).set(value);
         }
 
         @Override

@@ -22,6 +22,7 @@
  */
 package jdk.internal.nicl;
 
+import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
 
@@ -29,10 +30,11 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.nicl.layout.Layout;
 import java.nicl.metadata.*;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
-import java.nicl.types.Reference;
+import java.nicl.types.Struct;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -42,7 +44,7 @@ class StructImplGenerator extends BinderClassGenerator {
     private static final String POINTER_FIELD_NAME = "ptr";
 
     // support method handles
-    private static final MethodHandle BUILD_REF_MH;
+    private static final MethodHandle BUILD_PTR_MH;
     private static final MethodHandle PTR_COPY_TO_ARRAY_INT_MH;
     private static final MethodHandle PTR_COPY_TO_ARRAY_OBJECT_MH;
     private static final MethodHandle PTR_COPY_FROM_ARRAY_INT_MH;
@@ -51,11 +53,11 @@ class StructImplGenerator extends BinderClassGenerator {
     static {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         try {
-            BUILD_REF_MH = lookup.findStatic(RuntimeSupport.class, "buildRef", MethodType.methodType(Reference.class, Pointer.class, long.class, LayoutType.class));
+            BUILD_PTR_MH = lookup.findStatic(RuntimeSupport.class, "buildPtr", MethodType.methodType(Pointer.class, Pointer.class, long.class, LayoutType.class));
             PTR_COPY_TO_ARRAY_INT_MH = lookup.findStatic(RuntimeSupport.class, "copyToArray", MethodType.methodType(void.class, Pointer.class, long.class, int[].class, int.class));
-            PTR_COPY_TO_ARRAY_OBJECT_MH = lookup.findStatic(RuntimeSupport.class, "copyToArray", MethodType.methodType(void.class, Pointer.class, long.class, Object[].class, int.class, Class.class));
+            PTR_COPY_TO_ARRAY_OBJECT_MH = lookup.findStatic(RuntimeSupport.class, "copyToArray", MethodType.methodType(void.class, Pointer.class, long.class, Object[].class, int.class, LayoutType.class));
             PTR_COPY_FROM_ARRAY_INT_MH = lookup.findStatic(RuntimeSupport.class, "copyFromArray", MethodType.methodType(void.class, int[].class, Pointer.class, long.class, int.class));
-            PTR_COPY_FROM_ARRAY_OBJECT_MH = lookup.findStatic(RuntimeSupport.class, "copyFromArray", MethodType.methodType(void.class, Object[].class, Pointer.class, long.class, int.class, Class.class));
+            PTR_COPY_FROM_ARRAY_OBJECT_MH = lookup.findStatic(RuntimeSupport.class, "copyFromArray", MethodType.methodType(void.class, Object[].class, Pointer.class, long.class, int.class, LayoutType.class));
         } catch (ReflectiveOperationException ex) {
             throw new IllegalStateException(ex);
         }
@@ -70,8 +72,7 @@ class StructImplGenerator extends BinderClassGenerator {
         generatePointerField(cw);
         generateConstructor(cw);
         generatePointerGetter(cw);
-        generateRefHelper(cw);
-        generateReferenceImpl(cw);
+        generatePtrHelper(cw);
         super.generateMembers(cw);
     }
 
@@ -113,52 +114,25 @@ class StructImplGenerator extends BinderClassGenerator {
         mv.visitEnd();
     }
 
-    private void generateRefHelper(BinderClassWriter cw) {
+    private void generatePtrHelper(BinderClassWriter cw) {
         /*
-         * private <T> Reference<T> ref(long offset, LayoutType<T> t) {
-         *     MethodHandle buildRef = ldc <buildRef>
-         *     return buildRef.invokeExact(p, offset, t);
+         * private <T> Pointer<T> makePtr(long offset, LayoutType<T> t) {
+         *     MethodHandle buildPtr = ldc <buildPtr>
+         *     return buildPtr.invokeExact(p, offset, t);
          * }
          */
-        MethodVisitor mv = cw.visitMethod(ACC_PRIVATE, "ref", Type.getMethodDescriptor(Type.getType(Reference.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), null, null);
+        MethodVisitor mv = cw.visitMethod(ACC_PRIVATE, "makePtr", Type.getMethodDescriptor(Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), null, null);
         mv.visitCode();
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(BUILD_REF_MH));
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(BUILD_PTR_MH));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
         mv.visitVarInsn(LLOAD, 1);
         mv.visitVarInsn(ALOAD, 3);
-        mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.getType(Reference.class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), false);
+        mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.getType(Pointer.class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), false);
         mv.visitInsn(ARETURN);
         mv.visitMaxs(0, 0);
         mv.visitEnd();
-    }
-
-    private void generateReferenceImpl(BinderClassWriter cw) {
-        // Reference<T>.get()
-        {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "get", Type.getMethodDescriptor(Type.getType(Object.class)), null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-        }
-
-        // Reference<T>.set()
-        // FIXME: Copy here?
-        {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "set", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class)), null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitVarInsn(ALOAD, 1);
-            mv.visitTypeInsn(CHECKCAST, implClassName);
-            mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
-            mv.visitFieldInsn(PUTFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
-            mv.visitInsn(RETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-        }
     }
 
     @Override
@@ -175,7 +149,7 @@ class StructImplGenerator extends BinderClassGenerator {
             off = off / 8;
 
             generateFieldAccessors(cw, method, off);
-        } else if (method.getDeclaringClass() == Reference.class) {
+        } else if (method.getDeclaringClass() == Struct.class) {
             // ignore - the corresponding methods are generated as part of setting up the record type
         } else {
             super.generateMethodImplementation(cw, method);
@@ -211,6 +185,9 @@ class StructImplGenerator extends BinderClassGenerator {
     }
 
     private void generateArrayGetter(BinderClassWriter cw, Method method, Class<?> javaType, long offset, int length) {
+        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout().findFirst().get();
+        LayoutType<?> lt = Util.makeType(method.getGenericReturnType(), l);
+
         Class<?> componentType = javaType.getComponentType();
 
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(), Type.getMethodDescriptor(Type.getType(method.getReturnType())), null, null);
@@ -244,7 +221,8 @@ class StructImplGenerator extends BinderClassGenerator {
                     throw new UnsupportedOperationException("Unhandled component type: " + componentType);
             }
         } else {
-            mv.visitLdcInsn(Type.getType(componentType));
+            mv.visitLdcInsn(cw.makeConstantPoolPatch(lt));
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(LayoutType.class));
             mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(Object[].class), Type.INT_TYPE, Type.getType(Class.class)), false);
         }
 
@@ -256,6 +234,9 @@ class StructImplGenerator extends BinderClassGenerator {
     }
 
     private void generateArraySetter(BinderClassWriter cw, Method method, Class<?> javaType, long offset, int length) {
+        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout().findFirst().get();
+        LayoutType<?> lt = Util.makeType(method.getGenericReturnType(), l);
+
         Class<?> componentType = javaType.getComponentType();
 
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName().replace("$get", "$set"), Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(method.getReturnType())), null, null);
@@ -285,7 +266,8 @@ class StructImplGenerator extends BinderClassGenerator {
                     throw new UnsupportedOperationException("Unhandled component type: " + componentType);
             }
         } else {
-            mv.visitLdcInsn(Type.getType(componentType));
+            mv.visitLdcInsn(cw.makeConstantPoolPatch(lt));
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(LayoutType.class));
             mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE, Type.getType(Class.class)), false);
         }
 
@@ -313,7 +295,8 @@ class StructImplGenerator extends BinderClassGenerator {
     }
 
     private void generateNormalFieldAccessors(BinderClassWriter cw, Method method, Class<?> javaType, long offset) {
-        LayoutType<?> lt = Util.createLayoutType(method.getGenericReturnType());
+        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout().findFirst().get();
+        LayoutType<?> lt = Util.makeType(method.getGenericReturnType(), l);
 
         // Getter
         {
@@ -336,10 +319,10 @@ class StructImplGenerator extends BinderClassGenerator {
 
         // Reference
         {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName().replace("$get", "$ref"),
-                    Type.getMethodDescriptor(Type.getType(Reference.class)), null, null);
+            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName().replace("$get", "$ptr"),
+                    Type.getMethodDescriptor(Type.getType(Pointer.class)), null, null);
             mv.visitCode();
-            pushRef(cw, mv, offset, lt);
+            pushPtr(cw, mv, offset, lt);
             mv.visitInsn(ARETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
@@ -350,8 +333,8 @@ class StructImplGenerator extends BinderClassGenerator {
         /*
          * return this.ref(<offset>, this.<layoutTypeField>).get();
          */
-        pushRef(cw, mv, off, lt);
-        mv.visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(Reference.class), "get", Type.getMethodDescriptor(Type.getType(Object.class)), true);
+        pushPtr(cw, mv, off, lt);
+        mv.visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(Pointer.class), "get", Type.getMethodDescriptor(Type.getType(Object.class)), true);
         if (javaType.isPrimitive()) {
             unbox(mv, javaType);
         } else {
@@ -364,16 +347,16 @@ class StructImplGenerator extends BinderClassGenerator {
         /*
          * this.ref(<offset>, this.<layoutTypeField>).set(<value>);
          */
-        pushRef(cw, mv, off, lt);
+        pushPtr(cw, mv, off, lt);
         mv.visitVarInsn(loadInsn(javaType), 1);
         if (javaType.isPrimitive()) {
             box(mv, javaType);
         }
-        mv.visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(Reference.class), "set", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class)), true);
+        mv.visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(Pointer.class), "set", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class)), true);
         mv.visitInsn(RETURN);
     }
 
-    private void pushRef(BinderClassWriter cw, MethodVisitor mv, long off, LayoutType<?> layoutType) {
+    private void pushPtr(BinderClassWriter cw, MethodVisitor mv, long off, LayoutType<?> layoutType) {
         /*
          * ref(<offset>, this.<layoutTypeField>)
          */
@@ -381,6 +364,6 @@ class StructImplGenerator extends BinderClassGenerator {
         mv.visitLdcInsn(off);
         mv.visitLdcInsn(cw.makeConstantPoolPatch(layoutType));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(LayoutType.class));
-        mv.visitMethodInsn(INVOKEVIRTUAL, implClassName, "ref", Type.getMethodDescriptor(Type.getType(Reference.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), false);
+        mv.visitMethodInsn(INVOKEVIRTUAL, implClassName, "makePtr", Type.getMethodDescriptor(Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), false);
     }
 }

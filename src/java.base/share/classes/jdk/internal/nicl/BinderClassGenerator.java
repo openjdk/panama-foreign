@@ -135,7 +135,7 @@ abstract class BinderClassGenerator {
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
         if (method.isDefault()) {
             // default methods don't need implementations
-        } else if (method.getName().endsWith("$ref") || method.getName().endsWith("$set")) {
+        } else if (method.getName().endsWith("$ptr") || method.getName().endsWith("$set")) {
             // ignore - the corresponding methods are generated as part of processing the $get method
         } else {
             throw new IllegalStateException("Unhandled method: " + method);

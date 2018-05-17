@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,17 @@
  */
 package java.nicl.types;
 
-public interface Reference<T> extends Resource {
-    Pointer<T> ptr();
-    T get();
-    void set(T value);
+/**
+ * This interface acts as the root type for all native types handled by the binder. A native type must be annotated
+ * with the {@link java.nicl.metadata.NativeType} annotation, which contains information about the native type's
+ * layout.
+ * @param <T> the Java type modelling this native type.
+ */
+public interface Struct<T extends Struct<T>> extends Resource<T> {
 
-    void checkAccess(int mode);
+    /**
+     * Return a pointer to the managed struct.
+     * @return a pointer.
+     */
+    Pointer<T> ptr();
 }

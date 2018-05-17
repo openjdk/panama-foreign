@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,5 +22,9 @@
  */
 package java.nicl.types;
 
-public interface Resource {
+/**
+ * Common interface for all managed resources, such as pointers and native struct and callback stubs.
+ * @param <X> the carrier type associated with the resource.
+ */
+public interface Resource<X extends Resource<X>> {
 }

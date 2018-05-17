@@ -52,14 +52,14 @@ public class UnixSystem {
         public abstract Pointer<Byte> strerror(int errno);
 
         @C(file="dummy", line=1, column=1, USR="c:@errno")
-        @NativeType(layout="(i", ctype="dummy", size=4)
+        @NativeType(layout="i", ctype="dummy", size=4)
         public abstract int errno$get();
 
         @C(file="dummy", line=1, column=1, USR="c:@environ")
         @NativeType(layout="p:p:V", ctype="dummy", size=8, name="environ")
         public abstract Pointer<Pointer<Byte>> environ$get();
 
-        public abstract Reference<Pointer<Pointer<Byte>>> environ$ref();
+        public abstract Pointer<Pointer<Pointer<Byte>>> environ$ptr();
     }
 
     @NativeHeader
@@ -71,7 +71,7 @@ public class UnixSystem {
 
         @NativeType(layout="[iiiiiiiiiiiii]", ctype="dummy", size=144, isRecordType=true)
         @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        static interface stat extends Reference<stat> {
+        static interface stat extends Struct<stat> {
             @Offset(offset=384l)
             @C(file="dummy", line=47, column=11, USR="c:@SA@stat@st_size")
             @NativeType(layout="i", ctype="off_t", size=4l)
@@ -89,7 +89,7 @@ public class UnixSystem {
 
         @NativeType(layout="[iiiiiiiiiiiiiiiiiiiiii]", ctype="dummy", size=144, isRecordType=true)
         @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        static interface stat extends Reference<stat> {
+        static interface stat extends Struct<stat> {
             @Offset(offset=768l)
             @C(file="dummy", line=47, column=11, USR="c:@SA@stat@st_size")
             @NativeType(layout="l", ctype="off_t", size=4l)
@@ -116,7 +116,7 @@ public class UnixSystem {
         try (Scope scope = Scope.newNativeScope()) {
             long bufSize = 128;
 
-            LayoutType<Byte> t = LayoutType.create(byte.class);
+            LayoutType<Byte> t = NativeTypes.UINT8;
             Pointer<Byte> buf = scope.allocate(t, bufSize);
             Pointer<Byte> cfmt = scope.toCString(fmt);
 
@@ -159,10 +159,10 @@ public class UnixSystem {
         LinuxSystem i = Libraries.bind(MethodHandles.lookup(), LinuxSystem.class);
 
         try (Scope scope = Scope.newNativeScope()) {
-            LinuxSystem.stat s = scope.allocateStruct(LayoutType.create(LinuxSystem.stat.class));
+            LinuxSystem.stat s = scope.allocateStruct(LinuxSystem.stat.class);
             Pointer<LinuxSystem.stat> p = s.ptr();
 
-            s = p.deref();
+            s = p.get();
 
             int res = i.__xstat(1, scope.toCString(path), p);
             if (res != 0) {
@@ -177,10 +177,10 @@ public class UnixSystem {
         MacOSXSystem i = Libraries.bind(MethodHandles.lookup(), MacOSXSystem.class);
 
         try (Scope scope = Scope.newNativeScope()) {
-            MacOSXSystem.stat s = scope.allocateStruct(LayoutType.create(MacOSXSystem.stat.class));
+            MacOSXSystem.stat s = scope.allocateStruct(MacOSXSystem.stat.class);
             Pointer<MacOSXSystem.stat> p = s.ptr();
 
-            s = p.deref();
+            s = p.get();
 
             int res = i.stat$INODE64(scope.toCString(path), p);
             if (res != 0) {
@@ -235,17 +235,16 @@ public class UnixSystem {
 
         {
             // Pointer version
-            Pointer<Pointer<Byte>> pp = (Pointer)i.environ$get().cast(LayoutType.create(byte.class).ptrType());
-            Pointer<Byte> sp = (Pointer)pp.lvalue().get().cast(LayoutType.create(byte.class));
+            Pointer<Pointer<Byte>> pp = i.environ$get().cast(NativeTypes.UINT8.pointer());
+            Pointer<Byte> sp = pp.get();
             System.out.println("testEnviron.str: " + Pointer.toString(sp));
         }
 
         {
             // Reference version
-            Reference<Pointer<Pointer<Byte>>> r = i.environ$ref();
-            Pointer<Pointer<Byte>> spp = (Pointer)r.get().cast(LayoutType.create(byte.class).ptrType());
-            Pointer<Byte> sp = (Pointer)spp.lvalue().get().cast(LayoutType.create(byte.class));
-            System.out.println("testEnviron.str: " + Pointer.toString(sp));
+            Pointer<Pointer<Pointer<Byte>>> r = i.environ$ptr();
+            Pointer<Pointer<Byte>> spp = r.get().cast(NativeTypes.UINT8.pointer());
+            Pointer<Byte> sp = spp.get().cast(NativeTypes.UINT8);
         }
     }
 

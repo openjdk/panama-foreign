@@ -22,6 +22,7 @@
  */
 package jdk.internal.nicl;
 
+import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
 
@@ -29,10 +30,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.nicl.layout.Function;
+import java.nicl.layout.Layout;
 import java.nicl.metadata.*;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
-import java.nicl.types.Reference;
+import java.nicl.types.Struct;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -47,13 +50,13 @@ class HeaderImplGenerator extends BinderClassGenerator {
     }
 
     enum AccessorMethodType {
-        get, set, ref;
+        get, set, ptr;
 
         MethodType getMethodType(Class<?> c) {
             switch (this) {
                 case get: return MethodType.methodType(c);
                 case set: return MethodType.methodType(void.class, c);
-                case ref: return MethodType.methodType(Reference.class);
+                case ptr: return MethodType.methodType(Pointer.class);
             }
 
             throw new IllegalArgumentException("Unhandled type: " + this);
@@ -77,9 +80,10 @@ class HeaderImplGenerator extends BinderClassGenerator {
             generateGlobalVariableMethods(cw, method, getSymbolName(method, getGetterBaseName(method)));
         } else if (method.isAnnotationPresent(C.class) && method.isAnnotationPresent(CallingConvention.class)) {
             MethodType methodType = Util.methodTypeFor(method);
+            Function function = Util.functionof(method);
             NativeInvoker invoker;
             try {
-                invoker = new NativeInvoker(methodType, method.isVarArgs(), lookup, getSymbolName(method), method.toString(), method.getGenericReturnType());
+                invoker = new NativeInvoker(function, methodType, method.isVarArgs(), lookup, getSymbolName(method), method.toString(), method.getGenericReturnType());
             } catch (NoSuchMethodException | IllegalAccessException e) {
                 throw new IllegalStateException(e);
             }
@@ -92,7 +96,8 @@ class HeaderImplGenerator extends BinderClassGenerator {
     private void generateGlobalVariableMethods(BinderClassWriter cw, Method method, String symbolName) {
         Class<?> c = method.getReturnType();
         java.lang.reflect.Type type = method.getGenericReturnType();
-        LayoutType<?> lt = Util.createLayoutType(type);
+        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout().findFirst().get();
+        LayoutType<?> lt = Util.makeType(type, l);
 
         int dollarIndex = method.getName().indexOf("$");
         String methodBaseName = method.getName().substring(0, dollarIndex);
@@ -107,27 +112,23 @@ class HeaderImplGenerator extends BinderClassGenerator {
         for (AccessorMethodType t : AccessorMethodType.values()) {
             String methodName = methodBaseName + "$" + t.name();
             MethodHandle target;
-            try {
-                switch (t) {
-                    case get:
-                        target = MethodHandles.publicLookup().findVirtual(Reference.class, "get", MethodType.methodType(Object.class));
-                        target = target.bindTo(p.lvalue()).asType(MethodType.methodType(c));
-                        break;
+            switch (t) {
+                case get:
+                    target = lt.getter();
+                    target = target.bindTo(p).asType(MethodType.methodType(c));
+                    break;
 
-                    case set:
-                        target = MethodHandles.publicLookup().findVirtual(Reference.class, "set", MethodType.methodType(void.class, Object.class));
-                        target = target.bindTo(p.lvalue()).asType(MethodType.methodType(void.class, c));
-                        break;
+                case set:
+                    target = lt.setter();
+                    target = target.bindTo(p).asType(MethodType.methodType(void.class, c));
+                    break;
 
-                    case ref:
-                        target = MethodHandles.constant(Reference.class, p.lvalue());
-                        break;
+                case ptr:
+                    target = MethodHandles.constant(Pointer.class, p);
+                    break;
 
-                    default:
-                        throw new InternalError("Unexpected access method type: " + t);
-                }
-            } catch (NoSuchMethodException | IllegalAccessException e) {
-                throw new RuntimeException(e);
+                default:
+                    throw new InternalError("Unexpected access method type: " + t);
             }
 
             addMethodFromHandle(cw, methodName, t.getMethodType(c), false, target);

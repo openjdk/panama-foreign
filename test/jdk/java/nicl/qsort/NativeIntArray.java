@@ -22,10 +22,9 @@
  */
 
 
+import java.nicl.NativeTypes;
 import java.nicl.Scope;
-import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
-import java.nicl.types.Reference;
 import java.util.Iterator;
 
 public class NativeIntArray implements Iterable<Integer> {
@@ -37,7 +36,7 @@ public class NativeIntArray implements Iterable<Integer> {
 
     public NativeIntArray(int nelems) {
         this.nelems = nelems;
-        this.base = scope.allocate(LayoutType.create(int.class), nelems * ELEM_SIZE);
+        this.base = scope.allocate(NativeTypes.INT32, nelems * ELEM_SIZE);
     }
 
     public Pointer<Integer> getBasePointer() {
@@ -52,20 +51,20 @@ public class NativeIntArray implements Iterable<Integer> {
         return ELEM_SIZE;
     }
 
-    private Reference<Integer> refAt(int index) {
+    private Pointer<Integer> at(int index) {
         if (index < 0 || index >= nelems) {
             throw new IndexOutOfBoundsException();
         }
 
-        return base.offset(index).lvalue();
+        return base.offset(index);
     }
 
     public int getAt(int index) {
-        return refAt(index).get();
+        return at(index).get();
     }
 
     public void setAt(int index, int value) {
-        refAt(index).set(value);
+        at(index).set(value);
     }
 
     @Override

@@ -29,6 +29,7 @@
 
 import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
+import java.nicl.NativeTypes;
 import java.nicl.Scope;
 import java.nicl.metadata.C;
 import java.nicl.metadata.CallingConvention;
@@ -37,7 +38,7 @@ import java.nicl.metadata.NativeType;
 import java.nicl.metadata.Offset;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
-import java.nicl.types.Reference;
+import java.nicl.types.Struct;
 
 public class StructUpcall {
     private static final boolean DEBUG = false;
@@ -46,7 +47,7 @@ public class StructUpcall {
     public static interface Index {
         @NativeType(layout="[iiippp]", ctype="dummy", size=40, isRecordType=true)
         @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        static interface MyStruct extends Reference<MyStruct> {
+        static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
             @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field1")
             @NativeType(layout="i", ctype="enum MyStructField1", size=4l)
@@ -69,19 +70,19 @@ public class StructUpcall {
             @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field4")
             @NativeType(layout="p", ctype="const void *", size=8l)
             Pointer<Void> field4$get();
-            void field4$set(Pointer<Void> p);
+            void field4$set(Pointer<?> p);
 
             @Offset(offset=192l)
             @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field5")
             @NativeType(layout="p", ctype="const void *", size=8l)
             Pointer<Void> field5$get();
-            void field5$set(Pointer<Void> p);
+            void field5$set(Pointer<?> p);
 
             @Offset(offset=256l)
             @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field6")
             @NativeType(layout="p", ctype="const void *", size=8l)
             Pointer<Void> field6$get();
-            void field6$set(Pointer<Void> p);
+            void field6$set(Pointer<?> p);
         }
 
         @FunctionalInterface
@@ -110,17 +111,17 @@ public class StructUpcall {
                 System.err.println("\ts.field1  = " + s.field1$get());
                 System.err.println("\ts.field2 = " + s.field2$get());
                 System.err.println("\ts.field3 = " + s.field3$get());
-                System.err.println("\ts.field4 = " + s.field4$get().cast(LayoutType.create(byte.class)).lvalue().get());
-                System.err.println("\ts.field5 = " + s.field5$get().cast(LayoutType.create(byte.class)).lvalue().get());
-                System.err.println("\ts.field6 = " + s.field6$get().cast(LayoutType.create(byte.class)).lvalue().get());
+                System.err.println("\ts.field4 = " + s.field4$get().cast(NativeTypes.INT8).get());
+                System.err.println("\ts.field5 = " + s.field5$get().cast(NativeTypes.INT8).get());
+                System.err.println("\ts.field6 = " + s.field6$get().cast(NativeTypes.INT8).get());
             }
 
             assertEquals(47, s.field1$get());
             assertEquals(11, s.field2$get());
             assertEquals(93, s.field3$get());
-            assertEquals(123, s.field4$get().cast(LayoutType.create(byte.class)).lvalue().get());
-            assertEquals(124, s.field5$get().cast(LayoutType.create(byte.class)).lvalue().get());
-            assertEquals(125, s.field6$get().cast(LayoutType.create(byte.class)).lvalue().get());
+            assertEquals(123, s.field4$get().cast(NativeTypes.UINT8).get());
+            assertEquals(124, s.field5$get().cast(NativeTypes.UINT8).get());
+            assertEquals(125, s.field6$get().cast(NativeTypes.UINT8).get());
         }
     }
 
@@ -128,33 +129,33 @@ public class StructUpcall {
         Index i = Libraries.bind(Index.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
 
         try (Scope scope = Scope.newNativeScope()) {
-            Reference<Index.MyStruct> s = scope.allocateStruct(LayoutType.create(Index.MyStruct.class));
+            Index.MyStruct s = scope.allocateStruct(Index.MyStruct.class);
 
-            Pointer<Byte> p1 = scope.allocate(LayoutType.create(byte.class));
-            Pointer<Byte> p2 = scope.allocate(LayoutType.create(byte.class));
-            Pointer<Byte> p3 = scope.allocate(LayoutType.create(byte.class));
+            Pointer<Byte> p1 = scope.allocate(NativeTypes.INT8);
+            Pointer<Byte> p2 = scope.allocate(NativeTypes.INT8);
+            Pointer<Byte> p3 = scope.allocate(NativeTypes.INT8);
 
-            p1.lvalue().set((byte)123);
-            p2.lvalue().set((byte)124);
-            p3.lvalue().set((byte)125);
+            p1.set((byte)123);
+            p2.set((byte)124);
+            p3.set((byte)125);
 
-            s.get().field1$set(47);
-            s.get().field2$set(11);
-            s.get().field3$set(93);
-            s.get().field4$set(p1.cast(LayoutType.create(void.class)));
-            s.get().field5$set(p2.cast(LayoutType.create(void.class)));
-            s.get().field6$set(p3.cast(LayoutType.create(void.class)));
+            s.field1$set(47);
+            s.field2$set(11);
+            s.field3$set(93);
+            s.field4$set(p1.cast(NativeTypes.VOID));
+            s.field5$set(p2.cast(NativeTypes.VOID));
+            s.field6$set(p3.cast(NativeTypes.VOID));
 
-            assertEquals(47, s.get().field1$get());
-            assertEquals(11, s.get().field2$get());
-            assertEquals(93, s.get().field3$get());
-            assertEquals(123, s.get().field4$get().cast(LayoutType.create(byte.class)).lvalue().get());
-            assertEquals(124, s.get().field5$get().cast(LayoutType.create(byte.class)).lvalue().get());
-            assertEquals(125, s.get().field6$get().cast(LayoutType.create(byte.class)).lvalue().get());
+            assertEquals(47, s.field1$get());
+            assertEquals(11, s.field2$get());
+            assertEquals(93, s.field3$get());
+            assertEquals(123, s.field4$get().cast(NativeTypes.INT8).get());
+            assertEquals(124, s.field5$get().cast(NativeTypes.INT8).get());
+            assertEquals(125, s.field6$get().cast(NativeTypes.INT8).get());
 
             Index.MyStructVisitor v = new MyStructVisitorImpl();
 
-            i.struct_upcall(v, s.get());
+            i.struct_upcall(v, s);
         }
 
         if (DEBUG) {

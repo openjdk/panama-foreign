@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,73 +22,58 @@
  */
 package jdk.internal.nicl.types;
 
-import jdk.internal.nicl.LibrariesHelper;
-import jdk.internal.nicl.Util;
-import java.nicl.types.*;
+import java.nicl.NativeTypes;
+import java.nicl.types.Array;
+import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
-public class BoundedPointer<T> implements Pointer<T> {
-    private static final boolean DEBUG_WARN_ON_OOBPTR = Boolean.valueOf(
-        privilegedGetProperty("jdk.internal.nicl.types.DEBUG_WARN_ON_OOBPTR", "true"));
-
-    public static final Pointer<Void> NULL = new BoundedPointer<>(LayoutType.create(void.class), BoundedMemoryRegion.NOTHING, 0, 0);
+public class BoundedPointer<X> implements Pointer<X> {
 
     public static boolean isNull(long addr) {
         // FIMXE: Include the 64k?
         return addr == 0;
     }
 
-    protected final BoundedMemoryRegion region;
-    protected final long offset;
+    public final BoundedMemoryRegion region;
+    public final long offset;
 
-    protected final LayoutType<T> type;
-    protected final int mode;
+    public final LayoutType<X> type;
+    // @@@ Unused
+    public final int mode;
 
-    public BoundedPointer(LayoutType<T> type, BoundedMemoryRegion region) {
+    public BoundedPointer(LayoutType<X> type, BoundedMemoryRegion region) {
         this(type, region, 0);
     }
 
-    public BoundedPointer(LayoutType<T> type, BoundedMemoryRegion region, long offset) {
+    public BoundedPointer(LayoutType<X> type, BoundedMemoryRegion region, long offset) {
         this(type, region, offset, BoundedMemoryRegion.MODE_RW);
     }
 
-    public BoundedPointer(LayoutType<T> type, BoundedMemoryRegion region, long offset, int mode) {
+    public BoundedPointer(LayoutType<X> type, BoundedMemoryRegion region, long offset, int mode) {
         this.region = region;
         this.offset = offset;
         this.type = type;
         this.mode = mode;
     }
 
-    public static BoundedPointer<Void> createNativeVoidPointer(long offset) {
-        return new BoundedPointer<>(LayoutType.create(void.class), BoundedMemoryRegion.EVERYTHING, offset);
-    }
-
     @Override
-    public T deref() {
-        if (Util.isCStruct(type.getCarrierType())) {
-            Class<? extends T> c = LibrariesHelper.getStructImplClass(type.getCarrierType());
-
-            try {
-                return c.getConstructor(Pointer.class).newInstance(this);
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
-            }
-        } else {
-            return lvalue().get();
-        }
-    }
-
-    @Override
-    public Reference<T> lvalue() {
-        // FIXME: check bounds & liveness here
-        // FIXME: check for and potentially create an instance of the struct here if Util.isCStruct(type.getCarrierType()) ?
-        return new ReferenceImpl<>(type, region, offset, mode);
+    public LayoutType<X> type() {
+        return type;
     }
 
     private long effectiveAddress() {
         return region.addr() + offset;
+    }
+
+    @Override
+    public boolean isAccessibleFor(int mode) {
+        return region.isAccessibleFor(mode);
     }
 
     @Override
@@ -97,8 +82,24 @@ public class BoundedPointer<T> implements Pointer<T> {
     }
 
     @Override
-    public <S> Pointer<S> cast(LayoutType<S> type) {
-        return new BoundedPointer<>(type, region, offset);
+    public long bytesSize() {
+        return region.length - offset;
+    }
+
+    @Override
+    public Array<X> withSize(long size) {
+        return new BoundedArray<>(this, (int)size);
+    }
+
+    @Override
+    public Stream<Pointer<X>> elements() {
+        return StreamSupport.stream(Spliterators.spliterator(new PointerIterator<>(this),
+                region.length / (type.layout().bitsSize() / 8),
+                Spliterator.NONNULL | Spliterator.DISTINCT | Spliterator.ORDERED), false);
+    }
+
+    public BoundedPointer<X> limit(long nelems) {
+        return new BoundedPointer<>(type, region.limit(offset + ((type.layout().bitsSize() / 8) * nelems)), offset);
     }
 
     @Override
@@ -107,22 +108,16 @@ public class BoundedPointer<T> implements Pointer<T> {
     }
 
     @Override
-    public BoundedPointer<T> offset(long nElements) {
-        long elemSize = type.getNativeTypeSize();
+    public BoundedPointer<X> offset(long nElements) throws IllegalArgumentException, IndexOutOfBoundsException {
+        long elemSize = type.layout().bitsSize() / 8;
         if (elemSize == 0) {
             throw new IllegalArgumentException();
         }
 
         long newOffset = this.offset + nElements * elemSize;
 
-        if (DEBUG_WARN_ON_OOBPTR) { // FIXME: eager warning for sanity, just for now
-            try {
-                region.checkBounds(newOffset);
-            } catch (IndexOutOfBoundsException e) {
-                System.err.println("WARNING: Producing out of bounds pointer (could be an error)");
-                e.printStackTrace();
-            }
-        }
+        region.checkBounds(newOffset);
+
         // Note: the pointer may point outside of the memory region bounds.
         // This is allowed, as long as the pointer/data is not dereferenced
         return new BoundedPointer<>(type, region, newOffset);
@@ -134,8 +129,53 @@ public class BoundedPointer<T> implements Pointer<T> {
         srcRegion.copyTo(this.offset, dstRegion, dst.offset, bytes);
     }
 
+    public <Z> BoundedPointer<Z> cast(LayoutType<Z> layoutType) {
+        return new BoundedPointer<>(layoutType, region, offset, mode);
+    }
+
+    public static BoundedPointer<?> createNativeVoidPointer(long offset) {
+        return new BoundedPointer<>(NativeTypes.VOID, BoundedMemoryRegion.EVERYTHING, offset);
+    }
+
     @Override
     public String toString() {
-        return "{ BoundedPointer<" + type.getCarrierType() + "> type: " + type + " region: " + region + " offset=0x" + Long.toHexString(offset) + " }";
+        return "{ BoundedPointer type: " + type + " region: " + region + " offset=0x" + Long.toHexString(offset) + " }";
+    }
+
+    public void dump(int nbytes) {
+        region.dump(nbytes);
+    }
+
+    static class PointerIterator<X> implements Iterator<BoundedPointer<X>> {
+
+        BoundedPointer<X> next;
+
+        PointerIterator(BoundedPointer<X> pointer) {
+            this.next = pointer;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return next != null;
+        }
+
+        @Override
+        public BoundedPointer<X> next() {
+            if (next == null) {
+                throw new IllegalStateException("Pointer iterator doesn't have next()");
+            } else {
+                BoundedPointer<X> prev = next;
+                update();
+                return prev;
+            }
+        }
+
+        private void update() {
+            try {
+                next = next.offset(1);
+            } catch (IndexOutOfBoundsException ex) {
+                next = null;
+            }
+        }
     }
 }

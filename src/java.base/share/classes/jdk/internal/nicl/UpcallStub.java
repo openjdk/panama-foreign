@@ -26,6 +26,7 @@ import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
 
 import java.lang.ref.Cleaner;
+import java.nicl.NativeTypes;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 
@@ -34,11 +35,11 @@ class UpcallStub {
 
     static class Stub implements Runnable {
         private final int id;
-        private final Pointer<Void> entryPoint;
+        private final Pointer<?> entryPoint;
 
         Stub(int id) throws Throwable {
             this.id = id;
-            this.entryPoint = new BoundedPointer<>(LayoutType.create(void.class),
+            this.entryPoint = new BoundedPointer<>(NativeTypes.VOID,
                     new BoundedMemoryRegion(NativeInvoker.allocateUpcallStub(id), 0), 0, 0);
         }
 
@@ -59,7 +60,7 @@ class UpcallStub {
         cleaner.register(this, stub);
     }
 
-    public Pointer<Void> getEntryPoint() {
+    public Pointer<?> getEntryPoint() {
         return stub.entryPoint;
     }
 }

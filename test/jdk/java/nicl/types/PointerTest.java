@@ -29,6 +29,7 @@
 import java.lang.invoke.MethodHandles;
 import java.nicl.*;
 import java.nicl.metadata.*;
+import java.nicl.metadata.Array;
 import java.nicl.types.*;
 
 public class PointerTest {
@@ -67,16 +68,16 @@ public class PointerTest {
 
         @C(file="dummy", line=47, column=11, USR="c:@F@get_structs2")
         @CallingConvention(value=1)
-        @NativeType(layout="(p:i)p", ctype="const struct MyStruct **(int *)", size=1l)
+        @NativeType(layout="(p:i)p:p:[3ip:c]", ctype="const struct MyStruct **(int *)", size=1l)
         Pointer<Pointer<MyStruct>> get_structs2(Pointer<Integer> pcount);
 
         @NativeType(layout="[3ip:c]", ctype="dummy", size=24, isRecordType=true)
         @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        static interface MyStruct extends Reference<MyStruct> {
+        static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
             @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@ia")
             @Array(elementType="int", elementSize=4l, length=3l)
-            @NativeType(layout="iii", ctype="int []", size=12l)
+            @NativeType(layout="3i", ctype="int []", size=12l)
             int[] ia$get();
             void ia$set(int[] i);
 
@@ -96,12 +97,12 @@ public class PointerTest {
 
     private void verifyStrings(Pointer<Pointer<Byte>> values, Pointer<Integer> pi) {
         debug("values: " + values);
-        debug("nvalues: " + pi.deref());
+        debug("nvalues: " + pi.get());
 
-        assertEquals(VERIFICATION_STRINGS.length, pi.deref());
+        assertEquals(VERIFICATION_STRINGS.length, pi.get());
 
-        for (int i = 0; i < pi.deref(); i++) {
-            Pointer<Byte> cstr = values.offset(i).deref();
+        for (int i = 0; i < pi.get(); i++) {
+            Pointer<Byte> cstr = values.offset(i).get();
             String str = Pointer.toString(cstr);
 
             debug("str[" + i + "] = " + str);
@@ -113,15 +114,15 @@ public class PointerTest {
 
     void testStrings() {
         try (Scope scope = Scope.newNativeScope()) {
-            LayoutType<Integer> iType = LayoutType.create(int.class);
-            LayoutType<Pointer<Pointer<Byte>>> ppcType = LayoutType.create(byte.class).ptrType().ptrType();
+            LayoutType<Integer> iType = NativeTypes.INT32;
+            LayoutType<Pointer<Pointer<Byte>>> ppcType = NativeTypes.UINT8.pointer().pointer();
 
             Pointer<Pointer<Pointer<Byte>>> pppc = scope.allocate(ppcType);
             Pointer<Integer> pi = scope.allocate(iType);
 
             ptrs.get_strings(pppc, pi);
 
-            Pointer<Pointer<Byte>> values = pppc.deref();
+            Pointer<Pointer<Byte>> values = pppc.get();
 
             verifyStrings(values, pi);
         }
@@ -129,7 +130,7 @@ public class PointerTest {
 
     void testStrings2() {
         try (Scope scope = Scope.newNativeScope()) {
-            LayoutType<Integer> iType = LayoutType.create(int.class);
+            LayoutType<Integer> iType = NativeTypes.UINT32;
 
             Pointer<Integer> pi = scope.allocate(iType);
 
@@ -141,14 +142,14 @@ public class PointerTest {
 
     private void verifyStructs(Pointer<Pointer<pointers.MyStruct>> structs, Pointer<Integer> pi) {
         debug("structs: " + structs);
-        debug("nstructs: " + pi.deref());
+        debug("nstructs: " + pi.get());
 
-        assertEquals(VERIFICATION_STRINGS.length, pi.deref());
+        assertEquals(VERIFICATION_STRINGS.length, pi.get());
 
         int counter = 1;
 
-        for (int i = 0; i < pi.deref(); i++) {
-            pointers.MyStruct s = structs.offset(i).deref().deref();
+        for (int i = 0; i < pi.get(); i++) {
+            pointers.MyStruct s = structs.offset(i).get().get();
             String str = Pointer.toString(s.str$get());
             debug("str[" + i + "] = " + str);
 
@@ -165,15 +166,15 @@ public class PointerTest {
 
     void testStructs() {
         try (Scope scope = Scope.newNativeScope()) {
-            LayoutType<Integer> iType = LayoutType.create(int.class);
-            LayoutType<Pointer<Pointer<pointers.MyStruct>>> ppsType = LayoutType.create(pointers.MyStruct.class).ptrType().ptrType();
+            LayoutType<Integer> iType = NativeTypes.INT32;
+            LayoutType<Pointer<Pointer<pointers.MyStruct>>> ppsType = LayoutType.ofStruct(pointers.MyStruct.class).pointer().pointer();
 
             Pointer<Pointer<Pointer<pointers.MyStruct>>> ppps = scope.allocate(ppsType);
             Pointer<Integer> pi = scope.allocate(iType);
 
             ptrs.get_structs(ppps, pi);
 
-            Pointer<Pointer<pointers.MyStruct>> pps = ppps.deref();
+            Pointer<Pointer<pointers.MyStruct>> pps = ppps.get();
 
             verifyStructs(pps, pi);
         }
@@ -181,7 +182,7 @@ public class PointerTest {
 
     void testStructs2() {
         try (Scope scope = Scope.newNativeScope()) {
-            LayoutType<Integer> iType = LayoutType.create(int.class);
+            LayoutType<Integer> iType = NativeTypes.INT32;
 
             Pointer<Integer> pi = scope.allocate(iType);
 
