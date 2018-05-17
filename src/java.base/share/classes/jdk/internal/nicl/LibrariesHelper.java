@@ -24,7 +24,6 @@ package jdk.internal.nicl;
 
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
-import jdk.internal.misc.Unsafe;
 import jdk.internal.org.objectweb.asm.Type;
 
 import java.lang.invoke.MethodHandles.Lookup;
@@ -42,85 +41,103 @@ import java.util.Optional;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-public class LibrariesHelper {
+public final class LibrariesHelper {
+    private LibrariesHelper() {}
 
-    static JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
-
-    // Map of interface -> impl class
-    private static final Map<Class<?>, Class<?>> IMPLEMENTATIONS = new WeakHashMap<>();
-
-    private static final Unsafe U = Unsafe.getUnsafe();
+    private static final JavaLangAccess jlAccess = SharedSecrets.getJavaLangAccess();
 
     private static String generateImplName(Class<?> c) {
         return Type.getInternalName(c) + "$" + "Impl";
     }
 
-    public static <T> Class<? extends T> getStructImplClass(Class<T> c) {
-        return getOrCreateImpl(c, SymbolLookup.NO_LOOKUP);
-    }
-
     /**
-     * Look up the implementation for an interface, or generate it if needed
+     * Generate the implementation for an interface.
      *
      * @param c the interface for which to return an implementation class
      * @param generator a generator capable of generating an implementation, if needed
      * @return a class implementing the interface
      */
-    @SuppressWarnings("unchecked")
-    private static <T> Class<? extends T> getOrCreateImpl(Class<T> c, BinderClassGenerator generator) {
-        Class<? extends T> implCls;
-
-        synchronized (IMPLEMENTATIONS) {
-            implCls = (Class<? extends T>) IMPLEMENTATIONS.get(c);
+    private static Class<?> generateImpl(Class<?> c, BinderClassGenerator generator) {
+        try {
+            return AccessController.doPrivileged((PrivilegedAction<Class<?>>) () -> {
+                    return generator.generate();
+                });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate implementation for class " + c, e);
         }
-
-        if (implCls == null) {
-            Class<? extends T> newCls;
-            try {
-                newCls = (Class<? extends T>)AccessController.doPrivileged((PrivilegedAction<Class<?>>) () -> {
-                        return generator.generate();
-                    });
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to generate implementation for class " + c, e);
-            }
-
-            synchronized (IMPLEMENTATIONS) {
-                implCls = (Class<? extends T>) IMPLEMENTATIONS.get(c);
-                if (implCls == null) {
-                    IMPLEMENTATIONS.put(c, newCls);
-                    implCls = newCls;
-                }
-            }
-        }
-
-        return implCls;
     }
 
+    // Cache: Struct interface Class -> Impl Class.
+    private static final ClassValue<Class<?>> STRUCT_IMPLEMENTATIONS = new ClassValue<>() {
+        @Override
+        protected Class<?> computeValue(Class<?> c) {
+            assert c.isAnnotationPresent(NativeType.class) &&
+                   c.getAnnotation(NativeType.class).isRecordType();
+            return generateImpl(c, new StructImplGenerator(c, generateImplName(c), c));
+        }
+    };
+
     /**
-     * Generate an implementation class for a header type
+     * Get the implementation for a Struct interface.
+     *
+     * @param c the Struct interface for which to return an implementation class
+     * @return a class implementing the interface
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Class<? extends T> getStructImplClass(Class<T> c) {
+        boolean isRecordType = c.isAnnotationPresent(NativeType.class) &&
+                    c.getAnnotation(NativeType.class).isRecordType();
+        if (! isRecordType) {
+            throw new IllegalArgumentException("Not a Struct interface: " + c);
+        }
+
+        return (Class<? extends T>)STRUCT_IMPLEMENTATIONS.get(c);
+    }
+
+    // This is used to pass the current SymbolLookup object to the header computeValue method below.
+    private static final ThreadLocal<SymbolLookup> curSymLookup = new ThreadLocal<>();
+
+    // Cache: Header interface Class -> Impl Class.
+    private static final ClassValue<Class<?>> HEADER_IMPLEMENTATIONS = new ClassValue<>() {
+        @Override
+        protected Class<?> computeValue(Class<?> c) {
+            assert c.isAnnotationPresent(NativeHeader.class);
+            assert curSymLookup.get() != null;
+            String implName = generateImplName(c);
+            BinderClassGenerator generator = new HeaderImplGenerator(c, implName, c, curSymLookup.get());
+            return generateImpl(c, generator);
+        }
+    };
+
+    /**
+     * Get an implementation class for a header type
      *
      * @param c an interface representing a header file - must have an @NativeHeader annotation
      * @param lookup the symbol lookup to use to look up native symbols
      * @return a class implementing the header
      */
-    private static <T> Class<? extends T> getOrCreateImpl(Class<T> c, SymbolLookup lookup)
-            throws SecurityException, InternalError {
-        /*
+    @SuppressWarnings("unchecked")
+    private static <T> Class<? extends T> getHeaderImplClass(Class<T> c, SymbolLookup lookup) {
         if (!c.isAnnotationPresent(NativeHeader.class)) {
             throw new IllegalArgumentException("No @NativeHeader annotation on class " + c);
         }
-        */
 
-        String implClassName = generateImplName(c);
-
-        boolean isRecordType = c.isAnnotationPresent(NativeType.class) && c.getAnnotation(NativeType.class).isRecordType();
-        BinderClassGenerator generator = isRecordType ?
-                new StructImplGenerator(c, implClassName, c) :
-                new HeaderImplGenerator(c, implClassName, c, lookup);
-
-        return getOrCreateImpl(c, generator);
+        // Thread local is used to pass additional argument to the header
+        // implementation generator's computeValue method.
+        try {
+            curSymLookup.set(lookup);
+            return (Class<? extends T>)HEADER_IMPLEMENTATIONS.get(c);
+        } finally {
+            curSymLookup.remove();
+        }
     }
 
+    /**
+     * Load the specified shared library.
+     *
+     * @param lookup Lookup object of the caller.
+     * @param name Name of the shared library to load.
+     */
     public static Library loadLibrary(Lookup lookup, String name) {
         return jlAccess.findLibrary(lookup, name);
     }
@@ -133,6 +150,13 @@ public class LibrariesHelper {
               filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
     }
 
+    /**
+     * Load the specified shared libraries from the specified paths.
+     *
+     * @param lookup Lookup object of the caller.
+     * @param pathStrs array of paths to load the shared libraries from.
+     * @param names array of shared library names.
+     */
     // used by jextract tool to load libraries for symbol checks.
     public static Library[] loadLibraries(Lookup lookup, String[] pathStrs, String[] names) {
         if (pathStrs == null || pathStrs.length == 0) {
@@ -166,23 +190,36 @@ public class LibrariesHelper {
         return jlAccess.defaultLibrary();
     }
 
+    /**
+     * Create a raw, uncivilized version of the interface
+     *
+     * @param c the interface class to bind
+     * @param lib the library in which to look for native symbols
+     * @return an object of class implementing the interfacce
+     */
     public static <T> T bind(Class<T> c, Library lib) {
         return bind(c, new SymbolLookup(lib));
     }
 
     private static <T> T bind(Class<T> c, SymbolLookup lookup) {
-        Class<? extends T> cls = getOrCreateImpl(c, lookup);
+        Class<? extends T> cls = getHeaderImplClass(c, lookup);
 
         try {
-            //FIXME: Run some constructor here...?
             @SuppressWarnings("unchecked")
-            T instance = (T) U.allocateInstance(cls);
+            T instance = (T) cls.getDeclaredConstructor().newInstance();
             return instance;
         } catch (ReflectiveOperationException e) {
             throw new Error(e);
         }
     }
 
+    /**
+     * Create a raw, uncivilized version of the interface
+     *
+     * @param lookup the lookup object (used for implicit native library lookup)
+     * @param c the class to bind
+     * @return an object of class implementing the interfacce
+     */
     public static <T> T bind(Lookup lookup, Class<T> c) {
         return bind(c, getSymbolLookupForClass(lookup, c));
     }

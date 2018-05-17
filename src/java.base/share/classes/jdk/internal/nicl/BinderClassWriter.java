@@ -24,11 +24,11 @@ package jdk.internal.nicl;
 
 import jdk.internal.org.objectweb.asm.ClassWriter;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 
 class BinderClassWriter extends ClassWriter {
 
-    private final HashMap<Object, ConstantPoolPatch> cpPatches = new HashMap<>();
+    private final ArrayList<ConstantPoolPatch> cpPatches = new ArrayList<>();
     private int curUniquePatchIndex = 0;
 
     BinderClassWriter() {
@@ -39,7 +39,7 @@ class BinderClassWriter extends ClassWriter {
         int myUniqueIndex = curUniquePatchIndex++;
         String cpPlaceholder = "CONSTANT_PLACEHOLDER_" + myUniqueIndex;
         int index = newConst(cpPlaceholder);
-        cpPatches.put(cpPlaceholder, new ConstantPoolPatch(index, cpPlaceholder, o));
+        cpPatches.add(new ConstantPoolPatch(index, cpPlaceholder, o));
         return cpPlaceholder;
     }
 
@@ -51,7 +51,7 @@ class BinderClassWriter extends ClassWriter {
         int size = ((classFile[8] & 0xFF) << 8) | (classFile[9] & 0xFF);
 
         Object[] patches = new Object[size];
-        for (ConstantPoolPatch p : cpPatches.values()) {
+        for (ConstantPoolPatch p : cpPatches) {
             if (p.index >= size) {
                 throw new InternalError("Failed to resolve constant pool patch entries");
             }

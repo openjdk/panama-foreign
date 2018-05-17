@@ -88,6 +88,8 @@ abstract class BinderClassGenerator {
         String[] interfaceNames = (interfaces == null) ? null : Stream.of(interfaces).map(Type::getInternalName).toArray(String[]::new);
         cw.visit(52, ACC_PUBLIC | ACC_SUPER, implClassName, null, Type.getInternalName(Object.class), interfaceNames);
 
+        generateDefaultConstructor(cw);
+
         generateMembers(cw);
 
         cw.visitEnd();
@@ -125,6 +127,10 @@ abstract class BinderClassGenerator {
     }
 
     // code generation entry points (to be overridden by subclasses)
+
+    protected void generateDefaultConstructor(BinderClassWriter cw) {
+        // no default constructor by default
+    }
 
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
         if (method.isDefault()) {

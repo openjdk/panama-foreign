@@ -22,12 +22,10 @@
  */
 package java.nicl;
 
-import java.io.File;
-
-import jdk.internal.nicl.LibrariesHelper;
-
 import java.lang.invoke.MethodHandles.Lookup;
+import java.io.File;
 import java.util.Objects;
+import jdk.internal.nicl.LibrariesHelper;
 
 public final class Libraries {
     // don't create
@@ -36,9 +34,9 @@ public final class Libraries {
     /**
      * Create a raw, uncivilized version of the interface
      *
-     * @param c the class to bind
+     * @param c the interface class to bind
      * @param lib the library in which to look for native symbols
-     * @return
+     * @return an object of class implementing the interfacce
      */
     public static <T> T bind(Class<T> c, Library lib) {
         SecurityManager security = System.getSecurityManager();
@@ -53,7 +51,7 @@ public final class Libraries {
      *
      * @param lookup the lookup object (used for implicit native library lookup)
      * @param c the class to bind
-     * @return
+     * @return an object of class implementing the interfacce
      */
     public static <T> T bind(Lookup lookup, Class<T> c) {
         SecurityManager security = System.getSecurityManager();

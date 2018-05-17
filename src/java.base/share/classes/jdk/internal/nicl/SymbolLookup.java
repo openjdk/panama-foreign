@@ -47,6 +47,4 @@ class SymbolLookup {
 
         throw new NoSuchMethodException("Failed to look up symbol " + name);
     }
-
-    static SymbolLookup NO_LOOKUP = new SymbolLookup(new Library[0]);
 }
