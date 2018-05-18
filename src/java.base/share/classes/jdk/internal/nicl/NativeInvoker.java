@@ -39,9 +39,13 @@ import java.lang.reflect.WildcardType;
 import java.nicl.*;
 import java.nicl.layout.Address;
 import java.nicl.layout.Function;
+import java.nicl.layout.Layout;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -172,7 +176,7 @@ class NativeInvoker {
 
     private Object invokeNormal(Object[] args) throws Throwable {
         //Fixme: this should use the function field, not creating the layout via reflection!!!
-        CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(Util.functionof(methodType));
+        CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(function);
         ShuffleRecipe shuffleRecipe = ShuffleRecipe.make(callingSequence);
 
         Struct<?> returnStruct = null;
@@ -383,9 +387,18 @@ class NativeInvoker {
         System.arraycopy(args, 0, allArgs, 0, nNamedArgs);
         System.arraycopy(unnamedArgs, 0, allArgs, nNamedArgs, unnamedArgs.length);
 
+        //we need to infer layouts for all unnamed arguments
+        Layout[] argLayouts = Stream.concat(function.argumentLayouts().stream(),
+                Stream.of(unnamedArgs).map(Object::getClass).map(Util::variadicLayout))
+                .toArray(Layout[]::new);
+
+        Function varargFunc = function.returnLayout().isPresent() ?
+                Function.of(function.returnLayout().get(), false, argLayouts) :
+                Function.ofVoid(false, argLayouts);
+
         MethodType dynamicMethodType = getDynamicMethodType(methodType, unnamedArgs);
 
-        NativeInvoker delegate = new NativeInvoker(function, dynamicMethodType, false, targetMethodHandle, debugMethodString, genericReturnType);
+        NativeInvoker delegate = new NativeInvoker(varargFunc, dynamicMethodType, false, targetMethodHandle, debugMethodString, genericReturnType);
         return delegate.invoke(allArgs);
     }
 

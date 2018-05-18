@@ -83,7 +83,7 @@ public class UnixSystem {
     @NativeHeader
     static interface MacOSXSystem {
         @C(file="dummy", line=1, column=1, USR="c:@F@stat")
-        @NativeType(layout="(ip:cp:[iiiiiiiiiiiiiiiiiiiiii])i", ctype="dummy", size=1)
+        @NativeType(layout="(p:cp:[iSSQIIi[ll][ll][ll][ll]qqiIIi2q])i", ctype="dummy", size=1)
         @CallingConvention(value=1)
         public abstract int stat$INODE64(Pointer<Byte> path, Pointer<stat> buf);
 

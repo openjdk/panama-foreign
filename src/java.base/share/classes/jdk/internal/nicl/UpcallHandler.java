@@ -60,7 +60,7 @@ public class UpcallHandler {
     private final UpcallStub stub;
 
     static {
-        long size = Util.sizeof(long.class);
+        long size = 8;
         if (Constants.STACK_SLOT_SIZE != size) {
             throw new Error("Invalid size: " + Constants.STACK_SLOT_SIZE);
         }
@@ -85,10 +85,7 @@ public class UpcallHandler {
         }
 
         Method ficMethod = Util.findFunctionalInterfaceMethod(c);
-        Function ftype = Util.functionof(Util.methodTypeFor(ficMethod));
-//        if (ftype instanceof jdk.internal.nicl.types.Pointer) { //???
-//            ftype = ((jdk.internal.nicl.types.Pointer) ftype).getPointeeType();
-//        }
+        Function ftype = Util.functionof(ficMethod);
 
         MethodType mt = MethodHandles.publicLookup().unreflect(ficMethod).type().dropParameterTypes(0, 1);
 
@@ -159,14 +156,14 @@ public class UpcallHandler {
             case INTEGER_ARGUMENT_REGISTER:
                 return integers.offset(storage.getStorageIndex());
             case VECTOR_ARGUMENT_REGISTER:
-                return vectors.offset(storage.getStorageIndex() * Constants.VECTOR_REGISTER_SIZE / Util.sizeof(long.class));
+                return vectors.offset(storage.getStorageIndex() * Constants.VECTOR_REGISTER_SIZE / 8);
             case STACK_ARGUMENT_SLOT:
                 return stack.offset(storage.getStorageIndex());
 
             case INTEGER_RETURN_REGISTER:
                 return integerReturns.offset(storage.getStorageIndex());
             case VECTOR_RETURN_REGISTER:
-                return vectorReturns.offset(storage.getStorageIndex() * Constants.VECTOR_REGISTER_SIZE / Util.sizeof(long.class));
+                return vectorReturns.offset(storage.getStorageIndex() * Constants.VECTOR_REGISTER_SIZE / 8);
             default:
                 throw new Error("Unhandled storage: " + storage);
             }
@@ -305,7 +302,7 @@ public class UpcallHandler {
             long addr = Util.unpack((Pointer<?>) o);
             dst.set(addr);
         } else if (Util.isCStruct(c)) {
-            Function ft = Function.of(Util.typeof(c), false, new Layout[0]);
+            Function ft = Function.of(Util.layoutof(c), false, new Layout[0]);
             boolean returnsInMemory = SystemABI.getInstance().arrangeCall(ft).returnsInMemory();
 
             Struct<?> struct = (Struct<?>) o;
@@ -317,7 +314,7 @@ public class UpcallHandler {
                 long structAddr = context.getPtr(new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, 0, Constants.INTEGER_REGISTER_SIZE)).get();
 
                 // FIXME: 32-bit support goes here
-                long size = Util.alignUp(Util.sizeof(c), 8);
+                long size = Util.alignUp(ftype.returnLayout().get().bitsSize() / 8, 8);
                 Pointer<Long> dstStructPtr = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(structAddr, size));
 
                 Util.copy(src, dstStructPtr, size);

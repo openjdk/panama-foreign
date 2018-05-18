@@ -29,6 +29,7 @@ import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.nicl.types.Types;
 import jdk.internal.org.objectweb.asm.Type;
 
+import java.lang.annotation.Native;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.nicl.NativeTypes;
@@ -45,7 +46,6 @@ import java.nicl.types.Array;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 public final class Util {
 
@@ -81,18 +81,9 @@ public final class Util {
         return (n + alignment - 1) & ~(alignment - 1);
     }
 
-    public static boolean isCType(Class<?> clz) {
-        return clz.isAnnotationPresent(C.class) &&
-               clz.isAnnotationPresent(NativeType.class);
-    }
-
-    private static boolean isCMethod(Method m) {
-        return m.isAnnotationPresent(C.class) &&
-               m.isAnnotationPresent(NativeType.class);
-    }
-
     public static boolean isCStruct(Class<?> clz) {
-        if (!isCType(clz)) {
+        if (!clz.isAnnotationPresent(C.class) ||
+               !clz.isAnnotationPresent(NativeType.class)) {
             return false;
         }
         NativeType nt = clz.getAnnotation(NativeType.class);
@@ -100,85 +91,38 @@ public final class Util {
     }
 
     public static boolean isFunction(Class<?> clz) {
-        if (!isCType(clz)) {
+        if (!isCStruct(clz)) {
             return false;
         }
 
         return clz.isAnnotationPresent(CallingConvention.class);
     }
 
-    //Fixme: this is evil, and bypasses layouts!
-    private static Layout typeof2(java.lang.reflect.Type t) {
-        if (t instanceof Class) {
-            Class<?> c = (Class<?>) t;
-            if (c.isPrimitive()) {
-                switch (Type.getDescriptor(c)) {
-                    case "Z":
-                        return Types.BOOLEAN;
-                    case "B":
-                        return Types.INT8;
-                    case "C":
-                        return Types.UNSIGNED.INT16;
-                    case "S":
-                        return Types.INT16;
-                    case "I":
-                        return Types.INT32;
-                    case "J":
-                        return Types.INT64;
-                    case "F":
-                        return Types.FLOAT;
-                    case "D":
-                        return Types.DOUBLE;
-                    default:
-                        throw new IllegalArgumentException("Unhandled type: " + t);
-                }
-            } else if (Pointer.class.isAssignableFrom(c)) {
-                return Types.POINTER;
-            } else if (isFunctionalInterface(c)) {
-                return Types.POINTER;
-            } else if (isCType(c)) {
-                return typeof(c);
-            } else {
-                throw new IllegalArgumentException("Unhandled type: " + t);
-            }
+    public static Layout variadicLayout(Class<?> c) {
+        c = (Class<?>)unboxIfNeeded(c);
+        if (c.isPrimitive()) {
+            //it is ok to approximate with a machine word here; numerics arguments in a prototype-less
+            //function call are always rounded up to a register size anyway.
+            return Types.INT64;
+        } else if (Pointer.class.isAssignableFrom(c)) {
+            return Types.POINTER;
+        } else if (isFunctionalInterface(c)) {
+            return Types.POINTER;
+        } else if (isCStruct(c)) {
+            return layoutof(c);
         } else {
-            ParameterizedType pt = (ParameterizedType)t;
-            Class<?> rawType = (Class<?>)pt.getRawType();
-
-            if (Pointer.class.isAssignableFrom(rawType)) {
-                Layout pointeeType = typeof2(pt.getActualTypeArguments()[0]);
-                return Address.ofLayout(64, pointeeType);
-            } else {
-                throw new IllegalArgumentException("Unhandled type: " + t);
-            }
+            throw new IllegalArgumentException("Unhandled variadic argument class: " + c);
         }
     }
 
-    //Fixme: this is evil, and bypasses layouts!
-    public static Function functionof(MethodType methodType) {
-        boolean isVoid = methodType.returnType().equals(void.class);
-        Layout[] args = Stream.of(methodType.parameterArray()).map(Util::typeof2).toArray(Layout[]::new);
-        if (!isVoid) {
-            return Function.of(typeof2(methodType.returnType()), false, args);
-        } else {
-            return Function.ofVoid(false, args);
-        }
-    }
-
-    private static Layout typeof(NativeType nt) {
+    public static Layout layoutof(Class<?> c) {
+        NativeType nt = c.getAnnotation(NativeType.class);
         return new DescriptorParser(nt.layout()).parseLayout().findFirst().get();
     }
 
-    private static Function functionof(NativeType nt) {
-        return (Function)new DescriptorParser(nt.layout()).parseDescriptorOrLayouts().findFirst().get();
-    }
-
-    public static Layout typeof(Class<?> clz) {
-        return typeof(clz.getAnnotation(NativeType.class));
-    }
-
     public static Function functionof(Method m) {
-        return functionof(m.getAnnotation(NativeType.class));
+        NativeType nt = m.getAnnotation(NativeType.class);
+        return (Function)new DescriptorParser(nt.layout()).parseDescriptorOrLayouts().findFirst().get();
     }
 
     public static boolean isFunction(Method m) {
@@ -188,45 +132,6 @@ public final class Util {
         } catch (Throwable ex) {
             return false;
         }
-    }
-
-    private static long sizeofPrimitive(Class<?> cls) {
-        switch (Type.getDescriptor(cls)) {
-        case "B":
-        case "Z":
-            return 1;
-
-        case "S":
-        case "C":
-            return 2;
-
-        case "I":
-        case "F":
-            return 4;
-
-        case "J":
-        case "D":
-            return 8;
-
-        default:
-            throw new IllegalArgumentException("Unhandled type: " + cls);
-        }
-    }
-
-    public static long sizeof(Class<?> clz) {
-        // FIXME: treat java primitives as corresponding native types
-        if (clz.isPrimitive()) {
-            return sizeofPrimitive(clz);
-        } else if (Pointer.class.isAssignableFrom(clz)) {
-            return Unsafe.ADDRESS_SIZE;
-        }
-
-        if (! isCType(clz)) {
-            throw new IllegalArgumentException(clz + " is not a valid type");
-        }
-
-        NativeType nt = clz.getAnnotation(NativeType.class);
-        return nt.size();
     }
 
     static MethodType methodTypeFor(Method method) {

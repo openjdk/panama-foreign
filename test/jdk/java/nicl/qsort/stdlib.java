@@ -32,6 +32,7 @@ import java.nicl.types.Pointer;
 public interface stdlib {
     @FunctionalInterface
     static interface compar {
+        @NativeType(layout="(p:Vp:V)i", ctype="int(const void*,const void*)", size=1)
         public int fn(Pointer<Void> e1, Pointer<Void> e2);
     }
 
