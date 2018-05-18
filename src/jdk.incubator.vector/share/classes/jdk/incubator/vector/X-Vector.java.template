@@ -101,9 +101,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     //
 
     @Override
-    public $abstractvectortype$<S> add(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a + b));
-    }
+    public abstract $abstractvectortype$<S> add(Vector<$Boxtype$,S> v);
 
     /**
      * Adds this vector to the broadcast of an input scalar.
@@ -151,9 +149,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> addSaturate($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a - b));
-    }
+    public abstract $abstractvectortype$<S> sub(Vector<$Boxtype$,S> v);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector.
@@ -201,9 +197,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> subSaturate($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a * b));
-    }
+    public abstract $abstractvectortype$<S> mul(Vector<$Boxtype$,S> v);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar.
@@ -237,9 +231,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> mul($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public $abstractvectortype$<S> neg() {
-        return uOp((i, a) -> ($type$) (-a));
-    }
+    public abstract $abstractvectortype$<S> neg();
 
     @Override
     public $abstractvectortype$<S> neg(Mask<$Boxtype$, S> m) {
@@ -247,9 +239,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     }
 
     @Override
-    public $abstractvectortype$<S> abs() {
-        return uOp((i, a) -> ($type$) Math.abs(a));
-    }
+    public abstract $abstractvectortype$<S> abs();
 
     @Override
     public $abstractvectortype$<S> abs(Mask<$Boxtype$, S> m) {
@@ -257,9 +247,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     }
 
     @Override
-    public $abstractvectortype$<S> min(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> (a < b) ? a : b);
-    }
+    public abstract $abstractvectortype$<S> min(Vector<$Boxtype$,S> v);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -273,9 +261,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> min($type$ s);
 
     @Override
-    public $abstractvectortype$<S> max(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> (a > b) ? a : b);
-    }
+    public abstract $abstractvectortype$<S> max(Vector<$Boxtype$,S> v);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -289,9 +275,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> max($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> equal(Vector<$Boxtype$,S> v) {
-        return bTest(v, (i, a, b) -> a == b);
-    }
+    public abstract Mask<$Boxtype$, S> equal(Vector<$Boxtype$,S> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -306,9 +290,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract Mask<$Boxtype$, S> equal($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> notEqual(Vector<$Boxtype$,S> v) {
-        return bTest(v, (i, a, b) -> a != b);
-    }
+    public abstract Mask<$Boxtype$, S> notEqual(Vector<$Boxtype$,S> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -323,9 +305,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract Mask<$Boxtype$, S> notEqual($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> lessThan(Vector<$Boxtype$,S> v) {
-        return bTest(v, (i, a, b) -> a < b);
-    }
+    public abstract Mask<$Boxtype$, S> lessThan(Vector<$Boxtype$,S> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -340,9 +320,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract Mask<$Boxtype$, S> lessThan($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> lessThanEq(Vector<$Boxtype$,S> v) {
-        return bTest(v, (i, a, b) -> a <= b);
-    }
+    public abstract Mask<$Boxtype$, S> lessThanEq(Vector<$Boxtype$,S> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -357,9 +335,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract Mask<$Boxtype$, S> lessThanEq($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> greaterThan(Vector<$Boxtype$,S> v) {
-        return bTest(v, (i, a, b) -> a > b);
-    }
+    public abstract Mask<$Boxtype$, S> greaterThan(Vector<$Boxtype$,S> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -374,9 +350,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract Mask<$Boxtype$, S> greaterThan($type$ s);
 
     @Override
-    public Mask<$Boxtype$, S> greaterThanEq(Vector<$Boxtype$,S> v) {
-        return bTest(v, (i, a, b) -> a >= b);
-    }
+    public abstract Mask<$Boxtype$, S> greaterThanEq(Vector<$Boxtype$,S> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -392,9 +366,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract Mask<$Boxtype$, S> greaterThanEq($type$ s);
 
     @Override
-    public $abstractvectortype$<S> blend(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
-    }
+    public abstract $abstractvectortype$<S> blend(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -1218,9 +1190,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @param v the input vector
      * @return the bitwise AND of this vector with the input vector
      */
-    public $abstractvectortype$<S> and(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a & b));
-    }
+    public abstract $abstractvectortype$<S> and(Vector<$Boxtype$,S> v);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar.
@@ -1245,9 +1215,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @param m the mask controlling lane selection
      * @return the bitwise AND of this vector with the input vector
      */
-    public $abstractvectortype$<S> and(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a & b));
-    }
+    public abstract $abstractvectortype$<S> and(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
@@ -1272,9 +1240,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @param v the input vector
      * @return the bitwise OR of this vector with the input vector
      */
-    public $abstractvectortype$<S> or(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a | b));
-    }
+    public abstract $abstractvectortype$<S> or(Vector<$Boxtype$,S> v);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar.
@@ -1299,9 +1265,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @param m the mask controlling lane selection
      * @return the bitwise OR of this vector with the input vector
      */
-    public $abstractvectortype$<S> or(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a | b));
-    }
+    public abstract $abstractvectortype$<S> or(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar, selecting
@@ -1326,9 +1290,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @param v the input vector
      * @return the bitwise XOR of this vector with the input vector
      */
-    public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a ^ b));
-    }
+    public abstract $abstractvectortype$<S> xor(Vector<$Boxtype$,S> v);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar.
@@ -1353,9 +1315,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @param m the mask controlling lane selection
      * @return the bitwise XOR of this vector with the input vector
      */
-    public $abstractvectortype$<S> xor(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a ^ b));
-    }
+    public abstract $abstractvectortype$<S> xor(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar, selecting
@@ -1379,9 +1339,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the bitwise NOT of this vector
      */
-    public $abstractvectortype$<S> not() {
-        return uOp((i, a) -> ($type$) (~a));
-    }
+    public abstract $abstractvectortype$<S> not();
 
     /**
      * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
@@ -1417,9 +1375,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of logically left shifting left this vector by the
      * broadcast of an input scalar
      */
-    public $abstractvectortype$<S> shiftL(int s) {
-        return uOp((i, a) -> ($type$) (a << s));
-    }
+    public abstract $abstractvectortype$<S> shiftL(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
@@ -1448,9 +1404,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a << b));
-    }
+    public abstract $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> v);
 
     /**
      * Logically left shifts this vector by an input vector, selecting lane
@@ -1483,9 +1437,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public $abstractvectortype$<S> shiftR(int s) {
-        return uOp((i, a) -> ($type$) (a >>> s));
-    }
+    public abstract $abstractvectortype$<S> shiftR(int s);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
@@ -1515,9 +1467,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a >>> b));
-    }
+    public abstract $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> v);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
@@ -1547,9 +1497,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public $abstractvectortype$<S> aShiftR(int s) {
-        return uOp((i, a) -> ($type$) (a >> s));
-    }
+    public abstract $abstractvectortype$<S> aShiftR(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -1580,9 +1528,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a >> b));
-    }
+    public abstract $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
@@ -1711,9 +1657,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the addition of all the lane elements of this vector
      */
-    public $type$ addAll() {
-        return rOp(($type$) 0, (i, a, b) -> ($type$) (a + b));
-    }
+    public abstract $type$ addAll();
 
     /**
      * Subtracts all lane elements of this vector.
@@ -1724,9 +1668,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the subtraction of all the lane elements of this vector
      */
-    public $type$ subAll() {
-        return rOp(($type$) 0, (i, a, b) -> ($type$) (a - b));
-    }
+    public abstract $type$ subAll();
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1777,9 +1719,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public $type$ orAll() {
-        return rOp(($type$) 0, (i, a, b) -> ($type$) (a | b));
-    }
+    public abstract $type$ orAll();
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -1790,9 +1730,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public $type$ andAll() {
-        return rOp(($type$) -1, (i, a, b) -> ($type$) (a & b));
-    }
+    public abstract $type$ andAll();
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1803,9 +1741,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public $type$ xorAll() {
-        return rOp(($type$) 0, (i, a, b) -> ($type$) (a ^ b));
-    }
+    public abstract $type$ xorAll();
 #end[BITWISE]
 
     // Type specific accessors
@@ -1963,9 +1899,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         // Factories
 
         @Override
-        public $abstractvectortype$<S> zero() {
-            return op(i -> 0);
-        }
+        public abstract $abstractvectortype$<S> zero();
 
         /**
          * Returns a vector where all lane elements are set to the primitive
@@ -1975,9 +1909,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
          * @return a vector of vector where all lane elements are set to
          * the primitive value {@code e}
          */
-        public $abstractvectortype$<S> broadcast($type$ e) {
-            return op(i -> e);
-        }
+        public abstract $abstractvectortype$<S> broadcast($type$ e);
 
         /**
          * Returns a vector where the first lane element is set to the primtive
@@ -2034,9 +1966,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
          * @return a vector where each lane element is set to a given primitive
          * value
          */
-        public $abstractvectortype$<S> scalars($type$... es) {
-            return op(i -> es[i]);
-        }
+        public abstract $abstractvectortype$<S> scalars($type$... es);
 
         /**
          * Loads a vector from an array starting at offset.
@@ -2190,15 +2120,11 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
 
         @Override
         @ForceInline
-        public <F> $abstractvectortype$<S> rebracket(Vector<F, S> o) {
-            return reshape(o);
-        }
+        public abstract <F> $abstractvectortype$<S> rebracket(Vector<F, S> o);
 
         @Override
         @ForceInline
-        public <T extends Shape> $abstractvectortype$<S> resize(Vector<$Boxtype$, T> o) {
-            return reshape(o);
-        }
+        public abstract <T extends Shape> $abstractvectortype$<S> resize(Vector<$Boxtype$, T> o);
 
         @Override
         @SuppressWarnings("unchecked")

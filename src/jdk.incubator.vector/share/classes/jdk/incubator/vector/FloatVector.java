@@ -99,9 +99,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     //
 
     @Override
-    public FloatVector<S> add(Vector<Float,S> v) {
-        return bOp(v, (i, a, b) -> (float) (a + b));
-    }
+    public abstract FloatVector<S> add(Vector<Float,S> v);
 
     /**
      * Adds this vector to the broadcast of an input scalar.
@@ -149,9 +147,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> addSaturate(float s, Mask<Float, S> m);
 
     @Override
-    public FloatVector<S> sub(Vector<Float,S> v) {
-        return bOp(v, (i, a, b) -> (float) (a - b));
-    }
+    public abstract FloatVector<S> sub(Vector<Float,S> v);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector.
@@ -199,9 +195,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> subSaturate(float s, Mask<Float, S> m);
 
     @Override
-    public FloatVector<S> mul(Vector<Float,S> v) {
-        return bOp(v, (i, a, b) -> (float) (a * b));
-    }
+    public abstract FloatVector<S> mul(Vector<Float,S> v);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar.
@@ -235,9 +229,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> mul(float s, Mask<Float, S> m);
 
     @Override
-    public FloatVector<S> neg() {
-        return uOp((i, a) -> (float) (-a));
-    }
+    public abstract FloatVector<S> neg();
 
     @Override
     public FloatVector<S> neg(Mask<Float, S> m) {
@@ -245,9 +237,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     }
 
     @Override
-    public FloatVector<S> abs() {
-        return uOp((i, a) -> (float) Math.abs(a));
-    }
+    public abstract FloatVector<S> abs();
 
     @Override
     public FloatVector<S> abs(Mask<Float, S> m) {
@@ -255,9 +245,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     }
 
     @Override
-    public FloatVector<S> min(Vector<Float,S> v) {
-        return bOp(v, (i, a, b) -> (a < b) ? a : b);
-    }
+    public abstract FloatVector<S> min(Vector<Float,S> v);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -271,9 +259,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> min(float s);
 
     @Override
-    public FloatVector<S> max(Vector<Float,S> v) {
-        return bOp(v, (i, a, b) -> (a > b) ? a : b);
-    }
+    public abstract FloatVector<S> max(Vector<Float,S> v);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -287,9 +273,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> max(float s);
 
     @Override
-    public Mask<Float, S> equal(Vector<Float,S> v) {
-        return bTest(v, (i, a, b) -> a == b);
-    }
+    public abstract Mask<Float, S> equal(Vector<Float,S> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -304,9 +288,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract Mask<Float, S> equal(float s);
 
     @Override
-    public Mask<Float, S> notEqual(Vector<Float,S> v) {
-        return bTest(v, (i, a, b) -> a != b);
-    }
+    public abstract Mask<Float, S> notEqual(Vector<Float,S> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -321,9 +303,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract Mask<Float, S> notEqual(float s);
 
     @Override
-    public Mask<Float, S> lessThan(Vector<Float,S> v) {
-        return bTest(v, (i, a, b) -> a < b);
-    }
+    public abstract Mask<Float, S> lessThan(Vector<Float,S> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -338,9 +318,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract Mask<Float, S> lessThan(float s);
 
     @Override
-    public Mask<Float, S> lessThanEq(Vector<Float,S> v) {
-        return bTest(v, (i, a, b) -> a <= b);
-    }
+    public abstract Mask<Float, S> lessThanEq(Vector<Float,S> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -355,9 +333,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract Mask<Float, S> lessThanEq(float s);
 
     @Override
-    public Mask<Float, S> greaterThan(Vector<Float,S> v) {
-        return bTest(v, (i, a, b) -> a > b);
-    }
+    public abstract Mask<Float, S> greaterThan(Vector<Float,S> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -372,9 +348,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract Mask<Float, S> greaterThan(float s);
 
     @Override
-    public Mask<Float, S> greaterThanEq(Vector<Float,S> v) {
-        return bTest(v, (i, a, b) -> a >= b);
-    }
+    public abstract Mask<Float, S> greaterThanEq(Vector<Float,S> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -390,9 +364,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract Mask<Float, S> greaterThanEq(float s);
 
     @Override
-    public FloatVector<S> blend(Vector<Float,S> v, Mask<Float, S> m) {
-        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
-    }
+    public abstract FloatVector<S> blend(Vector<Float,S> v, Mask<Float, S> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -1274,9 +1246,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *
      * @return the addition of all the lane elements of this vector
      */
-    public float addAll() {
-        return rOp((float) 0, (i, a, b) -> (float) (a + b));
-    }
+    public abstract float addAll();
 
     /**
      * Subtracts all lane elements of this vector.
@@ -1287,9 +1257,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *
      * @return the subtraction of all the lane elements of this vector
      */
-    public float subAll() {
-        return rOp((float) 0, (i, a, b) -> (float) (a - b));
-    }
+    public abstract float subAll();
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1486,9 +1454,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         // Factories
 
         @Override
-        public FloatVector<S> zero() {
-            return op(i -> 0);
-        }
+        public abstract FloatVector<S> zero();
 
         /**
          * Returns a vector where all lane elements are set to the primitive
@@ -1498,9 +1464,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
          * @return a vector of vector where all lane elements are set to
          * the primitive value {@code e}
          */
-        public FloatVector<S> broadcast(float e) {
-            return op(i -> e);
-        }
+        public abstract FloatVector<S> broadcast(float e);
 
         /**
          * Returns a vector where the first lane element is set to the primtive
@@ -1543,9 +1507,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
          * @return a vector where each lane element is set to a given primitive
          * value
          */
-        public FloatVector<S> scalars(float... es) {
-            return op(i -> es[i]);
-        }
+        public abstract FloatVector<S> scalars(float... es);
 
         /**
          * Loads a vector from an array starting at offset.
@@ -1699,15 +1661,11 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
         @Override
         @ForceInline
-        public <F> FloatVector<S> rebracket(Vector<F, S> o) {
-            return reshape(o);
-        }
+        public abstract <F> FloatVector<S> rebracket(Vector<F, S> o);
 
         @Override
         @ForceInline
-        public <T extends Shape> FloatVector<S> resize(Vector<Float, T> o) {
-            return reshape(o);
-        }
+        public abstract <T extends Shape> FloatVector<S> resize(Vector<Float, T> o);
 
         @Override
         @SuppressWarnings("unchecked")

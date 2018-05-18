@@ -99,9 +99,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     //
 
     @Override
-    public ShortVector<S> add(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (short) (a + b));
-    }
+    public abstract ShortVector<S> add(Vector<Short,S> v);
 
     /**
      * Adds this vector to the broadcast of an input scalar.
@@ -149,9 +147,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> addSaturate(short s, Mask<Short, S> m);
 
     @Override
-    public ShortVector<S> sub(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (short) (a - b));
-    }
+    public abstract ShortVector<S> sub(Vector<Short,S> v);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector.
@@ -199,9 +195,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> subSaturate(short s, Mask<Short, S> m);
 
     @Override
-    public ShortVector<S> mul(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (short) (a * b));
-    }
+    public abstract ShortVector<S> mul(Vector<Short,S> v);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar.
@@ -235,9 +229,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> mul(short s, Mask<Short, S> m);
 
     @Override
-    public ShortVector<S> neg() {
-        return uOp((i, a) -> (short) (-a));
-    }
+    public abstract ShortVector<S> neg();
 
     @Override
     public ShortVector<S> neg(Mask<Short, S> m) {
@@ -245,9 +237,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     }
 
     @Override
-    public ShortVector<S> abs() {
-        return uOp((i, a) -> (short) Math.abs(a));
-    }
+    public abstract ShortVector<S> abs();
 
     @Override
     public ShortVector<S> abs(Mask<Short, S> m) {
@@ -255,9 +245,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     }
 
     @Override
-    public ShortVector<S> min(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (a < b) ? a : b);
-    }
+    public abstract ShortVector<S> min(Vector<Short,S> v);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -271,9 +259,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> min(short s);
 
     @Override
-    public ShortVector<S> max(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (a > b) ? a : b);
-    }
+    public abstract ShortVector<S> max(Vector<Short,S> v);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -287,9 +273,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> max(short s);
 
     @Override
-    public Mask<Short, S> equal(Vector<Short,S> v) {
-        return bTest(v, (i, a, b) -> a == b);
-    }
+    public abstract Mask<Short, S> equal(Vector<Short,S> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -304,9 +288,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract Mask<Short, S> equal(short s);
 
     @Override
-    public Mask<Short, S> notEqual(Vector<Short,S> v) {
-        return bTest(v, (i, a, b) -> a != b);
-    }
+    public abstract Mask<Short, S> notEqual(Vector<Short,S> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -321,9 +303,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract Mask<Short, S> notEqual(short s);
 
     @Override
-    public Mask<Short, S> lessThan(Vector<Short,S> v) {
-        return bTest(v, (i, a, b) -> a < b);
-    }
+    public abstract Mask<Short, S> lessThan(Vector<Short,S> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -338,9 +318,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract Mask<Short, S> lessThan(short s);
 
     @Override
-    public Mask<Short, S> lessThanEq(Vector<Short,S> v) {
-        return bTest(v, (i, a, b) -> a <= b);
-    }
+    public abstract Mask<Short, S> lessThanEq(Vector<Short,S> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -355,9 +333,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract Mask<Short, S> lessThanEq(short s);
 
     @Override
-    public Mask<Short, S> greaterThan(Vector<Short,S> v) {
-        return bTest(v, (i, a, b) -> a > b);
-    }
+    public abstract Mask<Short, S> greaterThan(Vector<Short,S> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -372,9 +348,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract Mask<Short, S> greaterThan(short s);
 
     @Override
-    public Mask<Short, S> greaterThanEq(Vector<Short,S> v) {
-        return bTest(v, (i, a, b) -> a >= b);
-    }
+    public abstract Mask<Short, S> greaterThanEq(Vector<Short,S> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -390,9 +364,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract Mask<Short, S> greaterThanEq(short s);
 
     @Override
-    public ShortVector<S> blend(Vector<Short,S> v, Mask<Short, S> m) {
-        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
-    }
+    public abstract ShortVector<S> blend(Vector<Short,S> v, Mask<Short, S> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -446,9 +418,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @param v the input vector
      * @return the bitwise AND of this vector with the input vector
      */
-    public ShortVector<S> and(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (short) (a & b));
-    }
+    public abstract ShortVector<S> and(Vector<Short,S> v);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar.
@@ -473,9 +443,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @param m the mask controlling lane selection
      * @return the bitwise AND of this vector with the input vector
      */
-    public ShortVector<S> and(Vector<Short,S> v, Mask<Short, S> m) {
-        return bOp(v, m, (i, a, b) -> (short) (a & b));
-    }
+    public abstract ShortVector<S> and(Vector<Short,S> v, Mask<Short, S> m);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
@@ -500,9 +468,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @param v the input vector
      * @return the bitwise OR of this vector with the input vector
      */
-    public ShortVector<S> or(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (short) (a | b));
-    }
+    public abstract ShortVector<S> or(Vector<Short,S> v);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar.
@@ -527,9 +493,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @param m the mask controlling lane selection
      * @return the bitwise OR of this vector with the input vector
      */
-    public ShortVector<S> or(Vector<Short,S> v, Mask<Short, S> m) {
-        return bOp(v, m, (i, a, b) -> (short) (a | b));
-    }
+    public abstract ShortVector<S> or(Vector<Short,S> v, Mask<Short, S> m);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar, selecting
@@ -554,9 +518,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @param v the input vector
      * @return the bitwise XOR of this vector with the input vector
      */
-    public ShortVector<S> xor(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (short) (a ^ b));
-    }
+    public abstract ShortVector<S> xor(Vector<Short,S> v);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar.
@@ -581,9 +543,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @param m the mask controlling lane selection
      * @return the bitwise XOR of this vector with the input vector
      */
-    public ShortVector<S> xor(Vector<Short,S> v, Mask<Short, S> m) {
-        return bOp(v, m, (i, a, b) -> (short) (a ^ b));
-    }
+    public abstract ShortVector<S> xor(Vector<Short,S> v, Mask<Short, S> m);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar, selecting
@@ -607,9 +567,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      *
      * @return the bitwise NOT of this vector
      */
-    public ShortVector<S> not() {
-        return uOp((i, a) -> (short) (~a));
-    }
+    public abstract ShortVector<S> not();
 
     /**
      * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
@@ -645,9 +603,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @return the result of logically left shifting left this vector by the
      * broadcast of an input scalar
      */
-    public ShortVector<S> shiftL(int s) {
-        return uOp((i, a) -> (short) (a << s));
-    }
+    public abstract ShortVector<S> shiftL(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
@@ -680,9 +636,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public ShortVector<S> shiftR(int s) {
-        return uOp((i, a) -> (short) (a >>> s));
-    }
+    public abstract ShortVector<S> shiftR(int s);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
@@ -712,9 +666,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public ShortVector<S> aShiftR(int s) {
-        return uOp((i, a) -> (short) (a >> s));
-    }
+    public abstract ShortVector<S> aShiftR(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -843,9 +795,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      *
      * @return the addition of all the lane elements of this vector
      */
-    public short addAll() {
-        return rOp((short) 0, (i, a, b) -> (short) (a + b));
-    }
+    public abstract short addAll();
 
     /**
      * Subtracts all lane elements of this vector.
@@ -856,9 +806,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      *
      * @return the subtraction of all the lane elements of this vector
      */
-    public short subAll() {
-        return rOp((short) 0, (i, a, b) -> (short) (a - b));
-    }
+    public abstract short subAll();
 
     /**
      * Multiplies all lane elements of this vector.
@@ -908,9 +856,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public short orAll() {
-        return rOp((short) 0, (i, a, b) -> (short) (a | b));
-    }
+    public abstract short orAll();
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -921,9 +867,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public short andAll() {
-        return rOp((short) -1, (i, a, b) -> (short) (a & b));
-    }
+    public abstract short andAll();
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -934,9 +878,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public short xorAll() {
-        return rOp((short) 0, (i, a, b) -> (short) (a ^ b));
-    }
+    public abstract short xorAll();
 
     // Type specific accessors
 
@@ -1093,9 +1035,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
         // Factories
 
         @Override
-        public ShortVector<S> zero() {
-            return op(i -> 0);
-        }
+        public abstract ShortVector<S> zero();
 
         /**
          * Returns a vector where all lane elements are set to the primitive
@@ -1105,9 +1045,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
          * @return a vector of vector where all lane elements are set to
          * the primitive value {@code e}
          */
-        public ShortVector<S> broadcast(short e) {
-            return op(i -> e);
-        }
+        public abstract ShortVector<S> broadcast(short e);
 
         /**
          * Returns a vector where the first lane element is set to the primtive
@@ -1150,9 +1088,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
          * @return a vector where each lane element is set to a given primitive
          * value
          */
-        public ShortVector<S> scalars(short... es) {
-            return op(i -> es[i]);
-        }
+        public abstract ShortVector<S> scalars(short... es);
 
         /**
          * Loads a vector from an array starting at offset.
@@ -1306,15 +1242,11 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
 
         @Override
         @ForceInline
-        public <F> ShortVector<S> rebracket(Vector<F, S> o) {
-            return reshape(o);
-        }
+        public abstract <F> ShortVector<S> rebracket(Vector<F, S> o);
 
         @Override
         @ForceInline
-        public <T extends Shape> ShortVector<S> resize(Vector<Short, T> o) {
-            return reshape(o);
-        }
+        public abstract <T extends Shape> ShortVector<S> resize(Vector<Short, T> o);
 
         @Override
         @SuppressWarnings("unchecked")

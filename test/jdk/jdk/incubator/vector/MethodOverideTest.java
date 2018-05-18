@@ -119,6 +119,7 @@ public class MethodOverideTest {
         return Stream.of(c.getDeclaredMethods()).
                 filter(cc -> Modifier.isPublic(cc.getModifiers())).
                 filter(cc -> !Modifier.isAbstract(cc.getModifiers())).
+                filter(cc -> !cc.isSynthetic()).
                 collect(Collectors.toList());
     }
 

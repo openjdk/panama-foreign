@@ -99,9 +99,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     //
 
     @Override
-    public IntVector<S> add(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) (a + b));
-    }
+    public abstract IntVector<S> add(Vector<Integer,S> v);
 
     /**
      * Adds this vector to the broadcast of an input scalar.
@@ -149,9 +147,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> addSaturate(int s, Mask<Integer, S> m);
 
     @Override
-    public IntVector<S> sub(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) (a - b));
-    }
+    public abstract IntVector<S> sub(Vector<Integer,S> v);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector.
@@ -199,9 +195,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> subSaturate(int s, Mask<Integer, S> m);
 
     @Override
-    public IntVector<S> mul(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) (a * b));
-    }
+    public abstract IntVector<S> mul(Vector<Integer,S> v);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar.
@@ -235,9 +229,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> mul(int s, Mask<Integer, S> m);
 
     @Override
-    public IntVector<S> neg() {
-        return uOp((i, a) -> (int) (-a));
-    }
+    public abstract IntVector<S> neg();
 
     @Override
     public IntVector<S> neg(Mask<Integer, S> m) {
@@ -245,9 +237,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     @Override
-    public IntVector<S> abs() {
-        return uOp((i, a) -> (int) Math.abs(a));
-    }
+    public abstract IntVector<S> abs();
 
     @Override
     public IntVector<S> abs(Mask<Integer, S> m) {
@@ -255,9 +245,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     @Override
-    public IntVector<S> min(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (a < b) ? a : b);
-    }
+    public abstract IntVector<S> min(Vector<Integer,S> v);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -271,9 +259,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> min(int s);
 
     @Override
-    public IntVector<S> max(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (a > b) ? a : b);
-    }
+    public abstract IntVector<S> max(Vector<Integer,S> v);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -287,9 +273,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> max(int s);
 
     @Override
-    public Mask<Integer, S> equal(Vector<Integer,S> v) {
-        return bTest(v, (i, a, b) -> a == b);
-    }
+    public abstract Mask<Integer, S> equal(Vector<Integer,S> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -304,9 +288,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract Mask<Integer, S> equal(int s);
 
     @Override
-    public Mask<Integer, S> notEqual(Vector<Integer,S> v) {
-        return bTest(v, (i, a, b) -> a != b);
-    }
+    public abstract Mask<Integer, S> notEqual(Vector<Integer,S> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -321,9 +303,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract Mask<Integer, S> notEqual(int s);
 
     @Override
-    public Mask<Integer, S> lessThan(Vector<Integer,S> v) {
-        return bTest(v, (i, a, b) -> a < b);
-    }
+    public abstract Mask<Integer, S> lessThan(Vector<Integer,S> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -338,9 +318,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract Mask<Integer, S> lessThan(int s);
 
     @Override
-    public Mask<Integer, S> lessThanEq(Vector<Integer,S> v) {
-        return bTest(v, (i, a, b) -> a <= b);
-    }
+    public abstract Mask<Integer, S> lessThanEq(Vector<Integer,S> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -355,9 +333,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract Mask<Integer, S> lessThanEq(int s);
 
     @Override
-    public Mask<Integer, S> greaterThan(Vector<Integer,S> v) {
-        return bTest(v, (i, a, b) -> a > b);
-    }
+    public abstract Mask<Integer, S> greaterThan(Vector<Integer,S> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -372,9 +348,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract Mask<Integer, S> greaterThan(int s);
 
     @Override
-    public Mask<Integer, S> greaterThanEq(Vector<Integer,S> v) {
-        return bTest(v, (i, a, b) -> a >= b);
-    }
+    public abstract Mask<Integer, S> greaterThanEq(Vector<Integer,S> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -390,9 +364,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract Mask<Integer, S> greaterThanEq(int s);
 
     @Override
-    public IntVector<S> blend(Vector<Integer,S> v, Mask<Integer, S> m) {
-        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
-    }
+    public abstract IntVector<S> blend(Vector<Integer,S> v, Mask<Integer, S> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -446,9 +418,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param v the input vector
      * @return the bitwise AND of this vector with the input vector
      */
-    public IntVector<S> and(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) (a & b));
-    }
+    public abstract IntVector<S> and(Vector<Integer,S> v);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar.
@@ -473,9 +443,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the bitwise AND of this vector with the input vector
      */
-    public IntVector<S> and(Vector<Integer,S> v, Mask<Integer, S> m) {
-        return bOp(v, m, (i, a, b) -> (int) (a & b));
-    }
+    public abstract IntVector<S> and(Vector<Integer,S> v, Mask<Integer, S> m);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
@@ -500,9 +468,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param v the input vector
      * @return the bitwise OR of this vector with the input vector
      */
-    public IntVector<S> or(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) (a | b));
-    }
+    public abstract IntVector<S> or(Vector<Integer,S> v);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar.
@@ -527,9 +493,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the bitwise OR of this vector with the input vector
      */
-    public IntVector<S> or(Vector<Integer,S> v, Mask<Integer, S> m) {
-        return bOp(v, m, (i, a, b) -> (int) (a | b));
-    }
+    public abstract IntVector<S> or(Vector<Integer,S> v, Mask<Integer, S> m);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar, selecting
@@ -554,9 +518,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param v the input vector
      * @return the bitwise XOR of this vector with the input vector
      */
-    public IntVector<S> xor(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) (a ^ b));
-    }
+    public abstract IntVector<S> xor(Vector<Integer,S> v);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar.
@@ -581,9 +543,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the bitwise XOR of this vector with the input vector
      */
-    public IntVector<S> xor(Vector<Integer,S> v, Mask<Integer, S> m) {
-        return bOp(v, m, (i, a, b) -> (int) (a ^ b));
-    }
+    public abstract IntVector<S> xor(Vector<Integer,S> v, Mask<Integer, S> m);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar, selecting
@@ -607,9 +567,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the bitwise NOT of this vector
      */
-    public IntVector<S> not() {
-        return uOp((i, a) -> (int) (~a));
-    }
+    public abstract IntVector<S> not();
 
     /**
      * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
@@ -645,9 +603,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically left shifting left this vector by the
      * broadcast of an input scalar
      */
-    public IntVector<S> shiftL(int s) {
-        return uOp((i, a) -> (int) (a << s));
-    }
+    public abstract IntVector<S> shiftL(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
@@ -675,9 +631,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public IntVector<S> shiftL(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) (a << b));
-    }
+    public abstract IntVector<S> shiftL(Vector<Integer,S> v);
 
     /**
      * Logically left shifts this vector by an input vector, selecting lane
@@ -709,9 +663,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public IntVector<S> shiftR(int s) {
-        return uOp((i, a) -> (int) (a >>> s));
-    }
+    public abstract IntVector<S> shiftR(int s);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
@@ -740,9 +692,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public IntVector<S> shiftR(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) (a >>> b));
-    }
+    public abstract IntVector<S> shiftR(Vector<Integer,S> v);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
@@ -771,9 +721,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public IntVector<S> aShiftR(int s) {
-        return uOp((i, a) -> (int) (a >> s));
-    }
+    public abstract IntVector<S> aShiftR(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -803,9 +751,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public IntVector<S> ashiftR(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) (a >> b));
-    }
+    public abstract IntVector<S> ashiftR(Vector<Integer,S> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
@@ -932,9 +878,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the addition of all the lane elements of this vector
      */
-    public int addAll() {
-        return rOp((int) 0, (i, a, b) -> (int) (a + b));
-    }
+    public abstract int addAll();
 
     /**
      * Subtracts all lane elements of this vector.
@@ -945,9 +889,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the subtraction of all the lane elements of this vector
      */
-    public int subAll() {
-        return rOp((int) 0, (i, a, b) -> (int) (a - b));
-    }
+    public abstract int subAll();
 
     /**
      * Multiplies all lane elements of this vector.
@@ -997,9 +939,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public int orAll() {
-        return rOp((int) 0, (i, a, b) -> (int) (a | b));
-    }
+    public abstract int orAll();
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -1010,9 +950,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public int andAll() {
-        return rOp((int) -1, (i, a, b) -> (int) (a & b));
-    }
+    public abstract int andAll();
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1023,9 +961,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public int xorAll() {
-        return rOp((int) 0, (i, a, b) -> (int) (a ^ b));
-    }
+    public abstract int xorAll();
 
     // Type specific accessors
 
@@ -1182,9 +1118,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         // Factories
 
         @Override
-        public IntVector<S> zero() {
-            return op(i -> 0);
-        }
+        public abstract IntVector<S> zero();
 
         /**
          * Returns a vector where all lane elements are set to the primitive
@@ -1194,9 +1128,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * @return a vector of vector where all lane elements are set to
          * the primitive value {@code e}
          */
-        public IntVector<S> broadcast(int e) {
-            return op(i -> e);
-        }
+        public abstract IntVector<S> broadcast(int e);
 
         /**
          * Returns a vector where the first lane element is set to the primtive
@@ -1239,9 +1171,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * @return a vector where each lane element is set to a given primitive
          * value
          */
-        public IntVector<S> scalars(int... es) {
-            return op(i -> es[i]);
-        }
+        public abstract IntVector<S> scalars(int... es);
 
         /**
          * Loads a vector from an array starting at offset.
@@ -1395,15 +1325,11 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
 
         @Override
         @ForceInline
-        public <F> IntVector<S> rebracket(Vector<F, S> o) {
-            return reshape(o);
-        }
+        public abstract <F> IntVector<S> rebracket(Vector<F, S> o);
 
         @Override
         @ForceInline
-        public <T extends Shape> IntVector<S> resize(Vector<Integer, T> o) {
-            return reshape(o);
-        }
+        public abstract <T extends Shape> IntVector<S> resize(Vector<Integer, T> o);
 
         @Override
         @SuppressWarnings("unchecked")

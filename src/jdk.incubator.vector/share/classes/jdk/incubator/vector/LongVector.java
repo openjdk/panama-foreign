@@ -99,9 +99,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     //
 
     @Override
-    public LongVector<S> add(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (long) (a + b));
-    }
+    public abstract LongVector<S> add(Vector<Long,S> v);
 
     /**
      * Adds this vector to the broadcast of an input scalar.
@@ -149,9 +147,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> addSaturate(long s, Mask<Long, S> m);
 
     @Override
-    public LongVector<S> sub(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (long) (a - b));
-    }
+    public abstract LongVector<S> sub(Vector<Long,S> v);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector.
@@ -199,9 +195,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> subSaturate(long s, Mask<Long, S> m);
 
     @Override
-    public LongVector<S> mul(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (long) (a * b));
-    }
+    public abstract LongVector<S> mul(Vector<Long,S> v);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar.
@@ -235,9 +229,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> mul(long s, Mask<Long, S> m);
 
     @Override
-    public LongVector<S> neg() {
-        return uOp((i, a) -> (long) (-a));
-    }
+    public abstract LongVector<S> neg();
 
     @Override
     public LongVector<S> neg(Mask<Long, S> m) {
@@ -245,9 +237,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     }
 
     @Override
-    public LongVector<S> abs() {
-        return uOp((i, a) -> (long) Math.abs(a));
-    }
+    public abstract LongVector<S> abs();
 
     @Override
     public LongVector<S> abs(Mask<Long, S> m) {
@@ -255,9 +245,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     }
 
     @Override
-    public LongVector<S> min(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (a < b) ? a : b);
-    }
+    public abstract LongVector<S> min(Vector<Long,S> v);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -271,9 +259,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> min(long s);
 
     @Override
-    public LongVector<S> max(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (a > b) ? a : b);
-    }
+    public abstract LongVector<S> max(Vector<Long,S> v);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -287,9 +273,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> max(long s);
 
     @Override
-    public Mask<Long, S> equal(Vector<Long,S> v) {
-        return bTest(v, (i, a, b) -> a == b);
-    }
+    public abstract Mask<Long, S> equal(Vector<Long,S> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -304,9 +288,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract Mask<Long, S> equal(long s);
 
     @Override
-    public Mask<Long, S> notEqual(Vector<Long,S> v) {
-        return bTest(v, (i, a, b) -> a != b);
-    }
+    public abstract Mask<Long, S> notEqual(Vector<Long,S> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -321,9 +303,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract Mask<Long, S> notEqual(long s);
 
     @Override
-    public Mask<Long, S> lessThan(Vector<Long,S> v) {
-        return bTest(v, (i, a, b) -> a < b);
-    }
+    public abstract Mask<Long, S> lessThan(Vector<Long,S> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -338,9 +318,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract Mask<Long, S> lessThan(long s);
 
     @Override
-    public Mask<Long, S> lessThanEq(Vector<Long,S> v) {
-        return bTest(v, (i, a, b) -> a <= b);
-    }
+    public abstract Mask<Long, S> lessThanEq(Vector<Long,S> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -355,9 +333,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract Mask<Long, S> lessThanEq(long s);
 
     @Override
-    public Mask<Long, S> greaterThan(Vector<Long,S> v) {
-        return bTest(v, (i, a, b) -> a > b);
-    }
+    public abstract Mask<Long, S> greaterThan(Vector<Long,S> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -372,9 +348,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract Mask<Long, S> greaterThan(long s);
 
     @Override
-    public Mask<Long, S> greaterThanEq(Vector<Long,S> v) {
-        return bTest(v, (i, a, b) -> a >= b);
-    }
+    public abstract Mask<Long, S> greaterThanEq(Vector<Long,S> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -390,9 +364,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract Mask<Long, S> greaterThanEq(long s);
 
     @Override
-    public LongVector<S> blend(Vector<Long,S> v, Mask<Long, S> m) {
-        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
-    }
+    public abstract LongVector<S> blend(Vector<Long,S> v, Mask<Long, S> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -446,9 +418,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @param v the input vector
      * @return the bitwise AND of this vector with the input vector
      */
-    public LongVector<S> and(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (long) (a & b));
-    }
+    public abstract LongVector<S> and(Vector<Long,S> v);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar.
@@ -473,9 +443,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @param m the mask controlling lane selection
      * @return the bitwise AND of this vector with the input vector
      */
-    public LongVector<S> and(Vector<Long,S> v, Mask<Long, S> m) {
-        return bOp(v, m, (i, a, b) -> (long) (a & b));
-    }
+    public abstract LongVector<S> and(Vector<Long,S> v, Mask<Long, S> m);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
@@ -500,9 +468,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @param v the input vector
      * @return the bitwise OR of this vector with the input vector
      */
-    public LongVector<S> or(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (long) (a | b));
-    }
+    public abstract LongVector<S> or(Vector<Long,S> v);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar.
@@ -527,9 +493,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @param m the mask controlling lane selection
      * @return the bitwise OR of this vector with the input vector
      */
-    public LongVector<S> or(Vector<Long,S> v, Mask<Long, S> m) {
-        return bOp(v, m, (i, a, b) -> (long) (a | b));
-    }
+    public abstract LongVector<S> or(Vector<Long,S> v, Mask<Long, S> m);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar, selecting
@@ -554,9 +518,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @param v the input vector
      * @return the bitwise XOR of this vector with the input vector
      */
-    public LongVector<S> xor(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (long) (a ^ b));
-    }
+    public abstract LongVector<S> xor(Vector<Long,S> v);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar.
@@ -581,9 +543,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @param m the mask controlling lane selection
      * @return the bitwise XOR of this vector with the input vector
      */
-    public LongVector<S> xor(Vector<Long,S> v, Mask<Long, S> m) {
-        return bOp(v, m, (i, a, b) -> (long) (a ^ b));
-    }
+    public abstract LongVector<S> xor(Vector<Long,S> v, Mask<Long, S> m);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar, selecting
@@ -607,9 +567,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      *
      * @return the bitwise NOT of this vector
      */
-    public LongVector<S> not() {
-        return uOp((i, a) -> (long) (~a));
-    }
+    public abstract LongVector<S> not();
 
     /**
      * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
@@ -645,9 +603,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of logically left shifting left this vector by the
      * broadcast of an input scalar
      */
-    public LongVector<S> shiftL(int s) {
-        return uOp((i, a) -> (long) (a << s));
-    }
+    public abstract LongVector<S> shiftL(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
@@ -675,9 +631,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public LongVector<S> shiftL(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (long) (a << b));
-    }
+    public abstract LongVector<S> shiftL(Vector<Long,S> v);
 
     /**
      * Logically left shifts this vector by an input vector, selecting lane
@@ -709,9 +663,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public LongVector<S> shiftR(int s) {
-        return uOp((i, a) -> (long) (a >>> s));
-    }
+    public abstract LongVector<S> shiftR(int s);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
@@ -740,9 +692,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public LongVector<S> shiftR(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (long) (a >>> b));
-    }
+    public abstract LongVector<S> shiftR(Vector<Long,S> v);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
@@ -771,9 +721,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public LongVector<S> aShiftR(int s) {
-        return uOp((i, a) -> (long) (a >> s));
-    }
+    public abstract LongVector<S> aShiftR(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -803,9 +751,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public LongVector<S> ashiftR(Vector<Long,S> v) {
-        return bOp(v, (i, a, b) -> (long) (a >> b));
-    }
+    public abstract LongVector<S> ashiftR(Vector<Long,S> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
@@ -932,9 +878,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      *
      * @return the addition of all the lane elements of this vector
      */
-    public long addAll() {
-        return rOp((long) 0, (i, a, b) -> (long) (a + b));
-    }
+    public abstract long addAll();
 
     /**
      * Subtracts all lane elements of this vector.
@@ -945,9 +889,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      *
      * @return the subtraction of all the lane elements of this vector
      */
-    public long subAll() {
-        return rOp((long) 0, (i, a, b) -> (long) (a - b));
-    }
+    public abstract long subAll();
 
     /**
      * Multiplies all lane elements of this vector.
@@ -997,9 +939,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public long orAll() {
-        return rOp((long) 0, (i, a, b) -> (long) (a | b));
-    }
+    public abstract long orAll();
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -1010,9 +950,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public long andAll() {
-        return rOp((long) -1, (i, a, b) -> (long) (a & b));
-    }
+    public abstract long andAll();
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1023,9 +961,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public long xorAll() {
-        return rOp((long) 0, (i, a, b) -> (long) (a ^ b));
-    }
+    public abstract long xorAll();
 
     // Type specific accessors
 
@@ -1182,9 +1118,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
         // Factories
 
         @Override
-        public LongVector<S> zero() {
-            return op(i -> 0);
-        }
+        public abstract LongVector<S> zero();
 
         /**
          * Returns a vector where all lane elements are set to the primitive
@@ -1194,9 +1128,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
          * @return a vector of vector where all lane elements are set to
          * the primitive value {@code e}
          */
-        public LongVector<S> broadcast(long e) {
-            return op(i -> e);
-        }
+        public abstract LongVector<S> broadcast(long e);
 
         /**
          * Returns a vector where the first lane element is set to the primtive
@@ -1239,9 +1171,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
          * @return a vector where each lane element is set to a given primitive
          * value
          */
-        public LongVector<S> scalars(long... es) {
-            return op(i -> es[i]);
-        }
+        public abstract LongVector<S> scalars(long... es);
 
         /**
          * Loads a vector from an array starting at offset.
@@ -1395,15 +1325,11 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
 
         @Override
         @ForceInline
-        public <F> LongVector<S> rebracket(Vector<F, S> o) {
-            return reshape(o);
-        }
+        public abstract <F> LongVector<S> rebracket(Vector<F, S> o);
 
         @Override
         @ForceInline
-        public <T extends Shape> LongVector<S> resize(Vector<Long, T> o) {
-            return reshape(o);
-        }
+        public abstract <T extends Shape> LongVector<S> resize(Vector<Long, T> o);
 
         @Override
         @SuppressWarnings("unchecked")

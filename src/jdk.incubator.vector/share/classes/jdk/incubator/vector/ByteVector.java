@@ -98,9 +98,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     //
 
     @Override
-    public ByteVector<S> add(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (byte) (a + b));
-    }
+    public abstract ByteVector<S> add(Vector<Byte,S> v);
 
     /**
      * Adds this vector to the broadcast of an input scalar.
@@ -148,9 +146,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> addSaturate(byte s, Mask<Byte, S> m);
 
     @Override
-    public ByteVector<S> sub(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (byte) (a - b));
-    }
+    public abstract ByteVector<S> sub(Vector<Byte,S> v);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector.
@@ -198,9 +194,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> subSaturate(byte s, Mask<Byte, S> m);
 
     @Override
-    public ByteVector<S> mul(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (byte) (a * b));
-    }
+    public abstract ByteVector<S> mul(Vector<Byte,S> v);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar.
@@ -234,9 +228,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> mul(byte s, Mask<Byte, S> m);
 
     @Override
-    public ByteVector<S> neg() {
-        return uOp((i, a) -> (byte) (-a));
-    }
+    public abstract ByteVector<S> neg();
 
     @Override
     public ByteVector<S> neg(Mask<Byte, S> m) {
@@ -244,9 +236,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     }
 
     @Override
-    public ByteVector<S> abs() {
-        return uOp((i, a) -> (byte) Math.abs(a));
-    }
+    public abstract ByteVector<S> abs();
 
     @Override
     public ByteVector<S> abs(Mask<Byte, S> m) {
@@ -254,9 +244,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     }
 
     @Override
-    public ByteVector<S> min(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (a < b) ? a : b);
-    }
+    public abstract ByteVector<S> min(Vector<Byte,S> v);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -270,9 +258,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> min(byte s);
 
     @Override
-    public ByteVector<S> max(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (a > b) ? a : b);
-    }
+    public abstract ByteVector<S> max(Vector<Byte,S> v);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -286,9 +272,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> max(byte s);
 
     @Override
-    public Mask<Byte, S> equal(Vector<Byte,S> v) {
-        return bTest(v, (i, a, b) -> a == b);
-    }
+    public abstract Mask<Byte, S> equal(Vector<Byte,S> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -303,9 +287,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract Mask<Byte, S> equal(byte s);
 
     @Override
-    public Mask<Byte, S> notEqual(Vector<Byte,S> v) {
-        return bTest(v, (i, a, b) -> a != b);
-    }
+    public abstract Mask<Byte, S> notEqual(Vector<Byte,S> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -320,9 +302,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract Mask<Byte, S> notEqual(byte s);
 
     @Override
-    public Mask<Byte, S> lessThan(Vector<Byte,S> v) {
-        return bTest(v, (i, a, b) -> a < b);
-    }
+    public abstract Mask<Byte, S> lessThan(Vector<Byte,S> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -337,9 +317,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract Mask<Byte, S> lessThan(byte s);
 
     @Override
-    public Mask<Byte, S> lessThanEq(Vector<Byte,S> v) {
-        return bTest(v, (i, a, b) -> a <= b);
-    }
+    public abstract Mask<Byte, S> lessThanEq(Vector<Byte,S> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -354,9 +332,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract Mask<Byte, S> lessThanEq(byte s);
 
     @Override
-    public Mask<Byte, S> greaterThan(Vector<Byte,S> v) {
-        return bTest(v, (i, a, b) -> a > b);
-    }
+    public abstract Mask<Byte, S> greaterThan(Vector<Byte,S> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -371,9 +347,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract Mask<Byte, S> greaterThan(byte s);
 
     @Override
-    public Mask<Byte, S> greaterThanEq(Vector<Byte,S> v) {
-        return bTest(v, (i, a, b) -> a >= b);
-    }
+    public abstract Mask<Byte, S> greaterThanEq(Vector<Byte,S> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -389,9 +363,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract Mask<Byte, S> greaterThanEq(byte s);
 
     @Override
-    public ByteVector<S> blend(Vector<Byte,S> v, Mask<Byte, S> m) {
-        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
-    }
+    public abstract ByteVector<S> blend(Vector<Byte,S> v, Mask<Byte, S> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -445,9 +417,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @param v the input vector
      * @return the bitwise AND of this vector with the input vector
      */
-    public ByteVector<S> and(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (byte) (a & b));
-    }
+    public abstract ByteVector<S> and(Vector<Byte,S> v);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar.
@@ -472,9 +442,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @param m the mask controlling lane selection
      * @return the bitwise AND of this vector with the input vector
      */
-    public ByteVector<S> and(Vector<Byte,S> v, Mask<Byte, S> m) {
-        return bOp(v, m, (i, a, b) -> (byte) (a & b));
-    }
+    public abstract ByteVector<S> and(Vector<Byte,S> v, Mask<Byte, S> m);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
@@ -499,9 +467,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @param v the input vector
      * @return the bitwise OR of this vector with the input vector
      */
-    public ByteVector<S> or(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (byte) (a | b));
-    }
+    public abstract ByteVector<S> or(Vector<Byte,S> v);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar.
@@ -526,9 +492,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @param m the mask controlling lane selection
      * @return the bitwise OR of this vector with the input vector
      */
-    public ByteVector<S> or(Vector<Byte,S> v, Mask<Byte, S> m) {
-        return bOp(v, m, (i, a, b) -> (byte) (a | b));
-    }
+    public abstract ByteVector<S> or(Vector<Byte,S> v, Mask<Byte, S> m);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar, selecting
@@ -553,9 +517,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @param v the input vector
      * @return the bitwise XOR of this vector with the input vector
      */
-    public ByteVector<S> xor(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (byte) (a ^ b));
-    }
+    public abstract ByteVector<S> xor(Vector<Byte,S> v);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar.
@@ -580,9 +542,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @param m the mask controlling lane selection
      * @return the bitwise XOR of this vector with the input vector
      */
-    public ByteVector<S> xor(Vector<Byte,S> v, Mask<Byte, S> m) {
-        return bOp(v, m, (i, a, b) -> (byte) (a ^ b));
-    }
+    public abstract ByteVector<S> xor(Vector<Byte,S> v, Mask<Byte, S> m);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar, selecting
@@ -606,9 +566,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      *
      * @return the bitwise NOT of this vector
      */
-    public ByteVector<S> not() {
-        return uOp((i, a) -> (byte) (~a));
-    }
+    public abstract ByteVector<S> not();
 
     /**
      * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
@@ -644,9 +602,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @return the result of logically left shifting left this vector by the
      * broadcast of an input scalar
      */
-    public ByteVector<S> shiftL(int s) {
-        return uOp((i, a) -> (byte) (a << s));
-    }
+    public abstract ByteVector<S> shiftL(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
@@ -679,9 +635,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public ByteVector<S> shiftR(int s) {
-        return uOp((i, a) -> (byte) (a >>> s));
-    }
+    public abstract ByteVector<S> shiftR(int s);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
@@ -711,9 +665,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public ByteVector<S> aShiftR(int s) {
-        return uOp((i, a) -> (byte) (a >> s));
-    }
+    public abstract ByteVector<S> aShiftR(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -842,9 +794,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      *
      * @return the addition of all the lane elements of this vector
      */
-    public byte addAll() {
-        return rOp((byte) 0, (i, a, b) -> (byte) (a + b));
-    }
+    public abstract byte addAll();
 
     /**
      * Subtracts all lane elements of this vector.
@@ -855,9 +805,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      *
      * @return the subtraction of all the lane elements of this vector
      */
-    public byte subAll() {
-        return rOp((byte) 0, (i, a, b) -> (byte) (a - b));
-    }
+    public abstract byte subAll();
 
     /**
      * Multiplies all lane elements of this vector.
@@ -907,9 +855,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      *
      * @return the logical OR all the lane elements of this vector
      */
-    public byte orAll() {
-        return rOp((byte) 0, (i, a, b) -> (byte) (a | b));
-    }
+    public abstract byte orAll();
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -920,9 +866,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      *
      * @return the logical AND all the lane elements of this vector
      */
-    public byte andAll() {
-        return rOp((byte) -1, (i, a, b) -> (byte) (a & b));
-    }
+    public abstract byte andAll();
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -933,9 +877,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      *
      * @return the logical XOR all the lane elements of this vector
      */
-    public byte xorAll() {
-        return rOp((byte) 0, (i, a, b) -> (byte) (a ^ b));
-    }
+    public abstract byte xorAll();
 
     // Type specific accessors
 
@@ -1092,9 +1034,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
         // Factories
 
         @Override
-        public ByteVector<S> zero() {
-            return op(i -> 0);
-        }
+        public abstract ByteVector<S> zero();
 
         /**
          * Returns a vector where all lane elements are set to the primitive
@@ -1104,9 +1044,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
          * @return a vector of vector where all lane elements are set to
          * the primitive value {@code e}
          */
-        public ByteVector<S> broadcast(byte e) {
-            return op(i -> e);
-        }
+        public abstract ByteVector<S> broadcast(byte e);
 
         /**
          * Returns a vector where the first lane element is set to the primtive
@@ -1149,9 +1087,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
          * @return a vector where each lane element is set to a given primitive
          * value
          */
-        public ByteVector<S> scalars(byte... es) {
-            return op(i -> es[i]);
-        }
+        public abstract ByteVector<S> scalars(byte... es);
 
         /**
          * Loads a vector from an array starting at offset.
@@ -1305,15 +1241,11 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
         @Override
         @ForceInline
-        public <F> ByteVector<S> rebracket(Vector<F, S> o) {
-            return reshape(o);
-        }
+        public abstract <F> ByteVector<S> rebracket(Vector<F, S> o);
 
         @Override
         @ForceInline
-        public <T extends Shape> ByteVector<S> resize(Vector<Byte, T> o) {
-            return reshape(o);
-        }
+        public abstract <T extends Shape> ByteVector<S> resize(Vector<Byte, T> o);
 
         @Override
         @SuppressWarnings("unchecked")

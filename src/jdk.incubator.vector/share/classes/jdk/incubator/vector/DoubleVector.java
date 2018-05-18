@@ -99,9 +99,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     //
 
     @Override
-    public DoubleVector<S> add(Vector<Double,S> v) {
-        return bOp(v, (i, a, b) -> (double) (a + b));
-    }
+    public abstract DoubleVector<S> add(Vector<Double,S> v);
 
     /**
      * Adds this vector to the broadcast of an input scalar.
@@ -149,9 +147,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> addSaturate(double s, Mask<Double, S> m);
 
     @Override
-    public DoubleVector<S> sub(Vector<Double,S> v) {
-        return bOp(v, (i, a, b) -> (double) (a - b));
-    }
+    public abstract DoubleVector<S> sub(Vector<Double,S> v);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector.
@@ -199,9 +195,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> subSaturate(double s, Mask<Double, S> m);
 
     @Override
-    public DoubleVector<S> mul(Vector<Double,S> v) {
-        return bOp(v, (i, a, b) -> (double) (a * b));
-    }
+    public abstract DoubleVector<S> mul(Vector<Double,S> v);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar.
@@ -235,9 +229,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> mul(double s, Mask<Double, S> m);
 
     @Override
-    public DoubleVector<S> neg() {
-        return uOp((i, a) -> (double) (-a));
-    }
+    public abstract DoubleVector<S> neg();
 
     @Override
     public DoubleVector<S> neg(Mask<Double, S> m) {
@@ -245,9 +237,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     }
 
     @Override
-    public DoubleVector<S> abs() {
-        return uOp((i, a) -> (double) Math.abs(a));
-    }
+    public abstract DoubleVector<S> abs();
 
     @Override
     public DoubleVector<S> abs(Mask<Double, S> m) {
@@ -255,9 +245,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     }
 
     @Override
-    public DoubleVector<S> min(Vector<Double,S> v) {
-        return bOp(v, (i, a, b) -> (a < b) ? a : b);
-    }
+    public abstract DoubleVector<S> min(Vector<Double,S> v);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -271,9 +259,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> min(double s);
 
     @Override
-    public DoubleVector<S> max(Vector<Double,S> v) {
-        return bOp(v, (i, a, b) -> (a > b) ? a : b);
-    }
+    public abstract DoubleVector<S> max(Vector<Double,S> v);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -287,9 +273,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> max(double s);
 
     @Override
-    public Mask<Double, S> equal(Vector<Double,S> v) {
-        return bTest(v, (i, a, b) -> a == b);
-    }
+    public abstract Mask<Double, S> equal(Vector<Double,S> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -304,9 +288,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract Mask<Double, S> equal(double s);
 
     @Override
-    public Mask<Double, S> notEqual(Vector<Double,S> v) {
-        return bTest(v, (i, a, b) -> a != b);
-    }
+    public abstract Mask<Double, S> notEqual(Vector<Double,S> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -321,9 +303,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract Mask<Double, S> notEqual(double s);
 
     @Override
-    public Mask<Double, S> lessThan(Vector<Double,S> v) {
-        return bTest(v, (i, a, b) -> a < b);
-    }
+    public abstract Mask<Double, S> lessThan(Vector<Double,S> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -338,9 +318,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract Mask<Double, S> lessThan(double s);
 
     @Override
-    public Mask<Double, S> lessThanEq(Vector<Double,S> v) {
-        return bTest(v, (i, a, b) -> a <= b);
-    }
+    public abstract Mask<Double, S> lessThanEq(Vector<Double,S> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -355,9 +333,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract Mask<Double, S> lessThanEq(double s);
 
     @Override
-    public Mask<Double, S> greaterThan(Vector<Double,S> v) {
-        return bTest(v, (i, a, b) -> a > b);
-    }
+    public abstract Mask<Double, S> greaterThan(Vector<Double,S> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -372,9 +348,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract Mask<Double, S> greaterThan(double s);
 
     @Override
-    public Mask<Double, S> greaterThanEq(Vector<Double,S> v) {
-        return bTest(v, (i, a, b) -> a >= b);
-    }
+    public abstract Mask<Double, S> greaterThanEq(Vector<Double,S> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -390,9 +364,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract Mask<Double, S> greaterThanEq(double s);
 
     @Override
-    public DoubleVector<S> blend(Vector<Double,S> v, Mask<Double, S> m) {
-        return bOp(v, (i, a, b) -> m.getElement(i) ? b : a);
-    }
+    public abstract DoubleVector<S> blend(Vector<Double,S> v, Mask<Double, S> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -1274,9 +1246,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      *
      * @return the addition of all the lane elements of this vector
      */
-    public double addAll() {
-        return rOp((double) 0, (i, a, b) -> (double) (a + b));
-    }
+    public abstract double addAll();
 
     /**
      * Subtracts all lane elements of this vector.
@@ -1287,9 +1257,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      *
      * @return the subtraction of all the lane elements of this vector
      */
-    public double subAll() {
-        return rOp((double) 0, (i, a, b) -> (double) (a - b));
-    }
+    public abstract double subAll();
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1486,9 +1454,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         // Factories
 
         @Override
-        public DoubleVector<S> zero() {
-            return op(i -> 0);
-        }
+        public abstract DoubleVector<S> zero();
 
         /**
          * Returns a vector where all lane elements are set to the primitive
@@ -1498,9 +1464,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
          * @return a vector of vector where all lane elements are set to
          * the primitive value {@code e}
          */
-        public DoubleVector<S> broadcast(double e) {
-            return op(i -> e);
-        }
+        public abstract DoubleVector<S> broadcast(double e);
 
         /**
          * Returns a vector where the first lane element is set to the primtive
@@ -1543,9 +1507,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
          * @return a vector where each lane element is set to a given primitive
          * value
          */
-        public DoubleVector<S> scalars(double... es) {
-            return op(i -> es[i]);
-        }
+        public abstract DoubleVector<S> scalars(double... es);
 
         /**
          * Loads a vector from an array starting at offset.
@@ -1699,15 +1661,11 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
 
         @Override
         @ForceInline
-        public <F> DoubleVector<S> rebracket(Vector<F, S> o) {
-            return reshape(o);
-        }
+        public abstract <F> DoubleVector<S> rebracket(Vector<F, S> o);
 
         @Override
         @ForceInline
-        public <T extends Shape> DoubleVector<S> resize(Vector<Double, T> o) {
-            return reshape(o);
-        }
+        public abstract <T extends Shape> DoubleVector<S> resize(Vector<Double, T> o);
 
         @Override
         @SuppressWarnings("unchecked")
