@@ -430,33 +430,6 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         return blend(xor(v), m);
     }
 
-    @Override
-    @ForceInline
-    public Short512Vector shiftL(int s) {
-        return (Short512Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Short512Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public Short512Vector shiftR(int s) {
-        return (Short512Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Short512Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Short512Vector aShiftR(int s) {
-        return (Short512Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Short512Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >> i)));
-    }
-
     // Ternary operations
 
 

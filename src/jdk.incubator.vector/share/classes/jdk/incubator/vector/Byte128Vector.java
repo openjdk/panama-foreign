@@ -429,33 +429,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         return blend(xor(v), m);
     }
 
-    @Override
-    @ForceInline
-    public Byte128Vector shiftL(int s) {
-        return (Byte128Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Byte128Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte128Vector shiftR(int s) {
-        return (Byte128Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Byte128Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte128Vector aShiftR(int s) {
-        return (Byte128Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Byte128Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >> i)));
-    }
-
     // Ternary operations
 
 

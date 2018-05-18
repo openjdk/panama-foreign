@@ -429,33 +429,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         return blend(xor(v), m);
     }
 
-    @Override
-    @ForceInline
-    public Byte512Vector shiftL(int s) {
-        return (Byte512Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Byte512Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte512Vector shiftR(int s) {
-        return (Byte512Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Byte512Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte512Vector aShiftR(int s) {
-        return (Byte512Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Byte512Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >> i)));
-    }
-
     // Ternary operations
 
 

@@ -430,33 +430,6 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         return blend(xor(v), m);
     }
 
-    @Override
-    @ForceInline
-    public Short64Vector shiftL(int s) {
-        return (Short64Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Short64Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector shiftR(int s) {
-        return (Short64Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Short64Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Short64Vector aShiftR(int s) {
-        return (Short64Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Short64Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >> i)));
-    }
-
     // Ternary operations
 
 

@@ -429,33 +429,6 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         return blend(xor(v), m);
     }
 
-    @Override
-    @ForceInline
-    public Byte64Vector shiftL(int s) {
-        return (Byte64Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Byte64Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte64Vector shiftR(int s) {
-        return (Byte64Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Byte64Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte64Vector aShiftR(int s) {
-        return (Byte64Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Byte64Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >> i)));
-    }
-
     // Ternary operations
 
 

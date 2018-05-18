@@ -429,33 +429,6 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         return blend(xor(v), m);
     }
 
-    @Override
-    @ForceInline
-    public Byte256Vector shiftL(int s) {
-        return (Byte256Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Byte256Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte256Vector shiftR(int s) {
-        return (Byte256Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Byte256Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Byte256Vector aShiftR(int s) {
-        return (Byte256Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Byte256Vector.class, byte.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >> i)));
-    }
-
     // Ternary operations
 
 

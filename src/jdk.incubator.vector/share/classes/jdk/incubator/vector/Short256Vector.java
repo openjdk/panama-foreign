@@ -430,33 +430,6 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
         return blend(xor(v), m);
     }
 
-    @Override
-    @ForceInline
-    public Short256Vector shiftL(int s) {
-        return (Short256Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Short256Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public Short256Vector shiftR(int s) {
-        return (Short256Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Short256Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Short256Vector aShiftR(int s) {
-        return (Short256Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Short256Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >> i)));
-    }
-
     // Ternary operations
 
 

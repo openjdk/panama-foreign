@@ -586,10 +586,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
 @@@ Check the shift operations against the JLS definition and vector
     instructions.
 
-    How to define byte and short? in Java the values are promoted
-    to int values.
-
-    For int values (promoted or otherwise) the low 5 bits of s are used.
+    For int values the low 5 bits of s are used.
     For long values the low 6 bits of s are used.
  */
 
@@ -650,7 +647,6 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     // logical, or unsigned, shift right
-
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
@@ -769,11 +765,6 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         return bOp(v, m, (i, a, b) -> (int) (a >> b));
     }
 
-// @@@ Should the rotateL/R operations be on int and long only?
-//     Currently short and byte promote to int, bits rotated, then downcast,
-//     thus bits will be truncated and not correctly rotated
-// @@@ Mask versions?
-
     /**
      * Rotates left this vector by the broadcast of an input scalar.
      * <p>
@@ -792,6 +783,25 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     /**
+     * Rotates left this vector by the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@link Integer#rotateLeft} is applied to lane elements and where
+     * lane elements of this vector apply to the first argument, and lane
+     * elements of the broadcast vector apply to the second argument (the
+     * rotation distance).
+     *
+     * @param s the input scalar; the number of the bits to rotate left
+     * @param m the mask controlling lane selection
+     * @return the result of rotating left this vector by the broadcast of an
+     * input scalar
+     */
+    public IntVector<S> rotateL(int s, Mask<Integer, S> m) {
+        return uOp(m, (i, a) -> (int) Integer.rotateLeft(a, s));
+    }
+
+    /**
      * Rotates right this vector by the broadcast of an input scalar.
      * <p>
      * This is a vector binary operation where the operation
@@ -806,6 +816,25 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      */
     public IntVector<S> rotateR(int s) {
         return uOp((i, a) -> (int) Integer.rotateRight(a, s));
+    }
+
+    /**
+     * Rotates right this vector by the broadcast of an input scalar, selecting
+     * lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@link Integer#rotateRight} is applied to lane elements and where
+     * lane elements of this vector apply to the first argument, and lane
+     * elements of the broadcast vector apply to the second argument (the
+     * rotation distance).
+     *
+     * @param s the input scalar; the number of the bits to rotate right
+     * @param m the mask controlling lane selection
+     * @return the result of rotating right this vector by the broadcast of an
+     * input scalar
+     */
+    public IntVector<S> rotateR(int s, Mask<Integer, S> m) {
+        return uOp(m, (i, a) -> (int) Integer.rotateRight(a, s));
     }
 
     @Override

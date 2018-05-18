@@ -430,33 +430,6 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         return blend(xor(v), m);
     }
 
-    @Override
-    @ForceInline
-    public Short128Vector shiftL(int s) {
-        return (Short128Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_LSHIFT, Short128Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a << i)));
-    }
-
-    @Override
-    @ForceInline
-    public Short128Vector shiftR(int s) {
-        return (Short128Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_URSHIFT, Short128Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >>> i)));
-    }
-
-    @Override
-    @ForceInline
-    public Short128Vector aShiftR(int s) {
-        return (Short128Vector) VectorIntrinsics.broadcastInt(
-            VECTOR_OP_RSHIFT, Short128Vector.class, short.class, LENGTH,
-            this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >> i)));
-    }
-
     // Ternary operations
 
 

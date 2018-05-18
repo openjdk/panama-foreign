@@ -557,7 +557,9 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     public $vectortype$ xor(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
         return blend(xor(v), m);
     }
+#end[BITWISE]
 
+#if[intOrLong]
     @Override
     @ForceInline
     public $vectortype$ shiftL(int s) {
@@ -584,9 +586,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this, s,
             (v, i) -> v.uOp((__, a) -> ($type$) (a >> i)));
     }
-#end[BITWISE]
 
-#if[intOrLong]
     @Override
     @ForceInline
     public $vectortype$ shiftL(Vector<$Boxtype$,Shapes.$shape$> s) {
