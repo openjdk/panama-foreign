@@ -1523,8 +1523,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of rotating left this vector by the broadcast of an
      * input scalar
      */
-    public $abstractvectortype$<S> rotateL(int s) {
-        return uOp((i, a) -> ($type$) $Boxtype$.rotateLeft(a, s));
+    @ForceInline
+    public final $abstractvectortype$<S> rotateL(int s) {
+        return shiftL(s).or(shiftR(-s));
     }
 
     /**
@@ -1542,8 +1543,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of rotating left this vector by the broadcast of an
      * input scalar
      */
-    public $abstractvectortype$<S> rotateL(int s, Mask<$Boxtype$, S> m) {
-        return uOp(m, (i, a) -> ($type$) $Boxtype$.rotateLeft(a, s));
+    @ForceInline
+    public final $abstractvectortype$<S> rotateL(int s, Mask<$Boxtype$, S> m) {
+        return shiftL(s, m).or(shiftR(-s, m), m);
     }
 
     /**
@@ -1559,8 +1561,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of rotating right this vector by the broadcast of an
      * input scalar
      */
-    public $abstractvectortype$<S> rotateR(int s) {
-        return uOp((i, a) -> ($type$) $Boxtype$.rotateRight(a, s));
+    @ForceInline
+    public final $abstractvectortype$<S> rotateR(int s) {
+        return shiftR(s).or(shiftL(-s));
     }
 
     /**
@@ -1578,8 +1581,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of rotating right this vector by the broadcast of an
      * input scalar
      */
-    public $abstractvectortype$<S> rotateR(int s, Mask<$Boxtype$, S> m) {
-        return uOp(m, (i, a) -> ($type$) $Boxtype$.rotateRight(a, s));
+    @ForceInline
+    public final $abstractvectortype$<S> rotateR(int s, Mask<$Boxtype$, S> m) {
+        return shiftR(s, m).or(shiftL(-s, m), m);
     }
 #end[intOrLong]
 #end[BITWISE]

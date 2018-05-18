@@ -750,8 +750,9 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of rotating left this vector by the broadcast of an
      * input scalar
      */
-    public LongVector<S> rotateL(int s) {
-        return uOp((i, a) -> (long) Long.rotateLeft(a, s));
+    @ForceInline
+    public final LongVector<S> rotateL(int s) {
+        return shiftL(s).or(shiftR(-s));
     }
 
     /**
@@ -769,8 +770,9 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of rotating left this vector by the broadcast of an
      * input scalar
      */
-    public LongVector<S> rotateL(int s, Mask<Long, S> m) {
-        return uOp(m, (i, a) -> (long) Long.rotateLeft(a, s));
+    @ForceInline
+    public final LongVector<S> rotateL(int s, Mask<Long, S> m) {
+        return shiftL(s, m).or(shiftR(-s, m), m);
     }
 
     /**
@@ -786,8 +788,9 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of rotating right this vector by the broadcast of an
      * input scalar
      */
-    public LongVector<S> rotateR(int s) {
-        return uOp((i, a) -> (long) Long.rotateRight(a, s));
+    @ForceInline
+    public final LongVector<S> rotateR(int s) {
+        return shiftR(s).or(shiftL(-s));
     }
 
     /**
@@ -805,8 +808,9 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of rotating right this vector by the broadcast of an
      * input scalar
      */
-    public LongVector<S> rotateR(int s, Mask<Long, S> m) {
-        return uOp(m, (i, a) -> (long) Long.rotateRight(a, s));
+    @ForceInline
+    public final LongVector<S> rotateR(int s, Mask<Long, S> m) {
+        return shiftR(s, m).or(shiftL(-s, m), m);
     }
 
     @Override
