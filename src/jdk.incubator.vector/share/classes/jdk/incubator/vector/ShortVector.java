@@ -636,6 +636,19 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract short addAll();
 
     /**
+     * Adds all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the addition of all the lane elements of this vector
+     */
+    public abstract short addAll(Mask<Short, S> m);
+
+    /**
      * Subtracts all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the subtraction
@@ -645,6 +658,19 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @return the subtraction of all the lane elements of this vector
      */
     public abstract short subAll();
+
+    /**
+     * Subtracts all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the subtraction of all the lane elements of this vector
+     */
+    public abstract short subAll(Mask<Short, S> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -660,6 +686,19 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     }
 
     /**
+     * Multiplies all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the multiplication of all the lane elements of this vector
+     */
+    public abstract short mulAll(Mask<Short, S> m);
+
+    /**
      * Returns the minimum lane element of this vector.
      * <p>
      * This is an associative vector reduction operation where the operation
@@ -671,6 +710,19 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public short minAll() {
         return rOp(Short.MAX_VALUE, (i, a, b) -> a > b ? b : a);
     }
+
+    /**
+     * Returns the minimum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Short.MAX_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the minimum lane element of this vector
+     */
+    public abstract short minAll(Mask<Short, S> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -686,6 +738,19 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     }
 
     /**
+     * Returns the maximum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Short.MIN_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the maximum lane element of this vector
+     */
+    public abstract short maxAll(Mask<Short, S> m);
+
+    /**
      * Logically ORs all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the logical OR
@@ -695,6 +760,19 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @return the logical OR all the lane elements of this vector
      */
     public abstract short orAll();
+
+    /**
+     * Logically ORs all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the logical OR
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the logical OR all the lane elements of this vector
+     */
+    public abstract short orAll(Mask<Short, S> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -708,6 +786,19 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract short andAll();
 
     /**
+     * Logically ANDs all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the logical AND
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code -1}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the logical AND all the lane elements of this vector
+     */
+    public abstract short andAll(Mask<Short, S> m);
+
+    /**
      * Logically XORs all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the logical XOR
@@ -717,6 +808,19 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @return the logical XOR all the lane elements of this vector
      */
     public abstract short xorAll();
+
+    /**
+     * Logically XORs all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the logical XOR
+     * operation ({@code ^}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the logical XOR all the lane elements of this vector
+     */
+    public abstract short xorAll(Mask<Short, S> m);
 
     // Type specific accessors
 

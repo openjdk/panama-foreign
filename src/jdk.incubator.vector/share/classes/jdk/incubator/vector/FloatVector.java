@@ -1221,6 +1221,19 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract float addAll();
 
     /**
+     * Adds all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the addition of all the lane elements of this vector
+     */
+    public abstract float addAll(Mask<Float, S> m);
+
+    /**
      * Subtracts all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the subtraction
@@ -1230,6 +1243,19 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * @return the subtraction of all the lane elements of this vector
      */
     public abstract float subAll();
+
+    /**
+     * Subtracts all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the subtraction of all the lane elements of this vector
+     */
+    public abstract float subAll(Mask<Float, S> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1245,6 +1271,19 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     }
 
     /**
+     * Multiplies all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the multiplication of all the lane elements of this vector
+     */
+    public abstract float mulAll(Mask<Float, S> m);
+
+    /**
      * Returns the minimum lane element of this vector.
      * <p>
      * This is an associative vector reduction operation where the operation
@@ -1258,6 +1297,19 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     }
 
     /**
+     * Returns the minimum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Float.MAX_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the minimum lane element of this vector
+     */
+    public abstract float minAll(Mask<Float, S> m);
+
+    /**
      * Returns the maximum lane element of this vector.
      * <p>
      * This is an associative vector reduction operation where the operation
@@ -1269,6 +1321,19 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public float maxAll() {
         return rOp(Float.MIN_VALUE, (i, a, b) -> a < b ? b : a);
     }
+
+    /**
+     * Returns the maximum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Float.MIN_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the maximum lane element of this vector
+     */
+    public abstract float maxAll(Mask<Float, S> m);
 
 
     // Type specific accessors

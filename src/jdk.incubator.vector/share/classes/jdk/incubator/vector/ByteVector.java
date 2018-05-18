@@ -635,6 +635,19 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract byte addAll();
 
     /**
+     * Adds all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the addition of all the lane elements of this vector
+     */
+    public abstract byte addAll(Mask<Byte, S> m);
+
+    /**
      * Subtracts all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the subtraction
@@ -644,6 +657,19 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @return the subtraction of all the lane elements of this vector
      */
     public abstract byte subAll();
+
+    /**
+     * Subtracts all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the subtraction of all the lane elements of this vector
+     */
+    public abstract byte subAll(Mask<Byte, S> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -659,6 +685,19 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     }
 
     /**
+     * Multiplies all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the multiplication of all the lane elements of this vector
+     */
+    public abstract byte mulAll(Mask<Byte, S> m);
+
+    /**
      * Returns the minimum lane element of this vector.
      * <p>
      * This is an associative vector reduction operation where the operation
@@ -670,6 +709,19 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public byte minAll() {
         return rOp(Byte.MAX_VALUE, (i, a, b) -> a > b ? b : a);
     }
+
+    /**
+     * Returns the minimum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Byte.MAX_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the minimum lane element of this vector
+     */
+    public abstract byte minAll(Mask<Byte, S> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -685,6 +737,19 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     }
 
     /**
+     * Returns the maximum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Byte.MIN_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the maximum lane element of this vector
+     */
+    public abstract byte maxAll(Mask<Byte, S> m);
+
+    /**
      * Logically ORs all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the logical OR
@@ -694,6 +759,19 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @return the logical OR all the lane elements of this vector
      */
     public abstract byte orAll();
+
+    /**
+     * Logically ORs all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the logical OR
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the logical OR all the lane elements of this vector
+     */
+    public abstract byte orAll(Mask<Byte, S> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -707,6 +785,19 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract byte andAll();
 
     /**
+     * Logically ANDs all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the logical AND
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code -1}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the logical AND all the lane elements of this vector
+     */
+    public abstract byte andAll(Mask<Byte, S> m);
+
+    /**
      * Logically XORs all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the logical XOR
@@ -716,6 +807,19 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @return the logical XOR all the lane elements of this vector
      */
     public abstract byte xorAll();
+
+    /**
+     * Logically XORs all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the logical XOR
+     * operation ({@code ^}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the logical XOR all the lane elements of this vector
+     */
+    public abstract byte xorAll(Mask<Byte, S> m);
 
     // Type specific accessors
 

@@ -431,6 +431,13 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public short andAll(Mask<Short, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast((short) -1), m).andAll();
+    }
+
+
+    @Override
+    @ForceInline
     public short subAll() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_SUB, Short128Vector.class, short.class, LENGTH,
@@ -449,11 +456,54 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public short orAll(Mask<Short, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast((short) 0), m).orAll();
+    }
+
+    @Override
+    @ForceInline
     public short xorAll() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, Short128Vector.class, short.class, LENGTH,
             this,
             v -> (long) v.rOp((short) 0, (i, a, b) -> (short) (a ^ b)));
+    }
+
+    @Override
+    @ForceInline
+    public short xorAll(Mask<Short, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast((short) 0), m).xorAll();
+    }
+
+
+    @Override
+    @ForceInline
+    public short addAll(Mask<Short, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast((short) 0), m).addAll();
+    }
+
+    @Override
+    @ForceInline
+    public short subAll(Mask<Short, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast((short) 0), m).subAll();
+    }
+
+    @Override
+    @ForceInline
+    public short mulAll(Mask<Short, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast((short) 1), m).mulAll();
+    }
+
+    @Override
+    @ForceInline
+    public short minAll(Mask<Short, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast(Short.MAX_VALUE), m).minAll();
+    }
+
+    @Override
+    @ForceInline
+    public short maxAll(Mask<Short, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast(Short.MIN_VALUE), m).maxAll();
     }
 
     // Memory operations

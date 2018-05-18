@@ -1221,6 +1221,19 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract double addAll();
 
     /**
+     * Adds all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the addition of all the lane elements of this vector
+     */
+    public abstract double addAll(Mask<Double, S> m);
+
+    /**
      * Subtracts all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the subtraction
@@ -1230,6 +1243,19 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * @return the subtraction of all the lane elements of this vector
      */
     public abstract double subAll();
+
+    /**
+     * Subtracts all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the subtraction of all the lane elements of this vector
+     */
+    public abstract double subAll(Mask<Double, S> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -1245,6 +1271,19 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     }
 
     /**
+     * Multiplies all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the multiplication of all the lane elements of this vector
+     */
+    public abstract double mulAll(Mask<Double, S> m);
+
+    /**
      * Returns the minimum lane element of this vector.
      * <p>
      * This is an associative vector reduction operation where the operation
@@ -1258,6 +1297,19 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     }
 
     /**
+     * Returns the minimum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Double.MAX_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the minimum lane element of this vector
+     */
+    public abstract double minAll(Mask<Double, S> m);
+
+    /**
      * Returns the maximum lane element of this vector.
      * <p>
      * This is an associative vector reduction operation where the operation
@@ -1269,6 +1321,19 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public double maxAll() {
         return rOp(Double.MIN_VALUE, (i, a, b) -> a < b ? b : a);
     }
+
+    /**
+     * Returns the maximum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Double.MIN_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the maximum lane element of this vector
+     */
+    public abstract double maxAll(Mask<Double, S> m);
 
 
     // Type specific accessors

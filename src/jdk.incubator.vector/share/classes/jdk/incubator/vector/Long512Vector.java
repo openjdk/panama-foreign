@@ -487,6 +487,13 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public long andAll(Mask<Long, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((long) -1), m).andAll();
+    }
+
+
+    @Override
+    @ForceInline
     public long mulAll() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Long512Vector.class, long.class, LENGTH,
@@ -514,11 +521,54 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public long orAll(Mask<Long, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((long) 0), m).orAll();
+    }
+
+    @Override
+    @ForceInline
     public long xorAll() {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, Long512Vector.class, long.class, LENGTH,
             this,
             v -> (long) v.rOp((long) 0, (i, a, b) -> (long) (a ^ b)));
+    }
+
+    @Override
+    @ForceInline
+    public long xorAll(Mask<Long, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((long) 0), m).xorAll();
+    }
+
+
+    @Override
+    @ForceInline
+    public long addAll(Mask<Long, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((long) 0), m).addAll();
+    }
+
+    @Override
+    @ForceInline
+    public long subAll(Mask<Long, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((long) 0), m).subAll();
+    }
+
+    @Override
+    @ForceInline
+    public long mulAll(Mask<Long, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((long) 1), m).mulAll();
+    }
+
+    @Override
+    @ForceInline
+    public long minAll(Mask<Long, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast(Long.MAX_VALUE), m).minAll();
+    }
+
+    @Override
+    @ForceInline
+    public long maxAll(Mask<Long, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast(Long.MIN_VALUE), m).maxAll();
     }
 
     // Memory operations

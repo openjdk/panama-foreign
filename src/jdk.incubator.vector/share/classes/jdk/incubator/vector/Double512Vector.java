@@ -476,6 +476,37 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         return Double.longBitsToDouble(bits);
     }
 
+
+    @Override
+    @ForceInline
+    public double addAll(Mask<Double, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((double) 0), m).addAll();
+    }
+
+    @Override
+    @ForceInline
+    public double subAll(Mask<Double, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((double) 0), m).subAll();
+    }
+
+    @Override
+    @ForceInline
+    public double mulAll(Mask<Double, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((double) 1), m).mulAll();
+    }
+
+    @Override
+    @ForceInline
+    public double minAll(Mask<Double, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast(Double.MAX_VALUE), m).minAll();
+    }
+
+    @Override
+    @ForceInline
+    public double maxAll(Mask<Double, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast(Double.MIN_VALUE), m).maxAll();
+    }
+
     // Memory operations
 
     @Override

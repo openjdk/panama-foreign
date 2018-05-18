@@ -886,6 +886,19 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract int addAll();
 
     /**
+     * Adds all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the addition
+     * operation ({@code +}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the addition of all the lane elements of this vector
+     */
+    public abstract int addAll(Mask<Integer, S> m);
+
+    /**
      * Subtracts all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the subtraction
@@ -895,6 +908,19 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the subtraction of all the lane elements of this vector
      */
     public abstract int subAll();
+
+    /**
+     * Subtracts all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the subtraction
+     * operation ({@code -}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the subtraction of all the lane elements of this vector
+     */
+    public abstract int subAll(Mask<Integer, S> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -910,6 +936,19 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     /**
+     * Multiplies all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the
+     * multiplication operation ({@code *}) is applied to lane elements,
+     * and the identity value is {@code 1}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the multiplication of all the lane elements of this vector
+     */
+    public abstract int mulAll(Mask<Integer, S> m);
+
+    /**
      * Returns the minimum lane element of this vector.
      * <p>
      * This is an associative vector reduction operation where the operation
@@ -921,6 +960,19 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public int minAll() {
         return rOp(Integer.MAX_VALUE, (i, a, b) -> a > b ? b : a);
     }
+
+    /**
+     * Returns the minimum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Integer.MAX_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the minimum lane element of this vector
+     */
+    public abstract int minAll(Mask<Integer, S> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -936,6 +988,19 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     /**
+     * Returns the maximum lane element of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the operation
+     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * and the identity value is {@link Integer.MIN_VALUE}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the maximum lane element of this vector
+     */
+    public abstract int maxAll(Mask<Integer, S> m);
+
+    /**
      * Logically ORs all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the logical OR
@@ -945,6 +1010,19 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the logical OR all the lane elements of this vector
      */
     public abstract int orAll();
+
+    /**
+     * Logically ORs all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the logical OR
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the logical OR all the lane elements of this vector
+     */
+    public abstract int orAll(Mask<Integer, S> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -958,6 +1036,19 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract int andAll();
 
     /**
+     * Logically ANDs all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the logical AND
+     * operation ({@code |}) is applied to lane elements,
+     * and the identity value is {@code -1}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the logical AND all the lane elements of this vector
+     */
+    public abstract int andAll(Mask<Integer, S> m);
+
+    /**
      * Logically XORs all lane elements of this vector.
      * <p>
      * This is an associative vector reduction operation where the logical XOR
@@ -967,6 +1058,19 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the logical XOR all the lane elements of this vector
      */
     public abstract int xorAll();
+
+    /**
+     * Logically XORs all lane elements of this vector, selecting lane elements
+     * controlled by a mask.
+     * <p>
+     * This is an associative vector reduction operation where the logical XOR
+     * operation ({@code ^}) is applied to lane elements,
+     * and the identity value is {@code 0}.
+     *
+     * @param m the mask controlling lane selection
+     * @return the logical XOR all the lane elements of this vector
+     */
+    public abstract int xorAll(Mask<Integer, S> m);
 
     // Type specific accessors
 

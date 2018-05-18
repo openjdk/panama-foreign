@@ -476,6 +476,37 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         return Float.intBitsToFloat(bits);
     }
 
+
+    @Override
+    @ForceInline
+    public float addAll(Mask<Float, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast((float) 0), m).addAll();
+    }
+
+    @Override
+    @ForceInline
+    public float subAll(Mask<Float, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast((float) 0), m).subAll();
+    }
+
+    @Override
+    @ForceInline
+    public float mulAll(Mask<Float, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast((float) 1), m).mulAll();
+    }
+
+    @Override
+    @ForceInline
+    public float minAll(Mask<Float, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast(Float.MAX_VALUE), m).minAll();
+    }
+
+    @Override
+    @ForceInline
+    public float maxAll(Mask<Float, Shapes.S128Bit> m) {
+        return blend(SPECIES.broadcast(Float.MIN_VALUE), m).maxAll();
+    }
+
     // Memory operations
 
     @Override

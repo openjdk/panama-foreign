@@ -630,6 +630,13 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v -> (long) v.rOp(($type$) -1, (i, a, b) -> ($type$) (a & b)));
     }
+
+    @Override
+    @ForceInline
+    public $type$ andAll(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(SPECIES.broadcast(($type$) -1), m).andAll();
+    }
+
 #if[intOrLong]
 
     @Override
@@ -662,11 +669,23 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
+    public $type$ orAll(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(SPECIES.broadcast(($type$) 0), m).orAll();
+    }
+
+    @Override
+    @ForceInline
     public $type$ xorAll() {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, $vectortype$.class, $type$.class, LENGTH,
             this,
             v -> (long) v.rOp(($type$) 0, (i, a, b) -> ($type$) (a ^ b)));
+    }
+
+    @Override
+    @ForceInline
+    public $type$ xorAll(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(SPECIES.broadcast(($type$) 0), m).xorAll();
     }
 #end[BITWISE]
 
@@ -711,6 +730,37 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     }
 
 #end[FP]
+
+    @Override
+    @ForceInline
+    public $type$ addAll(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(SPECIES.broadcast(($type$) 0), m).addAll();
+    }
+
+    @Override
+    @ForceInline
+    public $type$ subAll(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(SPECIES.broadcast(($type$) 0), m).subAll();
+    }
+
+    @Override
+    @ForceInline
+    public $type$ mulAll(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(SPECIES.broadcast(($type$) 1), m).mulAll();
+    }
+
+    @Override
+    @ForceInline
+    public $type$ minAll(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(SPECIES.broadcast($Boxtype$.MAX_VALUE), m).minAll();
+    }
+
+    @Override
+    @ForceInline
+    public $type$ maxAll(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(SPECIES.broadcast($Boxtype$.MIN_VALUE), m).maxAll();
+    }
+
     // Memory operations
 
     @Override

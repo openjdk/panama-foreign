@@ -430,6 +430,13 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public byte andAll(Mask<Byte, Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast((byte) -1), m).andAll();
+    }
+
+
+    @Override
+    @ForceInline
     public byte subAll() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_SUB, Byte256Vector.class, byte.class, LENGTH,
@@ -448,11 +455,54 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public byte orAll(Mask<Byte, Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast((byte) 0), m).orAll();
+    }
+
+    @Override
+    @ForceInline
     public byte xorAll() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, Byte256Vector.class, byte.class, LENGTH,
             this,
             v -> (long) v.rOp((byte) 0, (i, a, b) -> (byte) (a ^ b)));
+    }
+
+    @Override
+    @ForceInline
+    public byte xorAll(Mask<Byte, Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast((byte) 0), m).xorAll();
+    }
+
+
+    @Override
+    @ForceInline
+    public byte addAll(Mask<Byte, Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast((byte) 0), m).addAll();
+    }
+
+    @Override
+    @ForceInline
+    public byte subAll(Mask<Byte, Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast((byte) 0), m).subAll();
+    }
+
+    @Override
+    @ForceInline
+    public byte mulAll(Mask<Byte, Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast((byte) 1), m).mulAll();
+    }
+
+    @Override
+    @ForceInline
+    public byte minAll(Mask<Byte, Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast(Byte.MAX_VALUE), m).minAll();
+    }
+
+    @Override
+    @ForceInline
+    public byte maxAll(Mask<Byte, Shapes.S256Bit> m) {
+        return blend(SPECIES.broadcast(Byte.MIN_VALUE), m).maxAll();
     }
 
     // Memory operations

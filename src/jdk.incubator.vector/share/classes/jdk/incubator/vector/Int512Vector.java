@@ -507,6 +507,13 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public int andAll(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((int) -1), m).andAll();
+    }
+
+
+    @Override
+    @ForceInline
     public int mulAll() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Int512Vector.class, int.class, LENGTH,
@@ -534,11 +541,54 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public int orAll(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((int) 0), m).orAll();
+    }
+
+    @Override
+    @ForceInline
     public int xorAll() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_XOR, Int512Vector.class, int.class, LENGTH,
             this,
             v -> (long) v.rOp((int) 0, (i, a, b) -> (int) (a ^ b)));
+    }
+
+    @Override
+    @ForceInline
+    public int xorAll(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((int) 0), m).xorAll();
+    }
+
+
+    @Override
+    @ForceInline
+    public int addAll(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((int) 0), m).addAll();
+    }
+
+    @Override
+    @ForceInline
+    public int subAll(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((int) 0), m).subAll();
+    }
+
+    @Override
+    @ForceInline
+    public int mulAll(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast((int) 1), m).mulAll();
+    }
+
+    @Override
+    @ForceInline
+    public int minAll(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast(Integer.MAX_VALUE), m).minAll();
+    }
+
+    @Override
+    @ForceInline
+    public int maxAll(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(SPECIES.broadcast(Integer.MIN_VALUE), m).maxAll();
     }
 
     // Memory operations
