@@ -133,20 +133,6 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> add(float s, Mask<Float, S> m);
 
     @Override
-    public FloatVector<S> addSaturate(Vector<Float,S> v) {
-        return bOp(v, (i, a, b) -> (float) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract FloatVector<S> addSaturate(float s);
-
-    @Override
-    public FloatVector<S> addSaturate(Vector<Float,S> v, Mask<Float, S> m) {
-        return bOp(v, m, (i, a, b) -> (float) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract FloatVector<S> addSaturate(float s, Mask<Float, S> m);
-
-    @Override
     public abstract FloatVector<S> sub(Vector<Float,S> v);
 
     /**
@@ -179,20 +165,6 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * scalar from this vector
      */
     public abstract FloatVector<S> sub(float s, Mask<Float, S> m);
-
-    @Override
-    public FloatVector<S> subSaturate(Vector<Float,S> v) {
-        return bOp(v, (i, a, b) -> (float) ((a >= Float.MIN_VALUE || Float.MIN_VALUE + b > a) ? Float.MAX_VALUE : a - b));
-    }
-
-    public abstract FloatVector<S> subSaturate(float s);
-
-    @Override
-    public FloatVector<S> subSaturate(Vector<Float,S> v, Mask<Float, S> m) {
-        return bOp(v, m, (i, a, b) -> (float) ((a >= Float.MIN_VALUE || Float.MIN_VALUE + b > a) ? Float.MAX_VALUE : a - b));
-    }
-
-    public abstract FloatVector<S> subSaturate(float s, Mask<Float, S> m);
 
     @Override
     public abstract FloatVector<S> mul(Vector<Float,S> v);

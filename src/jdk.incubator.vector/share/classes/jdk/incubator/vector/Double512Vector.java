@@ -157,18 +157,6 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public DoubleVector<Shapes.S512Bit> addSaturate(double o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S512Bit> addSaturate(double o, Mask<Double,Shapes.S512Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public DoubleVector<Shapes.S512Bit> sub(double o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     @ForceInline
     public DoubleVector<Shapes.S512Bit> sub(double o, Mask<Double,Shapes.S512Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S512Bit> subSaturate(double o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S512Bit> subSaturate(double o, Mask<Double,Shapes.S512Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

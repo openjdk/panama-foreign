@@ -157,18 +157,6 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.S512Bit> addSaturate(short o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector<Shapes.S512Bit> addSaturate(short o, Mask<Short,Shapes.S512Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public ShortVector<Shapes.S512Bit> sub(short o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
     @ForceInline
     public ShortVector<Shapes.S512Bit> sub(short o, Mask<Short,Shapes.S512Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector<Shapes.S512Bit> subSaturate(short o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ShortVector<Shapes.S512Bit> subSaturate(short o, Mask<Short,Shapes.S512Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

@@ -156,18 +156,6 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> addSaturate(byte o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S64Bit> addSaturate(byte o, Mask<Byte,Shapes.S64Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public ByteVector<Shapes.S64Bit> sub(byte o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -176,18 +164,6 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     @ForceInline
     public ByteVector<Shapes.S64Bit> sub(byte o, Mask<Byte,Shapes.S64Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S64Bit> subSaturate(byte o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S64Bit> subSaturate(byte o, Mask<Byte,Shapes.S64Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

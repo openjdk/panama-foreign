@@ -323,10 +323,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
      */
     public abstract Vector<E, S> add(Vector<E, S> v, Mask<E, S> m);
 
-    public abstract Vector<E, S> addSaturate(Vector<E, S> v);
-
-    public abstract Vector<E, S> addSaturate(Vector<E, S> v, Mask<E, S> m);
-
     /**
      * Subtracts an input vector from this vector.
      * <p>
@@ -350,10 +346,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the result of subtracting the input vector from this vector
      */
     public abstract Vector<E, S> sub(Vector<E, S> v, Mask<E, S> m);
-
-    public abstract Vector<E, S> subSaturate(Vector<E, S> v);
-
-    public abstract Vector<E, S> subSaturate(Vector<E, S> v, Mask<E, S> m);
 
     /**
      * Multiplies this vector with an input vector.

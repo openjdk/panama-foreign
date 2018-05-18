@@ -156,18 +156,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S512Bit> addSaturate(byte o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S512Bit> addSaturate(byte o, Mask<Byte,Shapes.S512Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public ByteVector<Shapes.S512Bit> sub(byte o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -176,18 +164,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     @ForceInline
     public ByteVector<Shapes.S512Bit> sub(byte o, Mask<Byte,Shapes.S512Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S512Bit> subSaturate(byte o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public ByteVector<Shapes.S512Bit> subSaturate(byte o, Mask<Byte,Shapes.S512Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

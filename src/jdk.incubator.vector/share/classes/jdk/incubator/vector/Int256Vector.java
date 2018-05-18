@@ -157,18 +157,6 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> addSaturate(int o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S256Bit> addSaturate(int o, Mask<Integer,Shapes.S256Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public IntVector<Shapes.S256Bit> sub(int o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     @ForceInline
     public IntVector<Shapes.S256Bit> sub(int o, Mask<Integer,Shapes.S256Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S256Bit> subSaturate(int o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S256Bit> subSaturate(int o, Mask<Integer,Shapes.S256Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

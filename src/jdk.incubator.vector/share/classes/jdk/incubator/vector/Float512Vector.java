@@ -157,18 +157,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> addSaturate(float o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public FloatVector<Shapes.S512Bit> addSaturate(float o, Mask<Float,Shapes.S512Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public FloatVector<Shapes.S512Bit> sub(float o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @ForceInline
     public FloatVector<Shapes.S512Bit> sub(float o, Mask<Float,Shapes.S512Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public FloatVector<Shapes.S512Bit> subSaturate(float o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public FloatVector<Shapes.S512Bit> subSaturate(float o, Mask<Float,Shapes.S512Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

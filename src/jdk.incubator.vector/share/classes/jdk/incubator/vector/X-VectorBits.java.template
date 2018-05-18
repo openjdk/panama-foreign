@@ -159,18 +159,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
-    public $abstractvectortype$<Shapes.$shape$> addSaturate($type$ o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$<Shapes.$shape$> addSaturate($type$ o, Mask<$Boxtype$,Shapes.$shape$> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public $abstractvectortype$<Shapes.$shape$> sub($type$ o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -179,18 +167,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @ForceInline
     public $abstractvectortype$<Shapes.$shape$> sub($type$ o, Mask<$Boxtype$,Shapes.$shape$> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$<Shapes.$shape$> subSaturate($type$ o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public $abstractvectortype$<Shapes.$shape$> subSaturate($type$ o, Mask<$Boxtype$,Shapes.$shape$> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

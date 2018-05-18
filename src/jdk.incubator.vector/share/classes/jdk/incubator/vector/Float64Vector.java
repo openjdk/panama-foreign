@@ -157,18 +157,6 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S64Bit> addSaturate(float o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public FloatVector<Shapes.S64Bit> addSaturate(float o, Mask<Float,Shapes.S64Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public FloatVector<Shapes.S64Bit> sub(float o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
     @ForceInline
     public FloatVector<Shapes.S64Bit> sub(float o, Mask<Float,Shapes.S64Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public FloatVector<Shapes.S64Bit> subSaturate(float o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public FloatVector<Shapes.S64Bit> subSaturate(float o, Mask<Float,Shapes.S64Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

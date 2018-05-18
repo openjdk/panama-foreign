@@ -133,20 +133,6 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> add(int s, Mask<Integer, S> m);
 
     @Override
-    public IntVector<S> addSaturate(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract IntVector<S> addSaturate(int s);
-
-    @Override
-    public IntVector<S> addSaturate(Vector<Integer,S> v, Mask<Integer, S> m) {
-        return bOp(v, m, (i, a, b) -> (int) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract IntVector<S> addSaturate(int s, Mask<Integer, S> m);
-
-    @Override
     public abstract IntVector<S> sub(Vector<Integer,S> v);
 
     /**
@@ -179,20 +165,6 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * scalar from this vector
      */
     public abstract IntVector<S> sub(int s, Mask<Integer, S> m);
-
-    @Override
-    public IntVector<S> subSaturate(Vector<Integer,S> v) {
-        return bOp(v, (i, a, b) -> (int) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
-    }
-
-    public abstract IntVector<S> subSaturate(int s);
-
-    @Override
-    public IntVector<S> subSaturate(Vector<Integer,S> v, Mask<Integer, S> m) {
-        return bOp(v, m, (i, a, b) -> (int) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
-    }
-
-    public abstract IntVector<S> subSaturate(int s, Mask<Integer, S> m);
 
     @Override
     public abstract IntVector<S> mul(Vector<Integer,S> v);

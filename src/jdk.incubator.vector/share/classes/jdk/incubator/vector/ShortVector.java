@@ -133,20 +133,6 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> add(short s, Mask<Short, S> m);
 
     @Override
-    public ShortVector<S> addSaturate(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (short) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract ShortVector<S> addSaturate(short s);
-
-    @Override
-    public ShortVector<S> addSaturate(Vector<Short,S> v, Mask<Short, S> m) {
-        return bOp(v, m, (i, a, b) -> (short) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract ShortVector<S> addSaturate(short s, Mask<Short, S> m);
-
-    @Override
     public abstract ShortVector<S> sub(Vector<Short,S> v);
 
     /**
@@ -179,20 +165,6 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * scalar from this vector
      */
     public abstract ShortVector<S> sub(short s, Mask<Short, S> m);
-
-    @Override
-    public ShortVector<S> subSaturate(Vector<Short,S> v) {
-        return bOp(v, (i, a, b) -> (short) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
-    }
-
-    public abstract ShortVector<S> subSaturate(short s);
-
-    @Override
-    public ShortVector<S> subSaturate(Vector<Short,S> v, Mask<Short, S> m) {
-        return bOp(v, m, (i, a, b) -> (short) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
-    }
-
-    public abstract ShortVector<S> subSaturate(short s, Mask<Short, S> m);
 
     @Override
     public abstract ShortVector<S> mul(Vector<Short,S> v);

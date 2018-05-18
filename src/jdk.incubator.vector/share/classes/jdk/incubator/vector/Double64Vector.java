@@ -157,18 +157,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public DoubleVector<Shapes.S64Bit> addSaturate(double o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S64Bit> addSaturate(double o, Mask<Double,Shapes.S64Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public DoubleVector<Shapes.S64Bit> sub(double o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     @ForceInline
     public DoubleVector<Shapes.S64Bit> sub(double o, Mask<Double,Shapes.S64Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S64Bit> subSaturate(double o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S64Bit> subSaturate(double o, Mask<Double,Shapes.S64Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

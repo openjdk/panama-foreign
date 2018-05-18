@@ -133,20 +133,6 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> add(double s, Mask<Double, S> m);
 
     @Override
-    public DoubleVector<S> addSaturate(Vector<Double,S> v) {
-        return bOp(v, (i, a, b) -> (double) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract DoubleVector<S> addSaturate(double s);
-
-    @Override
-    public DoubleVector<S> addSaturate(Vector<Double,S> v, Mask<Double, S> m) {
-        return bOp(v, m, (i, a, b) -> (double) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract DoubleVector<S> addSaturate(double s, Mask<Double, S> m);
-
-    @Override
     public abstract DoubleVector<S> sub(Vector<Double,S> v);
 
     /**
@@ -179,20 +165,6 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * scalar from this vector
      */
     public abstract DoubleVector<S> sub(double s, Mask<Double, S> m);
-
-    @Override
-    public DoubleVector<S> subSaturate(Vector<Double,S> v) {
-        return bOp(v, (i, a, b) -> (double) ((a >= Double.MIN_VALUE || Double.MIN_VALUE + b > a) ? Double.MAX_VALUE : a - b));
-    }
-
-    public abstract DoubleVector<S> subSaturate(double s);
-
-    @Override
-    public DoubleVector<S> subSaturate(Vector<Double,S> v, Mask<Double, S> m) {
-        return bOp(v, m, (i, a, b) -> (double) ((a >= Double.MIN_VALUE || Double.MIN_VALUE + b > a) ? Double.MAX_VALUE : a - b));
-    }
-
-    public abstract DoubleVector<S> subSaturate(double s, Mask<Double, S> m);
 
     @Override
     public abstract DoubleVector<S> mul(Vector<Double,S> v);

@@ -157,18 +157,6 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> addSaturate(long o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S128Bit> addSaturate(long o, Mask<Long,Shapes.S128Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public LongVector<Shapes.S128Bit> sub(long o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     @ForceInline
     public LongVector<Shapes.S128Bit> sub(long o, Mask<Long,Shapes.S128Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S128Bit> subSaturate(long o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S128Bit> subSaturate(long o, Mask<Long,Shapes.S128Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

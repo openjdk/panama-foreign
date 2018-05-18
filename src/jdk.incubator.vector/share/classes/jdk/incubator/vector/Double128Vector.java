@@ -157,18 +157,6 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public DoubleVector<Shapes.S128Bit> addSaturate(double o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S128Bit> addSaturate(double o, Mask<Double,Shapes.S128Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public DoubleVector<Shapes.S128Bit> sub(double o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
     @ForceInline
     public DoubleVector<Shapes.S128Bit> sub(double o, Mask<Double,Shapes.S128Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S128Bit> subSaturate(double o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public DoubleVector<Shapes.S128Bit> subSaturate(double o, Mask<Double,Shapes.S128Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

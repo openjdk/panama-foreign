@@ -132,20 +132,6 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> add(byte s, Mask<Byte, S> m);
 
     @Override
-    public ByteVector<S> addSaturate(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (byte) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract ByteVector<S> addSaturate(byte s);
-
-    @Override
-    public ByteVector<S> addSaturate(Vector<Byte,S> v, Mask<Byte, S> m) {
-        return bOp(v, m, (i, a, b) -> (byte) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract ByteVector<S> addSaturate(byte s, Mask<Byte, S> m);
-
-    @Override
     public abstract ByteVector<S> sub(Vector<Byte,S> v);
 
     /**
@@ -178,20 +164,6 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * scalar from this vector
      */
     public abstract ByteVector<S> sub(byte s, Mask<Byte, S> m);
-
-    @Override
-    public ByteVector<S> subSaturate(Vector<Byte,S> v) {
-        return bOp(v, (i, a, b) -> (byte) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
-    }
-
-    public abstract ByteVector<S> subSaturate(byte s);
-
-    @Override
-    public ByteVector<S> subSaturate(Vector<Byte,S> v, Mask<Byte, S> m) {
-        return bOp(v, m, (i, a, b) -> (byte) ((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b));
-    }
-
-    public abstract ByteVector<S> subSaturate(byte s, Mask<Byte, S> m);
 
     @Override
     public abstract ByteVector<S> mul(Vector<Byte,S> v);

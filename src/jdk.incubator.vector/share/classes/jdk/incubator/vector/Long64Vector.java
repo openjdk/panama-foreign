@@ -157,18 +157,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S64Bit> addSaturate(long o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S64Bit> addSaturate(long o, Mask<Long,Shapes.S64Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public LongVector<Shapes.S64Bit> sub(long o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     @ForceInline
     public LongVector<Shapes.S64Bit> sub(long o, Mask<Long,Shapes.S64Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S64Bit> subSaturate(long o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public LongVector<Shapes.S64Bit> subSaturate(long o, Mask<Long,Shapes.S64Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override

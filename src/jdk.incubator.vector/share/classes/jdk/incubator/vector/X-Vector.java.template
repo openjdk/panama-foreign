@@ -135,20 +135,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> add($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract $abstractvectortype$<S> addSaturate($type$ s);
-
-    @Override
-    public $abstractvectortype$<S> addSaturate(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) ((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b));
-    }
-
-    public abstract $abstractvectortype$<S> addSaturate($type$ s, Mask<$Boxtype$, S> m);
-
-    @Override
     public abstract $abstractvectortype$<S> sub(Vector<$Boxtype$,S> v);
 
     /**
@@ -181,20 +167,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * scalar from this vector
      */
     public abstract $abstractvectortype$<S> sub($type$ s, Mask<$Boxtype$, S> m);
-
-    @Override
-    public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
-    }
-
-    public abstract $abstractvectortype$<S> subSaturate($type$ s);
-
-    @Override
-    public $abstractvectortype$<S> subSaturate(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) ((a >= $Wideboxtype$.MIN_VALUE || $Wideboxtype$.MIN_VALUE + b > a) ? $Wideboxtype$.MAX_VALUE : a - b));
-    }
-
-    public abstract $abstractvectortype$<S> subSaturate($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
     public abstract $abstractvectortype$<S> mul(Vector<$Boxtype$,S> v);

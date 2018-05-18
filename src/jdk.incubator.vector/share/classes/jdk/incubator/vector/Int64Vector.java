@@ -157,18 +157,6 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S64Bit> addSaturate(int o) {
-        return addSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S64Bit> addSaturate(int o, Mask<Integer,Shapes.S64Bit> m) {
-        return addSaturate(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
     public IntVector<Shapes.S64Bit> sub(int o) {
         return sub(SPECIES.broadcast(o));
     }
@@ -177,18 +165,6 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     @ForceInline
     public IntVector<Shapes.S64Bit> sub(int o, Mask<Integer,Shapes.S64Bit> m) {
         return sub(SPECIES.broadcast(o), m);
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S64Bit> subSaturate(int o) {
-        return subSaturate(SPECIES.broadcast(o));
-    }
-
-    @Override
-    @ForceInline
-    public IntVector<Shapes.S64Bit> subSaturate(int o, Mask<Integer,Shapes.S64Bit> m) {
-        return subSaturate(SPECIES.broadcast(o), m);
     }
 
     @Override
