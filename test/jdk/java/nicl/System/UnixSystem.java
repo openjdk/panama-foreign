@@ -87,7 +87,8 @@ public class UnixSystem {
         @CallingConvention(value=1)
         public abstract int stat$INODE64(Pointer<Byte> path, Pointer<stat> buf);
 
-        @NativeType(layout="[iiiiiiiiiiiiiiiiiiiiii]", ctype="dummy", size=144, isRecordType=true)
+
+        @NativeType(layout="[iSSQIIi[ll][ll][ll][ll]qqiIIi2q]", ctype="dummy", size=144, isRecordType=true)
         @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
         static interface stat extends Struct<stat> {
             @Offset(offset=768l)
