@@ -2844,12 +2844,6 @@ void Compile::expand_vunbox_node(VectorUnboxNode* vec_unbox) {
     vec_val_load = gvn.transform(vec_val_load);
 
     if (from_kls->is_vectormask() && masktype != T_BOOLEAN) {
-      if (masktype == T_FLOAT) {
-          masktype = T_INT;
-      }
-      if (masktype == T_DOUBLE) {
-          masktype = T_LONG;
-      }
       assert(vec_unbox->bottom_type()->is_vect()->element_basic_type() == masktype, "expect mask type consistency");
       vec_val_load = gvn.transform(new VectorLoadMaskNode(vec_val_load, TypeVect::make(masktype, num_elem)));
     }

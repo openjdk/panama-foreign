@@ -1387,9 +1387,11 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_VectorLoadMask:
           if (UseSSE <= 3) { ret_value = false; }
           else if (vlen == 1 || vlen == 2) { ret_value = false; } // Implementation limitation
+          else if (size_in_bits >= 256 && UseAVX < 2) { ret_value = false; } // Implementation limitation
           break;
         case Op_VectorStoreMask:
-          if (UseAVX < 2) { ret_value = false; } // Implementation limitation
+          if (UseAVX < 0) { ret_value = false; } // Implementation limitation
+          else if ((size_in_bits >= 256 || bt == T_LONG || bt == T_DOUBLE) && UseAVX < 2) { ret_value = false; } // Implementation limitation
           else if (vlen == 1 || vlen == 2) { ret_value = false; } // Implementation limitation
           else if (size_in_bits == 512 && !VM_Version::supports_avx512bw()) { ret_value = false; } // Implementation limitation
           break;
@@ -5139,7 +5141,7 @@ instruct rsadd4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
             "addw     $dst,$tmp2\n\t"
             "movswl  $dst,$dst\t! add reduction4S" %}
   ins_encode %{
-    __ movdqu($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ movdqu($tmp$$XMMRegister, $src2$$XMMRegister);
     __ phaddw($tmp$$XMMRegister, $tmp$$XMMRegister);
     __ phaddw($tmp$$XMMRegister, $tmp$$XMMRegister);
     __ movzwl($dst$$Register, $src1$$Register);
@@ -5834,6 +5836,21 @@ instruct rvadd8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
     __ vaddsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister);
     __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
     __ vaddsd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rssub2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
+  predicate(UseSSE >= 1 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (SubReductionVFP dst src2));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "subss  $dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "subss  $dst,$dst,$tmp\t! sub reduction2F" %}
+  ins_encode %{
+    __ subss($dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ subss($dst$$XMMRegister, $tmp$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -13282,6 +13299,19 @@ instruct vdiv8D_mem(vecZ dst, vecZ src, memory mem) %{
 // ------------------------------ Min ---------------------------------------
 // Byte vector Min
 instruct min8B_reg(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinV src1 src2));
+  effect(TEMP dst);
+  format %{ "movdqu  $dst,$src1\n\t"
+            "pminsb  $dst,$src2\t!  " %}
+  ins_encode %{
+    __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
+    __ pminsb($dst$$XMMRegister, $src2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct min8B_reg_avx(vecD dst, vecD src1, vecD src2) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinV src1 src2));
   format %{ "vpminsb  $dst,$src1,$src2\t!  " %}
@@ -13292,7 +13322,7 @@ instruct min8B_reg(vecD dst, vecD src1, vecD src2) %{
 %}
 
 instruct min16B_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src1\n\t"
@@ -13361,6 +13391,19 @@ instruct min64B_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 //Short vector Min
 instruct min4S_reg(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseSSE >= 2 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinV src1 src2));
+  effect(TEMP dst);
+  format %{ "movsd   $dst,$src1\n\t" 
+            "pminsw  $dst,$src2\t! " %}
+  ins_encode %{
+    __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
+    __ pminsw($dst$$XMMRegister, $src2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct min4S_reg_avx(vecD dst, vecD src1, vecD src2) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
@@ -13372,7 +13415,7 @@ instruct min4S_reg(vecD dst, vecD src1, vecD src2) %{
 %}
 
 instruct min8S_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 1 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseSSE >= 2 && UseAVX == 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
   format %{ "movsd   $dst,$src1\n\t" 
@@ -13441,7 +13484,7 @@ instruct min32S_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 // Int vector Min
 instruct min2I_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
   format %{ "movsd   $dst,$src1\n\t" 
@@ -13453,8 +13496,19 @@ instruct min2I_reg(vecD dst, vecD src1, vecD src2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct min2I_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinV src1 src2));
+  format %{ "vpminsd    $dst,$src1,$src2\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpminsd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct min4I_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu   $dst,$src1\n\t" 
@@ -13630,7 +13684,7 @@ instruct min8L_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 // Float vector Min
 instruct min2F_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
   format %{ "movsd  $dst,$src1\n\t" 
@@ -13642,8 +13696,19 @@ instruct min2F_reg(vecD dst, vecD src1, vecD src2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct min2F_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinV src1 src2));
+  format %{ "vminps  $dst,$src1,$src2\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vminps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct min4F_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src1\n\t" 
@@ -13712,7 +13777,7 @@ instruct min16F_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 // Double vector Min
 instruct minD_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
   format %{ "movsd  $dst,$src1\n\t" 
@@ -13725,8 +13790,19 @@ instruct minD_reg(vecD dst, vecD src1, vecD src2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct min1D_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MinV src1 src2));
+  format %{ "vminpd  $dst,$src1,$src2\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vminpd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct min2D_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src1\n\t" 
@@ -13797,7 +13873,7 @@ instruct min8D_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 // ------------------------------ Max ---------------------------------------
 // Byte vector Max
 instruct max8B_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movsd   $dst,$src1\n\t" 
@@ -13809,8 +13885,19 @@ instruct max8B_reg(vecD dst, vecD src1, vecD src2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct max8B_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxV src1 src2));
+  format %{ "vpmaxsb    $dst,$src1,$src2\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmaxsb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct max16B_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src1\n\t" 
@@ -13879,7 +13966,7 @@ instruct max64B_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 //Short vector Max
 instruct max4S_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 1 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseSSE > 1 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movsd   $dst,$src1\n\t" 
@@ -13891,8 +13978,19 @@ instruct max4S_reg(vecD dst, vecD src1, vecD src2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct max4S_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxV src1 src2));
+  format %{ "vpmaxsw    $dst,$src1,$src2\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmaxsw($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct max8S_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 1 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseSSE > 1 && UseAVX == 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src1\n\t" 
@@ -13961,7 +14059,7 @@ instruct max32S_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 // Int vector Max
 instruct max2I_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src1\n\t" 
@@ -13973,8 +14071,19 @@ instruct max2I_reg(vecD dst, vecD src1, vecD src2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct max2I_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxV src1 src2));
+  format %{ "vpmaxsd    $dst,$src1,$src2\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpmaxsd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct max4I_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src1\n\t" 
@@ -14150,7 +14259,7 @@ instruct max8L_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 // Float Vector Max
 instruct max2F_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movsd  $dst,$src1\n\t" 
@@ -14162,8 +14271,19 @@ instruct max2F_reg(vecD dst, vecD src1, vecD src2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct max2F_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxV src1 src2));
+  format %{ "vmaxps  $dst,$src1,$src2\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vmaxps($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct max4F_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src1\n\t" 
@@ -14232,7 +14352,7 @@ instruct max16F_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
 
 // Double Vector Max
 instruct maxD_reg(vecD dst, vecD src1, vecD src2) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movsd  $dst,$src1\n\t" 
@@ -14244,8 +14364,19 @@ instruct maxD_reg(vecD dst, vecD src1, vecD src2) %{
   ins_pipe( pipe_slow );
 %}
 
+instruct max1D_reg_avx(vecD dst, vecD src1, vecD src2) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MaxV src1 src2));
+  format %{ "vmaxpd  $dst,$src1,$src2\t! " %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vmaxpd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct max2D_reg(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseSSE > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src1\n\t" 
@@ -20070,11 +20201,15 @@ instruct vcmpne8L(vecZ dst, vecZ src1, vecZ src2, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct blendvps2F(vecD dst, vecD src, rxmm0 mask) %{
+instruct blendvps2F(vecD dst, vecD src, vecD mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "blendvps  $dst,$src,$mask\t! packed2F" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ blendvps($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20091,11 +20226,15 @@ instruct vblendvps2F(vecD dst, vecD src1, vecD src2, vecD mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct blendvps4F(vecX dst, vecX src, rxmm0 mask) %{
+instruct blendvps4F(vecX dst, vecX src, vecX mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "blendvps  $dst,$src,$mask\t! packed4F" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ blendvps($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20214,11 +20353,15 @@ instruct vpblendmq8L(vecZ dst, vecZ src1, vecZ src2, vecZ mask, rRegL scratch) %
 %}
 
 
-instruct pblendvb2I(vecD dst, vecD src, rxmm0 mask) %{
+instruct pblendvb2I(vecD dst, vecD src, vecD mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "vpblendvb  $dst,$src,$mask\t! blend packed2I" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20235,11 +20378,15 @@ instruct vpblendvb2I(vecD dst, vecD src1, vecD src2, vecD mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb4I(vecX dst, vecX src, rxmm0 mask) %{
+instruct pblendvb4I(vecX dst, vecX src, vecX mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "vpblendvb  $dst,$src,$mask\t! blend packed4I" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20267,11 +20414,15 @@ instruct vpblendvb8I(vecY dst, vecY src1, vecY src2, vecY mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb8B(vecD dst, vecD src, rxmm0 mask) %{
+instruct pblendvb8B(vecD dst, vecD src, vecD mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "pblendvb  $dst,$src,$mask\t! blend packed8B" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20288,11 +20439,15 @@ instruct vpblendvb8B(vecD dst, vecD src1, vecD src2, vecD mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb16B(vecX dst, vecX src, rxmm0 mask) %{
+instruct pblendvb16B(vecX dst, vecX src, vecX mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "pblendvb  $dst,$src,$mask\t! blend packed16B" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20320,11 +20475,15 @@ instruct vpblendvb32B(vecY dst, vecY src1, vecY src2, vecY mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb4S(vecD dst, vecD src, rxmm0 mask) %{
+instruct pblendvb4S(vecD dst, vecD src, vecD mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "pblendvb  $dst,$src,$mask\t! blend packed4S" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20341,11 +20500,15 @@ instruct vpblendvb4S(vecD dst, vecD src1, vecD src2, vecD mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb8S(vecX dst, vecX src, rxmm0 mask) %{
+instruct pblendvb8S(vecX dst, vecX src, vecX mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "pblendvb  $dst,$src,$mask\t! blend packed8S" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20373,11 +20536,15 @@ instruct vpblendvb16S(vecY dst, vecY src1, vecY src2, vecY mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb1L(vecD dst, vecD src, rxmm0 mask) %{
+instruct pblendvb1L(vecD dst, vecD src, vecD mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "pblendvb  $dst,$src,$mask\t! blend packed1L" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20394,11 +20561,15 @@ instruct vpblendvb1L(vecD dst, vecD src1, vecD src2, vecD mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct pblendvb2L(vecX dst, vecX src, rxmm0 mask) %{
+instruct pblendvb2L(vecX dst, vecX src, vecX mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "pblendvb  $dst,$src,$mask\t! blend packed2L" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ pblendvb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20426,11 +20597,15 @@ instruct vpblendvb4L(vecY dst, vecY src1, vecY src2, vecY mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct blendvpd1D(vecD dst, vecD src, rxmm0 mask) %{
+instruct blendvpd1D(vecD dst, vecD src, vecD mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "blendvpd  $dst,$src,$mask\t! packed1D" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ blendvpd($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -20447,11 +20622,15 @@ instruct vblendvpd1D(vecD dst, vecD src1, vecD src2, vecD mask) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct blendvpd2D(vecX dst, vecX src, rxmm0 mask) %{
+instruct blendvpd2D(vecX dst, vecX src, vecX mask, rxmm0 xmm_0) %{
   predicate(UseAVX == 0 && UseSSE > 3 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorBlend (Binary dst src) mask));
+  effect(TEMP xmm_0);
   format %{ "blendvpd  $dst,$src,$mask\t! packed2D" %}
   ins_encode %{
+    if ($mask$$XMMRegister != $xmm_0$$XMMRegister) {
+      __ movdqu($xmm_0$$XMMRegister, $mask$$XMMRegister);
+    }
     __ blendvpd($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -21182,7 +21361,9 @@ instruct loadmask32s(vecZ dst, vecY src) %{
 %}
 
 instruct loadmask2i(vecD dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
   format %{ "pxor  $dst,$dst\n\t"
@@ -21197,7 +21378,9 @@ instruct loadmask2i(vecD dst, vecS src) %{
 %}
 
 instruct loadmask4i(vecX dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 4 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
   format %{ "pxor  $dst,$dst\n\t"
@@ -21213,7 +21396,9 @@ instruct loadmask4i(vecX dst, vecS src) %{
 %}
 
 instruct loadmask8i(vecY dst, vecD src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
   format %{ "vpxor  $dst,$dst\n\t"
@@ -21229,7 +21414,9 @@ instruct loadmask8i(vecY dst, vecD src) %{
 %}
 
 instruct loadmask16i(vecZ dst, vecX src, vecZ tmp) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst, TEMP tmp);
   format %{ "vpxor  $dst,$dst\n\t"
@@ -21245,7 +21432,9 @@ instruct loadmask16i(vecZ dst, vecX src, vecZ tmp) %{
 %}
 
 instruct loadmask1l(vecD dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 1 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
   format %{ "pxor  $dst,$dst\n\t"
@@ -21260,7 +21449,9 @@ instruct loadmask1l(vecD dst, vecS src) %{
 %}
 
 instruct loadmask2l(vecX dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
   format %{ "pxor  $dst,$dst\n\t"
@@ -21275,7 +21466,9 @@ instruct loadmask2l(vecX dst, vecS src) %{
 %}
 
 instruct loadmask4l(vecY dst, vecS src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst);
   format %{ "vpxor  $dst,$dst\n\t"
@@ -21291,7 +21484,9 @@ instruct loadmask4l(vecY dst, vecS src) %{
 %}
 
 instruct loadmask8l(vecZ dst, vecD src, vecZ tmp) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadMask src));
   effect(TEMP dst, TEMP tmp);
   format %{ "vpxor  $dst,$dst\n\t"
