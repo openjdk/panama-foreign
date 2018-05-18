@@ -41,9 +41,9 @@ public final class Libraries {
     public static <T> T bind(Class<T> c, Library lib) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkPermission(new RuntimePermission("java.nicl.bindRaw"));
+            security.checkPermission(new RuntimePermission("java.nicl.bind"));
         }
-        return LibrariesHelper.bind(c, lib);
+        return LibrariesHelper.bind(Objects.requireNonNull(c), Objects.requireNonNull(lib));
     }
 
     /**
@@ -56,10 +56,9 @@ public final class Libraries {
     public static <T> T bind(Lookup lookup, Class<T> c) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkPermission(new RuntimePermission("java.nicl.bindRaw"));
+            security.checkPermission(new RuntimePermission("java.nicl.bind"));
         }
-        checkLookup(lookup);
-        return LibrariesHelper.bind(lookup, c);
+        return LibrariesHelper.bind(checkLookup(lookup), Objects.requireNonNull(c));
     }
 
     /**
@@ -86,18 +85,16 @@ public final class Libraries {
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
     public static Library loadLibrary(Lookup lookup, String filename) {
-        checkLookup(lookup);
         Objects.requireNonNull(filename);
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(filename);
         }
-        checkLookup(lookup);
         if (filename.indexOf(File.separatorChar) != -1) {
             throw new UnsatisfiedLinkError(
                 "Directory separator should not appear in library name: " + filename);
         }
-        return LibrariesHelper.loadLibrary(lookup, filename);
+        return LibrariesHelper.loadLibrary(checkLookup(lookup), filename);
     }
 
     /**
@@ -123,12 +120,11 @@ public final class Libraries {
         if (security != null) {
             security.checkLink(filename);
         }
-        checkLookup(lookup);
         if (!(new File(filename).isAbsolute())) {
             throw new UnsatisfiedLinkError(
                 "Expecting an absolute path of the library: " + filename);
         }
-        return LibrariesHelper.loadLibrary(lookup, filename);
+        return LibrariesHelper.loadLibrary(checkLookup(lookup), filename);
     }
 
     public static Library getDefaultLibrary() {
@@ -139,9 +135,10 @@ public final class Libraries {
         return LibrariesHelper.getDefaultLibrary();
     }
 
-    private static void checkLookup(Lookup lookup) {
+    private static Lookup checkLookup(Lookup lookup) {
         if (!Objects.requireNonNull(lookup).hasPrivateAccess()) {
             throw new IllegalArgumentException("Attempt to use non-private lookup object");
         }
+        return lookup;
     }
 }

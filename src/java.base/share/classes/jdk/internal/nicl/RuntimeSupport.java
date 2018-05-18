@@ -29,38 +29,39 @@ import java.nicl.types.Pointer;
 import java.nicl.types.Struct;
 
 final class RuntimeSupport {
+    private RuntimeSupport() {}
 
     // These static utility methods are invoked from generated code
 
-    public static <T> Pointer<T> buildPtr(Pointer<?> p, long offset, LayoutType<T> type) {
+    static <T> Pointer<T> buildPtr(Pointer<?> p, long offset, LayoutType<T> type) {
         return p
                 .cast(NativeTypes.UINT8)
                 .offset(offset)
                 .cast(type);
     }
 
-    public static void copyFromArray(int[] src, Pointer<?> p, long offset, int nElems) {
+    static void copyFromArray(int[] src, Pointer<?> p, long offset, int nElems) {
         Pointer<Integer> dst = buildPtr(p, offset, NativeTypes.INT32);
         for (int i = 0; i < nElems; i++) {
             dst.offset(i).set(src[i]);
         }
     }
 
-    public static void copyToArray(Pointer<?> p, long offset, int[] dst, int nElems) {
+    static void copyToArray(Pointer<?> p, long offset, int[] dst, int nElems) {
         Pointer<Integer> src = buildPtr(p, offset, NativeTypes.INT32);
         for (int i = 0; i < nElems; i++) {
             dst[i] = src.offset(i).get();
         }
     }
 
-    public static <T> void copyFromArray(T[] src, Pointer<?> p, long offset, int nElems, LayoutType<T> type) {
+    static <T> void copyFromArray(T[] src, Pointer<?> p, long offset, int nElems, LayoutType<T> type) {
         Pointer<T> dst = buildPtr(p, offset, type);
         for (int i = 0; i < nElems; i++) {
             dst.offset(i).set(src[i]);
         }
     }
 
-    public static <T> void copyToArray(Pointer<?> p, long offset, T[] dst, int nElems, LayoutType<T> type) {
+    static <T> void copyToArray(Pointer<?> p, long offset, T[] dst, int nElems, LayoutType<T> type) {
         Pointer<T> src = buildPtr(p, offset, type);
         for (int i = 0; i < nElems; i++) {
             dst[i] = src.offset(i).get();

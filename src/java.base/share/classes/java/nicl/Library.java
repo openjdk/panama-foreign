@@ -23,6 +23,7 @@
 package java.nicl;
 
 import java.nicl.types.Pointer;
+import java.util.Objects;
 
 public interface Library {
     public static class Symbol {
@@ -30,8 +31,8 @@ public interface Library {
         private final Pointer<?> address;
 
         public Symbol(String name, Pointer<?> address) {
-            this.name = name;
-            this.address = address;
+            this.name = Objects.requireNonNull(name);
+            this.address = Objects.requireNonNull(address);
         }
 
         public String getName() {

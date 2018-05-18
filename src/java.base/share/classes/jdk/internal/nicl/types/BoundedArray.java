@@ -27,6 +27,7 @@ package jdk.internal.nicl.types;
 
 import java.nicl.types.Array;
 import java.nicl.types.LayoutType;
+import java.util.Objects;
 
 public class BoundedArray<X> implements Array<X> {
 
@@ -34,7 +35,7 @@ public class BoundedArray<X> implements Array<X> {
     long size;
 
     public BoundedArray(BoundedPointer<X> pointer, long size) {
-        this.pointer = pointer;
+        this.pointer = Objects.requireNonNull(pointer);
         this.size = size;
     }
 

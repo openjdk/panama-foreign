@@ -25,6 +25,7 @@ package jdk.internal.nicl.types;
 import jdk.internal.misc.Unsafe;
 
 import java.nicl.Scope;
+import java.util.Objects;
 import java.security.AccessControlException;
 
 public class BoundedMemoryRegion {
@@ -123,6 +124,7 @@ public class BoundedMemoryRegion {
         checkRange(srcOffset, length);
         checkAccess(MODE_R);
         checkAlive();
+        Objects.requireNonNull(dst);
         dst.checkRange(dstOffset, length);
         dst.checkAccess(MODE_W);
         dst.checkAlive();

@@ -2400,7 +2400,7 @@ public abstract class ClassLoader {
 
         @Override
         public Symbol lookup(String name) throws NoSuchMethodException {
-            return new Symbol(name, BoundedPointer.createNativeVoidPointer(findEntry(name)));
+            return new Symbol(Objects.requireNonNull(name), BoundedPointer.createNativeVoidPointer(findEntry(name)));
         }
 
         /*

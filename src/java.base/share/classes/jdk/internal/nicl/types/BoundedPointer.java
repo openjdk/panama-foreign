@@ -27,11 +27,11 @@ import java.nicl.types.Array;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
 
 public class BoundedPointer<X> implements Pointer<X> {
 
@@ -56,9 +56,9 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     public BoundedPointer(LayoutType<X> type, BoundedMemoryRegion region, long offset, int mode) {
-        this.region = region;
+        this.region = Objects.requireNonNull(region);
         this.offset = offset;
-        this.type = type;
+        this.type = Objects.requireNonNull(type);
         this.mode = mode;
     }
 
