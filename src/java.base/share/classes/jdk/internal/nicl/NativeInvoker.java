@@ -206,11 +206,8 @@ class NativeInvoker {
                     if (c == StorageClass.INTEGER_ARGUMENT_REGISTER &&
                         callingSequence.returnsInMemory() &&
                         binding.getStorage().getStorageIndex() == 0) {
-                        long n = binding.getStorage().getSize() / 8;
-                        assert returnStruct != null;
-                        long[] argValues = new long[] { Util.unpack(returnStruct.ptr()) };
-                        System.arraycopy(argValues, 0, values, curValueArrayIndex, (int)n);
-                        curValueArrayIndex += n;
+                        values[curValueArrayIndex] = returnStruct.ptr().addr();
+                        curValueArrayIndex++;
                     } else {
                         long n = binding.getStorage().getSize() / 8;
 
@@ -251,43 +248,6 @@ class NativeInvoker {
     private Object processReturnValue(CallingSequence callingSequence, long[] returnValues, Struct<?> returnStruct) {
         if (methodType.returnType() == void.class) {
             return null;
-        } else if (methodType.returnType().isPrimitive()) {
-            switch (PrimitiveClassType.typeof(methodType.returnType())) {
-                case BYTE:
-                    return (byte)returnValues[0];
-                case BOOLEAN:
-                    return returnValues[0] != 0;
-                case SHORT:
-                    return (short)returnValues[0];
-                case CHAR:
-                    return (char)returnValues[0];
-                case INT:
-                    return (int)returnValues[0];
-                case LONG:
-                    return returnValues[0];
-                case FLOAT:
-                    return Float.intBitsToFloat((int)returnValues[0]);
-                case DOUBLE:
-                    return Double.longBitsToDouble(returnValues[0]);
-                case VOID:
-                default:
-                    throw new UnsupportedOperationException("NYI: " + methodType.returnType().getName());
-            }
-        } else if (Pointer.class.isAssignableFrom(methodType.returnType())) {
-            java.lang.reflect.Type ta = void.class;
-            if (genericReturnType instanceof ParameterizedType) {
-                ParameterizedType pt = (ParameterizedType) genericReturnType;
-                java.lang.reflect.Type arg = pt.getActualTypeArguments()[0];
-                if (!(arg instanceof WildcardType)) {
-                    ta = arg;
-                }
-            }
-            Pointer<?> ptr = Util.createPtr(returnValues[0], NativeTypes.VOID);
-            Address a = (Address)function.returnLayout().get();
-            if (a.addresseeInfo().isPresent()) {
-                ptr = ptr.cast(Util.makeType(ta, a.addresseeInfo().get().layout()));
-            }
-            return ptr;
         } else if (Util.isCStruct(methodType.returnType())) {
             if (!callingSequence.returnsInMemory()) {
                 int curValueArrayIndex = 0;
@@ -305,11 +265,14 @@ class NativeInvoker {
             }
 
             return returnStruct;
-        } else if (Util.isFunctionalInterface(methodType.returnType())) {
-            // FIXME: NIY
-            return null;
         } else {
-            throw new UnsupportedOperationException("Unhandled type: " + methodType.returnType().getName());
+            Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);
+            ptr.set(returnValues[0]);
+            try {
+                return ptr.cast(Util.makeType(genericReturnType, function.returnLayout().get())).type().getter().invoke(ptr);
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
         }
     }
 
@@ -333,34 +296,7 @@ class NativeInvoker {
     }
 
     private long[] getArgumentValues(Class<?> carrierType, ArgumentBinding binding, long n, Object arg) throws Throwable {
-        if (carrierType.isPrimitive()) {
-            switch (PrimitiveClassType.typeof(carrierType)) {
-                case INT:
-                    return new long[]{(Integer) arg};
-                case BYTE:
-                    return new long[]{(Byte) arg};
-                case BOOLEAN:
-                    return new long[]{(Boolean) arg ? 1 : 0};
-                case SHORT:
-                    return new long[]{(Short) arg};
-                case CHAR:
-                    return new long[]{(Character) arg};
-                case LONG:
-                    return new long[]{(Long) arg};
-                case FLOAT:
-                    return new long[]{Integer.toUnsignedLong(Float.floatToRawIntBits((Float) arg))};
-                case DOUBLE:
-                    return new long[]{Double.doubleToRawLongBits((Double) arg)};
-
-                case VOID:
-                default:
-                    throw new IllegalArgumentException(carrierType.getName());
-            }
-        } else if (carrierType.isArray()) {
-            throw new IllegalArgumentException("Array types NIY: " + carrierType);
-        } else if (Pointer.class.isAssignableFrom(carrierType)) {
-            return new long[] { Util.unpack((Pointer)arg) };
-        } else if (Util.isCStruct(carrierType)) {
+        if (Util.isCStruct(carrierType)) {
             long[] values = new long[(int)n];
             Struct<?> r = (Struct<?>)arg;
 
@@ -373,7 +309,10 @@ class NativeInvoker {
         } else if (Util.isFunctionalInterface(carrierType)) {
             return new long[] { UpcallHandler.make(carrierType, arg).getNativeEntryPoint().addr() };
         } else {
-            throw new UnsupportedOperationException("NYI: " + carrierType.getName());
+            Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);
+            ptr.cast(Util.makeType(carrierType, function.argumentLayouts().get(binding.getMember().getArgumentIndex())))
+                    .type().setter().invoke(ptr, arg);
+            return new long[] { ptr.get() };
         }
     }
 

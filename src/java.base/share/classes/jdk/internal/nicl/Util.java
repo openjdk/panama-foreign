@@ -244,10 +244,6 @@ public final class Util {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
-    public static long unpack(Pointer<?> ptr) throws IllegalAccessException {
-        return ptr == null? 0 : ptr.addr();
-    }
-
     public static long strlen(long addr) {
         long i = 0;
 

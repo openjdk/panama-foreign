@@ -51,7 +51,7 @@ public class Printf {
         i.printf(fmt);
 
         // Make sure output is not stuck in buffer
-        i.fflush(null);
+        i.fflush(Pointer.nullPointer());
     }
 
 
@@ -74,7 +74,7 @@ public class Printf {
         printf.invoke(i, fmt, 4711);
 
         // Make sure output is not stuck in buffer
-        i.fflush(null);
+        i.fflush(Pointer.nullPointer());
     }
 
 
@@ -94,7 +94,7 @@ public class Printf {
         printf.invoke(i, fmt, 4711);
 
         // Make sure output is not stuck in buffer
-        i.fflush(null);
+        i.fflush(Pointer.nullPointer());
     }
 
     /**
@@ -114,7 +114,7 @@ public class Printf {
         printf.invoke(i, fmt, arg);
 
         // Make sure output is not stuck in buffer
-        i.fflush(null);
+        i.fflush(Pointer.nullPointer());
     }
 
     public static void main(String[] args) throws Throwable {

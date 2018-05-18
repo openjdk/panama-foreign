@@ -246,13 +246,6 @@ public class UpcallHandler {
         return args;
     }
 
-    private void copy(long bits, Pointer<Long> dst) throws IllegalAccessException {
-        try (Scope scope = Scope.newNativeScope()) {
-            Pointer<Long> src = Util.createArrayElementsPointer(new long[] { bits }, scope);
-            Util.copy(src, dst, 8);
-        }
-    }
-
     private void unboxReturn(Class<?> c, UpcallContext context, ArgumentBinding binding, Object o) throws IllegalAccessException {
         if (DEBUG) {
             System.out.println("unboxReturn " + c.getName());
@@ -261,47 +254,7 @@ public class UpcallHandler {
 
         Pointer<Long> dst = context.getPtr(binding.getStorage());
 
-        if (c.isPrimitive()) {
-            switch (PrimitiveClassType.typeof(c)) {
-                case BOOLEAN:
-                    copy(((boolean) o) ? 1 : 0, dst);
-                    break;
-
-                case BYTE:
-                    copy((Byte) o, dst);
-                    break;
-
-                case SHORT:
-                    copy((Short) o, dst);
-                    break;
-
-                case CHAR:
-                    copy((Character) o, dst);
-                    break;
-
-                case INT:
-                    copy((Integer) o, dst);
-                    break;
-
-                case LONG:
-                    copy((Long) o, dst);
-                    break;
-
-                case FLOAT:
-                    copy(Float.floatToRawIntBits((Float) o), dst);
-                    break;
-
-                case DOUBLE:
-                    copy(Double.doubleToRawLongBits((Double) o), dst);
-                    break;
-
-                case VOID:
-                    throw new UnsupportedOperationException("Unhandled type: " + c.getName());
-            }
-        } else if (Pointer.class.isAssignableFrom(c)) {
-            long addr = Util.unpack((Pointer<?>) o);
-            dst.set(addr);
-        } else if (Util.isCStruct(c)) {
+        if (Util.isCStruct(c)) {
             Function ft = Function.of(Util.layoutof(c), false, new Layout[0]);
             boolean returnsInMemory = SystemABI.getInstance().arrangeCall(ft).returnsInMemory();
 
@@ -312,26 +265,26 @@ public class UpcallHandler {
             if (returnsInMemory) {
                 // the first integer argument register contains a pointer to caller allocated struct
                 long structAddr = context.getPtr(new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, 0, Constants.INTEGER_REGISTER_SIZE)).get();
-
-                // FIXME: 32-bit support goes here
                 long size = Util.alignUp(ftype.returnLayout().get().bitsSize() / 8, 8);
-                Pointer<Long> dstStructPtr = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(structAddr, size));
-
-                Util.copy(src, dstStructPtr, size);
-
-                // the first integer return register needs to be populated with the (caller supplied) struct addr
-                Pointer<Long> retRegPtr = context.getPtr(new Storage(StorageClass.INTEGER_RETURN_REGISTER, 0, Constants.INTEGER_REGISTER_SIZE));
-                retRegPtr.set(structAddr);
+                Pointer<?> dstStructPtr = new BoundedPointer<>(Util.makeType(c, ftype.returnLayout().get()), new BoundedMemoryRegion(structAddr, size));
+                try {
+                    ((BoundedPointer<?>) dstStructPtr).type.setter().invoke(dstStructPtr, o);
+                } catch (Throwable ex) {
+                    throw new IllegalStateException(ex);
+                }
             } else {
                 if ((binding.getOffset() % LONG_LAYOUT_TYPE.bytesSize()) != 0) {
                     throw new Error("Invalid offset: " + binding.getOffset());
                 }
                 Pointer<Long> srcPtr = src.offset(binding.getOffset() / LONG_LAYOUT_TYPE.bytesSize());
-
                 Util.copy(srcPtr, dst, binding.getStorage().getSize());
             }
         } else {
-            throw new UnsupportedOperationException("Unhandled type: " + c.getName());
+            try {
+                dst.cast(Util.makeType(c, ftype.returnLayout().get())).type().setter().invoke(dst, o);
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
         }
     }
 
