@@ -438,6 +438,24 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
+    public short minAll() {
+        return (short) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MIN, Short64Vector.class, short.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Short.MAX_VALUE , (i, a, b) -> (short) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public short maxAll() {
+        return (short) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MAX, Short64Vector.class, short.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Short.MIN_VALUE , (i, a, b) -> (short) ((a > b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
     public short subAll() {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_SUB, Short64Vector.class, short.class, LENGTH,

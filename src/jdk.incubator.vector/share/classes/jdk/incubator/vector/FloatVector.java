@@ -1292,9 +1292,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *
      * @return the minimum lane element of this vector
      */
-    public float minAll() {
-        return rOp(Float.MAX_VALUE, (i, a, b) -> a > b ? b : a);
-    }
+    public abstract float minAll();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -1318,9 +1316,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *
      * @return the maximum lane element of this vector
      */
-    public float maxAll() {
-        return rOp(Float.MIN_VALUE, (i, a, b) -> a < b ? b : a);
-    }
+    public abstract float maxAll();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements

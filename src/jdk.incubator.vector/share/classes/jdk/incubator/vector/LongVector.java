@@ -957,9 +957,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      *
      * @return the minimum lane element of this vector
      */
-    public long minAll() {
-        return rOp(Long.MAX_VALUE, (i, a, b) -> a > b ? b : a);
-    }
+    public abstract long minAll();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -983,9 +981,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      *
      * @return the maximum lane element of this vector
      */
-    public long maxAll() {
-        return rOp(Long.MIN_VALUE, (i, a, b) -> a < b ? b : a);
-    }
+    public abstract long maxAll();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements

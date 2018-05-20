@@ -659,6 +659,48 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Int256VectorTests::subAll);
     }
+    static int minAll(int[] a, int idx) {
+        int res = Integer.MAX_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res < a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "intUnaryOpProvider")
+    static void minAllInt256VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.minAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Int256VectorTests::minAll);
+    }
+    static int maxAll(int[] a, int idx) {
+        int res = Integer.MIN_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res > a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "intUnaryOpProvider")
+    static void maxAllInt256VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              IntVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.maxAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Int256VectorTests::maxAll);
+    }
 
     @Test(dataProvider = "intCompareOpProvider")
     static void lessThanInt256VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {

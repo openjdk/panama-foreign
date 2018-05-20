@@ -6595,6 +6595,2132 @@ instruct rvmul8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
   ins_pipe( pipe_slow );
 %}
 
+//--------------------Min Reduction --------------------
+instruct rsmin8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd  $tmp,$src2,0x1\n\t"
+            "pminsb  $tmp,$src2\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister,0x1);
+    __ pminsb($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::less, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmin16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd  $tmp4,$src2,0xE\n\t"
+            "pminsb  $tmp4,$src2\n\t"
+            "pshufd  $tmp,$tmp4,0x1\n\t"
+            "pminsb  $tmp,$tmp4\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  ins_encode %{
+    __ pshufd($tmp4$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ pminsb($tmp4$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
+    __ pminsb($tmp$$XMMRegister, $tmp4$$XMMRegister);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::less, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd  $tmp4,$src2,0xE\n\t"
+            "vpminsb  $tmp,$tmp4,$src2\n\t"
+            "pshufd  $tmp,$tmp4,0x1\n\t"
+            "vpminsb  $tmp,$tmp,$tmp4\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp4$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpminsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, 0);
+    __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
+    __ vpminsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 0);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::less, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "vextracti128_high  $tmp,$src2\n\t"
+            "vpminsb  $tmp,$tmp,$src2\n\t"
+            "pshufd  $tmp4,$tmp,0xE\n\t"
+            "vpminsb  $tmp4,$tmp4,$tmp\n\t"
+            "pshufd  $tmp,$tmp4,0x1\n\t"
+            "vpminsb  $tmp,$tmp,$tmp4\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ vpminsb($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp4$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpminsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $tmp$$XMMRegister, 0);
+    __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
+    __ vpminsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 0);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::less, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "vextracti64x4_high  $tmp4,$src2\n\t"
+            "vpminsb  $tmp4,$tmp4,$src2\n\t"
+            "vextracti128_high  $tmp,$tmp4\n\t"
+            "vpminsb  $tmp,$tmp,$tmp4\n\t"
+            "pshufd  $tmp4,$tmp,0xE\n\t"
+            "vpminsb  $tmp4,$tmp4,$tmp\n\t"
+            "pshufd  $tmp,$tmp4,0x1\n\t"
+            "vpminsb  $tmp,$tmp,$tmp4\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  ins_encode %{
+    __ vextracti64x4_high($tmp4$$XMMRegister, $src2$$XMMRegister);
+    __ vpminsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, 2);
+    __ vextracti128_high($tmp$$XMMRegister, $tmp4$$XMMRegister);
+    __ vpminsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 1);
+    __ pshufd($tmp4$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpminsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $tmp$$XMMRegister, 0);
+    __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
+    __ vpminsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 0);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::less, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmin4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3) %{
+  predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "pshufd  $tmp,$src2,0x1\n\t"
+            "pminsw  $tmp,$src2\n\t"
+            "pextrw  $tmp2,$tmp, 0x1\n\t"
+            "movswl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp, 0x0\n\t"
+            "movswl  $tmp3,$tmp3,0x1\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1\n\t"
+            "movswl  $dst,$tmp3\t! min reduction4S" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister,0x1);
+    __ pminsw($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ pextrw($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp2$$Register, $tmp2$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register); 
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmin8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+  predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd  $tmp2,$src2,0xE\n\t"
+            "pminsw  $tmp2,$src2\n\t"
+            "pshufd  $tmp,$tmp2,0x1\n\t"
+            "pminsw  $tmp,$tmp2\n\t"
+            "pextrw  $tmp2,$tmp\n\t"
+            "movswl  $tmp2,$tmp2\n\t"
+            "pextrw  $tmp3,$tmp, 0x0\n\t"
+            "movswl  $tmp3,$tmp3\n\t"
+            "cmpl    $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1\n\t"
+            "movl  $dst,$tmp3\t! min reduction8S" %}
+  ins_encode %{
+    __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister,0xE);
+    __ pminsw($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ pminsw($tmp$$XMMRegister, $tmp2$$XMMRegister);
+    __ pextrw($tmp4$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp4$$Register, $tmp4$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp4$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp4$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd   $tmp,$src2,0xE\n\t"
+            "vpminsw  $tmp,$tmp,$src2\n\t"
+            "pshufd   $tmp2,$tmp,0x1\n\t"
+            "vpminsw  $tmp,$tmp,$tmp2\n\t"
+            "movzwl   $dst,$src1\n\t"
+            "pextrw   $tmp3,$tmp, 0x0\n\t"
+            "vpminsw  $dst,$dst,$tmp3\n\t"
+            "pextrw   $tmp3,$tmp, 0x1\n\t"
+            "vpminsw  $dst,$dst,$tmp3\n\t"
+            "movswl   $dst,$dst\t! min reduction8S" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpminsw($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister,0x1);
+    __ vpminsw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pextrw($tmp4$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp4$$Register, $tmp4$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp4$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp4$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+  predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "vextracti128_high  $tmp,$src2\n\t"
+            "vpminsw  $tmp,$tmp,$src2\n\t"
+            "pshufd  $tmp2,$tmp,0xE\n\t"
+            "vpminsw  $tmp,$tmp,$tmp2\n\t"
+            "pshufd  $tmp2,$tmp,0x1\n\t"
+            "vpminsw  $tmp,$tmp,$tmp2\n\t"
+            "pextrw  $tmp2,$tmp, 0x1\n\t"
+            "movswl  $tmp2,$tmp2\n\t"
+            "pextrw  $tmp3,$tmp, 0x0\n\t"
+            "movswl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1\n\t"
+            "movl  $dst,$tmp3\t! min reduction16S" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ vpminsw($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpminsw($tmp$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister,0x1);
+    __ vpminsw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pextrw($tmp4$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp4$$Register, $tmp4$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp4$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp4$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin32S_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "vextracti64x4_high  $tmp2,$src2\n\t"
+            "vpminsw  $tmp2,$tmp2,$src2\n\t"
+            "vextracti128_high  $tmp,$tmp2\n\t"
+            "vpminsw  $tmp,$tmp,$tmp2\n\t"
+            "pshufd  $tmp2,$tmp,0xE\n\t"
+            "vpminsw  $tmp,$tmp,$tmp2\n\t"
+            "pshufd  $tmp2,$tmp,0x1\n\t"
+            "vpminsw  $tmp,$tmp,$tmp2\n\t"
+            "pextrw  $tmp3,$tmp, 0x0\n\t"
+            "movswl  $dst,$src1\n\t"
+            "pextrw  $tmp3,$tmp, 0x0\n\t"
+            "movswl  $dst,$src1\n\t"
+            "cmpl  $tmp2$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1\n\t"
+            "movl  $dst,$dst\t! min reduction32S" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vextracti64x4_high($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ vpminsw($tmp2$$XMMRegister, $tmp2$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vextracti128_high($tmp$$XMMRegister, $tmp2$$XMMRegister);
+    __ vpminsw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpminsw($tmp$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister,0x1);
+    __ vpminsw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pextrw($tmp4$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp4$$Register, $tmp4$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp4$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $tmp4$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmin2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp2) %{
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd  $tmp,$src2,0x1\n\t"
+            "pminsd  $tmp,$src2\n\t"
+            "movd    $tmp2,$src1\n\t"
+            "pminsd  $tmp2,$tmp\n\t"
+            "movd    $dst,$tmp2\t! min reduction2I" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ pminsd($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ movdl($tmp2$$XMMRegister, $src1$$Register);
+    __ pminsd($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd   $tmp,$src2,0x1\n\t"
+            "vpminsd  $tmp2,$tmp,$src2\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! min reduction2I" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vpminsd($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ movdl($tmp2$$XMMRegister, $src1$$Register);
+    __ vpminsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmin4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd  $tmp,$src2,0xE\n\t"
+            "pminsd  $tmp,$src2\n\t"
+            "pshufd  $tmp2,$tmp,0x1\n\t"
+            "pminsd  $tmp2,$tmp\n\t"
+            "movd    $tmp,$src1\n\t"
+            "pminsd  $tmp2,$tmp\n\t"
+            "movd    $dst,$tmp2\t! min reduction4I" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ pminsd($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0x1);
+    __ pminsd($tmp2$$XMMRegister,$tmp$$XMMRegister);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ pminsd($tmp2$$XMMRegister,$tmp$$XMMRegister);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd   $tmp,$src2,0xE\n\t"
+            "vpminsd  $tmp2,$tmp,$src2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! min reduction4I" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpminsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpminsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpminsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin4I_reduction_evex(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd   $tmp,$src2,0xE\n\t"
+            "vpminsd  $tmp2,$tmp,$src2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! min reduction4I" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpminsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpminsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpminsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin8I_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "vextracti128_high   $tmp,$src2\n\t"
+            "vpminsd  $tmp,$tmp,$src2\n\t"
+            "pshufd   $tmp2,$tmp,0xE\n\t"
+            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! min reduction8I" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ vpminsd($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpminsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpminsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpminsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin8I_reduction_evex(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "vextracti128_high   $tmp,$src2\n\t"
+            "vpminsd  $tmp,$tmp,$src2\n\t"
+            "pshufd   $tmp2,$tmp,0xE\n\t"
+            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! min reduction8I" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ vpminsd($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpminsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpminsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpminsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin16I_reduction_evex(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "vextracti64x4_high  $tmp3,$src2\n\t"
+            "vpminsd  $tmp3,$tmp3,$src2\n\t"
+            "vextracti128_high   $tmp,$tmp3\n\t"
+            "vpminsd  $tmp,$tmp,$tmp3\n\t"
+            "pshufd   $tmp2,$tmp,0xE\n\t"
+            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpminsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpminsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! min reduction16I" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vextracti64x4_high($tmp3$$XMMRegister, $src2$$XMMRegister);
+    __ vpminsd($tmp3$$XMMRegister, $tmp3$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vextracti128_high($tmp$$XMMRegister, $tmp3$$XMMRegister);
+    __ vpminsd($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpminsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpminsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpminsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// Long Min Reduction
+instruct rsmin1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 tmp, regF tmp2) %{
+  predicate(UseAVX <= 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movdq      $tmp,$src1\n\t"
+            "movdq      $tmp2,$src1\n\t"
+            "pcmpgtq   $tmp,$src2\n\t"
+            "blendvpd  $tmp2,$src2\n\t"
+            "movdq      $dst,$tmp2\t! min reduction1L" %}
+  ins_encode %{
+    __ movdq($tmp$$XMMRegister,$src1$$Register);
+    __ movdq($tmp2$$XMMRegister,$src1$$Register);
+    __ pcmpgtq($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ blendvpd($tmp2$$XMMRegister,$src2$$XMMRegister);
+    __ movdq($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 tmp, regF tmp2, regF tmp3) %{
+  predicate(UseAVX <= 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "pshufd   $tmp,$src2,0xE\n\t"
+            "pshufd   $tmp2,$src2,0xE\n\t"
+            "pcmpgtq  $tmp,$src2\n\t"
+            "blendvpd   $tmp2,$tmp\n\t"
+            "pshufd     $tmp,$src1\n\t"
+            "pcmpgtq  $tmp,$tmp2\n\t"
+            "blendvpd   $tmp2,$src1\n\t"
+            "movq     $dst,$tmp2\t! min reduction2L" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ pcmpgtq($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ blendvpd($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdq($tmp3$$XMMRegister, $src1$$Register);
+    __ pcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister);
+    __ blendvpd($tmp2$$XMMRegister,$tmp3$$XMMRegister);
+    __ movdq($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, regF tmp, regF tmp2, regF tmp3) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "pshufd   $tmp2,$src2,0xE\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$src2\n\t"
+            "vblendvpd   $tmp2,$tmp2,$src2,$tmp\n\t"
+            "movq     $tmp,$src1\n\t"
+            "vpcmpgtq  $tmp3,$tmp2,$tmp\n\t"
+            "blendvpd   $tmp2,$tmp2,$src1,$tmp3\n\t"
+            "movq     $dst,$tmp2\t! min reduction2L" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp2$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $tmp2$$XMMRegister, $src2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdq($tmp$$XMMRegister,$src1$$Register);
+    __ vpcmpgtq($tmp3$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $tmp2$$XMMRegister,$src1$$XMMRegister,$tmp3$$XMMRegister, vector_len);
+    __ movdq($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin4L_reduction_reg(rRegL dst, rRegL src1, vecY src2, regF tmp, regF tmp2, regF tmp3) %{
+  predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "vextracti128_high   $tmp2,$src2\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$src2\n\t"
+            "vblendvpd   $tmp2,$tmp2,$src2,$tmp\n\t"
+            "vpshufd   $tmp3, $tmp2,0x1\n\t"
+            "vpcmpgtq  $tmp, $tmp3,$tmp\n\t2"
+            "vblendvpd $tmp3,$tmp3,$tmp2,$tmp\n\t"
+            "movq     $tmp2,$src1\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$tmp3\n\t"
+            "blendvpd   $tmp2,$tmp2,$tmp3,$tmp\n\t"
+            "movq     $dst,$tmp2\t! min reduction2L" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp2$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $tmp2$$XMMRegister, $src2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp3$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp3$$XMMRegister,$tmp3$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdq($tmp$$XMMRegister,$src1$$Register);
+    __ vpcmpgtq($tmp2$$XMMRegister, $tmp3$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $tmp3$$XMMRegister,$tmp$$XMMRegister,$tmp2$$XMMRegister, vector_len);
+    __ movdq($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin8L_reduction_reg(rRegL dst, rRegL src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MinReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "vextracti64x4_high  $tmp3,$src2\n\t"
+            "vpcmpgtq  $tmp,$tmp3,$src2\n\t"
+            "vblendvpd   $tmp3,$tmp3,$src2,$tmp\n\t"
+            "vextracti128_high   $tmp2,$tmp3\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$tmp3\n\t"
+            "vblendvpd   $tmp2,$tmp2,$tmp3,$tmp\n\t"
+            "vpshufd  $tmp3,$tmp2,0x1\n\t"
+            "vpcmpgtq   $tmp,$tmp3,$tmp2\n\t"
+            "vblendvpd  $tmp3,$tmp3,$tmp2,$tmp\n\t"
+            "movq     $tmp2,$src1\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$tmp3\n\t"
+            "vblendvpd  $tmp2,$tmp2,$tmp3,$tmp\n\t"
+            "movq     $dst,$tmp2\t! min reduction4I" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vextracti64x4_high($tmp3$$XMMRegister, $src2$$XMMRegister);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp3$$XMMRegister, $tmp3$$XMMRegister, $src2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextracti128_high($tmp2$$XMMRegister, $tmp3$$XMMRegister);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp3$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp3$$XMMRegister,$tmp3$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdq($tmp2$$XMMRegister, $src1$$Register);
+    __ vpcmpgtq($tmp$$XMMRegister,$tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp3$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdq($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// Float Min Reduction
+instruct rsmin2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
+  predicate(UseSSE > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "minps   $dst, $src2\n\t"
+            "pshufd  $tmp,$src2,0x1\n\t"
+            "minps   $dst,$tmp\t! min reduction2F" %}
+  ins_encode %{
+    __ minps($dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ minps($dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vminps  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x1\n\t"
+            "vminps  $dst,$dst,$tmp\t! min reduction2F" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin4F_reduction_reg(regF dst, vecX src2, regF tmp) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "vminps  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x1\n\t"
+            "vminps  $dst,$dst,tmp\n\t"
+            "pshufd  $tmp,$src2,0x2\n\t"
+            "vminps  $dst,$dst,tmp\n\t"
+            "pshufd  $tmp,$src2,0x3\n\t"
+            "vminps  $dst,$dst,$tmp\t! min reduction4F" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin8F_reduction_reg(regF dst, vecY src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vminps  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x02\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x03\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "vextractf128_high  $tmp2,$src2\n\t"
+            "vminps  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vminps  $dst,$dst,$tmp\t! sub reduction8F" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x02);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x03);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf128_high($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin16F_reduction_reg(regF dst, vecZ src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vminps  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x02\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x03\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x1\n\t"
+            "vminps  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x2\n\t"
+            "vminps  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x3\n\t"
+            "vminps  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vminps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vminps  $dst,$dst,$tmp\t! sub reduction16F" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x02);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x03);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmin2D_reduction_reg(regD dst, vecX src2, regD tmp) %{
+  predicate(UseSSE >= 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "minpd   $dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "minpd   $dst,$tmp\t! min reduction2D" %}
+  ins_encode %{
+    __ minpd($dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ minpd($dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin2D_reduction_reg(regD dst, vecX src2, regD tmp) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "vminpd  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "vminpd  $dst,$dst,$tmp\t! min reduction2D" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin4D_reduction_reg(regD dst, vecY src2, regD tmp, regD tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vminpd  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "vminpd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x1\n\t"
+            "vminpd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vminpd  $dst,$dst,$tmp\t! min reduction4D" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmin8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vminpd  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "vminpd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x1\n\t"
+            "vminpd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vminpd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x2\n\t"
+            "vminpd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vminpd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x3\n\t"
+            "vminpd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vminpd  $dst,$dst,$tmp\t! min reduction8D" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vminpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// ------- Max Reduction ------------
+
+instruct rsmax8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd  $tmp,$src2,0x1\n\t"
+            "pminsb  $tmp,$src2\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister,0x1);
+    __ pmaxsb($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::greater, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmax16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd  $tmp4,$src2,0xE\n\t"
+            "pmaxsb  $tmp4,$src2\n\t"
+            "pshufd  $tmp,$tmp4,0x1\n\t"
+            "pmaxsb  $tmp,$tmp4\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! max reduction4S" %}
+  ins_encode %{
+    __ pshufd($tmp4$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ pmaxsb($tmp4$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
+    __ pmaxsb($tmp$$XMMRegister, $tmp4$$XMMRegister);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::greater, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd  $tmp4,$src2,0xE\n\t"
+            "vpmaxsb  $tmp,$tmp4,$src2\n\t"
+            "pshufd  $tmp,$tmp4,0x1\n\t"
+            "vpmaxsb  $tmp,$tmp,$tmp4\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! max reduction4S" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp4$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, 0);
+    __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 0);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::greater, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "vextracti128_high  $tmp,$src2\n\t"
+            "vpmaxsb  $tmp,$tmp,$src2\n\t"
+            "pshufd  $tmp4,$tmp,0xE\n\t"
+            "vpmaxsb  $tmp4,$tmp4,$tmp\n\t"
+            "pshufd  $tmp,$tmp4,0x1\n\t"
+            "vpmaxsb  $tmp,$tmp,$tmp4\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! min reduction4S" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp4$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $tmp$$XMMRegister, 0);
+    __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 0);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::greater, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "vextracti64x4_high  $tmp4,$src2\n\t"
+            "vpmaxsb  $tmp4,$tmp4,$src2\n\t"
+            "vextracti128_high  $tmp,$tmp4\n\t"
+            "vpmaxsb  $tmp,$tmp,$tmp4\n\t"
+            "pshufd  $tmp4,$tmp,0xE\n\t"
+            "vpmaxsb  $tmp,$tmp4,$tmp\n\t"
+            "pshufd  $tmp4,$src2,0xE\n\t"
+            "vpmaxsb  $tmp,$tmp4,$src2\n\t"
+            "pshufd  $tmp,$tmp4,0x1\n\t"
+            "vpmaxsb  $tmp,$tmp,$tmp4\n\t"
+            "pextrb  $tmp2,$tmp, 0x1\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp,0x0\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1, 0x0\n\t"
+            "movl  $dst,$tmp2\n\t"
+            "pextrb  $tmp2,$tmp\n\t"
+            "movsbl  $tmp2,$tmp2\n\t"
+            "pextrb  $tmp3,$tmp\n\t"
+            "movsbl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $tmp3,$dst\n\t"
+            "cmovl  $dst,$tmp3\t! max reduction32B" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vextracti64x4_high($tmp4$$XMMRegister, $src2$$XMMRegister);
+    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vextracti128_high($tmp$$XMMRegister, $tmp4$$XMMRegister);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, vector_len);
+    __ pshufd($tmp4$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $tmp$$XMMRegister, 0);
+    __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 0);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+    __ pextrb($tmp2$$Register, $tmp$$XMMRegister,0x3);
+    __ movsbl($tmp2$$Register, $tmp2$$Register);
+    __ pextrb($tmp3$$Register, $tmp$$XMMRegister,0x2);
+    __ movsbl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($tmp3$$Register, $dst$$Register);
+    __ cmovl(Assembler::greater, $dst$$Register, $tmp3$$Register);
+    __ movsbl($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmax4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3) %{
+  predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "pshufd  $tmp,$src2,0x1\n\t"
+            "pminsw  $tmp,$src2\n\t"
+            "movzwl  $dst,$src1\n\t"
+            "pextrw  $tmp2,$tmp, 0x0\n\t"
+            "pminsw  $dst,$tmp2\n\t"
+            "pminsw  $dst,$tmp2\n\t"
+            "movswl  $dst,$dst\t! min reduction4S" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister,0x1);
+    __ pmaxsw($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ pextrw($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp2$$Register, $tmp2$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register); 
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "pshufd  $tmp,$src2,0x1\n\t"
+            "pminsw  $tmp,$src2\n\t"
+            "movzwl  $dst,$src1\n\t"
+            "pextrw  $tmp2,$tmp, 0x0\n\t"
+            "pminsw  $dst,$tmp2\n\t"
+            "pminsw  $dst,$tmp2\n\t"
+            "movswl  $dst,$dst\t! min reduction4S" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister,0x1);
+    __ vpmaxsw($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, 0);
+    __ pextrw($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp2$$Register, $tmp2$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register); 
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmax8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+  predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd  $tmp2,$src2,0xE\n\t"
+            "pmaxsw  $tmp2,$src2\n\t"
+            "pshufd  $tmp,$tmp2,0x1\n\t"
+            "pmaxsw  $tmp,$tmp2\n\t"
+            "pextrw  $tmp2,$tmp\n\t"
+            "movswl  $tmp2,$tmp2\n\t"
+            "pextrw  $tmp3,$tmp, 0x0\n\t"
+            "movswl  $tmp3,$tmp3\n\t"
+            "cmpl    $tmp2,$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1\n\t"
+            "movl  $dst,$tmp3\t! max reduction8S" %}
+  ins_encode %{
+    __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister,0xE);
+    __ pmaxsw($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ pmaxsw($tmp$$XMMRegister, $tmp2$$XMMRegister);
+    __ pextrw($tmp4$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp4$$Register, $tmp4$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp4$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp4$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "pshufd   $tmp,$src2,0xE\n\t"
+            "vpmaxsw  $tmp,$tmp,$src2\n\t"
+            "pshufd   $tmp2,$tmp,0x1\n\t"
+            "vpmaxsw  $tmp,$tmp,$tmp2\n\t"
+            "movzwl   $dst,$src1\n\t"
+            "pextrw   $tmp3,$tmp, 0x0\n\t"
+            "vpmaxsw  $dst,$dst,$tmp3\n\t"
+            "pextrw   $tmp3,$tmp, 0x1\n\t"
+            "vpmaxsw  $dst,$dst,$tmp3\n\t"
+            "movswl   $dst,$dst\t! max reduction8S" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpmaxsw($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister,0x1);
+    __ vpmaxsw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pextrw($tmp4$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp4$$Register, $tmp4$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp4$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp4$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2, rRegI tmp3, rRegI tmp4) %{
+  predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  format %{ "vextracti128_high  $tmp,$src2\n\t"
+            "vpmaxsw  $tmp,$tmp,$src2\n\t"
+            "pshufd  $tmp2,$tmp,0xE\n\t"
+            "vpmaxsw  $tmp,$tmp,$tmp2\n\t"
+            "pshufd  $tmp2,$tmp,0x1\n\t"
+            "vpmaxsw  $tmp,$tmp,$tmp2\n\t"
+            "pextrw  $tmp2,$tmp, 0x1\n\t"
+            "movswl  $tmp2,$tmp2\n\t"
+            "pextrw  $tmp3,$tmp, 0x0\n\t"
+            "movswl  $tmp3,$tmp3\n\t"
+            "cmpl  $tmp2$tmp3\n\t"
+            "cmovl  $tmp3,$tmp2\n\t"
+            "cmpl  $src1,$tmp3\n\t"
+            "cmovl  $tmp3,$src1\n\t"
+            "movl  $dst,$tmp3\t! max reduction16S" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ vpmaxsw($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpmaxsw($tmp$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister,0x1);
+    __ vpmaxsw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pextrw($tmp4$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp4$$Register, $tmp4$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp4$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp4$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax32S_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rRegI tmp2, regF tmp3) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "vextracti64x4_high  $tmp2,$src2\n\t"
+            "vpmaxsw  $tmp2,$tmp2,$src2\n\t"
+            "vextracti128_high  $tmp,$tmp2\n\t"
+            "vpmaxsw  $tmp,$tmp,$tmp2\n\t"
+            "pshufd  $tmp2,$tmp,0xE\n\t"
+            "vpmaxsw  $tmp,$tmp,$tmp2\n\t"
+            "pshufd  $tmp2,$tmp,0x1\n\t"
+            "vpmaxsw  $tmp,$tmp,$tmp2\n\t"
+            "movzwl  $dst,$src1\n\t"
+            "pextrw  $tmp3,$tmp, 0x0\n\t"
+            "vpmaxsw  $dst,$dst,$tmp3\n\t"
+            "pextrw  $tmp3,$tmp, 0x1\n\t"
+            "vpmaxsw  $dst,$dst,$tmp3\n\t"
+            "movswl  $dst,$dst\t! max reduction32S" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vextracti64x4_high($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ vpmaxsw($tmp2$$XMMRegister, $tmp2$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vextracti128_high($tmp$$XMMRegister, $tmp2$$XMMRegister);
+    __ vpmaxsw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpmaxsw($tmp$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister,0x1);
+    __ vpmaxsw($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pextrw($tmp2$$Register, $tmp$$XMMRegister,0x1);
+    __ movswl($tmp2$$Register, $tmp2$$Register);
+    __ pextrw($tmp3$$Register, $tmp$$XMMRegister,0x0);
+    __ movswl($tmp3$$Register, $tmp3$$Register);
+    __ cmpl($tmp2$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
+    __ cmpl($src1$$Register, $tmp3$$Register);
+    __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
+    __ movl($dst$$Register, $tmp3$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmax2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp2) %{
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd  $tmp,$src2,0x1\n\t"
+            "pmaxsd  $tmp,$src2\n\t"
+            "movd    $tmp2,$src1\n\t"
+            "pmaxsd  $tmp2,$tmp\n\t"
+            "movd    $dst,$tmp2\t! max reduction2I" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ pmaxsd($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ movdl($tmp2$$XMMRegister, $src1$$Register);
+    __ pmaxsd($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax2I_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd   $tmp,$src2,0x1\n\t"
+            "vpmaxsd  $tmp2,$tmp,$src2\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! max reduction2I" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vpmaxsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ movdl($tmp2$$XMMRegister, $src1$$Register);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmax4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd  $tmp,$src2,0xE\n\t"
+            "pmaxsd  $tmp,$src2\n\t"
+            "pshufd  $tmp2,$tmp,0x1\n\t"
+            "pmaxsd  $tmp2,$tmp\n\t"
+            "movd    $tmp,$src1\n\t"
+            "pmaxsd  $tmp2,$tmp\n\t"
+            "movd    $dst,$tmp2\t! max reduction4I" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ pmaxsd($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0x1);
+    __ pmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ pmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax4I_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd   $tmp,$src2,0xE\n\t"
+            "vpmaxsd  $tmp2,$tmp,$src2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpmaxsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! max reduction4I" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpmaxsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax4I_reduction_evex(rRegI dst, rRegI src1, vecX src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "pshufd   $tmp,$src2,0xE\n\t"
+            "vpmaxsd  $tmp2,$tmp,$src2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpmaxsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! max reduction4I" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpmaxsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax8I_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "vextracti128_high   $tmp,$src2\n\t"
+            "vpmaxsd  $tmp,$tmp,$src2\n\t"
+            "pshufd   $tmp2,$tmp,0xE\n\t"
+            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpmaxsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! max reduction8I" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ vpmaxsd($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpmaxsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax8I_reduction_evex(rRegI dst, rRegI src1, vecY src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "vextracti128_high   $tmp,$src2\n\t"
+            "vpmaxsd  $tmp,$tmp,$src2\n\t"
+            "pshufd   $tmp2,$tmp,0xE\n\t"
+            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpmaxsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! max reduction8I" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ vpmaxsd($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpmaxsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax16I_reduction_evex(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "vextracti64x4_high  $tmp3,$src2\n\t"
+            "vpmaxsd  $tmp3,$tmp3,$src2\n\t"
+            "vextracti128_high   $tmp,$tmp3\n\t"
+            "vpmaxsd  $tmp,$tmp,$tmp3\n\t"
+            "pshufd   $tmp2,$tmp,0xE\n\t"
+            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
+            "pshufd   $tmp,$tmp2,0x1\n\t"
+            "vpmaxsd  $tmp2,$tmp2,$tmp\n\t"
+            "movd     $tmp,$src1\n\t"
+            "vpmaxsd  $tmp2,$tmp,$tmp2\n\t"
+            "movd     $dst,$tmp2\t! max reduction16I" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vextracti64x4_high($tmp3$$XMMRegister, $src2$$XMMRegister);
+    __ vpmaxsd($tmp3$$XMMRegister, $tmp3$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ vpmaxsd($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp2$$XMMRegister, $tmp$$XMMRegister, 0xE);
+    __ vpmaxsd($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister,0x1);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdl($tmp$$XMMRegister, $src1$$Register);
+    __ vpmaxsd($tmp2$$XMMRegister,$tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ movdl($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// Long Max Reduction
+instruct rsmax1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 tmp, regF tmp2, regF tmp3) %{
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "movdq      $tmp,$src1\n\t"
+            "movdq      $tmp2,$src1\n\t"
+            "pcmpgtq   $tmp,$src2\n\t"
+            "blendvpd  $tmp2,$src2\n\t"
+            "movdq      $dst,$tmp2\t! max reduction1L" %}
+  ins_encode %{
+    __ movdq($tmp$$XMMRegister,$src1$$Register);
+    __ movdq($tmp2$$XMMRegister,$src1$$Register);
+    __ movdq($tmp3$$XMMRegister,$src2$$Register);
+    __ pcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister);
+    __ blendvpd($tmp3$$XMMRegister,$tmp2$$XMMRegister);
+    __ movdq($dst$$Register, $tmp3$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmax2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 tmp, regF tmp2, regF tmp3) %{
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "pshufd   $tmp,$src2,0xE\n\t"
+            "pshufd   $tmp2,$src2,0xE\n\t"
+            "pcmpgtq  $tmp,$src2\n\t"
+            "blendvpd   $tmp2,$tmp\n\t"
+            "pshufd     $tmp,$src1\n\t"
+            "pcmpgtq  $tmp,$tmp2\n\t"
+            "blendvpd   $tmp2,$src1\n\t"
+            "movq     $dst,$tmp2\t! max reduction2L" %}
+  ins_encode %{
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ pcmpgtq($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ blendvpd($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister,$tmp2$$XMMRegister, 0x4);
+    __ movdq($tmp3$$XMMRegister, $src1$$Register);
+    __ pcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister);
+    __ blendvpd($tmp3$$XMMRegister,$tmp2$$XMMRegister);
+    __ movdq($dst$$Register, $tmp3$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, regF tmp, regF tmp2, regF tmp3) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "pshufd   $tmp2,$src2,0xE\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$src2\n\t"
+            "vblendvpd   $tmp2,$tmp2,$src2,$tmp\n\t"
+            "movq     $tmp,$src1\n\t"
+            "vpcmpgtq  $tmp3,$tmp2,$tmp\n\t"
+            "blendvpd   $tmp2,$tmp2,$src1,$tmp3\n\t"
+            "movq     $dst,$tmp2\t! max reduction2L" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp2$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $src2$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdq($tmp$$XMMRegister,$src1$$Register);
+    __ vpcmpgtq($tmp3$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $tmp$$XMMRegister,$tmp2$$XMMRegister,$tmp3$$XMMRegister, vector_len);
+    __ movdq($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax4L_reduction_reg(rRegL dst, rRegL src1, vecY src2, regF tmp, regF tmp2, regF tmp3) %{
+  predicate(UseAVX > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "vextracti128_high   $tmp2,$src2\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$src2\n\t"
+            "vblendvpd   $tmp2,$tmp2,$src2,$tmp\n\t"
+            "vpshufd   $tmp3, $tmp2,0x1\n\t"
+            "vpcmpgtq  $tmp, $tmp3,$tmp\n\t2"
+            "vblendvpd $tmp3,$tmp3,$tmp2,$tmp\n\t"
+            "movq     $tmp2,$src1\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$tmp3\n\t"
+            "blendvpd   $tmp2,$tmp2,$tmp3,$tmp\n\t"
+            "movq     $dst,$tmp2\t! max reduction2L" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti128_high($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp2$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $src2$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp3$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp3$$XMMRegister,$tmp2$$XMMRegister,$tmp3$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdq($tmp$$XMMRegister,$src1$$Register);
+    __ vpcmpgtq($tmp2$$XMMRegister, $tmp3$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $tmp$$XMMRegister,$tmp3$$XMMRegister,$tmp2$$XMMRegister, vector_len);
+    __ movdq($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax8L_reduction_reg(rRegL dst, rRegL src1, vecZ src2, regF tmp, regF tmp2, regF tmp3) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MaxReductionV src1 src2));
+  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
+  format %{ "vextracti64x4_high  $tmp3,$src2\n\t"
+            "vpcmpgtq  $tmp,$tmp3,$src2\n\t"
+            "vblendvpd   $tmp3,$tmp3,$src2,$tmp\n\t"
+            "vextracti128_high   $tmp2,$tmp3\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$tmp3\n\t"
+            "vblendvpd   $tmp2,$tmp2,$tmp3,$tmp\n\t"
+            "vpshufd  $tmp3,$tmp2,0x1\n\t"
+            "vpcmpgtq   $tmp,$tmp3,$tmp2\n\t"
+            "vblendvpd  $tmp3,$tmp3,$tmp2,$tmp\n\t"
+            "movq     $tmp2,$src1\n\t"
+            "vpcmpgtq  $tmp,$tmp2,$tmp3\n\t"
+            "vblendvpd  $tmp2,$tmp2,$tmp3,$tmp\n\t"
+            "movq     $dst,$tmp2\t! max reduction4I" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vextracti64x4_high($tmp3$$XMMRegister, $src2$$XMMRegister);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp3$$XMMRegister, $src2$$XMMRegister, $tmp3$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextracti128_high($tmp2$$XMMRegister, $tmp3$$XMMRegister);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister, $tmp3$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp3$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vpcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ vblendvpd($tmp3$$XMMRegister,$tmp2$$XMMRegister,$tmp3$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdq($tmp2$$XMMRegister, $src1$$Register);
+    __ vpcmpgtq($tmp$$XMMRegister,$tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vblendvpd($tmp2$$XMMRegister,$tmp3$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdq($dst$$Register, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// Float max Reduction
+instruct rsmax2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
+  predicate(UseSSE > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "maxps   $dst, $src2\n\t"
+            "pshufd  $tmp,$src2,0x1\n\t"
+            "maxps   $dst,$tmp\t! max reduction2F" %}
+  ins_encode %{
+    __ maxps($dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ maxps($dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vmaxps  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x1\n\t"
+            "vmaxps  $dst,$dst,$tmp\t! max reduction2F" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax4F_reduction_reg(regF dst, vecX src2, regF tmp) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "vmaxps  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x1\n\t"
+            "vmaxps  $dst,$dst,tmp\n\t"
+            "pshufd  $tmp,$src2,0x2\n\t"
+            "vmaxps  $dst,$dst,tmp\n\t"
+            "pshufd  $tmp,$src2,0x3\n\t"
+            "vmaxps  $dst,$dst,$tmp\t! max reduction4F" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax8F_reduction_reg(regF dst, vecY src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vmaxps  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x02\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x03\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "vextractf128_high  $tmp2,$src2\n\t"
+            "vmaxps  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vmaxps  $dst,$dst,$tmp\t! sub reduction8F" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x02);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x03);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf128_high($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax16F_reduction_reg(regF dst, vecZ src2, regF tmp, regF tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vmaxps  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x01\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x02\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$src2,0x03\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x1\n\t"
+            "vmaxps  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x2\n\t"
+            "vmaxps  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x3\n\t"
+            "vmaxps  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0x01\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x02\n\t"
+            "vmaxps  $dst,$dst,$tmp\n\t"
+            "pshufd  $tmp,$tmp2,0x03\n\t"
+            "vmaxps  $dst,$dst,$tmp\t! sub reduction16F" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x01);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x02);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x03);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x02);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x03);
+    __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmax2D_reduction_reg(regD dst, vecX src2, regD tmp) %{
+  predicate(UseSSE >= 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "maxpd   $dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "maxpd   $dst,$tmp\t! max reduction2D" %}
+  ins_encode %{
+    __ maxpd($dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ maxpd($dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax2D_reduction_reg(regD dst, vecX src2, regD tmp) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "vmaxpd  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "vmaxpd  $dst,$dst,$tmp\t! max reduction2D" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax4D_reduction_reg(regD dst, vecY src2, regD tmp, regD tmp2) %{
+  predicate(UseAVX > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vmaxpd  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "vmaxpd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x1\n\t"
+            "vmaxpd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vmaxpd  $dst,$dst,$tmp\t! max reduction4D" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvmax8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
+  predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "vmaxpd  $dst,$dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0xE\n\t"
+            "vmaxpd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x1\n\t"
+            "vmaxpd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vmaxpd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x2\n\t"
+            "vmaxpd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vmaxpd  $dst,$dst,$tmp\n\t"
+            "vextractf32x4  $tmp2,$src2,0x3\n\t"
+            "vmaxpd  $dst,$dst,$tmp2\n\t"
+            "pshufd  $tmp,$tmp2,0xE\n\t"
+            "vmaxpd  $dst,$dst,$tmp\t! max reduction8D" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextractf32x4($tmp2$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+    __ pshufd($tmp$$XMMRegister, $tmp2$$XMMRegister, 0xE);
+    __ vmaxpd($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 instruct rsand8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (AndReductionV src1 src2));

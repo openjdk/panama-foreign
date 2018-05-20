@@ -507,6 +507,48 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Double128VectorTests::subAll);
     }
+    static double minAll(double[] a, int idx) {
+        double res = Double.MAX_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res < a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void minAllDouble128VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.minAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Double128VectorTests::minAll);
+    }
+    static double maxAll(double[] a, int idx) {
+        double res = Double.MIN_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res > a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void maxAllDouble128VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.maxAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Double128VectorTests::maxAll);
+    }
 
     @Test(dataProvider = "doubleCompareOpProvider")
     static void lessThanDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {

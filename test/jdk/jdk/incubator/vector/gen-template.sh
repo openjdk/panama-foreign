@@ -36,6 +36,8 @@ blend="$TEMPLATE_FOLDER/Blend-op.template"
 compare_template="$TEMPLATE_FOLDER/Compare.template"
 reduction_scalar="$TEMPLATE_FOLDER/Reduction-Scalar-op.template"
 reduction_template="$TEMPLATE_FOLDER/Reduction-op.template"
+reduction_min_template="$TEMPLATE_FOLDER/Reduction-Scalar-Min-op.template"
+reduction_max_template="$TEMPLATE_FOLDER/Reduction-Scalar-Max-op.template"
 
 function gen_op_tmpl { 
   template=$1
@@ -93,6 +95,18 @@ function gen_reduction_op {
   gen_op_tmpl $reduction_template "$@"
 }
 
+function gen_reduction_op_min {
+  echo "Generating reduction op $1 ($2)..."
+  gen_op_tmpl $reduction_min_template "$@"
+  gen_op_tmpl $reduction_template "$@"
+}
+
+function gen_reduction_op_max {
+  echo "Generating reduction op $1 ($2)..."
+  gen_op_tmpl $reduction_max_template "$@"
+  gen_op_tmpl $reduction_template "$@"
+}
+
 function gen_header {
   cat $TEMPLATE_FOLDER/header.template > $1
 }
@@ -125,6 +139,8 @@ gen_reduction_op "orAll" "|" $template_file "BITWISE" "0"
 gen_reduction_op "xorAll" "^" $template_file "BITWISE" "0"
 gen_reduction_op "addAll" "+" $template_file "" "0"
 gen_reduction_op "subAll" "-" $template_file "" "0"
+gen_reduction_op_min "minAll" "" $template_file "" "MAX_VALUE"
+gen_reduction_op_max "maxAll" "" $template_file "" "MIN_VALUE"
 
 # Compares
 gen_op_tmpl $compare_template "lessThan" "<" $template_file

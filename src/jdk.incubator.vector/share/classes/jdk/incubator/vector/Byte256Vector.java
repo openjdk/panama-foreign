@@ -437,6 +437,24 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public byte minAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MIN, Byte256Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Byte.MAX_VALUE , (i, a, b) -> (byte) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public byte maxAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MAX, Byte256Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Byte.MIN_VALUE , (i, a, b) -> (byte) ((a > b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
     public byte subAll() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_SUB, Byte256Vector.class, byte.class, LENGTH,

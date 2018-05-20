@@ -707,9 +707,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      *
      * @return the minimum lane element of this vector
      */
-    public short minAll() {
-        return rOp(Short.MAX_VALUE, (i, a, b) -> a > b ? b : a);
-    }
+    public abstract short minAll();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -733,9 +731,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      *
      * @return the maximum lane element of this vector
      */
-    public short maxAll() {
-        return rOp(Short.MIN_VALUE, (i, a, b) -> a < b ? b : a);
-    }
+    public abstract short maxAll();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements

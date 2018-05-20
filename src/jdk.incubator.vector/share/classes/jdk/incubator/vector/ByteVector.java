@@ -706,9 +706,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      *
      * @return the minimum lane element of this vector
      */
-    public byte minAll() {
-        return rOp(Byte.MAX_VALUE, (i, a, b) -> a > b ? b : a);
-    }
+    public abstract byte minAll();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -732,9 +730,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      *
      * @return the maximum lane element of this vector
      */
-    public byte maxAll() {
-        return rOp(Byte.MIN_VALUE, (i, a, b) -> a < b ? b : a);
-    }
+    public abstract byte maxAll();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements

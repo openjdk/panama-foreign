@@ -659,6 +659,48 @@ public class Byte64VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Byte64VectorTests::subAll);
     }
+    static byte minAll(byte[] a, int idx) {
+        byte res = Byte.MAX_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res < a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "byteUnaryOpProvider")
+    static void minAllByte64VectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ByteVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.minAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Byte64VectorTests::minAll);
+    }
+    static byte maxAll(byte[] a, int idx) {
+        byte res = Byte.MIN_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res > a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "byteUnaryOpProvider")
+    static void maxAllByte64VectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ByteVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.maxAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Byte64VectorTests::maxAll);
+    }
 
     @Test(dataProvider = "byteCompareOpProvider")
     static void lessThanByte64VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {

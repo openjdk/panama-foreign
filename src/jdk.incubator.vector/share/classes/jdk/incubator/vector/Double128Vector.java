@@ -507,6 +507,32 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
         return blend(SPECIES.broadcast(Double.MIN_VALUE), m).maxAll();
     }
 
+    @Override
+    @ForceInline
+    public double minAll() {
+        long bits = (long) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MIN, Double128Vector.class, double.class, LENGTH,
+                                this,
+                                v -> {
+                                    double r = v.rOp(Double.MAX_VALUE , (i, a, b) -> (double) ((a < b) ? a : b));
+                                    return (long)Double.doubleToLongBits(r);
+                                });
+        return Double.longBitsToDouble(bits);
+    }
+
+    @Override
+    @ForceInline
+    public double maxAll() {
+        long bits = (long) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MAX, Double128Vector.class, double.class, LENGTH,
+                                this,
+                                v -> {
+                                    double r = v.rOp(Double.MIN_VALUE , (i, a, b) -> (double) ((a > b) ? a : b));
+                                    return (long)Double.doubleToLongBits(r);
+                                });
+        return Double.longBitsToDouble(bits);
+    }
+
     // Memory operations
 
     @Override

@@ -659,6 +659,48 @@ public class Long512VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Long512VectorTests::subAll);
     }
+    static long minAll(long[] a, int idx) {
+        long res = Long.MAX_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res < a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "longUnaryOpProvider")
+    static void minAllLong512VectorTests(IntFunction<long[]> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.minAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Long512VectorTests::minAll);
+    }
+    static long maxAll(long[] a, int idx) {
+        long res = Long.MIN_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res > a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "longUnaryOpProvider")
+    static void maxAllLong512VectorTests(IntFunction<long[]> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.maxAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Long512VectorTests::maxAll);
+    }
 
     @Test(dataProvider = "longCompareOpProvider")
     static void lessThanLong512VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {

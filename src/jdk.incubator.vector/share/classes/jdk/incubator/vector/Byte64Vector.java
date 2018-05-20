@@ -437,6 +437,24 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
+    public byte minAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MIN, Byte64Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Byte.MAX_VALUE , (i, a, b) -> (byte) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public byte maxAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MAX, Byte64Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Byte.MIN_VALUE , (i, a, b) -> (byte) ((a > b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
     public byte subAll() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_SUB, Byte64Vector.class, byte.class, LENGTH,

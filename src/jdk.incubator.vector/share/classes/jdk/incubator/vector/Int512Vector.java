@@ -514,6 +514,24 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public int minAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MIN, Int512Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Integer.MAX_VALUE , (i, a, b) -> (int) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public int maxAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MAX, Int512Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Integer.MIN_VALUE , (i, a, b) -> (int) ((a > b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
     public int mulAll() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Int512Vector.class, int.class, LENGTH,

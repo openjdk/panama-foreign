@@ -1292,9 +1292,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      *
      * @return the minimum lane element of this vector
      */
-    public double minAll() {
-        return rOp(Double.MAX_VALUE, (i, a, b) -> a > b ? b : a);
-    }
+    public abstract double minAll();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -1318,9 +1316,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      *
      * @return the maximum lane element of this vector
      */
-    public double maxAll() {
-        return rOp(Double.MIN_VALUE, (i, a, b) -> a < b ? b : a);
-    }
+    public abstract double maxAll();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements

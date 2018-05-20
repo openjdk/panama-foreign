@@ -637,6 +637,24 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         return blend(SPECIES.broadcast(($type$) -1), m).andAll();
     }
 
+    @Override
+    @ForceInline
+    public $type$ minAll() {
+        return ($type$) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v -> (long) v.rOp($Boxtype$.MAX_VALUE , (i, a, b) -> ($type$) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public $type$ maxAll() {
+        return ($type$) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
+            this,
+            v -> (long) v.rOp($Boxtype$.MIN_VALUE , (i, a, b) -> ($type$) ((a > b) ? a : b)));
+    }
+
 #if[intOrLong]
 
     @Override
@@ -724,6 +742,32 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                                 this,
                                 v -> {
                                     $type$ r = v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b));
+                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
+                                });
+        return $Type$.$bitstype$BitsTo$Fptype$(bits);
+    }
+
+    @Override
+    @ForceInline
+    public $type$ minAll() {
+        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
+                                this,
+                                v -> {
+                                    $type$ r = v.rOp($Boxtype$.MAX_VALUE , (i, a, b) -> ($type$) ((a < b) ? a : b));
+                                    return (long)$Type$.$type$To$Bitstype$Bits(r);
+                                });
+        return $Type$.$bitstype$BitsTo$Fptype$(bits);
+    }
+
+    @Override
+    @ForceInline
+    public $type$ maxAll() {
+        $bitstype$ bits = ($bitstype$) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
+                                this,
+                                v -> {
+                                    $type$ r = v.rOp($Boxtype$.MIN_VALUE , (i, a, b) -> ($type$) ((a > b) ? a : b));
                                     return (long)$Type$.$type$To$Bitstype$Bits(r);
                                 });
         return $Type$.$bitstype$BitsTo$Fptype$(bits);

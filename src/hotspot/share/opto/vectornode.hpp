@@ -725,6 +725,96 @@ class XorVNode : public VectorNode {
   virtual int Opcode() const;
 };
 
+//------------------------------MinReductionVNode--------------------------------------
+// Vector min byte, short, int, long, float, double as a reduction
+class MinReductionVNode : public ReductionNode {
+public:
+  MinReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {
+    if (in1->bottom_type()->basic_type() == T_INT) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+        in2->bottom_type()->is_vect()->element_basic_type() == T_BYTE ||
+        in2->bottom_type()->is_vect()->element_basic_type() == T_SHORT, "");
+    }
+    else if (in1->bottom_type()->basic_type() == T_LONG) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_LONG, "");
+    }
+    else if (in1->bottom_type()->basic_type() == T_FLOAT) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_FLOAT, "");
+    }
+    else if (in1->bottom_type()->basic_type() == T_DOUBLE) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE, "");
+    }
+  }
+  virtual int Opcode() const;
+  virtual const Type* bottom_type() const {  
+    if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT)
+      return TypeInt::INT;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE)
+      return TypeInt::BYTE;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT)
+      return TypeInt::SHORT;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT)
+      return Type::FLOAT;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE)
+      return Type::DOUBLE;
+		else return TypeLong::LONG;
+	}
+  virtual uint ideal_reg() const {
+    if (in(1)->bottom_type()->basic_type() == T_INT)
+      return Op_RegI;
+    else if (in(1)->bottom_type()->basic_type() == T_FLOAT)
+      return Op_RegF;
+    else if (in(1)->bottom_type()->basic_type() == T_DOUBLE)
+      return Op_RegD;
+    else return Op_RegL;
+  }
+};
+
+//------------------------------MaxReductionVNode--------------------------------------
+// Vector min byte, short, int, long, float, double as a reduction
+class MaxReductionVNode : public ReductionNode {
+public:
+  MaxReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {
+    if (in1->bottom_type()->basic_type() == T_INT) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+        in2->bottom_type()->is_vect()->element_basic_type() == T_BYTE ||
+        in2->bottom_type()->is_vect()->element_basic_type() == T_SHORT, "");
+    }
+    else if (in1->bottom_type()->basic_type() == T_LONG) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_LONG, "");
+    }
+    else if (in1->bottom_type()->basic_type() == T_FLOAT) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_FLOAT, "");
+    }
+    else if (in1->bottom_type()->basic_type() == T_DOUBLE) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE, "");
+    }
+  }
+  virtual int Opcode() const;
+  virtual const Type* bottom_type() const {
+    if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT)
+      return TypeInt::INT;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE)
+      return TypeInt::BYTE;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT)
+      return TypeInt::SHORT;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT)
+      return Type::FLOAT;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE)
+      return Type::DOUBLE;
+    else return TypeLong::LONG;
+  }
+  virtual uint ideal_reg() const {
+    if (in(1)->bottom_type()->basic_type() == T_INT)
+      return Op_RegI;
+    else if (in(1)->bottom_type()->basic_type() == T_FLOAT)
+      return Op_RegF;
+    else if (in(1)->bottom_type()->basic_type() == T_DOUBLE)
+      return Op_RegD;
+    else return Op_RegL;
+  }
+};
+
 //================================= M E M O R Y ===============================
 
 //------------------------------LoadVectorNode---------------------------------

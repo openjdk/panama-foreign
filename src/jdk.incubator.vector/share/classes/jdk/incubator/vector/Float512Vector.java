@@ -507,6 +507,32 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         return blend(SPECIES.broadcast(Float.MIN_VALUE), m).maxAll();
     }
 
+    @Override
+    @ForceInline
+    public float minAll() {
+        int bits = (int) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MIN, Float512Vector.class, float.class, LENGTH,
+                                this,
+                                v -> {
+                                    float r = v.rOp(Float.MAX_VALUE , (i, a, b) -> (float) ((a < b) ? a : b));
+                                    return (long)Float.floatToIntBits(r);
+                                });
+        return Float.intBitsToFloat(bits);
+    }
+
+    @Override
+    @ForceInline
+    public float maxAll() {
+        int bits = (int) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MAX, Float512Vector.class, float.class, LENGTH,
+                                this,
+                                v -> {
+                                    float r = v.rOp(Float.MIN_VALUE , (i, a, b) -> (float) ((a > b) ? a : b));
+                                    return (long)Float.floatToIntBits(r);
+                                });
+        return Float.intBitsToFloat(bits);
+    }
+
     // Memory operations
 
     @Override

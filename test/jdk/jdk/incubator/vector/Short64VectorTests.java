@@ -659,6 +659,48 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Short64VectorTests::subAll);
     }
+    static short minAll(short[] a, int idx) {
+        short res = Short.MAX_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res < a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "shortUnaryOpProvider")
+    static void minAllShort64VectorTests(IntFunction<short[]> fa) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] r = new short[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.minAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Short64VectorTests::minAll);
+    }
+    static short maxAll(short[] a, int idx) {
+        short res = Short.MIN_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res > a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "shortUnaryOpProvider")
+    static void maxAllShort64VectorTests(IntFunction<short[]> fa) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] r = new short[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.maxAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Short64VectorTests::maxAll);
+    }
 
     @Test(dataProvider = "shortCompareOpProvider")
     static void lessThanShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {

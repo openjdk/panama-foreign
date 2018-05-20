@@ -507,6 +507,48 @@ public class Float64VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Float64VectorTests::subAll);
     }
+    static float minAll(float[] a, int idx) {
+        float res = Float.MAX_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res < a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "floatUnaryOpProvider")
+    static void minAllFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.minAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Float64VectorTests::minAll);
+    }
+    static float maxAll(float[] a, int idx) {
+        float res = Float.MIN_VALUE;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res = (res > a[i])?res:a[i];
+        }
+
+        return res;
+    }    @Test(dataProvider = "floatUnaryOpProvider")
+    static void maxAllFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.maxAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Float64VectorTests::maxAll);
+    }
 
     @Test(dataProvider = "floatCompareOpProvider")
     static void lessThanFloat64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {

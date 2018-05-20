@@ -1732,9 +1732,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the minimum lane element of this vector
      */
-    public $type$ minAll() {
-        return rOp($Boxtype$.MAX_VALUE, (i, a, b) -> a > b ? b : a);
-    }
+    public abstract $type$ minAll();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -1758,9 +1756,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the maximum lane element of this vector
      */
-    public $type$ maxAll() {
-        return rOp($Boxtype$.MIN_VALUE, (i, a, b) -> a < b ? b : a);
-    }
+    public abstract $type$ maxAll();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements

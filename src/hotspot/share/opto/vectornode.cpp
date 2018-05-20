@@ -713,6 +713,54 @@ int ReductionNode::opcode(int opc, BasicType bt) {
       assert(bt == T_DOUBLE, "must be");
       vopc = Op_MulReductionVD;
       break;
+    case Op_MinI:
+      switch (bt) {
+        case T_BOOLEAN:
+        case T_CHAR: return 0;
+        case T_BYTE:
+        case T_SHORT:
+        case T_INT:
+          vopc = Op_MinReductionV;
+          break;
+        default:          ShouldNotReachHere(); return 0;
+      }
+      break;
+    case Op_MinL:
+      assert(bt == T_LONG, "must be");
+      vopc = Op_MinReductionV;
+      break;
+    case Op_MinF:
+      assert(bt == T_FLOAT, "must be");
+      vopc = Op_MinReductionV;
+      break;
+    case Op_MinD:
+      assert(bt == T_DOUBLE, "must be");
+      vopc = Op_MinReductionV;
+      break;
+    case Op_MaxI:
+      switch (bt) {
+        case T_BOOLEAN:
+        case T_CHAR: return 0;
+        case T_BYTE:
+        case T_SHORT:
+        case T_INT:
+          vopc = Op_MaxReductionV;
+          break;
+        default:          ShouldNotReachHere(); return 0;
+      }
+      break;
+    case Op_MaxL:
+      assert(bt == T_LONG, "must be");
+      vopc = Op_MaxReductionV;
+      break;
+    case Op_MaxF:
+      assert(bt == T_FLOAT, "must be");
+      vopc = Op_MaxReductionV;
+      break;
+    case Op_MaxD:
+      assert(bt == T_DOUBLE, "must be");
+      vopc = Op_MaxReductionV;
+      break;
     case Op_AndI:
       switch (bt) {
       case T_BOOLEAN:
@@ -807,6 +855,8 @@ ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, Basi
   case Op_MulReductionVL: return new MulReductionVLNode(ctrl, n1, n2);
   case Op_MulReductionVF: return new MulReductionVFNode(ctrl, n1, n2);
   case Op_MulReductionVD: return new MulReductionVDNode(ctrl, n1, n2);
+  case Op_MinReductionV: return new MinReductionVNode(ctrl, n1, n2);
+  case Op_MaxReductionV: return new MaxReductionVNode(ctrl, n1, n2);
   case Op_AndReductionV: return new AndReductionVNode(ctrl, n1, n2);
   case Op_OrReductionV: return new OrReductionVNode(ctrl, n1, n2);
   case Op_XorReductionV: return new XorReductionVNode(ctrl, n1, n2);
@@ -853,6 +903,36 @@ Node* ReductionNode::make_reduction_input(PhaseGVN& gvn, int opc, BasicType bt) 
       return gvn.makecon(TypeF::ONE);
     case Op_MulReductionVD:
       return gvn.makecon(TypeD::ONE);
+    case Op_MinReductionV:
+      switch (bt) {
+        case T_BYTE:
+        case T_SHORT:
+        case T_INT:
+          return gvn.makecon(TypeInt::MAX);
+        case T_LONG:
+          return gvn.makecon(TypeLong::MAX);
+        case T_FLOAT:
+          return gvn.makecon(TypeF::MAX);
+        case T_DOUBLE:
+          return gvn.makecon(TypeD::MAX);
+          default: Unimplemented(); return NULL;
+      }
+      break;
+    case Op_MaxReductionV:
+      switch (bt) {
+        case T_BYTE:
+        case T_SHORT:
+        case T_INT:
+          return gvn.makecon(TypeInt::MIN);
+        case T_LONG:
+          return gvn.makecon(TypeLong::MIN);
+        case T_FLOAT:
+          return gvn.makecon(TypeF::MIN);
+        case T_DOUBLE:
+          return gvn.makecon(TypeD::MIN);
+          default: Unimplemented(); return NULL;
+      }
+      break;
     default:
       fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
       return NULL;

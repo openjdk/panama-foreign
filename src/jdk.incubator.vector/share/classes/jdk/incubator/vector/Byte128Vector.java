@@ -437,6 +437,24 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public byte minAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MIN, Byte128Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Byte.MAX_VALUE , (i, a, b) -> (byte) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public byte maxAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MAX, Byte128Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Byte.MIN_VALUE , (i, a, b) -> (byte) ((a > b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
     public byte subAll() {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_SUB, Byte128Vector.class, byte.class, LENGTH,

@@ -514,6 +514,24 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public int minAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MIN, Int256Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Integer.MAX_VALUE , (i, a, b) -> (int) ((a < b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public int maxAll() {
+        return (int) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MAX, Int256Vector.class, int.class, LENGTH,
+            this,
+            v -> (long) v.rOp(Integer.MIN_VALUE , (i, a, b) -> (int) ((a > b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
     public int mulAll() {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MUL, Int256Vector.class, int.class, LENGTH,

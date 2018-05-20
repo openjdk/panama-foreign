@@ -957,9 +957,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the minimum lane element of this vector
      */
-    public int minAll() {
-        return rOp(Integer.MAX_VALUE, (i, a, b) -> a > b ? b : a);
-    }
+    public abstract int minAll();
 
     /**
      * Returns the minimum lane element of this vector, selecting lane elements
@@ -983,9 +981,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the maximum lane element of this vector
      */
-    public int maxAll() {
-        return rOp(Integer.MIN_VALUE, (i, a, b) -> a < b ? b : a);
-    }
+    public abstract int maxAll();
 
     /**
      * Returns the maximum lane element of this vector, selecting lane elements

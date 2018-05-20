@@ -213,6 +213,9 @@ inline size_t heap_word_size(size_t byte_size) {
   return (byte_size + (HeapWordSize-1)) >> LogHeapWordSize;
 }
 
+inline jfloat  jfloat_cast(jint    x);
+inline jdouble  jdouble_cast(jlong    x);
+
 //-------------------------------------------
 // Constant for jlong (standardized by C++11)
 
@@ -222,6 +225,13 @@ inline size_t heap_word_size(size_t byte_size) {
 
 const jlong min_jlong = CONST64(0x8000000000000000);
 const jlong max_jlong = CONST64(0x7fffffffffffffff);
+
+//-------------------------------------------
+// Constant for jdouble
+const jlong min_jlongDouble = CONST64(0x0000000000000001);
+const jdouble min_jdouble = jdouble_cast(min_jlongDouble);
+const jlong max_jlongDouble = CONST64(0x7fefffffffffffff);
+const jdouble max_jdouble = jdouble_cast(max_jlongDouble);
 
 const size_t K                  = 1024;
 const size_t M                  = K*K;
@@ -415,6 +425,11 @@ const jshort max_jshort = (1 << 15) - 1; // largest jshort
 
 const jint min_jint = (jint)1 << (sizeof(jint)*BitsPerByte-1); // 0x80000000 == smallest jint
 const jint max_jint = (juint)min_jint - 1;                     // 0x7FFFFFFF == largest jint
+
+const jint min_jintFloat = (jint)(0x00000001);
+const jfloat min_jfloat = jfloat_cast(min_jintFloat);
+const jint max_jintFloat = (jint)(0x7f7fffff);
+const jfloat max_jfloat = jfloat_cast(max_jintFloat);
 
 //----------------------------------------------------------------------------------------------------
 // JVM spec restrictions
