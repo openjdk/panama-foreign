@@ -655,8 +655,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             v -> (long) v.rOp($Boxtype$.MIN_VALUE , (i, a, b) -> ($type$) ((a > b) ? a : b)));
     }
 
-#if[intOrLong]
-
     @Override
     @ForceInline
     public $type$ mulAll() {
@@ -665,7 +663,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v -> (long) v.rOp(($type$) 1, (i, a, b) -> ($type$) (a * b)));
     }
-#end[intOrLong]
 
     @Override
     @ForceInline

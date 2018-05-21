@@ -434,7 +434,6 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         return blend(SPECIES.broadcast((byte) -1), m).andAll();
     }
 
-
     @Override
     @ForceInline
     public byte minAll() {
@@ -451,6 +450,15 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             VECTOR_OP_MAX, Byte512Vector.class, byte.class, LENGTH,
             this,
             v -> (long) v.rOp(Byte.MIN_VALUE , (i, a, b) -> (byte) ((a > b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public byte mulAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MUL, Byte512Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp((byte) 1, (i, a, b) -> (byte) (a * b)));
     }
 
     @Override

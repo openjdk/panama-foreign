@@ -507,6 +507,28 @@ public class Float512VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Float512VectorTests::subAll);
     }
+    static float mulAll(float[] a, int idx) {
+        float res = 1;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res *= a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void mulAllFloat512VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              FloatVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.mulAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Float512VectorTests::mulAll);
+    }
     static float minAll(float[] a, int idx) {
         float res = Float.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

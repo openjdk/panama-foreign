@@ -435,7 +435,6 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
         return blend(SPECIES.broadcast((short) -1), m).andAll();
     }
 
-
     @Override
     @ForceInline
     public short minAll() {
@@ -452,6 +451,15 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             VECTOR_OP_MAX, Short256Vector.class, short.class, LENGTH,
             this,
             v -> (long) v.rOp(Short.MIN_VALUE , (i, a, b) -> (short) ((a > b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public short mulAll() {
+        return (short) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MUL, Short256Vector.class, short.class, LENGTH,
+            this,
+            v -> (long) v.rOp((short) 1, (i, a, b) -> (short) (a * b)));
     }
 
     @Override

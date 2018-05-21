@@ -491,7 +491,6 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         return blend(SPECIES.broadcast((long) -1), m).andAll();
     }
 
-
     @Override
     @ForceInline
     public long minAll() {

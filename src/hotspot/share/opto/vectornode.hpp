@@ -357,12 +357,25 @@ public:
 };
 
 //------------------------------MulReductionVINode--------------------------------------
-// Vector multiply int as a reduction
+// Vector multiply byte, short and int as a reduction
 class MulReductionVINode : public ReductionNode {
 public:
-  MulReductionVINode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {}
+  MulReductionVINode(Node * ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {
+    if (in1->bottom_type()->basic_type() == T_INT) {
+      assert(in2->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+        in2->bottom_type()->is_vect()->element_basic_type() == T_BYTE ||
+        in2->bottom_type()->is_vect()->element_basic_type() == T_SHORT, "");
+    }
+  }
   virtual int Opcode() const;
-  virtual const Type* bottom_type() const { return TypeInt::INT; }
+  virtual const Type* bottom_type() const {
+    if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT)
+      return TypeInt::INT;
+    else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE)
+      return TypeInt::BYTE;
+    else
+      return TypeInt::SHORT;
+  }
   virtual uint ideal_reg() const { return Op_RegI; }
 };
 

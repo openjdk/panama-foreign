@@ -659,6 +659,28 @@ public class Byte512VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Byte512VectorTests::subAll);
     }
+    static byte mulAll(byte[] a, int idx) {
+        byte res = 1;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res *= a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "byteUnaryOpProvider")
+    static void mulAllByte512VectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ByteVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.mulAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Byte512VectorTests::mulAll);
+    }
     static byte minAll(byte[] a, int idx) {
         byte res = Byte.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

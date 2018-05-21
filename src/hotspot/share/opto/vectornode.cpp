@@ -698,8 +698,16 @@ int ReductionNode::opcode(int opc, BasicType bt) {
       vopc = Op_AddReductionVD;
       break;
     case Op_MulI:
-      assert(bt == T_INT, "must be");
-      vopc = Op_MulReductionVI;
+      switch (bt) {
+        case T_BOOLEAN:
+        case T_CHAR: return 0;
+        case T_BYTE:
+        case T_SHORT:
+        case T_INT:
+          vopc = Op_MulReductionVI;
+          break;
+        default:          ShouldNotReachHere(); return 0;
+      }
       break;
     case Op_MulL:
       assert(bt == T_LONG, "must be");

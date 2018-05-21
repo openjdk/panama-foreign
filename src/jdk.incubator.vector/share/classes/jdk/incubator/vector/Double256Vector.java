@@ -476,6 +476,32 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         return Double.longBitsToDouble(bits);
     }
 
+    @Override
+    @ForceInline
+    public double minAll() {
+        long bits = (long) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MIN, Double256Vector.class, double.class, LENGTH,
+                                this,
+                                v -> {
+                                    double r = v.rOp(Double.MAX_VALUE , (i, a, b) -> (double) ((a < b) ? a : b));
+                                    return (long)Double.doubleToLongBits(r);
+                                });
+        return Double.longBitsToDouble(bits);
+    }
+
+    @Override
+    @ForceInline
+    public double maxAll() {
+        long bits = (long) VectorIntrinsics.reductionCoerced(
+                                VECTOR_OP_MAX, Double256Vector.class, double.class, LENGTH,
+                                this,
+                                v -> {
+                                    double r = v.rOp(Double.MIN_VALUE , (i, a, b) -> (double) ((a > b) ? a : b));
+                                    return (long)Double.doubleToLongBits(r);
+                                });
+        return Double.longBitsToDouble(bits);
+    }
+
 
     @Override
     @ForceInline
@@ -505,32 +531,6 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
     @ForceInline
     public double maxAll(Mask<Double, Shapes.S256Bit> m) {
         return blend(SPECIES.broadcast(Double.MIN_VALUE), m).maxAll();
-    }
-
-    @Override
-    @ForceInline
-    public double minAll() {
-        long bits = (long) VectorIntrinsics.reductionCoerced(
-                                VECTOR_OP_MIN, Double256Vector.class, double.class, LENGTH,
-                                this,
-                                v -> {
-                                    double r = v.rOp(Double.MAX_VALUE , (i, a, b) -> (double) ((a < b) ? a : b));
-                                    return (long)Double.doubleToLongBits(r);
-                                });
-        return Double.longBitsToDouble(bits);
-    }
-
-    @Override
-    @ForceInline
-    public double maxAll() {
-        long bits = (long) VectorIntrinsics.reductionCoerced(
-                                VECTOR_OP_MAX, Double256Vector.class, double.class, LENGTH,
-                                this,
-                                v -> {
-                                    double r = v.rOp(Double.MIN_VALUE , (i, a, b) -> (double) ((a > b) ? a : b));
-                                    return (long)Double.doubleToLongBits(r);
-                                });
-        return Double.longBitsToDouble(bits);
     }
 
     // Memory operations

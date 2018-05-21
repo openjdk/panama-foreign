@@ -507,6 +507,28 @@ public class Double64VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Double64VectorTests::subAll);
     }
+    static double mulAll(double[] a, int idx) {
+        double res = 1;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res *= a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void mulAllDouble64VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              DoubleVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.mulAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Double64VectorTests::mulAll);
+    }
     static double minAll(double[] a, int idx) {
         double res = Double.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

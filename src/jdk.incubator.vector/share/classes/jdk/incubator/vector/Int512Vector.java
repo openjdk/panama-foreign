@@ -511,7 +511,6 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
         return blend(SPECIES.broadcast((int) -1), m).andAll();
     }
 
-
     @Override
     @ForceInline
     public int minAll() {

@@ -434,7 +434,6 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         return blend(SPECIES.broadcast((byte) -1), m).andAll();
     }
 
-
     @Override
     @ForceInline
     public byte minAll() {
@@ -451,6 +450,15 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
             VECTOR_OP_MAX, Byte64Vector.class, byte.class, LENGTH,
             this,
             v -> (long) v.rOp(Byte.MIN_VALUE , (i, a, b) -> (byte) ((a > b) ? a : b)));
+    }
+
+    @Override
+    @ForceInline
+    public byte mulAll() {
+        return (byte) VectorIntrinsics.reductionCoerced(
+            VECTOR_OP_MUL, Byte64Vector.class, byte.class, LENGTH,
+            this,
+            v -> (long) v.rOp((byte) 1, (i, a, b) -> (byte) (a * b)));
     }
 
     @Override

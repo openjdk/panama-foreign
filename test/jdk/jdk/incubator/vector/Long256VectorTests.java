@@ -659,6 +659,28 @@ public class Long256VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Long256VectorTests::subAll);
     }
+    static long mulAll(long[] a, int idx) {
+        long res = 1;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res *= a[i];
+        }
+
+        return res;
+    }
+    @Test(dataProvider = "longUnaryOpProvider")
+    static void mulAllLong256VectorTests(IntFunction<long[]> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              LongVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+              r[i] = av.mulAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, Long256VectorTests::mulAll);
+    }
     static long minAll(long[] a, int idx) {
         long res = Long.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {

@@ -139,6 +139,7 @@ gen_reduction_op "orAll" "|" $template_file "BITWISE" "0"
 gen_reduction_op "xorAll" "^" $template_file "BITWISE" "0"
 gen_reduction_op "addAll" "+" $template_file "" "0"
 gen_reduction_op "subAll" "-" $template_file "" "0"
+gen_reduction_op "mulAll" "*" $template_file "" "1"
 gen_reduction_op_min "minAll" "" $template_file "" "MAX_VALUE"
 gen_reduction_op_max "maxAll" "" $template_file "" "MIN_VALUE"
 

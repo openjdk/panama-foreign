@@ -511,7 +511,6 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         return blend(SPECIES.broadcast((int) -1), m).andAll();
     }
 
-
     @Override
     @ForceInline
     public int minAll() {

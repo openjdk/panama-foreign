@@ -491,7 +491,6 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         return blend(SPECIES.broadcast((long) -1), m).andAll();
     }
 
-
     @Override
     @ForceInline
     public long minAll() {
