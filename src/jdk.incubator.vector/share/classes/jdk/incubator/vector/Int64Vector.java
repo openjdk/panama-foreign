@@ -473,30 +473,36 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
     @Override
     @ForceInline
     public Int64Vector shiftL(Vector<Integer,Shapes.S64Bit> s) {
-        Int64Vector v = (Int64Vector)s;
+        Int64Vector shiftv = (Int64Vector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(species().broadcast(0x1f));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_LSHIFT, Int64Vector.class, int.class, LENGTH,
-            this, v,
+            this, shiftv,
             (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a << b)));
     }
 
     @Override
     @ForceInline
     public Int64Vector shiftR(Vector<Integer,Shapes.S64Bit> s) {
-        Int64Vector v = (Int64Vector)s;
+        Int64Vector shiftv = (Int64Vector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(species().broadcast(0x1f));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_URSHIFT, Int64Vector.class, int.class, LENGTH,
-            this, v,
+            this, shiftv,
             (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a >>> b)));
     }
 
     @Override
     @ForceInline
     public Int64Vector ashiftR(Vector<Integer,Shapes.S64Bit> s) {
-        Int64Vector v = (Int64Vector)s;
+        Int64Vector shiftv = (Int64Vector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(species().broadcast(0x1f));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_RSHIFT, Int64Vector.class, int.class, LENGTH,
-            this, v,
+            this, shiftv,
             (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a >> b)));
     }
     // Ternary operations

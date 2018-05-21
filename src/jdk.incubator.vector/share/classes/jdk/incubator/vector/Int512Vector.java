@@ -473,30 +473,36 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     @Override
     @ForceInline
     public Int512Vector shiftL(Vector<Integer,Shapes.S512Bit> s) {
-        Int512Vector v = (Int512Vector)s;
+        Int512Vector shiftv = (Int512Vector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(species().broadcast(0x1f));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_LSHIFT, Int512Vector.class, int.class, LENGTH,
-            this, v,
+            this, shiftv,
             (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a << b)));
     }
 
     @Override
     @ForceInline
     public Int512Vector shiftR(Vector<Integer,Shapes.S512Bit> s) {
-        Int512Vector v = (Int512Vector)s;
+        Int512Vector shiftv = (Int512Vector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(species().broadcast(0x1f));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_URSHIFT, Int512Vector.class, int.class, LENGTH,
-            this, v,
+            this, shiftv,
             (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a >>> b)));
     }
 
     @Override
     @ForceInline
     public Int512Vector ashiftR(Vector<Integer,Shapes.S512Bit> s) {
-        Int512Vector v = (Int512Vector)s;
+        Int512Vector shiftv = (Int512Vector)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(species().broadcast(0x1f));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_RSHIFT, Int512Vector.class, int.class, LENGTH,
-            this, v,
+            this, shiftv,
             (v1, v2) -> v1.bOp(v2,(i,a, b) -> (int) (a >> b)));
     }
     // Ternary operations

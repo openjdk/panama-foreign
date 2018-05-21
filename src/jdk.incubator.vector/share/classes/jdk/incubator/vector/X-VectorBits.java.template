@@ -579,30 +579,36 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     @ForceInline
     public $vectortype$ shiftL(Vector<$Boxtype$,Shapes.$shape$> s) {
-        $vectortype$ v = ($vectortype$)s;
+        $vectortype$ shiftv = ($vectortype$)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(species().broadcast({#if[int]?0x1f:0x3f}));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
+            this, shiftv,
             (v1, v2) -> v1.bOp(v2,(i,a, b) -> ($type$) (a << b)));
     }
 
     @Override
     @ForceInline
     public $vectortype$ shiftR(Vector<$Boxtype$,Shapes.$shape$> s) {
-        $vectortype$ v = ($vectortype$)s;
+        $vectortype$ shiftv = ($vectortype$)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(species().broadcast({#if[int]?0x1f:0x3f}));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
+            this, shiftv,
             (v1, v2) -> v1.bOp(v2,(i,a, b) -> ($type$) (a >>> b)));
     }
 
     @Override
     @ForceInline
     public $vectortype$ ashiftR(Vector<$Boxtype$,Shapes.$shape$> s) {
-        $vectortype$ v = ($vectortype$)s;
+        $vectortype$ shiftv = ($vectortype$)s;
+        // As per shift specification for Java, mask the shift count.
+        shiftv = shiftv.and(species().broadcast({#if[int]?0x1f:0x3f}));
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
-            this, v,
+            this, shiftv,
             (v1, v2) -> v1.bOp(v2,(i,a, b) -> ($type$) (a >> b)));
     }
 #end[intOrLong]
