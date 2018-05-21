@@ -688,7 +688,8 @@ public class Byte512VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "byteUnaryOpProvider")
+    }
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void minAllByte512VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
@@ -709,7 +710,8 @@ public class Byte512VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "byteUnaryOpProvider")
+    }
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void maxAllByte512VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];

@@ -536,7 +536,8 @@ public class Double64VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "doubleUnaryOpProvider")
+    }
+    @Test(dataProvider = "doubleUnaryOpProvider")
     static void minAllDouble64VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
@@ -557,7 +558,8 @@ public class Double64VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "doubleUnaryOpProvider")
+    }
+    @Test(dataProvider = "doubleUnaryOpProvider")
     static void maxAllDouble64VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];

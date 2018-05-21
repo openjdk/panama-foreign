@@ -688,7 +688,8 @@ public class Short128VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "shortUnaryOpProvider")
+    }
+    @Test(dataProvider = "shortUnaryOpProvider")
     static void minAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
@@ -709,7 +710,8 @@ public class Short128VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "shortUnaryOpProvider")
+    }
+    @Test(dataProvider = "shortUnaryOpProvider")
     static void maxAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];

@@ -536,7 +536,8 @@ public class Float128VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "floatUnaryOpProvider")
+    }
+    @Test(dataProvider = "floatUnaryOpProvider")
     static void minAllFloat128VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = new float[a.length];
@@ -557,7 +558,8 @@ public class Float128VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "floatUnaryOpProvider")
+    }
+    @Test(dataProvider = "floatUnaryOpProvider")
     static void maxAllFloat128VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = new float[a.length];

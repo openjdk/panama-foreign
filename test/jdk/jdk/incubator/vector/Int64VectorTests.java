@@ -688,7 +688,8 @@ public class Int64VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "intUnaryOpProvider")
+    }
+    @Test(dataProvider = "intUnaryOpProvider")
     static void minAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
@@ -709,7 +710,8 @@ public class Int64VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "intUnaryOpProvider")
+    }
+    @Test(dataProvider = "intUnaryOpProvider")
     static void maxAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];

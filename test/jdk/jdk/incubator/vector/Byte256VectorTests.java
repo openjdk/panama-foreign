@@ -688,7 +688,8 @@ public class Byte256VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "byteUnaryOpProvider")
+    }
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void minAllByte256VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
@@ -709,7 +710,8 @@ public class Byte256VectorTests extends AbstractVectorTest {
         }
 
         return res;
-    }    @Test(dataProvider = "byteUnaryOpProvider")
+    }
+    @Test(dataProvider = "byteUnaryOpProvider")
     static void maxAllByte256VectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
