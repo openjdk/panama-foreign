@@ -954,8 +954,9 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
          * @return a vector where the first lane element is set to the primitive
          * value {@code e}
          */
-        public ByteVector<S> single(byte e) {
-            return op(i -> i == 0 ? e : (byte) 0);
+        @ForceInline
+        public final ByteVector<S> single(byte e) {
+            return zero().with(0, e);
         }
 
         /**

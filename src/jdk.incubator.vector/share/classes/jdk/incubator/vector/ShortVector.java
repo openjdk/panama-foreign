@@ -955,8 +955,9 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
          * @return a vector where the first lane element is set to the primitive
          * value {@code e}
          */
-        public ShortVector<S> single(short e) {
-            return op(i -> i == 0 ? e : (short) 0);
+        @ForceInline
+        public final ShortVector<S> single(short e) {
+            return zero().with(0, e);
         }
 
         /**

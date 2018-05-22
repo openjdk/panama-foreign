@@ -1205,8 +1205,9 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * @return a vector where the first lane element is set to the primitive
          * value {@code e}
          */
-        public IntVector<S> single(int e) {
-            return op(i -> i == 0 ? e : (int) 0);
+        @ForceInline
+        public final IntVector<S> single(int e) {
+            return zero().with(0, e);
         }
 
         /**

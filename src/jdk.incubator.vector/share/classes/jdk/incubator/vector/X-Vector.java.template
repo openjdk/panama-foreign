@@ -1982,8 +1982,9 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
          * @return a vector where the first lane element is set to the primitive
          * value {@code e}
          */
-        public $abstractvectortype$<S> single($type$ e) {
-            return op(i -> i == 0 ? e : ($type$) 0);
+        @ForceInline
+        public final $abstractvectortype$<S> single($type$ e) {
+            return zero().with(0, e);
         }
 
         /**

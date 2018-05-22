@@ -1469,8 +1469,9 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
          * @return a vector where the first lane element is set to the primitive
          * value {@code e}
          */
-        public FloatVector<S> single(float e) {
-            return op(i -> i == 0 ? e : (float) 0);
+        @ForceInline
+        public final FloatVector<S> single(float e) {
+            return zero().with(0, e);
         }
 
         /**

@@ -1205,8 +1205,9 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
          * @return a vector where the first lane element is set to the primitive
          * value {@code e}
          */
-        public LongVector<S> single(long e) {
-            return op(i -> i == 0 ? e : (long) 0);
+        @ForceInline
+        public final LongVector<S> single(long e) {
+            return zero().with(0, e);
         }
 
         /**

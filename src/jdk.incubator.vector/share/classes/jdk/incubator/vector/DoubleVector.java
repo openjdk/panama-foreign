@@ -1469,8 +1469,9 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
          * @return a vector where the first lane element is set to the primitive
          * value {@code e}
          */
-        public DoubleVector<S> single(double e) {
-            return op(i -> i == 0 ? e : (double) 0);
+        @ForceInline
+        public final DoubleVector<S> single(double e) {
+            return zero().with(0, e);
         }
 
         /**
