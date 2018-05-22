@@ -1589,33 +1589,16 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
 #end[BITWISE]
 
     @Override
-    public void intoByteArray(byte[] a, int ix) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-        forEach((i, e) -> fb.put(e));
-    }
+    public abstract void intoByteArray(byte[] a, int ix);
 
     @Override
-    public void intoByteArray(byte[] a, int ix, Mask<$Boxtype$, S> m) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-        forEach((i, e) -> {
-            if (m.getElement(i))
-                fb.put(e);
-            else
-                fb.position(fb.position() + 1);
-        });
-    }
+    public abstract void intoByteArray(byte[] a, int ix, Mask<$Boxtype$, S> m);
 
     @Override
-    public void intoByteBuffer(ByteBuffer bb, int ix) {
-        forEach((i, a) -> bb.{#if[byte]?put:put$Type$}(ix + i * (species().elementSize() / 8), a));
-    }
+    public abstract void intoByteBuffer(ByteBuffer bb, int ix);
 
     @Override
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, S> m) {
-        forEach(m, (i, a) -> bb.{#if[byte]?put:put$Type$}(ix + i * (species().elementSize() / 8), a));
-    }
+    public abstract void intoByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, S> m);
 
 
     // Type specific horizontal reductions
@@ -1685,9 +1668,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the multiplication of all the lane elements of this vector
      */
-    public $type$ mulAll() {
-        return rOp(($type$) 1, (i, a, b) -> ($type$) (a * b));
-    }
+    public abstract $type$ mulAll();
 
     /**
      * Multiplies all lane elements of this vector, selecting lane elements
@@ -1870,7 +1851,8 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return an array containing the the lane elements of this vector
      */
     @ForceInline
-    public $type$[] toArray() {
+    public final $type$[] toArray() {
+        // @@@ could allocate without zeroing, see Unsafe.allocateUninitializedArray
         $type$[] a = new $type$[species().length()];
         intoArray(a, 0);
         return a;
@@ -1888,9 +1870,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @throws IndexOutOfBoundsException if {@code i < 0}, or
      * {@code i > a.length - this.length()}
      */
-    public void intoArray($type$[] a, int i) {
-        forEach((n, e) -> a[i + n] = e);
-    }
+    public abstract void intoArray($type$[] a, int i);
 
     /**
      * Stores this vector into an array starting at offset and using a mask.
@@ -1906,9 +1886,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * for any vector lane index {@code N} where the mask at lane {@code N}
      * is set {@code i >= a.length - N}
      */
-    public void intoArray($type$[] a, int i, Mask<$Boxtype$, S> m) {
-        forEach(m, (n, e) -> a[i + n] = e);
-    }
+    public abstract void intoArray($type$[] a, int i, Mask<$Boxtype$, S> m);
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -2065,9 +2043,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
          * @throws IndexOutOfBoundsException if {@code i < 0}, or
          * {@code i > a.length - this.length()}
          */
-        public $abstractvectortype$<S> fromArray($type$[] a, int i) {
-            return op(n -> a[i + n]);
-        }
+        public abstract $abstractvectortype$<S> fromArray($type$[] a, int i);
 
         /**
          * Loads a vector from an array starting at offset and using a mask.
@@ -2086,9 +2062,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
          * for any vector lane index {@code N} where the mask at lane {@code N}
          * is set {@code i > a.length - N}
          */
-        public $abstractvectortype$<S> fromArray($type$[] a, int i, Mask<$Boxtype$, S> m) {
-            return op(m, n -> a[i + n]);
-        }
+        public abstract $abstractvectortype$<S> fromArray($type$[] a, int i, Mask<$Boxtype$, S> m);
 
         /**
          * Loads a vector from an array using indexes obtained from an index
@@ -2141,35 +2115,16 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         }
 
         @Override
-        public $abstractvectortype$<S> fromByteArray(byte[] a, int ix) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-            return op(i -> fb.get());
-        }
+        public abstract $abstractvectortype$<S> fromByteArray(byte[] a, int ix);
 
         @Override
-        public $abstractvectortype$<S> fromByteArray(byte[] a, int ix, Mask<$Boxtype$, S> m) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-            return op(i -> {
-                if(m.getElement(i))
-                    return fb.get();
-                else {
-                    fb.position(fb.position() + 1);
-                    return ($type$) 0;
-                }
-            });
-        }
+        public abstract $abstractvectortype$<S> fromByteArray(byte[] a, int ix, Mask<$Boxtype$, S> m);
 
         @Override
-        public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            return op(i -> bb.{#if[byte]?get:get$Type$}(ix + i * (elementSize() / 8)));
-        }
+        public abstract $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, int ix);
 
         @Override
-        public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, S> m) {
-            return op(m, i -> bb.{#if[byte]?get:get$Type$}(ix + i * (elementSize() / 8)));
-        }
+        public abstract $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, S> m);
 
         @Override
         public <F, T extends Shape> $abstractvectortype$<S> reshape(Vector<F, T> o) {

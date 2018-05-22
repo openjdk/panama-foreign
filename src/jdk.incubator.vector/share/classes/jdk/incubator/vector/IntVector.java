@@ -814,33 +814,16 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     }
 
     @Override
-    public void intoByteArray(byte[] a, int ix) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        IntBuffer fb = bb.asIntBuffer();
-        forEach((i, e) -> fb.put(e));
-    }
+    public abstract void intoByteArray(byte[] a, int ix);
 
     @Override
-    public void intoByteArray(byte[] a, int ix, Mask<Integer, S> m) {
-        ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-        IntBuffer fb = bb.asIntBuffer();
-        forEach((i, e) -> {
-            if (m.getElement(i))
-                fb.put(e);
-            else
-                fb.position(fb.position() + 1);
-        });
-    }
+    public abstract void intoByteArray(byte[] a, int ix, Mask<Integer, S> m);
 
     @Override
-    public void intoByteBuffer(ByteBuffer bb, int ix) {
-        forEach((i, a) -> bb.putInt(ix + i * (species().elementSize() / 8), a));
-    }
+    public abstract void intoByteBuffer(ByteBuffer bb, int ix);
 
     @Override
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Integer, S> m) {
-        forEach(m, (i, a) -> bb.putInt(ix + i * (species().elementSize() / 8), a));
-    }
+    public abstract void intoByteBuffer(ByteBuffer bb, int ix, Mask<Integer, S> m);
 
 
     // Type specific horizontal reductions
@@ -910,9 +893,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the multiplication of all the lane elements of this vector
      */
-    public int mulAll() {
-        return rOp((int) 1, (i, a, b) -> (int) (a * b));
-    }
+    public abstract int mulAll();
 
     /**
      * Multiplies all lane elements of this vector, selecting lane elements
@@ -1093,7 +1074,8 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return an array containing the the lane elements of this vector
      */
     @ForceInline
-    public int[] toArray() {
+    public final int[] toArray() {
+        // @@@ could allocate without zeroing, see Unsafe.allocateUninitializedArray
         int[] a = new int[species().length()];
         intoArray(a, 0);
         return a;
@@ -1111,9 +1093,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @throws IndexOutOfBoundsException if {@code i < 0}, or
      * {@code i > a.length - this.length()}
      */
-    public void intoArray(int[] a, int i) {
-        forEach((n, e) -> a[i + n] = e);
-    }
+    public abstract void intoArray(int[] a, int i);
 
     /**
      * Stores this vector into an array starting at offset and using a mask.
@@ -1129,9 +1109,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * for any vector lane index {@code N} where the mask at lane {@code N}
      * is set {@code i >= a.length - N}
      */
-    public void intoArray(int[] a, int i, Mask<Integer, S> m) {
-        forEach(m, (n, e) -> a[i + n] = e);
-    }
+    public abstract void intoArray(int[] a, int i, Mask<Integer, S> m);
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -1274,9 +1252,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * @throws IndexOutOfBoundsException if {@code i < 0}, or
          * {@code i > a.length - this.length()}
          */
-        public IntVector<S> fromArray(int[] a, int i) {
-            return op(n -> a[i + n]);
-        }
+        public abstract IntVector<S> fromArray(int[] a, int i);
 
         /**
          * Loads a vector from an array starting at offset and using a mask.
@@ -1295,9 +1271,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * for any vector lane index {@code N} where the mask at lane {@code N}
          * is set {@code i > a.length - N}
          */
-        public IntVector<S> fromArray(int[] a, int i, Mask<Integer, S> m) {
-            return op(m, n -> a[i + n]);
-        }
+        public abstract IntVector<S> fromArray(int[] a, int i, Mask<Integer, S> m);
 
         /**
          * Loads a vector from an array using indexes obtained from an index
@@ -1350,35 +1324,16 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         }
 
         @Override
-        public IntVector<S> fromByteArray(byte[] a, int ix) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            IntBuffer fb = bb.asIntBuffer();
-            return op(i -> fb.get());
-        }
+        public abstract IntVector<S> fromByteArray(byte[] a, int ix);
 
         @Override
-        public IntVector<S> fromByteArray(byte[] a, int ix, Mask<Integer, S> m) {
-            ByteBuffer bb = ByteBuffer.wrap(a, ix, a.length - ix).order(ByteOrder.nativeOrder());
-            IntBuffer fb = bb.asIntBuffer();
-            return op(i -> {
-                if(m.getElement(i))
-                    return fb.get();
-                else {
-                    fb.position(fb.position() + 1);
-                    return (int) 0;
-                }
-            });
-        }
+        public abstract IntVector<S> fromByteArray(byte[] a, int ix, Mask<Integer, S> m);
 
         @Override
-        public IntVector<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            return op(i -> bb.getInt(ix + i * (elementSize() / 8)));
-        }
+        public abstract IntVector<S> fromByteBuffer(ByteBuffer bb, int ix);
 
         @Override
-        public IntVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Integer, S> m) {
-            return op(m, i -> bb.getInt(ix + i * (elementSize() / 8)));
-        }
+        public abstract IntVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Integer, S> m);
 
         @Override
         public <F, T extends Shape> IntVector<S> reshape(Vector<F, T> o) {

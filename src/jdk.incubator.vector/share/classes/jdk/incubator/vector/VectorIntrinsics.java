@@ -4,11 +4,28 @@ import jdk.internal.HotSpotIntrinsicCandidate;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.*;
 
 /*non-public*/ class VectorIntrinsics {
-    private static final Unsafe U = Unsafe.getUnsafe();
+    static final Unsafe U = Unsafe.getUnsafe();
+
+    static final long BUFFER_ADDRESS
+            = U.objectFieldOffset(Buffer.class, "address");
+
+    // Buffer.limit
+    static final long BUFFER_LIMIT
+            = U.objectFieldOffset(Buffer.class, "limit");
+
+    // ByteBuffer.hb
+    static final long BYTE_BUFFER_HB
+            = U.objectFieldOffset(ByteBuffer.class, "hb");
+
+    // ByteBuffer.isReadOnly
+    static final long BYTE_BUFFER_IS_READ_ONLY
+            = U.objectFieldOffset(ByteBuffer.class, "isReadOnly");
 
     // Unary
     static final int VECTOR_OP_ABS  = 0;
@@ -73,9 +90,11 @@ import java.util.function.*;
     /* ============================================================================ */
 
     @HotSpotIntrinsicCandidate
-    static <V> V broadcastCoerced(Class<V> vectorClass, Class<?> elementType, int vlen,
+    static
+    <VM>
+    VM broadcastCoerced(Class<VM> vmClass, Class<?> elementType, int length,
                                   long bits,
-                                  LongFunction<V> defaultImpl) {
+                                  LongFunction<VM> defaultImpl) {
         return defaultImpl.apply(bits);
     }
 
@@ -84,7 +103,7 @@ import java.util.function.*;
     @HotSpotIntrinsicCandidate
     static
     <V extends Vector<?,?>>
-    long reductionCoerced(int oprId, Class<?> vectorClass, Class<?> elementType, int vlen,
+    long reductionCoerced(int oprId, Class<?> vectorClass, Class<?> elementType, int length,
                           V v,
                           Function<V,Long> defaultImpl) {
         return defaultImpl.apply(v);
@@ -122,19 +141,23 @@ import java.util.function.*;
     /* ============================================================================ */
 
     @HotSpotIntrinsicCandidate
-    static <V> V unaryOp(int oprId, Class<V> vectorClass, Class<?> elementType, int vlen,
-                         V v1, /*Vector.Mask<E,S> m,*/
-                         Function<V,V> defaultImpl) {
-        return defaultImpl.apply(v1);
+    static
+    <VM>
+    VM unaryOp(int oprId, Class<VM> vmClass, Class<?> elementType, int length,
+               VM vm, /*Vector.Mask<E,S> m,*/
+               Function<VM, VM> defaultImpl) {
+        return defaultImpl.apply(vm);
     }
 
     /* ============================================================================ */
 
     @HotSpotIntrinsicCandidate
-    static <V> V binaryOp(int oprId, Class<? extends V> vectorClass, Class<?> elementType, int vlen,
-                          V v1, V v2, /*Vector.Mask<E,S> m,*/
-                          BiFunction<V,V,V> defaultImpl) {
-        return defaultImpl.apply(v1, v2);
+    static
+    <VM>
+    VM binaryOp(int oprId, Class<? extends VM> vmClass, Class<?> elementType, int length,
+                VM vm1, VM vm2, /*Vector.Mask<E,S> m,*/
+                BiFunction<VM, VM, VM> defaultImpl) {
+        return defaultImpl.apply(vm1, vm2);
     }
 
     /* ============================================================================ */
@@ -145,47 +168,60 @@ import java.util.function.*;
 
     @SuppressWarnings("unchecked")
     @HotSpotIntrinsicCandidate
-    static <V> V ternaryOp(int oprId, Class<V> vectorClass, Class<?> elementType, int vlen,
-                           V v1, V v2, V v3, /*Vector.Mask<E,S> m,*/
-                           TernaryOperation<V> defaultImpl) {
-        return defaultImpl.apply(v1, v2, v3);
+    static
+    <VM>
+    VM ternaryOp(int oprId, Class<VM> vmClass, Class<?> elementType, int length,
+                 VM vm1, VM vm2, VM vm3, /*Vector.Mask<E,S> m,*/
+                 TernaryOperation<VM> defaultImpl) {
+        return defaultImpl.apply(vm1, vm2, vm3);
     }
 
     /* ============================================================================ */
 
     // Memory operations
 
-    // FIXME: arrays are erased to Object
-
-    @HotSpotIntrinsicCandidate
-    static
-    <V extends Vector<?,?>>
-    V load(Class<?> vectorClass, Class<?> elementType, int vlen,
-           Object array, int index, /* Vector.Mask<E,S> m*/
-           BiFunction<Object, Integer, V> defaultImpl) {
-        return defaultImpl.apply(array, index);
+    interface LoadVectorOperation<C, V extends Vector<?,?>> {
+        V load(C container, int index);
     }
 
-    interface StoreVectorOperation<V extends Vector<?,?>> {
-        void store(Object array, int index, V v);
-    }
-
+    // @@@ Support endianness, pass in as argument to intrinsic
     @HotSpotIntrinsicCandidate
     static
-    <V extends Vector<?,?>>
-    void store(Class<?> vectorClass, Class<?> elementType, int vlen,
-               Object array, int index, V v, /*Vector.Mask<E,S> m*/
-               StoreVectorOperation<V> defaultImpl) {
-        defaultImpl.store(array, index, v);
+    <C, V extends Vector<?,?>>
+    V load(Class<?> vectorClass, Class<?> elementType, int length,
+           Object base, long offset,    // Unsafe addressing
+           // Vector.Mask<E,S> m,
+           C container, int index,      // Arguments for default implementation
+           LoadVectorOperation<C, V> defaultImpl) {
+        return defaultImpl.load(container, index);
+    }
+
+    interface StoreVectorOperation<C, V extends Vector<?,?>> {
+        void store(C container, int index, V v);
+    }
+
+    // @@@ Support endianness, pass in as argument to intrinsic
+    @HotSpotIntrinsicCandidate
+    static
+    <C, V extends Vector<?,?>>
+    void store(Class<?> vectorClass, Class<?> elementType, int length,
+               Object base, long offset,    // Unsafe addressing
+               V v,
+               // Vector.Mask<E,S> m,
+               C container, int index,      // Arguments for default implementation
+               StoreVectorOperation<C, V> defaultImpl) {
+        defaultImpl.store(container, index, v);
     }
 
     /* ============================================================================ */
 
     @HotSpotIntrinsicCandidate
-    static <V> boolean test(int cond, Class<?> vectorClass, Class<?> elementType, int vlen,
-                            V v1, V v2,
-                            BiFunction<V, V, Boolean> defaultImpl) {
-        return defaultImpl.apply(v1, v2);
+    static
+    <VM>
+    boolean test(int cond, Class<?> vmClass, Class<?> elementType, int length,
+                 VM vm1, VM vm2,
+                 BiFunction<VM, VM, Boolean> defaultImpl) {
+        return defaultImpl.apply(vm1, vm2);
     }
 
     /* ============================================================================ */
@@ -198,7 +234,7 @@ import java.util.function.*;
     static <V extends Vector<E,S>,
             M extends Vector.Mask<E,S>,
             S extends Vector.Shape, E>
-    M compare(int cond, Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int vlen,
+    M compare(int cond, Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int length,
               V v1, V v2,
               VectorCompareOp<V,M> defaultImpl) {
         return defaultImpl.apply(v1, v2);
@@ -217,7 +253,7 @@ import java.util.function.*;
     <V extends Vector<E,S>,
      M extends Vector.Mask<E,S>,
      S extends Vector.Shape, E>
-    V blend(Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int vlen,
+    V blend(Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int length,
             V v1, V v2, M m,
             VectorBlendOp<V,M,S,E> defaultImpl) {
         return defaultImpl.apply(v1, v2, m);
@@ -232,7 +268,7 @@ import java.util.function.*;
     @HotSpotIntrinsicCandidate
     static
     <V extends Vector<?,?>>
-    V broadcastInt(int opr, Class<V> vectorClass, Class<?> elementType, int vlen,
+    V broadcastInt(int opr, Class<V> vectorClass, Class<?> elementType, int length,
                    V v, int i,
                    VectorBroadcastIntOp<V> defaultImpl) {
         return defaultImpl.apply(v, i);

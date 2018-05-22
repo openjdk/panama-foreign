@@ -7368,15 +7368,19 @@ bool LibraryCallKit::inline_vector_broadcast_coerced() {
   return true;
 }
 
-//    <V extends Vector<?,?>>
+//    <C, V extends Vector<?,?>>
 //    V load(Class<?> vectorClass, Class<?> elementType, int vlen,
-//           Object array, int index, /* Vector.Mask<E,S> m*/
-//           BiFunction<Object, Integer, V> defaultImpl) {
+//           Object base, long offset,
+//           /* Vector.Mask<E,S> m*/
+//           Object container, int index,
+//           LoadVectorOperation<C, V> defaultImpl) {
 //
-//    <V extends Vector<?,?>>
+//    <C, V extends Vector<?,?>>
 //    void store(Class<?> vectorClass, Class<?> elementType, int vlen,
-//               Object array, int index, V v, /*Vector.Mask<E,S> m*/
-//               StoreVectorOperation<V> defaultImpl) {
+//               Object base, long offset,
+//               V v, /*Vector.Mask<E,S> m*/
+//               Object container, int index,
+//               StoreVectorOperation<C, V> defaultImpl) {
 
 bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
   const TypeInstPtr* vector_klass = gvn().type(argument(0))->is_instptr();
@@ -7399,20 +7403,19 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
     return false; // not supported
   }
 
-  Node* arr = argument(3);
-  Node* idx = argument(4);
+  Node* base = argument(3);
+  Node* offset = ConvL2X(argument(4));
+  Node* addr = make_unsafe_address(base, offset, elem_bt, true);
 
-  const TypeAryPtr* arr_type = gvn().type(arr)->isa_aryptr();
-  if (arr_type == NULL) {
-    return false; // should be an array
-  }
+  const TypePtr *addr_type = gvn().type(addr)->isa_ptr();
+  const TypeAryPtr* arr_type = addr_type->isa_aryptr();
 
   // Now handle special case where load/store happens from/to byte array but element type is not byte.
-  bool using_byte_array = arr_type->elem()->array_element_basic_type() == T_BYTE && elem_bt != T_BYTE;
+  bool using_byte_array = arr_type != NULL && arr_type->elem()->array_element_basic_type() == T_BYTE && elem_bt != T_BYTE;
 
   // It must be the case that if it is not special byte array case, there is consistency between
   // array and vector element types.
-  if (!using_byte_array && elem_bt != arr_type->elem()->array_element_basic_type()) {
+  if (!using_byte_array && arr_type != NULL && elem_bt != arr_type->elem()->array_element_basic_type()) {
     return false;
   }
 
@@ -7424,14 +7427,11 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
     }
   }
 
-  Node* adr = array_element_address(arr, idx, using_byte_array ? T_BYTE : elem_bt);
-  const TypePtr* adr_type = adr->bottom_type()->is_ptr();
-
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
   if (is_store) {
-    Node* val = unbox_vector(argument(5), vbox_type, elem_bt, num_elem);
+    Node* val = unbox_vector(argument(6), vbox_type, elem_bt, num_elem);
     if (val == NULL) {
       return false; // operand unboxing failed
     }
@@ -7445,19 +7445,19 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
       val = gvn().transform(new VectorReinterpretNode(val, val->bottom_type()->is_vect(), to_vect_type));
     }
 
-    Node* vstore = gvn().transform(StoreVectorNode::make(0, control(), memory(adr), adr, adr_type, val, store_num_elem));
-    set_memory(vstore, adr_type);
+    Node* vstore = gvn().transform(StoreVectorNode::make(0, control(), memory(addr), addr, addr_type, val, store_num_elem));
+    set_memory(vstore, addr_type);
     set_vector_result(vstore, false);
   } else {
     // When using byte array, we need to load as byte then reinterpret the value. Otherwise, do a simple vector load.
     Node* vload = NULL;
     if (using_byte_array) {
       int load_num_elem = num_elem * type2aelembytes(elem_bt);
-      vload = gvn().transform(LoadVectorNode::make(0, control(), memory(adr), adr, adr_type, load_num_elem, T_BYTE));
+      vload = gvn().transform(LoadVectorNode::make(0, control(), memory(addr), addr, addr_type, load_num_elem, T_BYTE));
       const TypeVect* to_vect_type = TypeVect::make(elem_bt, num_elem);
       vload = gvn().transform(new VectorReinterpretNode(vload, vload->bottom_type()->is_vect(), to_vect_type));
     } else {
-      vload = gvn().transform(LoadVectorNode::make(0, control(), memory(adr), adr, adr_type, num_elem, elem_bt));
+      vload = gvn().transform(LoadVectorNode::make(0, control(), memory(addr), addr, addr_type, num_elem, elem_bt));
     }
 
     Node* box = box_vector(vload, vbox_type, elem_bt, num_elem);

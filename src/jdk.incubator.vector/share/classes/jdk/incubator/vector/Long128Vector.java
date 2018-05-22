@@ -27,8 +27,11 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.LongBuffer;
+import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
+
+import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -281,20 +284,20 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public Long128Vector abs() {
-        return (Long128Vector) VectorIntrinsics.unaryOp(
+        return VectorIntrinsics.unaryOp(
             VECTOR_OP_ABS, Long128Vector.class, long.class, LENGTH,
             this,
-            v1 -> ((Long128Vector)v1).uOp((i, a) -> (long) Math.abs(a)));
+            v1 -> v1.uOp((i, a) -> (long) Math.abs(a)));
     }
 
 
     @Override
     @ForceInline
     public Long128Vector not() {
-        return (Long128Vector) VectorIntrinsics.unaryOp(
+        return VectorIntrinsics.unaryOp(
             VECTOR_OP_NOT, Long128Vector.class, long.class, LENGTH,
             this,
-            v1 -> ((Long128Vector)v1).uOp((i, a) -> (long) ~a));
+            v1 -> v1.uOp((i, a) -> (long) ~a));
     }
     // Binary operations
 
@@ -303,10 +306,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     public Long128Vector add(Vector<Long,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_ADD, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a + b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long)(a + b)));
     }
 
     @Override
@@ -314,10 +317,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     public Long128Vector sub(Vector<Long,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_SUB, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a - b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long)(a - b)));
     }
 
     @Override
@@ -325,10 +328,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     public Long128Vector mul(Vector<Long,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_MUL, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a * b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long)(a * b)));
     }
 
     @Override
@@ -347,10 +350,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     public Long128Vector max(Vector<Long,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
         }
 
 
@@ -360,10 +363,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     public Long128Vector and(Vector<Long,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_AND, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a & b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long)(a & b)));
     }
 
     @Override
@@ -371,10 +374,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     public Long128Vector or(Vector<Long,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_OR, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a | b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long)(a | b)));
     }
 
     @Override
@@ -382,10 +385,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     public Long128Vector xor(Vector<Long,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_XOR, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2, (i, a, b) -> (long)(a ^ b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long)(a ^ b)));
     }
 
     @Override
@@ -409,7 +412,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public Long128Vector shiftL(int s) {
-        return (Long128Vector) VectorIntrinsics.broadcastInt(
+        return VectorIntrinsics.broadcastInt(
             VECTOR_OP_LSHIFT, Long128Vector.class, long.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> (long) (a << i)));
@@ -418,7 +421,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public Long128Vector shiftR(int s) {
-        return (Long128Vector) VectorIntrinsics.broadcastInt(
+        return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, Long128Vector.class, long.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> (long) (a >>> i)));
@@ -427,7 +430,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public Long128Vector aShiftR(int s) {
-        return (Long128Vector) VectorIntrinsics.broadcastInt(
+        return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, Long128Vector.class, long.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> (long) (a >> i)));
@@ -437,30 +440,30 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     @ForceInline
     public Long128Vector shiftL(Vector<Long,Shapes.S128Bit> s) {
         Long128Vector v = (Long128Vector)s;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_LSHIFT, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2,(i,a, b) -> (long) (a << b)));
+            (v1, v2) -> v1.bOp(v2,(i,a, b) -> (long) (a << b)));
     }
 
     @Override
     @ForceInline
     public Long128Vector shiftR(Vector<Long,Shapes.S128Bit> s) {
         Long128Vector v = (Long128Vector)s;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_URSHIFT, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2,(i,a, b) -> (long) (a >>> b)));
+            (v1, v2) -> v1.bOp(v2,(i,a, b) -> (long) (a >>> b)));
     }
 
     @Override
     @ForceInline
     public Long128Vector ashiftR(Vector<Long,Shapes.S128Bit> s) {
         Long128Vector v = (Long128Vector)s;
-        return (Long128Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_RSHIFT, Long128Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long128Vector)v1).bOp(v2,(i,a, b) -> (long) (a >> b)));
+            (v1, v2) -> v1.bOp(v2,(i,a, b) -> (long) (a >> b)));
     }
     // Ternary operations
 
@@ -590,20 +593,24 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     // Memory operations
 
+    private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_LONG_INDEX_SCALE);
+
     @Override
     @ForceInline
     public void intoArray(long[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Long128Vector.class, long.class, LENGTH,
-                               a, ix, this,
-                               (arr, idx, v) -> v.forEach((i, a_) -> ((long[])arr)[idx + i] = a_));
+                               a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_LONG_BASE_OFFSET,
+                               this,
+                               a, ix,
+                               (arr, idx, v) -> v.forEach((i, e) -> arr[idx + i] = e));
     }
 
     @Override
     @ForceInline
-    public void intoArray(long[] a, int ax, Mask<Long, Shapes.S128Bit> m) {
-        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+    public final void intoArray(long[] a, int ax, Mask<Long, Shapes.S128Bit> m) {
+        // @@@ This can result in out of bounds errors for unset mask lanes
         Long128Vector oldVal = SPECIES.fromArray(a, ax);
         Long128Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -612,21 +619,24 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public void intoByteArray(byte[] a, int ix) {
+        // @@@ Endianess
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Long128Vector.class, long.class, LENGTH,
-                               a, ix, this,
-                               (arr, idx, v) -> {
-                                   byte[] tarr = (byte[])arr;
-                                   ByteBuffer bb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
-                                   LongBuffer fb = bb.asLongBuffer();
-                                   v.forEach((i, e) -> fb.put(e));
+                               a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
+                               this,
+                               a, ix,
+                               (c, idx, v) -> {
+                                   ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
+                                   LongBuffer tb = bbc.asLongBuffer();
+                                   v.forEach((i, e) -> tb.put(e));
                                });
     }
 
     @Override
     @ForceInline
-    public void intoByteArray(byte[] a, int ix, Mask<Long, Shapes.S128Bit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Long, Shapes.S128Bit> m) {
+        // @@@ This can result in out of bounds errors for unset mask lanes
         Long128Vector oldVal = SPECIES.fromByteArray(a, ix);
         Long128Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -635,25 +645,29 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-            int num_bytes = bitSize() / Byte.SIZE;
-            int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
-            VectorIntrinsics.store(Long128Vector.class, long.class, LENGTH,
-                                   bb.array(), ax, this,
-                                   (arr, idx, v) -> {
-                                       byte[] tarr = (byte[])arr;
-                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
-                                       LongBuffer fb = lbb.asLongBuffer();
-                                       v.forEach((i, e) -> fb.put(e));
-                                   });
-        } else {
-            super.intoByteBuffer(bb, ix);
+        // @@@ Endianess
+        if (bb.order() != ByteOrder.nativeOrder()) {
+            throw new IllegalArgumentException();
         }
+        if (bb.isReadOnly()) {
+            throw new ReadOnlyBufferException();
+        }
+        ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
+        VectorIntrinsics.store(Long128Vector.class, long.class, LENGTH,
+                               U.getObject(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
+                               this,
+                               bb, ix,
+                               (c, idx, v) -> {
+                                   ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
+                                   LongBuffer tb = bbc.asLongBuffer();
+                                   v.forEach((i, e) -> tb.put(e));
+                               });
     }
 
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Long, Shapes.S128Bit> m) {
+        // @@@ This can result in out of bounds errors for unset mask lanes
         Long128Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
         Long128Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -671,6 +685,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;
 
+        // @@@ Use equal op
         Long128Vector that = (Long128Vector) o;
         return Arrays.equals(this.getElements(), that.getElements());
     }
@@ -701,7 +716,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
-        return (Long128Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_eq, Long128Vector.class, Long128Mask.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
@@ -713,7 +728,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
-        return (Long128Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_ne, Long128Vector.class, Long128Mask.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
@@ -725,7 +740,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
-        return (Long128Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_lt, Long128Vector.class, Long128Mask.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
@@ -737,7 +752,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
-        return (Long128Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_le, Long128Vector.class, Long128Mask.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
@@ -761,7 +776,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
-        return (Long128Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_ge, Long128Vector.class, Long128Mask.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
@@ -879,7 +894,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         Long128Vector v = (Long128Vector)o1;
         Long128Mask   m = (Long128Mask)o2;
 
-        return (Long128Vector) VectorIntrinsics.blend(
+        return VectorIntrinsics.blend(
             Long128Vector.class, Long128Mask.class, long.class, LENGTH,
             this, v, m,
             (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
@@ -1207,9 +1222,10 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         public Long128Vector scalars(long... es) {
             Objects.requireNonNull(es);
             int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
-            return (Long128Vector) VectorIntrinsics.load(Long128Vector.class, long.class, LENGTH,
-                                                        es, ix,
-                                                        (arr, idx) -> super.fromArray((long[]) arr, idx));
+            return VectorIntrinsics.load(Long128Vector.class, long.class, LENGTH,
+                                         es, Unsafe.ARRAY_LONG_BASE_OFFSET,
+                                         es, ix,
+                                         (c, idx) -> op(n -> c[idx + n]));
         }
 
         @Override
@@ -1217,50 +1233,64 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         public Long128Vector fromArray(long[] a, int ix) {
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
-            return (Long128Vector) VectorIntrinsics.load(Long128Vector.class, long.class, LENGTH,
-                                                        a, ix,
-                                                        (arr, idx) -> super.fromArray((long[]) arr, idx));
+            return VectorIntrinsics.load(Long128Vector.class, long.class, LENGTH,
+                                         a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_LONG_BASE_OFFSET,
+                                         a, ix,
+                                         (c, idx) -> op(n -> c[idx + n]));
         }
 
         @Override
         @ForceInline
         public Long128Vector fromArray(long[] a, int ax, Mask<Long, Shapes.S128Bit> m) {
-            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
+            // @@@ This can result in out of bounds errors for unset mask lanes
+            return zero().blend(fromArray(a, ax), m);
         }
 
         @Override
         @ForceInline
         public Long128Vector fromByteArray(byte[] a, int ix) {
+            // @@@ Endianess
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
-            return (Long128Vector) VectorIntrinsics.load(Long128Vector.class, long.class, LENGTH,
-                                                        a, ix,
-                                                        (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+            return VectorIntrinsics.load(Long128Vector.class, long.class, LENGTH,
+                                         a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
+                                         a, ix,
+                                         (c, idx) -> {
+                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                             LongBuffer tb = bbc.asLongBuffer();
+                                             return op(i -> tb.get());
+                                         });
         }
 
         @Override
         @ForceInline
         public Long128Vector fromByteArray(byte[] a, int ix, Mask<Long, Shapes.S128Bit> m) {
+            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteArray(a, ix), m);
         }
 
         @Override
         @ForceInline
         public Long128Vector fromByteBuffer(ByteBuffer bb, int ix) {
-            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-                int num_bytes = bitSize() / Byte.SIZE;
-                int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
-                return (Long128Vector) VectorIntrinsics.load(Long128Vector.class, long.class, LENGTH,
-                                                            bb.array(), ax,
-                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
-            } else {
-                return (Long128Vector)super.fromByteBuffer(bb, ix);
+            // @@@ Endianess
+            if (bb.order() != ByteOrder.nativeOrder()) {
+                throw new IllegalArgumentException();
             }
+            ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
+            return VectorIntrinsics.load(Long128Vector.class, long.class, LENGTH,
+                                         U.getObject(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
+                                         bb, ix,
+                                         (c, idx) -> {
+                                             ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
+                                             LongBuffer tb = bbc.asLongBuffer();
+                                             return op(i -> tb.get());
+                                         });
         }
 
         @Override
         @ForceInline
         public Long128Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Long, Shapes.S128Bit> m) {
+            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 

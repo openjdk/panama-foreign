@@ -27,8 +27,11 @@ package jdk.incubator.vector;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
+import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
+
+import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
@@ -299,19 +302,19 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     @Override
     @ForceInline
     public Double512Vector abs() {
-        return (Double512Vector) VectorIntrinsics.unaryOp(
+        return VectorIntrinsics.unaryOp(
             VECTOR_OP_ABS, Double512Vector.class, double.class, LENGTH,
             this,
-            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.abs(a)));
+            v1 -> v1.uOp((i, a) -> (double) Math.abs(a)));
     }
 
     @Override
     @ForceInline
     public Double512Vector neg() {
-        return (Double512Vector) VectorIntrinsics.unaryOp(
+        return VectorIntrinsics.unaryOp(
             VECTOR_OP_NEG, Double512Vector.class, double.class, LENGTH,
             this,
-            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) -a));
+            v1 -> v1.uOp((i, a) -> (double) -a));
     }
 
     @Override
@@ -319,19 +322,19 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     public Double512Vector div(Vector<Double,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
-        return (Double512Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_DIV, Double512Vector.class, double.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a / b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double)(a / b)));
     }
 
     @Override
     @ForceInline
     public Double512Vector sqrt() {
-        return (Double512Vector) VectorIntrinsics.unaryOp(
+        return VectorIntrinsics.unaryOp(
             VECTOR_OP_SQRT, Double512Vector.class, double.class, LENGTH,
             this,
-            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.sqrt((double) a)));
+            v1 -> v1.uOp((i, a) -> (double) Math.sqrt((double) a)));
     }
 
     // Binary operations
@@ -341,10 +344,10 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     public Double512Vector add(Vector<Double,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
-        return (Double512Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_ADD, Double512Vector.class, double.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a + b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double)(a + b)));
     }
 
     @Override
@@ -352,10 +355,10 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     public Double512Vector sub(Vector<Double,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
-        return (Double512Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_SUB, Double512Vector.class, double.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a - b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double)(a - b)));
     }
 
     @Override
@@ -363,10 +366,10 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     public Double512Vector mul(Vector<Double,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
-        return (Double512Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_MUL, Double512Vector.class, double.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(a * b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double)(a * b)));
     }
 
     @Override
@@ -385,10 +388,10 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     public Double512Vector max(Vector<Double,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
-        return (Double512Vector) VectorIntrinsics.binaryOp(
+        return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, Double512Vector.class, double.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double) ((a > b) ? a : b)));
         }
 
     @Override
@@ -429,7 +432,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         Objects.requireNonNull(o2);
         Double512Vector v1 = (Double512Vector)o1;
         Double512Vector v2 = (Double512Vector)o2;
-        return (Double512Vector) VectorIntrinsics.ternaryOp(
+        return VectorIntrinsics.ternaryOp(
             VECTOR_OP_FMA, Double512Vector.class, double.class, LENGTH,
             this, v1, v2,
             (w1, w2, w3) -> w1.tOp(w2, w3, (i, a, b, c) -> Math.fma(a, b, c)));
@@ -535,20 +538,24 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     // Memory operations
 
+    private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+
     @Override
     @ForceInline
     public void intoArray(double[] a, int ix) {
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
         VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
-                               a, ix, this,
-                               (arr, idx, v) -> v.forEach((i, a_) -> ((double[])arr)[idx + i] = a_));
+                               a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
+                               this,
+                               a, ix,
+                               (arr, idx, v) -> v.forEach((i, e) -> arr[idx + i] = e));
     }
 
     @Override
     @ForceInline
-    public void intoArray(double[] a, int ax, Mask<Double, Shapes.S512Bit> m) {
-        // TODO: use better default impl: forEach(m, (i, a_) -> a[ax + i] = a_);
+    public final void intoArray(double[] a, int ax, Mask<Double, Shapes.S512Bit> m) {
+        // @@@ This can result in out of bounds errors for unset mask lanes
         Double512Vector oldVal = SPECIES.fromArray(a, ax);
         Double512Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -557,21 +564,24 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     @Override
     @ForceInline
     public void intoByteArray(byte[] a, int ix) {
+        // @@@ Endianess
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
-                               a, ix, this,
-                               (arr, idx, v) -> {
-                                   byte[] tarr = (byte[])arr;
-                                   ByteBuffer bb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
-                                   DoubleBuffer fb = bb.asDoubleBuffer();
-                                   v.forEach((i, e) -> fb.put(e));
+                               a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
+                               this,
+                               a, ix,
+                               (c, idx, v) -> {
+                                   ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
+                                   DoubleBuffer tb = bbc.asDoubleBuffer();
+                                   v.forEach((i, e) -> tb.put(e));
                                });
     }
 
     @Override
     @ForceInline
-    public void intoByteArray(byte[] a, int ix, Mask<Double, Shapes.S512Bit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Double, Shapes.S512Bit> m) {
+        // @@@ This can result in out of bounds errors for unset mask lanes
         Double512Vector oldVal = SPECIES.fromByteArray(a, ix);
         Double512Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -580,25 +590,29 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-            int num_bytes = bitSize() / Byte.SIZE;
-            int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
-            VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
-                                   bb.array(), ax, this,
-                                   (arr, idx, v) -> {
-                                       byte[] tarr = (byte[])arr;
-                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
-                                       DoubleBuffer fb = lbb.asDoubleBuffer();
-                                       v.forEach((i, e) -> fb.put(e));
-                                   });
-        } else {
-            super.intoByteBuffer(bb, ix);
+        // @@@ Endianess
+        if (bb.order() != ByteOrder.nativeOrder()) {
+            throw new IllegalArgumentException();
         }
+        if (bb.isReadOnly()) {
+            throw new ReadOnlyBufferException();
+        }
+        ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
+        VectorIntrinsics.store(Double512Vector.class, double.class, LENGTH,
+                               U.getObject(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
+                               this,
+                               bb, ix,
+                               (c, idx, v) -> {
+                                   ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
+                                   DoubleBuffer tb = bbc.asDoubleBuffer();
+                                   v.forEach((i, e) -> tb.put(e));
+                               });
     }
 
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Double, Shapes.S512Bit> m) {
+        // @@@ This can result in out of bounds errors for unset mask lanes
         Double512Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
         Double512Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -616,6 +630,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;
 
+        // @@@ Use equal op
         Double512Vector that = (Double512Vector) o;
         return Arrays.equals(this.getElements(), that.getElements());
     }
@@ -646,7 +661,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
 
-        return (Double512Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_eq, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a == b));
@@ -658,7 +673,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
 
-        return (Double512Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_ne, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a != b));
@@ -670,7 +685,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
 
-        return (Double512Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_lt, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a < b));
@@ -682,7 +697,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
 
-        return (Double512Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_le, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a <= b));
@@ -706,7 +721,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
 
-        return (Double512Mask) VectorIntrinsics.compare(
+        return VectorIntrinsics.compare(
             BT_ge, Double512Vector.class, Double512Mask.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bTest(v2, (i, a, b) -> a >= b));
@@ -824,7 +839,7 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         Double512Vector v = (Double512Vector)o1;
         Double512Mask   m = (Double512Mask)o2;
 
-        return (Double512Vector) VectorIntrinsics.blend(
+        return VectorIntrinsics.blend(
             Double512Vector.class, Double512Mask.class, double.class, LENGTH,
             this, v, m,
             (v1, v2, m_) -> v1.bOp(v2, (i, a, b) -> m_.getElement(i) ? b : a));
@@ -1153,9 +1168,10 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         public Double512Vector scalars(double... es) {
             Objects.requireNonNull(es);
             int ix = VectorIntrinsics.checkIndex(0, es.length, LENGTH);
-            return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
-                                                        es, ix,
-                                                        (arr, idx) -> super.fromArray((double[]) arr, idx));
+            return VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
+                                         es, Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
+                                         es, ix,
+                                         (c, idx) -> op(n -> c[idx + n]));
         }
 
         @Override
@@ -1163,50 +1179,64 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
         public Double512Vector fromArray(double[] a, int ix) {
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
-            return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
-                                                        a, ix,
-                                                        (arr, idx) -> super.fromArray((double[]) arr, idx));
+            return VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
+                                         a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
+                                         a, ix,
+                                         (c, idx) -> op(n -> c[idx + n]));
         }
 
         @Override
         @ForceInline
         public Double512Vector fromArray(double[] a, int ax, Mask<Double, Shapes.S512Bit> m) {
-            return zero().blend(fromArray(a, ax), m); // TODO: use better default impl: op(m, i -> a[ax + i]);
+            // @@@ This can result in out of bounds errors for unset mask lanes
+            return zero().blend(fromArray(a, ax), m);
         }
 
         @Override
         @ForceInline
         public Double512Vector fromByteArray(byte[] a, int ix) {
+            // @@@ Endianess
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
-            return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
-                                                        a, ix,
-                                                        (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
+            return VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
+                                         a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
+                                         a, ix,
+                                         (c, idx) -> {
+                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                             DoubleBuffer tb = bbc.asDoubleBuffer();
+                                             return op(i -> tb.get());
+                                         });
         }
 
         @Override
         @ForceInline
         public Double512Vector fromByteArray(byte[] a, int ix, Mask<Double, Shapes.S512Bit> m) {
+            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteArray(a, ix), m);
         }
 
         @Override
         @ForceInline
         public Double512Vector fromByteBuffer(ByteBuffer bb, int ix) {
-            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-                int num_bytes = bitSize() / Byte.SIZE;
-                int ax = VectorIntrinsics.checkIndex(ix, bb.limit(), num_bytes);
-                return (Double512Vector) VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
-                                                            bb.array(), ax,
-                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
-            } else {
-                return (Double512Vector)super.fromByteBuffer(bb, ix);
+            // @@@ Endianess
+            if (bb.order() != ByteOrder.nativeOrder()) {
+                throw new IllegalArgumentException();
             }
+            ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
+            return VectorIntrinsics.load(Double512Vector.class, double.class, LENGTH,
+                                         U.getObject(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
+                                         bb, ix,
+                                         (c, idx) -> {
+                                             ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
+                                             DoubleBuffer tb = bbc.asDoubleBuffer();
+                                             return op(i -> tb.get());
+                                         });
         }
 
         @Override
         @ForceInline
         public Double512Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Double, Shapes.S512Bit> m) {
+            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
