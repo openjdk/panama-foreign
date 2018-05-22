@@ -1168,34 +1168,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     }
 
     @Override
-    public void intoByteBuffer(ByteBuffer bb) {
-        FloatBuffer fb = bb.asFloatBuffer();
-        forEach((i, a) -> fb.put(a));
-    }
-
-    @Override
-    public void intoByteBuffer(ByteBuffer bb, Mask<Float, S> m) {
-        FloatBuffer fb = bb.asFloatBuffer();
-        forEach((i, a) -> {
-            if (m.getElement(i))
-                fb.put(a);
-            else
-                fb.position(fb.position() + 1);
-        });
-    }
-
-    @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        FloatBuffer fb = bb.asFloatBuffer();
-        forEach((i, a) -> fb.put(i, a));
+        forEach((i, a) -> bb.putFloat(ix + i * (species().elementSize() / 8), a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Float, S> m) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        FloatBuffer fb = bb.asFloatBuffer();
-        forEach(m, (i, a) -> fb.put(i, a));
+        forEach(m, (i, a) -> bb.putFloat(ix + i * (species().elementSize() / 8), a));
     }
 
 
@@ -1656,36 +1635,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         }
 
         @Override
-        public FloatVector<S> fromByteBuffer(ByteBuffer bb) {
-            FloatBuffer fb = bb.asFloatBuffer();
-            return op(i -> fb.get());
-        }
-
-        @Override
-        public FloatVector<S> fromByteBuffer(ByteBuffer bb, Mask<Float, S> m) {
-            FloatBuffer fb = bb.asFloatBuffer();
-            return op(i -> {
-                if(m.getElement(i))
-                    return fb.get();
-                else {
-                    fb.position(fb.position() + 1);
-                    return (float) 0;
-                }
-            });
-        }
-
-        @Override
         public FloatVector<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            FloatBuffer fb = bb.asFloatBuffer();
-            return op(i -> fb.get(i));
+            return op(i -> bb.getFloat(ix + i * (elementSize() / 8)));
         }
 
         @Override
         public FloatVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Float, S> m) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            FloatBuffer fb = bb.asFloatBuffer();
-            return op(m, i -> fb.get(i));
+            return op(m, i -> bb.getFloat(ix + i * (elementSize() / 8)));
         }
 
         @Override

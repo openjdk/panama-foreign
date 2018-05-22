@@ -578,34 +578,6 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb) {
-        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-            int num_bytes = bitSize() / Byte.SIZE;
-            int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
-            VectorIntrinsics.store(Short128Vector.class, short.class, LENGTH,
-                                   bb.array(), ix, this,
-                                   (arr, idx, v) -> {
-                                       byte[] tarr = (byte[])arr;
-                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
-                                       ShortBuffer fb = lbb.asShortBuffer();
-                                       v.forEach((i, e) -> fb.put(e));
-                                   });
-        } else {
-            super.intoByteBuffer(bb);
-        }
-    }
-
-    @Override
-    @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, Mask<Short, Shapes.S128Bit> m) {
-        int idx = bb.position();
-        Short128Vector oldVal = SPECIES.fromByteBuffer(bb, idx);
-        Short128Vector newVal = oldVal.blend(this, m);
-        newVal.intoByteBuffer(bb, idx);
-    }
-
-    @Override
-    @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix) {
         if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
             int num_bytes = bitSize() / Byte.SIZE;
@@ -1206,26 +1178,6 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         @ForceInline
         public Short128Vector fromByteArray(byte[] a, int ix, Mask<Short, Shapes.S128Bit> m) {
             return zero().blend(fromByteArray(a, ix), m);
-        }
-
-        @Override
-        @ForceInline
-        public Short128Vector fromByteBuffer(ByteBuffer bb) {
-            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-                int num_bytes = bitSize() / Byte.SIZE;
-                int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
-                return (Short128Vector) VectorIntrinsics.load(Short128Vector.class, short.class, LENGTH,
-                                                            bb.array(), ix,
-                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
-            } else {
-                return (Short128Vector)super.fromByteBuffer(bb);
-            }
-        }
-
-        @Override
-        @ForceInline
-        public Short128Vector fromByteBuffer(ByteBuffer bb, Mask<Short, Shapes.S128Bit> m) {
-            return zero().blend(fromByteBuffer(bb), m);
         }
 
         @Override

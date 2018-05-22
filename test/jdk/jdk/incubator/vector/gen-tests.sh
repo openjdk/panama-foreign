@@ -103,6 +103,7 @@ do
   abstractfpvectortype=${typeprefix}${Fptype}Vector
   args="$args -Dabstractvectortype=$abstractvectortype -Dabstractvectorteststype=$abstractvectorteststype -Dabstractbitsvectortype=$abstractbitsvectortype -Dabstractfpvectortype=$abstractfpvectortype"
 
+  # Generate tests for operations
   # For each size
   for bits in 64 128 256 512
   do
@@ -127,6 +128,33 @@ do
     fi
     Log true "done\n"
   done
+
+  # Generate tests for loads and stores
+  # For each size
+  for bits in 64 128 256 512
+  do
+    vectortype=${typeprefix}${Type}${bits}Vector
+    vectorteststype=${typeprefix}${Type}${bits}VectorLoadStoreTests
+    masktype=${typeprefix}${Type}${bits}Mask
+    bitsvectortype=${typeprefix}${Bitstype}${bits}Vector
+    fpvectortype=${typeprefix}${Fptype}${bits}Vector
+    shape=S${bits}Bit
+    Shape=S_${bits}_BIT
+    bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dvectorteststype=$vectorteststype -Dmasktype=$masktype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
+
+    # Generate
+    Log true "Generating $vectorteststype... "
+    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < templates/X-LoadStoreTest.java.template > $vectorteststype.java "
+    ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
+      < templates/X-LoadStoreTest.java.template \
+      > $vectorteststype.java
+    if [ VAR_OS_ENV==windows.cygwin ]; then
+      tr -d  '\r' < $vectorteststype.java > temp
+      mv temp $vectorteststype.java
+    fi
+    Log true "done\n"
+  done
+
 done
 
 rm -fr build

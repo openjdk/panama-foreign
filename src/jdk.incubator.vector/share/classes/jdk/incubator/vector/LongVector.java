@@ -833,34 +833,13 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     }
 
     @Override
-    public void intoByteBuffer(ByteBuffer bb) {
-        LongBuffer fb = bb.asLongBuffer();
-        forEach((i, a) -> fb.put(a));
-    }
-
-    @Override
-    public void intoByteBuffer(ByteBuffer bb, Mask<Long, S> m) {
-        LongBuffer fb = bb.asLongBuffer();
-        forEach((i, a) -> {
-            if (m.getElement(i))
-                fb.put(a);
-            else
-                fb.position(fb.position() + 1);
-        });
-    }
-
-    @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        LongBuffer fb = bb.asLongBuffer();
-        forEach((i, a) -> fb.put(i, a));
+        forEach((i, a) -> bb.putLong(ix + i * (species().elementSize() / 8), a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Long, S> m) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        LongBuffer fb = bb.asLongBuffer();
-        forEach(m, (i, a) -> fb.put(i, a));
+        forEach(m, (i, a) -> bb.putLong(ix + i * (species().elementSize() / 8), a));
     }
 
 
@@ -1392,36 +1371,13 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
         }
 
         @Override
-        public LongVector<S> fromByteBuffer(ByteBuffer bb) {
-            LongBuffer fb = bb.asLongBuffer();
-            return op(i -> fb.get());
-        }
-
-        @Override
-        public LongVector<S> fromByteBuffer(ByteBuffer bb, Mask<Long, S> m) {
-            LongBuffer fb = bb.asLongBuffer();
-            return op(i -> {
-                if(m.getElement(i))
-                    return fb.get();
-                else {
-                    fb.position(fb.position() + 1);
-                    return (long) 0;
-                }
-            });
-        }
-
-        @Override
         public LongVector<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            LongBuffer fb = bb.asLongBuffer();
-            return op(i -> fb.get(i));
+            return op(i -> bb.getLong(ix + i * (elementSize() / 8)));
         }
 
         @Override
         public LongVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Long, S> m) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            LongBuffer fb = bb.asLongBuffer();
-            return op(m, i -> fb.get(i));
+            return op(m, i -> bb.getLong(ix + i * (elementSize() / 8)));
         }
 
         @Override

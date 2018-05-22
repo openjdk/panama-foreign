@@ -769,49 +769,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
     public abstract void intoByteArray(byte[] a, int i, Mask<E, S> m);
 
     /**
-     * Stores this vector into a {@link ByteBuffer byte buffer} starting at the
-     * buffer's position.
-     * <p>
-     * Bytes are extracted from primitive lane elements according to the
-     * native byte order of the underlying platform.
-     * <p>
-     * This method behaves as if it calls the byte buffer, offset, and mask
-     * accepting
-     * {@link #intoByteBuffer(ByteBuffer, int, Mask)} method} as follows:
-     * <pre>{@code
-     *   this.intoByteBuffer(b, b.position(), this.maskAllTrue())
-     * }</pre>
-     *
-     * @param b the byte buffer
-     * @throws IndexOutOfBoundsException if there are fewer than
-     * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
-     * remaining in the byte buffer
-     */
-    public abstract void intoByteBuffer(ByteBuffer b);
-
-    /**
-     * Stores this vector into a {@link ByteBuffer byte buffer} starting at the
-     * buffer's position and using a mask.
-     * <p>
-     * Bytes are extracted from primitive lane elements according to the
-     * native byte order of the underlying platform.
-     * <p>
-     * This method behaves as if it calls the byte buffer, offset, and mask
-     * accepting
-     * {@link #intoByteBuffer(ByteBuffer, int, Mask)} method} as follows:
-     * <pre>{@code
-     *   this.intoByteBuffer(b, b.position(), m)
-     * }</pre>
-     *
-     * @param b the byte buffer
-     * @param m the mask
-     * @throws IndexOutOfBoundsException if for any vector lane index
-     * {@code N} where the mask at lane {@code N} is set
-     * {@code b.position() >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
-     */
-    public abstract void intoByteBuffer(ByteBuffer b, Mask<E, S> m);
-
-    /**
      * Stores this vector into a {@link ByteBuffer byte buffer} starting at an
      * offset into the byte buffer.
      * <p>
@@ -853,8 +810,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
      *     order(ByteOrder.nativeOrder()).position(i).
      *     asEBuffer();
      * e[] es = ((EVector<S>)this).toArray();
-     * for (int n = 0; n < t.length && m.isSet(n); n++) {
-     *     eb.put(n, es[n]);
+     * for (int n = 0; n < t.length; n++) {
+     *     if (m.isSet(n)) {
+     *         eb.put(n, es[n]);
+     *     }
      * }
      * }</pre>
      *
@@ -979,51 +938,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
         public abstract Vector<E, S> fromByteArray(byte[] a, int i, Mask<E, S> m);
 
         /**
-         * Loads a vector from a {@link ByteBuffer byte buffer} starting at the
-         * buffer's position.
-         * <p>
-         * Bytes are composed into primitive lane elements according to the
-         * native byte order of the underlying platform.
-         * <p>
-         * This method behaves as if it returns the result of calling the
-         * byte buffer, offset, and mask accepting
-         * {@link #fromByteBuffer(ByteBuffer, int, Mask) method} as follows:
-         * <pre>{@code
-         *   return this.fromByteBuffer(b, b.position(), this.maskAllTrue())
-         * }</pre>
-         *
-         * @param b the byte buffer
-         * @return a vector loaded from a byte buffer
-         * @throws IndexOutOfBoundsException if there are fewer than
-         * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
-         * remaining in the byte buffer
-         */
-        public abstract Vector<E, S> fromByteBuffer(ByteBuffer b);
-
-        /**
-         * Loads a vector from a {@link ByteBuffer byte buffer} starting at the
-         * buffer's position and using a mask.
-         * <p>
-         * Bytes are composed into primitive lane elements according to the
-         * native byte order of the underlying platform.
-         * <p>
-         * This method behaves as if it returns the result of calling the
-         * byte buffer, offset, and mask accepting
-         * {@link #fromByteBuffer(ByteBuffer, int, Mask)} method} as follows:
-         * <pre>{@code
-         *   return this.fromByteBuffer(b, b.position(), m)
-         * }</pre>
-         *
-         * @param b the byte buffer
-         * @param m the mask
-         * @return a vector loaded from a byte buffer
-         * @throws IndexOutOfBoundsException if for any vector lane index
-         * {@code N} where the mask at lane {@code N} is set
-         * {@code b.position() >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
-         */
-        public abstract Vector<E, S> fromByteBuffer(ByteBuffer b, Mask<E, S> m);
-
-        /**
          * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
          * offset into the byte buffer.
          * <p>
@@ -1066,8 +980,9 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *     order(ByteOrder.nativeOrder()).position(i).
          *     asEBuffer();
          * e[] es = new e[this.length()];
-         * for (int n = 0; n < t.length && m.isSet(n); n++) {
-         *     es[n] = eb.get(n);
+         * for (int n = 0; n < t.length; n++) {
+         *     if (m.isSet(n))
+         *         es[n] = eb.get(n);
          * }
          * Vector<E, S> r = ((ESpecies<S>)this).fromArray(es, 0, m);
          * }</pre>

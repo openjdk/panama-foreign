@@ -577,34 +577,6 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb) {
-        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-            int num_bytes = bitSize() / Byte.SIZE;
-            int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
-            VectorIntrinsics.store(Byte64Vector.class, byte.class, LENGTH,
-                                   bb.array(), ix, this,
-                                   (arr, idx, v) -> {
-                                       byte[] tarr = (byte[])arr;
-                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
-                                       ByteBuffer fb = lbb;
-                                       v.forEach((i, e) -> fb.put(e));
-                                   });
-        } else {
-            super.intoByteBuffer(bb);
-        }
-    }
-
-    @Override
-    @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, Mask<Byte, Shapes.S64Bit> m) {
-        int idx = bb.position();
-        Byte64Vector oldVal = SPECIES.fromByteBuffer(bb, idx);
-        Byte64Vector newVal = oldVal.blend(this, m);
-        newVal.intoByteBuffer(bb, idx);
-    }
-
-    @Override
-    @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix) {
         if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
             int num_bytes = bitSize() / Byte.SIZE;
@@ -1205,26 +1177,6 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         @ForceInline
         public Byte64Vector fromByteArray(byte[] a, int ix, Mask<Byte, Shapes.S64Bit> m) {
             return zero().blend(fromByteArray(a, ix), m);
-        }
-
-        @Override
-        @ForceInline
-        public Byte64Vector fromByteBuffer(ByteBuffer bb) {
-            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-                int num_bytes = bitSize() / Byte.SIZE;
-                int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
-                return (Byte64Vector) VectorIntrinsics.load(Byte64Vector.class, byte.class, LENGTH,
-                                                            bb.array(), ix,
-                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
-            } else {
-                return (Byte64Vector)super.fromByteBuffer(bb);
-            }
-        }
-
-        @Override
-        @ForceInline
-        public Byte64Vector fromByteBuffer(ByteBuffer bb, Mask<Byte, Shapes.S64Bit> m) {
-            return zero().blend(fromByteBuffer(bb), m);
         }
 
         @Override

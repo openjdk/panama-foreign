@@ -582,34 +582,13 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     }
 
     @Override
-    public void intoByteBuffer(ByteBuffer bb) {
-        ByteBuffer fb = bb;
-        forEach((i, a) -> fb.put(a));
-    }
-
-    @Override
-    public void intoByteBuffer(ByteBuffer bb, Mask<Byte, S> m) {
-        ByteBuffer fb = bb;
-        forEach((i, a) -> {
-            if (m.getElement(i))
-                fb.put(a);
-            else
-                fb.position(fb.position() + 1);
-        });
-    }
-
-    @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        ByteBuffer fb = bb;
-        forEach((i, a) -> fb.put(i, a));
+        forEach((i, a) -> bb.put(ix + i * (species().elementSize() / 8), a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Byte, S> m) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        ByteBuffer fb = bb;
-        forEach(m, (i, a) -> fb.put(i, a));
+        forEach(m, (i, a) -> bb.put(ix + i * (species().elementSize() / 8), a));
     }
 
 
@@ -1141,36 +1120,13 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
         }
 
         @Override
-        public ByteVector<S> fromByteBuffer(ByteBuffer bb) {
-            ByteBuffer fb = bb;
-            return op(i -> fb.get());
-        }
-
-        @Override
-        public ByteVector<S> fromByteBuffer(ByteBuffer bb, Mask<Byte, S> m) {
-            ByteBuffer fb = bb;
-            return op(i -> {
-                if(m.getElement(i))
-                    return fb.get();
-                else {
-                    fb.position(fb.position() + 1);
-                    return (byte) 0;
-                }
-            });
-        }
-
-        @Override
         public ByteVector<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            ByteBuffer fb = bb;
-            return op(i -> fb.get(i));
+            return op(i -> bb.get(ix + i * (elementSize() / 8)));
         }
 
         @Override
         public ByteVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte, S> m) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            ByteBuffer fb = bb;
-            return op(m, i -> fb.get(i));
+            return op(m, i -> bb.get(ix + i * (elementSize() / 8)));
         }
 
         @Override

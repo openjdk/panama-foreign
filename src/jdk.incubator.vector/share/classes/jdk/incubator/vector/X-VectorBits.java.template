@@ -848,34 +848,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb) {
-        if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-            int num_bytes = bitSize() / Byte.SIZE;
-            int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
-            VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
-                                   bb.array(), ix, this,
-                                   (arr, idx, v) -> {
-                                       byte[] tarr = (byte[])arr;
-                                       ByteBuffer lbb = ByteBuffer.wrap(tarr, idx, tarr.length - idx).order(ByteOrder.nativeOrder());
-                                       $Type$Buffer fb = lbb{#if[byte]?;:.as$Type$Buffer();}
-                                       v.forEach((i, e) -> fb.put(e));
-                                   });
-        } else {
-            super.intoByteBuffer(bb);
-        }
-    }
-
-    @Override
-    @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, Mask<$Boxtype$, Shapes.$shape$> m) {
-        int idx = bb.position();
-        $vectortype$ oldVal = SPECIES.fromByteBuffer(bb, idx);
-        $vectortype$ newVal = oldVal.blend(this, m);
-        newVal.intoByteBuffer(bb, idx);
-    }
-
-    @Override
-    @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix) {
         if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
             int num_bytes = bitSize() / Byte.SIZE;
@@ -1548,26 +1520,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @ForceInline
         public $vectortype$ fromByteArray(byte[] a, int ix, Mask<$Boxtype$, Shapes.$shape$> m) {
             return zero().blend(fromByteArray(a, ix), m);
-        }
-
-        @Override
-        @ForceInline
-        public $vectortype$ fromByteBuffer(ByteBuffer bb) {
-            if (bb.hasArray() && !bb.isReadOnly() && bb.order() == ByteOrder.nativeOrder()) {
-                int num_bytes = bitSize() / Byte.SIZE;
-                int ix = VectorIntrinsics.checkIndex(bb.position(), bb.limit(), num_bytes);
-                return ($vectortype$) VectorIntrinsics.load($vectortype$.class, $type$.class, LENGTH,
-                                                            bb.array(), ix,
-                                                            (arr, idx) -> super.fromByteArray((byte[]) arr, idx));
-            } else {
-                return ($vectortype$)super.fromByteBuffer(bb);
-            }
-        }
-
-        @Override
-        @ForceInline
-        public $vectortype$ fromByteBuffer(ByteBuffer bb, Mask<$Boxtype$, Shapes.$shape$> m) {
-            return zero().blend(fromByteBuffer(bb), m);
         }
 
         @Override

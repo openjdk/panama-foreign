@@ -21,16 +21,19 @@
  * questions.
  */
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 
 public class AbstractVectorTest {
 
-    static <T> IntFunction<T> withToString(String s, IntFunction<T> f) {
-        return new IntFunction<T>() {
+    static <R> IntFunction<R> withToString(String s, IntFunction<R> f) {
+        return new IntFunction<R>() {
             @Override
-            public T apply(int v) {
+            public R apply(int v) {
                 return f.apply(v);
             }
 
@@ -39,6 +42,64 @@ public class AbstractVectorTest {
                 return s;
             }
         };
+    }
+
+    static final List<IntFunction<ByteBuffer>> BYTE_BUFFER_GENERATORS = List.of(
+            withToString("HB:RW:NE", (int s) -> {
+                return ByteBuffer.allocate(s)
+                        .order(ByteOrder.nativeOrder());
+            }),
+            withToString("DB:RW:NE", (int s) -> {
+                return ByteBuffer.allocateDirect(s)
+                        .order(ByteOrder.nativeOrder());
+            })
+            // @@@ Add when endianness design issues are resolved
+//            , withToString("HB:RW:BE", (int s) -> {
+//                return ByteBuffer.allocate(s)
+//                        .order(ByteOrder.BIG_ENDIAN);
+//            }),
+//            withToString("DB:RW:BE", (int s) -> {
+//                return ByteBuffer.allocateDirect(s)
+//                        .order(ByteOrder.BIG_ENDIAN);
+//            }),
+//            withToString("HB:RW:LE", (int s) -> {
+//                return ByteBuffer.allocate(s)
+//                        .order(ByteOrder.LITTLE_ENDIAN);
+//            }),
+//            withToString("DB:RW:LE", (int s) -> {
+//                return ByteBuffer.allocateDirect(s)
+//                        .order(ByteOrder.LITTLE_ENDIAN);
+//            })
+    );
+
+    static final List<IntFunction<int[]>> INDEX_GENERATORS = List.of(
+            withToString("index[i -> i]", (int s) -> {
+                return fillInts(s,
+                                i -> i);
+            }),
+            withToString("index[i -> size - i - 1]", (int s) -> {
+                return fillInts(s,
+                                i -> s - i - 1);
+            }),
+            withToString("index[i -> (i % 2) == 0 ? i : s - i - 1]", (int s) -> {
+                return fillInts(s,
+                                i -> (i % 2) == 0 ? i : s - i - 1);
+            })
+    );
+
+    interface IntOp {
+        int apply(int i);
+    }
+
+    static int[] fillInts(int s , IntOp f) {
+        return fillInts(new int[s], f);
+    }
+
+    static int[] fillInts(int[] a, IntOp f) {
+        for (int i = 0; i < a.length; i++) {
+            a[i] = f.apply(i);
+        }
+        return a;
     }
 
     static final List<IntFunction<boolean[]>> BOOLEAN_MASK_GENERATORS = List.of(
@@ -57,4 +118,9 @@ public class AbstractVectorTest {
             withToString("mask[false]", boolean[]::new)
     );
 
+    static int countTrailingFalse(boolean[] m) {
+        int i;
+        for (i = m.length - 1; i >= 0 && !m[i]; i--);
+        return m.length - 1 - i;
+    }
 }

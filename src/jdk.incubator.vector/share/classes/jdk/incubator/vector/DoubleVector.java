@@ -1168,34 +1168,13 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     }
 
     @Override
-    public void intoByteBuffer(ByteBuffer bb) {
-        DoubleBuffer fb = bb.asDoubleBuffer();
-        forEach((i, a) -> fb.put(a));
-    }
-
-    @Override
-    public void intoByteBuffer(ByteBuffer bb, Mask<Double, S> m) {
-        DoubleBuffer fb = bb.asDoubleBuffer();
-        forEach((i, a) -> {
-            if (m.getElement(i))
-                fb.put(a);
-            else
-                fb.position(fb.position() + 1);
-        });
-    }
-
-    @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        DoubleBuffer fb = bb.asDoubleBuffer();
-        forEach((i, a) -> fb.put(i, a));
+        forEach((i, a) -> bb.putDouble(ix + i * (species().elementSize() / 8), a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Double, S> m) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        DoubleBuffer fb = bb.asDoubleBuffer();
-        forEach(m, (i, a) -> fb.put(i, a));
+        forEach(m, (i, a) -> bb.putDouble(ix + i * (species().elementSize() / 8), a));
     }
 
 
@@ -1656,36 +1635,13 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         }
 
         @Override
-        public DoubleVector<S> fromByteBuffer(ByteBuffer bb) {
-            DoubleBuffer fb = bb.asDoubleBuffer();
-            return op(i -> fb.get());
-        }
-
-        @Override
-        public DoubleVector<S> fromByteBuffer(ByteBuffer bb, Mask<Double, S> m) {
-            DoubleBuffer fb = bb.asDoubleBuffer();
-            return op(i -> {
-                if(m.getElement(i))
-                    return fb.get();
-                else {
-                    fb.position(fb.position() + 1);
-                    return (double) 0;
-                }
-            });
-        }
-
-        @Override
         public DoubleVector<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            DoubleBuffer fb = bb.asDoubleBuffer();
-            return op(i -> fb.get(i));
+            return op(i -> bb.getDouble(ix + i * (elementSize() / 8)));
         }
 
         @Override
         public DoubleVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Double, S> m) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            DoubleBuffer fb = bb.asDoubleBuffer();
-            return op(m, i -> fb.get(i));
+            return op(m, i -> bb.getDouble(ix + i * (elementSize() / 8)));
         }
 
         @Override

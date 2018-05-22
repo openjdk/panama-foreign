@@ -1608,34 +1608,13 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     }
 
     @Override
-    public void intoByteBuffer(ByteBuffer bb) {
-        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-        forEach((i, a) -> fb.put(a));
-    }
-
-    @Override
-    public void intoByteBuffer(ByteBuffer bb, Mask<$Boxtype$, S> m) {
-        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-        forEach((i, a) -> {
-            if (m.getElement(i))
-                fb.put(a);
-            else
-                fb.position(fb.position() + 1);
-        });
-    }
-
-    @Override
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-        forEach((i, a) -> fb.put(i, a));
+        forEach((i, a) -> bb.{#if[byte]?put:put$Type$}(ix + i * (species().elementSize() / 8), a));
     }
 
     @Override
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, S> m) {
-        bb = bb.duplicate().order(bb.order()).position(ix);
-        $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-        forEach(m, (i, a) -> fb.put(i, a));
+        forEach(m, (i, a) -> bb.{#if[byte]?put:put$Type$}(ix + i * (species().elementSize() / 8), a));
     }
 
 
@@ -2183,36 +2162,13 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         }
 
         @Override
-        public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb) {
-            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-            return op(i -> fb.get());
-        }
-
-        @Override
-        public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, Mask<$Boxtype$, S> m) {
-            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-            return op(i -> {
-                if(m.getElement(i))
-                    return fb.get();
-                else {
-                    fb.position(fb.position() + 1);
-                    return ($type$) 0;
-                }
-            });
-        }
-
-        @Override
         public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, int ix) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-            return op(i -> fb.get(i));
+            return op(i -> bb.{#if[byte]?get:get$Type$}(ix + i * (elementSize() / 8)));
         }
 
         @Override
         public $abstractvectortype$<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, S> m) {
-            bb = bb.duplicate().order(bb.order()).position(ix);
-            $Type$Buffer fb = bb{#if[byte]?;:.as$Type$Buffer();}
-            return op(m, i -> fb.get(i));
+            return op(m, i -> bb.{#if[byte]?get:get$Type$}(ix + i * (elementSize() / 8)));
         }
 
         @Override
