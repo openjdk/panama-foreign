@@ -22,36 +22,30 @@
  */
 
 
-import java.nicl.metadata.C;
-import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.NativeHeader;
+import java.nicl.metadata.NativeLocation;
 import java.nicl.metadata.NativeType;
 import java.nicl.types.Pointer;
 
-@NativeHeader(headerPath="/usr/include/stdio.h")
+@NativeHeader(path="/usr/include/stdio.h")
 public interface stdio {
-    @C(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@getpid")
-    @NativeType(layout="(p:c*)i", ctype="int (const char*, ...)", size=1)
-    @CallingConvention(value=1)
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@getpid")
+    @NativeType(layout="(p:c*)i", ctype="int (const char*, ...)")
     int getpid();
 
-    @C(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@printf")
-    @NativeType(layout="(p:c*)i", ctype="int (const char*, ...)", size=1)
-    @CallingConvention(value=1)
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@printf")
+    @NativeType(layout="(p:c*)i", ctype="int (const char*, ...)")
     int printf(Pointer<Byte> fmt, Object... args);
 
-    @C(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fprintf")
-    @NativeType(layout="(pp:c*)i", ctype="int (FILE*, const char*, ...)", size=1)
-    @CallingConvention(value=1)
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fprintf")
+    @NativeType(layout="(pp:c*)i", ctype="int (FILE*, const char*, ...)")
     int fprintf(Pointer<Void> strm, Pointer<Byte> fmt, Object... args);
 
-    @C(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fflush")
-    @NativeType(layout="(p)i", ctype="int (FILE *stream)", size=1)
-    @CallingConvention(value=1)
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fflush")
+    @NativeType(layout="(p)i", ctype="int (FILE *stream)")
     int fflush(Pointer<Void> stream);
 
-    @C(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fdopen")
-    @NativeType(layout="(ip:c)p", ctype="FILE* (int fd, const char* mode)", size=1)
-    @CallingConvention(value=1)
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fdopen")
+    @NativeType(layout="(ip:c)p", ctype="FILE* (int fd, const char* mode)")
     Pointer<Void> fdopen(int fd, Pointer<Byte> mode);
 }

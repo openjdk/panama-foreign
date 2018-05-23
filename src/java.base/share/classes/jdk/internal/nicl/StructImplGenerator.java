@@ -138,7 +138,7 @@ class StructImplGenerator extends BinderClassGenerator {
     @Override
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
         if (method.isAnnotationPresent(Offset.class)) {
-            if (!method.isAnnotationPresent(C.class) || !method.isAnnotationPresent(NativeType.class)) {
+            if (!method.isAnnotationPresent(NativeType.class)) {
                 throw new IllegalArgumentException("Unexpectedly found an @Offset annotated method without a @NativeType annotation");
             }
 

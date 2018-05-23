@@ -38,8 +38,9 @@ import java.nicl.layout.Address;
 import java.nicl.layout.Function;
 import java.nicl.layout.Layout;
 import java.nicl.layout.Sequence;
-import java.nicl.metadata.C;
-import java.nicl.metadata.CallingConvention;
+import java.nicl.metadata.NativeCallback;
+import java.nicl.metadata.NativeLocation;
+import java.nicl.metadata.NativeStruct;
 import java.nicl.metadata.NativeType;
 import java.nicl.types.*;
 import java.nicl.types.Array;
@@ -82,20 +83,7 @@ public final class Util {
     }
 
     public static boolean isCStruct(Class<?> clz) {
-        if (!clz.isAnnotationPresent(C.class) ||
-               !clz.isAnnotationPresent(NativeType.class)) {
-            return false;
-        }
-        NativeType nt = clz.getAnnotation(NativeType.class);
-        return nt.isRecordType();
-    }
-
-    public static boolean isFunction(Class<?> clz) {
-        if (!isCStruct(clz)) {
-            return false;
-        }
-
-        return clz.isAnnotationPresent(CallingConvention.class);
+        return clz.isAnnotationPresent(NativeStruct.class);
     }
 
     public static Layout variadicLayout(Class<?> c) {
@@ -116,11 +104,29 @@ public final class Util {
     }
 
     public static Layout layoutof(Class<?> c) {
-        NativeType nt = c.getAnnotation(NativeType.class);
-        return new DescriptorParser(nt.layout()).parseLayout().findFirst().get();
+        String layout;
+        if (c.isAnnotationPresent(NativeStruct.class)) {
+            layout = c.getAnnotation(NativeStruct.class).value();
+        } else if (c.isAnnotationPresent(NativeType.class)) { 
+            layout = c.getAnnotation(NativeType.class).layout();
+        } else {
+            throw new IllegalArgumentException("@NativeStruct or @NativeType expected: " + c);
+        }
+        return new DescriptorParser(layout).parseLayout().findFirst().get();
+    }
+
+    public static Function functionof(Class<?> c) {
+        if (! c.isAnnotationPresent(NativeCallback.class)) {
+            throw new IllegalArgumentException("@NativeCallback expected: " + c);
+        }
+        NativeCallback nc = c.getAnnotation(NativeCallback.class);
+        return (Function)new DescriptorParser(nc.value()).parseDescriptorOrLayouts().findFirst().get();
     }
 
     public static Function functionof(Method m) {
+        if (! m.isAnnotationPresent(NativeType.class)) {
+            throw new IllegalArgumentException("@NativeType expected: " + m);
+        }
         NativeType nt = m.getAnnotation(NativeType.class);
         return (Function)new DescriptorParser(nt.layout()).parseDescriptorOrLayouts().findFirst().get();
     }

@@ -76,18 +76,20 @@ class HeaderImplGenerator extends BinderClassGenerator {
 
     @Override
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
-        if (method.isAnnotationPresent(NativeType.class) && !Util.isFunction(method)) {
-            generateGlobalVariableMethods(cw, method, getSymbolName(method, getGetterBaseName(method)));
-        } else if (method.isAnnotationPresent(C.class) && method.isAnnotationPresent(CallingConvention.class)) {
-            MethodType methodType = Util.methodTypeFor(method);
-            Function function = Util.functionof(method);
-            NativeInvoker invoker;
-            try {
-                invoker = new NativeInvoker(function, methodType, method.isVarArgs(), lookup, getSymbolName(method), method.toString(), method.getGenericReturnType());
-            } catch (NoSuchMethodException | IllegalAccessException e) {
-                throw new IllegalStateException(e);
+        if (method.isAnnotationPresent(NativeType.class)) {
+            if (Util.isFunction(method)) {
+                MethodType methodType = Util.methodTypeFor(method);
+                Function function = Util.functionof(method);
+                NativeInvoker invoker;
+                try {
+                    invoker = new NativeInvoker(function, methodType, method.isVarArgs(), lookup, getSymbolName(method), method.toString(), method.getGenericReturnType());
+                } catch (NoSuchMethodException | IllegalAccessException e) {
+                    throw new IllegalStateException(e);
+                }
+                addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), invoker.getBoundMethodHandle());
+            } else {
+                generateGlobalVariableMethods(cw, method, getSymbolName(method, getGetterBaseName(method)));
             }
-            addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), invoker.getBoundMethodHandle());
         } else {
             super.generateMethodImplementation(cw, method);
         }

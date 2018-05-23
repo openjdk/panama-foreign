@@ -21,9 +21,9 @@
  * questions.
  */
 
-import java.nicl.metadata.C;
-import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.NativeHeader;
+import java.nicl.metadata.NativeLocation;
+import java.nicl.metadata.NativeStruct;
 import java.nicl.metadata.NativeType;
 import java.nicl.metadata.Offset;
 import java.nio.file.Files;
@@ -140,7 +140,7 @@ public class Runner {
         assertEquals(files, mfm.listClasses());
     }
 
-    private void verifyAnnotationC(C actual, C expected) {
+    private void verifyNativeLocation(NativeLocation actual, NativeLocation expected) {
         // Only check the filename, not full path
         assertNotNull(actual);
         assertNotNull(expected);
@@ -157,14 +157,12 @@ public class Runner {
         assertTrue(ea.length >= aa.length);
 
         for (Annotation a: ea) {
-            if (a instanceof C) {
-                verifyAnnotationC(actual.getAnnotation(C.class), (C) a);
+            if (a instanceof NativeLocation) {
+                verifyNativeLocation(actual.getAnnotation(NativeLocation.class), (NativeLocation) a);
             } else if (a instanceof NativeType) {
                 assertEquals(actual.getAnnotation(NativeType.class), (NativeType) a);
             } else if (a instanceof Offset) {
                 assertEquals(actual.getAnnotation(Offset.class), (Offset) a);
-            } else if (a instanceof CallingConvention) {
-                assertNotNull(actual.getAnnotation(CallingConvention.class));
             }
         }
     }
@@ -213,16 +211,16 @@ public class Runner {
             NativeType ant = actual.getAnnotation(NativeType.class);
             assertNotNull(ant);
             assertEquals(ant, expected.getAnnotation(NativeType.class));
-            C ac = actual.getAnnotation(C.class);
-            assertNotNull(ac);
-            verifyAnnotationC(ac, expected.getAnnotation(C.class));
+            NativeLocation loc = actual.getAnnotation(NativeLocation.class);
+            assertNotNull(loc);
+            verifyNativeLocation(loc, expected.getAnnotation(NativeLocation.class));
         } else {
             NativeHeader ah = actual.getAnnotation(NativeHeader.class);
             assertNotNull(ah);
             NativeHeader eh = actual.getAnnotation(NativeHeader.class);
             assertNotNull(eh);
-            assertEquals(Paths.get(ah.headerPath()).getFileName(),
-                    Paths.get(eh.headerPath()).getFileName());
+            assertEquals(Paths.get(ah.path()).getFileName(),
+                    Paths.get(eh.path()).getFileName());
         }
 
     }

@@ -28,9 +28,9 @@
 
 import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
-import java.nicl.metadata.C;
-import java.nicl.metadata.CallingConvention;
+import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
+import java.nicl.metadata.NativeLocation;
 import java.nicl.metadata.NativeType;
 
 public class Upcall {
@@ -40,17 +40,15 @@ public class Upcall {
 
     @NativeHeader
     public static interface upcall {
+        @NativeCallback("(i)V")
         @FunctionalInterface
         static interface visitor {
-            @C(file="dummy", line=47, column=11, USR="c:@F@slowsort")
-            @NativeType(layout="(i)V", ctype="void (int)", size=4l)
-            @CallingConvention(value=1)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public void fn(int i);
         }
 
-        @C(file="dummy", line=47, column=11, USR="c:@F@do_upcall")
-        @NativeType(layout="(p:(i)Vi)V", ctype="void (visitor, int)", name="do_upcall", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@do_upcall")
+        @NativeType(layout="(p:(i)Vi)V", ctype="void (visitor, int)", name="do_upcall")
         public abstract void do_upcall(visitor v, int i);
     }
 

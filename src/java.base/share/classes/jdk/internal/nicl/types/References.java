@@ -29,7 +29,7 @@ import jdk.internal.nicl.LibrariesHelper;
 import jdk.internal.nicl.Util;
 
 import java.nicl.Libraries;
-import java.nicl.metadata.NativeType;
+import java.nicl.metadata.NativeStruct;
 import java.nicl.layout.Address;
 import java.nicl.layout.Sequence;
 import java.nicl.layout.Value;
@@ -653,11 +653,11 @@ public final class References {
      * @param clazz the native struct carrier.
      * @param <T> the native struct type.
      * @return a reference factory for native struct references.
-     * @throws IllegalArgumentException if the carrier is not annotated with the {@link NativeType} annotation.
+     * @throws IllegalArgumentException if the carrier is not annotated with the {@link NativeStruct} annotation.
      */
     public static <T extends Struct<T>> OfStruct<T> ofStruct(Class<T> clazz) throws IllegalArgumentException {
-        if (!clazz.isAnnotationPresent(NativeType.class)) {
-            throw new IllegalArgumentException("Not a native type carrier!");
+        if (!clazz.isAnnotationPresent(NativeStruct.class)) {
+            throw new IllegalArgumentException("Not a native struct!");
         }
         return new OfStruct<>(clazz);
     }

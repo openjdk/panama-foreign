@@ -29,10 +29,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface NativeType {
     public static final String NO_NAME = ""; // No symbol name specified
 
-    String layout();
+    String layout() default "";
     String ctype();
     String name() default NO_NAME;
-
-    long size();
-    boolean isRecordType() default false;
 }

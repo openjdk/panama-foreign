@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.nicl.metadata.C;
+import java.nicl.metadata.NativeLocation;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -45,7 +45,7 @@ public class JTypeTest {
 
     @Target(TYPE_USE)
     @Retention(RUNTIME)
-    @C(file="", line=1, column=1, USR="")
+    @NativeLocation(file="", line=1, column=1, USR="")
     static @interface Alias {};
 
     public JTypeTest() {

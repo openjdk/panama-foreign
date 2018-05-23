@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,19 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.nicl.types;
+package java.nicl.metadata;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.lang.annotation.Target;
+
+@Target(ElementType.TYPE)
+@Retention(RUNTIME)
 /**
- * This interface acts as the root type for all native types handled by the binder. A native type must be annotated
- * with the {@link java.nicl.metadata.NativeStruct} annotation, which contains information about the native type's
- * layout.
- * @param <T> the Java type modelling this native type.
+ * Annotation for every native struct or union.
  */
-public interface Struct<T extends Struct<T>> extends Resource<T> {
-
-    /**
-     * Return a pointer to the managed struct.
-     * @return a pointer.
-     */
-    Pointer<T> ptr();
+public @interface NativeStruct {
+    // layout String for this native struct/union.
+    String value();
 }

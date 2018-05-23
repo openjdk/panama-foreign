@@ -31,9 +31,10 @@ import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
 import java.nicl.NativeTypes;
 import java.nicl.Scope;
-import java.nicl.metadata.C;
-import java.nicl.metadata.CallingConvention;
+import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
+import java.nicl.metadata.NativeLocation;
+import java.nicl.metadata.NativeStruct;
 import java.nicl.metadata.NativeType;
 import java.nicl.metadata.Offset;
 import java.nicl.types.LayoutType;
@@ -45,57 +46,55 @@ public class StructUpcall {
 
     @NativeHeader
     public static interface Index {
-        @NativeType(layout="[iiippp]", ctype="dummy", size=40, isRecordType=true)
-        @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeStruct("[iiippp]")
         static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field1")
-            @NativeType(layout="i", ctype="enum MyStructField1", size=4l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field1")
+            @NativeType(layout="i", ctype="enum MyStructField1")
             int field1$get();
             void field1$set(int i);
 
             @Offset(offset=32l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field2")
-            @NativeType(layout="i", ctype="int", size=4l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field2")
+            @NativeType(layout="i", ctype="int")
             int field2$get();
             void field2$set(int i);
 
             @Offset(offset=64l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field3")
-            @NativeType(layout="i", ctype="int", size=4l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field3")
+            @NativeType(layout="i", ctype="int")
             int field3$get();
             void field3$set(int i);
 
             @Offset(offset=128l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field4")
-            @NativeType(layout="p", ctype="const void *", size=8l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field4")
+            @NativeType(layout="p", ctype="const void *")
             Pointer<Void> field4$get();
             void field4$set(Pointer<?> p);
 
             @Offset(offset=192l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field5")
-            @NativeType(layout="p", ctype="const void *", size=8l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field5")
+            @NativeType(layout="p", ctype="const void *")
             Pointer<Void> field5$get();
             void field5$set(Pointer<?> p);
 
             @Offset(offset=256l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field6")
-            @NativeType(layout="p", ctype="const void *", size=8l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field6")
+            @NativeType(layout="p", ctype="const void *")
             Pointer<Void> field6$get();
             void field6$set(Pointer<?> p);
         }
 
+        @NativeCallback("([iiippp])V")
         @FunctionalInterface
         static interface MyStructVisitor {
-            @C(file="dummy", line=47, column=11, USR="c:@F@slowsort")
-            @NativeType(layout="([iiippp])V", ctype="void (dummy)", size=4l)
-            @CallingConvention(value=1)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public void fn(MyStruct s);
         }
 
-        @C(file="dummy", line=47, column=11, USR="c:@F@struct_upcall")
-        @NativeType(layout="(p:([iiip:Vp:Vp:V])V[iiip:Vp:Vp:V])V", ctype="void (struct_upcall_cb, struct MyStruct)", name="struct_upcall", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@struct_upcall")
+        @NativeType(layout="(p:([iiip:Vp:Vp:V])V[iiip:Vp:Vp:V])V", ctype="void (struct_upcall_cb, struct MyStruct)", name="struct_upcall")
         public abstract void struct_upcall(MyStructVisitor v, MyStruct s);
     }
 

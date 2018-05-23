@@ -28,9 +28,9 @@
 
 import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
-import java.nicl.metadata.C;
-import java.nicl.metadata.CallingConvention;
+import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
+import java.nicl.metadata.NativeLocation;
 import java.nicl.metadata.NativeType;
 
 public class DoubleUpcall {
@@ -38,17 +38,15 @@ public class DoubleUpcall {
 
     @NativeHeader
     public static interface upcall {
+        @NativeCallback("(dd)d")
         @FunctionalInterface
         static interface cb {
-            @C(file="dummy", line=47, column=11, USR="c:@F@slowsort")
-            @NativeType(layout="(dd)d", ctype="double (double,double)", size=4l)
-            @CallingConvention(value=1)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public double fn(double d1, double d2);
         }
 
-        @C(file="dummy", line=47, column=11, USR="c:@F@double_upcall")
-        @NativeType(layout="(p:(DD)DDD)D", ctype="double (double_upcall_cb, double, double)", name="double_upcall", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@double_upcall")
+        @NativeType(layout="(p:(DD)DDD)D", ctype="double (double_upcall_cb, double, double)", name="double_upcall")
         public abstract double double_upcall(cb cb, double d1, double d2);
     }
 

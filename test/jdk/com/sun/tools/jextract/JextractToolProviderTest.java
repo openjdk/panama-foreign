@@ -215,7 +215,8 @@ public class JextractToolProviderTest {
             // check NativeHeader annotation
             NativeHeader header = cls.getAnnotation(NativeHeader.class);
             assertNotNull(header);
-            assertEquals(header.headerPath(), helloH.toString());
+            assertEquals(header.path(), helloH.toString());
+            assertFalse(header.declarations().isEmpty());
 
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
@@ -234,7 +235,7 @@ public class JextractToolProviderTest {
             // check NativeHeader annotation
             NativeHeader header = cls.getAnnotation(NativeHeader.class);
             assertNotNull(header);
-            assertEquals(header.headerPath(), helloH.toString());
+            assertEquals(header.path(), helloH.toString());
 
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));

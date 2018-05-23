@@ -45,9 +45,9 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 final class AsmCodeFactory extends CodeFactory {
     private static final String ANNOTATION_PKG_PREFIX = "Ljava/nicl/metadata/";
     private static final String ARRAY = ANNOTATION_PKG_PREFIX + "Array;";
-    private static final String C = ANNOTATION_PKG_PREFIX + "C;";
-    private static final String CALLING_CONVENTION = ANNOTATION_PKG_PREFIX + "CallingConvention;";
+    private static final String NATIVE_CALLBACK = ANNOTATION_PKG_PREFIX + "NativeCallback;";
     private static final String NATIVE_HEADER = ANNOTATION_PKG_PREFIX + "NativeHeader;";
+    private static final String NATIVE_LOCATION = ANNOTATION_PKG_PREFIX + "NativeLocation;";
     private static final String NATIVE_TYPE = ANNOTATION_PKG_PREFIX + "NativeType;";
     private static final String OFFSET = ANNOTATION_PKG_PREFIX + "Offset;";
 
@@ -58,6 +58,7 @@ final class AsmCodeFactory extends CodeFactory {
     private final Map<String, byte[]> types;
     private final HashSet<String> handledMacros = new HashSet<>();
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private final StringBuilder headerDeclarations = new StringBuilder();
 
     AsmCodeFactory(Context ctx, HeaderFile header) {
         this.ctx = ctx;
@@ -66,15 +67,14 @@ final class AsmCodeFactory extends CodeFactory {
         this.internal_name = Utils.toInternalName(owner.pkgName, owner.clsName);
         this.global_cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         this.types = new HashMap<>();
-        init();
-    }
-
-    private void init() {
         global_cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
                 internal_name,
                 null, "java/lang/Object", null);
+    }
+
+    private void generateNativeHeader() {
         AnnotationVisitor av = global_cw.visitAnnotation(NATIVE_HEADER, true);
-        av.visit("headerPath", owner.path.toAbsolutePath().toString());
+        av.visit("path", owner.path.toAbsolutePath().toString());
         if (owner.libraries != null && !owner.libraries.isEmpty()) {
             AnnotationVisitor libNames = av.visitArray("libraries");
             for (String name : owner.libraries) {
@@ -89,6 +89,7 @@ final class AsmCodeFactory extends CodeFactory {
                 libPaths.visitEnd();
             }
         }
+        av.visit("declarations", headerDeclarations.toString());
         av.visitEnd();
     }
 
@@ -99,8 +100,8 @@ final class AsmCodeFactory extends CodeFactory {
         }
     }
 
-    private void annotateC(ClassVisitor cw, Cursor dcl) {
-        AnnotationVisitor av = cw.visitAnnotation(C, true);
+    private void annotateNativeLocation(ClassVisitor cw, Cursor dcl) {
+        AnnotationVisitor av = cw.visitAnnotation(NATIVE_LOCATION, true);
         SourceLocation src = dcl.getSourceLocation();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
@@ -134,7 +135,7 @@ final class AsmCodeFactory extends CodeFactory {
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$get",
                 "()" + jt.getDescriptor(), "()" + jt.getSignature(), null);
 
-        AnnotationVisitor av = mv.visitAnnotation(C, true);
+        AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
         SourceLocation src = c.getSourceLocation();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
@@ -147,7 +148,6 @@ final class AsmCodeFactory extends CodeFactory {
         av = mv.visitAnnotation(NATIVE_TYPE, true);
         av.visit("layout", Utils.getLayout(t));
         av.visit("ctype", t.spelling());
-        av.visit("size", t.size());
         av.visit("name", fieldName);
         av.visitEnd();
 
@@ -212,12 +212,11 @@ final class AsmCodeFactory extends CodeFactory {
         cw.visit(V1_8, ACC_PUBLIC /*| ACC_STATIC*/ | ACC_INTERFACE | ACC_ABSTRACT,
                 name, "Ljava/lang/Object;Ljava/nicl/types/Struct<L" + name + ";>;",
                 "java/lang/Object", new String[] {"java/nicl/types/Struct"});
-        annotateC(cw, cursor);
+        annotateNativeLocation(cw, cursor);
         AnnotationVisitor av = cw.visitAnnotation(NATIVE_TYPE, true);
         av.visit("layout", Utils.getLayout(t));
         av.visit("ctype", t.spelling());
         av.visit("size", t.size());
-        av.visit("isRecordType", true);
         av.visitEnd();
         cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
 
@@ -269,7 +268,7 @@ final class AsmCodeFactory extends CodeFactory {
         String[] superAnno = { "java/lang/annotation/Annotation" };
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE | ACC_ANNOTATION,
                 name, null, "java/lang/Object", superAnno);
-        annotateC(cw, dcl);
+        annotateNativeLocation(cw, dcl);
         Type t = dcl.type().canonicalType();
         AnnotationVisitor av = cw.visitAnnotation(NATIVE_TYPE, true);
         av.visit("layout", Utils.getLayout(t));
@@ -310,19 +309,14 @@ final class AsmCodeFactory extends CodeFactory {
         AnnotationVisitor av = cw.visitAnnotation(
                 "Ljava/lang/FunctionalInterface;", true);
         av.visitEnd();
+        av = cw.visitAnnotation(NATIVE_CALLBACK, true);
+        av.visit("value", nDesc);
+        av.visitEnd();
         cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
 
         // add the method
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, "fn",
                 fn.getDescriptor(), fn.getSignature(), null);
-        av = mv.visitAnnotation(NATIVE_TYPE, true);
-        av.visit("layout", nDesc);
-        av.visit("ctype", "N/A");
-        av.visit("size", -1);
-        av.visitEnd();
-        // FIXME: We need calling convention
-        av = mv.visitAnnotation(CALLING_CONVENTION, true);
-        av.visit("value", jt2.getCallingConvention());
         av.visitEnd();
 
         mv.visitEnd();
@@ -355,27 +349,22 @@ final class AsmCodeFactory extends CodeFactory {
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
                 name, null, "java/lang/Object", null);
         if (dcl != null) {
-            annotateC(cw, dcl);
+            annotateNativeLocation(cw, dcl);
         }
         AnnotationVisitor av = cw.visitAnnotation(
                 "Ljava/lang/FunctionalInterface;", true);
         av.visitEnd();
+        if (dcl != null) {
+            av = cw.visitAnnotation(NATIVE_CALLBACK, true);
+            Type t = dcl.type().canonicalType();
+            av.visit("value", Utils.getLayout(t));
+            av.visitEnd();
+        }
         cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
 
         // add the method
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, "fn",
                 fn.getDescriptor(), fn.getSignature(), null);
-        if (dcl != null) {
-            av = mv.visitAnnotation(NATIVE_TYPE, true);
-            Type t = dcl.type().canonicalType();
-            av.visit("layout", Utils.getLayout(t));
-            av.visit("ctype", t.spelling());
-            av.visit("size", t.size());
-            av.visitEnd();
-            av = mv.visitAnnotation(CALLING_CONVENTION, true);
-            av.visit("value", t.getCallingConvention().value());
-            av.visitEnd();
-        }
         mv.visitEnd();
         // Write class
         try {
@@ -412,7 +401,7 @@ final class AsmCodeFactory extends CodeFactory {
             logger.finer(() -> "  arg " + tmp + ": " + name);
             mv.visitParameter(name, 0);
         }
-        AnnotationVisitor av = mv.visitAnnotation(C, true);
+        AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
         SourceLocation src = dcl.getSourceLocation();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
@@ -423,14 +412,16 @@ final class AsmCodeFactory extends CodeFactory {
         av.visitEnd();
         av = mv.visitAnnotation(NATIVE_TYPE, true);
         Type t = dcl.type();
-        av.visit("layout", Utils.getLayout(t));
+        String layout = Utils.getLayout(t);
+        av.visit("layout", layout);
         av.visit("ctype", t.spelling());
         av.visit("name", dcl.spelling());
-        av.visit("size", t.size());
         av.visitEnd();
-        av = mv.visitAnnotation(CALLING_CONVENTION, true);
-        av.visit("value", t.getCallingConvention().value());
-        av.visitEnd();
+
+        headerDeclarations.append(dcl.spelling());
+        headerDeclarations.append('=');
+        headerDeclarations.append(layout);
+        headerDeclarations.append(' ');
 
         int idx = 0;
         for (JType arg: fn.args) {
@@ -658,7 +649,7 @@ final class AsmCodeFactory extends CodeFactory {
         String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(l.type().getTypeClass()));
         MethodVisitor mv = global_cw.visitMethod(flags, macroName, sig, sig, null);
 
-        AnnotationVisitor av = mv.visitAnnotation(C, true);
+        AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
         SourceLocation src = cursor.getSourceLocation();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
@@ -691,6 +682,7 @@ final class AsmCodeFactory extends CodeFactory {
 
     @Override
     protected void produce() {
+        generateNativeHeader();
         try {
             writeClassFile(global_cw, owner.clsName);
         } catch (IOException ex) {

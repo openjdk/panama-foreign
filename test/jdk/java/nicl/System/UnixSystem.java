@@ -36,27 +36,24 @@ import java.nicl.metadata.*;
 public class UnixSystem {
     @NativeHeader
     static interface system {
-        @C(file="dummy", line=1, column=1, USR="c:@F@getpid")
-        @NativeType(layout="()i", ctype="dummy", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@getpid")
+        @NativeType(layout="()i", ctype="dummy")
         public abstract int getpid();
 
-        @C(file="dummy", line=1, column=1, USR="c:@F@snprintf")
-        @NativeType(layout="(p:clp:c*)i", ctype="dummy", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@snprintf")
+        @NativeType(layout="(p:clp:c*)i", ctype="dummy")
         public abstract int snprintf(Pointer<Byte> buf, long size, Pointer<Byte> fmt, Object... args);
 
-        @C(file="dummy", line=1, column=1, USR="c:@F@strerror")
-        @NativeType(layout="(i)p:c", ctype="dummy", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@strerror")
+        @NativeType(layout="(i)p:c", ctype="dummy")
         public abstract Pointer<Byte> strerror(int errno);
 
-        @C(file="dummy", line=1, column=1, USR="c:@errno")
-        @NativeType(layout="i", ctype="dummy", size=4)
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@errno")
+        @NativeType(layout="i", ctype="dummy")
         public abstract int errno$get();
 
-        @C(file="dummy", line=1, column=1, USR="c:@environ")
-        @NativeType(layout="p:p:V", ctype="dummy", size=8, name="environ")
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@environ")
+        @NativeType(layout="p:p:V", ctype="dummy", name="environ")
         public abstract Pointer<Pointer<Byte>> environ$get();
 
         public abstract Pointer<Pointer<Pointer<Byte>>> environ$ptr();
@@ -64,17 +61,16 @@ public class UnixSystem {
 
     @NativeHeader
     static interface LinuxSystem {
-        @C(file="dummy", line=1, column=1, USR="c:@F@__xstat")
-        @NativeType(layout="(ip:cp:[iiiiiiiiiiiii])i", ctype="dummy", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@__xstat")
+        @NativeType(layout="(ip:cp:[iiiiiiiiiiiii])i", ctype="dummy")
         public abstract int __xstat(int ver, Pointer<Byte> path, Pointer<stat> buf);
 
-        @NativeType(layout="[iiiiiiiiiiiii]", ctype="dummy", size=144, isRecordType=true)
-        @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeStruct("[iiiiiiiiiiiii]")
         static interface stat extends Struct<stat> {
             @Offset(offset=384l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@stat@st_size")
-            @NativeType(layout="i", ctype="off_t", size=4l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@stat@st_size")
+            @NativeType(layout="i", ctype="off_t")
             int st_size$get();
             void st_size$set(int i);
         }
@@ -82,18 +78,17 @@ public class UnixSystem {
 
     @NativeHeader
     static interface MacOSXSystem {
-        @C(file="dummy", line=1, column=1, USR="c:@F@stat")
-        @NativeType(layout="(p:cp:[iSSQIIi[ll][ll][ll][ll]qqiIIi2q])i", ctype="dummy", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@stat")
+        @NativeType(layout="(p:cp:[iSSQIIi[ll][ll][ll][ll]qqiIIi2q])i", ctype="dummy")
         public abstract int stat$INODE64(Pointer<Byte> path, Pointer<stat> buf);
 
 
-        @NativeType(layout="[iSSQIIi[ll][ll][ll][ll]qqiIIi2q]", ctype="dummy", size=144, isRecordType=true)
-        @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeStruct("[iSSQIIi[ll][ll][ll][ll]qqiIIi2q]")
         static interface stat extends Struct<stat> {
             @Offset(offset=768l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@stat@st_size")
-            @NativeType(layout="l", ctype="off_t", size=4l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@stat@st_size")
+            @NativeType(layout="l", ctype="off_t")
             long st_size$get();
             void st_size$set(long i);
         }

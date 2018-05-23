@@ -29,11 +29,16 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RUNTIME)
+/**
+ * Annotation for every native header file.
+ */
 public @interface NativeHeader {
     // the header file corresponding to this native library interface
-    String headerPath() default "";
+    String path() default "";
     // zero or more libraries
     String[] libraries() default {};
     // zero or more library paths
     String[] libraryPaths() default {};
+    // declarations in this header file
+    String declarations() default "";
 }

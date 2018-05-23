@@ -22,15 +22,13 @@
  */
 
 
-import java.nicl.metadata.C;
-import java.nicl.metadata.CallingConvention;
 import java.nicl.metadata.NativeHeader;
+import java.nicl.metadata.NativeLocation;
 import java.nicl.metadata.NativeType;
 
-@NativeHeader(headerPath="unistd.h")
+@NativeHeader(path="unistd.h")
 public interface unistd {
-    @C(file="unistd.h", line=47, column=11, USR="c:@F@getpid")
-    @NativeType(layout="()i", ctype="int (void)", size=1)
-    @CallingConvention(value=1)
+    @NativeLocation(file="unistd.h", line=47, column=11, USR="c:@F@getpid")
+    @NativeType(layout="()i", ctype="int (void)")
     public int getpid();
 }

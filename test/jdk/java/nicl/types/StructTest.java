@@ -45,11 +45,12 @@ public class StructTest {
         return (n + alignment - 1) & ~(alignment - 1);
     }
 
-    @C(file="dummy", line=47, column=11, USR="c:@S@MyStruct")
-    @NativeType(layout="[4i]", ctype="struct MyStruct", size=16l, isRecordType=true)
+    @NativeLocation(file="dummy", line=47, column=11, USR="c:@S@MyStruct")
+    @NativeStruct("[4i]")
+    @NativeType(ctype="struct MyStruct")
     static interface MyStruct extends Struct<MyStruct> {
-        @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@field1")
-        @NativeType(layout="4i", ctype="off_t", size=4l)
+        @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@field1")
+        @NativeType(layout="4i", ctype="off_t")
         @Array(elementType="int", elementSize=4l, length=4l)
         @Offset(offset=0l)
         int[] a$get();

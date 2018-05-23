@@ -33,65 +33,64 @@ import java.nicl.metadata.*;
 public class GlobalVariable {
     @NativeHeader
     static interface globvar {
-        @C(file="dummy", line=1, column=1, USR="c:@F@init")
-        @NativeType(layout="()V", ctype="dummy", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@init")
+        @NativeType(layout="()V", ctype="dummy")
         public abstract void init();
 
-        @C(file="dummy", line=1, column=1, USR="c:@global_boolean")
-        @NativeType(layout="B", ctype="dummy", size=1, name="global_boolean")
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_boolean")
+        @NativeType(layout="B", ctype="dummy", name="global_boolean")
         public abstract boolean global_boolean$get();
         public abstract void global_boolean$set(boolean arg);
         public abstract Pointer<Boolean> global_boolean$ptr();
 
-        @C(file="dummy", line=1, column=1, USR="c:@global_i8")
-        @NativeType(layout="c", ctype="dummy", size=1, name="global_i8")
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i8")
+        @NativeType(layout="c", ctype="dummy", name="global_i8")
         public abstract byte global_i8$get();
         public abstract void global_i8$set(byte arg);
         public abstract Pointer<Byte> global_i8$ptr();
 
-        @C(file="dummy", line=1, column=1, USR="c:@global_i16")
-        @NativeType(layout="s", ctype="dummy", size=2, name="global_i16")
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i16")
+        @NativeType(layout="s", ctype="dummy", name="global_i16")
         public abstract short global_i16$get();
         public abstract void global_i16$set(short arg);
         public abstract Pointer<Short> global_i16$ptr();
 
-        @C(file="dummy", line=1, column=1, USR="c:@global_i32")
-        @NativeType(layout="i", ctype="dummy", size=4, name="global_i32")
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i32")
+        @NativeType(layout="i", ctype="dummy", name="global_i32")
         public abstract int global_i32$get();
         public abstract void global_i32$set(int arg);
         public abstract Pointer<Integer> global_i32$ptr();
 
-        @C(file="dummy", line=1, column=1, USR="c:@global_i64")
-        @NativeType(layout="l", ctype="dummy", size=8, name="global_i64")
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i64")
+        @NativeType(layout="l", ctype="dummy", name="global_i64")
         public abstract long global_i64$get();
         public abstract void global_i64$set(long arg);
         public abstract Pointer<Long> global_i64$ptr();
 
-        @C(file="dummy", line=1, column=1, USR="c:@global_f32")
-        @NativeType(layout="f", ctype="dummy", size=4, name="global_f32")
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_f32")
+        @NativeType(layout="f", ctype="dummy", name="global_f32")
         public abstract float global_f32$get();
         public abstract void global_f32$set(float arg);
         public abstract Pointer<Float> global_f32$ptr();
 
-        @C(file="dummy", line=1, column=1, USR="c:@global_d64")
-        @NativeType(layout="d", ctype="dummy", size=8, name="global_d64")
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_d64")
+        @NativeType(layout="d", ctype="dummy", name="global_d64")
         public abstract double global_d64$get();
         public abstract void global_d64$set(double arg);
         public abstract Pointer<Double> global_d64$ptr();
 
-        @NativeType(layout="[i]", ctype="dummy", size=4, isRecordType=true)
-        @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeStruct("[i]")
         static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@i")
-            @NativeType(layout="i", ctype="int", size=4l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@i")
+            @NativeType(layout="i", ctype="int")
             int i$get();
             void i$set(int i);
         }
 
-        @C(file="dummy", line=1, column=1, USR="c:@global_struct")
-        @NativeType(layout="[i]", ctype="dummy", size=4, name="global_struct")
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_struct")
+        @NativeType(layout="[i]", ctype="dummy", name="global_struct")
         public abstract MyStruct global_struct$get();
         public abstract void global_struct$set(MyStruct arg);
         public abstract Pointer<MyStruct> global_struct$ptr();

@@ -38,9 +38,8 @@ import java.nicl.metadata.*;
 public class BindLookupTest {
     @NativeHeader
     public static interface system {
-        @C(file="dummy", line=1, column=1, USR="c:@F@getpid")
-        @NativeType(layout="()i", ctype="dummy", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@getpid")
+        @NativeType(layout="()i", ctype="dummy")
         public abstract int getpid();
     }
 

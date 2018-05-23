@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +27,12 @@ import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
 
-@Target({ElementType.METHOD})
+@Target(ElementType.TYPE)
 @Retention(RUNTIME)
-/*
- * The calling convention of a function. Value corresponding to
- * jdk.internal.clang.CallingConvention.value().
+/**
+ * Annotation for every native callback.
  */
-public @interface CallingConvention {
-    int value() default 0;
+public @interface NativeCallback {
+    // descriptor for the native callback
+    String value();
 }

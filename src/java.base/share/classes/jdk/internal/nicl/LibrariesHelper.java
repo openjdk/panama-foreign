@@ -30,6 +30,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.nicl.Library;
 import java.nicl.Libraries;
 import java.nicl.metadata.NativeHeader;
+import java.nicl.metadata.NativeStruct;
 import java.nicl.metadata.NativeType;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,8 +72,7 @@ public final class LibrariesHelper {
     private static final ClassValue<Class<?>> STRUCT_IMPLEMENTATIONS = new ClassValue<>() {
         @Override
         protected Class<?> computeValue(Class<?> c) {
-            assert c.isAnnotationPresent(NativeType.class) &&
-                   c.getAnnotation(NativeType.class).isRecordType();
+            assert c.isAnnotationPresent(NativeStruct.class);
             return generateImpl(c, new StructImplGenerator(c, generateImplName(c), c));
         }
     };
@@ -85,9 +85,7 @@ public final class LibrariesHelper {
      */
     @SuppressWarnings("unchecked")
     public static <T> Class<? extends T> getStructImplClass(Class<T> c) {
-        boolean isRecordType = c.isAnnotationPresent(NativeType.class) &&
-                    c.getAnnotation(NativeType.class).isRecordType();
-        if (! isRecordType) {
+        if (!c.isAnnotationPresent(NativeStruct.class)) {
             throw new IllegalArgumentException("Not a Struct interface: " + c);
         }
 

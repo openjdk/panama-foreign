@@ -26,7 +26,7 @@ import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Retention(RUNTIME)
-public @interface C {
+public @interface NativeLocation {
     String file();
     int line();
     int column();

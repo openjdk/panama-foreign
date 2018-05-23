@@ -85,7 +85,7 @@ public class UpcallHandler {
         }
 
         Method ficMethod = Util.findFunctionalInterfaceMethod(c);
-        Function ftype = Util.functionof(ficMethod);
+        Function ftype = Util.functionof(c);
 
         MethodType mt = MethodHandles.publicLookup().unreflect(ficMethod).type().dropParameterTypes(0, 1);
 

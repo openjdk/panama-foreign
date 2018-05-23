@@ -51,39 +51,35 @@ public class PointerTest {
 
     @NativeHeader
     static interface pointers {
-        @C(file="dummy", line=47, column=11, USR="c:@F@get_strings")
-        @CallingConvention(value=1)
-        @NativeType(layout="(p:p:p:cp:i)V", ctype="void (const char***, int*)", size=1l)
+        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings")
+        @NativeType(layout="(p:p:p:cp:i)V", ctype="void (const char***, int*)")
         void get_strings(Pointer<Pointer<Pointer<Byte>>> p, Pointer<Integer> pcount);
 
-        @C(file="dummy", line=47, column=11, USR="c:@F@get_strings2")
-        @CallingConvention(value=1)
-        @NativeType(layout="(p:i)p:p:c", ctype="const char **(int *)", size=1l)
+        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings2")
+        @NativeType(layout="(p:i)p:p:c", ctype="const char **(int *)")
         Pointer<Pointer<Byte>> get_strings2(Pointer<Integer> pcount);
 
-        @C(file="dummy", line=47, column=11, USR="c:@F@get_structs")
-        @CallingConvention(value=1)
-        @NativeType(layout="(p:p:p:[3ip:c]p:i)V", ctype="void (const struct MyStruct ***, int *)", size=1l)
+        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs")
+        @NativeType(layout="(p:p:p:[3ip:c]p:i)V", ctype="void (const struct MyStruct ***, int *)" )
         void get_structs(Pointer<Pointer<Pointer<MyStruct>>> p, Pointer<Integer> pcount);
 
-        @C(file="dummy", line=47, column=11, USR="c:@F@get_structs2")
-        @CallingConvention(value=1)
-        @NativeType(layout="(p:i)p:p:[3ip:c]", ctype="const struct MyStruct **(int *)", size=1l)
+        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs2")
+        @NativeType(layout="(p:i)p:p:[3ip:c]", ctype="const struct MyStruct **(int *)")
         Pointer<Pointer<MyStruct>> get_structs2(Pointer<Integer> pcount);
 
-        @NativeType(layout="[3ip:c]", ctype="dummy", size=24, isRecordType=true)
-        @C(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeStruct("[3ip:c]")
         static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@ia")
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@ia")
             @Array(elementType="int", elementSize=4l, length=3l)
-            @NativeType(layout="3i", ctype="int []", size=12l)
+            @NativeType(layout="3i", ctype="int []")
             int[] ia$get();
             void ia$set(int[] i);
 
             @Offset(offset=128l)
-            @C(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@str")
-            @NativeType(layout="p:c", ctype="const char*", size=4l)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@str")
+            @NativeType(layout="p:c", ctype="const char*")
             Pointer<Byte> str$get();
             void str$set(Pointer<Byte> str);
         }

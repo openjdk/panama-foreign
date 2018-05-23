@@ -35,7 +35,7 @@ import java.nicl.layout.Layout;
 import java.nicl.layout.Sequence;
 
 import java.lang.invoke.MethodHandle;
-import java.nicl.metadata.NativeType;
+import java.nicl.metadata.NativeStruct;
 
 /**
  * This class describes the relationship between a memory layout (usually described in bits) and a Java carrier
@@ -219,14 +219,14 @@ public class LayoutType<X> {
      * @param <T> the struct type.
      * @param carrier the struct carrier.
      * @return the {@code LayoutType}.
-     * @throws IllegalArgumentException if the given carrier is not annotated with the {@link java.nicl.metadata.NativeType} annotation.
+     * @throws IllegalArgumentException if the given carrier is not annotated with the {@link java.nicl.metadata.NativeStruct} annotation.
      */
     public static <T extends Struct<T>> LayoutType<T> ofStruct(Class<T> carrier) throws IllegalArgumentException {
-        NativeType nativeStruct = carrier.getAnnotation(NativeType.class);
+        NativeStruct nativeStruct = carrier.getAnnotation(NativeStruct.class);
         if (nativeStruct == null) {
             throw new IllegalArgumentException("Not a struct type!");
         }
-        Group type = (Group) new DescriptorParser(nativeStruct.layout()).parseLayout().findFirst().get();
+        Group type = (Group) new DescriptorParser(nativeStruct.value()).parseLayout().findFirst().get();
         return new LayoutType<>(type, References.ofStruct(carrier));
     }
 }

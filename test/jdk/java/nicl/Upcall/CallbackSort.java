@@ -30,9 +30,9 @@ import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
 import java.nicl.NativeTypes;
 import java.nicl.Scope;
-import java.nicl.metadata.C;
-import java.nicl.metadata.CallingConvention;
+import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
+import java.nicl.metadata.NativeLocation;
 import java.nicl.metadata.NativeType;
 import java.nicl.types.Pointer;
 import java.util.Iterator;
@@ -43,17 +43,15 @@ public class CallbackSort {
 
     @NativeHeader
     public static interface stdlib {
+        @NativeCallback("(p:Vp:V)i")
         @FunctionalInterface
         static interface compar {
-            @C(file="dummy", line=47, column=11, USR="c:@F@slowsort")
-            @NativeType(layout="(p:Vp:V)i", ctype="int (void*,void*)", size=4l)
-            @CallingConvention(value=1)
+            @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public int fn(Pointer<Void> e1, Pointer<Void> e2);
         }
 
-        @C(file="dummy", line=47, column=11, USR="c:@F@slowsort")
-        @NativeType(layout="(p:VLLp:(p:Vp:V)i)V", ctype="void (void *, size_t, size_t, int (*)(const void *, const void *))", name="slowsort", size=1)
-        @CallingConvention(value=1)
+        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
+        @NativeType(layout="(p:VLLp:(p:Vp:V)i)V", ctype="void (void *, size_t, size_t, int (*)(const void *, const void *))", name="slowsort")
         public abstract void slowsort(Pointer<?> base, long nmemb, long size, compar compar);
     }
 
