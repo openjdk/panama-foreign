@@ -22,26 +22,40 @@
  */
 package com.sun.tools.jextract;
 
-import jdk.internal.clang.*;
+import jdk.internal.clang.Cursor;
+import jdk.internal.clang.Diagnostic;
+import jdk.internal.clang.Index;
+import jdk.internal.clang.LibClang;
+import jdk.internal.clang.SourceLocation;
+import jdk.internal.clang.Type;
+import jdk.internal.nicl.LibrariesHelper;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nicl.Library;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.jar.JarOutputStream;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
-import jdk.internal.nicl.LibrariesHelper;
 
-import static java.nio.file.StandardOpenOption.*;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 /**
  * The setup for the tool execution
@@ -333,7 +347,19 @@ public final class Context {
             HeaderFile hf = headerMap.computeIfAbsent(path, p -> getHeaderFile(p, null));
             hf.useLibraries(libraryNames, libraryPaths);
             hf.useCodeFactory(fn.apply(hf));
-            logger.info(() -> "Parsing header file " + path);
+            logger.info(() -> {
+                StringBuilder sb = new StringBuilder(
+                        "Parsing header file " + path + " with following args:\n");
+                int i = 0;
+                for (String arg : clangArgs) {
+                    sb.append("arg[");
+                    sb.append(i++);
+                    sb.append("] = ");
+                    sb.append(arg);
+                    sb.append("\n");
+                }
+                return sb.toString();
+            });
 
             Index index = LibClang.createIndex();
             Cursor tuCursor = index.parse(path.toString(),
