@@ -1376,6 +1376,11 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           if (UseAVX <= 0) { ret_value = false; }
           else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
           break;
+        case Op_MinReductionV:
+        case Op_MaxReductionV:
+          if (UseSSE <= 3 && UseAVX == 0) { ret_value = false; }
+          else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          break;
         case Op_VectorBlend:
           if (UseSSE <= 3 && UseAVX == 0) { ret_value = false; }
           else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
@@ -7553,7 +7558,7 @@ instruct rvmin16I_reduction_evex(rRegI dst, rRegI src1, vecZ src2, regF tmp, reg
 
 // Long Min Reduction
 instruct rsmin1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 tmp, regF tmp2) %{
-  predicate(UseAVX <= 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2);
   format %{ "movdq      $tmp,$src1\n\t"
@@ -7571,25 +7576,29 @@ instruct rsmin1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 tmp, regF
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 tmp, regF tmp2, regF tmp3) %{
-  predicate(UseAVX <= 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+instruct rsmin2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, regF tmp2, regF tmp3) %{
+  predicate(UseSSE > 3 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
-  format %{ "pshufd   $tmp,$src2,0xE\n\t"
-            "pshufd   $tmp2,$src2,0xE\n\t"
-            "pcmpgtq  $tmp,$src2\n\t"
-            "blendvpd   $tmp2,$tmp\n\t"
-            "pshufd     $tmp,$src1\n\t"
-            "pcmpgtq  $tmp,$tmp2\n\t"
-            "blendvpd   $tmp2,$src1\n\t"
-            "movq     $dst,$tmp2\t! min reduction2L" %}
+  effect(TEMP xmm_0, TEMP tmp2, TEMP tmp3);
+  format %{ "pshufd  $tmp3,$src2,0xE\n\t"
+            "movdqu  $xmm_0,$src2\n\t"
+            "movdqu  $tmp2,$src2\n\t"
+            "pcmpgtq  $xmm_0,$tmp3\n\t"
+            "blendvpd  $tmp2,$tmp3\n\t"
+            "movdqu  $xmm_0,$tmp2\n\t"
+            "movdq  $tmp3,$src1\n\t"
+            "pcmpgtq  $xmm_0,$tmp3\n\t"
+            "blendvpd  $tmp2,$tmp3\n\t"
+            "movq  $dst,$tmp2\t! min reduction2L" %}
   ins_encode %{
-    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
-    __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0xE);
-    __ pcmpgtq($tmp$$XMMRegister, $src2$$XMMRegister);
-    __ blendvpd($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp3$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ movdqu($xmm_0$$XMMRegister, $src2$$XMMRegister);
+    __ movdqu($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ pcmpgtq($xmm_0$$XMMRegister, $tmp3$$XMMRegister);
+    __ blendvpd($tmp2$$XMMRegister, $tmp3$$XMMRegister);
+    __ movdqu($xmm_0$$XMMRegister, $tmp2$$XMMRegister);
     __ movdq($tmp3$$XMMRegister, $src1$$Register);
-    __ pcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister);
+    __ pcmpgtq($xmm_0$$XMMRegister, $tmp3$$XMMRegister);
     __ blendvpd($tmp2$$XMMRegister,$tmp3$$XMMRegister);
     __ movdq($dst$$Register, $tmp2$$XMMRegister);
   %}
@@ -7688,7 +7697,7 @@ instruct rvmin8L_reduction_reg(rRegL dst, rRegL src1, vecZ src2, regF tmp, regF 
 
 // Float Min Reduction
 instruct rsmin2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
-  predicate(UseSSE > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinReductionV dst src2));
   effect(TEMP dst, TEMP tmp);
   format %{ "minps   $dst, $src2\n\t"
@@ -7714,6 +7723,30 @@ instruct rvmin2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
     __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
     __ vminps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmin4F_reduction_reg(regF dst, vecX src2, regF tmp) %{
+  predicate(UseSSE > 0 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinReductionV dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "minps  $dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x1\n\t"
+            "minps  $dst,tmp\n\t"
+            "pshufd  $tmp,$src2,0x2\n\t"
+            "minps  $dst,tmp\n\t"
+            "pshufd  $tmp,$src2,0x3\n\t"
+            "minps  $dst,$tmp\t! min reduction4F" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ minps($dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ minps($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ minps($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ minps($dst$$XMMRegister, $tmp$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -8626,48 +8659,49 @@ instruct rvmax16I_reduction_evex(rRegI dst, rRegI src1, vecZ src2, regF tmp, reg
 %}
 
 // Long Max Reduction
-instruct rsmax1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 tmp, regF tmp2, regF tmp3) %{
+instruct rsmax1L_reduction_reg(rRegL dst, rRegL src1, vecD src2, rxmm0 xmm_0, regF tmp2, regF tmp3) %{
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
-  format %{ "movdq      $tmp,$src1\n\t"
+  effect(TEMP xmm_0, TEMP tmp2, TEMP tmp3);
+  format %{ "movdq      $xmm_0,$src1\n\t"
             "movdq      $tmp2,$src1\n\t"
-            "pcmpgtq   $tmp,$src2\n\t"
+            "pcmpgtq   $xmm_0,$src2\n\t"
             "blendvpd  $tmp2,$src2\n\t"
             "movdq      $dst,$tmp2\t! max reduction1L" %}
   ins_encode %{
-    __ movdq($tmp$$XMMRegister,$src1$$Register);
+    __ movdq($xmm_0$$XMMRegister,$src1$$Register);
     __ movdq($tmp2$$XMMRegister,$src1$$Register);
     __ movdq($tmp3$$XMMRegister,$src2$$Register);
-    __ pcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister);
+    __ pcmpgtq($xmm_0$$XMMRegister, $tmp3$$XMMRegister);
     __ blendvpd($tmp3$$XMMRegister,$tmp2$$XMMRegister);
     __ movdq($dst$$Register, $tmp3$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rsmax2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 tmp, regF tmp2, regF tmp3) %{
-  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+instruct rsmax2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, rxmm0 xmm_0, regF tmp2, regF tmp3) %{
+  predicate(UseSSE > 3 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2, TEMP tmp3);
-  format %{ "pshufd   $tmp,$src2,0xE\n\t"
-            "pshufd   $tmp2,$src2,0xE\n\t"
-            "pcmpgtq  $tmp,$src2\n\t"
-            "blendvpd   $tmp2,$tmp\n\t"
-            "pshufd     $tmp,$src1\n\t"
-            "pcmpgtq  $tmp,$tmp2\n\t"
-            "blendvpd   $tmp2,$src1\n\t"
+  effect(TEMP xmm_0, TEMP tmp2, TEMP tmp3);
+  format %{ "pshufd   $tmp3,$src2,0xE\n\t"
+            "movdqu  $xmm_0,$src2\n\t"
+            "pcmpgtq  $xmm_0,$tmp3\n\t"
+            "blendvpd  $tmp3,$src2\n\t"
+            "movdqu  $xmm_0,$tmp3\n\t"
+            "movdq  $tmp2,$src1\n\t"
+            "pcmpgtq  $xmm_0,$tmp2\n\t"
+            "blendvpd  $tmp2,$tmp3\n\t"
             "movq     $dst,$tmp2\t! max reduction2L" %}
   ins_encode %{
-    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
-    __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0xE);
-    __ pcmpgtq($tmp$$XMMRegister, $src2$$XMMRegister);
-    __ blendvpd($tmp2$$XMMRegister, $src2$$XMMRegister);
-    __ pshufd($tmp$$XMMRegister,$tmp2$$XMMRegister, 0x4);
-    __ movdq($tmp3$$XMMRegister, $src1$$Register);
-    __ pcmpgtq($tmp$$XMMRegister, $tmp3$$XMMRegister);
-    __ blendvpd($tmp3$$XMMRegister,$tmp2$$XMMRegister);
-    __ movdq($dst$$Register, $tmp3$$XMMRegister);
+    __ pshufd($tmp3$$XMMRegister, $src2$$XMMRegister, 0xE);
+    __ movdqu($xmm_0$$XMMRegister, $src2$$XMMRegister);
+    __ pcmpgtq($xmm_0$$XMMRegister, $tmp3$$XMMRegister);
+    __ blendvpd($tmp3$$XMMRegister, $src2$$XMMRegister);
+    __ movdqu($xmm_0$$XMMRegister, $tmp3$$XMMRegister);
+    __ movdq($tmp2$$XMMRegister, $src1$$Register);
+    __ pcmpgtq($xmm_0$$XMMRegister, $tmp2$$XMMRegister);
+    __ blendvpd($tmp2$$XMMRegister,$tmp3$$XMMRegister);
+    __ movdq($dst$$Register, $tmp2$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -8764,7 +8798,7 @@ instruct rvmax8L_reduction_reg(rRegL dst, rRegL src1, vecZ src2, regF tmp, regF 
 
 // Float max Reduction
 instruct rsmax2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
-  predicate(UseSSE > 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  predicate(UseSSE > 0 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MaxReductionV dst src2));
   effect(TEMP dst, TEMP tmp);
   format %{ "maxps   $dst, $src2\n\t"
@@ -8790,6 +8824,29 @@ instruct rvmax2F_reduction_reg(regF dst, vecD src2, regF tmp) %{
     __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $src2$$XMMRegister, vector_len);
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
     __ vmaxps($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rsmax4F_reduction_reg(regF dst, vecX src2, regF tmp) %{
+  predicate(UseSSE > 0 && UseAVX == 0 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxReductionV dst src2));
+  effect(TEMP tmp, TEMP dst);
+  format %{ "maxps  $dst,$src2\n\t"
+            "pshufd  $tmp,$src2,0x1\n\t"
+            "maxps  $dst,tmp\n\t"
+            "pshufd  $tmp,$src2,0x2\n\t"
+            "maxps  $dst,tmp\n\t"
+            "pshufd  $tmp,$src2,0x3\n\t"
+            "maxps  $dst,$tmp\t! max reduction4F" %}
+  ins_encode %{
+    __ maxps($dst$$XMMRegister, $src2$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
+    __ maxps($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x2);
+    __ maxps($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x3);
+    __ maxps($dst$$XMMRegister, $tmp$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
