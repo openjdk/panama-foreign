@@ -114,9 +114,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> add(double s);
 
     @Override
-    public DoubleVector<S> add(Vector<Double,S> v, Mask<Double, S> m) {
-        return bOp(v, m, (i, a, b) -> (double) (a + b));
-    }
+    public abstract DoubleVector<S> add(Vector<Double,S> v, Mask<Double, S> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -148,9 +146,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> sub(double s);
 
     @Override
-    public DoubleVector<S> sub(Vector<Double,S> v, Mask<Double, S> m) {
-        return bOp(v, m, (i, a, b) -> (double) (a - b));
-    }
+    public abstract DoubleVector<S> sub(Vector<Double,S> v, Mask<Double, S> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -182,9 +178,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> mul(double s);
 
     @Override
-    public DoubleVector<S> mul(Vector<Double,S> v, Mask<Double, S> m) {
-        return bOp(v, m, (i, a, b) -> (double) (a * b));
-    }
+    public abstract DoubleVector<S> mul(Vector<Double,S> v, Mask<Double, S> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -204,17 +198,13 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> neg();
 
     @Override
-    public DoubleVector<S> neg(Mask<Double, S> m) {
-        return uOp(m, (i, a) -> (double) (-a));
-    }
+    public abstract DoubleVector<S> neg(Mask<Double, S> m);
 
     @Override
     public abstract DoubleVector<S> abs();
 
     @Override
-    public DoubleVector<S> abs(Mask<Double, S> m) {
-        return uOp(m, (i, a) -> (double) Math.abs(a));
-    }
+    public abstract DoubleVector<S> abs(Mask<Double, S> m);
 
     @Override
     public abstract DoubleVector<S> min(Vector<Double,S> v);
@@ -388,9 +378,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * @param v the input vector
      * @return the result of dividing this vector by the input vector
      */
-    public DoubleVector<S> div(Vector<Double,S> v) {
-        return bOp(v, (i, a, b) -> (double) (a / b));
-    }
+    public abstract DoubleVector<S> div(Vector<Double,S> v);
 
     /**
      * Divides this vector by the broadcast of an input scalar.
@@ -415,9 +403,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * @param m the mask controlling lane selection
      * @return the result of dividing this vector by the input vector
      */
-    public DoubleVector<S> div(Vector<Double,S> v, Mask<Double, S> m) {
-        return bOp(v, m, (i, a, b) -> (double) (a / b));
-    }
+    public abstract DoubleVector<S> div(Vector<Double,S> v, Mask<Double, S> m);
 
     /**
      * Divides this vector by the broadcast of an input scalar, selecting lane
@@ -449,9 +435,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      *
      * @return the square root of this vector
      */
-    public DoubleVector<S> sqrt() {
-        return uOp((i, a) -> (double) Math.sqrt((double) a));
-    }
+    public abstract DoubleVector<S> sqrt();
 
     /**
      * Calculates the square root of this vector, selecting lane elements
@@ -1002,9 +986,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * @return the product of this vector and the first input vector summed with
      * the second input vector
      */
-    public DoubleVector<S> fma(Vector<Double,S> v1, Vector<Double,S> v2) {
-        return tOp(v1, v2, (i, a, b, c) -> Math.fma(a, b, c));
-    }
+    public abstract DoubleVector<S> fma(Vector<Double,S> v1, Vector<Double,S> v2);
 
     /**
      * Calculates the product of this vector and the broadcast of a first input

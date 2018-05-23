@@ -281,6 +281,12 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public Short256Vector neg(Mask<Short, Shapes.S256Bit> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public Short256Vector abs() {
@@ -288,6 +294,12 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             VECTOR_OP_ABS, Short256Vector.class, short.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (short) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public Short256Vector abs(Mask<Short, Shapes.S256Bit> m) {
+        return blend(abs(), m);
     }
 
 
@@ -298,6 +310,12 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             VECTOR_OP_NOT, Short256Vector.class, short.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (short) ~a));
+    }
+
+    @ForceInline
+    @Override
+    public Short256Vector not(Mask<Short, Shapes.S256Bit> m) {
+        return blend(not(), m);
     }
     // Binary operations
 
@@ -314,6 +332,12 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Short256Vector add(Vector<Short,Shapes.S256Bit> v, Mask<Short, Shapes.S256Bit> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Short256Vector sub(Vector<Short,Shapes.S256Bit> o) {
         Objects.requireNonNull(o);
         Short256Vector v = (Short256Vector)o;
@@ -325,6 +349,12 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Short256Vector sub(Vector<Short,Shapes.S256Bit> v, Mask<Short, Shapes.S256Bit> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Short256Vector mul(Vector<Short,Shapes.S256Bit> o) {
         Objects.requireNonNull(o);
         Short256Vector v = (Short256Vector)o;
@@ -332,6 +362,12 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             VECTOR_OP_MUL, Short256Vector.class, short.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public Short256Vector mul(Vector<Short,Shapes.S256Bit> v, Mask<Short, Shapes.S256Bit> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -355,8 +391,6 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short) ((a > b) ? a : b)));
         }
-
-
 
     @Override
     @ForceInline

@@ -114,9 +114,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> add(int s);
 
     @Override
-    public IntVector<S> add(Vector<Integer,S> v, Mask<Integer, S> m) {
-        return bOp(v, m, (i, a, b) -> (int) (a + b));
-    }
+    public abstract IntVector<S> add(Vector<Integer,S> v, Mask<Integer, S> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -148,9 +146,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> sub(int s);
 
     @Override
-    public IntVector<S> sub(Vector<Integer,S> v, Mask<Integer, S> m) {
-        return bOp(v, m, (i, a, b) -> (int) (a - b));
-    }
+    public abstract IntVector<S> sub(Vector<Integer,S> v, Mask<Integer, S> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -182,9 +178,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> mul(int s);
 
     @Override
-    public IntVector<S> mul(Vector<Integer,S> v, Mask<Integer, S> m) {
-        return bOp(v, m, (i, a, b) -> (int) (a * b));
-    }
+    public abstract IntVector<S> mul(Vector<Integer,S> v, Mask<Integer, S> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -204,17 +198,13 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> neg();
 
     @Override
-    public IntVector<S> neg(Mask<Integer, S> m) {
-        return uOp(m, (i, a) -> (int) (-a));
-    }
+    public abstract IntVector<S> neg(Mask<Integer, S> m);
 
     @Override
     public abstract IntVector<S> abs();
 
     @Override
-    public IntVector<S> abs(Mask<Integer, S> m) {
-        return uOp(m, (i, a) -> (int) Math.abs(a));
-    }
+    public abstract IntVector<S> abs(Mask<Integer, S> m);
 
     @Override
     public abstract IntVector<S> min(Vector<Integer,S> v);
@@ -550,9 +540,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the bitwise NOT of this vector
      */
-    public IntVector<S> not(Mask<Integer, S> m) {
-        return uOp(m, (i, a) -> (int) (~a));
-    }
+    public abstract IntVector<S> not(Mask<Integer, S> m);
 
 /*
 @@@ Check the shift operations against the JLS definition and vector

@@ -114,9 +114,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> add(float s);
 
     @Override
-    public FloatVector<S> add(Vector<Float,S> v, Mask<Float, S> m) {
-        return bOp(v, m, (i, a, b) -> (float) (a + b));
-    }
+    public abstract FloatVector<S> add(Vector<Float,S> v, Mask<Float, S> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -148,9 +146,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> sub(float s);
 
     @Override
-    public FloatVector<S> sub(Vector<Float,S> v, Mask<Float, S> m) {
-        return bOp(v, m, (i, a, b) -> (float) (a - b));
-    }
+    public abstract FloatVector<S> sub(Vector<Float,S> v, Mask<Float, S> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -182,9 +178,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> mul(float s);
 
     @Override
-    public FloatVector<S> mul(Vector<Float,S> v, Mask<Float, S> m) {
-        return bOp(v, m, (i, a, b) -> (float) (a * b));
-    }
+    public abstract FloatVector<S> mul(Vector<Float,S> v, Mask<Float, S> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -204,17 +198,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> neg();
 
     @Override
-    public FloatVector<S> neg(Mask<Float, S> m) {
-        return uOp(m, (i, a) -> (float) (-a));
-    }
+    public abstract FloatVector<S> neg(Mask<Float, S> m);
 
     @Override
     public abstract FloatVector<S> abs();
 
     @Override
-    public FloatVector<S> abs(Mask<Float, S> m) {
-        return uOp(m, (i, a) -> (float) Math.abs(a));
-    }
+    public abstract FloatVector<S> abs(Mask<Float, S> m);
 
     @Override
     public abstract FloatVector<S> min(Vector<Float,S> v);
@@ -388,9 +378,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * @param v the input vector
      * @return the result of dividing this vector by the input vector
      */
-    public FloatVector<S> div(Vector<Float,S> v) {
-        return bOp(v, (i, a, b) -> (float) (a / b));
-    }
+    public abstract FloatVector<S> div(Vector<Float,S> v);
 
     /**
      * Divides this vector by the broadcast of an input scalar.
@@ -415,9 +403,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * @param m the mask controlling lane selection
      * @return the result of dividing this vector by the input vector
      */
-    public FloatVector<S> div(Vector<Float,S> v, Mask<Float, S> m) {
-        return bOp(v, m, (i, a, b) -> (float) (a / b));
-    }
+    public abstract FloatVector<S> div(Vector<Float,S> v, Mask<Float, S> m);
 
     /**
      * Divides this vector by the broadcast of an input scalar, selecting lane
@@ -449,9 +435,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *
      * @return the square root of this vector
      */
-    public FloatVector<S> sqrt() {
-        return uOp((i, a) -> (float) Math.sqrt((double) a));
-    }
+    public abstract FloatVector<S> sqrt();
 
     /**
      * Calculates the square root of this vector, selecting lane elements
@@ -1002,9 +986,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * @return the product of this vector and the first input vector summed with
      * the second input vector
      */
-    public FloatVector<S> fma(Vector<Float,S> v1, Vector<Float,S> v2) {
-        return tOp(v1, v2, (i, a, b, c) -> Math.fma(a, b, c));
-    }
+    public abstract FloatVector<S> fma(Vector<Float,S> v1, Vector<Float,S> v2);
 
     /**
      * Calculates the product of this vector and the broadcast of a first input

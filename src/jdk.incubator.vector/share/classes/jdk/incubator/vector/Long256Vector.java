@@ -281,6 +281,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public Long256Vector neg(Mask<Long, Shapes.S256Bit> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public Long256Vector abs() {
@@ -288,6 +294,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             VECTOR_OP_ABS, Long256Vector.class, long.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (long) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public Long256Vector abs(Mask<Long, Shapes.S256Bit> m) {
+        return blend(abs(), m);
     }
 
 
@@ -298,6 +310,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             VECTOR_OP_NOT, Long256Vector.class, long.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (long) ~a));
+    }
+
+    @ForceInline
+    @Override
+    public Long256Vector not(Mask<Long, Shapes.S256Bit> m) {
+        return blend(not(), m);
     }
     // Binary operations
 
@@ -314,6 +332,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Long256Vector add(Vector<Long,Shapes.S256Bit> v, Mask<Long, Shapes.S256Bit> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Long256Vector sub(Vector<Long,Shapes.S256Bit> o) {
         Objects.requireNonNull(o);
         Long256Vector v = (Long256Vector)o;
@@ -325,6 +349,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Long256Vector sub(Vector<Long,Shapes.S256Bit> v, Mask<Long, Shapes.S256Bit> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Long256Vector mul(Vector<Long,Shapes.S256Bit> o) {
         Objects.requireNonNull(o);
         Long256Vector v = (Long256Vector)o;
@@ -332,6 +362,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             VECTOR_OP_MUL, Long256Vector.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector mul(Vector<Long,Shapes.S256Bit> v, Mask<Long, Shapes.S256Bit> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -355,8 +391,6 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
         }
-
-
 
     @Override
     @ForceInline

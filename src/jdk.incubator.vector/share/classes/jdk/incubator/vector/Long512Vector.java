@@ -281,6 +281,12 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public Long512Vector neg(Mask<Long, Shapes.S512Bit> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public Long512Vector abs() {
@@ -288,6 +294,12 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             VECTOR_OP_ABS, Long512Vector.class, long.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (long) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public Long512Vector abs(Mask<Long, Shapes.S512Bit> m) {
+        return blend(abs(), m);
     }
 
 
@@ -298,6 +310,12 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             VECTOR_OP_NOT, Long512Vector.class, long.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (long) ~a));
+    }
+
+    @ForceInline
+    @Override
+    public Long512Vector not(Mask<Long, Shapes.S512Bit> m) {
+        return blend(not(), m);
     }
     // Binary operations
 
@@ -314,6 +332,12 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Long512Vector add(Vector<Long,Shapes.S512Bit> v, Mask<Long, Shapes.S512Bit> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Long512Vector sub(Vector<Long,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Long512Vector v = (Long512Vector)o;
@@ -325,6 +349,12 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Long512Vector sub(Vector<Long,Shapes.S512Bit> v, Mask<Long, Shapes.S512Bit> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Long512Vector mul(Vector<Long,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Long512Vector v = (Long512Vector)o;
@@ -332,6 +362,12 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             VECTOR_OP_MUL, Long512Vector.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long512Vector mul(Vector<Long,Shapes.S512Bit> v, Mask<Long, Shapes.S512Bit> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -355,8 +391,6 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
         }
-
-
 
     @Override
     @ForceInline

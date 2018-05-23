@@ -114,9 +114,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> add(short s);
 
     @Override
-    public ShortVector<S> add(Vector<Short,S> v, Mask<Short, S> m) {
-        return bOp(v, m, (i, a, b) -> (short) (a + b));
-    }
+    public abstract ShortVector<S> add(Vector<Short,S> v, Mask<Short, S> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -148,9 +146,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> sub(short s);
 
     @Override
-    public ShortVector<S> sub(Vector<Short,S> v, Mask<Short, S> m) {
-        return bOp(v, m, (i, a, b) -> (short) (a - b));
-    }
+    public abstract ShortVector<S> sub(Vector<Short,S> v, Mask<Short, S> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -182,9 +178,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> mul(short s);
 
     @Override
-    public ShortVector<S> mul(Vector<Short,S> v, Mask<Short, S> m) {
-        return bOp(v, m, (i, a, b) -> (short) (a * b));
-    }
+    public abstract ShortVector<S> mul(Vector<Short,S> v, Mask<Short, S> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -204,17 +198,13 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> neg();
 
     @Override
-    public ShortVector<S> neg(Mask<Short, S> m) {
-        return uOp(m, (i, a) -> (short) (-a));
-    }
+    public abstract ShortVector<S> neg(Mask<Short, S> m);
 
     @Override
     public abstract ShortVector<S> abs();
 
     @Override
-    public ShortVector<S> abs(Mask<Short, S> m) {
-        return uOp(m, (i, a) -> (short) Math.abs(a));
-    }
+    public abstract ShortVector<S> abs(Mask<Short, S> m);
 
     @Override
     public abstract ShortVector<S> min(Vector<Short,S> v);
@@ -550,9 +540,7 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
      * @param m the mask controlling lane selection
      * @return the bitwise NOT of this vector
      */
-    public ShortVector<S> not(Mask<Short, S> m) {
-        return uOp(m, (i, a) -> (short) (~a));
-    }
+    public abstract ShortVector<S> not(Mask<Short, S> m);
 
 /*
 @@@ Check the shift operations against the JLS definition and vector

@@ -113,9 +113,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> add(byte s);
 
     @Override
-    public ByteVector<S> add(Vector<Byte,S> v, Mask<Byte, S> m) {
-        return bOp(v, m, (i, a, b) -> (byte) (a + b));
-    }
+    public abstract ByteVector<S> add(Vector<Byte,S> v, Mask<Byte, S> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -147,9 +145,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> sub(byte s);
 
     @Override
-    public ByteVector<S> sub(Vector<Byte,S> v, Mask<Byte, S> m) {
-        return bOp(v, m, (i, a, b) -> (byte) (a - b));
-    }
+    public abstract ByteVector<S> sub(Vector<Byte,S> v, Mask<Byte, S> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -181,9 +177,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> mul(byte s);
 
     @Override
-    public ByteVector<S> mul(Vector<Byte,S> v, Mask<Byte, S> m) {
-        return bOp(v, m, (i, a, b) -> (byte) (a * b));
-    }
+    public abstract ByteVector<S> mul(Vector<Byte,S> v, Mask<Byte, S> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -203,17 +197,13 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> neg();
 
     @Override
-    public ByteVector<S> neg(Mask<Byte, S> m) {
-        return uOp(m, (i, a) -> (byte) (-a));
-    }
+    public abstract ByteVector<S> neg(Mask<Byte, S> m);
 
     @Override
     public abstract ByteVector<S> abs();
 
     @Override
-    public ByteVector<S> abs(Mask<Byte, S> m) {
-        return uOp(m, (i, a) -> (byte) Math.abs(a));
-    }
+    public abstract ByteVector<S> abs(Mask<Byte, S> m);
 
     @Override
     public abstract ByteVector<S> min(Vector<Byte,S> v);
@@ -549,9 +539,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * @param m the mask controlling lane selection
      * @return the bitwise NOT of this vector
      */
-    public ByteVector<S> not(Mask<Byte, S> m) {
-        return uOp(m, (i, a) -> (byte) (~a));
-    }
+    public abstract ByteVector<S> not(Mask<Byte, S> m);
 
 /*
 @@@ Check the shift operations against the JLS definition and vector

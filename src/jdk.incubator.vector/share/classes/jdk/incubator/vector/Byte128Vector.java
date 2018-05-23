@@ -280,6 +280,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public Byte128Vector neg(Mask<Byte, Shapes.S128Bit> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public Byte128Vector abs() {
@@ -287,6 +293,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             VECTOR_OP_ABS, Byte128Vector.class, byte.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (byte) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public Byte128Vector abs(Mask<Byte, Shapes.S128Bit> m) {
+        return blend(abs(), m);
     }
 
 
@@ -297,6 +309,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             VECTOR_OP_NOT, Byte128Vector.class, byte.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (byte) ~a));
+    }
+
+    @ForceInline
+    @Override
+    public Byte128Vector not(Mask<Byte, Shapes.S128Bit> m) {
+        return blend(not(), m);
     }
     // Binary operations
 
@@ -313,6 +331,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public Byte128Vector add(Vector<Byte,Shapes.S128Bit> v, Mask<Byte, Shapes.S128Bit> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Byte128Vector sub(Vector<Byte,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Byte128Vector v = (Byte128Vector)o;
@@ -324,6 +348,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public Byte128Vector sub(Vector<Byte,Shapes.S128Bit> v, Mask<Byte, Shapes.S128Bit> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Byte128Vector mul(Vector<Byte,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Byte128Vector v = (Byte128Vector)o;
@@ -331,6 +361,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             VECTOR_OP_MUL, Byte128Vector.class, byte.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (byte)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public Byte128Vector mul(Vector<Byte,Shapes.S128Bit> v, Mask<Byte, Shapes.S128Bit> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -354,8 +390,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (byte) ((a > b) ? a : b)));
         }
-
-
 
     @Override
     @ForceInline

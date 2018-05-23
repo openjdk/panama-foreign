@@ -250,6 +250,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Float256Vector div(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
+        return blend(div(v), m);
+    }
+
+    @Override
+    @ForceInline
     public FloatVector<Shapes.S256Bit> atan2(float o) {
         return atan2(SPECIES.broadcast(o));
     }
@@ -299,6 +305,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public Float256Vector neg(Mask<Float, Shapes.S256Bit> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public Float256Vector abs() {
@@ -306,6 +318,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             VECTOR_OP_ABS, Float256Vector.class, float.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (float) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public Float256Vector abs(Mask<Float, Shapes.S256Bit> m) {
+        return blend(abs(), m);
     }
 
     @Override
@@ -352,6 +370,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Float256Vector add(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Float256Vector sub(Vector<Float,Shapes.S256Bit> o) {
         Objects.requireNonNull(o);
         Float256Vector v = (Float256Vector)o;
@@ -363,6 +387,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Float256Vector sub(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Float256Vector mul(Vector<Float,Shapes.S256Bit> o) {
         Objects.requireNonNull(o);
         Float256Vector v = (Float256Vector)o;
@@ -370,6 +400,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             VECTOR_OP_MUL, Float256Vector.class, float.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (float)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public Float256Vector mul(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -393,34 +429,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (float) ((a > b) ? a : b)));
         }
-
-    @Override
-    @ForceInline
-    public Float256Vector add(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a + b));
-        return blend(add(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Float256Vector sub(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a - b));
-        return blend(sub(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Float256Vector mul(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a * b));
-        return blend(mul(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Float256Vector div(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (float)(a / b));
-        return blend(div(v), m);
-    }
 
 
     // Ternary operations

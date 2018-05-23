@@ -281,6 +281,12 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public Int512Vector neg(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public Int512Vector abs() {
@@ -288,6 +294,12 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             VECTOR_OP_ABS, Int512Vector.class, int.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (int) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public Int512Vector abs(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(abs(), m);
     }
 
 
@@ -298,6 +310,12 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             VECTOR_OP_NOT, Int512Vector.class, int.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (int) ~a));
+    }
+
+    @ForceInline
+    @Override
+    public Int512Vector not(Mask<Integer, Shapes.S512Bit> m) {
+        return blend(not(), m);
     }
     // Binary operations
 
@@ -314,6 +332,12 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Int512Vector add(Vector<Integer,Shapes.S512Bit> v, Mask<Integer, Shapes.S512Bit> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Int512Vector sub(Vector<Integer,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Int512Vector v = (Int512Vector)o;
@@ -325,6 +349,12 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Int512Vector sub(Vector<Integer,Shapes.S512Bit> v, Mask<Integer, Shapes.S512Bit> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Int512Vector mul(Vector<Integer,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Int512Vector v = (Int512Vector)o;
@@ -332,6 +362,12 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             VECTOR_OP_MUL, Int512Vector.class, int.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int512Vector mul(Vector<Integer,Shapes.S512Bit> v, Mask<Integer, Shapes.S512Bit> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -355,28 +391,6 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) ((a > b) ? a : b)));
         }
-
-    @Override
-    @ForceInline
-    public Int512Vector add(Vector<Integer,Shapes.S512Bit> v, Mask<Integer, Shapes.S512Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (int)(a + b));
-        return blend(add(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int512Vector sub(Vector<Integer,Shapes.S512Bit> v, Mask<Integer, Shapes.S512Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (int)(a - b));
-        return blend(sub(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int512Vector mul(Vector<Integer,Shapes.S512Bit> v, Mask<Integer, Shapes.S512Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (int)(a * b));
-        return blend(mul(v), m);
-    }
-
 
     @Override
     @ForceInline

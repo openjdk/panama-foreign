@@ -253,6 +253,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
+    public $vectortype$ div(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(div(v), m);
+    }
+
+    @Override
+    @ForceInline
     public $abstractvectortype$<Shapes.$shape$> atan2($type$ o) {
         return atan2(SPECIES.broadcast(o));
     }
@@ -346,6 +352,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public $vectortype$ neg(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public $vectortype$ abs() {
@@ -353,6 +365,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             VECTOR_OP_ABS, $vectortype$.class, $type$.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> ($type$) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public $vectortype$ abs(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(abs(), m);
     }
 
 #if[FP]
@@ -395,6 +413,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> v1.uOp((i, a) -> ($type$) ~a));
     }
+
+    @ForceInline
+    @Override
+    public $vectortype$ not(Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(not(), m);
+    }
 #end[BITWISE]
     // Binary operations
 
@@ -411,6 +435,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
+    public $vectortype$ add(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public $vectortype$ sub(Vector<$Boxtype$,Shapes.$shape$> o) {
         Objects.requireNonNull(o);
         $vectortype$ v = ($vectortype$)o;
@@ -422,6 +452,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
+    public $vectortype$ sub(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public $vectortype$ mul(Vector<$Boxtype$,Shapes.$shape$> o) {
         Objects.requireNonNull(o);
         $vectortype$ v = ($vectortype$)o;
@@ -429,6 +465,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             VECTOR_OP_MUL, $vectortype$.class, $type$.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ mul(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -452,38 +494,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$) ((a > b) ? a : b)));
         }
-
-#if[intOrFP]
-    @Override
-    @ForceInline
-    public $vectortype$ add(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> ($type$)(a + b));
-        return blend(add(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ sub(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> ($type$)(a - b));
-        return blend(sub(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public $vectortype$ mul(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> ($type$)(a * b));
-        return blend(mul(v), m);
-    }
-#end[intOrFP]
-
-#if[FP]
-    @Override
-    @ForceInline
-    public $vectortype$ div(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> ($type$)(a / b));
-        return blend(div(v), m);
-    }
-#end[FP]
 
 #if[BITWISE]
     @Override

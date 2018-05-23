@@ -250,6 +250,12 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Double512Vector div(Vector<Double,Shapes.S512Bit> v, Mask<Double, Shapes.S512Bit> m) {
+        return blend(div(v), m);
+    }
+
+    @Override
+    @ForceInline
     public DoubleVector<Shapes.S512Bit> atan2(double o) {
         return atan2(SPECIES.broadcast(o));
     }
@@ -299,6 +305,12 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public Double512Vector neg(Mask<Double, Shapes.S512Bit> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public Double512Vector abs() {
@@ -306,6 +318,12 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             VECTOR_OP_ABS, Double512Vector.class, double.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (double) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public Double512Vector abs(Mask<Double, Shapes.S512Bit> m) {
+        return blend(abs(), m);
     }
 
     @Override
@@ -352,6 +370,12 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Double512Vector add(Vector<Double,Shapes.S512Bit> v, Mask<Double, Shapes.S512Bit> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Double512Vector sub(Vector<Double,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
@@ -363,6 +387,12 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Double512Vector sub(Vector<Double,Shapes.S512Bit> v, Mask<Double, Shapes.S512Bit> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Double512Vector mul(Vector<Double,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Double512Vector v = (Double512Vector)o;
@@ -370,6 +400,12 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             VECTOR_OP_MUL, Double512Vector.class, double.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public Double512Vector mul(Vector<Double,Shapes.S512Bit> v, Mask<Double, Shapes.S512Bit> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -393,34 +429,6 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double) ((a > b) ? a : b)));
         }
-
-    @Override
-    @ForceInline
-    public Double512Vector add(Vector<Double,Shapes.S512Bit> v, Mask<Double, Shapes.S512Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a + b));
-        return blend(add(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Double512Vector sub(Vector<Double,Shapes.S512Bit> v, Mask<Double, Shapes.S512Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a - b));
-        return blend(sub(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Double512Vector mul(Vector<Double,Shapes.S512Bit> v, Mask<Double, Shapes.S512Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a * b));
-        return blend(mul(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Double512Vector div(Vector<Double,Shapes.S512Bit> v, Mask<Double, Shapes.S512Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (double)(a / b));
-        return blend(div(v), m);
-    }
 
 
     // Ternary operations

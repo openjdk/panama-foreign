@@ -281,6 +281,12 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public Int128Vector neg(Mask<Integer, Shapes.S128Bit> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public Int128Vector abs() {
@@ -288,6 +294,12 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
             VECTOR_OP_ABS, Int128Vector.class, int.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (int) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public Int128Vector abs(Mask<Integer, Shapes.S128Bit> m) {
+        return blend(abs(), m);
     }
 
 
@@ -298,6 +310,12 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
             VECTOR_OP_NOT, Int128Vector.class, int.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (int) ~a));
+    }
+
+    @ForceInline
+    @Override
+    public Int128Vector not(Mask<Integer, Shapes.S128Bit> m) {
+        return blend(not(), m);
     }
     // Binary operations
 
@@ -314,6 +332,12 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public Int128Vector add(Vector<Integer,Shapes.S128Bit> v, Mask<Integer, Shapes.S128Bit> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Int128Vector sub(Vector<Integer,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Int128Vector v = (Int128Vector)o;
@@ -325,6 +349,12 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public Int128Vector sub(Vector<Integer,Shapes.S128Bit> v, Mask<Integer, Shapes.S128Bit> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Int128Vector mul(Vector<Integer,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Int128Vector v = (Int128Vector)o;
@@ -332,6 +362,12 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
             VECTOR_OP_MUL, Int128Vector.class, int.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public Int128Vector mul(Vector<Integer,Shapes.S128Bit> v, Mask<Integer, Shapes.S128Bit> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -355,28 +391,6 @@ final class Int128Vector extends IntVector<Shapes.S128Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) ((a > b) ? a : b)));
         }
-
-    @Override
-    @ForceInline
-    public Int128Vector add(Vector<Integer,Shapes.S128Bit> v, Mask<Integer, Shapes.S128Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (int)(a + b));
-        return blend(add(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int128Vector sub(Vector<Integer,Shapes.S128Bit> v, Mask<Integer, Shapes.S128Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (int)(a - b));
-        return blend(sub(v), m);
-    }
-
-    @Override
-    @ForceInline
-    public Int128Vector mul(Vector<Integer,Shapes.S128Bit> v, Mask<Integer, Shapes.S128Bit> m) {
-        // TODO: use better default impl: bOp(o, m, (i, a, b) -> (int)(a * b));
-        return blend(mul(v), m);
-    }
-
 
     @Override
     @ForceInline

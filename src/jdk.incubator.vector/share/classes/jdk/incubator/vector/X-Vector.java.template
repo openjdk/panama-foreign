@@ -116,9 +116,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> add($type$ s);
 
     @Override
-    public $abstractvectortype$<S> add(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a + b));
-    }
+    public abstract $abstractvectortype$<S> add(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -150,9 +148,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> sub($type$ s);
 
     @Override
-    public $abstractvectortype$<S> sub(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a - b));
-    }
+    public abstract $abstractvectortype$<S> sub(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -184,9 +180,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> mul($type$ s);
 
     @Override
-    public $abstractvectortype$<S> mul(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a * b));
-    }
+    public abstract $abstractvectortype$<S> mul(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -206,17 +200,13 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> neg();
 
     @Override
-    public $abstractvectortype$<S> neg(Mask<$Boxtype$, S> m) {
-        return uOp(m, (i, a) -> ($type$) (-a));
-    }
+    public abstract $abstractvectortype$<S> neg(Mask<$Boxtype$, S> m);
 
     @Override
     public abstract $abstractvectortype$<S> abs();
 
     @Override
-    public $abstractvectortype$<S> abs(Mask<$Boxtype$, S> m) {
-        return uOp(m, (i, a) -> ($type$) Math.abs(a));
-    }
+    public abstract $abstractvectortype$<S> abs(Mask<$Boxtype$, S> m);
 
     @Override
     public abstract $abstractvectortype$<S> min(Vector<$Boxtype$,S> v);
@@ -391,9 +381,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @param v the input vector
      * @return the result of dividing this vector by the input vector
      */
-    public $abstractvectortype$<S> div(Vector<$Boxtype$,S> v) {
-        return bOp(v, (i, a, b) -> ($type$) (a / b));
-    }
+    public abstract $abstractvectortype$<S> div(Vector<$Boxtype$,S> v);
 
     /**
      * Divides this vector by the broadcast of an input scalar.
@@ -418,9 +406,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @param m the mask controlling lane selection
      * @return the result of dividing this vector by the input vector
      */
-    public $abstractvectortype$<S> div(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
-        return bOp(v, m, (i, a, b) -> ($type$) (a / b));
-    }
+    public abstract $abstractvectortype$<S> div(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m);
 
     /**
      * Divides this vector by the broadcast of an input scalar, selecting lane
@@ -452,9 +438,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      *
      * @return the square root of this vector
      */
-    public $abstractvectortype$<S> sqrt() {
-        return uOp((i, a) -> ($type$) Math.sqrt((double) a));
-    }
+    public abstract $abstractvectortype$<S> sqrt();
 
     /**
      * Calculates the square root of this vector, selecting lane elements
@@ -1005,9 +989,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the product of this vector and the first input vector summed with
      * the second input vector
      */
-    public $abstractvectortype$<S> fma(Vector<$Boxtype$,S> v1, Vector<$Boxtype$,S> v2) {
-        return tOp(v1, v2, (i, a, b, c) -> Math.fma(a, b, c));
-    }
+    public abstract $abstractvectortype$<S> fma(Vector<$Boxtype$,S> v1, Vector<$Boxtype$,S> v2);
 
     /**
      * Calculates the product of this vector and the broadcast of a first input
@@ -1322,9 +1304,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @param m the mask controlling lane selection
      * @return the bitwise NOT of this vector
      */
-    public $abstractvectortype$<S> not(Mask<$Boxtype$, S> m) {
-        return uOp(m, (i, a) -> ($type$) (~a));
-    }
+    public abstract $abstractvectortype$<S> not(Mask<$Boxtype$, S> m);
 
 /*
 @@@ Check the shift operations against the JLS definition and vector

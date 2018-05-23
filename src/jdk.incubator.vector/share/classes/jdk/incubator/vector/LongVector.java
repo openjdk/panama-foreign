@@ -114,9 +114,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> add(long s);
 
     @Override
-    public LongVector<S> add(Vector<Long,S> v, Mask<Long, S> m) {
-        return bOp(v, m, (i, a, b) -> (long) (a + b));
-    }
+    public abstract LongVector<S> add(Vector<Long,S> v, Mask<Long, S> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -148,9 +146,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> sub(long s);
 
     @Override
-    public LongVector<S> sub(Vector<Long,S> v, Mask<Long, S> m) {
-        return bOp(v, m, (i, a, b) -> (long) (a - b));
-    }
+    public abstract LongVector<S> sub(Vector<Long,S> v, Mask<Long, S> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -182,9 +178,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> mul(long s);
 
     @Override
-    public LongVector<S> mul(Vector<Long,S> v, Mask<Long, S> m) {
-        return bOp(v, m, (i, a, b) -> (long) (a * b));
-    }
+    public abstract LongVector<S> mul(Vector<Long,S> v, Mask<Long, S> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -204,17 +198,13 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> neg();
 
     @Override
-    public LongVector<S> neg(Mask<Long, S> m) {
-        return uOp(m, (i, a) -> (long) (-a));
-    }
+    public abstract LongVector<S> neg(Mask<Long, S> m);
 
     @Override
     public abstract LongVector<S> abs();
 
     @Override
-    public LongVector<S> abs(Mask<Long, S> m) {
-        return uOp(m, (i, a) -> (long) Math.abs(a));
-    }
+    public abstract LongVector<S> abs(Mask<Long, S> m);
 
     @Override
     public abstract LongVector<S> min(Vector<Long,S> v);
@@ -550,9 +540,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @param m the mask controlling lane selection
      * @return the bitwise NOT of this vector
      */
-    public LongVector<S> not(Mask<Long, S> m) {
-        return uOp(m, (i, a) -> (long) (~a));
-    }
+    public abstract LongVector<S> not(Mask<Long, S> m);
 
 /*
 @@@ Check the shift operations against the JLS definition and vector

@@ -281,6 +281,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     // Unary operations
 
+    @ForceInline
+    @Override
+    public Long128Vector neg(Mask<Long, Shapes.S128Bit> m) {
+        return blend(neg(), m);
+    }
+
     @Override
     @ForceInline
     public Long128Vector abs() {
@@ -288,6 +294,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             VECTOR_OP_ABS, Long128Vector.class, long.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (long) Math.abs(a)));
+    }
+
+    @ForceInline
+    @Override
+    public Long128Vector abs(Mask<Long, Shapes.S128Bit> m) {
+        return blend(abs(), m);
     }
 
 
@@ -298,6 +310,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             VECTOR_OP_NOT, Long128Vector.class, long.class, LENGTH,
             this,
             v1 -> v1.uOp((i, a) -> (long) ~a));
+    }
+
+    @ForceInline
+    @Override
+    public Long128Vector not(Mask<Long, Shapes.S128Bit> m) {
+        return blend(not(), m);
     }
     // Binary operations
 
@@ -314,6 +332,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public Long128Vector add(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+        return blend(add(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Long128Vector sub(Vector<Long,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
@@ -325,6 +349,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public Long128Vector sub(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+        return blend(sub(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Long128Vector mul(Vector<Long,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
@@ -332,6 +362,12 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             VECTOR_OP_MUL, Long128Vector.class, long.class, LENGTH,
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long)(a * b)));
+    }
+
+    @Override
+    @ForceInline
+    public Long128Vector mul(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+        return blend(mul(v), m);
     }
 
     @Override
@@ -355,8 +391,6 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
         }
-
-
 
     @Override
     @ForceInline
