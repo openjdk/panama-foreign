@@ -62,11 +62,11 @@ public class UnixSystem {
     @NativeHeader
     static interface LinuxSystem {
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@__xstat")
-        @NativeType(layout="(i32u64:u8u64:[i32i32i32i32i32i32i32i32i32i32i32i32])i32", ctype="dummy")
+        @NativeType(layout="(i32u64:u8u64:$(linux_stat))i32", ctype="dummy")
         public abstract int __xstat(int ver, Pointer<Byte> path, Pointer<stat> buf);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        @NativeStruct("[i32i32i32i32i32i32i32i32i32i32i32i32i32]")
+        @NativeStruct("[i32i32i32i32i32i32i32i32i32i32i32i32i32](linux_stat)")
         static interface stat extends Struct<stat> {
             @Offset(offset=384l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@stat@st_size")
@@ -79,11 +79,11 @@ public class UnixSystem {
     @NativeHeader
     static interface MacOSXSystem {
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@stat")
-        @NativeType(layout="(u64:u8u64:[i32u16u16u64u32u32i64[i64i64][i64i64][i64i64][i64i64]i64i64i32u32u32i32[2i64]])i32", ctype="dummy")
+        @NativeType(layout="(u64:u8u64:$(osx_stat))i32", ctype="dummy")
         public abstract int stat$INODE64(Pointer<Byte> path, Pointer<stat> buf);
 
 
-        @NativeStruct("[i32u16u16u64u32u32i64[i64i64][i64i64][i64i64][i64i64]i64i64i32u32u32i32[2i64]]")
+        @NativeStruct("[i32u16u16u64u32u32i64[i64i64][i64i64][i64i64][i64i64]i64i64i32u32u32i32[2i64]](osx_stat)")
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
         static interface stat extends Struct<stat> {
             @Offset(offset=768l)

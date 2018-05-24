@@ -47,7 +47,7 @@ public class StructUpcall {
     @NativeHeader
     public static interface Index {
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        @NativeStruct("[i32i32i32u64:vu64:vu64:v]")
+        @NativeStruct("[i32i32i32u64:vu64:vu64:v](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field1")
@@ -86,7 +86,7 @@ public class StructUpcall {
             void field6$set(Pointer<?> p);
         }
 
-        @NativeCallback("([i32i32i32u64:vu64:vu64:v])v")
+        @NativeCallback("($(mystruct))v")
         @FunctionalInterface
         static interface MyStructVisitor {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
@@ -94,7 +94,7 @@ public class StructUpcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@struct_upcall")
-        @NativeType(layout="(u64:([i32i32i32u64:vu64:vu64:v])v[i32i32i32u64:vu64:vu64:v])v", ctype="void (struct_upcall_cb, struct MyStruct)", name="struct_upcall")
+        @NativeType(layout="(u64:($(mystruct))v$(mystruct))v", ctype="void (struct_upcall_cb, struct MyStruct)", name="struct_upcall")
         public abstract void struct_upcall(MyStructVisitor v, MyStruct s);
     }
 

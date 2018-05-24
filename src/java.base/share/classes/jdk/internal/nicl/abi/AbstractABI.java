@@ -30,6 +30,7 @@ import java.nicl.layout.Sequence;
 import java.nicl.layout.Group;
 import java.nicl.layout.Group.Kind;
 import java.nicl.layout.Layout;
+import java.nicl.layout.Unresolved;
 import java.nicl.layout.Value;
 
 /**
@@ -86,6 +87,8 @@ public abstract class AbstractABI implements SystemABI {
             return alignmentOfContainer((Group) t);
         } else if (t instanceof Address) {
             return 8;
+        } else if (t instanceof Unresolved) {
+            return alignment(((Unresolved)t).resolve(), isVar);
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);
         }
@@ -165,6 +168,8 @@ public abstract class AbstractABI implements SystemABI {
             return new ContainerSizeInfo((Group) t, -1).size();
         } else if (t instanceof Address) {
             return definedSize((Address)t);
+        } else if (t instanceof Unresolved) {
+            return sizeof(((Unresolved)t).resolve());
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);
         }

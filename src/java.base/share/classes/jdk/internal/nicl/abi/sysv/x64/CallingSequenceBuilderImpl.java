@@ -36,6 +36,7 @@ import java.nicl.layout.Sequence;
 import java.nicl.layout.Group;
 import java.nicl.layout.Group.Kind;
 import java.nicl.layout.Layout;
+import java.nicl.layout.Unresolved;
 import java.nicl.layout.Value;
 import java.util.ArrayList;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
@@ -272,6 +273,8 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
             return classifyArrayType((Sequence) type, named);
         } else if (type instanceof Group) {
             return classifyStructType((Group) type, named);
+        } else if (type instanceof Unresolved) {
+            return classifyType(((Unresolved)type).resolve(), named);
         } else {
             throw new IllegalArgumentException("Unhandled type " + type);
         }

@@ -60,15 +60,15 @@ public class PointerTest {
         Pointer<Pointer<Byte>> get_strings2(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs")
-        @NativeType(layout="(u64:u64:u64:[[3i32]u64:u8]u64:i32)v", ctype="void (const struct MyStruct ***, int *)" )
+        @NativeType(layout="(u64:u64:u64:$(mystruct)u64:i32)v", ctype="void (const struct MyStruct ***, int *)" )
         void get_structs(Pointer<Pointer<Pointer<MyStruct>>> p, Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs2")
-        @NativeType(layout="(u64:i32)u64:u64:[[3i32]u64:u8]", ctype="const struct MyStruct **(int *)")
+        @NativeType(layout="(u64:i32)u64:u64:$(mystruct)", ctype="const struct MyStruct **(int *)")
         Pointer<Pointer<MyStruct>> get_structs2(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        @NativeStruct("[[3i32]u64:u8]")
+        @NativeStruct("[[3i32]u64:u8](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@ia")

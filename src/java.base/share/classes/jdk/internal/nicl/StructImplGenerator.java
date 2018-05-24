@@ -69,6 +69,7 @@ class StructImplGenerator extends BinderClassGenerator {
 
     @Override
     protected void generateMembers(BinderClassWriter cw) {
+        LayoutResolver.instance().scanType(interfaces[0]);
         generatePointerField(cw);
         generateConstructor(cw);
         generatePointerGetter(cw);

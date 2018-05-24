@@ -24,6 +24,8 @@
  */
 package java.nicl.layout;
 
+import jdk.internal.nicl.LayoutResolver;
+
 import java.util.Map;
 
 /**
@@ -43,8 +45,7 @@ public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
      * on whether the resolved layout could contain extra unresolved layout in size-independent positions (e.g. inside pointers).
      */
     public Layout resolve() throws IllegalArgumentException {
-        //Todo: implementation missing
-        throw new IllegalArgumentException("Cannot resolve path expression; " + this);
+        return LayoutResolver.instance().resolve(this).orElseThrow(IllegalArgumentException::new);
     }
 
     /**

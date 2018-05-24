@@ -80,7 +80,7 @@ public class GlobalVariable {
         public abstract Pointer<Double> global_d64$ptr();
 
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        @NativeStruct("[i32]")
+        @NativeStruct("[i32](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@i")
@@ -90,7 +90,7 @@ public class GlobalVariable {
         }
 
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_struct")
-        @NativeType(layout="[i32]", ctype="dummy", name="global_struct")
+        @NativeType(layout="$(mystruct)", ctype="dummy", name="global_struct")
         public abstract MyStruct global_struct$get();
         public abstract void global_struct$set(MyStruct arg);
         public abstract Pointer<MyStruct> global_struct$ptr();

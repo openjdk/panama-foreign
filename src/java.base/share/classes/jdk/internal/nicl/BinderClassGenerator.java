@@ -145,6 +145,7 @@ abstract class BinderClassGenerator {
     protected void generateMembers(BinderClassWriter cw) {
         for (Method m : interfaces[0].getMethods()) {
             try {
+                LayoutResolver.instance().scanMethod(m);
                 generateMethodImplementation(cw, m);
             } catch (Exception | Error e) {
                 throw new RuntimeException("Failed to generate method " + m, e);
