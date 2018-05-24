@@ -112,6 +112,24 @@ public interface JType {
         return new ObjectRef(clsName);
     }
 
+    /**
+     * Return Java type signature for JType. If JType is a Pointer&lt;Void&gt;, return as
+     * Pointer&lt;?&gt;
+     * @param jt The JType to get signature for
+     * @return The Java type signature
+     */
+    static String getPointerVoidAsWildcard(JType jt) {
+        // Return Pointer<?> instead of Pointer<Void>
+        if (jt instanceof JType2) {
+            jt = ((JType2) jt).getDelegate();
+        }
+        if (jt instanceof PointerType) {
+            return ((PointerType) jt).getSignature(true);
+        } else {
+            return jt.getSignature();
+        }
+    }
+
     static class ObjectRef implements JType {
         final String clsName;
 
@@ -208,7 +226,7 @@ public interface JType {
             sb.append('(');
             // ensure sequence
             for (int i = 0; i < args.length; i++) {
-                sb.append(args[i].getSignature());
+                sb.append(getPointerVoidAsWildcard(args[i]));
             }
             if (isVarArgs) {
                 sb.append("[Ljava/lang/Object;");

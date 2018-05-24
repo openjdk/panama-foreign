@@ -173,7 +173,8 @@ final class AsmCodeFactory extends CodeFactory {
         }
         mv.visitEnd();
         cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
-                "(" + jt.getDescriptor() + ")V", "(" + jt.getSignature() + ")V", null);
+                "(" + jt.getDescriptor() + ")V",
+                "(" + JType.getPointerVoidAsWildcard(jt) + ")V", null);
         // Use long for a reference for now
         JType refType = new ReferenceType(jt);
         cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ref",

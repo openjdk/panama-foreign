@@ -71,6 +71,7 @@ public class Array implements Type {
 
     @Override
     public String toString() {
-        return "" + occurrence + elementType.toString();
+        return ((occurrence < 0) ? "*" : Integer.toString(occurrence)) +
+                elementType.toString();
     }
 }
