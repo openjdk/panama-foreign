@@ -99,6 +99,16 @@ public final class HeaderFile {
 
     void processCursor(Cursor c, HeaderFile main, boolean isBuiltIn) {
         if (c.isDeclaration()) {
+            logger.finest(() -> "Looking at cursor " + c.spelling() + " of kind " + c.kind());
+            if (c.kind() == CursorKind.UnexposedDecl ||
+                    c.kind() == CursorKind.Namespace) {
+                c.children()
+                        .filter(c1 -> c1.isDeclaration())
+                        .peek(c1 -> logger.finest(
+                                () -> "Cursor: " + c1.spelling() + "@" + c1.USR() + "?" + c1.isDeclaration()))
+                        .forEach(c1 -> processCursor(c1, main, isBuiltIn));
+                return;
+            }
             Type t = c.type();
             if (t.kind() == TypeKind.FunctionProto ||
                 t.kind() == TypeKind.FunctionNoProto) {

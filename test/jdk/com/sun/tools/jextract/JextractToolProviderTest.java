@@ -21,30 +21,21 @@
  * questions.
  */
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nicl.metadata.NativeHeader;
-import java.nicl.types.Pointer;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
-import java.util.spi.ToolProvider;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
+import java.nicl.metadata.NativeHeader;
+import java.nicl.types.Pointer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Map;
+
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.assertFalse;
 
 /*
  * @test
@@ -52,116 +43,7 @@ import static org.testng.Assert.assertFalse;
  * @build JextractToolProviderTest
  * @run testng/othervm -Duser.language=en JextractToolProviderTest
  */
-public class JextractToolProviderTest {
-    private static final ToolProvider JEXTRACT_TOOL = ToolProvider.findFirst("jextract")
-        .orElseThrow(() ->
-            new RuntimeException("jextract tool not found")
-        );
-
-    private static String testSrcDir = System.getProperty("test.src", ".");
-    private static String testClassesDir = System.getProperty("test.classes", ".");
-
-    private static Path getFilePath(String dir, String fileName) {
-        return Paths.get(dir, fileName).toAbsolutePath();
-    }
-
-    private static Path getInputFilePath(String fileName) {
-        return getFilePath(testSrcDir, fileName);
-    }
-
-    private static Path getOutputFilePath(String fileName) {
-        return getFilePath(testClassesDir, fileName);
-    }
-
-    private static int checkJextract(String expected, String... options) {
-        StringWriter writer = new StringWriter();
-        PrintWriter pw = new PrintWriter(writer);
-
-        int result = JEXTRACT_TOOL.run(pw, pw, options);
-        String output = writer.toString();
-        System.err.println(output);
-        if (expected != null) {
-            if (!output.contains(expected)) {
-                throw new AssertionError("Output does not contain " + expected);
-            }
-        }
-
-        return result;
-    }
-
-    private static void checkSuccess(String expected, String... options) {
-        int result = checkJextract(null, options);
-        assertEquals(result, 0, "Sucess excepted, failed: " + result);
-    }
-
-    private static void checkFailure(String expected, String... options) {
-        int result = checkJextract(expected, options);
-        assertNotEquals(result, 0, "Failure excepted, succeeded!");
-    }
-
-    private static void deleteFile(Path path) {
-        try {
-            Files.delete(path);
-        } catch (IOException ioExp) {
-            System.err.println(ioExp);
-        }
-    }
-
-    private static Class<?> loadClass(String className, Path...paths) {
-        try {
-            URL[] urls = new URL[paths.length];
-            for (int i = 0; i < paths.length; i++) {
-                urls[i] = paths[i].toUri().toURL();
-            }
-            URLClassLoader ucl = new URLClassLoader(urls, null);
-            return Class.forName(className, false, ucl);
-        } catch (RuntimeException re) {
-            throw re;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Field findField(Class<?> cls, String name) {
-        try {
-            return cls.getField(name);
-        } catch (Exception e) {
-            System.err.println(e);
-            return null;
-        }
-    }
-
-    private static Method findMethod(Class<?> cls, String name, Class<?>... argTypes) {
-        try {
-            return cls.getMethod(name, argTypes);
-        } catch (Exception e) {
-            System.err.println(e);
-            return null;
-        }
-    }
-
-    private static Method findStructFieldGet(Class<?> cls, String name) {
-        return findMethod(cls, name + "$get");
-    }
-
-    private static Method findGlobalVariableGet(Class<?> cls, String name) {
-        return findMethod(cls, name + "$get");
-    }
-
-    private static Method findFirstMethod(Class<?> cls, String name) {
-        try {
-            for (Method m : cls.getMethods()) {
-                if (name.equals(m.getName())) {
-                    return m;
-                }
-            }
-            return null;
-        } catch (Exception e) {
-            System.err.println(e);
-            return null;
-        }
-    }
-
+public class JextractToolProviderTest extends JextractToolRunner {
     @Test
     public void testHelp() {
         checkFailure(null); // no options
@@ -208,7 +90,7 @@ public class JextractToolProviderTest {
     public void testOutputClass() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
-	Path helloH = getInputFilePath("hello.h");
+        Path helloH = getInputFilePath("hello.h");
         checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
         try {
             Class<?> cls = loadClass("hello", helloJar);
@@ -228,7 +110,7 @@ public class JextractToolProviderTest {
     private void testTargetPackage(String targetPkgOption) {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
-	Path helloH = getInputFilePath("hello.h");
+        Path helloH = getInputFilePath("hello.h");
         checkSuccess(null, targetPkgOption, "com.acme", "-o", helloJar.toString(), helloH.toString());
         try {
             Class<?> cls = loadClass("com.acme.hello", helloJar);
@@ -260,8 +142,8 @@ public class JextractToolProviderTest {
         Path mytypesJar = getOutputFilePath("mytypes.jar");
         deleteFile(mytypesJar);
 
-	Path worldH = getInputFilePath("world.h");
-	Path include = getInputFilePath("include");
+        Path worldH = getInputFilePath("world.h");
+        Path include = getInputFilePath("include");
         // generate jar for mytypes.h
         checkSuccess(null, "-t", "com.acme", "-o", mytypesJar.toString(),
             include.resolve("mytypes.h").toString());
@@ -293,7 +175,7 @@ public class JextractToolProviderTest {
     public void test_option_L_without_l() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
-	Path helloH = getInputFilePath("hello.h");
+        Path helloH = getInputFilePath("hello.h");
         Path linkDir = getInputFilePath("libs");
         String warning = "WARNING: -L option specified without any -l option";
         checkSuccess(warning, "-L", linkDir.toString(), "-o", helloJar.toString(), helloH.toString());
@@ -303,7 +185,7 @@ public class JextractToolProviderTest {
     public void test_option_rpath_without_l() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
-	Path helloH = getInputFilePath("hello.h");
+        Path helloH = getInputFilePath("hello.h");
         Path rpathDir = getInputFilePath("libs");
         String warning = "WARNING: -rpath option specified without any -l option";
         try {
@@ -317,7 +199,7 @@ public class JextractToolProviderTest {
     public void test_option_l() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
-	Path helloH = getInputFilePath("hello.h");
+        Path helloH = getInputFilePath("hello.h");
         checkSuccess(null, "-l", "hello", "-o", helloJar.toString(), helloH.toString());
         try {
             Class<?> cls = loadClass("hello", helloJar);
@@ -337,7 +219,7 @@ public class JextractToolProviderTest {
     public void test_option_l_and_rpath() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
-	Path helloH = getInputFilePath("hello.h");
+    Path helloH = getInputFilePath("hello.h");
         Path rpathDir = getInputFilePath("libs");
         checkSuccess(null, "-l", "hello", "-rpath", rpathDir.toString(),
              "-o", helloJar.toString(), helloH.toString());
@@ -359,7 +241,7 @@ public class JextractToolProviderTest {
     public void testUnionDeclaration() {
         Path uniondeclJar = getOutputFilePath("uniondecl.jar");
         deleteFile(uniondeclJar);
-	Path uniondeclH = getInputFilePath("uniondecl.h");
+        Path uniondeclH = getInputFilePath("uniondecl.h");
         try {
             checkSuccess(null, "-o", uniondeclJar.toString(), uniondeclH.toString());
             Class<?> unionCls = loadClass("uniondecl", uniondeclJar);
@@ -374,27 +256,6 @@ public class JextractToolProviderTest {
         }
     }
 
-    private void checkIntField(Class<?> cls, String name, int value) {
-        Field field = findField(cls, name);
-        assertNotNull(field);
-        assertEquals(field.getType(), int.class);
-        try {
-            assertEquals((int)field.get(null), value);
-        } catch (Exception exp) {
-            System.err.println(exp);
-            assertTrue(false, "should not reach here");
-        }
-    }
-
-    private Class<?> findClass(Class<?>[] clz, String name) {
-        for (Class<?> cls: clz) {
-            if (cls.getSimpleName().equals(name)) {
-                return cls;
-            }
-        }
-        return null;
-    }
-
     private void testEnumValue(Class<?> enumCls, Map<String, Integer> values) {
         values.entrySet().stream().
                 forEach(e -> checkIntField(enumCls, e.getKey(), e.getValue()));
@@ -404,7 +265,7 @@ public class JextractToolProviderTest {
     public void testAnonymousEnum() {
         Path anonenumJar = getOutputFilePath("anonenum.jar");
         deleteFile(anonenumJar);
-    	Path anonenumH = getInputFilePath("anonenum.h");
+        Path anonenumH = getInputFilePath("anonenum.h");
         try {
             checkSuccess(null, "-o", anonenumJar.toString(), anonenumH.toString());
             Class<?> anonenumCls = loadClass("anonenum", anonenumJar);
@@ -481,7 +342,7 @@ public class JextractToolProviderTest {
     public void testNestedStructsUnions() {
         Path nestedJar = getOutputFilePath("nested.jar");
         deleteFile(nestedJar);
-	Path nestedH = getInputFilePath("nested.h");
+    Path nestedH = getInputFilePath("nested.h");
         try {
             checkSuccess(null, "-o", nestedJar.toString(), nestedH.toString());
             Class<?> headerCls = loadClass("nested", nestedJar);
