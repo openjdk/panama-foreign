@@ -47,46 +47,46 @@ public class StructUpcall {
     @NativeHeader
     public static interface Index {
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        @NativeStruct("[iiippp]")
+        @NativeStruct("[i32i32i32u64:vu64:vu64:v]")
         static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field1")
-            @NativeType(layout="i", ctype="enum MyStructField1")
+            @NativeType(layout="i32", ctype="enum MyStructField1")
             int field1$get();
             void field1$set(int i);
 
             @Offset(offset=32l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field2")
-            @NativeType(layout="i", ctype="int")
+            @NativeType(layout="i32", ctype="int")
             int field2$get();
             void field2$set(int i);
 
             @Offset(offset=64l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field3")
-            @NativeType(layout="i", ctype="int")
+            @NativeType(layout="i32", ctype="int")
             int field3$get();
             void field3$set(int i);
 
             @Offset(offset=128l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field4")
-            @NativeType(layout="p", ctype="const void *")
+            @NativeType(layout="u64:v", ctype="const void *")
             Pointer<Void> field4$get();
             void field4$set(Pointer<?> p);
 
             @Offset(offset=192l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field5")
-            @NativeType(layout="p", ctype="const void *")
+            @NativeType(layout="u64:v", ctype="const void *")
             Pointer<Void> field5$get();
             void field5$set(Pointer<?> p);
 
             @Offset(offset=256l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field6")
-            @NativeType(layout="p", ctype="const void *")
+            @NativeType(layout="u64:v", ctype="const void *")
             Pointer<Void> field6$get();
             void field6$set(Pointer<?> p);
         }
 
-        @NativeCallback("([iiippp])V")
+        @NativeCallback("([i32i32i32u64:vu64:vu64:v])v")
         @FunctionalInterface
         static interface MyStructVisitor {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
@@ -94,7 +94,7 @@ public class StructUpcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@struct_upcall")
-        @NativeType(layout="(p:([iiip:Vp:Vp:V])V[iiip:Vp:Vp:V])V", ctype="void (struct_upcall_cb, struct MyStruct)", name="struct_upcall")
+        @NativeType(layout="(u64:([i32i32i32u64:vu64:vu64:v])v[i32i32i32u64:vu64:vu64:v])v", ctype="void (struct_upcall_cb, struct MyStruct)", name="struct_upcall")
         public abstract void struct_upcall(MyStructVisitor v, MyStruct s);
     }
 

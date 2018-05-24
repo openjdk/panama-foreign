@@ -383,7 +383,7 @@ public class CallingSequenceBuilderTest {
      * m(s);
      */
     public void testStruct32() {
-        Layout structparm = Layout.of("[=64I=64I=64I=64I]");
+        Layout structparm = Layout.of("[u64u64u64u64]");
 
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
@@ -425,7 +425,7 @@ public class CallingSequenceBuilderTest {
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
         CallingSequence recipe = builder
-            .addArgument(Layout.of("p:()V"), "f")
+            .addArgument(Layout.of("u64:()v"), "f")
                 .build();
 
         assertEquals(false, recipe.returnsInMemory());
@@ -475,7 +475,7 @@ public class CallingSequenceBuilderTest {
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
 
         CallingSequence recipe = builder
-                .addArgument(Layout.of("[=64i=64i]"), "s1")
+                .addArgument(Layout.of("[i64i64]"), "s1")
                 .build();
 
         assertEquals(false, recipe.returnsInMemory());

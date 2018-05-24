@@ -98,7 +98,7 @@ class HeaderImplGenerator extends BinderClassGenerator {
     private void generateGlobalVariableMethods(BinderClassWriter cw, Method method, String symbolName) {
         Class<?> c = method.getReturnType();
         java.lang.reflect.Type type = method.getGenericReturnType();
-        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout().findFirst().get();
+        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout();
         LayoutType<?> lt = Util.makeType(type, l);
 
         int dollarIndex = method.getName().indexOf("$");

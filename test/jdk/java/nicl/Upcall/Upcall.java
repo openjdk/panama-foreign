@@ -40,7 +40,7 @@ public class Upcall {
 
     @NativeHeader
     public static interface upcall {
-        @NativeCallback("(i)V")
+        @NativeCallback("(i32)v")
         @FunctionalInterface
         static interface visitor {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
@@ -48,7 +48,7 @@ public class Upcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@do_upcall")
-        @NativeType(layout="(p:(i)Vi)V", ctype="void (visitor, int)", name="do_upcall")
+        @NativeType(layout="(u64:(i32)vi32)v", ctype="void (visitor, int)", name="do_upcall")
         public abstract void do_upcall(visitor v, int i);
     }
 

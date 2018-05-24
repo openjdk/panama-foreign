@@ -46,11 +46,11 @@ public class StructTest {
     }
 
     @NativeLocation(file="dummy", line=47, column=11, USR="c:@S@MyStruct")
-    @NativeStruct("[4i]")
+    @NativeStruct("[[4i32]]")
     @NativeType(ctype="struct MyStruct")
     static interface MyStruct extends Struct<MyStruct> {
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@field1")
-        @NativeType(layout="4i", ctype="off_t")
+        @NativeType(layout="[4i32]", ctype="off_t")
         @Array(elementType="int", elementSize=4l, length=4l)
         @Offset(offset=0l)
         int[] a$get();

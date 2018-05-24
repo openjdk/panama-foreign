@@ -38,7 +38,7 @@ public class DoubleUpcall {
 
     @NativeHeader
     public static interface upcall {
-        @NativeCallback("(dd)d")
+        @NativeCallback("(f64f64)f64")
         @FunctionalInterface
         static interface cb {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
@@ -46,7 +46,7 @@ public class DoubleUpcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@double_upcall")
-        @NativeType(layout="(p:(DD)DDD)D", ctype="double (double_upcall_cb, double, double)", name="double_upcall")
+        @NativeType(layout="(u64:(f64f64)f64f64f64)f64", ctype="double (double_upcall_cb, double, double)", name="double_upcall")
         public abstract double double_upcall(cb cb, double d1, double d2);
     }
 

@@ -43,7 +43,7 @@ public class CallbackSort {
 
     @NativeHeader
     public static interface stdlib {
-        @NativeCallback("(p:Vp:V)i")
+        @NativeCallback("(u64:vu64:v)i32")
         @FunctionalInterface
         static interface compar {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
@@ -51,7 +51,7 @@ public class CallbackSort {
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
-        @NativeType(layout="(p:VLLp:(p:Vp:V)i)V", ctype="void (void *, size_t, size_t, int (*)(const void *, const void *))", name="slowsort")
+        @NativeType(layout="(u64:vu64u64u64:(u64:vu64:v)i32)v", ctype="void (void *, size_t, size_t, int (*)(const void *, const void *))", name="slowsort")
         public abstract void slowsort(Pointer<?> base, long nmemb, long size, compar compar);
     }
 

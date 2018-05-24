@@ -29,6 +29,6 @@ import java.nicl.metadata.NativeType;
 @NativeHeader(path="unistd.h")
 public interface unistd {
     @NativeLocation(file="unistd.h", line=47, column=11, USR="c:@F@getpid")
-    @NativeType(layout="()i", ctype="int (void)")
+    @NativeType(layout="()i32", ctype="int (void)")
     public int getpid();
 }

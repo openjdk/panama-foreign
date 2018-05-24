@@ -84,6 +84,6 @@ public interface Layout {
     String toString();
 
     static Layout of(String s) {
-        return new DescriptorParser(s).parseLayout().findFirst().get();
+        return new DescriptorParser(s).parseLayout();
     }
 }

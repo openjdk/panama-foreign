@@ -226,7 +226,7 @@ public class LayoutType<X> {
         if (nativeStruct == null) {
             throw new IllegalArgumentException("Not a struct type!");
         }
-        Group type = (Group) new DescriptorParser(nativeStruct.value()).parseLayout().findFirst().get();
+        Group type = (Group) new DescriptorParser(nativeStruct.value()).parseLayout();
         return new LayoutType<>(type, References.ofStruct(carrier));
     }
 }

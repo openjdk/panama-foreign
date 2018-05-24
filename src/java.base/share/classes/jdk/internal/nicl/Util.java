@@ -112,7 +112,7 @@ public final class Util {
         } else {
             throw new IllegalArgumentException("@NativeStruct or @NativeType expected: " + c);
         }
-        return new DescriptorParser(layout).parseLayout().findFirst().get();
+        return new DescriptorParser(layout).parseLayout();
     }
 
     public static Function functionof(Class<?> c) {
@@ -120,7 +120,7 @@ public final class Util {
             throw new IllegalArgumentException("@NativeCallback expected: " + c);
         }
         NativeCallback nc = c.getAnnotation(NativeCallback.class);
-        return (Function)new DescriptorParser(nc.value()).parseDescriptorOrLayouts().findFirst().get();
+        return new DescriptorParser(nc.value()).parseFunction();
     }
 
     public static Function functionof(Method m) {
@@ -128,7 +128,7 @@ public final class Util {
             throw new IllegalArgumentException("@NativeType expected: " + m);
         }
         NativeType nt = m.getAnnotation(NativeType.class);
-        return (Function)new DescriptorParser(nt.layout()).parseDescriptorOrLayouts().findFirst().get();
+        return new DescriptorParser(nt.layout()).parseFunction();
     }
 
     public static boolean isFunction(Method m) {

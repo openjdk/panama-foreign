@@ -185,7 +185,7 @@ class StructImplGenerator extends BinderClassGenerator {
     }
 
     private void generateArrayGetter(BinderClassWriter cw, Method method, Class<?> javaType, long offset, int length) {
-        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout().findFirst().get();
+        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout();
         LayoutType<?> lt = Util.makeType(method.getGenericReturnType(), l);
 
         Class<?> componentType = javaType.getComponentType();
@@ -234,7 +234,7 @@ class StructImplGenerator extends BinderClassGenerator {
     }
 
     private void generateArraySetter(BinderClassWriter cw, Method method, Class<?> javaType, long offset, int length) {
-        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout().findFirst().get();
+        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout();
         LayoutType<?> lt = Util.makeType(method.getGenericReturnType(), l);
 
         Class<?> componentType = javaType.getComponentType();
@@ -295,7 +295,7 @@ class StructImplGenerator extends BinderClassGenerator {
     }
 
     private void generateNormalFieldAccessors(BinderClassWriter cw, Method method, Class<?> javaType, long offset) {
-        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout().findFirst().get();
+        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout();
         LayoutType<?> lt = Util.makeType(method.getGenericReturnType(), l);
 
         // Getter

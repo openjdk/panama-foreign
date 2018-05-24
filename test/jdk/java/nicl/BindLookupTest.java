@@ -39,7 +39,7 @@ public class BindLookupTest {
     @NativeHeader
     public static interface system {
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@getpid")
-        @NativeType(layout="()i", ctype="dummy")
+        @NativeType(layout="()i32", ctype="dummy")
         public abstract int getpid();
     }
 

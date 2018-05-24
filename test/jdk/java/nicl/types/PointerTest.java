@@ -52,34 +52,34 @@ public class PointerTest {
     @NativeHeader
     static interface pointers {
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings")
-        @NativeType(layout="(p:p:p:cp:i)V", ctype="void (const char***, int*)")
+        @NativeType(layout="(u64:u64:u64:u8u64:i32)v", ctype="void (const char***, int*)")
         void get_strings(Pointer<Pointer<Pointer<Byte>>> p, Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings2")
-        @NativeType(layout="(p:i)p:p:c", ctype="const char **(int *)")
+        @NativeType(layout="(u64:i32)u64:u64:u8", ctype="const char **(int *)")
         Pointer<Pointer<Byte>> get_strings2(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs")
-        @NativeType(layout="(p:p:p:[3ip:c]p:i)V", ctype="void (const struct MyStruct ***, int *)" )
+        @NativeType(layout="(u64:u64:u64:[[3i32]u64:u8]u64:i32)v", ctype="void (const struct MyStruct ***, int *)" )
         void get_structs(Pointer<Pointer<Pointer<MyStruct>>> p, Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs2")
-        @NativeType(layout="(p:i)p:p:[3ip:c]", ctype="const struct MyStruct **(int *)")
+        @NativeType(layout="(u64:i32)u64:u64:[[3i32]u64:u8]", ctype="const struct MyStruct **(int *)")
         Pointer<Pointer<MyStruct>> get_structs2(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        @NativeStruct("[3ip:c]")
+        @NativeStruct("[[3i32]u64:u8]")
         static interface MyStruct extends Struct<MyStruct> {
             @Offset(offset=0l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@ia")
             @Array(elementType="int", elementSize=4l, length=3l)
-            @NativeType(layout="3i", ctype="int []")
+            @NativeType(layout="[3i32]", ctype="int []")
             int[] ia$get();
             void ia$set(int[] i);
 
             @Offset(offset=128l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@str")
-            @NativeType(layout="p:c", ctype="const char*")
+            @NativeType(layout="u64:u8", ctype="const char*")
             Pointer<Byte> str$get();
             void str$set(Pointer<Byte> str);
         }

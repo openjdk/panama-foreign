@@ -33,12 +33,13 @@
 
 import jdk.internal.nicl.types.*;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -71,27 +72,12 @@ public class TestDescriptorGrammar {
         }
     }
 
-    enum ArraySize implements Template {
-        ANY() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return Collections.singletonList("*").stream();
-            }
-        },
-        NUMBER() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return digits(2);
-            }
-        }
-    }
-
     //Note: separators are not tested here
     enum ElementType implements Template {
-        SCALAR_TYPE() {
+        VALUE() {
             @Override
             public Stream<String> generate(int depth) {
-                return generateAll(depth, ScalarType.class);
+                return generateAll(depth, ValueType.class);
             }
         },
         CONTAINER_TYPE() {
@@ -99,20 +85,11 @@ public class TestDescriptorGrammar {
             public Stream<String> generate(int depth) {
                 return generateAll(depth, ContainerType.class);
             }
-        },
-        ARRAY_TYPE() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return depth == 0 ?
-                        IntegerTypeInternal.INT.generate(depth) :
-                        generateAll(depth, ArraySize.class)
-                            .flatMap(as -> generateAll(depth - 1, ElementType.class).map(e -> as + e));
-            }
         }
     }
 
     enum ReturnType implements Template {
-        ELEMENT_TYPE() {
+        ELEMENT() {
             @Override
             public Stream<String> generate(int depth) {
                 return generateAll(depth, ElementType.class);
@@ -128,21 +105,28 @@ public class TestDescriptorGrammar {
     }
 
     enum ContainerType implements Template {
-        PLAIN() {
+        STRUCT() {
             @Override
             public Stream<String> generate(int depth) {
-                return generateAll(depth, ContainerTypeInternal.class).map(e -> "[" + e + "]");
+                return generateAll(depth, StructType.class).map(e -> "[" + e + "]");
+            }
+        },
+        ARRAY() {
+            @Override
+            public Stream<String> generate(int depth) {
+                return depth == 0 ?
+                        ValueTypePrefix.PLAIN.generate(depth) :
+                        digits(0).flatMap(s -> generateAll(depth - 1, ElementType.class).map(e -> "[" + s + e + "]"));
             }
         }
-        //Todo: container endianness (not supported in the API)
     }
 
-    enum ContainerTypeInternal implements Template {
+    enum StructType implements Template {
         ELEMENT1() {
             @Override
             public Stream<String> generate(int depth) {
                 return depth == 0 ?
-                        IntegerTypeInternal.INT.generate(depth) :
+                        ValueTypePrefix.PLAIN.generate(depth) :
                         generateAll(depth - 1, ElementType.class);
             }
         },
@@ -161,23 +145,6 @@ public class TestDescriptorGrammar {
                     e1 -> sample(ELEMENT1.generate(depth)).map(e2 -> e1 + "|" + e2)
                 );
             }
-        }
-    }
-
-    enum Endianness implements Template {
-        BIG('>'),
-        SMALL('<'),
-        NATIVE('@');
-
-        char tag;
-
-        Endianness(char tag) {
-            this.tag = tag;
-        }
-
-        @Override
-        public Stream<String> generate(int depth) {
-            return Collections.singletonList(tag + "").stream();
         }
     }
 
@@ -220,17 +187,13 @@ public class TestDescriptorGrammar {
         }
     }
 
-    enum ScalarType implements Template {
-        INTEGER(IntegerType.class),
-        REAL(RealType.class),
-        POINTER(PointerType.class),
-        SIZED(SizedType.class),
-        MISC(MiscType.class),
-        BITFIELD(BitFieldType.class);
+    enum ValueType implements Template {
+        PLAIN(ValueTypePrefix.class),
+        POINTER(PointerType.class);
 
         Class<?> clazz;
 
-        ScalarType(Class<?> clazz) {
+        ValueType(Class<?> clazz) {
             this.clazz = clazz;
         }
 
@@ -240,106 +203,39 @@ public class TestDescriptorGrammar {
         }
     }
 
-    enum MiscType implements Template {
-        BOOLEAN('B'),
-        PADDING('x'),
-        CHAR('c');
-
-        char tag;
-
-        MiscType(char tag) {
-            this.tag = tag;
-        }
-
-        @Override
-        public Stream<String> generate(int depth) {
-            return Collections.singletonList(tag + "").stream();
-        }
-    }
-
-    enum IntegerType implements Template {
+    enum ValueTypePrefix implements Template {
         PLAIN() {
             @Override
             public Stream<String> generate(int depth) {
-                return generateAll(depth, IntegerTypeInternal.class);
+                return generateAll(depth, ScalarType.class);
             }
         },
-        ENDIANNESS() {
+        SUBGROUP() {
             @Override
             public Stream<String> generate(int depth) {
-                return PLAIN.generate(depth)
-                        .flatMap(i -> generateAll(depth, Endianness.class).map(e -> e + i));
+                return depth == 0 ?
+                        PLAIN.generate(depth) :
+                        generateAll(depth, ScalarType.class).flatMap(s ->
+                                sample(generateAll(depth - 1, ContainerType.class)).map(c -> s + "=" + c));
             }
         }
     }
 
-    enum IntegerTypeInternal implements Template {
-        STANDARD_SIZE() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return generateAll(depth, StandardSizeType.class);
-            }
-        },
-        INT() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return Collections.singletonList("i").stream();
-            }
-        }
-    }
+    enum ScalarType implements Template {
+        INTEGRAL_UNSIGNED("u"),
+        INTEGRAL_SIGNED("i"),
+        FLOAT("f");
 
-    enum RealType implements Template {
-        PLAIN() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return generateAll(depth, RealTypeInternal.class);
-            }
-        },
-        ENDIANNESS() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return PLAIN.generate(depth)
-                        .flatMap(i -> generateAll(depth, Endianness.class).map(e -> e + i));
-            }
-        }
-    }
+        String tag;
 
-    enum RealTypeInternal implements Template {
-        FLOAT('f'),
-        DOUBLE('d'),
-        LONG_DOUBLE('e');
-
-        char tag;
-
-        RealTypeInternal(char tag) {
+        ScalarType(String tag) {
             this.tag = tag;
         }
 
         @Override
         public Stream<String> generate(int depth) {
-            return Collections.singletonList(tag + "").stream();
-        }
-    }
-
-    enum StandardSizeType implements Template {
-        OCTET('o'),
-        SHORT('s'),
-        LONG('l'),
-        LONG_LONG('q'),
-        UNSIGNED_OCTET('O'),
-        UNSIGNED_SHORT('S'),
-        UNSIGNED_LONG('L'),
-        UNSIGNED_LONG_LONG('Q');
-
-        char tag;
-
-        StandardSizeType(char tag) {
-            this.tag = tag;
-        }
-
-        @Override
-        public Stream<String> generate(int depth) {
-            return Collections.singletonList(tag + "").stream();
+            return Stream.of(TestDescriptorGrammar.Endianness.values())
+                    .flatMap(e -> bytes().map(n -> e.apply(this) + n));
         }
     }
 
@@ -347,7 +243,7 @@ public class TestDescriptorGrammar {
         PLAIN() {
             @Override
             public Stream<String> generate(int depth) {
-                return Collections.singletonList("p").stream();
+                return generateAll(depth - 1, ScalarType.class).map(s -> s + ":v");
             }
         },
         BREAKDOWN() {
@@ -355,107 +251,26 @@ public class TestDescriptorGrammar {
             public Stream<String> generate(int depth) {
                 return depth == 0 ?
                         PLAIN.generate(depth) :
-                        sample(generateAll(depth - 1, PointeeType.class)).map(e -> "p:" + e);
+                        generateAll(depth - 1, ValueTypePrefix.class).flatMap(
+                                s -> sample(generateAll(depth - 1, Descriptor.class)).map(e -> s + ":" + e));
             }
         }
     }
 
-    enum PointeeType implements Template {
-        DESCRIPTOR() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return generateAll(depth, Descriptor.class);
-            }
-        },
+    enum Endianness implements Function<ScalarType, String> {
+        BIG_ENDIAN,
+        LITTLE_ENDIAN;
 
-        VOID() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return Stream.of("V");
-            }
-        }
-    }
-
-    enum SizedType implements Template {
-        PLAIN() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return generateAll(depth, SizedTypeInternal.class);
-            }
-        },
-        ENDIANNES() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return PLAIN.generate(depth)
-                        .flatMap(i -> generateAll(depth, Endianness.class).map(e -> e + i));
-            }
-        }
-    }
-
-    enum SizedTypeInternal implements Template {
-        STANDARD() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return generateAll(depth, StandardSizeType.class)
-                        .map(s -> "=" + s);
-            }
-        },
-        EXPLICIT() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return digits(1).flatMap(n ->
-                        generateAll(depth, IntegerTypeInternal.INT, RealTypeInternal.FLOAT)
-                                .map(tag -> "=" + n + tag));
-
-            }
-        }
-    }
-
-    enum BitFieldType implements Template {
-        ONE() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return generateAll(depth, IntegerTypeInternal.class).flatMap(t ->
-                        generateAll(depth, BitFieldTypeInternal.class).flatMap(f -> Stream.of(t + ":" + f)));
-            }
-        },
-        TWO() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return ONE.generate(depth).flatMap(prev ->
-                        generateAll(depth, BitFieldTypeInternal.class).flatMap(f -> Stream.of(prev + f)));
-            }
-        },
-        THREE() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return TWO.generate(depth).flatMap(prev ->
-                        generateAll(depth, BitFieldTypeInternal.class).flatMap(f -> Stream.of(prev + f)));
-            }
-        }
-    }
-
-    enum BitFieldTypeInternal implements Template {
-        SIZE() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return digits(1).map(d -> d + "b");
-            }
-        },
-        NO_SIZE() {
-            @Override
-            public Stream<String> generate(int depth) {
-                return Stream.of("b");
-            }
+        @Override
+        public String apply(ScalarType scalarKind) {
+            return this == BIG_ENDIAN ?
+                    scalarKind.tag.toUpperCase() :
+                    scalarKind.tag;
         }
     }
     
-    static int SAMPLE_SIZE = 40;
+    static int SAMPLE_SIZE = 30;
     static int DIGITS_SIZE = 4;
-
-    static <Z extends Template> Stream<String> generateAll(int depth, Z... zs) {
-        return Stream.of(zs).flatMap(t -> t.generate(depth));
-    }
 
     static <Z extends Enum<?> & Template> Stream<String> generateAll(int depth, Class<Z> enumClazz) {
         Entry e = new Entry(enumClazz, depth);
@@ -504,6 +319,10 @@ public class TestDescriptorGrammar {
                 .mapToObj(String::valueOf), DIGITS_SIZE);
     }
 
+    static Stream<String> bytes() {
+        return digits(1).map(d -> "" + (Integer.valueOf(d) * 8));
+    }
+
     static Stream<String> sample(Stream<String> ss) {
         return sampleInternal(ss, SAMPLE_SIZE);
     }
@@ -516,16 +335,19 @@ public class TestDescriptorGrammar {
     static long checks = 0;
 
     public static void main(String[] args) {
-        generateAll(2, Descriptor.class).forEach(TestDescriptorGrammar::testDescriptor);
+        testDescriptor(generateAll(2, ElementType.class), DescriptorParser::parseLayout);
+        testDescriptor(generateAll(2, FunctionType.class), DescriptorParser::parseFunction);
         System.err.println("Checks executed: " + checks);
     }
 
-    static void testDescriptor(String layout) {
-        try {
-            new DescriptorParser(layout).parseDescriptorOrLayouts();
-            checks++;
-        } catch (Throwable t) {
-            throw new AssertionError("Cannot parse: " + layout, t);
-        }
+    static void testDescriptor(Stream<String> descriptors, Consumer<DescriptorParser> parserFunc) {
+        descriptors.forEach(d -> {
+            try {
+                parserFunc.accept(new DescriptorParser(d));
+                checks++;
+            } catch (Throwable t) {
+                throw new AssertionError("Cannot parse: " + d, t);
+            }
+        });
     }
 }

@@ -30,13 +30,13 @@ import java.nicl.types.Pointer;
 
 @NativeHeader(path="stdlib.h")
 public interface stdlib {
-    @NativeCallback("(p:Vp:V)i")
+    @NativeCallback("(u64:vu64:v)i32")
     @FunctionalInterface
     static interface compar {
         public int fn(Pointer<Void> e1, Pointer<Void> e2);
     }
 
     @NativeLocation(file="stdlib.h", line=47, column=11, USR="c:@F@qsort")
-    @NativeType(layout="(p:VLLp:(p:Vp:V)i)V", ctype="void (void*, size_t, size_t, int(*)(const void*,const void*))")
+    @NativeType(layout="(u64:vu32u32u64:(u64:vu64:v)i32)v", ctype="void (void*, size_t, size_t, int(*)(const void*,const void*))")
     public abstract void qsort(Pointer<?> base, long nmemb, long size, compar compar);
 }
