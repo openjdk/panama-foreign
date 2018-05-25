@@ -178,4 +178,26 @@ public class BoundedPointer<X> implements Pointer<X> {
             }
         }
     }
+
+    @Override
+    public int hashCode() {
+        return Long.valueOf(effectiveAddress()).hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        } else if (o instanceof BoundedPointer) {
+            return ((BoundedPointer) o).effectiveAddress() == effectiveAddress();
+        } else if (o instanceof Pointer) {
+            try {
+                return ((Pointer) o).addr() == effectiveAddress();
+            } catch (IllegalAccessException iae) {
+                throw new IllegalStateException();
+            }
+        } else {
+            return false;
+        }
+    }
 }

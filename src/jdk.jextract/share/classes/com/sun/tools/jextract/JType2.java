@@ -54,6 +54,8 @@ public class JType2 implements JType {
         return delegate;
     }
 
+    public Cursor getCursor() { return cursor; }
+
     public static JType2 bind(JType type, Type cType, Cursor c) {
         return new JType2(cType, c, type);
     }

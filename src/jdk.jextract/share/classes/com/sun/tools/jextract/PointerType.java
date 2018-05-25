@@ -36,7 +36,7 @@ public final class PointerType implements JType {
         return JType.of(Pointer.class).getDescriptor();
     }
 
-    public String getSignature() {
+    public String getSignature(boolean useWildcard) {
         StringBuilder sb = new StringBuilder();
         sb.append("L");
         sb.append(Pointer.class.getName().replace('.', '/'));
@@ -48,9 +48,18 @@ public final class PointerType implements JType {
         if (pt instanceof TypeAlias) {
             pt = ((TypeAlias) pt).canonicalType();
         }
-        sb.append(JType.boxing(pt));
+        if (pt == JType.Void && useWildcard) {
+            sb.append("*");
+        } else {
+            sb.append(JType.boxing(pt));
+        }
         sb.append(">;");
         return sb.toString();
+    }
+
+    @Override
+    public String getSignature() {
+        return getSignature(false);
     }
 
     public JType getPointeeType() {
