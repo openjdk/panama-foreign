@@ -196,7 +196,7 @@ class HeaderImplGenerator extends BinderClassGenerator {
         }
 
         //call MH
-        mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invoke",
+        mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
                 targetMethodHandle.type().toMethodDescriptorString(), false);
 
         mv.visitInsn(returnInsn(methodType.returnType()));

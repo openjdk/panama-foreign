@@ -307,20 +307,32 @@ class StructImplGenerator extends BinderClassGenerator {
         Class<?> erasedType = Util.erasure(javaType);
 
         switch (accessorKind) {
-            case GET: {
-                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(),
-                        Type.getMethodDescriptor(Type.getType(erasedType)), null, null);
-                mv.visitCode();
-                generateGetter(cw, mv, offset, erasedType, lt);
-                mv.visitMaxs(0, 0);
-                mv.visitEnd();
-                break;
-            }
+            case GET:
             case SET: {
+                //add accessor method
+                MethodType accType = accessorKind.getMethodType(erasedType);
                 MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(),
-                        Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(erasedType)), null, null);
+                        accType.toMethodDescriptorString(), null, null);
                 mv.visitCode();
-                generateSetter(cw, mv, offset, erasedType, lt);
+                //load MH receiver
+                MethodHandle accessor = accessorKind == AccessorKind.GET ?
+                        lt.getter() : lt.setter();
+                mv.visitLdcInsn(cw.makeConstantPoolPatch(accessor));
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+                //load arguments
+                pushPtr(cw, mv, offset, lt);
+                if (accessorKind == AccessorKind.SET) {
+                    mv.visitVarInsn(loadInsn(erasedType), 1);
+                }
+                //call MH
+                mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
+                        accType.insertParameterTypes(0, Pointer.class).toMethodDescriptorString(), false);
+                //handle return
+                if (accessorKind == AccessorKind.GET) {
+                    mv.visitInsn(returnInsn(erasedType));
+                } else {
+                    mv.visitInsn(RETURN);
+                }
                 mv.visitMaxs(0, 0);
                 mv.visitEnd();
                 break;
@@ -336,33 +348,6 @@ class StructImplGenerator extends BinderClassGenerator {
                 break;
             }
         }
-    }
-
-    private void generateGetter(BinderClassWriter cw, MethodVisitor mv, long off, Class<?> javaType, LayoutType<?> lt) {
-        /*
-         * return this.ref(<offset>, this.<layoutTypeField>).get();
-         */
-        pushPtr(cw, mv, off, lt);
-        mv.visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(Pointer.class), "get", Type.getMethodDescriptor(Type.getType(Object.class)), true);
-        if (javaType.isPrimitive()) {
-            unbox(mv, javaType);
-        } else {
-            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaType));
-        }
-        mv.visitInsn(returnInsn(javaType));
-    }
-
-    private void generateSetter(BinderClassWriter cw, MethodVisitor mv, long off, Class<?> javaType, LayoutType<?> lt) {
-        /*
-         * this.ref(<offset>, this.<layoutTypeField>).set(<value>);
-         */
-        pushPtr(cw, mv, off, lt);
-        mv.visitVarInsn(loadInsn(javaType), 1);
-        if (javaType.isPrimitive()) {
-            box(mv, javaType);
-        }
-        mv.visitMethodInsn(INVOKEINTERFACE, Type.getInternalName(Pointer.class), "set", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class)), true);
-        mv.visitInsn(RETURN);
     }
 
     private void pushPtr(BinderClassWriter cw, MethodVisitor mv, long off, LayoutType<?> layoutType) {
