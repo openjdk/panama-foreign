@@ -39,32 +39,4 @@ final class RuntimeSupport {
                 .offset(offset)
                 .cast(type);
     }
-
-    static void copyFromArray(int[] src, Pointer<?> p, long offset, int nElems) {
-        Pointer<Integer> dst = buildPtr(p, offset, NativeTypes.INT32);
-        for (int i = 0; i < nElems; i++) {
-            dst.offset(i).set(src[i]);
-        }
-    }
-
-    static void copyToArray(Pointer<?> p, long offset, int[] dst, int nElems) {
-        Pointer<Integer> src = buildPtr(p, offset, NativeTypes.INT32);
-        for (int i = 0; i < nElems; i++) {
-            dst[i] = src.offset(i).get();
-        }
-    }
-
-    static <T> void copyFromArray(T[] src, Pointer<?> p, long offset, int nElems, LayoutType<T> type) {
-        Pointer<T> dst = buildPtr(p, offset, type);
-        for (int i = 0; i < nElems; i++) {
-            dst.offset(i).set(src[i]);
-        }
-    }
-
-    static <T> void copyToArray(Pointer<?> p, long offset, T[] dst, int nElems, LayoutType<T> type) {
-        Pointer<T> src = buildPtr(p, offset, type);
-        for (int i = 0; i < nElems; i++) {
-            dst[i] = src.offset(i).get();
-        }
-    }
 }

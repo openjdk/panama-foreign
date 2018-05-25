@@ -23,7 +23,6 @@
 package jdk.internal.nicl;
 
 import jdk.internal.nicl.LayoutPaths.LayoutPath;
-import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
 
@@ -31,16 +30,11 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.nicl.layout.Group;
 import java.nicl.layout.Layout;
-import java.nicl.layout.Sequence;
 import java.nicl.metadata.*;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
-import java.nicl.types.Struct;
-import java.util.HashMap;
-import java.util.Map;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -51,19 +45,11 @@ class StructImplGenerator extends BinderClassGenerator {
 
     // support method handles
     private static final MethodHandle BUILD_PTR_MH;
-    private static final MethodHandle PTR_COPY_TO_ARRAY_INT_MH;
-    private static final MethodHandle PTR_COPY_TO_ARRAY_OBJECT_MH;
-    private static final MethodHandle PTR_COPY_FROM_ARRAY_INT_MH;
-    private static final MethodHandle PTR_COPY_FROM_ARRAY_OBJECT_MH;
 
     static {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         try {
             BUILD_PTR_MH = lookup.findStatic(RuntimeSupport.class, "buildPtr", MethodType.methodType(Pointer.class, Pointer.class, long.class, LayoutType.class));
-            PTR_COPY_TO_ARRAY_INT_MH = lookup.findStatic(RuntimeSupport.class, "copyToArray", MethodType.methodType(void.class, Pointer.class, long.class, int[].class, int.class));
-            PTR_COPY_TO_ARRAY_OBJECT_MH = lookup.findStatic(RuntimeSupport.class, "copyToArray", MethodType.methodType(void.class, Pointer.class, long.class, Object[].class, int.class, LayoutType.class));
-            PTR_COPY_FROM_ARRAY_INT_MH = lookup.findStatic(RuntimeSupport.class, "copyFromArray", MethodType.methodType(void.class, int[].class, Pointer.class, long.class, int.class));
-            PTR_COPY_FROM_ARRAY_OBJECT_MH = lookup.findStatic(RuntimeSupport.class, "copyFromArray", MethodType.methodType(void.class, Object[].class, Pointer.class, long.class, int.class, LayoutType.class));
         } catch (ReflectiveOperationException ex) {
             throw new IllegalStateException(ex);
         }
@@ -157,148 +143,6 @@ class StructImplGenerator extends BinderClassGenerator {
 
     private void generateFieldAccessor(BinderClassWriter cw, Method method, AccessorKind accessorKind, LayoutPath path) {
         java.lang.reflect.Type javaType = accessorKind.carrier(method);
-
-        try {
-            if (Util.erasure(javaType).isArray()) {
-                generateArrayFieldAccessor(cw, method, javaType, accessorKind, path);
-            } else {
-                generateNormalFieldAccessor(cw, method, javaType, accessorKind, path);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create accessors for " + method, e);
-        }
-    }
-
-    private void generateArrayFieldAccessor(BinderClassWriter cw, Method method, java.lang.reflect.Type javaType, AccessorKind accessorKind, LayoutPath path) {
-        switch (accessorKind) {
-            case GET:
-                generateArrayGetter(cw, method, javaType, path);
-                break;
-            case SET:
-                generateArraySetter(cw, method, javaType, path);
-                break;
-            default:
-                throw new IllegalStateException("Kind not supported: " + accessorKind);
-        }
-    }
-
-    private void generateArrayGetter(BinderClassWriter cw, Method method, java.lang.reflect.Type javaType, LayoutPath path) {
-        Layout l = path.layout();
-        LayoutType<?> lt = Util.makeType(javaType, l);
-
-        Class<?> erasedType = Util.erasure(javaType);
-        Class<?> componentType = erasedType.getComponentType();
-
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(), Type.getMethodDescriptor(Type.getType(erasedType)), null, null);
-        mv.visitCode();
-
-        int length = ((Sequence)path.layout).elementsSize();
-        long offset = path.offset() / 8;
-        allocArray(mv, componentType, length);
-        mv.visitVarInsn(ASTORE, 1);
-
-        //load receiver MH
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(componentType.isPrimitive() ?
-                        PTR_COPY_TO_ARRAY_INT_MH : PTR_COPY_TO_ARRAY_OBJECT_MH));
-        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
-
-
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
-        mv.visitLdcInsn(offset);
-
-        mv.visitVarInsn(ALOAD, 1);
-
-        mv.visitLdcInsn(length);
-
-        if (componentType.isPrimitive()) {
-            switch (PrimitiveClassType.typeof(componentType)) {
-                case INT:
-                    mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(int[].class), Type.INT_TYPE), false);
-                    break;
-
-                // FIXME: Add other primitives here
-                default:
-                    throw new UnsupportedOperationException("Unhandled component type: " + componentType);
-            }
-        } else {
-            mv.visitLdcInsn(cw.makeConstantPoolPatch(lt));
-            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(LayoutType.class));
-            mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(Object[].class), Type.INT_TYPE, Type.getType(Class.class)), false);
-        }
-
-        mv.visitVarInsn(ALOAD, 1);
-
-        mv.visitInsn(ARETURN);
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
-    }
-
-    private void generateArraySetter(BinderClassWriter cw, Method method, java.lang.reflect.Type javaType, LayoutPath path) {
-        Layout l = path.layout();
-        LayoutType<?> lt = Util.makeType(javaType, l);
-
-        Class<?> erasedType = Util.erasure(javaType);
-        Class<?> componentType = erasedType.getComponentType();
-        int length = ((Sequence)path.layout).elementsSize();
-        long offset = path.offset() / 8;
-
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(), Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(erasedType)), null, null);
-        mv.visitCode();
-
-        //load receiver MH
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(componentType.isPrimitive() ?
-                        PTR_COPY_FROM_ARRAY_INT_MH : PTR_COPY_FROM_ARRAY_OBJECT_MH));
-        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
-
-        mv.visitVarInsn(ALOAD, 1);
-
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
-        mv.visitLdcInsn(offset);
-
-        mv.visitLdcInsn(length);
-
-        if (componentType.isPrimitive()) {
-            switch (PrimitiveClassType.typeof(componentType)) {
-                case INT:
-                    mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(int[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE), false);
-                    break;
-
-                // FIXME: Add other primitives here
-                default:
-                    throw new UnsupportedOperationException("Unhandled component type: " + componentType);
-            }
-        } else {
-            mv.visitLdcInsn(cw.makeConstantPoolPatch(lt));
-            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(LayoutType.class));
-            mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object[].class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.INT_TYPE, Type.getType(Class.class)), false);
-        }
-
-        mv.visitInsn(RETURN);
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
-    }
-
-    private void allocArray(MethodVisitor mv, Class<?> componentType, int length) {
-        mv.visitLdcInsn(length);
-
-        if (componentType.isPrimitive()) {
-            switch (PrimitiveClassType.typeof(componentType)) {
-                case INT:
-                    mv.visitIntInsn(NEWARRAY, T_INT);
-                    break;
-
-                // FIXME: Add other primitives here
-                default:
-                    throw new IllegalArgumentException("Unhandled type: " + componentType);
-            }
-        } else {
-            mv.visitTypeInsn(ANEWARRAY, Type.getInternalName(componentType));
-        }
-    }
-
-    private void generateNormalFieldAccessor(BinderClassWriter cw, Method method, java.lang.reflect.Type javaType, AccessorKind accessorKind, LayoutPath path) {
         Layout l = path.layout();
         LayoutType<?> lt = Util.makeType(javaType, l);
 

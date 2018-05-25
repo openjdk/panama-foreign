@@ -24,6 +24,7 @@ package java.nicl;
 
 import jdk.internal.nicl.ScopeImpl;
 import jdk.internal.nicl.Util;
+import jdk.internal.nicl.types.BoundedArray;
 
 import java.nicl.layout.Layout;
 import java.nicl.types.Array;
@@ -106,6 +107,22 @@ public interface Scope extends AutoCloseable {
     }
 
     /**
+     * Allocate region of memory as an array of elements with given {@code LayoutType}. The array is initialized
+     * with the contents of a given Java array.
+     * @param <X> the carrier type associated with the element type of the native array to be allocated.
+     * @param elementType the {@code LayoutType} of the array element.
+     * @param init the (Java) array initializer.
+     * @return an array to the first element of the array.
+     * @throws IllegalArgumentException if the array initializer type is not compatible with the required type.
+     */
+    default <X> Array<X> allocateArray(LayoutType<X> elementType, Object init) throws IllegalArgumentException {
+        int size = java.lang.reflect.Array.getLength(init);
+        Array<X> arr = allocateArray(elementType, size);
+        BoundedArray.copyFrom(arr, init, size);
+        return arr;
+    }
+
+    /**
      * Allocate region of memory with given native data.
      * @param carrier the carrier type modelling the native data.
      * @param <T> the carrier type.
@@ -119,15 +136,10 @@ public interface Scope extends AutoCloseable {
 
 
     private Pointer<Byte> toCString(byte[] ar) {
-        try {
-            Pointer<Byte> buf = allocate(Util.BYTE_TYPE, ar.length + 1);
-            Pointer<Byte> src = Util.createArrayElementsPointer(ar);
-            Util.copy(src, buf, ar.length);
-            buf.offset(ar.length).set((byte)0);
-            return buf;
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException(e);
-        }
+        Array<Byte> buf = allocateArray(Util.BYTE_TYPE, ar.length + 1);
+        BoundedArray.copyFrom(buf, ar, ar.length);
+        buf.set(ar.length, (byte)0);
+        return buf.elementPointer();
     }
 
     default Pointer<Byte> toCString(String str) {

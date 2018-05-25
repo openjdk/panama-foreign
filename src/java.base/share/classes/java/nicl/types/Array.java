@@ -25,6 +25,10 @@
 
 package java.nicl.types;
 
+import jdk.internal.nicl.types.BoundedArray;
+
+import java.util.function.IntFunction;
+
 /**
  * This interface models a native array. An array is composed by a base pointer and a size.
  * @param <X> the carrier type associated with the array element.
@@ -51,10 +55,11 @@ public interface Array<X> extends Resource<Array<X>> {
 
     /**
      * Cast the array to given {@code LayoutType}.
+     * @param <Y> the target array type.
      * @param type the new {@code LayoutType} associated with the array.
      * @return a new array with desired type info.
      */
-    default Array<X> cast(LayoutType<X> type) { return cast(type, length()); }
+    default <Y> Array<Y> cast(LayoutType<Y> type) { return cast(type, length()); }
 
     /**
      * Cast the array to given {@code LayoutType} and size.
@@ -100,5 +105,22 @@ public interface Array<X> extends Resource<Array<X>> {
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+    /**
+     * Collect element values into a Java array.
+     * @param arrFactory the factory for the Java array.
+     * @param <Z> the Java array type.
+     * @return a new instance of a Java array.
+     * @throws IllegalArgumentException if the array created by the provided factory is not compatible with the required type.
+     */
+    default <Z> Z toArray(IntFunction<Z> arrFactory) {
+        if (length() > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Native array is too big to fit into a Java array");
+        }
+        int size = (int)length();
+        Z arr = arrFactory.apply((int)length());
+        BoundedArray.copyTo(this, arr, size);
+        return arr;
     }
 }

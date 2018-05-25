@@ -25,9 +25,15 @@
 
 package jdk.internal.nicl.types;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.nicl.Scope;
 import java.nicl.types.Array;
 import java.nicl.types.LayoutType;
+import java.nicl.types.Pointer;
 import java.util.Objects;
+import java.util.function.IntFunction;
 
 public class BoundedArray<X> implements Array<X> {
 
@@ -58,5 +64,29 @@ public class BoundedArray<X> implements Array<X> {
     public <Z> Array<Z> cast(LayoutType<Z> type, long size) {
         BoundedPointer<Z> np = new BoundedPointer<>(type, pointer.region, pointer.offset, pointer.mode);
         return new BoundedArray<>(np, size);
+    }
+
+    public static void copyFrom(Array<?> nativeArray, Object javaArray, int size) {
+        MethodHandle getter = MethodHandles.arrayElementGetter(javaArray.getClass());
+        MethodHandle copier = MethodHandles.collectArguments(nativeArray.type().setter(), 1, getter);
+        for (int i = 0 ; i < size ; i++) {
+            try {
+                copier.invoke(nativeArray.elementPointer().offset(i), javaArray, i);
+            } catch (Throwable ex) {
+                throw new IllegalArgumentException(ex);
+            }
+        }
+    }
+
+    public static void copyTo(Array<?> nativeArray, Object javaArray, int size) {
+        MethodHandle setter = MethodHandles.arrayElementSetter(javaArray.getClass());
+        MethodHandle copier = MethodHandles.filterArguments(setter, 2, nativeArray.type().getter());
+        for (int i = 0 ; i < size ; i++) {
+            try {
+                copier.invoke(javaArray, i, nativeArray.elementPointer().offset(i));
+            } catch (Throwable ex) {
+                throw new IllegalArgumentException(ex);
+            }
+        }
     }
 }

@@ -28,8 +28,8 @@
 
 import java.nicl.*;
 import java.nicl.metadata.*;
-import java.nicl.metadata.Array;
 import java.nicl.types.*;
+import java.nicl.types.Array;
 
 public class StructTest {
     public static final boolean DEBUG = Boolean.getBoolean("StructTest.DEBUG");
@@ -50,8 +50,8 @@ public class StructTest {
     @NativeType(ctype="struct MyStruct")
     static interface MyStruct extends Struct<MyStruct> {
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@field1")
-        int[] a$get();
-        void a$set(int[] a);
+        Array<Integer> a$get();
+        void a$set(Array<Integer> a);
     }
 
     public int buildInt(long baseValue) {
@@ -79,7 +79,7 @@ public class StructTest {
         {
             long expected = A_OFFSET / 8;
 
-            int[] ia = s.a$get();
+            int[] ia = s.a$get().toArray(int[]::new);
             assertEquals(A_LENGTH, ia.length);
 
             for (int i = 0; i < ia.length; i++, expected += 4) {
@@ -101,13 +101,15 @@ public class StructTest {
             for (int i = 0; i < ia.length; i++, counter += 4) {
                 ia[i] = buildInt(counter);
             }
-            s.a$set(ia);
+            try (Scope sc = Scope.newNativeScope()) {
+                s.a$set(sc.allocateArray(NativeTypes.INT32, ia));
+            }
         }
 
         {
             int expected = 0x80;
 
-            int[] ia = s.a$get();
+            int[] ia = s.a$get().toArray(int[]::new);
             assertEquals(A_LENGTH, ia.length);
 
             for (int i = 0; i < ia.length; i++, expected += 4) {

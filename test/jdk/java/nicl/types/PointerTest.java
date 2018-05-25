@@ -30,6 +30,8 @@ import java.lang.invoke.MethodHandles;
 import java.nicl.*;
 import java.nicl.metadata.*;
 import java.nicl.types.*;
+import java.nicl.types.Array;
+import java.util.function.IntFunction;
 
 public class PointerTest {
     private static final boolean DEBUG = Boolean.getBoolean("PointerTest.DEBUG");
@@ -75,8 +77,8 @@ public class PointerTest {
                       "](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@ia")
-            int[] ia$get();
-            void ia$set(int[] i);
+            Array<Integer> ia$get();
+            void ia$set(Array<Integer> i);
 
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@str")
             Pointer<Byte> str$get();
@@ -149,7 +151,7 @@ public class PointerTest {
             debug("str[" + i + "] = " + str);
 
             assertEquals(VERIFICATION_STRINGS[i], str);
-            int[] ia = s.ia$get();
+            int[] ia = s.ia$get().toArray(int[]::new);
 
             assertEquals(3, ia.length);
 

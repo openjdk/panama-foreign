@@ -23,7 +23,6 @@
 package jdk.internal.nicl;
 
 import jdk.internal.misc.Unsafe;
-import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
 import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.nicl.types.Types;
@@ -31,7 +30,6 @@ import jdk.internal.nicl.types.Types;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.nicl.NativeTypes;
-import java.nicl.Scope;
 import java.nicl.layout.Address;
 import java.nicl.layout.Function;
 import java.nicl.layout.Layout;
@@ -232,51 +230,6 @@ public final class Util {
     public static final LayoutType<Pointer<Byte>> BYTE_PTR_TYPE = BYTE_TYPE.pointer();
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
-
-    public static long strlen(long addr) {
-        long i = 0;
-
-        while (UNSAFE.getByte(addr + i) != 0) {
-            i++;
-        }
-
-        return i;
-    }
-
-    public static <T> Pointer<T> createPtr(long addr, LayoutType<T> type) {
-        return createPtr(null, addr, type);
-    }
-
-    public static <T> Pointer<T> createPtr(Object base, long addr, LayoutType<T> type) {
-        // FIXME: Long.MAX_VALUE is not correct
-        return new BoundedPointer<>(type, new BoundedMemoryRegion(base, addr, Long.MAX_VALUE), 0);
-    }
-
-    // Helper methods useful for playing with pointers into the Java heap and data copying
-
-    public static BoundedMemoryRegion createRegionForArrayElements(long[] arr) {
-        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(long[].class), arr.length * 8, BoundedMemoryRegion.MODE_RW);
-    }
-
-    public static BoundedMemoryRegion createRegionForArrayElements(byte[] arr) {
-        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(byte[].class), arr.length, BoundedMemoryRegion.MODE_RW);
-    }
-
-    public static BoundedMemoryRegion createRegionForArrayElements(long[] arr, Scope scope) {
-        return new BoundedMemoryRegion(arr, UNSAFE.arrayBaseOffset(long[].class), arr.length * 8, BoundedMemoryRegion.MODE_RW, scope);
-    }
-
-    public static Pointer<Long> createArrayElementsPointer(long[] arr) {
-        return new BoundedPointer<>(NativeTypes.INT64, createRegionForArrayElements(arr), 0);
-    }
-
-    public static Pointer<Byte> createArrayElementsPointer(byte[] arr) {
-        return new BoundedPointer<>(NativeTypes.INT8, createRegionForArrayElements(arr), 0);
-    }
-
-    public static Pointer<Long> createArrayElementsPointer(long[] arr, Scope scope) {
-        return new BoundedPointer<>(NativeTypes.INT64, createRegionForArrayElements(arr, scope), 0);
-    }
 
     public static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
         BoundedPointer<?> bsrc = (BoundedPointer<?>)Objects.requireNonNull(src);
