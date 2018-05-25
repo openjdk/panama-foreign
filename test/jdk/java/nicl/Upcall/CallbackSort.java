@@ -33,7 +33,6 @@ import java.nicl.Scope;
 import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
-import java.nicl.metadata.NativeType;
 import java.nicl.types.Pointer;
 import java.util.Iterator;
 
@@ -41,7 +40,7 @@ public class CallbackSort {
     private static final boolean DEBUG = Boolean.getBoolean("CallbackSort.DEBUG");
     private boolean upcallCalled = false;
 
-    @NativeHeader
+    @NativeHeader(declarations = "slowsort=(u64:vu64u64u64:(u64:vu64:v)i32)v")
     public static interface stdlib {
         @NativeCallback("(u64:vu64:v)i32")
         @FunctionalInterface
@@ -51,7 +50,6 @@ public class CallbackSort {
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
-        @NativeType(layout="(u64:vu64u64u64:(u64:vu64:v)i32)v", ctype="void (void *, size_t, size_t, int (*)(const void *, const void *))", name="slowsort")
         public abstract void slowsort(Pointer<?> base, long nmemb, long size, compar compar);
     }
 

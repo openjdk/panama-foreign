@@ -22,6 +22,7 @@
  */
 package jdk.internal.nicl;
 
+import jdk.internal.nicl.LayoutPaths.LayoutPath;
 import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
@@ -30,11 +31,16 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.nicl.layout.Group;
 import java.nicl.layout.Layout;
+import java.nicl.layout.Sequence;
 import java.nicl.metadata.*;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Struct;
+import java.util.HashMap;
+import java.util.Map;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -63,15 +69,17 @@ class StructImplGenerator extends BinderClassGenerator {
         }
     }
 
+    private Group layout;
+
     StructImplGenerator(Class<?> hostClass, String implClassName, Class<?> c) {
         super(hostClass, implClassName, new Class<?>[] { c });
+        layout = (Group)Layout.of(c.getAnnotation(NativeStruct.class).value());
     }
 
     @Override
     protected void generateMembers(BinderClassWriter cw) {
         LayoutResolver.instance().scanType(interfaces[0]);
         generatePointerField(cw);
-        generateConstructor(cw);
         generatePointerGetter(cw);
         generatePtrHelper(cw);
         super.generateMembers(cw);
@@ -81,7 +89,8 @@ class StructImplGenerator extends BinderClassGenerator {
         cw.visitField(ACC_PRIVATE | ACC_FINAL, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class), null, null);
     }
 
-    private void generateConstructor(BinderClassWriter cw) {
+    @Override
+    protected void generateConstructor(BinderClassWriter cw) {
         /*
          * <init>(Pointer p) {
          *     super();
@@ -138,62 +147,53 @@ class StructImplGenerator extends BinderClassGenerator {
 
     @Override
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
-        if (method.isAnnotationPresent(Offset.class)) {
-            if (!method.isAnnotationPresent(NativeType.class)) {
-                throw new IllegalArgumentException("Unexpectedly found an @Offset annotated method without a @NativeType annotation");
+        for (AccessorKind accessorKind : AccessorKind.values()) {
+            LayoutPath path = findAccessor(method, accessorKind);
+            if (path != null) {
+                generateFieldAccessor(cw, method, accessorKind, path);
             }
-
-            long off = method.getAnnotation(Offset.class).offset();
-            if (off < 0 || off % 8 != 0) {
-                throw new Error("NYI: Sub-byte offsets (" + off + ") in struct type: " + interfaces[0].getCanonicalName());
-            }
-            off = off / 8;
-
-            generateFieldAccessors(cw, method, off);
-        } else if (method.getDeclaringClass() == Struct.class) {
-            // ignore - the corresponding methods are generated as part of setting up the record type
-        } else {
-            super.generateMethodImplementation(cw, method);
         }
     }
 
-    private void generateFieldAccessors(BinderClassWriter cw, Method method, long offset) {
-        Class<?> javaType = method.getReturnType();
+    private void generateFieldAccessor(BinderClassWriter cw, Method method, AccessorKind accessorKind, LayoutPath path) {
+        java.lang.reflect.Type javaType = accessorKind.carrier(method);
 
         try {
-            if (javaType.isArray()) {
-                generateArrayFieldAccessors(cw, method, javaType, offset);
+            if (Util.erasure(javaType).isArray()) {
+                generateArrayFieldAccessor(cw, method, javaType, accessorKind, path);
             } else {
-                generateNormalFieldAccessors(cw, method, javaType, offset);
+                generateNormalFieldAccessor(cw, method, javaType, accessorKind, path);
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to create accessors for " + method, e);
         }
     }
 
-    private void generateArrayFieldAccessors(BinderClassWriter cw, Method method, Class<?> javaType, long offset) {
-        Array ar = method.getAnnotation(Array.class);
-        if (null == ar) {
-            throw new IllegalStateException("Array return type should have Array annotation");
+    private void generateArrayFieldAccessor(BinderClassWriter cw, Method method, java.lang.reflect.Type javaType, AccessorKind accessorKind, LayoutPath path) {
+        switch (accessorKind) {
+            case GET:
+                generateArrayGetter(cw, method, javaType, path);
+                break;
+            case SET:
+                generateArraySetter(cw, method, javaType, path);
+                break;
+            default:
+                throw new IllegalStateException("Kind not supported: " + accessorKind);
         }
-        final long length = ar.length();
-        if (length > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Array size is too large");
-        }
-
-        generateArrayGetter(cw, method, javaType, offset, (int) length);
-        generateArraySetter(cw, method, javaType, offset, (int) length);
     }
 
-    private void generateArrayGetter(BinderClassWriter cw, Method method, Class<?> javaType, long offset, int length) {
-        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout();
-        LayoutType<?> lt = Util.makeType(method.getGenericReturnType(), l);
+    private void generateArrayGetter(BinderClassWriter cw, Method method, java.lang.reflect.Type javaType, LayoutPath path) {
+        Layout l = path.layout();
+        LayoutType<?> lt = Util.makeType(javaType, l);
 
-        Class<?> componentType = javaType.getComponentType();
+        Class<?> erasedType = Util.erasure(javaType);
+        Class<?> componentType = erasedType.getComponentType();
 
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(), Type.getMethodDescriptor(Type.getType(method.getReturnType())), null, null);
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(), Type.getMethodDescriptor(Type.getType(erasedType)), null, null);
         mv.visitCode();
 
+        int length = ((Sequence)path.layout).elementsSize();
+        long offset = path.offset() / 8;
         allocArray(mv, componentType, length);
         mv.visitVarInsn(ASTORE, 1);
 
@@ -234,13 +234,16 @@ class StructImplGenerator extends BinderClassGenerator {
         mv.visitEnd();
     }
 
-    private void generateArraySetter(BinderClassWriter cw, Method method, Class<?> javaType, long offset, int length) {
-        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout();
-        LayoutType<?> lt = Util.makeType(method.getGenericReturnType(), l);
+    private void generateArraySetter(BinderClassWriter cw, Method method, java.lang.reflect.Type javaType, LayoutPath path) {
+        Layout l = path.layout();
+        LayoutType<?> lt = Util.makeType(javaType, l);
 
-        Class<?> componentType = javaType.getComponentType();
+        Class<?> erasedType = Util.erasure(javaType);
+        Class<?> componentType = erasedType.getComponentType();
+        int length = ((Sequence)path.layout).elementsSize();
+        long offset = path.offset() / 8;
 
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName().replace("$get", "$set"), Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(method.getReturnType())), null, null);
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(), Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(erasedType)), null, null);
         mv.visitCode();
 
         //load receiver MH
@@ -295,38 +298,43 @@ class StructImplGenerator extends BinderClassGenerator {
         }
     }
 
-    private void generateNormalFieldAccessors(BinderClassWriter cw, Method method, Class<?> javaType, long offset) {
-        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout();
-        LayoutType<?> lt = Util.makeType(method.getGenericReturnType(), l);
+    private void generateNormalFieldAccessor(BinderClassWriter cw, Method method, java.lang.reflect.Type javaType, AccessorKind accessorKind, LayoutPath path) {
+        Layout l = path.layout();
+        LayoutType<?> lt = Util.makeType(javaType, l);
 
-        // Getter
-        {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(), Type.getMethodDescriptor(Type.getType(javaType)), null, null);
-            mv.visitCode();
-            generateGetter(cw, mv, offset, javaType, lt);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-        }
+        long offset = path.offset() / 8;
 
-        // Setter
-        {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName().replace("$get", "$set"),
-                    Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(javaType)), null, null);
-            mv.visitCode();
-            generateSetter(cw, mv, offset, javaType, lt);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-        }
+        Class<?> erasedType = Util.erasure(javaType);
 
-        // Reference
-        {
-            MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName().replace("$get", "$ptr"),
-                    Type.getMethodDescriptor(Type.getType(Pointer.class)), null, null);
-            mv.visitCode();
-            pushPtr(cw, mv, offset, lt);
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
+        switch (accessorKind) {
+            case GET: {
+                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(),
+                        Type.getMethodDescriptor(Type.getType(erasedType)), null, null);
+                mv.visitCode();
+                generateGetter(cw, mv, offset, erasedType, lt);
+                mv.visitMaxs(0, 0);
+                mv.visitEnd();
+                break;
+            }
+            case SET: {
+                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(),
+                        Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(erasedType)), null, null);
+                mv.visitCode();
+                generateSetter(cw, mv, offset, erasedType, lt);
+                mv.visitMaxs(0, 0);
+                mv.visitEnd();
+                break;
+            }
+            case PTR: {
+                MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(),
+                        Type.getMethodDescriptor(Type.getType(Pointer.class)), null, null);
+                mv.visitCode();
+                pushPtr(cw, mv, offset, lt);
+                mv.visitInsn(ARETURN);
+                mv.visitMaxs(0, 0);
+                mv.visitEnd();
+                break;
+            }
         }
     }
 
@@ -366,5 +374,10 @@ class StructImplGenerator extends BinderClassGenerator {
         mv.visitLdcInsn(cw.makeConstantPoolPatch(layoutType));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(LayoutType.class));
         mv.visitMethodInsn(INVOKEVIRTUAL, implClassName, "makePtr", Type.getMethodDescriptor(Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), false);
+    }
+
+    private LayoutPath findAccessor(Method method, AccessorKind kind) {
+        return LayoutPaths.lookup(layout, l -> method.getName().equals(AccessorKind.from(l).get(kind)))
+                .findAny().orElse(null);
     }
 }

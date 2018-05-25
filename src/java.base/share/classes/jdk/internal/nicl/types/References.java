@@ -28,9 +28,7 @@ package jdk.internal.nicl.types;
 import jdk.internal.nicl.LibrariesHelper;
 import jdk.internal.nicl.Util;
 
-import java.nicl.Libraries;
 import java.nicl.metadata.NativeStruct;
-import java.nicl.layout.Address;
 import java.nicl.layout.Sequence;
 import java.nicl.layout.Value;
 import java.nicl.layout.Value.Kind;

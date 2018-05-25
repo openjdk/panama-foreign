@@ -25,10 +25,9 @@
 import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
-import java.nicl.metadata.NativeType;
 import java.nicl.types.Pointer;
 
-@NativeHeader(path="stdlib.h")
+@NativeHeader(path="stdlib.h", declarations = "qsort=(u64:vu32u32u64:(u64:vu64:v)i32)v")
 public interface stdlib {
     @NativeCallback("(u64:vu64:v)i32")
     @FunctionalInterface
@@ -37,6 +36,5 @@ public interface stdlib {
     }
 
     @NativeLocation(file="stdlib.h", line=47, column=11, USR="c:@F@qsort")
-    @NativeType(layout="(u64:vu32u32u64:(u64:vu64:v)i32)v", ctype="void (void*, size_t, size_t, int(*)(const void*,const void*))")
     public abstract void qsort(Pointer<?> base, long nmemb, long size, compar compar);
 }

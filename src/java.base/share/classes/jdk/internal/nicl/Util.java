@@ -27,9 +27,7 @@ import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
 import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.nicl.types.Types;
-import jdk.internal.org.objectweb.asm.Type;
 
-import java.lang.annotation.Native;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.nicl.NativeTypes;
@@ -39,9 +37,7 @@ import java.nicl.layout.Function;
 import java.nicl.layout.Layout;
 import java.nicl.layout.Sequence;
 import java.nicl.metadata.NativeCallback;
-import java.nicl.metadata.NativeLocation;
 import java.nicl.metadata.NativeStruct;
-import java.nicl.metadata.NativeType;
 import java.nicl.types.*;
 import java.nicl.types.Array;
 import java.nio.Buffer;
@@ -107,8 +103,6 @@ public final class Util {
         String layout;
         if (c.isAnnotationPresent(NativeStruct.class)) {
             layout = c.getAnnotation(NativeStruct.class).value();
-        } else if (c.isAnnotationPresent(NativeType.class)) { 
-            layout = c.getAnnotation(NativeType.class).layout();
         } else {
             throw new IllegalArgumentException("@NativeStruct or @NativeType expected: " + c);
         }
@@ -121,23 +115,6 @@ public final class Util {
         }
         NativeCallback nc = c.getAnnotation(NativeCallback.class);
         return new DescriptorParser(nc.value()).parseFunction();
-    }
-
-    public static Function functionof(Method m) {
-        if (! m.isAnnotationPresent(NativeType.class)) {
-            throw new IllegalArgumentException("@NativeType expected: " + m);
-        }
-        NativeType nt = m.getAnnotation(NativeType.class);
-        return new DescriptorParser(nt.layout()).parseFunction();
-    }
-
-    public static boolean isFunction(Method m) {
-        try {
-            functionof(m);
-            return true;
-        } catch (Throwable ex) {
-            return false;
-        }
     }
 
     static MethodType methodTypeFor(Method method) {
@@ -159,7 +136,7 @@ public final class Util {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static LayoutType<?> makeType(java.lang.reflect.Type carrier, Layout layout) {
+    public static LayoutType<?> makeType(Type carrier, Layout layout) {
         carrier = unboxIfNeeded(carrier);
         if (carrier == byte.class) {
             return LayoutType.ofByte(layout);
@@ -182,7 +159,7 @@ public final class Util {
         } else if (Pointer.class.isAssignableFrom(erasure(carrier))) {
             if (carrier instanceof ParameterizedType) {
                 ParameterizedType pt = (ParameterizedType)carrier;
-                java.lang.reflect.Type arg = pt.getActualTypeArguments()[0];
+                Type arg = pt.getActualTypeArguments()[0];
                 if (arg instanceof WildcardType) {
                     return NativeTypes.VOID.pointer();
                 }
@@ -196,7 +173,7 @@ public final class Util {
         } else if (Array.class.isAssignableFrom(erasure(carrier))) {
             if (carrier instanceof ParameterizedType) {
                 ParameterizedType pt = (ParameterizedType)carrier;
-                java.lang.reflect.Type arg = pt.getActualTypeArguments()[0];
+                Type arg = pt.getActualTypeArguments()[0];
                 if (arg instanceof WildcardType) {
                     return NativeTypes.VOID.array();
                 }
@@ -208,7 +185,7 @@ public final class Util {
             return LayoutType.ofStruct((Class) carrier);
         } else if (erasure(carrier).isArray()) {
             //Todo: this provisional, Java arrays are not meant to be supported in this way
-            java.lang.reflect.Type element = (carrier instanceof GenericArrayType) ?
+            Type element = (carrier instanceof GenericArrayType) ?
                     ((GenericArrayType)carrier).getGenericComponentType() :
                     erasure(carrier).getComponentType();
             return makeType(element, ((Sequence)layout).element()).array(((Sequence)layout).elementsSize());
@@ -217,13 +194,19 @@ public final class Util {
         }
     }
 
-    static Class<?> erasure(java.lang.reflect.Type type) {
-        return (type instanceof ParameterizedType) ?
-                (Class<?>)((ParameterizedType)type).getRawType() :
-                (Class<?>)type;
+    static Class<?> erasure(Type type) {
+        if (type instanceof ParameterizedType) {
+            return (Class<?>)((ParameterizedType)type).getRawType();
+        } else if (type instanceof GenericArrayType) {
+            return java.lang.reflect.Array.newInstance(erasure(((GenericArrayType)type).getGenericComponentType()), 0).getClass();
+        } else if (type instanceof TypeVariable<?>) {
+            return erasure(((TypeVariable<?>)type).getBounds()[0]);
+        } else {
+            return (Class<?>)type;
+        }
     }
 
-    public static java.lang.reflect.Type unboxIfNeeded(java.lang.reflect.Type clazz) {
+    public static Type unboxIfNeeded(Type clazz) {
         if (clazz == Boolean.class) {
             return boolean.class;
         } else if (clazz == Byte.class) {

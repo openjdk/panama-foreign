@@ -24,11 +24,9 @@
 
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
-import java.nicl.metadata.NativeType;
 
-@NativeHeader(path="unistd.h")
+@NativeHeader(path="unistd.h", declarations = "getpid=()i32")
 public interface unistd {
     @NativeLocation(file="unistd.h", line=47, column=11, USR="c:@F@getpid")
-    @NativeType(layout="()i32", ctype="int (void)")
     public int getpid();
 }

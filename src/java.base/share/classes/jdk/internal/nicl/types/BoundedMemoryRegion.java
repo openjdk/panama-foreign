@@ -254,10 +254,14 @@ public class BoundedMemoryRegion {
         return "{ BoundedMemoryRegion base=" + base + ", min=0x" + Long.toHexString(min) + " length=0x" + Long.toHexString(length) + " mode=" + mode + " }";
     }
 
-    public void dump(int nbytes) {
+    public String dump(int nbytes) {
+        StringBuilder buf = new StringBuilder();
         for (int offset = 0 ; offset < nbytes ; offset++) {
             byte b = (byte)getBits(offset, 1);
-            System.err.println(Long.toHexString(b & 0xFF));
+            String hex = Long.toHexString(b & 0xFF);
+            buf.append(hex.length() == 1 ? "0" + hex : hex);
+            buf.append(" ");
         }
+        return buf.toString();
     }
 }

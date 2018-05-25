@@ -30,10 +30,9 @@ import java.nicl.*;
 import java.nicl.metadata.*;
 
 public class Hello {
-    @NativeHeader(libraries = { "Hello" })
+    @NativeHeader(libraries = { "Hello" }, declarations = "func=()i32")
     static interface hello {
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@func")
-        @NativeType(layout="()i32", ctype="dummy")
         public abstract int func();
     }
 

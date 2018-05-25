@@ -35,53 +35,45 @@ import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
 import java.nicl.metadata.NativeStruct;
-import java.nicl.metadata.NativeType;
-import java.nicl.metadata.Offset;
-import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Struct;
 
 public class StructUpcall {
     private static final boolean DEBUG = false;
 
-    @NativeHeader
+    @NativeHeader(declarations = "struct_upcall=(u64:($(mystruct))v$(mystruct))v")
     public static interface Index {
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        @NativeStruct("[i32i32i32u64:vu64:vu64:v](mystruct)")
+        @NativeStruct("[" +
+                      "  i32(get=field1$get)(set=field1$set)" +
+                      "  i32(get=field2$get)(set=field2$set)" +
+                      "  i32(get=field3$get)(set=field3$set)" +
+                      "  u64(get=field4$get)(set=field4$set):v" +
+                      "  u64(get=field5$get)(set=field5$set):v" +
+                      "  u64(get=field6$get)(set=field6$set):v" +
+                      "](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
-            @Offset(offset=0l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field1")
-            @NativeType(layout="i32", ctype="enum MyStructField1")
             int field1$get();
             void field1$set(int i);
 
-            @Offset(offset=32l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field2")
-            @NativeType(layout="i32", ctype="int")
             int field2$get();
             void field2$set(int i);
 
-            @Offset(offset=64l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field3")
-            @NativeType(layout="i32", ctype="int")
             int field3$get();
             void field3$set(int i);
 
-            @Offset(offset=128l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field4")
-            @NativeType(layout="u64:v", ctype="const void *")
             Pointer<Void> field4$get();
             void field4$set(Pointer<?> p);
 
-            @Offset(offset=192l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field5")
-            @NativeType(layout="u64:v", ctype="const void *")
             Pointer<Void> field5$get();
             void field5$set(Pointer<?> p);
 
-            @Offset(offset=256l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field6")
-            @NativeType(layout="u64:v", ctype="const void *")
             Pointer<Void> field6$get();
             void field6$set(Pointer<?> p);
         }
@@ -94,7 +86,6 @@ public class StructUpcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@struct_upcall")
-        @NativeType(layout="(u64:($(mystruct))v$(mystruct))v", ctype="void (struct_upcall_cb, struct MyStruct)", name="struct_upcall")
         public abstract void struct_upcall(MyStructVisitor v, MyStruct s);
     }
 

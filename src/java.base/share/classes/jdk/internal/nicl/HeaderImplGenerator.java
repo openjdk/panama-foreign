@@ -36,6 +36,8 @@ import java.nicl.metadata.*;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Struct;
+import java.util.HashMap;
+import java.util.Map;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -44,27 +46,60 @@ class HeaderImplGenerator extends BinderClassGenerator {
     // lookup helper to use for looking up symbols
     private final SymbolLookup lookup;
 
+    // dictionary from method name to member info
+    final Map<String, MemberInfo<?>> nameToInfo = new HashMap<>();
+
     HeaderImplGenerator(Class<?> hostClass, String implClassName, Class<?> c, SymbolLookup lookup) {
         super(hostClass, implClassName, new Class<?>[] { c });
         this.lookup = lookup;
     }
 
-    enum AccessorMethodType {
-        get, set, ptr;
+    abstract class MemberInfo<D> {
+        String symbolName;
+        D descriptor;
 
-        MethodType getMethodType(Class<?> c) {
-            switch (this) {
-                case get: return MethodType.methodType(c);
-                case set: return MethodType.methodType(void.class, c);
-                case ptr: return MethodType.methodType(Pointer.class);
-            }
+        MemberInfo(String symbolName, D descriptor) {
+            this.symbolName = symbolName;
+            this.descriptor = descriptor;
+        }
+    }
 
-            throw new IllegalArgumentException("Unhandled type: " + this);
+    class GlobalVarInfo extends MemberInfo<Layout> {
+
+        AccessorKind accessorKind;
+
+        GlobalVarInfo(String symbolName, Layout layout, AccessorKind accessorKind) {
+            super(symbolName, layout);
+            this.accessorKind = accessorKind;
+        }
+    }
+
+    class FunctionInfo extends MemberInfo<Function> {
+        public FunctionInfo(String symbolName, Function descriptor) {
+            super(symbolName, descriptor);
         }
     }
 
     @Override
-    protected void generateDefaultConstructor(BinderClassWriter cw) {
+    protected void generateMembers(BinderClassWriter cw) {
+        Class<?> headerClass = interfaces[0];
+        String declarations = headerClass.getAnnotation(NativeHeader.class).declarations();
+        for (Map.Entry<String, Object> declEntry : DescriptorParser.parseHeaderDeclarations(declarations).entrySet()) {
+            if (declEntry.getValue() instanceof Layout) {
+                Layout l = (Layout)declEntry.getValue();
+                for (Map.Entry<AccessorKind, String> accessorEntry : AccessorKind.from(l).entrySet()) {
+                    nameToInfo.put(accessorEntry.getValue(), new GlobalVarInfo(declEntry.getKey(), l, accessorEntry.getKey()));
+                }
+            } else {
+                Function f = (Function)declEntry.getValue();
+                nameToInfo.put(declEntry.getKey(), new FunctionInfo(declEntry.getKey(), f));
+            }
+        }
+        super.generateMembers(cw);
+    }
+
+    @Override
+    protected void generateConstructor(BinderClassWriter cw) {
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
@@ -76,89 +111,63 @@ class HeaderImplGenerator extends BinderClassGenerator {
 
     @Override
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
-        if (method.isAnnotationPresent(NativeType.class)) {
-            if (Util.isFunction(method)) {
-                MethodType methodType = Util.methodTypeFor(method);
-                Function function = Util.functionof(method);
-                NativeInvoker invoker;
-                try {
-                    invoker = new NativeInvoker(function, methodType, method.isVarArgs(), lookup, getSymbolName(method), method.toString(), method.getGenericReturnType());
-                } catch (NoSuchMethodException | IllegalAccessException e) {
-                    throw new IllegalStateException(e);
-                }
-                addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), invoker.getBoundMethodHandle());
-            } else {
-                generateGlobalVariableMethods(cw, method, getSymbolName(method, getGetterBaseName(method)));
-            }
-        } else {
-            super.generateMethodImplementation(cw, method);
+        MemberInfo<?> memberInfo = nameToInfo.get(method.getName());
+        if (memberInfo instanceof FunctionInfo) {
+            generateFunctionMethod(cw, method, (FunctionInfo)memberInfo);
+        } else if (memberInfo instanceof GlobalVarInfo) {
+            generateGlobalVariableMethod(cw, method, (GlobalVarInfo)memberInfo);
         }
     }
 
-    private void generateGlobalVariableMethods(BinderClassWriter cw, Method method, String symbolName) {
-        Class<?> c = method.getReturnType();
-        java.lang.reflect.Type type = method.getGenericReturnType();
-        Layout l = new DescriptorParser(method.getAnnotation(NativeType.class).layout()).parseLayout();
+    void generateFunctionMethod(BinderClassWriter cw, Method method, FunctionInfo info) {
+        MethodType methodType = Util.methodTypeFor(method);
+        Function function = info.descriptor;
+        NativeInvoker invoker;
+        try {
+            invoker = new NativeInvoker(function, methodType, method.isVarArgs(), lookup, info.symbolName, method.toString(), method.getGenericReturnType());
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+        addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), invoker.getBoundMethodHandle());
+    }
+
+    private void generateGlobalVariableMethod(BinderClassWriter cw, Method method, GlobalVarInfo info) {
+        java.lang.reflect.Type type = info.accessorKind.carrier(method);
+        Class<?> c = Util.erasure(type);
+        Layout l = info.descriptor;
         LayoutType<?> lt = Util.makeType(type, l);
 
-        int dollarIndex = method.getName().indexOf("$");
-        String methodBaseName = method.getName().substring(0, dollarIndex);
+        String methodName = method.getName();
         Pointer<?> p;
 
         try {
-            p = lookup.lookup(symbolName).getAddress().cast(lt);
+            p = lookup.lookup(info.symbolName).getAddress().cast(lt);
         } catch (NoSuchMethodException e) {
             throw new IllegalStateException(e);
         }
 
-        for (AccessorMethodType t : AccessorMethodType.values()) {
-            String methodName = methodBaseName + "$" + t.name();
-            MethodHandle target;
-            switch (t) {
-                case get:
-                    target = lt.getter();
-                    target = target.bindTo(p).asType(MethodType.methodType(c));
-                    break;
+        MethodHandle target;
+        AccessorKind kind = info.accessorKind;
+        switch (kind) {
+            case GET:
+                target = lt.getter();
+                target = target.bindTo(p).asType(MethodType.methodType(c));
+                break;
 
-                case set:
-                    target = lt.setter();
-                    target = target.bindTo(p).asType(MethodType.methodType(void.class, c));
-                    break;
+            case SET:
+                target = lt.setter();
+                target = target.bindTo(p).asType(MethodType.methodType(void.class, c));
+                break;
 
-                case ptr:
-                    target = MethodHandles.constant(Pointer.class, p);
-                    break;
+            case PTR:
+                target = MethodHandles.constant(Pointer.class, p);
+                break;
 
-                default:
-                    throw new InternalError("Unexpected access method type: " + t);
-            }
-
-            addMethodFromHandle(cw, methodName, t.getMethodType(c), false, target);
-        }
-    }
-
-    private String getGetterBaseName(Method method) {
-        String name = method.getName();
-
-        if (!name.endsWith("$get")) {
-            throw new IllegalArgumentException("Unexpected method name " + method.getName());
+            default:
+                throw new InternalError("Unexpected access method type: " + kind);
         }
 
-        return name.substring(0, name.lastIndexOf("$"));
-    }
-
-    private String getSymbolName(Method method, String defaultName) {
-        String name = method.getAnnotation(NativeType.class).name();
-        if (NativeType.NO_NAME.equals(name)) {
-            // FIXME: Make this an error (require name to be set)?
-            return defaultName;
-        } else {
-            return name;
-        }
-    }
-
-    private String getSymbolName(Method method) {
-        return getSymbolName(method, method.getName());
+        addMethodFromHandle(cw, methodName, kind.getMethodType(c), false, target);
     }
 
     // code generation helpers

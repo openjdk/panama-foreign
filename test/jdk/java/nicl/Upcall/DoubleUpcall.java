@@ -31,12 +31,11 @@ import java.nicl.Libraries;
 import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
-import java.nicl.metadata.NativeType;
 
 public class DoubleUpcall {
     private static final boolean DEBUG = false;
 
-    @NativeHeader
+    @NativeHeader(declarations = "double_upcall=(u64:(f64f64)f64f64f64)f64")
     public static interface upcall {
         @NativeCallback("(f64f64)f64")
         @FunctionalInterface
@@ -46,7 +45,6 @@ public class DoubleUpcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@double_upcall")
-        @NativeType(layout="(u64:(f64f64)f64f64f64)f64", ctype="double (double_upcall_cb, double, double)", name="double_upcall")
         public abstract double double_upcall(cb cb, double d1, double d2);
     }
 

@@ -32,7 +32,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.nicl.layout.Layout;
+import java.nicl.types.Pointer;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.stream.Stream;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
@@ -88,7 +94,7 @@ abstract class BinderClassGenerator {
         String[] interfaceNames = (interfaces == null) ? null : Stream.of(interfaces).map(Type::getInternalName).toArray(String[]::new);
         cw.visit(52, ACC_PUBLIC | ACC_SUPER, implClassName, null, Type.getInternalName(Object.class), interfaceNames);
 
-        generateDefaultConstructor(cw);
+        generateConstructor(cw);
 
         generateMembers(cw);
 
@@ -128,19 +134,9 @@ abstract class BinderClassGenerator {
 
     // code generation entry points (to be overridden by subclasses)
 
-    protected void generateDefaultConstructor(BinderClassWriter cw) {
-        // no default constructor by default
-    }
+    protected abstract void generateConstructor(BinderClassWriter cw);
 
-    protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
-        if (method.isDefault()) {
-            // default methods don't need implementations
-        } else if (method.getName().endsWith("$ptr") || method.getName().endsWith("$set")) {
-            // ignore - the corresponding methods are generated as part of processing the $get method
-        } else {
-            throw new IllegalStateException("Unhandled method: " + method);
-        }
-    }
+    protected abstract void generateMethodImplementation(BinderClassWriter cw, Method method);
 
     protected void generateMembers(BinderClassWriter cw) {
         for (Method m : interfaces[0].getMethods()) {
@@ -324,6 +320,52 @@ abstract class BinderClassGenerator {
             fos.write(data);
         } catch (IOException e) {
             throw new RuntimeException("Failed to write class " + implClassName + " to file " + file);
+        }
+    }
+
+    enum AccessorKind {
+        GET("get"),
+        SET("set"),
+        PTR("ptr");
+
+        String annotationName;
+
+        AccessorKind(String annotationName) {
+            this.annotationName = annotationName;
+        }
+
+        java.lang.reflect.Type carrier(Method m) {
+            switch (this) {
+                case GET:
+                    return m.getGenericReturnType();
+                case SET:
+                    return m.getGenericParameterTypes()[0];
+                case PTR:
+                    return ((ParameterizedType)m.getGenericReturnType()).getActualTypeArguments()[0];
+                default:
+                    throw new IllegalStateException("Unknown kind: " + this);
+            }
+        }
+
+        MethodType getMethodType(Class<?> c) {
+            switch (this) {
+                case GET: return MethodType.methodType(c);
+                case SET: return MethodType.methodType(void.class, c);
+                case PTR: return MethodType.methodType(Pointer.class);
+            }
+
+            throw new IllegalArgumentException("Unhandled type: " + this);
+        }
+
+        static EnumMap<AccessorKind, String> from(Layout l) {
+            EnumMap<AccessorKind, String> kinds = new EnumMap<>(AccessorKind.class);
+            for (AccessorKind accessorKind : AccessorKind.values()) {
+                String accessor = l.annotations().get(accessorKind.annotationName);
+                if (accessor != null) {
+                    kinds.put(accessorKind, accessor);
+                }
+            }
+            return kinds;
         }
     }
 }

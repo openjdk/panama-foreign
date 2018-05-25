@@ -31,14 +31,13 @@ import java.nicl.Libraries;
 import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
-import java.nicl.metadata.NativeType;
 
 public class Upcall {
     private static final boolean DEBUG = false;
 
     private static final int MAGIC_INTEGER = 4711;
 
-    @NativeHeader
+    @NativeHeader(declarations = "do_upcall=(u64:(i32)vi32)v")
     public static interface upcall {
         @NativeCallback("(i32)v")
         @FunctionalInterface
@@ -48,7 +47,6 @@ public class Upcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@do_upcall")
-        @NativeType(layout="(u64:(i32)vi32)v", ctype="void (visitor, int)", name="do_upcall")
         public abstract void do_upcall(visitor v, int i);
     }
 

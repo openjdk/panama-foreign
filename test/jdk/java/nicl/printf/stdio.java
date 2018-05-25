@@ -24,28 +24,28 @@
 
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
-import java.nicl.metadata.NativeType;
 import java.nicl.types.Pointer;
 
-@NativeHeader(path="/usr/include/stdio.h")
+@NativeHeader(path="/usr/include/stdio.h", declarations =
+        "getpid=()i32" +
+        "printf=(u64:u8*)i32" +
+        "fprintf=(u64:vu64:u8*)i32" +
+        "fflush=(u64:v)i32" +
+        "fdopen=(i32u64:u8)u64:v"
+)
 public interface stdio {
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@getpid")
-    @NativeType(layout="()i32", ctype="int ()")
     int getpid();
 
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@printf")
-    @NativeType(layout="(u64:u8*)i32", ctype="int (const char*, ...)")
     int printf(Pointer<Byte> fmt, Object... args);
 
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fprintf")
-    @NativeType(layout="(u64:vu64:u8*)i32", ctype="int (FILE*, const char*, ...)")
     int fprintf(Pointer<Void> strm, Pointer<Byte> fmt, Object... args);
 
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fflush")
-    @NativeType(layout="(u64:v)i32", ctype="int (FILE *stream)")
     int fflush(Pointer<Void> stream);
 
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fdopen")
-    @NativeType(layout="(i32u64:u8)u64:v", ctype="FILE* (int fd, const char* mode)")
     Pointer<Void> fdopen(int fd, Pointer<Byte> mode);
 }

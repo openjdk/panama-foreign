@@ -31,66 +31,65 @@ import java.nicl.types.*;
 import java.nicl.metadata.*;
 
 public class GlobalVariable {
-    @NativeHeader
+    @NativeHeader(declarations =
+            "init=()v" +
+            "global_boolean=u8(get=global_boolean$get)(set=global_boolean$set)(ptr=global_boolean$ptr)" +
+            "global_i8=i8(get=global_i8$get)(set=global_i8$set)(ptr=global_i8$ptr)" +
+            "global_i16=i16(get=global_i16$get)(set=global_i16$set)(ptr=global_i16$ptr)" +
+            "global_i32=i32(get=global_i32$get)(set=global_i32$set)(ptr=global_i32$ptr)" +
+            "global_i64=i64(get=global_i64$get)(set=global_i64$set)(ptr=global_i64$ptr)" +
+            "global_f32=f32(get=global_f32$get)(set=global_f32$set)(ptr=global_f32$ptr)" +
+            "global_d64=f64(get=global_d64$get)(set=global_d64$set)(ptr=global_d64$ptr)" +
+            "global_struct=$(mystruct)(get=global_struct$get)(set=global_struct$set)(ptr=global_struct$ptr)"
+    )
     static interface globvar {
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@init")
-        @NativeType(layout="()v", ctype="dummy")
         public abstract void init();
 
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_boolean")
-        @NativeType(layout="u8", ctype="dummy", name="global_boolean")
         public abstract boolean global_boolean$get();
         public abstract void global_boolean$set(boolean arg);
         public abstract Pointer<Boolean> global_boolean$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i8")
-        @NativeType(layout="i8", ctype="dummy", name="global_i8")
         public abstract byte global_i8$get();
         public abstract void global_i8$set(byte arg);
         public abstract Pointer<Byte> global_i8$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i16")
-        @NativeType(layout="i16", ctype="dummy", name="global_i16")
         public abstract short global_i16$get();
         public abstract void global_i16$set(short arg);
         public abstract Pointer<Short> global_i16$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i32")
-        @NativeType(layout="i32", ctype="dummy", name="global_i32")
         public abstract int global_i32$get();
         public abstract void global_i32$set(int arg);
         public abstract Pointer<Integer> global_i32$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i64")
-        @NativeType(layout="i64", ctype="dummy", name="global_i64")
         public abstract long global_i64$get();
         public abstract void global_i64$set(long arg);
         public abstract Pointer<Long> global_i64$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_f32")
-        @NativeType(layout="f32", ctype="dummy", name="global_f32")
         public abstract float global_f32$get();
         public abstract void global_f32$set(float arg);
         public abstract Pointer<Float> global_f32$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_d64")
-        @NativeType(layout="f64", ctype="dummy", name="global_d64")
         public abstract double global_d64$get();
         public abstract void global_d64$set(double arg);
         public abstract Pointer<Double> global_d64$ptr();
 
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        @NativeStruct("[i32](mystruct)")
+        @NativeStruct("[i32(get=i$get)(set=i$set)](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
-            @Offset(offset=0l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@i")
-            @NativeType(layout="i32", ctype="int")
             int i$get();
             void i$set(int i);
         }
 
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_struct")
-        @NativeType(layout="$(mystruct)", ctype="dummy", name="global_struct")
         public abstract MyStruct global_struct$get();
         public abstract void global_struct$set(MyStruct arg);
         public abstract Pointer<MyStruct> global_struct$ptr();

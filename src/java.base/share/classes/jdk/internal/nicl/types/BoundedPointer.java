@@ -142,8 +142,8 @@ public class BoundedPointer<X> implements Pointer<X> {
         return "{ BoundedPointer type: " + type + " region: " + region + " offset=0x" + Long.toHexString(offset) + " }";
     }
 
-    public void dump(int nbytes) {
-        region.dump(nbytes);
+    public String dump(int nbytes) {
+        return region.dump(nbytes);
     }
 
     static class PointerIterator<X> implements Iterator<BoundedPointer<X>> {

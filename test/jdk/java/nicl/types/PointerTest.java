@@ -29,7 +29,6 @@
 import java.lang.invoke.MethodHandles;
 import java.nicl.*;
 import java.nicl.metadata.*;
-import java.nicl.metadata.Array;
 import java.nicl.types.*;
 
 public class PointerTest {
@@ -49,37 +48,37 @@ public class PointerTest {
         ptrs = Libraries.bind(pointers.class, lib);
     }
 
-    @NativeHeader
+    @NativeHeader(declarations =
+            "get_strings=(u64:u64:u64:u8u64:i32)v" +
+            "get_strings2=(u64:i32)u64:u64:u8" +
+            "get_structs=(u64:u64:u64:$(mystruct)u64:i32)v" +
+            "get_structs2=(u64:i32)u64:u64:$(mystruct)"
+    )
     static interface pointers {
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings")
-        @NativeType(layout="(u64:u64:u64:u8u64:i32)v", ctype="void (const char***, int*)")
         void get_strings(Pointer<Pointer<Pointer<Byte>>> p, Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings2")
-        @NativeType(layout="(u64:i32)u64:u64:u8", ctype="const char **(int *)")
         Pointer<Pointer<Byte>> get_strings2(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs")
-        @NativeType(layout="(u64:u64:u64:$(mystruct)u64:i32)v", ctype="void (const struct MyStruct ***, int *)" )
         void get_structs(Pointer<Pointer<Pointer<MyStruct>>> p, Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs2")
-        @NativeType(layout="(u64:i32)u64:u64:$(mystruct)", ctype="const struct MyStruct **(int *)")
         Pointer<Pointer<MyStruct>> get_structs2(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
-        @NativeStruct("[[3i32]u64:u8](mystruct)")
+        @NativeStruct("[" +
+                      "  [3i32](get=ia$get)(set=ia$set)" +
+                      "  u32(pad)" +
+                      "  u64(get=str$get)(set=str$set):u8" +
+                      "](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
-            @Offset(offset=0l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@ia")
-            @Array(elementType="int", elementSize=4l, length=3l)
-            @NativeType(layout="[3i32]", ctype="int []")
             int[] ia$get();
             void ia$set(int[] i);
 
-            @Offset(offset=128l)
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@str")
-            @NativeType(layout="u64:u8", ctype="const char*")
             Pointer<Byte> str$get();
             void str$set(Pointer<Byte> str);
         }
