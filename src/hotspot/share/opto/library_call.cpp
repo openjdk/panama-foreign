@@ -6755,8 +6755,8 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   Node* opd1 = NULL; Node* opd2 = NULL; Node* opd3 = NULL;
   switch (n) {
     case 3: {
-      opd1 = unbox_vector(argument(6), vbox_type, elem_bt, num_elem);
-      if (opd1 == NULL) {
+      opd3 = unbox_vector(argument(6), vbox_type, elem_bt, num_elem);
+      if (opd3 == NULL) {
         return false;
       }
       // fall-through
@@ -6788,11 +6788,11 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
     switch (n) {
       case 1:
       case 2: {
-        operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, num_elem, elem_bt));
+        operation = _gvn.transform(VectorNode::make(opc, opd1, opd2, num_elem, elem_bt));
         break;
       }
       case 3: {
-        operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, opd3, num_elem, elem_bt));
+        operation = _gvn.transform(VectorNode::make(opc, opd1, opd2, opd3, num_elem, elem_bt));
         break;
       }
       default: fatal("unsupported arity: %d", n);
@@ -7305,7 +7305,7 @@ bool LibraryCallKit::inline_vector_broadcast_int() {
   if (opd1 == NULL || opd2 == NULL) {
     return false;
   }
-  Node* operation = _gvn.transform(VectorNode::make(sopc, opd1, opd2, num_elem, elem_bt));
+  Node* operation = _gvn.transform(VectorNode::make(opc, opd1, opd2, num_elem, elem_bt));
 
   Node* vbox = box_vector(operation, vbox_type, elem_bt, num_elem);
   set_vector_result(vbox);
@@ -7372,39 +7372,6 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
     is_cast = false;
   }
 
-  int cast_vopc = 0;
-  if (is_cast) {
-    assert(!is_mask, "masks cannot be casted");
-    switch (elem_bt_from) {
-      case T_BYTE:
-        cast_vopc = Op_VectorCastB2X;
-        break;
-      case T_SHORT:
-        cast_vopc = Op_VectorCastS2X;
-        break;
-      case T_INT:
-        cast_vopc = Op_VectorCastI2X;
-        break;
-      case T_LONG:
-        cast_vopc = Op_VectorCastL2X;
-        break;
-      case T_FLOAT:
-        cast_vopc = Op_VectorCastF2X;
-        break;
-      case T_DOUBLE:
-        cast_vopc = Op_VectorCastD2X;
-        break;
-      default:
-        Unimplemented();
-    }
-    assert(cast_vopc != 0, "need to find vector cast operand");
-
-    // Make sure that cast is implemented to particular type/size combination.
-    if (!arch_supports_vector(cast_vopc, num_elem_to, elem_bt_to, VecMaskNotUsed)) {
-      return false;
-    }
-  }
-
   const TypeInstPtr* vbox_type_from = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass_from);
 
   Node* opd1 = unbox_vector(argument(5), vbox_type_from, elem_bt_from, num_elem_from);
@@ -7417,6 +7384,13 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
 
   Node* op = opd1;
   if (is_cast) {
+    assert(!is_mask, "masks cannot be casted");
+    int cast_vopc = VectorCastNode::opcode(elem_bt_from);
+    // Make sure that cast is implemented to particular type/size combination.
+    if (!arch_supports_vector(cast_vopc, num_elem_to, elem_bt_to, VecMaskNotUsed)) {
+      return false;
+    }
+
     if (num_elem_from < num_elem_to) {
       // Since input and output number of elements are not consistent, we need to make sure we
       // properly size. Thus, first make a cast that retains the number of elements from source.
@@ -7429,7 +7403,7 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
         return false;
       }
 
-      op = _gvn.transform(VectorNode::make(cast_vopc, op, NULL, num_elem_for_cast, elem_bt_to));
+      op = _gvn.transform(VectorCastNode::make(cast_vopc, op, elem_bt_to, num_elem_for_cast));
       // Now ensure that the destination gets properly resized to needed size.
       op = _gvn.transform(new VectorReinterpretNode(op, op->bottom_type()->is_vect(), dst_type));
     } else if (num_elem_from > num_elem_to) {
@@ -7450,11 +7424,11 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
                                                     src_type,
                                                     TypeVect::make(elem_bt_from,
                                                                    num_elem_for_resize)));
-      op = _gvn.transform(VectorNode::make(cast_vopc, op, NULL, num_elem_to, elem_bt_to));
+      op = _gvn.transform(VectorCastNode::make(cast_vopc, op, elem_bt_to, num_elem_to));
     } else {
       // Since input and output number of elements match, and since we know this vector size is
       // supported, simply do a cast with no resize needed.
-      op = _gvn.transform(VectorNode::make(cast_vopc, op, NULL, num_elem_to, elem_bt_to));
+      op = _gvn.transform(VectorCastNode::make(cast_vopc, op, elem_bt_to, num_elem_to));
     }
   } else if (Type::cmp(src_type, dst_type) != 0) {
     assert(!is_cast, "must be reinterpret");

@@ -249,65 +249,6 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_StoreD:
     return Op_StoreVector;
 
-  case Op_AddVB:
-  case Op_AddVS:
-  case Op_AddVI:
-  case Op_AddVL:
-  case Op_AddVF:
-  case Op_AddVD:
-  case Op_SubVB:
-  case Op_SubVS:
-  case Op_SubVI:
-  case Op_SubVL:
-  case Op_SubVF:
-  case Op_SubVD:
-  case Op_MulVB:
-  case Op_MulVS:
-  case Op_MulVI:
-  case Op_MulVL:
-  case Op_MulVF:
-  case Op_MulVD:
-  case Op_DivVF:
-  case Op_DivVD:
-  case Op_MinV:
-  case Op_MaxV:
-  case Op_AbsV:
-  case Op_AbsVF:
-  case Op_AbsVD:
-  case Op_NegVI:
-  case Op_NegVF:
-  case Op_NegVD:
-  case Op_SqrtVF:
-  case Op_SqrtVD:
-  case Op_NotV:
-  case Op_LShiftVB:
-  case Op_LShiftVS:
-  case Op_LShiftVI:
-  case Op_LShiftVL:
-  case Op_RShiftVB:
-  case Op_RShiftVS:
-  case Op_RShiftVI:
-  case Op_RShiftVL:
-  case Op_URShiftVB:
-  case Op_URShiftVS:
-  case Op_URShiftVI:
-  case Op_URShiftVL:
-  case Op_AndV:
-  case Op_OrV:
-  case Op_XorV:
-  case Op_VectorBlend:
-  case Op_VectorReinterpret:
-  case Op_VectorTest:
-  case Op_VectorMaskCmp:
-  case Op_VectorCastB2X:
-  case Op_VectorCastS2X:
-  case Op_VectorCastI2X:
-  case Op_VectorCastL2X:
-  case Op_VectorCastF2X:
-  case Op_VectorCastD2X:
-    // When op is already vectorized, return that directly.
-    return sopc;
-
   default:
     return 0; // Unimplemented
   }
@@ -493,13 +434,6 @@ VectorNode* VectorNode::make(int opc, Node* n1, Node* n2, uint vlen, BasicType b
   case Op_AndV: return new AndVNode(n1, n2, vt);
   case Op_OrV:  return new OrVNode (n1, n2, vt);
   case Op_XorV: return new XorVNode(n1, n2, vt);
-
-  case Op_VectorCastB2X: return new VectorCastB2XNode(n1, vt);
-  case Op_VectorCastS2X: return new VectorCastS2XNode(n1, vt);
-  case Op_VectorCastI2X: return new VectorCastI2XNode(n1, vt);
-  case Op_VectorCastL2X: return new VectorCastL2XNode(n1, vt);
-  case Op_VectorCastF2X: return new VectorCastF2XNode(n1, vt);
-  case Op_VectorCastD2X: return new VectorCastD2XNode(n1, vt);
 
   default:
     fatal("Missed vector creation for '%s'", NodeClassNames[vopc]);
@@ -703,7 +637,7 @@ int ReductionNode::opcode(int opc, BasicType bt) {
         case T_CHAR: return 0;
         case T_BYTE:
         case T_SHORT:
-        case T_INT:       
+        case T_INT:
           vopc = Op_AddReductionVI;
           break;
         default:          ShouldNotReachHere(); return 0;
@@ -900,6 +834,33 @@ ReductionNode* ReductionNode::make(int opc, Node *ctrl, Node* n1, Node* n2, Basi
   }
 }
 
+VectorCastNode* VectorCastNode::make(int vopc, Node* n1, BasicType bt, uint vlen) {
+  const TypeVect* vt = TypeVect::make(bt, vlen);
+  switch (vopc) {
+    case Op_VectorCastB2X: return new VectorCastB2XNode(n1, vt);
+    case Op_VectorCastS2X: return new VectorCastS2XNode(n1, vt);
+    case Op_VectorCastI2X: return new VectorCastI2XNode(n1, vt);
+    case Op_VectorCastL2X: return new VectorCastL2XNode(n1, vt);
+    case Op_VectorCastF2X: return new VectorCastF2XNode(n1, vt);
+    case Op_VectorCastD2X: return new VectorCastD2XNode(n1, vt);
+    default: fatal("unknown node: %s", NodeClassNames[vopc]);
+  }
+  return NULL;
+}
+
+int VectorCastNode::opcode(BasicType bt) {
+  switch (bt) {
+    case T_BYTE:   return Op_VectorCastB2X;
+    case T_SHORT:  return Op_VectorCastS2X;
+    case T_INT:    return Op_VectorCastI2X;
+    case T_LONG:   return Op_VectorCastL2X;
+    case T_FLOAT:  return Op_VectorCastF2X;
+    case T_DOUBLE: return Op_VectorCastD2X;
+    default: Unimplemented();
+  }
+  return 0;
+}
+
 Node* ReductionNode::make_reduction_input(PhaseGVN& gvn, int opc, BasicType bt) {
   int vopc = opcode(opc, bt);
   guarantee(vopc != opc, "Vector reduction for '%s' is not implemented", NodeClassNames[opc]);
@@ -1033,7 +994,7 @@ Node* SubReductionVNode::Ideal(PhaseGVN* phase, bool can_reshape) {
   } else {
     Unimplemented();
     return NULL;
-  } 
+  }
 }
 
 Node* VectorInsertNode::make(Node* vec, Node* new_val, int position) {

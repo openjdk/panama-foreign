@@ -151,7 +151,7 @@ public:
   virtual int Opcode() const;
   virtual const Type* bottom_type() const {
     if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT)
-      return TypeInt::INT; 
+      return TypeInt::INT;
     else if(in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE)
       return TypeInt::BYTE;
     else
@@ -242,14 +242,14 @@ class SubVDNode : public VectorNode {
 // Vector sub int, long as a reduction
 class SubReductionVNode : public ReductionNode {
 public:
-  SubReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) { 
-    assert(in1->bottom_type()->basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),""); 
+  SubReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {
+    assert(in1->bottom_type()->basic_type() == in2->bottom_type()->is_vect()->element_basic_type(),"");
     assert(in1->bottom_type()->basic_type() == T_INT ||
            in1->bottom_type()->basic_type() == T_LONG, "");
   }
   virtual int Opcode() const;
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
-  virtual const Type* bottom_type() const { if (in(1)->bottom_type()->basic_type() == T_INT) 
+  virtual const Type* bottom_type() const { if (in(1)->bottom_type()->basic_type() == T_INT)
                                               return TypeInt::INT; else return TypeLong::LONG; }
   virtual uint ideal_reg() const { return in(1)->bottom_type()->basic_type() == T_INT ? Op_RegI : Op_RegL; }
 };
@@ -684,7 +684,7 @@ class OrVNode : public VectorNode {
 // Vector or short, byte, int, long as a reduction
 class OrReductionVNode : public ReductionNode {
 public:
-  OrReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) { 
+  OrReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {
     assert(in1->bottom_type()->basic_type() == T_INT ||
            in1->bottom_type()->basic_type() == T_LONG ||
            in1->bottom_type()->basic_type() == T_SHORT ||
@@ -709,7 +709,7 @@ public:
 // Vector and int, long as a reduction
 class XorReductionVNode : public ReductionNode {
 public:
-  XorReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) { 
+  XorReductionVNode(Node *ctrl, Node* in1, Node* in2) : ReductionNode(ctrl, in1, in2) {
     assert(in1->bottom_type()->basic_type() == T_INT ||
            in1->bottom_type()->basic_type() == T_LONG ||
            in1->bottom_type()->basic_type() == T_SHORT ||
@@ -1317,49 +1317,59 @@ class VectorReinterpretNode : public VectorNode {
   virtual int Opcode() const;
 };
 
-class VectorCastB2XNode : public VectorNode {
+class VectorCastNode : public VectorNode {
+ public:
+  VectorCastNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {}
+  virtual int Opcode() const;
+
+  static VectorCastNode* make(int vopc, Node* n1, BasicType bt, uint vlen);
+  static int  opcode(BasicType bt);
+  static bool implemented(BasicType bt, uint vlen);
+};
+
+class VectorCastB2XNode : public VectorCastNode {
 public:
-  VectorCastB2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+  VectorCastB2XNode(Node* in, const TypeVect* vt) : VectorCastNode(in, vt) {
     assert(in->bottom_type()->is_vect()->element_basic_type() == T_BYTE, "must be byte");
   }
   virtual int Opcode() const;
 };
 
-class VectorCastS2XNode : public VectorNode {
+class VectorCastS2XNode : public VectorCastNode {
 public:
-  VectorCastS2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+  VectorCastS2XNode(Node* in, const TypeVect* vt) : VectorCastNode(in, vt) {
     assert(in->bottom_type()->is_vect()->element_basic_type() == T_SHORT, "must be short");
   }
   virtual int Opcode() const;
 };
 
-class VectorCastI2XNode : public VectorNode {
+class VectorCastI2XNode : public VectorCastNode {
 public:
-  VectorCastI2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+  VectorCastI2XNode(Node* in, const TypeVect* vt) : VectorCastNode(in, vt) {
     assert(in->bottom_type()->is_vect()->element_basic_type() == T_INT, "must be int");
   }
   virtual int Opcode() const;
 };
 
-class VectorCastL2XNode : public VectorNode {
+class VectorCastL2XNode : public VectorCastNode {
 public:
-  VectorCastL2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+  VectorCastL2XNode(Node* in, const TypeVect* vt) : VectorCastNode(in, vt) {
     assert(in->bottom_type()->is_vect()->element_basic_type() == T_LONG, "must be long");
   }
   virtual int Opcode() const;
 };
 
-class VectorCastF2XNode : public VectorNode {
+class VectorCastF2XNode : public VectorCastNode {
 public:
-  VectorCastF2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+  VectorCastF2XNode(Node* in, const TypeVect* vt) : VectorCastNode(in, vt) {
     assert(in->bottom_type()->is_vect()->element_basic_type() == T_FLOAT, "must be float");
   }
   virtual int Opcode() const;
 };
 
-class VectorCastD2XNode : public VectorNode {
+class VectorCastD2XNode : public VectorCastNode {
 public:
-  VectorCastD2XNode(Node* in, const TypeVect* vt) : VectorNode(in, vt) {
+  VectorCastD2XNode(Node* in, const TypeVect* vt) : VectorCastNode(in, vt) {
     assert(in->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE, "must be double");
   }
   virtual int Opcode() const;
