@@ -2014,7 +2014,7 @@ void Assembler::evpmovqw(XMMRegister dst, XMMRegister src, int vector_len) {
 void Assembler::pabsd(XMMRegister dst, XMMRegister src) {
   assert(VM_Version::supports_ssse3(), "");
   InstructionAttr attributes(AVX_128bit, /* rex_w */ false, /* legacy_mode */ false, /* no_mask_reg */ true, /* uses_vl */ false);
-  int encode = simd_prefix_and_encode(dst, dst, src, VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
+  int encode = simd_prefix_and_encode(dst, 0, src, VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
   emit_int8(0x1E);
   emit_int8((unsigned char)(0xC0 | encode));
 }
