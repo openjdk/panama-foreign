@@ -7809,7 +7809,6 @@ Node* LibraryCallKit::gen_call_to_svml(int vector_api_op_id, BasicType bt, int n
   get_svml_address(vector_api_op_id, vt->length_in_bytes() * BitsPerByte, bt, &name, &addr);
 
   if (addr == NULL) {
-    tty->print_cr("Failed to generate call to %s", name);
     return NULL;
   }
 
