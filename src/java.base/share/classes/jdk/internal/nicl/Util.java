@@ -154,7 +154,7 @@ public final class Util {
 
     public static jdk.internal.nicl.types.Type typeof(Class<?> clz) {
         if (!isCType(clz)) {
-            if (clz.isAnnotationPresent(C.class) && clz.isAnnotationPresent(FunctionalInterface.class)) {
+            if (clz.isAnnotationPresent(FunctionalInterface.class)) {
                 return typeofFunctionalInterfaceMethod(clz);
             }
             throw new IllegalArgumentException();

@@ -22,14 +22,16 @@
  */
 package java.nicl;
 
+import jdk.internal.nicl.HeapScope;
+import jdk.internal.nicl.NativeScope;
+import jdk.internal.nicl.Util;
+
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Reference;
 import java.nicl.types.Resource;
-
-import jdk.internal.nicl.HeapScope;
-import jdk.internal.nicl.NativeScope;
-import jdk.internal.nicl.Util;
+import java.util.List;
+import java.util.function.Function;
 
 public interface Scope extends AutoCloseable {
     void checkAlive();
@@ -67,20 +69,47 @@ public interface Scope extends AutoCloseable {
     @Override
     void close();
 
-    private Pointer<Byte> toCString(byte[] ar) {
+    private Pointer<Byte> toNativeBuffer(byte[] ar, boolean appendNull) {
         try {
-            Pointer<Byte> buf = allocateArray(Util.BYTE_TYPE, ar.length + 1);
+            if (ar == null || ar.length == 0) {
+                if (appendNull) {
+                    Pointer<Byte> buf = allocate(Util.BYTE_TYPE);
+                    buf.lvalue().set((byte) 0);
+                    return buf;
+                } else {
+                    return Pointer.nullPointer();
+                }
+            }
+
+            int len = ar.length;
+            if (appendNull) {
+                len += 1;
+            }
+
+            Pointer<Byte> buf = allocateArray(Util.BYTE_TYPE, len);
             Pointer<Byte> src = Util.createArrayElementsPointer(ar);
             Util.copy(src, buf, ar.length);
-            buf.offset(ar.length).lvalue().set((byte)0);
+            if (appendNull) {
+                buf.offset(ar.length).lvalue().set((byte) 0);
+            }
             return buf;
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e);
         }
     }
 
+    public default Pointer<Byte> toNativeBuffer(byte[] ar) {
+        if (null == ar || ar.length == 0) {
+            return Pointer.nullPointer();
+        }
+        return toNativeBuffer(ar, false);
+    }
+
     public default Pointer<Byte> toCString(String str) {
-        return toCString(str.getBytes());
+        if (null == str) {
+            return Pointer.nullPointer();
+        }
+        return toNativeBuffer(str.getBytes(), true);
     }
 
     public default Pointer<Pointer<Byte>> toCStrArray(String[] ar) {
@@ -95,6 +124,30 @@ public interface Scope extends AutoCloseable {
         }
 
         return ptr;
+    }
+
+    public default <T, E> Pointer<T> toNativeArray(LayoutType<T> type, E[] values, Function<E,T> fn) {
+        if (values == null || values.length == 0) {
+            return Pointer.nullPointer();
+        }
+        final int size = values.length;
+        Pointer<T> ar = allocateArray(type, size);
+        for (int i = 0; i < size; i++) {
+            ar.offset(i).lvalue().set(fn.apply(values[i]));
+        }
+        return ar;
+    }
+
+    public default <T, E> Pointer<T> toNativeArray(LayoutType<T> type, List<E> values, Function<E,T> fn) {
+        if (values == null || values.size() == 0) {
+            return Pointer.nullPointer();
+        }
+        final int size = values.size();
+        Pointer<T> ar = allocateArray(type, size);
+        for (int i = 0; i < size; i++) {
+            ar.offset(i).lvalue().set(fn.apply(values.get(i)));
+        }
+        return ar;
     }
 
     static Scope newNativeScope() {

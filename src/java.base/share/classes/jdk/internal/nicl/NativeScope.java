@@ -23,7 +23,6 @@
 package jdk.internal.nicl;
 
 import jdk.internal.misc.Unsafe;
-import jdk.internal.nicl.Util;
 import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
 
@@ -124,6 +123,10 @@ public class NativeScope implements Scope {
 
     @Override
     public <T> Pointer<T> allocateArray(LayoutType<T> type, long count) {
+        if (count == 0) {
+            return Pointer.nullPointer();
+        }
+
         // FIXME: when allocating structs align size up to 8 bytes to allow for raw reads/writes?
         long size = Util.sizeof(type.getCarrierType());
         if (size < 0) {

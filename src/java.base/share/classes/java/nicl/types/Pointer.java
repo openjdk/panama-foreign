@@ -22,8 +22,12 @@
  */
 package java.nicl.types;
 
-import java.io.ByteArrayOutputStream;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.nicl.Util;
+import jdk.internal.nicl.types.BoundedPointer;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 
 /**
  * @param <T> The type of the pointee
@@ -97,5 +101,20 @@ public interface Pointer<T> extends Resource {
             os.write(b);
         }
         return os.toString();
+    }
+
+    public static ByteBuffer asDirectByteBuffer(Pointer<?> buf, int bytes) throws IllegalAccessException {
+        return SharedSecrets.getJavaNioAccess().newDirectByteBuffer(
+                buf.addr(), bytes, null);
+    }
+
+    /**
+     * Obtains the {@code NULL} pointer.
+     * @param <Z> the null pointer type.
+     * @return the {@code NULL} pointer.
+     */
+    @SuppressWarnings("unchecked")
+    static <Z extends Pointer<?>> Z nullPointer() {
+        return (Z) BoundedPointer.NULL;
     }
 }
