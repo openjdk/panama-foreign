@@ -110,6 +110,7 @@ public class BoundedMemoryRegion {
 
     private void checkRange(long offset, long length) {
         checkBounds(offset);
+        if (length == 0) return;
         checkBounds(offset + length - 1);
     }
 
