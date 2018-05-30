@@ -13762,10 +13762,10 @@ instruct min8S_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE >= 2 && UseAVX == 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd   $dst,$src1\n\t" 
+  format %{ "movdqu   $dst,$src1\n\t"
             "pminsw  $dst,$src2\t! " %}
   ins_encode %{
-    __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
     __ pminsw($dst$$XMMRegister, $src2$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -14530,14 +14530,14 @@ instruct max2L_reg(vecX dst, vecX src1, vecX src2, rxmm0 tmp) %{
   predicate(UseAVX == 0 && UseSSE >= 4 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst, TEMP tmp);
-  format %{ "movdqu    $tmp,$src1\n\t"
-            "movdqu    $dst,$src2\n\t"
-            "pcmpgtq   $tmp,$src2\n\t"
-            "blendvpd  $dst,$src1\t! " %}
+  format %{ "movdqu    $tmp,$src2\n\t"
+            "movdqu    $dst,$src1\n\t"
+            "pcmpgtq   $tmp,$src1\n\t"
+            "blendvpd  $dst,$src2\t! " %}
   ins_encode %{
-    __ movdqu($tmp$$XMMRegister, $src1$$XMMRegister);
+    __ movdqu($tmp$$XMMRegister, $src2$$XMMRegister);
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
-    __ pcmpgtq($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ pcmpgtq($tmp$$XMMRegister, $src1$$XMMRegister);
     __ blendvpd($dst$$XMMRegister, $src2$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
