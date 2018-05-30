@@ -1321,7 +1321,8 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
     } else {
         switch (opcode) {
         case Op_AbsV:
-          if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          if (is_integral_type(bt) && UseSSE < 3) { ret_value = false; }
+          else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
           else if (bt == T_LONG && UseAVX <= 2) { ret_value = false; } // Implementation limitation
           break; 
         case Op_AddVB:
