@@ -1243,7 +1243,6 @@ const bool Matcher::match_rule_supported(int opcode) {
       if (!UsePopCountInstruction || !VM_Version::supports_vpopcntdq())
         ret_value = false;
       break;
-    case Op_MulVB:
     case Op_MulVI:
     case Op_MulVL:
       if ((UseSSE < 4) && (UseAVX < 1)) // only with SSE4_1 or AVX
@@ -1257,10 +1256,6 @@ const bool Matcher::match_rule_supported(int opcode) {
       if (UseAVX < 3) // only EVEX : vector connectivity becomes an issue here
         ret_value = false;
       break;
-    case Op_AddReductionVI:
-      if (UseSSE < 3) // requires at least SSE3
-        ret_value = false;
-      break;
     case Op_MulReductionVI:
       if (UseSSE < 4) // requires at least SSE4
         ret_value = false;
@@ -1270,10 +1265,6 @@ const bool Matcher::match_rule_supported(int opcode) {
     case Op_MulReductionVF:
     case Op_MulReductionVD:
       if (UseSSE < 1) // requires at least SSE
-        ret_value = false;
-      break;
-    case Op_AndReductionV:
-      if (UseSSE < 2) // requires at least SSE2
         ret_value = false;
       break;
     case Op_SqrtVD:
@@ -1330,7 +1321,8 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
     } else {
         switch (opcode) {
         case Op_AbsV:
-          if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+          if (is_integral_type(bt) && UseSSE < 3) { ret_value = false; }
+          else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
           else if (bt == T_LONG && UseAVX <= 2) { ret_value = false; } // Implementation limitation
           break; 
         case Op_AddVB:
@@ -1342,6 +1334,10 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_MinV:
           if (UseSSE < 4 && (bt == T_BYTE || bt == T_INT || bt == T_LONG))
             ret_value = false;
+          break;
+        case Op_MulVB:
+          if (size_in_bits <= 128 && UseSSE < 4) { ret_value = false; }
+          else if (size_in_bits > 256 && UseAVX < 2) { ret_value = false; }
           break;
         case Op_LShiftVI:
         case Op_RShiftVI:
@@ -1372,13 +1368,22 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           if (vlen != 4)
             ret_value  = false;
           break;
+        case Op_AddReductionVI:
+          if (bt == T_INT && UseSSE < 3) { ret_value = false; }
+          else if (is_subword_type(bt) && UseSSE <= 3) { ret_value = false; }
+          break;
+        case Op_AndReductionV:
+        case Op_OrReductionV:
+        case Op_XorReductionV:
+          if (bt == T_BYTE && UseSSE <= 3) { ret_value = false; }
+          break;
         case Op_VectorMaskCmp:
           if (UseAVX <= 0) { ret_value = false; }
           else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
           break;
         case Op_MinReductionV:
         case Op_MaxReductionV:
-          if (UseSSE <= 3 && UseAVX == 0) { ret_value = false; }
+          if ((bt == T_INT || bt == T_LONG || bt == T_BYTE) && UseSSE <= 3) { ret_value = false; }
           else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
           break;
         case Op_VectorBlend:
@@ -6906,7 +6911,7 @@ instruct rvmul8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
 
 //--------------------Min Reduction --------------------
 instruct rsmin8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
-  predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
   format %{ "pshufd  $tmp,$src2,0x1\n\t"
@@ -7985,7 +7990,7 @@ instruct rvmin8D_reduction_reg(regD dst, vecZ src2, regD tmp, regD tmp2) %{
 // ------- Max Reduction ------------
 
 instruct rsmax8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
-  predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MaxReductionV src1 src2));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
   format %{ "pshufd  $tmp,$src2,0x1\n\t"
@@ -13762,10 +13767,10 @@ instruct min8S_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE >= 2 && UseAVX == 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd   $dst,$src1\n\t" 
+  format %{ "movdqu   $dst,$src1\n\t"
             "pminsw  $dst,$src2\t! " %}
   ins_encode %{
-    __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
     __ pminsw($dst$$XMMRegister, $src2$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
@@ -14530,14 +14535,14 @@ instruct max2L_reg(vecX dst, vecX src1, vecX src2, rxmm0 tmp) %{
   predicate(UseAVX == 0 && UseSSE >= 4 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst, TEMP tmp);
-  format %{ "movdqu    $tmp,$src1\n\t"
-            "movdqu    $dst,$src2\n\t"
-            "pcmpgtq   $tmp,$src2\n\t"
-            "blendvpd  $dst,$src1\t! " %}
+  format %{ "movdqu    $tmp,$src2\n\t"
+            "movdqu    $dst,$src1\n\t"
+            "pcmpgtq   $tmp,$src1\n\t"
+            "blendvpd  $dst,$src2\t! " %}
   ins_encode %{
-    __ movdqu($tmp$$XMMRegister, $src1$$XMMRegister);
+    __ movdqu($tmp$$XMMRegister, $src2$$XMMRegister);
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
-    __ pcmpgtq($tmp$$XMMRegister, $src2$$XMMRegister);
+    __ pcmpgtq($tmp$$XMMRegister, $src1$$XMMRegister);
     __ blendvpd($dst$$XMMRegister, $src2$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
