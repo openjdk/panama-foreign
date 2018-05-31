@@ -48,7 +48,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static final LongVector.LongSpecies<Shapes.S64Bit> SPECIES =
                 LongVector.species(Shapes.S_64_BIT);
 
-    static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
+    static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
 
     interface FUnOp {
         long apply(long a);
@@ -58,10 +58,10 @@ public class Long64VectorTests extends AbstractVectorTest {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(f.apply(a[i]), r[i]);
+                Assert.assertEquals(r[i], f.apply(a[i]));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a[i]), r[i], "at index #" + i);
+            Assert.assertEquals(r[i], f.apply(a[i]), "at index #" + i + ", input = " + a[i]);
         }
     }
 
@@ -69,10 +69,10 @@ public class Long64VectorTests extends AbstractVectorTest {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(mask[i % SPECIES.length()] ? f.apply(a[i]) : a[i], r[i]);
+                Assert.assertEquals(r[i], mask[i % SPECIES.length()] ? f.apply(a[i]) : a[i]);
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(mask[i % SPECIES.length()] ? f.apply(a[i]) : a[i], r[i], "at index #" + i);
+            Assert.assertEquals(r[i], mask[i % SPECIES.length()] ? f.apply(a[i]) : a[i], "at index #" + i + ", input = " + a[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
 
@@ -84,10 +84,10 @@ public class Long64VectorTests extends AbstractVectorTest {
       int i = 0;
       try {
         for (; i < a.length; i += SPECIES.length()) {
-          Assert.assertEquals(f.apply(a, i), b[i]);
+          Assert.assertEquals(b[i], f.apply(a, i));
         }
       } catch (AssertionError e) {
-        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+        Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
       }
     }
 
@@ -107,10 +107,10 @@ public class Long64VectorTests extends AbstractVectorTest {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(f.apply(a[i], b[i]), r[i]);
+                Assert.assertEquals(r[i], f.apply(a[i], b[i]));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "at index #" + i);
+            Assert.assertEquals(r[i], f.apply(a[i], b[i]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i]);
         }
     }
 
@@ -122,10 +122,10 @@ public class Long64VectorTests extends AbstractVectorTest {
         int i = 0;
         try {
             for (; i < a.length; i++) {
-                Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i]);
+                Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]));
             }
         } catch (AssertionError err) {
-            Assert.assertEquals(f.apply(a[i], b[i], mask[i % SPECIES.length()]), r[i], "at index #" + i + ", a[i] = " + a[i] + ", b[i] = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
+            Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
     static final List<IntFunction<long[]>> LONG_GENERATORS = List.of(
