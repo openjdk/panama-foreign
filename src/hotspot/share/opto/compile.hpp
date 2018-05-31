@@ -364,6 +364,9 @@ class Compile : public Phase {
   const char*           _stub_name;             // Name of stub or adapter being compiled, or NULL
   address               _stub_entry_point;      // Compile code entry for generated stub, or NULL
 
+  // For GC
+  void*                 _barrier_set_state;
+
   // Control of this compilation.
   int                   _num_loop_opts;         // Number of iterations for doing loop optimiztions
   int                   _max_inline_size;       // Max inline size for this compilation
@@ -536,6 +539,8 @@ class Compile : public Phase {
   void log_late_inline_failure(CallGenerator* cg, const char* msg);
 
  public:
+
+  void* barrier_set_state() const { return _barrier_set_state; }
 
   outputStream* print_inlining_stream() const {
     assert(print_inlining() || print_intrinsics(), "PrintInlining off?");
@@ -1388,7 +1393,6 @@ class Compile : public Phase {
   // supporting clone_map
   CloneMap&     clone_map();
   void          set_clone_map(Dict* d);
-
 };
 
 #endif // SHARE_VM_OPTO_COMPILE_HPP
