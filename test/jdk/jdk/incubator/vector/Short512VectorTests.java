@@ -136,6 +136,10 @@ public class Short512VectorTests extends AbstractVectorTest {
             withToString("short[i + 1]", (int s) -> {
                 return fill(s * 1000,
                             i -> (((short)(i + 1) == 0) ? 1 : (short)(i + 1)));
+            }),
+            withToString("short[cornerCaseValue(i)]", (int s) -> {
+                return fill(s * 1000,
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -194,9 +198,9 @@ public class Short512VectorTests extends AbstractVectorTest {
                 return fill(s * 1000,
                             i -> i%3 == 0 ? (short)i : (i%3 == 1 ? (short)(i + 1) : (short)(i - 2)));
             }),
-            withToString("short[cornerComparisonCase(i)]", (int s) -> {
+            withToString("short[cornerCaseValue(i)]", (int s) -> {
                 return fill(s * 1000,
-                            i -> cornerComparisonCase(i));
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -226,7 +230,7 @@ public class Short512VectorTests extends AbstractVectorTest {
         return a;
     }
     
-    static short cornerComparisonCase(int i) {
+    static short cornerCaseValue(int i) {
         switch(i % 5) {
             case 0:
                 return Short.MAX_VALUE;

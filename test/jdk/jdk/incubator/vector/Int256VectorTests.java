@@ -136,6 +136,10 @@ public class Int256VectorTests extends AbstractVectorTest {
             withToString("int[i + 1]", (int s) -> {
                 return fill(s * 1000,
                             i -> (((int)(i + 1) == 0) ? 1 : (int)(i + 1)));
+            }),
+            withToString("int[cornerCaseValue(i)]", (int s) -> {
+                return fill(s * 1000,
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -194,9 +198,9 @@ public class Int256VectorTests extends AbstractVectorTest {
                 return fill(s * 1000,
                             i -> i%3 == 0 ? (int)i : (i%3 == 1 ? (int)(i + 1) : (int)(i - 2)));
             }),
-            withToString("int[cornerComparisonCase(i)]", (int s) -> {
+            withToString("int[cornerCaseValue(i)]", (int s) -> {
                 return fill(s * 1000,
-                            i -> cornerComparisonCase(i));
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -226,7 +230,7 @@ public class Int256VectorTests extends AbstractVectorTest {
         return a;
     }
     
-    static int cornerComparisonCase(int i) {
+    static int cornerCaseValue(int i) {
         switch(i % 5) {
             case 0:
                 return Integer.MAX_VALUE;

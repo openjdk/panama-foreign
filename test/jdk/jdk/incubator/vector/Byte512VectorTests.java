@@ -136,6 +136,10 @@ public class Byte512VectorTests extends AbstractVectorTest {
             withToString("byte[i + 1]", (int s) -> {
                 return fill(s * 1000,
                             i -> (((byte)(i + 1) == 0) ? 1 : (byte)(i + 1)));
+            }),
+            withToString("byte[cornerCaseValue(i)]", (int s) -> {
+                return fill(s * 1000,
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -194,9 +198,9 @@ public class Byte512VectorTests extends AbstractVectorTest {
                 return fill(s * 1000,
                             i -> i%3 == 0 ? (byte)i : (i%3 == 1 ? (byte)(i + 1) : (byte)(i - 2)));
             }),
-            withToString("byte[cornerComparisonCase(i)]", (int s) -> {
+            withToString("byte[cornerCaseValue(i)]", (int s) -> {
                 return fill(s * 1000,
-                            i -> cornerComparisonCase(i));
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -226,7 +230,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         return a;
     }
     
-    static byte cornerComparisonCase(int i) {
+    static byte cornerCaseValue(int i) {
         switch(i % 5) {
             case 0:
                 return Byte.MAX_VALUE;

@@ -184,6 +184,10 @@ public class Double128VectorTests extends AbstractVectorTest {
             withToString("double[i + 1]", (int s) -> {
                 return fill(s * 1000,
                             i -> (((double)(i + 1) == 0) ? 1 : (double)(i + 1)));
+            }),
+            withToString("double[cornerCaseValue(i)]", (int s) -> {
+                return fill(s * 1000,
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -242,9 +246,9 @@ public class Double128VectorTests extends AbstractVectorTest {
                 return fill(s * 1000,
                             i -> i%3 == 0 ? (double)i : (i%3 == 1 ? (double)(i + 1) : (double)(i - 2)));
             }),
-            withToString("double[cornerComparisonCase(i)]", (int s) -> {
+            withToString("double[cornerCaseValue(i)]", (int s) -> {
                 return fill(s * 1000,
-                            i -> cornerComparisonCase(i));
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -274,7 +278,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         return a;
     }
     
-    static double cornerComparisonCase(int i) {
+    static double cornerCaseValue(int i) {
         switch(i % 7) {
             case 0:
                 return Double.MAX_VALUE;

@@ -203,6 +203,10 @@ public class $vectorteststype$ extends AbstractVectorTest {
             withToString("$type$[i + 1]", (int s) -> {
                 return fill(s * 1000,
                             i -> ((($type$)(i + 1) == 0) ? 1 : ($type$)(i + 1)));
+            }),
+            withToString("$type$[cornerCaseValue(i)]", (int s) -> {
+                return fill(s * 1000,
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -261,9 +265,9 @@ public class $vectorteststype$ extends AbstractVectorTest {
                 return fill(s * 1000,
                             i -> i%3 == 0 ? ($type$)i : (i%3 == 1 ? ($type$)(i + 1) : ($type$)(i - 2)));
             }),
-            withToString("$type$[cornerComparisonCase(i)]", (int s) -> {
+            withToString("$type$[cornerCaseValue(i)]", (int s) -> {
                 return fill(s * 1000,
-                            i -> cornerComparisonCase(i));
+                            i -> cornerCaseValue(i));
             })
     );
 
@@ -293,7 +297,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         return a;
     }
     
-    static $type$ cornerComparisonCase(int i) {
+    static $type$ cornerCaseValue(int i) {
 #if[FP]
         switch(i % 7) {
             case 0:
