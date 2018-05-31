@@ -181,12 +181,6 @@ public final class Util {
             }
         } else if (Struct.class.isAssignableFrom(erasure(carrier))) {
             return LayoutType.ofStruct((Class) carrier);
-        } else if (erasure(carrier).isArray()) {
-            //Todo: this provisional, Java arrays are not meant to be supported in this way
-            Type element = (carrier instanceof GenericArrayType) ?
-                    ((GenericArrayType)carrier).getGenericComponentType() :
-                    erasure(carrier).getComponentType();
-            return makeType(element, ((Sequence)layout).element()).array(((Sequence)layout).elementsSize());
         } else {
             throw new IllegalStateException("Unknown carrier: " + carrier.getTypeName());
         }

@@ -36,7 +36,7 @@ public final class NativeTypes {
     /**
      * The {@code void} type.
      */
-    public static LayoutType<?> VOID = LayoutType.ofVoid(Value.ofUnsignedInt(0));
+    public static LayoutType<Void> VOID = LayoutType.ofVoid(Value.ofUnsignedInt(0));
 
     /**
      * The {@code int8_t} type.

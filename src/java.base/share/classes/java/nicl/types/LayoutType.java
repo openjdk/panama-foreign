@@ -200,7 +200,7 @@ public class LayoutType<X> {
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<?> ofVoid(Layout layout) {
+    public static LayoutType<Void> ofVoid(Layout layout) {
         return new LayoutType<>(layout, null) {
             @Override
             public MethodHandle getter() throws UnsupportedOperationException {
