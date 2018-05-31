@@ -36,11 +36,11 @@ import java.util.Map;
  */
 public final class Sequence extends Group {
 
-    private final int size;
+    private final long size;
     private final Layout elementLayout;
 
-    private Sequence(int size, Layout elementLayout, Map<String, String> annotations) {
-        super(Kind.STRUCT, Collections.nCopies(size, elementLayout), annotations);
+    private Sequence(long size, Layout elementLayout, Map<String, String> annotations) {
+        super(Kind.STRUCT, Collections.nCopies((int)size, elementLayout), annotations);
         this.size = size;
         this.elementLayout = elementLayout;
     }
@@ -59,7 +59,7 @@ public final class Sequence extends Group {
      * @param size the array repetition count.
      * @return the new sequence layout.
      */
-    public static Sequence of(int size, Layout elementLayout) {
+    public static Sequence of(long size, Layout elementLayout) {
         return new Sequence(size, elementLayout, NO_ANNOS);
     }
 
@@ -67,7 +67,7 @@ public final class Sequence extends Group {
      * Returns the repetition count associated with this sequence layout.
      * @return the repetition count (can be zero if array size is unspecified).
      */
-    public int elementsSize() {
+    public long elementsSize() {
         return size;
     }
 

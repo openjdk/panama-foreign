@@ -24,8 +24,6 @@
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
 import java.nicl.metadata.NativeStruct;
-import java.nicl.metadata.NativeType;
-import java.nicl.metadata.Offset;
 import java.nio.file.Files;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -159,10 +157,6 @@ public class Runner {
         for (Annotation a: ea) {
             if (a instanceof NativeLocation) {
                 verifyNativeLocation(actual.getAnnotation(NativeLocation.class), (NativeLocation) a);
-            } else if (a instanceof NativeType) {
-                assertEquals(actual.getAnnotation(NativeType.class), (NativeType) a);
-            } else if (a instanceof Offset) {
-                assertEquals(actual.getAnnotation(Offset.class), (Offset) a);
             }
         }
     }
@@ -208,19 +202,22 @@ public class Runner {
             assertTrue(actual.getName().contains("$"));
             assertTrue(expected.isMemberClass());
             assertTrue(actual.isMemberClass());
-            NativeType ant = actual.getAnnotation(NativeType.class);
+            NativeStruct ant = actual.getAnnotation(NativeStruct.class);
             assertNotNull(ant);
-            assertEquals(ant, expected.getAnnotation(NativeType.class));
+            assertEquals(ant, expected.getAnnotation(NativeStruct.class));
             NativeLocation loc = actual.getAnnotation(NativeLocation.class);
             assertNotNull(loc);
             verifyNativeLocation(loc, expected.getAnnotation(NativeLocation.class));
         } else {
             NativeHeader ah = actual.getAnnotation(NativeHeader.class);
             assertNotNull(ah);
-            NativeHeader eh = actual.getAnnotation(NativeHeader.class);
+            NativeHeader eh = expected.getAnnotation(NativeHeader.class);
             assertNotNull(eh);
+
             assertEquals(Paths.get(ah.path()).getFileName(),
                     Paths.get(eh.path()).getFileName());
+
+            assertEquals(ah.declarations(), eh.declarations());
         }
 
     }

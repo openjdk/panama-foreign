@@ -110,7 +110,7 @@ public class LayoutType<X> {
      * @return the array {@code LayoutType}.
      */
     @SuppressWarnings("unchecked")
-    public LayoutType<Array<X>> array(int size) {
+    public LayoutType<Array<X>> array(long size) {
         return new LayoutType<>(Sequence.of(size, layout), References.ofArray(this));
     }
 

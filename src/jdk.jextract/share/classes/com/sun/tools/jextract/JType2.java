@@ -43,7 +43,7 @@ public class JType2 implements JType {
     }
 
     public String getNativeDescriptor() {
-        return Utils.getLayout(cType);
+        return Utils.getLayout(cType).toString();
     }
 
     public int getCallingConvention() {

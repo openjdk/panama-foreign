@@ -27,13 +27,17 @@ import jdk.internal.clang.Type;
 import jdk.internal.org.objectweb.asm.*;
 
 import java.io.IOException;
+import java.nicl.layout.Layout;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
@@ -44,12 +48,10 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
  */
 final class AsmCodeFactory extends CodeFactory {
     private static final String ANNOTATION_PKG_PREFIX = "Ljava/nicl/metadata/";
-    private static final String ARRAY = ANNOTATION_PKG_PREFIX + "Array;";
     private static final String NATIVE_CALLBACK = ANNOTATION_PKG_PREFIX + "NativeCallback;";
     private static final String NATIVE_HEADER = ANNOTATION_PKG_PREFIX + "NativeHeader;";
     private static final String NATIVE_LOCATION = ANNOTATION_PKG_PREFIX + "NativeLocation;";
-    private static final String NATIVE_TYPE = ANNOTATION_PKG_PREFIX + "NativeType;";
-    private static final String OFFSET = ANNOTATION_PKG_PREFIX + "Offset;";
+    private static final String NATIVE_STRUCT = ANNOTATION_PKG_PREFIX + "NativeStruct;";
 
     private final Context ctx;
     private final ClassWriter global_cw;
@@ -58,7 +60,7 @@ final class AsmCodeFactory extends CodeFactory {
     private final Map<String, byte[]> types;
     private final HashSet<String> handledMacros = new HashSet<>();
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
-    private final StringBuilder headerDeclarations = new StringBuilder();
+    private final List<String> headerDeclarations = new ArrayList<>();
 
     AsmCodeFactory(Context ctx, HeaderFile header) {
         this.ctx = ctx;
@@ -89,7 +91,7 @@ final class AsmCodeFactory extends CodeFactory {
                 libPaths.visitEnd();
             }
         }
-        av.visit("declarations", headerDeclarations.toString());
+        av.visit("declarations", String.join(" ", headerDeclarations));
         av.visitEnd();
     }
 
@@ -145,32 +147,6 @@ final class AsmCodeFactory extends CodeFactory {
         av.visit("USR", c.USR());
         av.visitEnd();
 
-        av = mv.visitAnnotation(NATIVE_TYPE, true);
-        av.visit("layout", Utils.getLayout(t));
-        av.visit("ctype", t.spelling());
-        av.visit("name", fieldName);
-        av.visitEnd();
-
-        if (t.kind() == TypeKind.ConstantArray || t.kind() == TypeKind.IncompleteArray) {
-            logger.finer(() -> "Array field " + fieldName + ", type " + t.kind().name());
-            av = mv.visitAnnotation(ARRAY, true);
-            av.visit("elementType", t.getElementType().canonicalType().spelling());
-            av.visit("elementSize", t.getElementType().canonicalType().size());
-            if (t.kind() == TypeKind.ConstantArray) {
-                av.visit("length", t.getNumberOfElements());
-            }
-            av.visitEnd();
-        }
-
-        if (parentType != null) {
-            long offset = parentType.getOffsetOf(fieldName);
-            av = mv.visitAnnotation(OFFSET,  true);
-            av.visit("offset", offset);
-            if (c.isBitField()) {
-                av.visit("bits", c.getBitFieldWidth());
-            }
-            av.visitEnd();
-        }
         mv.visitEnd();
         cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
@@ -178,6 +154,18 @@ final class AsmCodeFactory extends CodeFactory {
         JType ptrType = new PointerType(jt);
         cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
                 "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(), null);
+    }
+
+    private void addVar(ClassVisitor cw, Cursor c, Type parentType) {
+        addField(cw, c, parentType);
+        Layout layout = Utils.getLayout(c.type());
+        String globalName = c.spelling();
+        String descStr = decorateAsAccessor(globalName, layout).toString();
+        addHeaderDecl(c.spelling(), descStr);
+    }
+
+    private void addHeaderDecl(String symbol, String desc) {
+        headerDeclarations.add(String.format("%s=%s", symbol, desc));
     }
 
     private void addConstant(ClassVisitor cw, Cursor c) {
@@ -214,22 +202,28 @@ final class AsmCodeFactory extends CodeFactory {
                 name, "Ljava/lang/Object;Ljava/nicl/types/Struct<L" + name + ";>;",
                 "java/lang/Object", new String[] {"java/nicl/types/Struct"});
         annotateNativeLocation(cw, cursor);
-        AnnotationVisitor av = cw.visitAnnotation(NATIVE_TYPE, true);
-        av.visit("layout", Utils.getLayout(t));
-        av.visit("ctype", t.spelling());
-        av.visit("size", t.size());
+
+        AnnotationVisitor av = cw.visitAnnotation(NATIVE_STRUCT, true);
+        Layout structLayout = Utils.getRecordLayout(t, this::decorateAsAccessor);
+        av.visit("value", structLayout.toString());
         av.visitEnd();
         cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
 
         // fields
-        Printer dbg = new Printer();
-        structFields(cursor).forEachOrdered(cx -> addField(cw, cx, cursor.type()));
+        structFields(cursor).forEach(cx -> addField(cw, cx, cursor.type()));
         // Write class
         try {
             writeClassFile(cw, owner.clsName + "$" + intf);
         } catch (IOException ex) {
             handleException(ex);
         }
+    }
+
+    Layout decorateAsAccessor(String accessorName, Layout layout) {
+        return layout
+                    .withAnnotation("get", accessorName + "$get")
+                    .withAnnotation("set", accessorName + "$set")
+                    .withAnnotation("ptr", accessorName + "$ptr");
     }
 
     // A stream of fields of a struct (or union). Note that we have to include
@@ -271,13 +265,7 @@ final class AsmCodeFactory extends CodeFactory {
                 name, null, "java/lang/Object", superAnno);
         annotateNativeLocation(cw, dcl);
         Type t = dcl.type().canonicalType();
-        AnnotationVisitor av = cw.visitAnnotation(NATIVE_TYPE, true);
-        av.visit("layout", Utils.getLayout(t));
-        av.visit("ctype", t.spelling());
-        av.visit("size", t.size());
-        av.visitEnd();
-
-        av = cw.visitAnnotation("Ljava/lang/annotation/Target;", true);
+        AnnotationVisitor av = cw.visitAnnotation("Ljava/lang/annotation/Target;", true);
         av.visitEnum("value", "Ljava/lang/annotation/ElementType;", "TYPE_USE");
         av.visitEnd();
         av = cw.visitAnnotation("Ljava/lang/annotation/Retention;", true);
@@ -298,7 +286,7 @@ final class AsmCodeFactory extends CodeFactory {
         JType.Function fn = fnif.getFunction();
         String intf = ((JType.InnerType) fnif.type).getName();
         logger.fine(() -> "Create FunctionalInterface " + intf);
-        String nDesc = jt2.getNativeDescriptor();
+        String nDesc = Utils.getFunction(jt2.cType.getPointeeType()).toString();
 
         final String name = internal_name + "$" + intf;
 
@@ -358,7 +346,7 @@ final class AsmCodeFactory extends CodeFactory {
         if (dcl != null) {
             av = cw.visitAnnotation(NATIVE_CALLBACK, true);
             Type t = dcl.type().canonicalType();
-            av.visit("value", Utils.getLayout(t));
+            av.visit("value", Utils.getLayout(t).toString());
             av.visitEnd();
         }
         cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
@@ -411,18 +399,9 @@ final class AsmCodeFactory extends CodeFactory {
         av.visit("column", loc.column());
         av.visit("USR", dcl.USR());
         av.visitEnd();
-        av = mv.visitAnnotation(NATIVE_TYPE, true);
         Type t = dcl.type();
-        String layout = Utils.getLayout(t);
-        av.visit("layout", layout);
-        av.visit("ctype", t.spelling());
-        av.visit("name", dcl.spelling());
-        av.visitEnd();
-
-        headerDeclarations.append(dcl.spelling());
-        headerDeclarations.append('=');
-        headerDeclarations.append(layout);
-        headerDeclarations.append(' ');
+        final String descStr = Utils.getFunction(t).toString();
+        addHeaderDecl(dcl.spelling(), descStr);
 
         int idx = 0;
         for (JType arg: fn.args) {
@@ -478,7 +457,12 @@ final class AsmCodeFactory extends CodeFactory {
             switch (cursor.kind()) {
                 case StructDecl:
                 case UnionDecl:
-                    createStruct(cursor);
+                    if (!cursor.getDefinition().isInvalid()) {
+                        createStruct(cursor);
+                    } else {
+                        logger.fine(() -> "Skipping undeclared struct or union:");
+                        logger.fine(() -> Printer.Stringifier(p -> p.dumpCursor(cursor, true)));
+                    }
                     break;
                 case FunctionDecl:
                     assert (jt instanceof JType.Function);
@@ -494,7 +478,7 @@ final class AsmCodeFactory extends CodeFactory {
                     }
                     break;
                 case VarDecl:
-                    addField(global_cw, cursor, null);
+                    addVar(global_cw, cursor, null);
                     break;
                 default:
                     logger.warning(() -> "Unsupported declaration Cursor:");

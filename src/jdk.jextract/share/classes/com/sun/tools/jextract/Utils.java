@@ -26,10 +26,25 @@ package com.sun.tools.jextract;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
+import jdk.internal.clang.TypeKind;
+import jdk.internal.nicl.types.Types;
+import jdk.internal.nicl.types.Types.UNSIGNED;
 
 import javax.lang.model.SourceVersion;
+import java.nicl.layout.Address;
+import java.nicl.layout.Function;
+import java.nicl.layout.Group;
+import java.nicl.layout.Group.Kind;
+import java.nicl.layout.Layout;
+import java.nicl.layout.Sequence;
+import java.nicl.layout.Unresolved;
+import java.nicl.layout.Value;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * General utility functions
@@ -183,177 +198,176 @@ public class Utils {
         throw new IllegalArgumentException("Malformed descriptor");
     }
 
-    private static class DescriptorBuilder {
-        final StringBuilder sb = new StringBuilder();
-        private Set<String> seenRecords = new HashSet<>();
-
-        public DescriptorBuilder append(Type t) {
-            switch(t.kind()) {
-                case Bool:
-                    sb.append('B');
-                    break;
-                case Int:
-                    sb.append('i');
-                    break;
-                case UInt:
-                    sb.append('I');
-                    break;
-                case Int128:
-                    sb.append("=128i");
-                    break;
-                case UInt128:
-                    sb.append("=128I");
-                    break;
-                case Short:
-                    sb.append('s');
-                    break;
-                case UShort:
-                    sb.append('S');
-                    break;
-                case Long:
-                    sb.append('l');
-                    break;
-                case ULong:
-                    sb.append('L');
-                    break;
-                case LongLong:
-                    sb.append('q');
-                    break;
-                case ULongLong:
-                    sb.append('Q');
-                    break;
-                case Char_S:
-                case Char_U:
-                    sb.append('c');
-                    break;
-                case SChar:
-                    sb.append('o');
-                    break;
-                case UChar:
-                    sb.append('O');
-                    break;
-                case Float:
-                    sb.append('F');
-                    break;
-                case Double:
-                    sb.append('D');
-                    break;
-                case LongDouble:
-                    sb.append('E');
-                    break;
-                case Void:
-                    sb.append('V');
-                    break;
-                case Vector:
-                    sb.append('=');
-                    sb.append(t.size() * 8);
-                    sb.append('v');
-                    break;
-                case Record:
-                    sb.append('[');
-                    doRecord(t);
-                    sb.append(']');
-                    break;
-                case Enum:
-                    sb.append('i');
-                    break;
-                case ConstantArray:
-                    sb.append(t.getNumberOfElements());
-                    append(t.getElementType());
-                    break;
-                case IncompleteArray:
-                    sb.append('*');
-                    append(t.getElementType());
-                    break;
-                case FunctionProto:
-                case FunctionNoProto:
-                    doFunction(t);
-                    break;
-                case Unexposed:
-                case Typedef:
-                case Elaborated:
-                    append(t.canonicalType());
-                    break;
-                case Pointer:
-                case BlockPointer:
-                    sb.append("p:");
-                    int prevPos = sb.length() - 1;
-                    try {
-                        append(t.getPointeeType());
-                    } catch (RecursiveRecordDeclarationError err) {
-                        //undo changes
-                        sb.delete(prevPos, sb.length());
-                    }
-                    break;
-                default:
-                    throw new IllegalArgumentException(
-                            "Unsupported type kind: " + t.kind());
-            }
-            return this;
-        }
-
-        private void doFunction(Type t) {
-            sb.append('(');
-            final int args = t.numberOfArgs();
-            for (int i = 0; i < args; i++) {
-                append(t.argType(i));
-            }
-            if (t.isVariadic()) {
-                sb.append("*)");
-            } else {
-                sb.append(')');
-            }
-            append(t.resultType());
-        }
-
-        private void doRecord(Type t) {
-            Cursor cu = t.getDeclarationCursor().getDefinition();
-            if (cu.isInvalid()) {
-                // Have no idea what's inside, fill with char[]
-                if (t.size() < 0) {
-                    sb.append('*');
-                } else {
-                    sb.append(t.size());
-                }
-                sb.append('c');
-            } else {
-                if (!seenRecords.add(t.spelling())) {
-                    throw new RecursiveRecordDeclarationError();
-                } else {
-                    try {
-                        final boolean isUnion = cu.kind() == CursorKind.UnionDecl;
-                        cu.stream()
-                                .filter(cx -> cx.kind() == CursorKind.FieldDecl)
-                                .forEachOrdered(cx -> {
-                                    append(cx.type());
-                                    if (isUnion) {
-                                        sb.append('|');
-                                    }
-                                });
-                        if (sb.charAt(sb.length() - 1) == '|') {
-                            sb.deleteCharAt(sb.length() - 1);
-                        }
-                    } finally {
-                        seenRecords.remove(t.spelling());
-                    }
-                }
-            }
-        }
-
-        public String build() {
-            return sb.toString();
-        }
-    }
-
-    static class RecursiveRecordDeclarationError extends Error {
-        private static final long serialVersionUID = 0L;
-    }
-
-    public static String getLayout(Type clang_type) {
-        return new DescriptorBuilder().append(clang_type).build();
-    }
-
-    public static String getLayout(Cursor clang_cursor) {
+    public static Layout getLayout(Cursor clang_cursor) {
         return getLayout(clang_cursor.type());
+    }
+
+    public static Function getFunction(Cursor clang_cursor) {
+        return getFunction(clang_cursor.type());
+    }
+
+    public static boolean isFunction(Type clang_type) {
+        switch (clang_type.kind()) {
+            case Unexposed:
+            case Typedef:
+            case Elaborated:
+                return isFunction(clang_type.canonicalType());
+            case FunctionProto:
+            case FunctionNoProto:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static Function getFunction(Type t) {
+        switch (t.kind()) {
+            case Unexposed:
+            case Typedef:
+            case Elaborated:
+                return parseFunctionInternal(t.canonicalType());
+            case FunctionProto:
+            case FunctionNoProto:
+                return parseFunctionInternal(t);
+            default:
+                throw new IllegalArgumentException(
+                        "Unsupported type kind: " + t.kind());
+        }
+    }
+
+    private static Function parseFunctionInternal(Type t) {
+        final int argSize = t.numberOfArgs();
+        Layout[] args = new Layout[argSize];
+        for (int i = 0; i < argSize; i++) {
+            args[i] = getLayout(t.argType(i));
+        }
+        if (t.resultType().kind() == TypeKind.Void) {
+            return Function.ofVoid(t.isVariadic(), args);
+        } else {
+            return Function.of(getLayout(t.resultType()), t.isVariadic(), args);
+        }
+    }
+
+    public static Layout getLayout(Type t) {
+        switch(t.kind()) {
+            case Bool:
+                return Types.BOOLEAN;
+            case Int:
+                return Types.INT;
+            case UInt:
+                return Types.UNSIGNED.INT;
+            case Int128:
+                return Types.INT128;
+            case UInt128:
+                return Types.UNSIGNED.INT128;
+            case Short:
+                return Types.SHORT;
+            case UShort:
+                return Types.UNSIGNED.SHORT;
+            case Long:
+                return Types.LONG;
+            case ULong:
+                return Types.UNSIGNED.LONG;
+            case LongLong:
+                return Types.LONG_LONG;
+            case ULongLong:
+                return Types.UNSIGNED.LONG_LONG;
+            case SChar:
+                return Types.BYTE;
+            case Char_S:
+            case Char_U:
+            case UChar:
+                return Types.UNSIGNED.BYTE;
+            case Float:
+                return Types.FLOAT;
+            case Double:
+                return Types.DOUBLE;
+            case LongDouble:
+                return Types.LONG_DOUBLE;
+            case Record:
+                return getRecordReferenceLayout(t);
+            case Enum:
+                return Types.INT;
+            case ConstantArray:
+                return Sequence.of(t.getNumberOfElements(), getLayout(t.getElementType()));
+            case IncompleteArray:
+                return Sequence.of(0L, getLayout(t.getElementType()));
+            case Unexposed:
+            case Typedef:
+            case Elaborated:
+                return getLayout(t.canonicalType());
+            case Pointer:
+            case BlockPointer:
+                return parsePointerInternal(t.getPointeeType());
+            default:
+                throw new IllegalArgumentException(
+                        "Unsupported type kind: " + t.kind());
+        }
+    }
+
+    private static Address parsePointerInternal(Type pointeeType) {
+        switch (pointeeType.kind()) {
+            case Unexposed:
+            case Typedef:
+            case Elaborated:
+                return parsePointerInternal(pointeeType.canonicalType());
+            case FunctionProto:
+            case FunctionNoProto:
+                return Address.ofFunction(64, parseFunctionInternal(pointeeType));
+            case Void:
+                return Address.ofVoid(64);
+            default:
+                return Address.ofLayout(64, getLayout(pointeeType));
+        }
+    }
+
+    private static Layout getRecordReferenceLayout(Type t) {
+        Cursor cu = t.getDeclarationCursor().getDefinition();
+        if (cu.isInvalid()) {
+            // Have no idea what's inside - likely a pointer to undefined struct
+            return t.size() < 0 ?
+                    Types.CHAR :
+                    Sequence.of(t.size(), Types.CHAR);
+        } else {
+            //symbolic reference
+            return Unresolved.of()
+                    .withAnnotation(Layout.NAME, t.canonicalType().getDeclarationCursor().spelling());
+        }
+    }
+
+    public static Group getRecordLayout(Type t, java.util.function.BiFunction<String, Layout, Layout> fieldMapper) {
+        Cursor cu = t.getDeclarationCursor().getDefinition();
+        assert !cu.isInvalid();
+        final boolean isUnion = cu.kind() == CursorKind.UnionDecl;
+        Stream<Cursor> fieldTypes = cu.stream()
+                .filter(cx -> cx.kind() == CursorKind.FieldDecl);
+        long offset = 0L;
+        int padCount = 0;
+        List<Layout> fieldLayouts = new ArrayList<>();
+        for (Cursor c : fieldTypes.collect(Collectors.toList())) {
+            String fieldName = c.spelling();
+            long fieldOffset = t.getOffsetOf(c.spelling());
+            if (fieldOffset != offset) {
+                //add padding
+                fieldLayouts.add(Value.ofUnsignedInt(fieldOffset - offset).withAnnotation(Layout.NAME, "pad" + padCount++));
+                offset = fieldOffset;
+            }
+            Layout fieldLayout = c.isAnonymousStruct() ?
+                    getRecordLayout(c.type(), fieldMapper) :
+                    getLayout(c.type());
+            fieldLayouts.add(fieldMapper.apply(fieldName, fieldLayout));
+            if (!isUnion) {
+                offset += c.type().size() * 8;
+            }
+        }
+        long size = t.size() * 8;
+        if (offset != size) {
+            //add final padding
+            fieldLayouts.add(Value.ofUnsignedInt(size - offset).withAnnotation("pad", String.valueOf(padCount)));
+        }
+        Layout[] fields = fieldLayouts.toArray(new Layout[0]);
+        Group g = isUnion ?
+                Group.union(fields) : Group.struct(fields);
+        return g.withAnnotation(Layout.NAME, cu.spelling());
     }
 }

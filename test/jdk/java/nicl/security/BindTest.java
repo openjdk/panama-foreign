@@ -34,10 +34,9 @@ import java.nicl.metadata.*;
  * @summary Tests for bind method(s) security checks
  */
 public class BindTest {
-    @NativeHeader
+    @NativeHeader(declarations = "getpid=()i32")
     static interface system {
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@getpid")
-        @NativeType(layout="()i", ctype="dummy")
         public abstract int getpid();
     }
 

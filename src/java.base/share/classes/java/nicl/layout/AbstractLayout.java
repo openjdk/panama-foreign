@@ -25,6 +25,7 @@
 package java.nicl.layout;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
 
     @Override
     public L withAnnotation(String name, String value) {
-        Map<String, String> newAnnotations = new HashMap<>(annotations);
+        Map<String, String> newAnnotations = new LinkedHashMap<>(annotations);
         newAnnotations.put(name, value);
         return dup(newAnnotations);
     }
@@ -58,7 +59,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
         if (!annotations.isEmpty()) {
             return String.format("%s%s",
                     s, annotations.entrySet().stream()
-                            .map(e -> e.getKey().equals(NAME) ?
+                            .map(e -> !e.getKey().equals(NAME) ?
                                     String.format("(%s=%s)", e.getKey(), e.getValue()) :
                                     String.format("(%s)", e.getValue()))
                             .collect(Collectors.joining()));
@@ -67,5 +68,5 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
         }
     }
 
-    static final Map<String, String> NO_ANNOS = new HashMap<>();
+    static final Map<String, String> NO_ANNOS = new LinkedHashMap<>();
 }

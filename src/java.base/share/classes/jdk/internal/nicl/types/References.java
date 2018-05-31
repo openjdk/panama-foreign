@@ -552,7 +552,7 @@ public final class References {
                 // @@@ Perform a bulk copy from the array into the pointers
                 // memory region
                 Sequence seq = ((Sequence)pointer.type().layout());
-                int size = seq.elementsSize();
+                long size = seq.elementsSize();
                 for (int i = 0 ; i < size ; i++) {
                     Object newVal = elemGetter.invoke(fromElemPointer.offset(i));
                     elemSetter.invoke(toElemPointer.offset(i), newVal);

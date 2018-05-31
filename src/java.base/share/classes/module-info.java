@@ -154,6 +154,8 @@ module java.base {
         java.logging;
     exports jdk.internal.nicl to
         jdk.jextract;
+    exports jdk.internal.nicl.types to
+        jdk.jextract;
     exports jdk.internal.org.objectweb.asm to
         jdk.jartool,
         jdk.jfr,

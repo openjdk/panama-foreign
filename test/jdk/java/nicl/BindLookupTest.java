@@ -36,10 +36,9 @@ import java.nicl.metadata.*;
  * @summary Tests for bind method(s) lookup checks
  */
 public class BindLookupTest {
-    @NativeHeader
+    @NativeHeader(declarations = "getpid=()i32")
     public static interface system {
         @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@getpid")
-        @NativeType(layout="()i32", ctype="dummy")
         public abstract int getpid();
     }
 

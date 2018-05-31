@@ -47,7 +47,6 @@ public class StructTest {
 
     @NativeLocation(file="dummy", line=47, column=11, USR="c:@S@MyStruct")
     @NativeStruct("[[4i32](get=a$get)(set=a$set)]")
-    @NativeType(ctype="struct MyStruct")
     static interface MyStruct extends Struct<MyStruct> {
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@field1")
         Array<Integer> a$get();

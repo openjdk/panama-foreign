@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nicl.metadata.NativeType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -67,87 +66,6 @@ final class TypeDictionary {
         this.pkgName = pkg;
         this.typeMap = new HashMap<>();
         this.serialNo = new AtomicInteger();
-    }
-
-/*
-    public static boolean addType(Context ctx, Type t, Class<?> cls) {
-        if (cls.isAnnotation() || cls.isArray()) {
-            throw new IllegalArgumentException();
-        }
-
-        String pkg = cls.getPackage().getName();
-        TypeDictionary dict = ctx.typeDictionaryFor(pkg);
-
-        String type = t.spelling();
-        return dict.addWithClass(type, cls);
-    }
-
-    boolean addType(String type, Class<?> cls) {
-        String pkg = cls.getPackage().getName();
-        // Class must be in this or sub packages
-        if (! pkg.startsWith(pkgName)) {
-            return false;
-        }
-        return addWithClass(type, cls);
-    }
-
-    private boolean addWithClass(String type, Class<?> cls) {
-        assert(! cls.isArray());
-        assert(! cls.isAnnotation());
-
-        return (null == typeMap.putIfAbsent(type, JType.of(cls)));
-    }
-*/
-
-    static class JarClassStreamer extends ClassLoader {
-        private final Context ctx;
-        private final HashMap<String, byte[]> bytecodes = new HashMap<>();
-
-        JarClassStreamer(Context ctx, Path jar) {
-            this.ctx = ctx;
-            try (JarInputStream jis = new JarInputStream(Files.newInputStream(jar, READ))) {
-                // List all classes in the jar
-                for (JarEntry e = jis.getNextJarEntry(); e != null; e = jis.getNextJarEntry()) {
-                    if (e.isDirectory()) {
-                        jis.closeEntry();
-                        continue;
-                    }
-                    String name = e.getName();
-                    if (! name.endsWith(".class")) {
-                        // Should not have file not class files
-                        ctx.err.println("Warning: unexpected file " + name);
-                    }
-                    name = name.substring(0, name.length() - 6);
-                    byte[] buf = new byte[4096];
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    int n;
-                    while ((n = jis.read(buf)) > -1) {
-                        bos.write(buf, 0, n);
-                    }
-                    bytecodes.put(name.replace(File.separatorChar, '.'), bos.toByteArray());
-                }
-            } catch (IOException ioe) {
-                ctx.err.println("Failed to load types from jar file: " + jar.toString());
-            }
-        }
-
-        public Stream<Class<?>> stream() {
-            return bytecodes.entrySet().stream()
-                    .map(e -> {
-                        byte[] bytecode = e.getValue();
-                        return defineClass(e.getKey(), bytecode, 0, bytecode.length);
-                    });
-        }
-    }
-
-    void loadJar(Path jar) {
-        JarClassStreamer cl = new JarClassStreamer(ctx, jar);
-        cl.stream().forEach(cls -> {
-            Package pkg = cls.getPackage();
-            TypeDictionary dict = ctx.typeDictionaryFor(pkg.getName());
-            NativeType nt = cls.getAnnotation(NativeType.class);
-            dict.typeMap.putIfAbsent(nt.ctype(), JType.of(cls));
-        });
     }
 
     private static JType checkPrimitive(Type t) {
