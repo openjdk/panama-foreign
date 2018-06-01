@@ -35,6 +35,7 @@ import java.nicl.types.Array;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
 import java.nicl.types.Struct;
+import java.util.ArrayList;
 
 public abstract class ScopeImpl implements Scope {
 
@@ -97,11 +98,14 @@ public abstract class ScopeImpl implements Scope {
         private final static long UNIT_SIZE = 64 * 1024;
 
         // the address of allocated memory
-        private final long block;
+        private long block;
         // the first offset of available memory
         private long free_offset;
         // the free offset when start transaction
         private long transaction_origin;
+
+        //list of used blocks
+        private final ArrayList<Long> used_blocks;
 
         public NativeScope() {
             SecurityManager security = System.getSecurityManager();
@@ -111,6 +115,7 @@ public abstract class ScopeImpl implements Scope {
             block = U.allocateMemory(UNIT_SIZE);
             free_offset = 0;
             transaction_origin = -1;
+            used_blocks = new ArrayList<>();
         }
 
         BoundedMemoryRegion allocateRegion(long size) {
@@ -132,9 +137,33 @@ public abstract class ScopeImpl implements Scope {
                 throw new IllegalArgumentException();
             }
 
-            if ((free_offset + size) > UNIT_SIZE) {
-                rollbackAllocation();
-                throw new OutOfMemoryError();
+            long boundary = free_offset + size;
+
+            if (boundary > UNIT_SIZE) {
+                try {
+                    long newBuf;
+                    if (size >= (UNIT_SIZE >> 1)) {
+                        // Need more than half block, just allocate for it
+                        newBuf = U.allocateMemory(size);
+                        used_blocks.add(newBuf);
+                    } else {
+                        // less than half block left, start a new block
+                        // shrink current block
+                        newBuf = U.reallocateMemory(block, free_offset);
+                        // We want to revisit strategy if shrink is need a copy
+                        assert newBuf == block;
+                        used_blocks.add(block);
+                        // create a new block
+                        newBuf = block = U.allocateMemory(UNIT_SIZE);
+                        free_offset = Util.alignUp(size, ALLOC_ALIGNMENT);
+                    }
+                    // new buffer allocated, commit partial transaction for simplification
+                    transaction_origin = -1;
+                    return newBuf;
+                } catch (OutOfMemoryError ome) {
+                    rollbackAllocation();
+                    throw ome;
+                }
             }
 
             long rv = block + free_offset;
@@ -150,6 +179,10 @@ public abstract class ScopeImpl implements Scope {
         @Override
         public void close() {
             super.close();
+            for (Long addr: used_blocks) {
+                U.freeMemory(addr);
+            }
+            used_blocks.clear();
             U.freeMemory(block);
         }
     }
