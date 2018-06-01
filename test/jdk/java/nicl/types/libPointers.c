@@ -48,6 +48,9 @@ static const struct MyStruct* struct_pointers[] = {
 };
 
 const char** get_strings2(int* pcount) {
+  if (NULL == pcount) {
+    return NULL;
+  }
   *pcount = sizeof(strings) / sizeof(const char*);
   return strings;
 }

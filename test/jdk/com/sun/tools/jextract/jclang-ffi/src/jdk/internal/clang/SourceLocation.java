@@ -22,6 +22,7 @@
  */
 package jdk.internal.clang;
 
+import java.nicl.NativeTypes;
 import java.nicl.Scope;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
@@ -48,17 +49,15 @@ public class SourceLocation {
     @SuppressWarnings("unchecked")
     private Location getLocation(LocationFactory fn) {
         try (Scope s = Scope.newNativeScope()) {
-            Pointer<Pointer<Void>> file = s.allocate(
-                LayoutType.create(void.class).ptrType());
-            LayoutType<Integer> lt = LayoutType.create(Integer.class);
-            Pointer<Integer> line = s.allocate(lt);
-            Pointer<Integer> col = s.allocate(lt);
-            Pointer<Integer> offset = s.allocate(lt);
+            Pointer<Pointer<Void>> file = s.allocate(NativeTypes.VOID.pointer());
+            Pointer<Integer> line = s.allocate(NativeTypes.INT);
+            Pointer<Integer> col = s.allocate(NativeTypes.INT);
+            Pointer<Integer> offset = s.allocate(NativeTypes.INT);
 
             fn.get(loc, file, line, col, offset);
-            CXString fname = LibClang.lib.clang_getFileName(file.deref());
-            return new Location(LibClang.CXStrToString(fname), line.deref(),
-                col.deref(), offset.deref());
+            CXString fname = LibClang.lib.clang_getFileName(file.get());
+            return new Location(LibClang.CXStrToString(fname), line.get(),
+                col.get(), offset.get());
         }
     }
 

@@ -65,12 +65,12 @@ public class Index {
             Pointer<Byte> src = scope.toCString(file);
             Pointer<Pointer<Byte>> cargs = scope.toCStrArray(args);
             @CXTranslationUnit Pointer<Void> tu = lclang.clang_parseTranslationUnit(
-                    ptr, src, cargs, args.length, null, 0,
+                    ptr, src, cargs, args.length, Pointer.nullPointer(), 0,
                     detailedPreprocessorRecord ?
                             CXTranslationUnit_DetailedPreprocessingRecord :
                             CXTranslationUnit_None);
 
-            if (tu != null) {
+            if (tu != null && !tu.isNull()) {
                 translationUnits.add(tu);
             }
 

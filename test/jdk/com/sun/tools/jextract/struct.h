@@ -5,6 +5,10 @@ extern "C" {
 typedef struct UndefinedStruct UndefinedStruct;
 UndefinedStruct* allocateUndefinedStruct();
 
+typedef struct UndefineStructForPointer *UndefinedStructPointer;
+
+struct Opaque* allocate_opaque_struct();
+
 typedef struct TypedefNamedAsIs {
     int i;
     long l;

@@ -148,7 +148,7 @@ public interface Scope extends AutoCloseable {
 
     default Pointer<Pointer<Byte>> toCStrArray(String[] ar) {
         if (ar.length == 0) {
-            return null;
+            return Pointer.nullPointer();
         }
 
         Pointer<Pointer<Byte>> ptr = allocate(Util.BYTE_PTR_TYPE, ar.length);

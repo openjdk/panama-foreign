@@ -25,6 +25,8 @@
 
 package java.nicl;
 
+import jdk.internal.nicl.abi.SystemABI;
+
 import java.nicl.layout.Value;
 import java.nicl.types.LayoutType;
 
@@ -32,6 +34,7 @@ import java.nicl.types.LayoutType;
  * This class defines constants modelling standard primitive types in the C programming language.
  */
 public final class NativeTypes {
+    private final static SystemABI ABI = SystemABI.getInstance();
 
     /**
      * The {@code void} type.
@@ -81,10 +84,36 @@ public final class NativeTypes {
     /**
      * The {@code float} type.
      */
-    public static LayoutType<Float> FLOAT = LayoutType.ofFloat(Value.ofFloatingPoint(32));
+    public static LayoutType<Float> FLOAT = LayoutType.ofFloat(
+            ABI.layoutFor(SystemABI.CType.Float));
 
     /**
      * The {@code double} type.
      */
-    public static LayoutType<Double> DOUBLE = LayoutType.ofDouble(Value.ofFloatingPoint(64));
+    public static LayoutType<Double> DOUBLE = LayoutType.ofDouble(
+            ABI.layoutFor(SystemABI.CType.Double));
+
+    /**
+     * The {@code int} type.
+     */
+    public static LayoutType<Integer> INT = LayoutType.ofInt(
+            ABI.layoutFor(SystemABI.CType.Int));
+
+    /**
+     * The {@code unsigned} type.
+     */
+    public static LayoutType<Integer> UINT = LayoutType.ofInt(
+            ABI.layoutFor(SystemABI.CType.UnsignedInt));
+
+    /**
+     * The {@code long} type.
+     */
+    public static LayoutType<Integer> LONG = LayoutType.ofInt(
+            ABI.layoutFor(SystemABI.CType.Long));
+
+    /**
+     * The {@code long long} type.
+     */
+    public static LayoutType<Integer> LONGLONG = LayoutType.ofInt(
+            ABI.layoutFor(SystemABI.CType.LongLong));
 }

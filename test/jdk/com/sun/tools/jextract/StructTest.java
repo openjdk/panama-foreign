@@ -41,7 +41,6 @@ import static org.testng.Assert.assertTrue;
  */
 public class StructTest extends JextractToolRunner {
     private static final String[] ExpectedIfs = {
-            "UndefinedStruct",
             "TypedefNamedAsIs",
             "TypedefNamedDifferent",
             "TypedefAnonymous",
@@ -57,6 +56,10 @@ public class StructTest extends JextractToolRunner {
     };
 
     private static final String[] ExpectedTypeAnnotations = {
+            "UndefinedStruct",
+            // "UndefineStructForPointer",
+            "UndefinedStructPointer",
+            // "Opaque",
             "TypedefNamedDifferent_t"
     };
 
@@ -82,9 +85,12 @@ public class StructTest extends JextractToolRunner {
         assertNotNull(asIs);
     }
 
-    private void verifyUndefinedStruct(Class<?> undefined) {
-        assertNotNull(undefined);
-        assertTrue(undefined.isAnnotation());
+    private void verifyExpectedAnnotations(Class<?>[] declared) {
+        for (String name : ExpectedTypeAnnotations) {
+            Class<?> cls = findClass(declared, name);
+            assertNotNull(cls);
+            assertTrue(cls.isAnnotation());
+        }
     }
 
     private void assertVoidPointer(ParameterizedType pvoid, boolean isWildcard) {
@@ -161,7 +167,7 @@ public class StructTest extends JextractToolRunner {
         assertEquals(clz.length, NumberOfInnerClasses);
         verifyPlain(findClass(clz, "Plain"));
         verifyTypedefNamedAsIs(findClass(clz, "TypedefNamedAsIs"));
-        verifyUndefinedStruct(findClass(clz, "UndefinedStruct"));
+        verifyExpectedAnnotations(clz);
         verifyFunctionWithVoidPointer(cls);
         verifyFunctionPointer(findClass(clz,"FunctionPointer"));
         verifyIncompleteArray(findClass(clz, "IncompleteArray"));

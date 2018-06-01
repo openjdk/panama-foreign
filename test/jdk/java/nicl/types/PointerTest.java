@@ -27,11 +27,18 @@
  */
 
 import java.lang.invoke.MethodHandles;
-import java.nicl.*;
-import java.nicl.metadata.*;
-import java.nicl.types.*;
+import java.nicl.Libraries;
+import java.nicl.Library;
+import java.nicl.NativeTypes;
+import java.nicl.Scope;
+import java.nicl.metadata.NativeHeader;
+import java.nicl.metadata.NativeLocation;
+import java.nicl.metadata.NativeStruct;
 import java.nicl.types.Array;
-import java.util.function.IntFunction;
+import java.nicl.types.LayoutType;
+import java.nicl.types.Pointer;
+import java.nicl.types.Struct;
+import java.util.Objects;
 
 public class PointerTest {
     private static final boolean DEBUG = Boolean.getBoolean("PointerTest.DEBUG");
@@ -189,11 +196,37 @@ public class PointerTest {
         }
     }
 
+    void testNullPointer() {
+        try (Scope scope = Scope.newNativeScope()) {
+            LayoutType<Integer> iType = NativeTypes.UINT32;
+
+            Pointer<Integer> pi = Pointer.nullPointer();
+            Pointer<Pointer<Byte>> values;
+
+            try {
+                values = ptrs.get_strings2(null);
+                throw new IllegalStateException("null should not be allowed to pass as Pointer object and should not cause crash");
+            } catch (NullPointerException npe) {
+                // expected
+                npe.printStackTrace(System.out);
+            }
+
+            values = ptrs.get_strings2(pi);
+            Objects.requireNonNull(values);
+            if (! values.isNull()) {
+                throw new IllegalStateException("Expect to get back Pointer.nullPoitner()");
+            }
+            assertEquals(values, Pointer.nullPointer());
+        }
+
+    }
+
     public void test() {
         testStrings();
         testStrings2();
         testStructs();
         testStructs2();
+        testNullPointer();
     }
 
     static void assertEquals(Object expected, Object actual) {

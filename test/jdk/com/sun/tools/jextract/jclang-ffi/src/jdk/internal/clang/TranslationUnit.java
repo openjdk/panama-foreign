@@ -25,6 +25,7 @@
 
 package jdk.internal.clang;
 
+import java.nicl.NativeTypes;
 import java.nicl.Scope;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
@@ -75,12 +76,10 @@ public class TranslationUnit {
 
     public Tokens tokenize(SourceRange range) {
         // FIXME: Use a shared scope now, we really want to use is StackScope
-        Pointer<Pointer<CXToken>> p = scope.allocate(
-                LayoutType.create(CXToken.class).ptrType());
-        Pointer<Integer> pCnt = scope.allocate(
-                LayoutType.create(Integer.class));
+        Pointer<Pointer<CXToken>> p = scope.allocate(LayoutType.ofStruct(CXToken.class).pointer());
+        Pointer<Integer> pCnt = scope.allocate(NativeTypes.UINT);
         LibClang.lib.clang_tokenize(tu, range.range, p, pCnt);
-        Tokens rv = new Tokens(p.deref().cast(LayoutType.create(CXToken.class)), pCnt.deref());
+        Tokens rv = new Tokens(p.get().cast(LayoutType.ofStruct(CXToken.class)), pCnt.get());
         return rv;
     }
 
@@ -107,14 +106,14 @@ public class TranslationUnit {
 
         public Token getToken(int idx) {
             Pointer<CXToken> p = ar.offset(idx);
-            return new Token(p.deref());
+            return new Token(p.get());
         }
 
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < size; i++) {
-                CXString s = LibClang.lib.clang_getTokenSpelling(tu, ar.offset(i).deref());
+                CXString s = LibClang.lib.clang_getTokenSpelling(tu, ar.offset(i).get());
                 sb.append("Token[");
                 sb.append(i);
                 sb.append("]=");

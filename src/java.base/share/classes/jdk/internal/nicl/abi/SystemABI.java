@@ -28,18 +28,27 @@ import jdk.internal.nicl.abi.sysv.x64.SysVx64ABI;
 
 import java.nicl.layout.Function;
 import java.nicl.layout.Layout;
-import java.nicl.layout.Value;
 
 public interface SystemABI {
-    /**
-     * The size in bytes for a type as defined by the ABI
-     */
-    long definedSize(Value scalar);
-
-    /**
-     * The alignment requirement for a type as defined by the ABI
-     */
-    long definedAlignment(Value scalar);
+    // The enumeration of types defined as C standard with implementation dependent size
+    enum CType {
+        Bool,
+        Char,
+        SignedChar,
+        Short,
+        Int,
+        Long,
+        LongLong,
+        UnsignedChar,
+        UnsignedShort,
+        UnsignedInt,
+        UnsignedLong,
+        UnsignedLongLong,
+        Pointer,
+        Float,
+        Double,
+        LongDouble
+    }
 
     /**
      * The alignment requirement for a given type
@@ -60,6 +69,8 @@ public interface SystemABI {
     long align(Layout t, boolean isVar, long addr);
 
     CallingSequence arrangeCall(Function f);
+
+    Layout layoutFor(CType type);
 
     static SystemABI getInstance() {
         return SysVx64ABI.getInstance();

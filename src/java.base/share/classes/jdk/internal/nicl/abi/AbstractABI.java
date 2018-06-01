@@ -40,11 +40,6 @@ import java.nicl.layout.Value;
  * arrangeCall() methods.
  */
 public abstract class AbstractABI implements SystemABI {
-    @Override
-    public long definedAlignment(Value scalar) {
-        // default to same as size, which happen to be the case for AMD64
-        return scalar.bitsSize() / 8;
-    }
 
     private long alignUp(long addr, long alignment) {
         return ((addr - 1) | (alignment - 1)) + 1;
@@ -55,7 +50,7 @@ public abstract class AbstractABI implements SystemABI {
     }
 
     protected long alignmentOfScalar(Value st) {
-        return definedAlignment(st);
+        return st.bitsSize() / 8;
     }
 
     protected long alignmentOfArray(Sequence ar, boolean isVar) {
@@ -167,7 +162,7 @@ public abstract class AbstractABI implements SystemABI {
         } else if (t instanceof Group) {
             return new ContainerSizeInfo((Group) t, -1).size();
         } else if (t instanceof Address) {
-            return definedSize((Address)t);
+            return t.bitsSize() / 8;
         } else if (t instanceof Unresolved) {
             return sizeof(((Unresolved)t).resolve());
         } else {

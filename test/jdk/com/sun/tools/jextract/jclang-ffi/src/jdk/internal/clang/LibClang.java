@@ -24,6 +24,7 @@ package jdk.internal.clang;
 
 import clang.CXString.CXString;
 
+import java.lang.invoke.MethodHandles;
 import java.nicl.Libraries;
 import java.nicl.Library;
 import java.nicl.types.Pointer;
@@ -38,9 +39,9 @@ public class LibClang {
         if (DEBUG) {
             System.err.println("Loading LibClang FFI");
         }
-        Library libclang = Libraries.loadLibrary("clang");
-        lib = Libraries.bindRaw(clang.Index.class, libclang);
-        lcxstr = Libraries.bindRaw(clang.CXString.class, libclang);
+        Library libclang = Libraries.loadLibrary(MethodHandles.lookup(), "clang");
+        lib = Libraries.bind(clang.Index.class, libclang);
+        lcxstr = Libraries.bind(clang.CXString.class, libclang);
         lib.clang_toggleCrashRecovery(0);
         if (DEBUG) {
             System.err.println("LibClang crash recovery disabled");

@@ -48,11 +48,6 @@ public class SysVx64ABI extends AbstractABI {
     }
 
     @Override
-    public long definedSize(Value s) {
-        return s.bitsSize() / 8;
-    }
-
-    @Override
     public CallingSequence arrangeCall(Function f) {
         CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
         for (int i = 0; i < f.argumentLayouts().size(); i++) {
@@ -68,6 +63,43 @@ public class SysVx64ABI extends AbstractABI {
         }
 
         return builder.build();
+    }
+
+    @Override
+    public Layout layoutFor(CType type) {
+        switch (type) {
+            case Char:
+            case SignedChar:
+                return Value.ofSignedInt(8);
+            case Bool:
+            case UnsignedChar:
+                return Value.ofUnsignedInt(8);
+            case Short:
+                return Value.ofSignedInt(16);
+            case UnsignedShort:
+                return Value.ofUnsignedInt(16);
+            case Int:
+                return Value.ofSignedInt(32);
+            case UnsignedInt:
+                return Value.ofUnsignedInt(32);
+            case Long:
+            case LongLong:
+                return Value.ofSignedInt(64);
+            case UnsignedLong:
+            case UnsignedLongLong:
+                return Value.ofUnsignedInt(64);
+            case Float:
+                return Value.ofFloatingPoint(32);
+            case Double:
+                return Value.ofFloatingPoint(64);
+            case LongDouble:
+                return Value.ofFloatingPoint(128);
+            case Pointer:
+                return Value.ofUnsignedInt(64);
+            default:
+                throw new IllegalArgumentException("Unknown layout " + type);
+
+        }
     }
 }
 
