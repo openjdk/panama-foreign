@@ -2400,6 +2400,10 @@ public abstract class ClassLoader {
 
         @Override
         public Symbol lookup(String name) throws NoSuchMethodException {
+            long addr = findEntry(name);
+            if (0 == addr) {
+                throw new NoSuchMethodException("Cannot find symbol " + name + " in library " + this.name);
+            }
             return new Symbol(Objects.requireNonNull(name), BoundedPointer.createNativeVoidPointer(findEntry(name)));
         }
 

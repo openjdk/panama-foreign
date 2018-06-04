@@ -61,8 +61,11 @@ public class PointerTest {
             "get_strings=(u64:u64:u64:u8u64:i32)v" +
             "get_strings2=(u64:i32)u64:u64:u8" +
             "get_structs=(u64:u64:u64:$(mystruct)u64:i32)v" +
-            "get_structs2=(u64:i32)u64:u64:$(mystruct)"
+            "get_structs2=(u64:i32)u64:u64:$(mystruct)" +
+            "get_stringsAsVoidPtr=(u64:i32)u64:v" +
+            "get_stringsAsOpaquePtr=(u64:i32)u64:i8"
     )
+
     static interface pointers {
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings")
         void get_strings(Pointer<Pointer<Pointer<Byte>>> p, Pointer<Integer> pcount);
@@ -70,11 +73,19 @@ public class PointerTest {
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings2")
         Pointer<Pointer<Byte>> get_strings2(Pointer<Integer> pcount);
 
+        @NativeLocation(file="dummy", line=71, column=0, USR="c:@F@get_stringsAsVoidPtr")
+        Pointer<Void> get_stringsAsVoidPtr(Pointer<Integer> pcount);
+
+        @NativeLocation(file="dummy", line=75, column=0, USR="c:@F@get_stringsAsOpaquePtr")
+        Pointer<Void> get_stringsAsOpaquePtr(Pointer<Integer> pcount);
+
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs")
         void get_structs(Pointer<Pointer<Pointer<MyStruct>>> p, Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs2")
         Pointer<Pointer<MyStruct>> get_structs2(Pointer<Integer> pcount);
+
+        Void notExist(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
         @NativeStruct("[" +
@@ -144,6 +155,23 @@ public class PointerTest {
         }
     }
 
+    void testStringsAsVoidPtr() {
+        try (Scope scope = Scope.newNativeScope()) {
+            LayoutType<Integer> iType = NativeTypes.UINT32;
+            Pointer<Integer> pi = scope.allocate(iType);
+            Pointer<Void> values = ptrs.get_stringsAsVoidPtr(pi);
+            verifyStrings(values.cast(NativeTypes.INT8.pointer()), pi);
+        }
+    }
+
+    void testStringsAsOpaquePtr() {
+        try (Scope scope = Scope.newNativeScope()) {
+            LayoutType<Integer> iType = NativeTypes.UINT32;
+            Pointer<Integer> pi = scope.allocate(iType);
+            Pointer<Void> values = ptrs.get_stringsAsOpaquePtr(pi);
+            verifyStrings(values.cast(NativeTypes.INT8.pointer()), pi);
+        }
+    }
     private void verifyStructs(Pointer<Pointer<pointers.MyStruct>> structs, Pointer<Integer> pi) {
         debug("structs: " + structs);
         debug("nstructs: " + pi.get());
@@ -218,15 +246,27 @@ public class PointerTest {
             }
             assertEquals(values, Pointer.nullPointer());
         }
+    }
 
+    void testNotExistWontCrash() {
+        try {
+            ptrs.notExist(Pointer.nullPointer());
+            throw new IllegalStateException("Should get an NoSuchMethodError");
+        } catch (AbstractMethodError ex) {
+            // Expected
+            ex.printStackTrace();
+        }
     }
 
     public void test() {
         testStrings();
         testStrings2();
+        testStringsAsVoidPtr();
+        testStringsAsOpaquePtr();
         testStructs();
         testStructs2();
         testNullPointer();
+        testNotExistWontCrash();
     }
 
     static void assertEquals(Object expected, Object actual) {

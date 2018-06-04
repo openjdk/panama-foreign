@@ -138,6 +138,8 @@ public final class Util {
         carrier = unboxIfNeeded(carrier);
         if (carrier == byte.class) {
             return LayoutType.ofByte(layout);
+        } else if (carrier == void.class) {
+            return LayoutType.ofVoid(layout);
         } else if (carrier == boolean.class) {
             return LayoutType.ofBoolean(layout);
         } else if (carrier == short.class) {
@@ -201,6 +203,8 @@ public final class Util {
     public static Type unboxIfNeeded(Type clazz) {
         if (clazz == Boolean.class) {
             return boolean.class;
+        } else if (clazz == Void.class) {
+            return void.class;
         } else if (clazz == Byte.class) {
             return byte.class;
         } else if (clazz == Character.class) {

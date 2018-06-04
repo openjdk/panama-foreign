@@ -42,6 +42,11 @@ public class BindLookupTest {
         public abstract int getpid();
     }
 
+    @NativeHeader(declarations = "noSuchMethodTest=()i32")
+    public static interface bomb {
+        public abstract int noSuchMethodTest();
+    }
+
     @Test(dataProvider = "Lookups")
     public void testBind(Lookup lookup, Class<?> exceptionClass) {
         checkIllegalArgumentException(()-> {
@@ -54,6 +59,13 @@ public class BindLookupTest {
         checkIllegalArgumentException(()-> {
             system i = Libraries.bind(system.class, Libraries.getDefaultLibrary());
          }, null);
+    }
+
+    @Test
+    public void testNotExistSymbol() {
+        checkIllegalArgumentException(()-> {
+            bomb i = Libraries.bind(bomb.class, Libraries.getDefaultLibrary());
+        }, RuntimeException.class);
     }
 
     @DataProvider(name = "Lookups")

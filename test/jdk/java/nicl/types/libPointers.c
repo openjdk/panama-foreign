@@ -67,3 +67,11 @@ const struct MyStruct** get_structs2(int* pcount) {
 void get_structs(const struct MyStruct*** p, int* pcount) {
   *p = get_structs2(pcount);
 }
+
+void* get_stringsAsVoidPtr(int* pcount) {
+    return get_strings2(pcount);
+}
+
+struct opaque* get_stringsAsOpaquePtr(int *pcount) {
+    return (struct opaque*) get_strings2(pcount);
+}
