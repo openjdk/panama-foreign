@@ -106,6 +106,23 @@ public class Double512VectorTests extends AbstractVectorTest {
       }
     }
 
+    static void assertInsertArraysEquals(double[] a, double[] b, double element, int index) {
+      int i = 0;
+      try {
+         for (; i < a.length; i += 1) {
+            if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element);
+            else
+              Assert.assertEquals(b[i], a[i]);
+        }
+      } catch (AssertionError e) {
+        if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element, "at index #" + i);
+            else
+              Assert.assertEquals(b[i], a[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         double apply(double a, double b);
     }
@@ -650,6 +667,21 @@ public class Double512VectorTests extends AbstractVectorTest {
 
 
 
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void withDouble512VectorTests(IntFunction<double []> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              DoubleVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+              av.with(0, (double)4).intoArray(r, i);
+            }
+        }
+
+        assertInsertArraysEquals(a, r, (double)4, 0);
+    }
 
     @Test(dataProvider = "doubleCompareOpProvider")
     static void lessThanDouble512VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {

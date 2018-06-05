@@ -42,6 +42,7 @@ unary_math_template="$TEMPLATE_FOLDER/Unary-op-math.template"
 binary_math_template="$TEMPLATE_FOLDER/Binary-op-math.template"
 bool_reduction_scalar="$TEMPLATE_FOLDER/BoolReduction-Scalar-op.template"
 bool_reduction_template="$TEMPLATE_FOLDER/BoolReduction-op.template"
+with_op_template="$TEMPLATE_FOLDER/With-Op.template"
 
 function gen_op_tmpl { 
   template=$1
@@ -117,6 +118,11 @@ function gen_bool_reduction_op {
   gen_op_tmpl $bool_reduction_template "$@"
 }
 
+function gen_with_op {
+  echo "Generating with op $1 ($2)..."
+  gen_op_tmpl $with_op_template "$@"
+}
+
 function gen_header {
   cat $TEMPLATE_FOLDER/header.template > $1
 }
@@ -156,6 +162,9 @@ gen_reduction_op_max "maxAll" "" $template_file "" "MIN_VALUE"
 # Boolean reductions.
 gen_bool_reduction_op "anyTrue" "|" $template_file "BITWISE" "false"
 gen_bool_reduction_op "allTrue" "\&" $template_file "BITWISE" "true"
+
+#Insert
+gen_with_op "with" "" $template_file "" ""
 
 # Compares
 gen_op_tmpl $compare_template "lessThan" "<" $template_file

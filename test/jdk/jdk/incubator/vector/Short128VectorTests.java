@@ -106,6 +106,23 @@ public class Short128VectorTests extends AbstractVectorTest {
       }
     }
 
+    static void assertInsertArraysEquals(short[] a, short[] b, short element, int index) {
+      int i = 0;
+      try {
+         for (; i < a.length; i += 1) {
+            if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element);
+            else
+              Assert.assertEquals(b[i], a[i]);
+        }
+      } catch (AssertionError e) {
+        if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element, "at index #" + i);
+            else
+              Assert.assertEquals(b[i], a[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         short apply(short a, short b);
     }
@@ -802,6 +819,21 @@ public class Short128VectorTests extends AbstractVectorTest {
         assertReductionBoolArraysEquals(mask, r, Short128VectorTests::allTrue);
     }
 
+
+    @Test(dataProvider = "shortUnaryOpProvider")
+    static void withShort128VectorTests(IntFunction<short []> fa) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] r = new short[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ShortVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              av.with(0, (short)4).intoArray(r, i);
+            }
+        }
+
+        assertInsertArraysEquals(a, r, (short)4, 0);
+    }
 
     @Test(dataProvider = "shortCompareOpProvider")
     static void lessThanShort128VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {

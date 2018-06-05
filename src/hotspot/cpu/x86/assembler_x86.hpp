@@ -1704,12 +1704,21 @@ private:
   // SSE 4.1 insert
   void pinsrd(XMMRegister dst, Register src, int imm8);
   void pinsrq(XMMRegister dst, Register src, int imm8);
+  void pinsrb(XMMRegister dst, Register src, int imm8);
   void pinsrd(XMMRegister dst, Address src, int imm8);
   void pinsrq(XMMRegister dst, Address src, int imm8);
   void pinsrb(XMMRegister dst, Address src, int imm8);
+  void insertps(XMMRegister dst, XMMRegister src, int imm8);
   // SSE 2 insert
   void pinsrw(XMMRegister dst, Register src, int imm8);
   void pinsrw(XMMRegister dst, Address src, int imm8);
+
+  // AVX insert
+  void vpinsrd(XMMRegister dst, XMMRegister nds, Register src, int imm8);
+  void vpinsrb(XMMRegister dst, XMMRegister nds, Register src, int imm8);
+  void vpinsrq(XMMRegister dst, XMMRegister nds, Register src, int imm8);
+  void vpinsrw(XMMRegister dst, XMMRegister nds, Register src, int imm8);
+  void vinsertps(XMMRegister dst, XMMRegister nds, XMMRegister src, int imm8);
 
   // Zero extend moves
   void pmovzxbw(XMMRegister dst, XMMRegister src);

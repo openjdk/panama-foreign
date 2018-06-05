@@ -106,6 +106,23 @@ public class Long64VectorTests extends AbstractVectorTest {
       }
     }
 
+    static void assertInsertArraysEquals(long[] a, long[] b, long element, int index) {
+      int i = 0;
+      try {
+         for (; i < a.length; i += 1) {
+            if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element);
+            else
+              Assert.assertEquals(b[i], a[i]);
+        }
+      } catch (AssertionError e) {
+        if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element, "at index #" + i);
+            else
+              Assert.assertEquals(b[i], a[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         long apply(long a, long b);
     }
@@ -802,6 +819,21 @@ public class Long64VectorTests extends AbstractVectorTest {
         assertReductionBoolArraysEquals(mask, r, Long64VectorTests::allTrue);
     }
 
+
+    @Test(dataProvider = "longUnaryOpProvider")
+    static void withLong64VectorTests(IntFunction<long []> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              LongVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              av.with(0, (long)4).intoArray(r, i);
+            }
+        }
+
+        assertInsertArraysEquals(a, r, (long)4, 0);
+    }
 
     @Test(dataProvider = "longCompareOpProvider")
     static void lessThanLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {

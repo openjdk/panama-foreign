@@ -106,6 +106,23 @@ public class Byte256VectorTests extends AbstractVectorTest {
       }
     }
 
+    static void assertInsertArraysEquals(byte[] a, byte[] b, byte element, int index) {
+      int i = 0;
+      try {
+         for (; i < a.length; i += 1) {
+            if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element);
+            else
+              Assert.assertEquals(b[i], a[i]);
+        }
+      } catch (AssertionError e) {
+        if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element, "at index #" + i);
+            else
+              Assert.assertEquals(b[i], a[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         byte apply(byte a, byte b);
     }
@@ -802,6 +819,21 @@ public class Byte256VectorTests extends AbstractVectorTest {
         assertReductionBoolArraysEquals(mask, r, Byte256VectorTests::allTrue);
     }
 
+
+    @Test(dataProvider = "byteUnaryOpProvider")
+    static void withByte256VectorTests(IntFunction<byte []> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+              ByteVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+              av.with(0, (byte)4).intoArray(r, i);
+            }
+        }
+
+        assertInsertArraysEquals(a, r, (byte)4, 0);
+    }
 
     @Test(dataProvider = "byteCompareOpProvider")
     static void lessThanByte256VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {

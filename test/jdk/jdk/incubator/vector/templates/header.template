@@ -123,6 +123,23 @@ public class $vectorteststype$ extends AbstractVectorTest {
       }
     }
 
+    static void assertInsertArraysEquals($type$[] a, $type$[] b, $type$ element, int index) {
+      int i = 0;
+      try {
+         for (; i < a.length; i += 1) {
+            if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element);
+            else
+              Assert.assertEquals(b[i], a[i]);
+        }
+      } catch (AssertionError e) {
+        if(i%SPECIES.length() == index)
+              Assert.assertEquals(b[i], element, "at index #" + i);
+            else
+              Assert.assertEquals(b[i], a[i], "at index #" + i);
+      }
+    }
+
     interface FBinOp {
         $type$ apply($type$ a, $type$ b);
     }
