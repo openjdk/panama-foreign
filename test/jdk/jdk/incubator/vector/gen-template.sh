@@ -40,6 +40,8 @@ reduction_min_template="$TEMPLATE_FOLDER/Reduction-Scalar-Min-op.template"
 reduction_max_template="$TEMPLATE_FOLDER/Reduction-Scalar-Max-op.template"
 unary_math_template="$TEMPLATE_FOLDER/Unary-op-math.template"
 binary_math_template="$TEMPLATE_FOLDER/Binary-op-math.template"
+bool_reduction_scalar="$TEMPLATE_FOLDER/BoolReduction-Scalar-op.template"
+bool_reduction_template="$TEMPLATE_FOLDER/BoolReduction-op.template"
 
 function gen_op_tmpl { 
   template=$1
@@ -109,6 +111,12 @@ function gen_reduction_op_max {
   gen_op_tmpl $reduction_template "$@"
 }
 
+function gen_bool_reduction_op {
+  echo "Generating boolean reduction op $1 ($2)..."
+  gen_op_tmpl $bool_reduction_scalar "$@"
+  gen_op_tmpl $bool_reduction_template "$@"
+}
+
 function gen_header {
   cat $TEMPLATE_FOLDER/header.template > $1
 }
@@ -144,6 +152,10 @@ gen_reduction_op "subAll" "-" $template_file "" "0"
 gen_reduction_op "mulAll" "*" $template_file "" "1"
 gen_reduction_op_min "minAll" "" $template_file "" "MAX_VALUE"
 gen_reduction_op_max "maxAll" "" $template_file "" "MIN_VALUE"
+
+# Boolean reductions.
+gen_bool_reduction_op "anyTrue" "|" $template_file "BITWISE" "false"
+gen_bool_reduction_op "allTrue" "\&" $template_file "BITWISE" "true"
 
 # Compares
 gen_op_tmpl $compare_template "lessThan" "<" $template_file

@@ -90,6 +90,21 @@ public class Long64VectorTests extends AbstractVectorTest {
         Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
       }
     }
+ 
+    interface FBoolReductionOp {
+      boolean apply(boolean[] a, int idx);
+    }
+
+    static void assertReductionBoolArraysEquals(boolean[] a, boolean[] b, FBoolReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
 
     interface FBinOp {
         long apply(long a, long b);
@@ -149,6 +164,13 @@ public class Long64VectorTests extends AbstractVectorTest {
         Stream.of(LONG_GENERATORS.get(0)).
                 flatMap(fa -> LONG_GENERATORS.stream().skip(1).map(fb -> List.of(fa, fb))).
                 collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] boolUnaryOpProvider() {
+        return BOOL_ARRAY_GENERATORS.stream().
+                map(f -> new Object[]{f}).
+                toArray(Object[][]::new);
+    }
 
     @DataProvider
     public Object[][] longBinaryOpProvider() {
@@ -728,6 +750,58 @@ public class Long64VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Long64VectorTests::maxAll);
     }
+
+    static boolean anyTrue(boolean[] a, int idx) {
+        boolean res = false;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res |= a[i];
+        }
+
+        return res;
+    }
+
+
+    @Test(dataProvider = "boolUnaryOpProvider")
+    static void anyTrueLong64VectorTests(IntFunction<boolean[]> fm) {
+        boolean[] mask = fm.apply(SPECIES.length());
+        boolean[] r = new boolean[mask.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < mask.length; i += SPECIES.length()) {
+              Vector.Mask<Long, Shapes.S64Bit> vmask = SPECIES.maskFromArray(mask, i);
+              r[i] = vmask.anyTrue();
+            }
+        }
+
+        assertReductionBoolArraysEquals(mask, r, Long64VectorTests::anyTrue);
+    }
+
+
+    static boolean allTrue(boolean[] a, int idx) {
+        boolean res = true;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res &= a[i];
+        }
+
+        return res;
+    }
+
+
+    @Test(dataProvider = "boolUnaryOpProvider")
+    static void allTrueLong64VectorTests(IntFunction<boolean[]> fm) {
+        boolean[] mask = fm.apply(SPECIES.length());
+        boolean[] r = new boolean[mask.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < mask.length; i += SPECIES.length()) {
+              Vector.Mask<Long, Shapes.S64Bit> vmask = SPECIES.maskFromArray(mask, i);
+              r[i] = vmask.allTrue();
+            }
+        }
+
+        assertReductionBoolArraysEquals(mask, r, Long64VectorTests::allTrue);
+    }
+
 
     @Test(dataProvider = "longCompareOpProvider")
     static void lessThanLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {

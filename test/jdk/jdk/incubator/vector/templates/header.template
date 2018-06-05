@@ -107,6 +107,21 @@ public class $vectorteststype$ extends AbstractVectorTest {
         Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
       }
     }
+ 
+    interface FBoolReductionOp {
+      boolean apply(boolean[] a, int idx);
+    }
+
+    static void assertReductionBoolArraysEquals(boolean[] a, boolean[] b, FBoolReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
 
     interface FBinOp {
         $type$ apply($type$ a, $type$ b);
@@ -216,6 +231,13 @@ public class $vectorteststype$ extends AbstractVectorTest {
         Stream.of($TYPE$_GENERATORS.get(0)).
                 flatMap(fa -> $TYPE$_GENERATORS.stream().skip(1).map(fb -> List.of(fa, fb))).
                 collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] boolUnaryOpProvider() {
+        return BOOL_ARRAY_GENERATORS.stream().
+                map(f -> new Object[]{f}).
+                toArray(Object[][]::new);
+    }
 
     @DataProvider
     public Object[][] $type$BinaryOpProvider() {

@@ -90,6 +90,21 @@ public class Int128VectorTests extends AbstractVectorTest {
         Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
       }
     }
+ 
+    interface FBoolReductionOp {
+      boolean apply(boolean[] a, int idx);
+    }
+
+    static void assertReductionBoolArraysEquals(boolean[] a, boolean[] b, FBoolReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
 
     interface FBinOp {
         int apply(int a, int b);
@@ -149,6 +164,13 @@ public class Int128VectorTests extends AbstractVectorTest {
         Stream.of(INT_GENERATORS.get(0)).
                 flatMap(fa -> INT_GENERATORS.stream().skip(1).map(fb -> List.of(fa, fb))).
                 collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] boolUnaryOpProvider() {
+        return BOOL_ARRAY_GENERATORS.stream().
+                map(f -> new Object[]{f}).
+                toArray(Object[][]::new);
+    }
 
     @DataProvider
     public Object[][] intBinaryOpProvider() {
@@ -728,6 +750,58 @@ public class Int128VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Int128VectorTests::maxAll);
     }
+
+    static boolean anyTrue(boolean[] a, int idx) {
+        boolean res = false;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res |= a[i];
+        }
+
+        return res;
+    }
+
+
+    @Test(dataProvider = "boolUnaryOpProvider")
+    static void anyTrueInt128VectorTests(IntFunction<boolean[]> fm) {
+        boolean[] mask = fm.apply(SPECIES.length());
+        boolean[] r = new boolean[mask.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < mask.length; i += SPECIES.length()) {
+              Vector.Mask<Integer, Shapes.S128Bit> vmask = SPECIES.maskFromArray(mask, i);
+              r[i] = vmask.anyTrue();
+            }
+        }
+
+        assertReductionBoolArraysEquals(mask, r, Int128VectorTests::anyTrue);
+    }
+
+
+    static boolean allTrue(boolean[] a, int idx) {
+        boolean res = true;
+        for (int i = idx; i < (idx + SPECIES.length()); i++) {
+          res &= a[i];
+        }
+
+        return res;
+    }
+
+
+    @Test(dataProvider = "boolUnaryOpProvider")
+    static void allTrueInt128VectorTests(IntFunction<boolean[]> fm) {
+        boolean[] mask = fm.apply(SPECIES.length());
+        boolean[] r = new boolean[mask.length];
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < mask.length; i += SPECIES.length()) {
+              Vector.Mask<Integer, Shapes.S128Bit> vmask = SPECIES.maskFromArray(mask, i);
+              r[i] = vmask.allTrue();
+            }
+        }
+
+        assertReductionBoolArraysEquals(mask, r, Int128VectorTests::allTrue);
+    }
+
 
     @Test(dataProvider = "intCompareOpProvider")
     static void lessThanInt128VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {

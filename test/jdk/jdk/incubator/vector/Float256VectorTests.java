@@ -90,6 +90,21 @@ public class Float256VectorTests extends AbstractVectorTest {
         Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
       }
     }
+ 
+    interface FBoolReductionOp {
+      boolean apply(boolean[] a, int idx);
+    }
+
+    static void assertReductionBoolArraysEquals(boolean[] a, boolean[] b, FBoolReductionOp f) {
+      int i = 0;
+      try {
+        for (; i < a.length; i += SPECIES.length()) {
+          Assert.assertEquals(f.apply(a, i), b[i]);
+        }
+      } catch (AssertionError e) {
+        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
+      }
+    }
 
     interface FBinOp {
         float apply(float a, float b);
@@ -197,6 +212,13 @@ public class Float256VectorTests extends AbstractVectorTest {
         Stream.of(FLOAT_GENERATORS.get(0)).
                 flatMap(fa -> FLOAT_GENERATORS.stream().skip(1).map(fb -> List.of(fa, fb))).
                 collect(Collectors.toList());
+
+    @DataProvider
+    public Object[][] boolUnaryOpProvider() {
+        return BOOL_ARRAY_GENERATORS.stream().
+                map(f -> new Object[]{f}).
+                toArray(Object[][]::new);
+    }
 
     @DataProvider
     public Object[][] floatBinaryOpProvider() {
@@ -624,6 +646,10 @@ public class Float256VectorTests extends AbstractVectorTest {
 
         assertReductionArraysEquals(a, r, Float256VectorTests::maxAll);
     }
+
+
+
+
 
     @Test(dataProvider = "floatCompareOpProvider")
     static void lessThanFloat256VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {

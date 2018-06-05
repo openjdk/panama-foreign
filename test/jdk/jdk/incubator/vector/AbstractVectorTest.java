@@ -29,6 +29,20 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 
 public class AbstractVectorTest {
+    interface ToBoolF {
+        boolean apply(int i);
+    }
+
+    static boolean[] fill_boolean(int s , ToBoolF f) {
+        return fill_boolean(new boolean[s], f);
+    }    
+
+    static boolean[] fill_boolean(boolean[] a, ToBoolF f) {
+        for (int i = 0; i < a.length; i++) {
+            a[i] = f.apply(i);
+        }
+        return a;
+    }
 
     static <R> IntFunction<R> withToString(String s, IntFunction<R> f) {
         return new IntFunction<R>() {
@@ -72,6 +86,16 @@ public class AbstractVectorTest {
 //            })
     );
 
+    static final List<IntFunction<boolean[]>> BOOL_ARRAY_GENERATORS = List.of(
+            withToString("boolean[i % 2]", (int s) -> {
+                return fill_boolean(s * 1000,
+                            i -> ((i % 2) == 0));
+            }),
+            withToString("boolean[i % 5]", (int s) -> {
+                return fill_boolean(s * 1000,
+                            i -> ((i % 5) == 0));
+            })
+    );
     static final List<IntFunction<int[]>> INDEX_GENERATORS = List.of(
             withToString("index[i -> i]", (int s) -> {
                 return fillInts(s,
