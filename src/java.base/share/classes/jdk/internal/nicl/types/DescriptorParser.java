@@ -51,10 +51,10 @@ public class DescriptorParser {
     }
 
     void nextToken(Token expected) {
-        nextToken();
         if (token != expected) {
-            scanner.error("expected: " + expected + "; found: " + token);
+            throw scanner.error("expected: " + expected + "; found: " + token);
         }
+        nextToken();
     }
 
     /**
@@ -131,9 +131,9 @@ public class DescriptorParser {
     private Value parseValue() {
         Value.Kind kind = lastKind();
         Endianness endianness = lastEndianness();
-        nextToken(Token.NUMERIC);
+        nextToken(Token.VALUE);
         int size = parseSize();
-        nextToken(); //NUMERIC
+        nextToken(Token.NUMERIC); //NUMERIC
         Value value;
         switch (kind) {
             case INTEGRAL_UNSIGNED:
@@ -158,9 +158,9 @@ public class DescriptorParser {
      * padding = [ 'x' ] number [annotations]
      */
     private Padding parsePadding() {
-        nextToken(Token.NUMERIC);
+        nextToken(Token.PADDING);
         int size = parseSize();
-        nextToken(); //NUMERIC
+        nextToken(Token.NUMERIC);
         return annotatedOpt(Padding.of(size));
     }
 
@@ -189,7 +189,7 @@ public class DescriptorParser {
         if (token != Token.EQ) {
             return value;
         }
-        nextToken(Token.LBRACKET);
+        nextToken();
         boolean prevAllowSubByteSizes = allowSubByteSizes;
         try {
             allowSubByteSizes = true;
@@ -294,7 +294,7 @@ public class DescriptorParser {
      * group = '[' (structOrUnionRest / sequenceRest) ']' [annotations]
      */
     private Group parseGroup() {
-        nextToken();
+        nextToken(Token.LBRACKET);
         Group group;
         if (token == Token.NUMERIC) {
             group = parseSequenceRest();
