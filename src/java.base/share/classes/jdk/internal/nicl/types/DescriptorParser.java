@@ -83,7 +83,7 @@ public class DescriptorParser {
     }
 
     /**
-     * layout = (value / group / unresolved)
+     * layout = (padding / value / group / unresolved)
      */
     public Layout parseLayout() {
         switch (token) {
@@ -91,6 +91,8 @@ public class DescriptorParser {
                 return parseUnresolved();
             case LBRACKET:
                 return parseGroup();
+            case PADDING:
+                return parsePadding();
             case VALUE:
                 return parseValue();
             default:
@@ -150,6 +152,16 @@ public class DescriptorParser {
         return (token == Token.BREAKDOWN) ?
                 parsePointerRest(value) :
                 value;
+    }
+
+    /**
+     * padding = [ 'x' ] number [annotations]
+     */
+    private Padding parsePadding() {
+        nextToken(Token.NUMERIC);
+        int size = parseSize();
+        nextToken(); //NUMERIC
+        return annotatedOpt(Padding.of(size));
     }
 
     Endianness lastEndianness() {
@@ -343,6 +355,7 @@ public class DescriptorParser {
             BREAKDOWN,
             EQ,
             VALUE,
+            PADDING,
             UNRESOLVED,
             LPAREN,
             RPAREN,
@@ -394,6 +407,9 @@ public class DescriptorParser {
                         case 'F': case 'I':
                             lastValueTag = ch;
                             res = Token.VALUE;
+                            break outer;
+                        case 'x':
+                            res = Token.PADDING;
                             break outer;
                         case 'v':
                             res = Token.VOID;

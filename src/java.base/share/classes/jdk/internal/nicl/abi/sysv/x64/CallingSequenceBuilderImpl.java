@@ -32,10 +32,11 @@ import jdk.internal.nicl.abi.StorageClass;
 import jdk.internal.nicl.abi.SystemABI;
 
 import java.nicl.layout.Address;
-import java.nicl.layout.Sequence;
 import java.nicl.layout.Group;
 import java.nicl.layout.Group.Kind;
 import java.nicl.layout.Layout;
+import java.nicl.layout.Padding;
+import java.nicl.layout.Sequence;
 import java.nicl.layout.Unresolved;
 import java.nicl.layout.Value;
 import java.util.ArrayList;
@@ -214,6 +215,9 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         final int count = type.elements().size();
         for (int idx = 0; idx < count; idx++) {
             Layout t = type.elements().get(idx);
+            if (t instanceof Padding) {
+                continue;
+            }
             offset = abi.align(t, false, offset);
             ArrayList<ArgumentClass> subclasses = classifyType(t, named);
             if (subclasses.isEmpty()) {

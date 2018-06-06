@@ -36,6 +36,7 @@ import java.nicl.layout.Function;
 import java.nicl.layout.Group;
 import java.nicl.layout.Group.Kind;
 import java.nicl.layout.Layout;
+import java.nicl.layout.Padding;
 import java.nicl.layout.Sequence;
 import java.nicl.layout.Unresolved;
 import java.nicl.layout.Value;
@@ -342,14 +343,13 @@ public class Utils {
         Stream<Cursor> fieldTypes = cu.stream()
                 .filter(cx -> cx.kind() == CursorKind.FieldDecl);
         long offset = 0L;
-        int padCount = 0;
         List<Layout> fieldLayouts = new ArrayList<>();
         for (Cursor c : fieldTypes.collect(Collectors.toList())) {
             String fieldName = c.spelling();
             long fieldOffset = t.getOffsetOf(c.spelling());
             if (fieldOffset != offset) {
                 //add padding
-                fieldLayouts.add(Value.ofUnsignedInt(fieldOffset - offset).withAnnotation(Layout.NAME, "pad" + padCount++));
+                fieldLayouts.add(Padding.of(fieldOffset - offset));
                 offset = fieldOffset;
             }
             Layout fieldLayout = c.isAnonymousStruct() ?
@@ -363,7 +363,7 @@ public class Utils {
         long size = t.size() * 8;
         if (offset != size) {
             //add final padding
-            fieldLayouts.add(Value.ofUnsignedInt(size - offset).withAnnotation("pad", String.valueOf(padCount)));
+            fieldLayouts.add(Padding.of(size - offset));
         }
         Layout[] fields = fieldLayouts.toArray(new Layout[0]);
         Group g = isUnion ?

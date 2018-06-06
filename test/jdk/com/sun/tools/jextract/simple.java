@@ -32,9 +32,9 @@ public interface simple {
             "i64(get=l$get)(set=l$set)(ptr=l$ptr)" +
             "i64(get=ll$get)(set=ll$set)(ptr=ll$ptr)" +
             "f32(get=f$get)(set=f$set)(ptr=f$ptr)" +
-            "u32(pad0)" +
+            "x32" +
             "f64(get=d$get)(set=d$set)(ptr=d$ptr)" +
-            "u64(pad1)" +
+            "x64" +
             "f128(get=ld$get)(set=ld$set)(ptr=ld$ptr)" +
             "](anonymous)")
     public static interface anonymous extends Struct<anonymous> {
