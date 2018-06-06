@@ -329,9 +329,6 @@ public class DescriptorParser {
                 nextToken();
             }
         }
-        if (components.isEmpty()) {
-            throw scanner.error("Empty container");
-        }
         Layout[] componentArr = components.toArray(new Layout[0]);
         return isUnion ? Group.union(componentArr) : Group.struct(componentArr);
     }

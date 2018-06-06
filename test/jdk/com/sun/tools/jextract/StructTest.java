@@ -195,7 +195,8 @@ public class StructTest extends JextractToolRunner {
         deleteFile(clzPath);
     }
 
-    @Test void testCMode() {
+    @Test
+    public void testCMode() {
         Path clzPath = getOutputFilePath("StructTest.c.jar");
         checkSuccess(null,"-o", clzPath.toString(),
                 getInputFilePath("struct.h").toString());

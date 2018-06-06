@@ -38,13 +38,14 @@ import static org.testng.Assert.assertTrue;
  * @run testng EmptyStructTest
  */
 public class EmptyStructTest extends JextractToolRunner {
-    @Test void emptyStruct() {
+    @Test
+    public void emptyStruct() {
         Path clzPath = getOutputFilePath("EmptyStructTest.jar");
         checkSuccess(null,"-o", clzPath.toString(),
                 getInputFilePath("emptyStruct.h").toString());
         Class<?> cls = loadClass("emptyStruct", clzPath);
         Class<?>[] inners = cls.getDeclaredClasses();
-        assertEquals(inners.length, 2);
+        assertEquals(inners.length, 3);
         Class<?> emptyStruct = findClass(inners, "EmptyStruct");
         Class<?> nothing = findClass(inners, "Nothing");
         assertTrue(nothing.isAnnotation());
