@@ -346,10 +346,11 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
     public abstract ShortVector<S> blend(short s, Mask<Short, S> m);
 
     @Override
-    public abstract ShortVector<S> shuffle(Vector<Short,S> v, Shuffle<Short, S> m);
+    public abstract ShortVector<S> rearrange(Vector<Short, S> v,
+                                                      Shuffle<Short, S> s, Mask<Short, S> m);
 
     @Override
-    public abstract ShortVector<S> swizzle(Shuffle<Short, S> m);
+    public abstract ShortVector<S> rearrange(Shuffle<Short, S> m);
 
     @Override
     @ForceInline

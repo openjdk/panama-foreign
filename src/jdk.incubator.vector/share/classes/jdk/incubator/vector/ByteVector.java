@@ -345,10 +345,11 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     public abstract ByteVector<S> blend(byte s, Mask<Byte, S> m);
 
     @Override
-    public abstract ByteVector<S> shuffle(Vector<Byte,S> v, Shuffle<Byte, S> m);
+    public abstract ByteVector<S> rearrange(Vector<Byte, S> v,
+                                                      Shuffle<Byte, S> s, Mask<Byte, S> m);
 
     @Override
-    public abstract ByteVector<S> swizzle(Shuffle<Byte, S> m);
+    public abstract ByteVector<S> rearrange(Shuffle<Byte, S> m);
 
     @Override
     @ForceInline

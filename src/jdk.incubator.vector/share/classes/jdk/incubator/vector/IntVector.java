@@ -346,10 +346,11 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract IntVector<S> blend(int s, Mask<Integer, S> m);
 
     @Override
-    public abstract IntVector<S> shuffle(Vector<Integer,S> v, Shuffle<Integer, S> m);
+    public abstract IntVector<S> rearrange(Vector<Integer, S> v,
+                                                      Shuffle<Integer, S> s, Mask<Integer, S> m);
 
     @Override
-    public abstract IntVector<S> swizzle(Shuffle<Integer, S> m);
+    public abstract IntVector<S> rearrange(Shuffle<Integer, S> m);
 
     @Override
     @ForceInline

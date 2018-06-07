@@ -553,6 +553,17 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         return blend(SPECIES.broadcast(Double.MIN_VALUE), m).maxAll();
     }
 
+    @Override
+    @ForceInline
+    public Shuffle<Double, Shapes.S64Bit> toShuffle() {
+        double[] a = toArray();
+        int[] sa = new int[a.length];
+        for (int i = 0; i < a.length; i++) {
+            sa[i] = (int) a[i];
+        }
+        return SPECIES.shuffleFromArray(sa, 0);
+    }
+
     // Memory operations
 
     private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
@@ -818,33 +829,18 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     }
 
     @Override
-    public Double64Vector shuffle(Vector<Double, Shapes.S64Bit> o, Shuffle<Double, Shapes.S64Bit> s) {
-        Double64Vector v = (Double64Vector) o;
-        return uOp((i, a) -> {
-            double[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                //from this
-                return vec[e];
-            } else if(e < length() * 2) {
-                //from o
-                return v.getElements()[e - length()];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
-        });
+    @ForceInline
+    public Double64Vector rearrange(Vector<Double, Shapes.S64Bit> v,
+                                  Shuffle<Double, Shapes.S64Bit> s, Mask<Double, Shapes.S64Bit> m) {
+        return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
-    public Double64Vector swizzle(Shuffle<Double, Shapes.S64Bit> s) {
+    public Double64Vector rearrange(Shuffle<Double, Shapes.S64Bit> s) {
         return uOp((i, a) -> {
             double[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                return vec[e];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
+            int ei = s.getElement(i);
+            return vec[ei];
         });
     }
 
@@ -907,8 +903,12 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             this(bits, 0);
         }
 
-        public Double64Mask(boolean[] bits, int i) {
-            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
+        public Double64Mask(boolean[] bits, int offset) {
+            boolean[] a = new boolean[species().length()];
+            for (int i = 0; i < a.length; i++) {
+                a[i] = bits[offset + i];
+            }
+            this.bits = a;
         }
 
         public Double64Mask(boolean val) {
@@ -952,22 +952,11 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             double[] res = new double[species().length()];
             boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
+                // -1 will result in the most significant bit being set in
+                // addition to some or all other bits
                 res[i] = (double) (bits[i] ? -1 : 0);
             }
             return new Double64Vector(res);
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        public <Z> Mask<Z, Shapes.S64Bit> rebracket(Species<Z, Shapes.S64Bit> species) {
-            Objects.requireNonNull(species);
-            // TODO: check proper element type
-            return VectorIntrinsics.reinterpret(
-                Double64Mask.class, double.class, LENGTH,
-                species.elementType(), species.length(), this,
-                (m, t) -> m.reshape(species)
-            );
         }
 
         // Unary operations
@@ -1025,7 +1014,9 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     // Shuffle
 
     static final class Double64Shuffle extends AbstractShuffle<Double, Shapes.S64Bit> {
-        static final IntVector.IntSpecies<Shapes.S64Bit> INT_SPECIES = IntVector.species(Shapes.S_64_BIT);
+        Double64Shuffle(byte[] reorder) {
+            super(reorder);
+        }
 
         public Double64Shuffle(int[] reorder) {
             super(reorder);
@@ -1041,8 +1032,22 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         }
 
         @Override
-        public IntVector.IntSpecies<Shapes.S64Bit> intSpecies() {
-            return INT_SPECIES;
+        public Double64Vector toVector() {
+            double[] va = new double[SPECIES.length()];
+            for (int i = 0; i < va.length; i++) {
+              va[i] = (double) getElement(i);
+            }
+            return species().fromArray(va, 0);
+        }
+
+        @Override
+        public Double64Shuffle rearrange(Vector.Shuffle<Double, Shapes.S64Bit> o) {
+            Double64Shuffle s = (Double64Shuffle) o;
+            byte[] r = new byte[reorder.length];
+            for (int i = 0; i < reorder.length; i++) {
+                r[i] = reorder[s.reorder[i]];
+            }
+            return new Double64Shuffle(r);
         }
     }
 
@@ -1139,12 +1144,6 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         @Override
         public Double64Shuffle shuffleFromArray(int[] ixs, int i) {
             return new Double64Shuffle(ixs, i);
-        }
-
-        @Override
-        public Double64Shuffle shuffleFromVector(Vector<Integer, Shapes.S64Bit> v) {
-            int[] a = ((IntVector<Shapes.S64Bit>) v).toArray();
-            return new Double64Shuffle(a, 0);
         }
 
         @Override
@@ -1477,7 +1476,9 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         @ForceInline
         @SuppressWarnings("unchecked")
         public <E, S extends Shape> Double64Vector cast(Vector<E, S> o) {
-            Objects.requireNonNull(o);
+            if (o.length() != LENGTH)
+                throw new IllegalArgumentException("Vector length this species length differ");
+
             if (o.elementType() == byte.class) {
                 ByteVector<S> so = (ByteVector<S>)o;
                 return castFromByte(so);
@@ -1499,6 +1500,22 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             } else {
                 throw new InternalError("Unimplemented type");
             }
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Double64Mask cast(Mask<E, S> m) {
+            if (m.length() != LENGTH)
+                throw new IllegalArgumentException("Mask length this species length differ");
+            return new Double64Mask(m.toArray());
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Double64Shuffle cast(Shuffle<E, S> s) {
+            if (s.length() != LENGTH)
+                throw new IllegalArgumentException("Shuffle length this species length differ");
+            return new Double64Shuffle(s.toArray());
         }
 
         @Override

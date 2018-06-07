@@ -346,10 +346,11 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
     public abstract LongVector<S> blend(long s, Mask<Long, S> m);
 
     @Override
-    public abstract LongVector<S> shuffle(Vector<Long,S> v, Shuffle<Long, S> m);
+    public abstract LongVector<S> rearrange(Vector<Long, S> v,
+                                                      Shuffle<Long, S> s, Mask<Long, S> m);
 
     @Override
-    public abstract LongVector<S> swizzle(Shuffle<Long, S> m);
+    public abstract LongVector<S> rearrange(Shuffle<Long, S> m);
 
     @Override
     @ForceInline

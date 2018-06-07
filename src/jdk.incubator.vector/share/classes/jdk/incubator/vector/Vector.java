@@ -186,9 +186,10 @@ import java.nio.ByteBuffer;
  * same lane, and if appropriate applied to the result vector at the same lane.
  * A further category of operation is a cross-lane vector operation where lane
  * access is defined by the arguments to the operation.  Cross-lane operations
- * generally rearrange lane elements, by permutation (commonly controlled by a
- * {@link Shuffle}) or by blending (commonly controlled by a {@link Mask}).
- * Such an operation explicitly specifies how it rearranges lane elements.
+ * generally rearrange lane elements, for example by permutation (commonly
+ * controlled by a {@link Shuffle}) or by blending (commonly controlled by a
+ * {@link Mask}).  Such an operation explicitly specifies how it rearranges lane
+ * elements.
  * </ul>
  *
  * If a vector operation is represented as an instance method then first input
@@ -596,46 +597,68 @@ public abstract class Vector<E, S extends Vector.Shape> {
     public abstract Vector<E, S> blend(Vector<E, S> v, Mask<E, S> m);
 
     /**
-     * Shuffles the lane elements of this vector and those of an input vector,
-     * selecting lane indexes controlled by a shuffle.
+     * Rearranges the lane elements of this vector and those of an input vector,
+     * selecting lane indexes controlled by shuffles and a mask.
      * <p>
-     * This is a cross-lane operation that permutes the lane elements of this
-     * vector and tine input vector.
-     * For each lane of the shuffle, at lane index {@code N}, if the shuffle
-     * lane element, {@code I}, is less than the length of this vector then the
-     * lane element at {@code I} from this vector is selected and placed into
-     * the resulting vector at {@code N}, otherwise the lane element at
-     * {@code I - this.length()} from the input vector is selected and placed
-     * into the resulting vector at {@code N}.
+     * This is a cross-lane operation that rearranges the lane elements of this
+     * vector and the input vector.  This method behaves as if it rearranges
+     * each vector with the corresponding shuffle and then blends the two
+     * results with the mask:
+     * <pre>{@code
+     * return this.rearrange(s1).blend(v.rearrange(s2), m);
+     * }</pre>
      *
      * @param v the input vector
-     * @param s the shuffle controlling lane index selection
-     * @return the result of shuffling the lane elements of this vector and
+     * @param s the shuffle controlling lane index selection of the input vector
+     * if corresponding mask lanes are set, otherwise controlling lane
+     * index selection of this vector
+     * @param m the mask controlling shuffled lane selection
+     * @return the rearrangement of lane elements of this vector and
      * those of an input vector
-     * @throws IndexOutOfBoundsException if any lane element is {@code < 0} or
-     * {@code >= 2 * this.length())
      */
-    public abstract Vector<E, S> shuffle(Vector<E, S> v, Shuffle<E, S> s);
+    @ForceInline
+    // rearrange
+    public abstract Vector<E, S> rearrange(Vector<E, S> v,
+                                           Shuffle<E, S> s, Mask<E, S> m);
 
     /**
-     * Shuffles the lane elements of this vector selecting lane indexes
+     * Rearranges the lane elements of this vector selecting lane indexes
      * controlled by a shuffle.
      * <p>
-     * This is a cross-lane operation that permutes the lane elements of this
+     * This is a cross-lane operation that rearranges the lane elements of this
      * vector.
      * For each lane of the shuffle, at lane index {@code N} with lane
      * element {@code I}, the lane element at {@code I} from this vector is
      * selected and placed into the resulting vector at {@code N}.
      *
      * @param s the shuffle controlling lane index selection
-     * @return the result of shuffling the lane elements of this vector
-     * @throws IndexOutOfBoundsException if any lane element is {@code < 0} or
-     * {@code >= this.length())
+     * @return the rearrangement of the lane elements of this vector
      */
-    public abstract Vector<E, S> swizzle(Shuffle<E, S> s);
+    // rearrange
+    public abstract Vector<E, S> rearrange(Shuffle<E, S> s);
 
 
     // Conversions
+
+    /**
+     * Converts this vector into a shuffle, creating a shuffle from vector
+     * lane elements cast to {@code int} then logically AND'ed with the
+     * shuffle length minus one.
+     * <p>
+     * This methods behaves as if it returns the result of creating a shuffle
+     * given an array of the vector lane elements, as follows:
+     * <pre>{@code
+     * $type$[] a = this.toArray();
+     * int[] sa = new int[a.length];
+     * for (int i = 0; i < a.length; i++) {
+     *     sa[i] = (int) a[i];
+     * }
+     * return this.species().shuffleFromValues(sa);
+     * }</pre>
+     *
+     * @return a shuffle representation of this vector
+     */
+    public abstract Shuffle<E, S> toShuffle();
 
     // Bitwise preserving
 
@@ -1047,19 +1070,19 @@ public abstract class Vector<E, S extends Vector.Shape> {
         public abstract Mask<E, S> maskAllFalse();
 
         /**
-         * Returns a shuffle where each lane element to a given {@code int}
-         * value.
+         * Returns a shuffle where each lane element is set to a given
+         * {@code int} value logically AND'ed by the species length minus one.
          * <p>
          * For each shuffle lane, where {@code N} is the shuffle lane index, the
-         * the {@code int} value at index {@code N} is placed into the resulting
-         * shuffle at lane index {@code N}.
-         *
-         * @@@ What should happen if indexes.length < this.length() ? use the
-         * default value or throw IndexOutOfBoundsException
+         * the {@code int} value at index {@code N} logically AND'ed by
+         * {@code this.length() - 1} is placed into the resulting shuffle at
+         * lane index {@code N}.
          *
          * @param indexes the given {@code int} values
-         * @return a shufle where each lane element is set to a given
+         * @return a shuffle where each lane element is set to a given
          * {@code int} value
+         * @throws IndexOutOfBoundsException if the number of int values is
+         * {@code < this.length()}.
          */
         public abstract Shuffle<E, S> shuffleFromValues(int... indexes);
 
@@ -1067,29 +1090,17 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * Loads a shuffle from an {@code int} array starting at offset.
          * <p>
          * For each shuffle lane, where {@code N} is the shuffle lane index, the
-         * array element at index {@code i + N} is placed into the
-         * resulting shuffle at lane index {@code N}.
+         * array element at index {@code i + N} logically AND'ed by
+         * {@code this.length() - 1} is placed into the resulting shuffle at lane
+         * index {@code N}.
          *
          * @param a the {@code int} array
          * @param i the offset into the array
-         * @return the shuffle loaded from an {@code int} array
+         * @return a shuffle loaded from an {@code int} array
          * @throws IndexOutOfBoundsException if {@code i < 0}, or
          * {@code i > a.length - this.length()}
          */
         public abstract Shuffle<E, S> shuffleFromArray(int[] a, int i);
-
-        /**
-         * Returns a shuffle containing lane elements of an {@code int}
-         * vector.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * lane element at index {@code N} is placed into the resulting shuffle
-         * at lane index {@code N}.
-         *
-         * @param v the {@code int} vector
-         * @return a shuffle containing lane elements of an {@code int} vector
-         */
-        public abstract Shuffle<E, S> shuffleFromVector(Vector<Integer, S> v);
 
         // Shuffle iota, 0...N
 
@@ -1217,186 +1228,44 @@ public abstract class Vector<E, S extends Vector.Shape> {
          */
         public abstract <F, T extends Shape> Vector<E, S> cast(Vector<F, T> v);
 
-
-        // Mask type/shape transformations
-
         /**
-         * Transforms an input mask of shape {@code T} and element type
-         * {@code F} to a vector of this species shape {@code S} and element
+         * Converts a given mask of shape {@code T} and element type
+         * {@code F} to a mask of this species shape {@code S} and element
          * type {@code E}.
          * <p>
-         * The lane elements of the input mask are copied to the resulting
-         * mask without modification, but those lane elements, before copying,
-         * may be truncated if the mask length is greater than this species
-         * length, or appended to with false values if the mask length less than
-         * this species length.
-         * <p>
-         * The method behaves as if the input mask is stored into a boolean
-         * array and then the returned mask is loaded from the boolean array.
-         * The following pseudocode expresses the behaviour:
-         * <pre>{@code
-         * int alen = Math.max(m.length(), this.length());
-         * boolean[] a = new boolean[alen];
-         * m.intoArray(a, 0);
-         * return this.maskFromArray(a, 0);
-         * }</pre>
+         * For each mask lane, where {@code N} is the mask lane index, if the
+         * mask lane at index {@code N} is set, then the mask lane at index
+         * {@code N} of the resulting mask is set, otherwise that mask lane is
+         * not set.
          *
-         * @param m the input mask
+         * @param m the mask
          * @param <F> the boxed element type of the mask
          * @param <T> the type of shape of the mask
-         * @return a mask transformed, by shape and element type, from an
-         * input mask
+         * @return a mask, converted by shape and element type, from a given
+         * mask.
+         * @throws IllegalArgumentException if the mask length and this species
+         * length differ
          */
-        public <F, T extends Shape> Mask<E, S> reshape(Mask<F, T> m) {
-            return maskFromValues(m.toArray());
-        }
+        public abstract <F, T extends Shape> Mask<E, S> cast(Mask<F, T> m);
 
         /**
-         * Transforms an input mask of element type {@code F} to a mask of
-         * this species element type {@code E}, where the this species shape
-         * {@code S} is preserved.
-         * <p>
-         * The lane elements of the input mask are copied without
-         * modification to the resulting mask.
-         * <p>
-         * The method behaves as if the input mask is stored into a boolean
-         * array and then the returned mask is loaded from the boolean array.
-         * The following pseudocode expresses the behaviour:
-         * <pre>{@code
-         * boolean[] a = new byte[m.length()];
-         * m.intoArray(a, 0);
-         * return this.maskFromArray(a, 0);
-         * }</pre>
-         *
-         * @param m the input mask
-         * @param <F> the boxed element type of the mask
-         * @return a mask transformed, by element type, from an input mask
-         */
-        @ForceInline
-        public <F> Mask<E, S> rebracket(Mask<F, S> m) {
-            return reshape(m);
-        }
-
-        /**
-         * Transforms an input mask of shape {@code T} to a mask of this
-         * species shape {@code S}, where the this species element type
-         * {@code E} is preserved.
-         * <p>
-         * The lane elements of the input mask are copied to the resulting
-         * mask without modification, but those lane elements, before copying,
-         * may be truncated if the mask length is greater than this species
-         * length, or appended to with false values if the mask length less than
-         * this species length.
-         * <p>
-         * The method behaves as if the input mask is stored into a boolean
-         * array and then the returned mask is loaded from the boolean array.
-         * The following pseudocode expresses the behaviour:
-         * <pre>{@code
-         * int alen = Math.max(m.length(), this.length());
-         * boolean[] a = new boolean[alen];
-         * m.intoArray(a, 0);
-         * return this.maskFromArray(a, 0);
-         * }</pre>
-         *
-         * @param m the input mask
-         * @param <T> the type of shape of the mask
-         * @return a mask transformed, by shape, from an input mask
-         */
-        @ForceInline
-        public <T extends Shape> Mask<E, S> resize(Mask<E, T> m) {
-            return reshape(m);
-        }
-
-
-        // Shuffle type/shape transformations
-
-        /**
-         * Transforms an input shuffle of shape {@code T} and element type
+         * Converts a given shuffle of shape {@code T} and element type
          * {@code F} to a shuffle of this species shape {@code S} and element
          * type {@code E}.
          * <p>
-         * The lane elements of the input shuffle are copied to the resulting
-         * shuffle without modification, but those lane elements, before copying,
-         * may be truncated if the shuffle length is greater than this species
-         * length, or appended to with zero values if the shuffle length less than
-         * this species length.
-         * <p>
-         * The method behaves as if the input shuffle is stored into a int
-         * array and then the returned shuffle is loaded from the int array.
-         * The following pseudocode expresses the behaviour:
-         * <pre>{@code
-         * int alen = Math.max(s.length(), this.length());
-         * int[] a = new int[blen];
-         * s.intoArray(a, 0);
-         * return this.shuffleFromArray(a, 0);
-         * }</pre>
+         * For each shuffle lane, where {@code N} is the mask lane index, the
+         * shuffle element at index {@code N} is placed, unmodified, into the
+         * resulting shuffle at index {@code N}.
          *
-         * @param s the input shuffle
-         * @param <F> the boxed element type of the shuffle
-         * @param <T> the type of shape of the shuffle
-         * @return a shuffle transformed, by shape and element type, from an
-         * input shuffle
+         * @param s the shuffle
+         * @param <F> the boxed element type of the mask
+         * @param <T> the type of shape of the mask
+         * @return a shuffle, converted by shape and element type, from a given
+         * shuffle.
+         * @throws IllegalArgumentException if the shuffle length and this
+         * species length differ
          */
-        public <F, T extends Shape> Shuffle<E, S> reshape(Shuffle<F, T> s) {
-            return shuffleFromValues(s.toArray());
-        }
-
-        /**
-         * Transforms an input shuffle of element type {@code F} to a shuffle of
-         * this species element type {@code E}, where the this species shape
-         * {@code S} is preserved.
-         * <p>
-         * The lane elements of the input shuffle are copied without
-         * modification to the resulting shuffle.
-         * <p>
-         * The method behaves as if the input shuffle is stored into a int
-         * array and then the returned shuffle is loaded from the int array.
-         * The following pseudocode expresses the behaviour:
-         * <pre>{@code
-         * int[] a = new byte[s.length()];
-         * s.intoArray(a, 0);
-         * return this.shuffleFromArray(a, 0);
-         * }</pre>
-         *
-         * @param s the input shuffle
-         * @param <F> the boxed element type of the shuffle
-         * @return a shuffle transformed, by element type, from an input shuffle
-         */
-        @ForceInline
-        public <F> Shuffle<E, S> rebracket(Shuffle<F, S> s) {
-            return reshape(s);
-        }
-
-        /**
-         * Transforms an input shuffle of shape {@code T} to a shuffle of this
-         * species shape {@code S}, where the this species element type
-         * {@code E} is preserved.
-         * <p>
-         * The lane elements of the input shuffle are copied to the resulting
-         * shuffle without modification, but those lane elements, before copying,
-         * may be truncated if the shuffle length is greater than this species
-         * length, or appended to with zero values if the shuffle length less than
-         * this species length.
-         * <p>
-         * The method behaves as if the input shuffle is stored into a int
-         * array and then the returned shuffle is loaded from the int array.
-         * The following pseudocode expresses the behaviour:
-         * <pre>{@code
-         * int alen = Math.max(m.length(), this.length());
-         * boolean[] a = new boolean[alen];
-         * m.intoArray(a, 0);
-         * return this.maskFromArray(a, 0);
-         * }</pre>
-         *
-         * @param s the input shuffle
-         * @param <T> the type of shape of the shuffle
-         * @return a shuffle transformed, by shape, from an input shuffle
-         */
-        @ForceInline
-        public <T extends Shape> Shuffle<E, S> resize(Shuffle<E, T> s) {
-            return reshape(s);
-        }
-
+        public abstract <F, T extends Shape> Shuffle<E, S> cast(Shuffle<F, T> s);
 
         // Species/species transformations
 
@@ -1507,6 +1376,29 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @return the number of mask lanes
          */
         public int length() { return species().length(); }
+
+        /**
+         * Converts this mask to a mask of the given species shape {@code T} and
+         * element type {@code F}.
+         * <p>
+         * This method behaves as if it returns the result of calling
+         * {@link Species#cast(Mask) cast} on the given species with this mask:
+         * <pre>{@code
+         * return species.cast(this);
+         * }</pre>
+         *
+         * @param species the species
+         * @param <F> the boxed element type of the species
+         * @param <T> the type of shape of the species
+         * @return a mask converted by shape and element type
+         * @throws IllegalArgumentException if this mask length and the species
+         * length differ
+         * @see Species#cast(Mask)
+         */
+        @ForceInline
+        public <F, T extends Shape> Mask<F, T> cast(Species<F, T> species) {
+            return species.cast(this);
+        }
 
         /**
          * Returns the lane elements of this mask packed into a {@code long}
@@ -1634,70 +1526,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
          */
         // @@@ Rename to isSet
         public abstract boolean getElement(int i);
-
-        /**
-         * Transforms this mask to a mask of the given species shape {@code T}
-         * and element type {@code F}.
-         * <p>
-         * This method behaves as if it returns the result of calling
-         * {@link Species#reshape(Mask) reshape} on the given species with this
-         * mask:
-         * <pre>{@code
-         * return species.reshape(this);
-         * }</pre>
-         *
-         * @param species the species
-         * @param <F> the boxed element type of the species
-         * @param <T> the type of shape of the species
-         * @return a mask transformed by shape and element type
-         * @see Species#reshape(Mask)
-         */
-        @ForceInline
-        public <F, T extends Shape> Mask<F, T> reshape(Species<F, T> species) {
-            return species.reshape(this);
-        }
-
-        /**
-         * Transforms this mask to a mask of the given species element type
-         * {@code F}, where this mask's shape {@code S} is preserved.
-         * <p>
-         * This method behaves as if it returns the result of calling
-         * {@link Species#rebracket(Mask) rebracket} on the given species with
-         * this mask:
-         * <pre>{@code
-         * return species.rebracket(this);
-         * }</pre>
-         *
-         * @param species the species
-         * @param <F> the boxed element type of the species
-         * @return a mask transformed element type
-         * @see Species#rebracket(Mask)
-         */
-        @ForceInline
-        public <F> Mask<F, S> rebracket(Species<F, S> species) {
-            return species.reshape(this);
-        }
-
-        /**
-         * Transforms this mask to a mask of the given species shape {@code T},
-         * where this mask's element type {@code E} is preserved.
-         * <p>
-         * This method behaves as if it returns the result of calling
-         * {@link Species#resize(Mask) resize} on the given species with this
-         * mask:
-         * <pre>{@code
-         * return species.resize(this);
-         * }</pre>
-         *
-         * @param species the species
-         * @param <T> the type of shape of the species
-         * @return a mask transformed by shape
-         * @see Species#resize(Mask)
-         */
-        @ForceInline
-        public <T extends Shape> Mask<E, T> resize(Species<E, T> species) {
-            return species.reshape(this);
-        }
     }
 
     /**
@@ -1714,12 +1542,12 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * A Shuffle and Vector of the same element type and shape have the same
      * number of lanes.
      * <p>
-     * A {@code Shuffle<E, S>} is a specialized and limited form of an
-     * {@code IntVector<S>} where the Shuffle's lane elements correspond to
-     * lane index values.
      * A Shuffle describes how a lane element of a vector may cross lanes from
      * its lane index, {@code i} say, to another lane index whose value is the
-     * Shuffle's lane element at lane index {@code i}.
+     * Shuffle's lane element at lane index {@code i}.  Shuffle lane elements
+     * will be in the range of {@code 0} (inclusive) to the shuffle length
+     * (exclusive), and therefore cannot induce out of bounds errors when
+     * used with vectors operations and vectors of the same length.
      *
      * @param <E> the boxed element type of this mask
      * @param <S> the type of shape of this mask
@@ -1735,19 +1563,35 @@ public abstract class Vector<E, S extends Vector.Shape> {
         public abstract Species<E, S> species();
 
         /**
-         * Returns the specialized {@code int} species of this shuffle.
-         *
-         * @return the specialized {@code int} species of this shuffle
-         * @see #toVector
-         */
-        public abstract IntVector.IntSpecies<S> intSpecies();
-
-        /**
          * Returns the number of shuffle lanes (the length).
          *
          * @return the number of shuffle lanes
          */
         public int length() { return species().length(); }
+
+        /**
+         * Converts this shuffle to a shuffle of the given species shape
+         * {@code T} and element type {@code F}.
+         * <p>
+         * This method behaves as if it returns the result of calling
+         * {@link Species#cast(Shuffle) cast} on the given species with this
+         * shuffle:
+         * <pre>{@code
+         * return species.cast(this);
+         * }</pre>
+         *
+         * @param species the species
+         * @param <F> the boxed element type of the species
+         * @param <T> the type of shape of the species
+         * @return a shuffle converted by shape and element type
+         * @throws IllegalArgumentException if this shuffle length and the
+         * species length differ
+         * @see Species#cast(Mask)
+         */
+        @ForceInline
+        public <F, T extends Shape> Shuffle<F, T> cast(Species<F, T> species) {
+            return species.cast(this);
+        }
 
         /**
          * Returns an {@code int} array containing the lane elements of this
@@ -1783,22 +1627,24 @@ public abstract class Vector<E, S extends Vector.Shape> {
         // @@@ rotate/shift/EL/ER
 
         /**
-         * Returns an {@link IntVector}, of the same shape as this shuffle,
-         * containing the lane elements of this shuffle.
+         * Converts this shuffle into a vector, creating a vector from shuffle
+         * lane elements (int values) cast to the vector element type.
          * <p>
-         * This method behaves as if it returns the result of creating an
-         * {@link IntVector} given this shuffle's {@code int} species and an
-         * {@code int} array obtained from this shuffle's lane elements, as
-         * follows:
+         * This method behaves as if it returns the result of creating a
+         * vector given an {@code int} array obtained from this shuffle's
+         * lane elements, as follows:
          * <pre>{@code
-         *   int[] a = this.toArray();
-         *   return this.intSpecies().fromArray(a, 0);
+         *   int[] sa = this.toArray();
+         *   $type$[] va = new $type$[a.length];
+         *   for (int i = 0; i < a.length; i++) {
+         *       va[i] = ($type$) sa[i];
+         *   }
+         *   return this.species().fromArray(va, 0);
          * }</pre>
          *
-         * @return an {@link IntVector}, of the same shape as this shuffle,
-         * containing the lane elements of this shuffle
+         * @return a vector representation of this shuffle
          */
-        public abstract IntVector<S> toVector();
+        public abstract Vector<E, S> toVector();
 
         /**
          * Gets the {@code int} lane element at lane index {@code i}
@@ -1809,67 +1655,17 @@ public abstract class Vector<E, S extends Vector.Shape> {
         public int getElement(int i) { return toArray()[i]; }
 
         /**
-         * Transforms this shuffle to a shuffle of the given species shape {@code T}
-         * and element type {@code F}.
+         * Rearranges the lane elements of this shuffle selecting lane indexes
+         * controlled by another shuffle.
          * <p>
-         * This method behaves as if it returns the result of calling
-         * {@link Species#reshape(Shuffle) reshape} on the given species with this
-         * shuffle:
-         * <pre>{@code
-         * return species.reshape(this);
-         * }</pre>
+         * For each lane of the shuffle, at lane index {@code N} with lane
+         * element {@code I}, the lane element at {@code I} from this shuffle is
+         * selected and placed into the resulting shuffle at {@code N}.
          *
-         * @param species the species
-         * @param <F> the boxed element type of the species
-         * @param <T> the type of shape of the species
-         * @return a shuffle transformed by shape and element type
-         * @see Species#reshape(Shuffle)
+         * @param s the shuffle controlling lane index selection
+         * @return the rearrangement of the lane elements of this shuffle
          */
-        @ForceInline
-        public <F, T extends Shape> Shuffle<F, T> reshape(Species<F, T> species) {
-            return species.reshape(this);
-        }
-
-        /**
-         * Transforms this shuffle to a shuffle of the given species element type
-         * {@code F}, where this shuffle's shape {@code S} is preserved.
-         * <p>
-         * This method behaves as if it returns the result of calling
-         * {@link Species#rebracket(Shuffle) rebracket} on the given species with this
-         * shuffle:
-         * <pre>{@code
-         * return species.rebracket(this);
-         * }</pre>
-         *
-         * @param species the species
-         * @param <F> the boxed element type of the species
-         * @return a shuffle transformed element type
-         * @see Species#rebracket(Shuffle)
-         */
-        @ForceInline
-        public <F> Shuffle<F, S> rebracket(Species<F, S> species) {
-            return species.reshape(this);
-        }
-
-        /**
-         * Transforms this shuffle to a shuffle of the given species shape {@code T},
-         * where this shuffle's element type {@code E} is preserved.
-         * <p>
-         * This method behaves as if it returns the result of calling
-         * {@link Species#resize(Shuffle) resize} on the given species with this shuffle:
-         * <pre>{@code
-         * return species.resize(this);
-         * }</pre>
-         *
-         * @param species the species
-         * @param <T> the type of shape of the species
-         * @return a shuffle transformed by shape
-         * @see Species#resize(Shuffle)
-         */
-        @ForceInline
-        public <T extends Shape> Shuffle<E, T> resize(Species<E, T> species) {
-            return species.reshape(this);
-        }
+        public abstract Shuffle<E, S> rearrange(Shuffle<E, S> s);
     }
 
     /**

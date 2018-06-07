@@ -348,10 +348,11 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public abstract $abstractvectortype$<S> blend($type$ s, Mask<$Boxtype$, S> m);
 
     @Override
-    public abstract $abstractvectortype$<S> shuffle(Vector<$Boxtype$,S> v, Shuffle<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> rearrange(Vector<$Boxtype$, S> v,
+                                                      Shuffle<$Boxtype$, S> s, Mask<$Boxtype$, S> m);
 
     @Override
-    public abstract $abstractvectortype$<S> swizzle(Shuffle<$Boxtype$, S> m);
+    public abstract $abstractvectortype$<S> rearrange(Shuffle<$Boxtype$, S> m);
 
     @Override
     @ForceInline

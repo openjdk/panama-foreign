@@ -346,10 +346,11 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
     public abstract DoubleVector<S> blend(double s, Mask<Double, S> m);
 
     @Override
-    public abstract DoubleVector<S> shuffle(Vector<Double,S> v, Shuffle<Double, S> m);
+    public abstract DoubleVector<S> rearrange(Vector<Double, S> v,
+                                                      Shuffle<Double, S> s, Mask<Double, S> m);
 
     @Override
-    public abstract DoubleVector<S> swizzle(Shuffle<Double, S> m);
+    public abstract DoubleVector<S> rearrange(Shuffle<Double, S> m);
 
     @Override
     @ForceInline

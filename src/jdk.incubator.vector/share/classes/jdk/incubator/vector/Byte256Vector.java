@@ -568,6 +568,17 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         return blend(SPECIES.broadcast(Byte.MIN_VALUE), m).maxAll();
     }
 
+    @Override
+    @ForceInline
+    public Shuffle<Byte, Shapes.S256Bit> toShuffle() {
+        byte[] a = toArray();
+        int[] sa = new int[a.length];
+        for (int i = 0; i < a.length; i++) {
+            sa[i] = (int) a[i];
+        }
+        return SPECIES.shuffleFromArray(sa, 0);
+    }
+
     // Memory operations
 
     private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_BYTE_INDEX_SCALE);
@@ -825,33 +836,18 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
     }
 
     @Override
-    public Byte256Vector shuffle(Vector<Byte, Shapes.S256Bit> o, Shuffle<Byte, Shapes.S256Bit> s) {
-        Byte256Vector v = (Byte256Vector) o;
-        return uOp((i, a) -> {
-            byte[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                //from this
-                return vec[e];
-            } else if(e < length() * 2) {
-                //from o
-                return v.getElements()[e - length()];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
-        });
+    @ForceInline
+    public Byte256Vector rearrange(Vector<Byte, Shapes.S256Bit> v,
+                                  Shuffle<Byte, Shapes.S256Bit> s, Mask<Byte, Shapes.S256Bit> m) {
+        return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
-    public Byte256Vector swizzle(Shuffle<Byte, Shapes.S256Bit> s) {
+    public Byte256Vector rearrange(Shuffle<Byte, Shapes.S256Bit> s) {
         return uOp((i, a) -> {
             byte[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                return vec[e];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
+            int ei = s.getElement(i);
+            return vec[ei];
         });
     }
 
@@ -913,8 +909,12 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             this(bits, 0);
         }
 
-        public Byte256Mask(boolean[] bits, int i) {
-            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
+        public Byte256Mask(boolean[] bits, int offset) {
+            boolean[] a = new boolean[species().length()];
+            for (int i = 0; i < a.length; i++) {
+                a[i] = bits[offset + i];
+            }
+            this.bits = a;
         }
 
         public Byte256Mask(boolean val) {
@@ -958,22 +958,11 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             byte[] res = new byte[species().length()];
             boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
+                // -1 will result in the most significant bit being set in
+                // addition to some or all other bits
                 res[i] = (byte) (bits[i] ? -1 : 0);
             }
             return new Byte256Vector(res);
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        public <Z> Mask<Z, Shapes.S256Bit> rebracket(Species<Z, Shapes.S256Bit> species) {
-            Objects.requireNonNull(species);
-            // TODO: check proper element type
-            return VectorIntrinsics.reinterpret(
-                Byte256Mask.class, byte.class, LENGTH,
-                species.elementType(), species.length(), this,
-                (m, t) -> m.reshape(species)
-            );
         }
 
         // Unary operations
@@ -1031,7 +1020,9 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
     // Shuffle
 
     static final class Byte256Shuffle extends AbstractShuffle<Byte, Shapes.S256Bit> {
-        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = IntVector.species(Shapes.S_256_BIT);
+        Byte256Shuffle(byte[] reorder) {
+            super(reorder);
+        }
 
         public Byte256Shuffle(int[] reorder) {
             super(reorder);
@@ -1047,8 +1038,22 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         }
 
         @Override
-        public IntVector.IntSpecies<Shapes.S256Bit> intSpecies() {
-            return INT_SPECIES;
+        public Byte256Vector toVector() {
+            byte[] va = new byte[SPECIES.length()];
+            for (int i = 0; i < va.length; i++) {
+              va[i] = (byte) getElement(i);
+            }
+            return species().fromArray(va, 0);
+        }
+
+        @Override
+        public Byte256Shuffle rearrange(Vector.Shuffle<Byte, Shapes.S256Bit> o) {
+            Byte256Shuffle s = (Byte256Shuffle) o;
+            byte[] r = new byte[reorder.length];
+            for (int i = 0; i < reorder.length; i++) {
+                r[i] = reorder[s.reorder[i]];
+            }
+            return new Byte256Shuffle(r);
         }
     }
 
@@ -1145,12 +1150,6 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         @Override
         public Byte256Shuffle shuffleFromArray(int[] ixs, int i) {
             return new Byte256Shuffle(ixs, i);
-        }
-
-        @Override
-        public Byte256Shuffle shuffleFromVector(Vector<Integer, Shapes.S256Bit> v) {
-            int[] a = ((IntVector<Shapes.S256Bit>) v).toArray();
-            return new Byte256Shuffle(a, 0);
         }
 
         @Override
@@ -1483,7 +1482,9 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         @ForceInline
         @SuppressWarnings("unchecked")
         public <E, S extends Shape> Byte256Vector cast(Vector<E, S> o) {
-            Objects.requireNonNull(o);
+            if (o.length() != LENGTH)
+                throw new IllegalArgumentException("Vector length this species length differ");
+
             if (o.elementType() == byte.class) {
                 ByteVector<S> so = (ByteVector<S>)o;
                 return castFromByte(so);
@@ -1505,6 +1506,22 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             } else {
                 throw new InternalError("Unimplemented type");
             }
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Byte256Mask cast(Mask<E, S> m) {
+            if (m.length() != LENGTH)
+                throw new IllegalArgumentException("Mask length this species length differ");
+            return new Byte256Mask(m.toArray());
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Byte256Shuffle cast(Shuffle<E, S> s) {
+            if (s.length() != LENGTH)
+                throw new IllegalArgumentException("Shuffle length this species length differ");
+            return new Byte256Shuffle(s.toArray());
         }
 
         @Override

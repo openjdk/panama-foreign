@@ -346,10 +346,11 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     public abstract FloatVector<S> blend(float s, Mask<Float, S> m);
 
     @Override
-    public abstract FloatVector<S> shuffle(Vector<Float,S> v, Shuffle<Float, S> m);
+    public abstract FloatVector<S> rearrange(Vector<Float, S> v,
+                                                      Shuffle<Float, S> s, Mask<Float, S> m);
 
     @Override
-    public abstract FloatVector<S> swizzle(Shuffle<Float, S> m);
+    public abstract FloatVector<S> rearrange(Shuffle<Float, S> m);
 
     @Override
     @ForceInline

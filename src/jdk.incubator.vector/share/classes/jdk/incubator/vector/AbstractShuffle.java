@@ -24,36 +24,44 @@
  */
 package jdk.incubator.vector;
 
-import java.util.Arrays;
-
 abstract class AbstractShuffle<E, S extends Vector.Shape> extends Vector.Shuffle<E, S> {
-    private final int[] reorder;
+    // Internal representation allows for a maximum index of 256
+    // Values are masked by (species().length() - 1)
+    final byte[] reorder;
+
+    AbstractShuffle(byte[] reorder) {
+        this.reorder = reorder;
+    }
 
     public AbstractShuffle(int[] reorder) {
         this(reorder, 0);
     }
 
-    public AbstractShuffle(int[] reorder, int i) {
-        this.reorder = Arrays.copyOfRange(reorder, i, i + species().length());
+    public AbstractShuffle(int[] reorder, int offset) {
+        byte[] a = new byte[species().length()];
+        for (int i = 0; i < reorder.length; i++) {
+            a[i] = (byte) (reorder[offset + i] & (reorder.length - 1));
+        }
+        this.reorder = a;
     }
 
     @Override
-    public void intoArray(int[] ixs, int i) {
-        System.arraycopy(reorder, 0, ixs, i, reorder.length);
+    public void intoArray(int[] a, int offset) {
+        for (int i = 0; i < reorder.length; i++) {
+            a[i] = reorder[i];
+        }
     }
 
     @Override
     public int[] toArray() {
-        return reorder.clone();
-    }
-
-    @Override
-    public IntVector<S> toVector() {
-        return intSpecies().fromArray(reorder, 0);
+        int[] a = new int[reorder.length];
+        intoArray(a, 0);
+        return a;
     }
 
     @Override
     public int getElement(int i) {
         return reorder[i];
     }
+
 }

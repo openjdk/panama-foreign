@@ -631,6 +631,17 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         return blend(SPECIES.broadcast(Long.MIN_VALUE), m).maxAll();
     }
 
+    @Override
+    @ForceInline
+    public Shuffle<Long, Shapes.S256Bit> toShuffle() {
+        long[] a = toArray();
+        int[] sa = new int[a.length];
+        for (int i = 0; i < a.length; i++) {
+            sa[i] = (int) a[i];
+        }
+        return SPECIES.shuffleFromArray(sa, 0);
+    }
+
     // Memory operations
 
     private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_LONG_INDEX_SCALE);
@@ -896,33 +907,18 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
     }
 
     @Override
-    public Long256Vector shuffle(Vector<Long, Shapes.S256Bit> o, Shuffle<Long, Shapes.S256Bit> s) {
-        Long256Vector v = (Long256Vector) o;
-        return uOp((i, a) -> {
-            long[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                //from this
-                return vec[e];
-            } else if(e < length() * 2) {
-                //from o
-                return v.getElements()[e - length()];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
-        });
+    @ForceInline
+    public Long256Vector rearrange(Vector<Long, Shapes.S256Bit> v,
+                                  Shuffle<Long, Shapes.S256Bit> s, Mask<Long, Shapes.S256Bit> m) {
+        return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
-    public Long256Vector swizzle(Shuffle<Long, Shapes.S256Bit> s) {
+    public Long256Vector rearrange(Shuffle<Long, Shapes.S256Bit> s) {
         return uOp((i, a) -> {
             long[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                return vec[e];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
+            int ei = s.getElement(i);
+            return vec[ei];
         });
     }
 
@@ -984,8 +980,12 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             this(bits, 0);
         }
 
-        public Long256Mask(boolean[] bits, int i) {
-            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
+        public Long256Mask(boolean[] bits, int offset) {
+            boolean[] a = new boolean[species().length()];
+            for (int i = 0; i < a.length; i++) {
+                a[i] = bits[offset + i];
+            }
+            this.bits = a;
         }
 
         public Long256Mask(boolean val) {
@@ -1029,22 +1029,11 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             long[] res = new long[species().length()];
             boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
+                // -1 will result in the most significant bit being set in
+                // addition to some or all other bits
                 res[i] = (long) (bits[i] ? -1 : 0);
             }
             return new Long256Vector(res);
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        public <Z> Mask<Z, Shapes.S256Bit> rebracket(Species<Z, Shapes.S256Bit> species) {
-            Objects.requireNonNull(species);
-            // TODO: check proper element type
-            return VectorIntrinsics.reinterpret(
-                Long256Mask.class, long.class, LENGTH,
-                species.elementType(), species.length(), this,
-                (m, t) -> m.reshape(species)
-            );
         }
 
         // Unary operations
@@ -1102,7 +1091,9 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
     // Shuffle
 
     static final class Long256Shuffle extends AbstractShuffle<Long, Shapes.S256Bit> {
-        static final IntVector.IntSpecies<Shapes.S256Bit> INT_SPECIES = IntVector.species(Shapes.S_256_BIT);
+        Long256Shuffle(byte[] reorder) {
+            super(reorder);
+        }
 
         public Long256Shuffle(int[] reorder) {
             super(reorder);
@@ -1118,8 +1109,22 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         }
 
         @Override
-        public IntVector.IntSpecies<Shapes.S256Bit> intSpecies() {
-            return INT_SPECIES;
+        public Long256Vector toVector() {
+            long[] va = new long[SPECIES.length()];
+            for (int i = 0; i < va.length; i++) {
+              va[i] = (long) getElement(i);
+            }
+            return species().fromArray(va, 0);
+        }
+
+        @Override
+        public Long256Shuffle rearrange(Vector.Shuffle<Long, Shapes.S256Bit> o) {
+            Long256Shuffle s = (Long256Shuffle) o;
+            byte[] r = new byte[reorder.length];
+            for (int i = 0; i < reorder.length; i++) {
+                r[i] = reorder[s.reorder[i]];
+            }
+            return new Long256Shuffle(r);
         }
     }
 
@@ -1216,12 +1221,6 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         @Override
         public Long256Shuffle shuffleFromArray(int[] ixs, int i) {
             return new Long256Shuffle(ixs, i);
-        }
-
-        @Override
-        public Long256Shuffle shuffleFromVector(Vector<Integer, Shapes.S256Bit> v) {
-            int[] a = ((IntVector<Shapes.S256Bit>) v).toArray();
-            return new Long256Shuffle(a, 0);
         }
 
         @Override
@@ -1554,7 +1553,9 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
         @ForceInline
         @SuppressWarnings("unchecked")
         public <E, S extends Shape> Long256Vector cast(Vector<E, S> o) {
-            Objects.requireNonNull(o);
+            if (o.length() != LENGTH)
+                throw new IllegalArgumentException("Vector length this species length differ");
+
             if (o.elementType() == byte.class) {
                 ByteVector<S> so = (ByteVector<S>)o;
                 return castFromByte(so);
@@ -1576,6 +1577,22 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             } else {
                 throw new InternalError("Unimplemented type");
             }
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Long256Mask cast(Mask<E, S> m) {
+            if (m.length() != LENGTH)
+                throw new IllegalArgumentException("Mask length this species length differ");
+            return new Long256Mask(m.toArray());
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Long256Shuffle cast(Shuffle<E, S> s) {
+            if (s.length() != LENGTH)
+                throw new IllegalArgumentException("Shuffle length this species length differ");
+            return new Long256Shuffle(s.toArray());
         }
 
         @Override

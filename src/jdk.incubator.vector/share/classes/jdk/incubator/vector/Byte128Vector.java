@@ -568,6 +568,17 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         return blend(SPECIES.broadcast(Byte.MIN_VALUE), m).maxAll();
     }
 
+    @Override
+    @ForceInline
+    public Shuffle<Byte, Shapes.S128Bit> toShuffle() {
+        byte[] a = toArray();
+        int[] sa = new int[a.length];
+        for (int i = 0; i < a.length; i++) {
+            sa[i] = (int) a[i];
+        }
+        return SPECIES.shuffleFromArray(sa, 0);
+    }
+
     // Memory operations
 
     private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_BYTE_INDEX_SCALE);
@@ -825,33 +836,18 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
     }
 
     @Override
-    public Byte128Vector shuffle(Vector<Byte, Shapes.S128Bit> o, Shuffle<Byte, Shapes.S128Bit> s) {
-        Byte128Vector v = (Byte128Vector) o;
-        return uOp((i, a) -> {
-            byte[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                //from this
-                return vec[e];
-            } else if(e < length() * 2) {
-                //from o
-                return v.getElements()[e - length()];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
-        });
+    @ForceInline
+    public Byte128Vector rearrange(Vector<Byte, Shapes.S128Bit> v,
+                                  Shuffle<Byte, Shapes.S128Bit> s, Mask<Byte, Shapes.S128Bit> m) {
+        return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
-    public Byte128Vector swizzle(Shuffle<Byte, Shapes.S128Bit> s) {
+    public Byte128Vector rearrange(Shuffle<Byte, Shapes.S128Bit> s) {
         return uOp((i, a) -> {
             byte[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                return vec[e];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
+            int ei = s.getElement(i);
+            return vec[ei];
         });
     }
 
@@ -913,8 +909,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             this(bits, 0);
         }
 
-        public Byte128Mask(boolean[] bits, int i) {
-            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
+        public Byte128Mask(boolean[] bits, int offset) {
+            boolean[] a = new boolean[species().length()];
+            for (int i = 0; i < a.length; i++) {
+                a[i] = bits[offset + i];
+            }
+            this.bits = a;
         }
 
         public Byte128Mask(boolean val) {
@@ -958,22 +958,11 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             byte[] res = new byte[species().length()];
             boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
+                // -1 will result in the most significant bit being set in
+                // addition to some or all other bits
                 res[i] = (byte) (bits[i] ? -1 : 0);
             }
             return new Byte128Vector(res);
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        public <Z> Mask<Z, Shapes.S128Bit> rebracket(Species<Z, Shapes.S128Bit> species) {
-            Objects.requireNonNull(species);
-            // TODO: check proper element type
-            return VectorIntrinsics.reinterpret(
-                Byte128Mask.class, byte.class, LENGTH,
-                species.elementType(), species.length(), this,
-                (m, t) -> m.reshape(species)
-            );
         }
 
         // Unary operations
@@ -1031,7 +1020,9 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
     // Shuffle
 
     static final class Byte128Shuffle extends AbstractShuffle<Byte, Shapes.S128Bit> {
-        static final IntVector.IntSpecies<Shapes.S128Bit> INT_SPECIES = IntVector.species(Shapes.S_128_BIT);
+        Byte128Shuffle(byte[] reorder) {
+            super(reorder);
+        }
 
         public Byte128Shuffle(int[] reorder) {
             super(reorder);
@@ -1047,8 +1038,22 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         }
 
         @Override
-        public IntVector.IntSpecies<Shapes.S128Bit> intSpecies() {
-            return INT_SPECIES;
+        public Byte128Vector toVector() {
+            byte[] va = new byte[SPECIES.length()];
+            for (int i = 0; i < va.length; i++) {
+              va[i] = (byte) getElement(i);
+            }
+            return species().fromArray(va, 0);
+        }
+
+        @Override
+        public Byte128Shuffle rearrange(Vector.Shuffle<Byte, Shapes.S128Bit> o) {
+            Byte128Shuffle s = (Byte128Shuffle) o;
+            byte[] r = new byte[reorder.length];
+            for (int i = 0; i < reorder.length; i++) {
+                r[i] = reorder[s.reorder[i]];
+            }
+            return new Byte128Shuffle(r);
         }
     }
 
@@ -1145,12 +1150,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         @Override
         public Byte128Shuffle shuffleFromArray(int[] ixs, int i) {
             return new Byte128Shuffle(ixs, i);
-        }
-
-        @Override
-        public Byte128Shuffle shuffleFromVector(Vector<Integer, Shapes.S128Bit> v) {
-            int[] a = ((IntVector<Shapes.S128Bit>) v).toArray();
-            return new Byte128Shuffle(a, 0);
         }
 
         @Override
@@ -1483,7 +1482,9 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         @ForceInline
         @SuppressWarnings("unchecked")
         public <E, S extends Shape> Byte128Vector cast(Vector<E, S> o) {
-            Objects.requireNonNull(o);
+            if (o.length() != LENGTH)
+                throw new IllegalArgumentException("Vector length this species length differ");
+
             if (o.elementType() == byte.class) {
                 ByteVector<S> so = (ByteVector<S>)o;
                 return castFromByte(so);
@@ -1505,6 +1506,22 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             } else {
                 throw new InternalError("Unimplemented type");
             }
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Byte128Mask cast(Mask<E, S> m) {
+            if (m.length() != LENGTH)
+                throw new IllegalArgumentException("Mask length this species length differ");
+            return new Byte128Mask(m.toArray());
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Byte128Shuffle cast(Shuffle<E, S> s) {
+            if (s.length() != LENGTH)
+                throw new IllegalArgumentException("Shuffle length this species length differ");
+            return new Byte128Shuffle(s.toArray());
         }
 
         @Override

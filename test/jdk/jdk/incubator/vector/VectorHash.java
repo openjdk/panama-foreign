@@ -146,23 +146,31 @@ public class VectorHash {
     }
 
     static int hashCodeVector512Shift(byte[] a) {
-        return hashCodeVectorGenericShift(a, BYTE_512_SPECIES, INT_512_SPECIES,
+        return hashCodeVectorGenericShift(a,
+                                          BYTE_128_SPECIES,
+                                          BYTE_512_SPECIES,
+                                          INT_512_SPECIES,
                                           COEFF_31_TO_16,
                                           H_COEFF_16);
     }
 
     static <S extends Vector.Shape> int hashCodeVectorGenericShift(
             byte[] a,
+            ByteVector.ByteSpecies<?> bytesForIntsSpecies,
             ByteVector.ByteSpecies<S> byteSpecies, IntVector.IntSpecies<S> intSpecies,
             int top_h_coeff,
             IntVector<S> v_h_coeff) {
+        assert bytesForIntsSpecies.length() == intSpecies.length();
+
         int h = 1;
         int i = 0;
         for (; i < (a.length & ~(byteSpecies.length() - 1)); i += byteSpecies.length()) {
             ByteVector<S> b = byteSpecies.fromArray(a, i);
 
             for (int j = 0; j < byteSpecies.length() / intSpecies.length(); j++) {
-                IntVector<S> x = intSpecies.cast(b);
+                // Reduce the size of the byte vector and then cast to int
+                IntVector<S> x = intSpecies.cast(bytesForIntsSpecies.resize(b));
+
                 h = h * top_h_coeff + x.mul(v_h_coeff).addAll();
 
                 b = b.shiftEL(intSpecies.length());

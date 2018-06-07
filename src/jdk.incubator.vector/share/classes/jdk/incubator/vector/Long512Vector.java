@@ -631,6 +631,17 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         return blend(SPECIES.broadcast(Long.MIN_VALUE), m).maxAll();
     }
 
+    @Override
+    @ForceInline
+    public Shuffle<Long, Shapes.S512Bit> toShuffle() {
+        long[] a = toArray();
+        int[] sa = new int[a.length];
+        for (int i = 0; i < a.length; i++) {
+            sa[i] = (int) a[i];
+        }
+        return SPECIES.shuffleFromArray(sa, 0);
+    }
+
     // Memory operations
 
     private static final int ARRAY_SHIFT = 31 - Integer.numberOfLeadingZeros(Unsafe.ARRAY_LONG_INDEX_SCALE);
@@ -896,33 +907,18 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
     }
 
     @Override
-    public Long512Vector shuffle(Vector<Long, Shapes.S512Bit> o, Shuffle<Long, Shapes.S512Bit> s) {
-        Long512Vector v = (Long512Vector) o;
-        return uOp((i, a) -> {
-            long[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                //from this
-                return vec[e];
-            } else if(e < length() * 2) {
-                //from o
-                return v.getElements()[e - length()];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
-        });
+    @ForceInline
+    public Long512Vector rearrange(Vector<Long, Shapes.S512Bit> v,
+                                  Shuffle<Long, Shapes.S512Bit> s, Mask<Long, Shapes.S512Bit> m) {
+        return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
-    public Long512Vector swizzle(Shuffle<Long, Shapes.S512Bit> s) {
+    public Long512Vector rearrange(Shuffle<Long, Shapes.S512Bit> s) {
         return uOp((i, a) -> {
             long[] vec = this.getElements();
-            int e = s.getElement(i);
-            if(e >= 0 && e < length()) {
-                return vec[e];
-            } else {
-                throw new ArrayIndexOutOfBoundsException("Bad reordering for shuffle");
-            }
+            int ei = s.getElement(i);
+            return vec[ei];
         });
     }
 
@@ -984,8 +980,12 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             this(bits, 0);
         }
 
-        public Long512Mask(boolean[] bits, int i) {
-            this.bits = Arrays.copyOfRange(bits, i, i + species().length());
+        public Long512Mask(boolean[] bits, int offset) {
+            boolean[] a = new boolean[species().length()];
+            for (int i = 0; i < a.length; i++) {
+                a[i] = bits[offset + i];
+            }
+            this.bits = a;
         }
 
         public Long512Mask(boolean val) {
@@ -1029,22 +1029,11 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             long[] res = new long[species().length()];
             boolean[] bits = getBits();
             for (int i = 0; i < species().length(); i++) {
+                // -1 will result in the most significant bit being set in
+                // addition to some or all other bits
                 res[i] = (long) (bits[i] ? -1 : 0);
             }
             return new Long512Vector(res);
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        public <Z> Mask<Z, Shapes.S512Bit> rebracket(Species<Z, Shapes.S512Bit> species) {
-            Objects.requireNonNull(species);
-            // TODO: check proper element type
-            return VectorIntrinsics.reinterpret(
-                Long512Mask.class, long.class, LENGTH,
-                species.elementType(), species.length(), this,
-                (m, t) -> m.reshape(species)
-            );
         }
 
         // Unary operations
@@ -1102,7 +1091,9 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
     // Shuffle
 
     static final class Long512Shuffle extends AbstractShuffle<Long, Shapes.S512Bit> {
-        static final IntVector.IntSpecies<Shapes.S512Bit> INT_SPECIES = IntVector.species(Shapes.S_512_BIT);
+        Long512Shuffle(byte[] reorder) {
+            super(reorder);
+        }
 
         public Long512Shuffle(int[] reorder) {
             super(reorder);
@@ -1118,8 +1109,22 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         }
 
         @Override
-        public IntVector.IntSpecies<Shapes.S512Bit> intSpecies() {
-            return INT_SPECIES;
+        public Long512Vector toVector() {
+            long[] va = new long[SPECIES.length()];
+            for (int i = 0; i < va.length; i++) {
+              va[i] = (long) getElement(i);
+            }
+            return species().fromArray(va, 0);
+        }
+
+        @Override
+        public Long512Shuffle rearrange(Vector.Shuffle<Long, Shapes.S512Bit> o) {
+            Long512Shuffle s = (Long512Shuffle) o;
+            byte[] r = new byte[reorder.length];
+            for (int i = 0; i < reorder.length; i++) {
+                r[i] = reorder[s.reorder[i]];
+            }
+            return new Long512Shuffle(r);
         }
     }
 
@@ -1216,12 +1221,6 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         @Override
         public Long512Shuffle shuffleFromArray(int[] ixs, int i) {
             return new Long512Shuffle(ixs, i);
-        }
-
-        @Override
-        public Long512Shuffle shuffleFromVector(Vector<Integer, Shapes.S512Bit> v) {
-            int[] a = ((IntVector<Shapes.S512Bit>) v).toArray();
-            return new Long512Shuffle(a, 0);
         }
 
         @Override
@@ -1554,7 +1553,9 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         @ForceInline
         @SuppressWarnings("unchecked")
         public <E, S extends Shape> Long512Vector cast(Vector<E, S> o) {
-            Objects.requireNonNull(o);
+            if (o.length() != LENGTH)
+                throw new IllegalArgumentException("Vector length this species length differ");
+
             if (o.elementType() == byte.class) {
                 ByteVector<S> so = (ByteVector<S>)o;
                 return castFromByte(so);
@@ -1576,6 +1577,22 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             } else {
                 throw new InternalError("Unimplemented type");
             }
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Long512Mask cast(Mask<E, S> m) {
+            if (m.length() != LENGTH)
+                throw new IllegalArgumentException("Mask length this species length differ");
+            return new Long512Mask(m.toArray());
+        }
+
+        @Override
+        @ForceInline
+        public <E, S extends Shape> Long512Shuffle cast(Shuffle<E, S> s) {
+            if (s.length() != LENGTH)
+                throw new IllegalArgumentException("Shuffle length this species length differ");
+            return new Long512Shuffle(s.toArray());
         }
 
         @Override
