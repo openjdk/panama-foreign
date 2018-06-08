@@ -34,17 +34,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.WildcardType;
 import java.nicl.*;
-import java.nicl.layout.Address;
 import java.nicl.layout.Function;
 import java.nicl.layout.Layout;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
@@ -306,7 +301,7 @@ class NativeInvoker {
                 values[i] = src.offset(i).get();
             }
             return values;
-        } else if (Util.isFunctionalInterface(carrierType)) {
+        } else if (Util.isCallback(carrierType)) {
             return new long[] { UpcallHandler.make(carrierType, arg).getNativeEntryPoint().addr() };
         } else {
             Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);

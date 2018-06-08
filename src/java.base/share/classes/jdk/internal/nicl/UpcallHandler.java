@@ -34,6 +34,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.nicl.NativeTypes;
 import java.nicl.Scope;
 import java.nicl.layout.Function;
@@ -56,6 +57,7 @@ public class UpcallHandler {
 
     private final MethodHandle mh;
     private final Function ftype;
+    private final Method ficMethod;
 
     private final UpcallStub stub;
 
@@ -73,7 +75,7 @@ public class UpcallHandler {
     }
 
     public static UpcallHandler make(Class<?> c, Object o) throws Throwable {
-        if (!Util.isFunctionalInterface(c)) {
+        if (!Util.isCallback(c)) {
             throw new IllegalArgumentException("Class is not a @FunctionalInterface: " + c.getName());
         }
         if (o == null) {
@@ -87,17 +89,15 @@ public class UpcallHandler {
         Method ficMethod = Util.findFunctionalInterfaceMethod(c);
         Function ftype = Util.functionof(c);
 
-        MethodType mt = MethodHandles.publicLookup().unreflect(ficMethod).type().dropParameterTypes(0, 1);
+        MethodHandle mh = MethodHandles.publicLookup().unreflect(ficMethod);
 
-        MethodHandle mh = MethodHandles.publicLookup().findVirtual(c, "fn", mt);
-
-        return UpcallHandler.make(mh.bindTo(o), ftype);
+        return UpcallHandler.make(mh.bindTo(o), ftype, ficMethod);
     }
 
-    private static UpcallHandler make(MethodHandle mh, Function ftype) throws Throwable {
+    private static UpcallHandler make(MethodHandle mh, Function ftype, Method ficMethod) throws Throwable {
         synchronized (HANDLERS_LOCK) {
             int id = ID2HANDLER.size();
-            UpcallHandler handler = new UpcallHandler(mh, ftype, id);
+            UpcallHandler handler = new UpcallHandler(mh, ftype, ficMethod, id);
             ID2HANDLER.add(handler);
 
             if (DEBUG) {
@@ -125,9 +125,10 @@ public class UpcallHandler {
         }
     }
 
-    private UpcallHandler(MethodHandle mh, Function ftype, int id) throws Throwable {
+    private UpcallHandler(MethodHandle mh, Function ftype, Method ficMethod, int id) throws Throwable {
         this.mh = mh;
         this.ftype = ftype;
+        this.ficMethod = ficMethod;
         this.stub = new UpcallStub(id);
     }
 
@@ -171,7 +172,9 @@ public class UpcallHandler {
     }
 
     private Object boxArgument(Scope scope, UpcallContext context, Struct<?>[] structs, ArgumentBinding binding) throws IllegalAccessException {
-        Class<?> carrierType = binding.getMember().getCarrierType(mh.type());
+        Type carrierType = binding.getMember().getCarrierType(ficMethod);
+        Class<?> carrierClass = Util.erasure(carrierType);
+        Layout layout = binding.getMember().getLayout(ftype);
 
         Pointer<Long> src = context.getPtr(binding.getStorage());
 
@@ -180,7 +183,7 @@ public class UpcallHandler {
         }
 
 
-        if (Util.isCStruct(carrierType)) {
+        if (Util.isCStruct(carrierClass)) {
             int index = binding.getMember().getArgumentIndex();
             Struct<?> r = structs[index];
             if (r == null) {
@@ -192,7 +195,7 @@ public class UpcallHandler {
                 scope = Scope.newNativeScope();
 
                 @SuppressWarnings({"rawtypes", "unchecked"})
-                Struct<?> rtmp = scope.allocateStruct((Class)carrierType);
+                Struct<?> rtmp = scope.allocateStruct((Class)carrierClass);
 
                 structs[index] = r = rtmp;
             }
@@ -214,7 +217,7 @@ public class UpcallHandler {
 
             return r;
         } else {
-            return src.cast(Util.makeType(carrierType, src.type().layout())).get();
+            return src.cast(Util.makeType(carrierType, layout)).get();
         }
     }
 

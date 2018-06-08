@@ -41,6 +41,8 @@ import java.nicl.types.Array;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public final class Util {
 
@@ -88,7 +90,7 @@ public final class Util {
             return Types.INT64;
         } else if (Pointer.class.isAssignableFrom(c)) {
             return Types.POINTER;
-        } else if (isFunctionalInterface(c)) {
+        } else if (isCallback(c)) {
             return Types.POINTER;
         } else if (isCStruct(c)) {
             return layoutof(c);
@@ -119,18 +121,18 @@ public final class Util {
         return MethodType.methodType(method.getReturnType(), method.getParameterTypes());
     }
 
-    public static boolean isFunctionalInterface(Class<?> c) {
-        return c.isAnnotationPresent(FunctionalInterface.class);
+    public static boolean isCallback(Class<?> c) {
+        return c.isAnnotationPresent(NativeCallback.class);
     }
 
     public static Method findFunctionalInterfaceMethod(Class<?> c) {
-        for (Method m : c.getMethods()) {
-            if (m.getName().equals("fn")) {
-                return m;
-            }
+        Optional<Method> methodOpt = Optional.empty();
+        if (c.isAnnotationPresent(NativeCallback.class)) {
+            methodOpt = Stream.of(c.getDeclaredMethods())
+                .filter(m -> (m.getModifiers() & (Modifier.ABSTRACT | Modifier.PUBLIC)) != 0)
+                .findFirst();
         }
-
-        return null;
+        return methodOpt.orElseThrow(IllegalStateException::new);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
