@@ -39,8 +39,6 @@ public abstract class CodeFactory {
      */
     protected abstract CodeFactory addType(JType type, Cursor cursor);
 
-    protected abstract CodeFactory addMacro(Cursor cursor);
-
     protected abstract void produce();
 
     /**

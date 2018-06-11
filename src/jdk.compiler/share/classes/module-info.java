@@ -84,6 +84,7 @@ module jdk.compiler {
         jdk.javadoc;
     exports com.sun.tools.javac.api to
         jdk.javadoc,
+        jdk.jextract,
         jdk.jshell;
     exports com.sun.tools.javac.resources to
         jdk.jshell;

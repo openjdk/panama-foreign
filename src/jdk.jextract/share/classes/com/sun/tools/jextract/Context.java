@@ -22,12 +22,7 @@
  */
 package com.sun.tools.jextract;
 
-import jdk.internal.clang.Cursor;
-import jdk.internal.clang.Diagnostic;
-import jdk.internal.clang.Index;
-import jdk.internal.clang.LibClang;
-import jdk.internal.clang.SourceLocation;
-import jdk.internal.clang.Type;
+import jdk.internal.clang.*;
 import jdk.internal.nicl.LibrariesHelper;
 
 import java.io.File;
@@ -87,6 +82,8 @@ public final class Context {
     private Predicate<String> symChecker;
     private Predicate<String> symFilter;
 
+    private final MacroParser macroParser;
+
     private final static String defaultPkg = "jextract.dump";
     final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
@@ -100,6 +97,7 @@ public final class Context {
         this.libraryPaths = new ArrayList<>();
         this.linkCheckPaths = new ArrayList<>();
         this.excludeSymbols = new ArrayList<>();
+        this.macroParser = new MacroParser();
         this.out = out;
         this.err = err;
     }
@@ -249,6 +247,32 @@ public final class Context {
 
         final Context.Entity e = whatis(header);
         return new HeaderFile(this, header, e.pkg, e.entity, main);
+    }
+
+    void defineMacro(Cursor cursor) {
+        String macroName = cursor.spelling();
+        if (cursor.isMacroFunctionLike()) {
+            logger.fine(() -> "Skipping function-like macro " + macroName);
+            return;
+        }
+
+
+        if (macroParser.isDefined(macroName)) {
+            logger.fine(() -> "Macro " + macroName + " already handled");
+            return;
+        }
+
+        logger.fine(() -> "Defining macro " + macroName);
+
+        TranslationUnit tu = cursor.getTranslationUnit();
+        SourceRange range = cursor.getExtent();
+        String[] tokens = tu.tokens(range);
+
+        macroParser.parse(cursor, tokens);
+    }
+
+    List<MacroParser.Macro> macros() {
+        return macroParser.macros();
     }
 
     void processCursor(Cursor c, HeaderFile main, Function<HeaderFile, CodeFactory> fn) {

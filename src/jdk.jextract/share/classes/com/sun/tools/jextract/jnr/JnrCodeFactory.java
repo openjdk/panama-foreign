@@ -78,11 +78,6 @@ public class JnrCodeFactory extends CodeFactory {
         return this;
     }
 
-    @Override
-    public CodeFactory addMacro(Cursor c) {
-        return this;
-    }
-
     protected String getTypeDescriptor(Type type) {
         try {
             switch (type.kind()) {

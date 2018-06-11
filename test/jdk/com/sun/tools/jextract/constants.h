@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,35 @@
  * questions.
  */
 
-module jdk.jextract {
-    requires java.compiler;
-    requires java.logging;
-    requires jdk.internal.opt;
-    requires jdk.internal.clang;
-    requires jdk.compiler;
+#define ZERO 0
+#define ONE ZERO + 1 //backward ref
+#define THREE ONE + TWO /* forward ref */
+#define TWO ONE + ONE
 
-    provides java.util.spi.ToolProvider with
-        com.sun.tools.jextract.Main.JextractToolProvider;
-}
+#define FOUR 0x1L + THREE
+#define FIVE 0x1UL + FOUR
+
+#define SIX ONE +\
+              TWO +\
+              THREE
+
+#define STR "Hello" // a string
+
+#define ID(x) x //function-like
+#define SUM(x,y) x + y //function-like
+
+#define BLOCK_BEGIN { //not a constant
+#define BLOCK_END } //not a constant
+
+#define INTEGER_MAX_VALUE Integer.MAX_VALUE //constant in Java, not in C
+#define QUOTE "QUOTE" //should be ok
+
+#define FLOAT_VALUE 1.32F;
+#define DOUBLE_VALUE 1.32;
+
+#define CYCLIC_1 1 + CYCLIC_1 //cycle
+
+#define CYCLIC_2 1 + TEMP //indirect cycle
+#define TEMP 1 + CYCLIC_2
+
+#define CHAR_VALUE 'h'

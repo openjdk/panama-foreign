@@ -22,8 +22,10 @@
  */
 package com.sun.tools.jextract;
 
+import com.sun.tools.jextract.MacroParser.Macro;
 import jdk.internal.clang.*;
 import jdk.internal.clang.Type;
+import jdk.internal.nicl.Util;
 import jdk.internal.org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -33,11 +35,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
@@ -58,7 +58,6 @@ final class AsmCodeFactory extends CodeFactory {
     private final String internal_name;
     private final HeaderFile owner;
     private final Map<String, byte[]> types;
-    private final HashSet<String> handledMacros = new HashSet<>();
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private final List<String> headerDeclarations = new ArrayList<>();
 
@@ -75,6 +74,7 @@ final class AsmCodeFactory extends CodeFactory {
     }
 
     private void generateNativeHeader() {
+        generateMacros();
         AnnotationVisitor av = global_cw.visitAnnotation(NATIVE_HEADER, true);
         av.visit("path", owner.path.toAbsolutePath().toString());
         if (owner.libraries != null && !owner.libraries.isEmpty()) {
@@ -493,174 +493,50 @@ final class AsmCodeFactory extends CodeFactory {
         return this;
     }
 
-    private static class Literal {
-        private enum Type {
-            INT(int.class),
-            LONG(long.class),
-            STRING(String.class);
+    CodeFactory generateMacros() {
+        for (Macro macro : ctx.macros()) {
+            if (macro.isConstantMacro()) {
+                logger.fine(() -> "Adding macro " + macro.name());
+                Object value = macro.value();
+                Class<?> macroType = (Class<?>)Util.unboxIfNeeded(value.getClass());
 
-            private Class<?> c;
+                String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(macroType));
+                MethodVisitor mv = global_cw.visitMethod(ACC_PUBLIC, macro.name(), sig, sig, null);
 
-            Type(Class<?> c) {
-                this.c = c;
-            }
+                Cursor cursor = macro.cursor();
+                AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
+                SourceLocation src = cursor.getSourceLocation();
+                SourceLocation.Location loc = src.getFileLocation();
+                Path p = loc.path();
+                av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+                av.visit("line", loc.line());
+                av.visit("column", loc.column());
+                av.visit("USR", cursor.USR());
+                av.visitEnd();
 
-            Class<?> getTypeClass() {
-                return c;
-            }
-        }
+                mv.visitCode();
 
-        private final Type type;
-        private final Object value;
-
-        Literal(Type type, Object value) {
-            this.type = type;
-            this.value = value;
-        }
-
-        Type type() {
-            return type;
-        }
-
-        Object getValue() {
-            return value;
-        }
-
-        private static Literal parseString(String s) {
-            if (!s.startsWith("\"") || !s.endsWith("\"")) {
-                return null;
-            }
-
-            return new Literal(Literal.Type.STRING, s.substring(1, s.length() - 1));
-        }
-
-        private static Literal parseInteger(String s) {
-            try {
-                return new Literal(Literal.Type.INT, Integer.valueOf(s));
-            } catch (NumberFormatException e) {
-            }
-
-            if (s.startsWith("0x")) {
-                try {
-                    return new Literal(Literal.Type.INT, Integer.parseInt(s.substring(2), 16));
-                } catch (NumberFormatException e) {
+                mv.visitLdcInsn(value);
+                if (macroType.equals(char.class)) {
+                    mv.visitInsn(I2C);
+                    mv.visitInsn(IRETURN);
+                } else if (macroType.equals(int.class)) {
+                    mv.visitInsn(IRETURN);
+                } else if (macroType.equals(float.class)) {
+                    mv.visitInsn(FRETURN);
+                } else if (macroType.equals(long.class)) {
+                    mv.visitInsn(LRETURN);
+                } else if (macroType.equals(double.class)) {
+                    mv.visitInsn(DRETURN);
+                } else if (macroType.equals(String.class)) {
+                    mv.visitInsn(ARETURN);
                 }
+                mv.visitMaxs(0, 0);
+                mv.visitEnd();
+            } else {
+                logger.fine(() -> "Skipping unrecognized object-like macro " + macro.name());
             }
-
-            return null;
         }
-
-        private static Literal parseLong(String s) {
-            try {
-                return new Literal(Literal.Type.LONG, Long.valueOf(s));
-            } catch (NumberFormatException e) {
-            }
-
-            if (s.startsWith("0x")) {
-                try {
-                    return new Literal(Literal.Type.LONG, Long.parseLong(s.substring(2), 16));
-                } catch (NumberFormatException e) {
-                }
-            }
-
-            String[] ignoredSuffixes = {"L", "UL", "LL"};
-
-            for (String suffix : ignoredSuffixes) {
-                if (s.endsWith(suffix)) {
-                    Literal l = parseLong(s.substring(0, s.length() - suffix.length()));
-                    if (l != null) {
-                        return l;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        static Literal parse(String s) {
-            Literal l;
-
-            l = parseString(s);
-            if (l != null) {
-                return l;
-            }
-
-            l = parseInteger(s);
-            if (l != null) {
-                return l;
-            }
-
-            l = parseLong(s);
-            if (l != null) {
-                return l;
-            }
-
-            return null;
-        }
-    }
-
-    @Override
-    protected CodeFactory addMacro(Cursor cursor) {
-        String macroName = cursor.spelling();
-
-        if (handledMacros.contains(macroName)) {
-            logger.fine(() -> "Macro " + macroName + " already handled");
-            return this;
-        }
-
-        logger.fine(() -> "Adding macro " + macroName);
-
-        TranslationUnit tu = cursor.getTranslationUnit();
-        SourceRange range = cursor.getExtent();
-        String[] tokens = tu.tokens(range);
-
-        for (String token : tokens) {
-            logger.finest(() -> "TOKEN: " + token);
-        }
-
-        if (tokens.length != 2) {
-            logger.fine(() -> "Skipping macro " + tokens[0] + " because it doesn't have exactly 2 tokens");
-            return this;
-        }
-
-        int flags = ACC_PUBLIC;
-
-        Literal l = Literal.parse(tokens[1]);
-        if (l == null) {
-            logger.fine(() -> "Skipping macro " + tokens[0] + " because its body isn't a recognizable literal constant");
-            return this;
-        }
-
-        String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(l.type().getTypeClass()));
-        MethodVisitor mv = global_cw.visitMethod(flags, macroName, sig, sig, null);
-
-        AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
-        SourceLocation src = cursor.getSourceLocation();
-        SourceLocation.Location loc = src.getFileLocation();
-        Path p = loc.path();
-        av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
-        av.visit("line", loc.line());
-        av.visit("column", loc.column());
-        av.visit("USR", cursor.USR());
-        av.visitEnd();
-
-        mv.visitCode();
-        mv.visitLdcInsn(l.getValue());
-        switch (l.type()) {
-            case INT:
-                mv.visitInsn(IRETURN);
-                break;
-            case LONG:
-                mv.visitInsn(LRETURN);
-                break;
-            case STRING:
-                mv.visitInsn(ARETURN);
-                break;
-        }
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
-
-        handledMacros.add(macroName);
 
         return this;
     }
