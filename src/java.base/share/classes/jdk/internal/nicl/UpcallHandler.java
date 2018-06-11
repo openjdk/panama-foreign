@@ -32,7 +32,6 @@ import jdk.internal.nicl.types.*;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.nicl.NativeTypes;
@@ -87,7 +86,9 @@ public class UpcallHandler {
         }
 
         Method ficMethod = Util.findFunctionalInterfaceMethod(c);
-        Function ftype = Util.functionof(c);
+        LayoutResolver resolver = LayoutResolver.get(c);
+        resolver.scanMethod(ficMethod);
+        Function ftype = resolver.resolve(Util.functionof(c));
 
         MethodHandle mh = MethodHandles.publicLookup().unreflect(ficMethod);
 

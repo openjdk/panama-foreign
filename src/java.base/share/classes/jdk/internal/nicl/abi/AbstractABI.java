@@ -82,8 +82,6 @@ public abstract class AbstractABI implements SystemABI {
             return alignmentOfContainer((Group) t);
         } else if (t instanceof Address) {
             return 8;
-        } else if (t instanceof Unresolved) {
-            return alignment(((Unresolved)t).resolve(), isVar);
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);
         }
@@ -163,8 +161,6 @@ public abstract class AbstractABI implements SystemABI {
             return new ContainerSizeInfo((Group) t, -1).size();
         } else if (t instanceof Address) {
             return t.bitsSize() / 8;
-        } else if (t instanceof Unresolved) {
-            return sizeof(((Unresolved)t).resolve());
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);
         }

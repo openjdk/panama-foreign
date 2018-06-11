@@ -71,6 +71,15 @@ public final class Function {
     }
 
     /**
+     * Does this function contain unresolved layouts?
+     * @return true if this function contains (possibly nested) unresolved layouts.
+     */
+    public boolean isPartial() {
+        return Stream.concat(resLayout.stream(), Stream.of(argLayouts))
+                .anyMatch(Layout::isPartial);
+    }
+
+    /**
      * Create a function descriptor with given return and argument layouts.
      * @param varargs is this a variadic function
      * @param resLayout the return layout.

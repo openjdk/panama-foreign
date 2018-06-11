@@ -75,10 +75,13 @@ abstract class BinderClassGenerator {
     // name to use for the generated class
     final String implClassName;
 
+    final LayoutResolver layoutResolver;
+
     BinderClassGenerator(Class<?> hostClass, String implClassName, Class<?>[] interfaces) {
         this.hostClass = hostClass;
         this.implClassName = implClassName;
         this.interfaces = interfaces;
+        this.layoutResolver = LayoutResolver.get(hostClass);
     }
 
     /**
@@ -141,7 +144,7 @@ abstract class BinderClassGenerator {
     protected void generateMembers(BinderClassWriter cw) {
         for (Method m : interfaces[0].getMethods()) {
             try {
-                LayoutResolver.instance().scanMethod(m);
+                layoutResolver.scanMethod(m);
                 generateMethodImplementation(cw, m);
             } catch (Exception | Error e) {
                 throw new RuntimeException("Failed to generate method " + m, e);

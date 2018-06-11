@@ -52,7 +52,7 @@ public final class Address extends Value {
             FUNCTION
         }
 
-        Kind kind;
+        private final Kind kind;
         private final Object info;
 
         private Info(Kind kind, Object info) {

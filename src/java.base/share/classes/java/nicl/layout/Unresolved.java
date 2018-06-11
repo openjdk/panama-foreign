@@ -39,16 +39,6 @@ public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
     }
 
     /**
-     * Resolve this layout to a new layout instance.
-     * @throws IllegalArgumentException if the resolution process fails.
-     * @return the resolved layout. The resulting layout is such that its size is known. There are no constraints
-     * on whether the resolved layout could contain extra unresolved layout in size-independent positions (e.g. inside pointers).
-     */
-    public Layout resolve() throws IllegalArgumentException {
-        return LayoutResolver.instance().resolve(this).orElseThrow(IllegalArgumentException::new);
-    }
-
-    /**
      * Create a new selector layout from given path expression.
      * @return the new selector layout.
      */
@@ -58,7 +48,7 @@ public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
 
     @Override
     public long bitsSize() {
-        return resolve().bitsSize();
+        throw new UnsupportedOperationException("bitsSize on Unresolved");
     }
 
     @Override

@@ -25,13 +25,13 @@
 
 package jdk.internal.nicl;
 
-import jdk.internal.nicl.types.DescriptorParser;
-
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nicl.layout.Function;
 import java.nicl.layout.Group;
+import java.nicl.layout.Group.Kind;
 import java.nicl.layout.Layout;
 import java.nicl.layout.Unresolved;
 import java.nicl.metadata.NativeStruct;
@@ -49,20 +49,25 @@ public final class LayoutResolver {
 
     private LayoutResolver() { }
 
-    private Map<String, Group> roots = new HashMap<>();
-
-    public Optional<Layout> resolve(Unresolved selector) {
-        return resolveRoot(selector.name().get());
-    }
+    private final Map<String, Group> descriptorToGroup = new HashMap<>();
+    private final Map<String, Group> nameToGroup = new HashMap<>();
 
     private Optional<Layout> resolveRoot(String name) {
-        return Optional.ofNullable(roots.get(name));
+        return Optional.ofNullable(nameToGroup.get(name));
     }
 
-    private static LayoutResolver resolver = new LayoutResolver();
+    private static final ClassValue<LayoutResolver> resolvers = new ClassValue<>() {
+        @Override
+        protected LayoutResolver computeValue(Class<?> c) {
+            return new LayoutResolver();
+        }
+    };
 
-    public static LayoutResolver instance() {
-        return resolver;
+    public static LayoutResolver get(Class<?> c) {
+        while (c.getEnclosingClass() != null) {
+            c = c.getEnclosingClass();
+        }
+        return resolvers.get(c);
     }
 
     void scanType(Type t) {
@@ -76,18 +81,58 @@ public final class LayoutResolver {
             if (cl.isArray()) {
                 scanType(cl.getComponentType());
             } else if (cl.isAnnotationPresent(NativeStruct.class)) {
-                Group g = (Group) DescriptorParser.parseLayout(cl.getAnnotation(NativeStruct.class).value());
+                String layout = cl.getAnnotation(NativeStruct.class).value();
+                Group g = descriptorToGroup.containsKey(layout)? descriptorToGroup.get(layout) : (Group)Layout.of(layout);
+                descriptorToGroup.put(layout, g);
                 addRoot(g);
             }
         }
     }
     //where
     private void addRoot(Group group) {
-        group.name().ifPresent(name -> roots.put(name, group));
+        group.name().ifPresent(name -> {
+            if (nameToGroup.containsKey(name) && nameToGroup.get(name) != group) {
+                throw new IllegalArgumentException(name + " cannot be redefined");
+            }
+            nameToGroup.put(name, group);
+        });
     }
 
     void scanMethod(Method m) {
         Stream.of(m.getGenericParameterTypes()).forEach(this::scanType);
         scanType(m.getGenericReturnType());
+    }
+
+    Function resolve(Function f) {
+        if (!f.isPartial()) {
+            return f;
+        } else {
+            Layout[] newArgs = f.argumentLayouts().stream()
+                    .map(this::resolve)
+                    .toArray(Layout[]::new);
+            return (f.returnLayout().isEmpty()) ?
+                    Function.ofVoid(f.isVariadic(), newArgs) :
+                    Function.of(resolve(f.returnLayout().get()), f.isVariadic(), newArgs);
+        }
+    }
+
+    Layout resolve(Layout l) {
+        if (!l.isPartial()) {
+            return l;
+        } else {
+            if (l instanceof Unresolved) {
+                return resolveRoot(l.name().get()).orElseThrow(IllegalStateException::new);
+            } else if (l instanceof Group) {
+                Group g = (Group)l;
+                Layout[] newElems = g.elements().stream()
+                        .map(this::resolve)
+                        .toArray(Layout[]::new);
+                return g.kind() == Kind.STRUCT ?
+                        Group.struct(newElems) :
+                        Group.union(newElems);
+            } else {
+                return l;
+            }
+        }
     }
 }

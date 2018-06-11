@@ -277,8 +277,6 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
             return classifyArrayType((Sequence) type, named);
         } else if (type instanceof Group) {
             return classifyStructType((Group) type, named);
-        } else if (type instanceof Unresolved) {
-            return classifyType(((Unresolved)type).resolve(), named);
         } else {
             throw new IllegalArgumentException("Unhandled type " + type);
         }

@@ -35,7 +35,6 @@ import java.nicl.layout.Layout;
 import java.nicl.metadata.*;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
-import java.nicl.types.Struct;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -124,7 +123,8 @@ class HeaderImplGenerator extends BinderClassGenerator {
         Function function = info.descriptor;
         NativeInvoker invoker;
         try {
-            invoker = new NativeInvoker(function, methodType, method.isVarArgs(), lookup, info.symbolName, method.toString(), method.getGenericReturnType());
+            invoker = new NativeInvoker(layoutResolver.resolve(function), methodType, method.isVarArgs(), lookup,
+                    info.symbolName, method.toString(), method.getGenericReturnType());
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new IllegalStateException(e);
         }

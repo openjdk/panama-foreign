@@ -24,6 +24,7 @@
  */
 package java.nicl.layout;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,7 +34,7 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
     private final Map<String, String> annotations;
 
     public AbstractLayout(Map<String, String> annotations) {
-        this.annotations = annotations;
+        this.annotations = Collections.unmodifiableMap(annotations);
     }
 
     @Override
@@ -68,5 +69,5 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
         }
     }
 
-    static final Map<String, String> NO_ANNOS = new LinkedHashMap<>();
+    static final Map<String, String> NO_ANNOS = Collections.unmodifiableMap(new HashMap<>());
 }

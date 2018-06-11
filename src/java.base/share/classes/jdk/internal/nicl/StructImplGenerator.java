@@ -59,12 +59,12 @@ class StructImplGenerator extends BinderClassGenerator {
 
     StructImplGenerator(Class<?> hostClass, String implClassName, Class<?> c) {
         super(hostClass, implClassName, new Class<?>[] { c });
-        layout = (Group)Layout.of(c.getAnnotation(NativeStruct.class).value());
+        layout = (Group)layoutResolver.resolve(Layout.of(c.getAnnotation(NativeStruct.class).value()));
     }
 
     @Override
     protected void generateMembers(BinderClassWriter cw) {
-        LayoutResolver.instance().scanType(interfaces[0]);
+        layoutResolver.scanType(interfaces[0]);
         generatePointerField(cw);
         generatePointerGetter(cw);
         generatePtrHelper(cw);
