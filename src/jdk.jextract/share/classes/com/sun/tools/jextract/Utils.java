@@ -332,7 +332,7 @@ public class Utils {
         } else {
             //symbolic reference
             return Unresolved.of()
-                    .withAnnotation(Layout.NAME, t.canonicalType().getDeclarationCursor().spelling());
+                    .withAnnotation(Layout.NAME, getIdentifier(t.canonicalType()));
         }
     }
 
@@ -368,6 +368,6 @@ public class Utils {
         Layout[] fields = fieldLayouts.toArray(new Layout[0]);
         Group g = isUnion ?
                 Group.union(fields) : Group.struct(fields);
-        return g.withAnnotation(Layout.NAME, cu.spelling());
+        return g.withAnnotation(Layout.NAME, getIdentifier(t));
     }
 }

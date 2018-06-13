@@ -91,6 +91,9 @@ public final class LayoutResolver {
     //where
     private void addRoot(Group group) {
         group.name().ifPresent(name -> {
+            if (name.isEmpty()) {
+                throw new IllegalArgumentException("name cannot be empty");
+            }
             if (nameToGroup.containsKey(name) && nameToGroup.get(name) != group) {
                 throw new IllegalArgumentException(name + " cannot be redefined");
             }

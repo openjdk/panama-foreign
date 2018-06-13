@@ -309,7 +309,8 @@ public class Runner {
     public static Object[][] cases() {
         return new Object[][] {
             { "simple.h", "com.acme", new String[] { "simple.java" }},
-            { "recursive.h", "com.acme", new String[] { "recursive.java" }}
+            { "recursive.h", "com.acme", new String[] { "recursive.java" }},
+            { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct.java" }}
         };
     }
 }
