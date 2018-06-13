@@ -23,27 +23,16 @@
 
 package com.sun.tools.jextract;
 
-import jdk.internal.clang.Cursor;
-import jdk.internal.clang.Type;
-import jdk.internal.clang.TypeKind;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
-
-import static java.nio.file.StandardOpenOption.READ;
+import jdk.internal.clang.Cursor;
+import jdk.internal.clang.Type;
+import jdk.internal.clang.TypeKind;
 
 /**
  * A dictionary that find Java type for a given native type.
@@ -140,13 +129,13 @@ final class TypeDictionary {
                 // Array of element type
                 jt = get(t.getElementType());
                 if (jt != null) {
-                    jt = new JType.Array(jt);
+                    jt = JType.ofArray(jt);
                 }
                 break;
             case IncompleteArray:
                 jt = get(t.getElementType());
                 if (jt != null) {
-                    jt = new PointerType(jt);
+                    jt = JType.ofArray(jt);
                 }
                 break;
             case Pointer:

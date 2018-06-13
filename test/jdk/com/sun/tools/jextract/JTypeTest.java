@@ -20,17 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-import java.nicl.metadata.NativeLocation;
-import static java.lang.annotation.ElementType.TYPE_USE;
+
+import com.sun.tools.jextract.JType;
 import java.lang.annotation.Retention;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
-import java.util.function.Predicate;
+import java.nicl.metadata.NativeLocation;
+import org.testng.annotations.Test;
+
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-import org.testng.annotations.Test;
-import com.sun.tools.jextract.JType;
-import com.sun.tools.jextract.TypeAlias;
 
 /*
  * @test
@@ -71,7 +71,7 @@ public class JTypeTest {
     public void testOfReference() {
         assertEquals(JType.of(Object.class), JType.Object);
         int[] ar = new int[0];
-        assertTrue(JType.of(ar.getClass()) instanceof JType.Array);
+        assertTrue(JType.of(ar.getClass()) instanceof JType.ArrayType);
         assertTrue(JType.of(getClass()) instanceof JType.ObjectRef);
         // FIXME: the follwing cases fail.
         // assertTrue(JType.of(Alias.class) instanceof TypeAlias);

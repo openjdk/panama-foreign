@@ -49,7 +49,7 @@ public interface JType {
 
     public static JType of(final Class<?> cls) {
         if (cls.isArray()) {
-            return new Array(JType.of(cls.getComponentType()));
+            return ofArray(JType.of(cls.getComponentType()));
         }
         if (cls.isPrimitive()) {
             switch (cls.getTypeName()) {
@@ -111,6 +111,7 @@ public interface JType {
     public static JType of(String clsName) {
         return new ObjectRef(clsName);
     }
+    public static JType ofArray(JType elementType) { return new ArrayType(elementType); }
 
     /**
      * Return Java type signature for JType. If JType is a Pointer&lt;Void&gt;, return as
@@ -122,6 +123,9 @@ public interface JType {
         // Return Pointer<?> instead of Pointer<Void>
         if (jt instanceof JType2) {
             jt = ((JType2) jt).getDelegate();
+        }
+        if (jt instanceof TypeAlias) {
+            jt = ((TypeAlias) jt).canonicalType();
         }
         if (jt instanceof PointerType) {
             return ((PointerType) jt).getSignature(true);
@@ -175,21 +179,38 @@ public interface JType {
         }
     }
 
-    final static class Array implements JType {
+    final class ArrayType implements JType {
         final JType elementType;
 
-        Array(JType elementType) {
-            this.elementType = elementType;
+        ArrayType(JType type) {
+            elementType = type;
         }
 
         @Override
         public String getDescriptor() {
-            return "[" + elementType.getDescriptor();
+            return JType.of(java.nicl.types.Array.class).getDescriptor();
         }
 
         @Override
         public String getSignature() {
-            return "[" + elementType.getSignature();
+            StringBuilder sb = new StringBuilder();
+            sb.append("L");
+            sb.append(java.nicl.types.Array.class.getName().replace('.', '/'));
+            sb.append("<");
+            JType pt = elementType;
+            if (pt instanceof JType2) {
+                pt = ((JType2) pt).getDelegate();
+            }
+            if (pt instanceof TypeAlias) {
+                pt = ((TypeAlias) pt).canonicalType();
+            }
+            sb.append(JType.boxing(pt));
+            sb.append(">;");
+            return sb.toString();
+        }
+
+        public JType getElementType() {
+            return elementType;
         }
     }
 
@@ -197,8 +218,10 @@ public interface JType {
         final JType returnType;
         final JType[] args;
         final boolean isVarArgs;
+        final java.nicl.layout.Function layout;
 
-        Function(boolean isVarArgs, JType returnType, JType... args) {
+        Function(java.nicl.layout.Function layout, boolean isVarArgs, JType returnType, JType... args) {
+            this.layout = layout;
             this.returnType = returnType;
             this.args = args;
             this.isVarArgs = isVarArgs;
@@ -234,6 +257,10 @@ public interface JType {
             sb.append(')');
             sb.append(returnType.getSignature());
             return sb.toString();
+        }
+
+        public String getNativeDescriptor() {
+            return layout.toString();
         }
     }
 

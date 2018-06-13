@@ -6,6 +6,9 @@ typedef struct UndefinedStruct UndefinedStruct;
 UndefinedStruct* allocateUndefinedStruct();
 
 typedef struct UndefineStructForPointer *UndefinedStructPointer;
+UndefinedStructPointer getParent(UndefinedStructPointer node);
+struct UndefinedStructForPointer* getSibling(UndefinedStructPointer node);
+UndefinedStructPointer getFirstChild(struct UndefinedStructForPointer* node);
 
 struct Opaque* allocate_opaque_struct();
 

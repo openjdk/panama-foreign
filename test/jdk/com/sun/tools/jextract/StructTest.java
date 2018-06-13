@@ -21,13 +21,16 @@
  * questions.
  */
 
-import org.testng.annotations.Test;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
+import java.nicl.layout.Function;
+import java.nicl.metadata.NativeHeader;
 import java.nio.file.Path;
+import java.util.Map;
+import jdk.internal.nicl.types.DescriptorParser;
+import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -35,7 +38,7 @@ import static org.testng.Assert.assertTrue;
 
 /*
  * @test
- * @modules jdk.jextract
+ * @modules jdk.jextract java.base/jdk.internal.nicl.types
  * @build StructTest
  * @run testng StructTest
  */
@@ -162,6 +165,25 @@ public class StructTest extends JextractToolRunner {
         assertEquals(ppVoid.getActualTypeArguments()[0], pVoid);
     }
 
+    private void verifyUndefinedStructFunctions(Class<?> header) {
+        NativeHeader nh = header.getAnnotation(NativeHeader.class);
+        Map<String, Object> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
+
+        Method m = findMethod(header, "getParent", java.nicl.types.Pointer.class);
+        assertNotNull(m);
+        ParameterizedType pVoid = (ParameterizedType) m.getGenericReturnType();
+        assertVoidPointer(pVoid, false);
+        Type[] args = m.getGenericParameterTypes();
+        assertEquals(args.length, 1);
+        ParameterizedType pWildcard = (ParameterizedType) args[0];
+        assertVoidPointer(pWildcard, true);
+
+        Function fn = (Function) map.get("getParent");
+        fn = (Function) map.get("getSibling");
+        fn = (Function) map.get("getFirstChild");
+        assertEquals(fn.toString(), "(u64:i8)u64:i8");
+    }
+
     private void verifyClass(Class<?> cls) {
         Class<?>[] clz = cls.getDeclaredClasses();
         assertEquals(clz.length, NumberOfInnerClasses);
@@ -172,6 +194,7 @@ public class StructTest extends JextractToolRunner {
         verifyFunctionPointer(findClass(clz,"FunctionPointer"));
         verifyIncompleteArray(findClass(clz, "IncompleteArray"));
         checkMethod(cls, "voidArguments", void.class);
+        verifyUndefinedStructFunctions(cls);
     }
 
     private void verifyAsCpp(Class<?> cls) {

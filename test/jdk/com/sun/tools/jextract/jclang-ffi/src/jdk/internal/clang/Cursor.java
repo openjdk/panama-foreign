@@ -30,6 +30,7 @@ import static clang.Index.CXCursor;
 import static clang.Index.CXSourceLocation;
 import static clang.Index.CXSourceRange;
 
+import java.nicl.types.Pointer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -150,7 +151,7 @@ public class Cursor {
         LibClang.lib.clang_visitChildren(cursor, (c, p, d) -> {
             ar.add(new Cursor(c));
             return Index.CXChildVisit_Continue;
-        }, null);
+        }, Pointer.nullPointer());
         return ar.stream();
     }
 

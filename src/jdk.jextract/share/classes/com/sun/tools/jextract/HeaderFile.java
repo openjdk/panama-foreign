@@ -22,16 +22,15 @@
  */
 package com.sun.tools.jextract;
 
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
-
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
-import java.util.List;
 
 /**
  * This class represent a native code header file
@@ -234,10 +233,10 @@ public final class HeaderFile {
                 jt = define(t.canonicalType());
                 break;
             case ConstantArray:
-                jt = new JType.Array(globalLookup(t.getElementType()));
+                jt = JType.ofArray(globalLookup(t.getElementType()));
                 break;
             case IncompleteArray:
-                jt = new PointerType(globalLookup(t.getElementType()));
+                jt = JType.ofArray(globalLookup(t.getElementType()));
                 break;
             case FunctionProto:
             case FunctionNoProto:
@@ -246,7 +245,7 @@ public final class HeaderFile {
                     // argument could be function pointer declared locally
                     args[i] = globalLookup(t.argType(i));
                 }
-                jt = new JType.Function(t.isVariadic(), globalLookup(t.resultType()), args);
+                jt = new JType.Function(Utils.getFunction(t), t.isVariadic(), globalLookup(t.resultType()), args);
                 break;
             case Enum:
                 String name = Utils.toInternalName(pkgName, clsName,

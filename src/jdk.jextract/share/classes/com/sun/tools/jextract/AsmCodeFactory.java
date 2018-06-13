@@ -281,49 +281,14 @@ final class AsmCodeFactory extends CodeFactory {
         }
     }
 
-    private void createFunctionalInterface(JType2 jt2) {
-        JType.FnIf fnif = (JType.FnIf) jt2.getDelegate();
-        JType.Function fn = fnif.getFunction();
-        String intf = ((JType.InnerType) fnif.type).getName();
-        logger.fine(() -> "Create FunctionalInterface " + intf);
-        String nDesc = Utils.getFunction(jt2.cType.getPointeeType()).toString();
-
-        final String name = internal_name + "$" + intf;
-
-        logger.fine(() -> "Define class " + name + " for anonymous function " + nDesc);
-        global_cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
-                name, null, "java/lang/Object", null);
-        AnnotationVisitor av = cw.visitAnnotation(
-                "Ljava/lang/FunctionalInterface;", true);
-        av.visitEnd();
-        av = cw.visitAnnotation(NATIVE_CALLBACK, true);
-        av.visit("value", nDesc);
-        av.visitEnd();
-        cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
-
-        // add the method
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, "fn",
-                fn.getDescriptor(), fn.getSignature(), null);
-        av.visitEnd();
-
-        mv.visitEnd();
-        // Write class
-        try {
-            writeClassFile(cw, owner.clsName + "$" + intf);
-        } catch (IOException ex) {
-            handleException(ex);
-        }
-    }
-
     private void createFunctionalInterface(Cursor dcl, JType.FnIf fnif) {
         JType.Function fn = fnif.getFunction();
         String intf;
         String nativeName;
+        String nDesc = fnif.getFunction().getNativeDescriptor();
         if (dcl == null) {
             intf = ((JType.InnerType) fnif.type).getName();
-            nativeName = "N/A";
+            nativeName = "anonymous function";
         } else {
             nativeName = Utils.getIdentifier(dcl);
             intf = Utils.toClassName(nativeName);
@@ -332,7 +297,7 @@ final class AsmCodeFactory extends CodeFactory {
 
         final String name = internal_name + "$" + intf;
 
-        logger.fine(() -> "Define class " + name + " for native type " + nativeName);
+        logger.fine(() -> "Define class " + name + " for native type " + nativeName + nDesc);
         global_cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
@@ -343,12 +308,9 @@ final class AsmCodeFactory extends CodeFactory {
         AnnotationVisitor av = cw.visitAnnotation(
                 "Ljava/lang/FunctionalInterface;", true);
         av.visitEnd();
-        if (dcl != null) {
-            av = cw.visitAnnotation(NATIVE_CALLBACK, true);
-            Type t = dcl.type().canonicalType();
-            av.visit("value", Utils.getLayout(t).toString());
-            av.visitEnd();
-        }
+        av = cw.visitAnnotation(NATIVE_CALLBACK, true);
+        av.visit("value", nDesc);
+        av.visitEnd();
         cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
 
         // add the method
@@ -447,7 +409,7 @@ final class AsmCodeFactory extends CodeFactory {
         if (cursor == null) {
             assert (jt2 != null);
             if (jt instanceof JType.FnIf) {
-                createFunctionalInterface(jt2);
+                createFunctionalInterface(null, (JType.FnIf) jt);
             }
             return this;
         }
