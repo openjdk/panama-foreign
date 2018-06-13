@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,6 +91,9 @@ import java.util.stream.Stream;
 import jdk.internal.misc.VM;
 import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.Modules;
+import jdk.internal.platform.Container;
+import jdk.internal.platform.Metrics;
+
 
 public final class LauncherHelper {
 
@@ -151,6 +154,7 @@ public final class LauncherHelper {
      *    this code determine this value, using a suitable method or omit the
      *    line entirely.
      */
+    @SuppressWarnings("fallthrough")
     static void showSettings(boolean printToStderr, String optionFlag,
             long initialHeapSize, long maxHeapSize, long stackSize) {
 
@@ -169,10 +173,18 @@ public final class LauncherHelper {
             case "locale":
                 printLocale();
                 break;
+            case "system":
+                if (System.getProperty("os.name").contains("Linux")) {
+                    printSystemMetrics();
+                    break;
+                }
             default:
                 printVmSettings(initialHeapSize, maxHeapSize, stackSize);
                 printProperties();
                 printLocale();
+                if (System.getProperty("os.name").contains("Linux")) {
+                    printSystemMetrics();
+                }
                 break;
         }
     }
@@ -305,6 +317,101 @@ public final class LauncherHelper {
                 ostream.print(INDENT + INDENT);
             }
         }
+    }
+
+    public static void printSystemMetrics() {
+        Metrics c = Container.metrics();
+
+        ostream.println("Operating System Metrics:");
+
+        if (c == null) {
+            ostream.println(INDENT + "No metrics available for this platform");
+            return;
+        }
+
+        ostream.println(INDENT + "Provider: " + c.getProvider());
+        ostream.println(INDENT + "Effective CPU Count: " + c.getEffectiveCpuCount());
+        ostream.println(INDENT + "CPU Period: " + c.getCpuPeriod() +
+               (c.getCpuPeriod() == -1 ? "" : "us"));
+        ostream.println(INDENT + "CPU Quota: " + c.getCpuQuota() +
+               (c.getCpuQuota() == -1 ? "" : "us"));
+        ostream.println(INDENT + "CPU Shares: " + c.getCpuShares());
+
+        int cpus[] = c.getCpuSetCpus();
+        ostream.println(INDENT + "List of Processors, "
+                + cpus.length + " total: ");
+
+        ostream.print(INDENT);
+        for (int i = 0; i < cpus.length; i++) {
+            ostream.print(cpus[i] + " ");
+        }
+        if (cpus.length > 0) {
+            ostream.println("");
+        }
+
+        cpus = c.getEffectiveCpuSetCpus();
+        ostream.println(INDENT + "List of Effective Processors, "
+                + cpus.length + " total: ");
+
+        ostream.print(INDENT);
+        for (int i = 0; i < cpus.length; i++) {
+            ostream.print(cpus[i] + " ");
+        }
+        if (cpus.length > 0) {
+            ostream.println("");
+        }
+
+        int mems[] = c.getCpuSetMems();
+        ostream.println(INDENT + "List of Memory Nodes, "
+                + mems.length + " total: ");
+
+        ostream.print(INDENT);
+        for (int i = 0; i < mems.length; i++) {
+            ostream.print(mems[i] + " ");
+        }
+        if (mems.length > 0) {
+            ostream.println("");
+        }
+
+        mems = c.getEffectiveCpuSetMems();
+        ostream.println(INDENT + "List of Available Memory Nodes, "
+                + mems.length + " total: ");
+
+        ostream.print(INDENT);
+        for (int i = 0; i < mems.length; i++) {
+            ostream.print(mems[i] + " ");
+        }
+        if (mems.length > 0) {
+            ostream.println("");
+        }
+
+        ostream.println(INDENT + "CPUSet Memory Pressure Enabled: "
+                + c.isCpuSetMemoryPressureEnabled());
+
+        long limit = c.getMemoryLimit();
+        ostream.println(INDENT + "Memory Limit: " +
+                ((limit >= 0) ? SizePrefix.scaleValue(limit) : "Unlimited"));
+
+        limit = c.getMemorySoftLimit();
+        ostream.println(INDENT + "Memory Soft Limit: " +
+                ((limit >= 0) ? SizePrefix.scaleValue(limit) : "Unlimited"));
+
+        limit = c.getMemoryAndSwapLimit();
+        ostream.println(INDENT + "Memory & Swap Limit: " +
+                ((limit >= 0) ? SizePrefix.scaleValue(limit) : "Unlimited"));
+
+        limit = c.getKernelMemoryLimit();
+        ostream.println(INDENT + "Kernel Memory Limit: " +
+                ((limit >= 0) ? SizePrefix.scaleValue(limit) : "Unlimited"));
+
+        limit = c.getTcpMemoryLimit();
+        ostream.println(INDENT + "TCP Memory Limit: " +
+                ((limit >= 0) ? SizePrefix.scaleValue(limit) : "Unlimited"));
+
+        ostream.println(INDENT + "Out Of Memory Killer Enabled: "
+                + c.isMemoryOOMKillEnabled());
+
+        ostream.println("");
     }
 
     private enum SizePrefix {
@@ -502,12 +609,13 @@ public final class LauncherHelper {
     }
 
     // From src/share/bin/java.c:
-    //   enum LaunchMode { LM_UNKNOWN = 0, LM_CLASS, LM_JAR, LM_MODULE }
+    //   enum LaunchMode { LM_UNKNOWN = 0, LM_CLASS, LM_JAR, LM_MODULE, LM_SOURCE }
 
     private static final int LM_UNKNOWN = 0;
     private static final int LM_CLASS   = 1;
     private static final int LM_JAR     = 2;
     private static final int LM_MODULE  = 3;
+    private static final int LM_SOURCE  = 4;
 
     static void abort(Throwable t, String msgKey, Object... args) {
         if (msgKey != null) {
@@ -538,13 +646,21 @@ public final class LauncherHelper {
      *
      * @return the application's main class
      */
+    @SuppressWarnings("fallthrough")
     public static Class<?> checkAndLoadMain(boolean printToStderr,
                                             int mode,
                                             String what) {
         initOutput(printToStderr);
 
-        Class<?> mainClass = (mode == LM_MODULE) ? loadModuleMainClass(what)
-                                                 : loadMainClass(mode, what);
+        Class<?> mainClass = null;
+        switch (mode) {
+            case LM_MODULE: case LM_SOURCE:
+                mainClass = loadModuleMainClass(what);
+                break;
+            default:
+                mainClass = loadMainClass(mode, what);
+                break;
+        }
 
         // record the real main class for UI purposes
         // neither method above can return null, they will abort()

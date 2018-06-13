@@ -373,7 +373,8 @@ HeapWord* CollectedHeap::obj_allocate_raw(Klass* klass, size_t size,
       return result;
     }
   }
-  return Universe::heap()->mem_allocate(size, gc_overhead_limit_was_exceeded);
+
+  return allocate_outside_tlab(klass, size, gc_overhead_limit_was_exceeded, THREAD);
 }
 
 HeapWord* CollectedHeap::allocate_from_tlab_slow(Klass* klass, size_t size, TRAPS) {
@@ -523,6 +524,10 @@ void CollectedHeap::fill_with_objects(HeapWord* start, size_t words, bool zap)
   }
 
   fill_with_object_impl(start, words, zap);
+}
+
+void CollectedHeap::fill_with_dummy_object(HeapWord* start, HeapWord* end, bool zap) {
+  CollectedHeap::fill_with_object(start, end, zap);
 }
 
 HeapWord* CollectedHeap::allocate_new_tlab(size_t min_size,
