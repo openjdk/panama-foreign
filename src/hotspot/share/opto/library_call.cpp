@@ -7237,12 +7237,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
     }
   } else {
     assert(bt == T_DOUBLE, "must be FP type only");
-    switch(op) {
-      default:
-        *name_ptr = "invalid";
-        *addr_ptr = NULL;
-        break;
-    }
+    *name_ptr = "invalid";
+    *addr_ptr = NULL;
   }
 }
 

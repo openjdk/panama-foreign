@@ -29,6 +29,12 @@
 #ifndef SHARE_VM_UTILITIES_GLOBALDEFINITIONS_VECAPI_HPP
 #define SHARE_VM_UTILITIES_GLOBALDEFINITIONS_VECAPI_HPP
 
+// VS2013 required to build .s files for math intrinsics
+#if defined(_WIN64) && (defined(_MSC_VER) && (_MSC_VER >= 1800))
+#define __VECTOR_API_MATH_INTRINSICS_COMMON
+#define __VECTOR_API_MATH_INTRINSICS_WINDOWS
+#endif
+
 // GCC 5+ can build all .s files for Linux
 #if defined(LINUX) && defined(AMD64) && (defined(__GNUC__) && (__GNUC__ >= 5))
 #define __VECTOR_API_MATH_INTRINSICS_COMMON
