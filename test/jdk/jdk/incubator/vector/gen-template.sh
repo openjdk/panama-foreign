@@ -29,6 +29,9 @@ TEMPLATE_FOLDER="templates/"
 unary="$TEMPLATE_FOLDER/Unary-op.template"
 unary_masked="$TEMPLATE_FOLDER/Unary-Masked-op.template"
 unary_scalar="$TEMPLATE_FOLDER/Unary-Scalar-op.template"
+ternary="$TEMPLATE_FOLDER/Ternary-op.template"
+ternary_masked="$TEMPLATE_FOLDER/Ternary-Masked-op.template"
+ternary_scalar="$TEMPLATE_FOLDER/Ternary-Scalar-op.template"
 binary="$TEMPLATE_FOLDER/Binary-op.template"
 binary_masked="$TEMPLATE_FOLDER/Binary-Masked-op.template"
 binary_scalar="$TEMPLATE_FOLDER/Binary-Scalar-op.template"
@@ -82,10 +85,17 @@ function gen_binary_alu_op {
 }
 
 function gen_unary_alu_op {
-  echo "Generating binary op $1 ($2)..."
+  echo "Generating unary op $1 ($2)..."
   gen_op_tmpl $unary_scalar "$@"
   gen_op_tmpl $unary "$@"
   gen_op_tmpl $unary_masked "$@"
+}
+
+function gen_ternary_alu_op {
+  echo "Generating ternary op $1 ($2)..."
+  gen_op_tmpl $ternary_scalar "$@"
+  gen_op_tmpl $ternary "$@"
+  gen_op_tmpl $ternary_masked "$@"
 }
 
 function gen_binary_op {
@@ -196,6 +206,9 @@ gen_op_tmpl $unary_math_template "cbrt" "Math.cbrt((double)a)" $template_file "F
 gen_op_tmpl $binary_math_template "hypot" "Math.hypot((double)a, (double)b)" $template_file "FP"
 gen_op_tmpl $binary_math_template "pow" "Math.pow((double)a, (double)b)" $template_file "FP"
 gen_op_tmpl $binary_math_template "atan2" "Math.atan2((double)a, (double)b)" $template_file "FP"
+
+# Ternary operations.
+gen_ternary_alu_op "fma" "Math.fma(a, b, c)" $template_file "FP"
 
 # Unary operations.
 gen_unary_alu_op "neg" "-((\$type\$)a)" $template_file

@@ -160,6 +160,7 @@ public class Long256VectorTests extends AbstractVectorTest {
             Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
+
     static final List<IntFunction<long[]>> LONG_GENERATORS = List.of(
             withToString("long[i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -189,6 +190,7 @@ public class Long256VectorTests extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
+
     @DataProvider
     public Object[][] longBinaryOpProvider() {
         return LONG_GENERATOR_PAIRS.stream().map(List::toArray).
@@ -203,6 +205,7 @@ public class Long256VectorTests extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
 
     @DataProvider
     public Object[][] longUnaryOpProvider() {
@@ -977,6 +980,9 @@ public class Long256VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Long256VectorTests::blend);
     }
+
+
+
 
 
 

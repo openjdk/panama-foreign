@@ -177,7 +177,47 @@ public class $vectorteststype$ extends AbstractVectorTest {
             Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
+
 #if[FP]
+    interface FTernOp {
+        $type$ apply($type$ a, $type$ b, $type$ c);
+    }
+
+    interface FTernMaskOp {
+        $type$ apply($type$ a, $type$ b, $type$ c, boolean m);
+
+        static FTernMaskOp lift(FTernOp f) {
+            return (a, b, c, m) -> m ? f.apply(a, b, c) : a;
+        }
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] c, $type$[] r, FTernOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(r[i], f.apply(a[i], b[i], c[i]));
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(r[i], f.apply(a[i], b[i], c[i]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i] + ", input3 = " + c[i]);
+        }
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] c, $type$[] r, boolean[] mask, FTernOp f) {
+        assertArraysEquals(a, b, c, r, mask, FTernMaskOp.lift(f));
+    }
+
+    static void assertArraysEquals($type$[] a, $type$[] b, $type$[] c, $type$[] r, boolean[] mask, FTernMaskOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(r[i], f.apply(a[i], b[i], c[i], mask[i % SPECIES.length()]));
+            }
+        } catch (AssertionError err) {
+            Assert.assertEquals(r[i], f.apply(a[i], b[i], c[i], mask[i % SPECIES.length()]), "at index #" + i + ", input1 = " + a[i] + ", input2 = "
+              + b[i] + ", input3 = " + c[i] + ", mask = " + mask[i % SPECIES.length()]);
+        }
+    }
+
     static boolean isWithin1Ulp($type$ actual, $type$ expected) {
         if ($Type$.isNaN(expected) && !$Type$.isNaN(actual)) {
             return false;
@@ -256,6 +296,13 @@ public class $vectorteststype$ extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
+#if[FP]
+    static final List<List<IntFunction<$type$[]>>> $TYPE$_GENERATOR_TRIPLES =
+        $TYPE$_GENERATOR_PAIRS.stream().
+                flatMap(pair -> $TYPE$_GENERATORS.stream().map(f -> List.of(pair.get(0), pair.get(1), f))).
+                collect(Collectors.toList());
+#end[FP]
+
     @DataProvider
     public Object[][] $type$BinaryOpProvider() {
         return $TYPE$_GENERATOR_PAIRS.stream().map(List::toArray).
@@ -270,6 +317,23 @@ public class $vectorteststype$ extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
+#if[FP]
+    @DataProvider
+    public Object[][] $type$TernaryOpProvider() {
+        return $TYPE$_GENERATOR_TRIPLES.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] $type$TernaryOpMaskProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+                flatMap(fm -> $TYPE$_GENERATOR_TRIPLES.stream().map(lfa -> {
+                    return Stream.concat(lfa.stream(), Stream.of(fm)).toArray();
+                })).
+                toArray(Object[][]::new);
+    }
+#end[FP]
 
     @DataProvider
     public Object[][] $type$UnaryOpProvider() {
