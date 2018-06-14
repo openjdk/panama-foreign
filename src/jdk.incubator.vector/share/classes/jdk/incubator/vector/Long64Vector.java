@@ -30,6 +30,7 @@ import java.nio.LongBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -1103,6 +1104,10 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             super(reorder, i);
         }
 
+        public Long64Shuffle(IntUnaryOperator f) {
+            super(f);
+        }
+
         @Override
         public Long64Species species() {
             return SPECIES;
@@ -1211,6 +1216,16 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         @Override
         public Long64Mask maskFromArray(boolean[] bits, int i) {
             return new Long64Mask(bits, i);
+        }
+
+        @Override
+        public Long64Shuffle shuffle(IntUnaryOperator f) {
+            return new Long64Shuffle(f);
+        }
+
+        @Override
+        public Long64Shuffle shuffleIota() {
+            return new Long64Shuffle(AbstractShuffle.IDENTITY);
         }
 
         @Override

@@ -30,6 +30,7 @@ import java.nio.FloatBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -1026,6 +1027,10 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
             super(reorder, i);
         }
 
+        public Float128Shuffle(IntUnaryOperator f) {
+            super(f);
+        }
+
         @Override
         public Float128Species species() {
             return SPECIES;
@@ -1134,6 +1139,16 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         @Override
         public Float128Mask maskFromArray(boolean[] bits, int i) {
             return new Float128Mask(bits, i);
+        }
+
+        @Override
+        public Float128Shuffle shuffle(IntUnaryOperator f) {
+            return new Float128Shuffle(f);
+        }
+
+        @Override
+        public Float128Shuffle shuffleIota() {
+            return new Float128Shuffle(AbstractShuffle.IDENTITY);
         }
 
         @Override

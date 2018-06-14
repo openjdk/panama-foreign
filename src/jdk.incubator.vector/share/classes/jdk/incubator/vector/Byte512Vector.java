@@ -29,6 +29,7 @@ import java.nio.ByteOrder;
 import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -1032,6 +1033,10 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
             super(reorder, i);
         }
 
+        public Byte512Shuffle(IntUnaryOperator f) {
+            super(f);
+        }
+
         @Override
         public Byte512Species species() {
             return SPECIES;
@@ -1140,6 +1145,16 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         @Override
         public Byte512Mask maskFromArray(boolean[] bits, int i) {
             return new Byte512Mask(bits, i);
+        }
+
+        @Override
+        public Byte512Shuffle shuffle(IntUnaryOperator f) {
+            return new Byte512Shuffle(f);
+        }
+
+        @Override
+        public Byte512Shuffle shuffleIota() {
+            return new Byte512Shuffle(AbstractShuffle.IDENTITY);
         }
 
         @Override

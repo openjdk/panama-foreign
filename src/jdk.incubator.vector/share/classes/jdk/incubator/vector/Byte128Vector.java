@@ -29,6 +29,7 @@ import java.nio.ByteOrder;
 import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -1032,6 +1033,10 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             super(reorder, i);
         }
 
+        public Byte128Shuffle(IntUnaryOperator f) {
+            super(f);
+        }
+
         @Override
         public Byte128Species species() {
             return SPECIES;
@@ -1140,6 +1145,16 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         @Override
         public Byte128Mask maskFromArray(boolean[] bits, int i) {
             return new Byte128Mask(bits, i);
+        }
+
+        @Override
+        public Byte128Shuffle shuffle(IntUnaryOperator f) {
+            return new Byte128Shuffle(f);
+        }
+
+        @Override
+        public Byte128Shuffle shuffleIota() {
+            return new Byte128Shuffle(AbstractShuffle.IDENTITY);
         }
 
         @Override

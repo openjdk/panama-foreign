@@ -24,7 +24,11 @@
  */
 package jdk.incubator.vector;
 
+import java.util.function.IntUnaryOperator;
+
 abstract class AbstractShuffle<E, S extends Vector.Shape> extends Vector.Shuffle<E, S> {
+    static final IntUnaryOperator IDENTITY = i -> i;
+
     // Internal representation allows for a maximum index of 256
     // Values are masked by (species().length() - 1)
     final byte[] reorder;
@@ -39,8 +43,16 @@ abstract class AbstractShuffle<E, S extends Vector.Shape> extends Vector.Shuffle
 
     public AbstractShuffle(int[] reorder, int offset) {
         byte[] a = new byte[species().length()];
-        for (int i = 0; i < reorder.length; i++) {
-            a[i] = (byte) (reorder[offset + i] & (reorder.length - 1));
+        for (int i = 0; i < a.length; i++) {
+            a[i] = (byte) (reorder[offset + i] & (a.length - 1));
+        }
+        this.reorder = a;
+    }
+
+    public AbstractShuffle(IntUnaryOperator f) {
+        byte[] a = new byte[species().length()];
+        for (int i = 0; i < a.length; i++) {
+            a[i] = (byte) (f.applyAsInt(i) & (a.length - 1));
         }
         this.reorder = a;
     }

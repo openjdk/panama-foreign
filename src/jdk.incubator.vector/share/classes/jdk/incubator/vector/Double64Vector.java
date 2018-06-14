@@ -30,6 +30,7 @@ import java.nio.DoubleBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -1026,6 +1027,10 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             super(reorder, i);
         }
 
+        public Double64Shuffle(IntUnaryOperator f) {
+            super(f);
+        }
+
         @Override
         public Double64Species species() {
             return SPECIES;
@@ -1134,6 +1139,16 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         @Override
         public Double64Mask maskFromArray(boolean[] bits, int i) {
             return new Double64Mask(bits, i);
+        }
+
+        @Override
+        public Double64Shuffle shuffle(IntUnaryOperator f) {
+            return new Double64Shuffle(f);
+        }
+
+        @Override
+        public Double64Shuffle shuffleIota() {
+            return new Double64Shuffle(AbstractShuffle.IDENTITY);
         }
 
         @Override

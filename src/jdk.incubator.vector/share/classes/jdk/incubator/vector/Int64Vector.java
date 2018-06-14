@@ -30,6 +30,7 @@ import java.nio.IntBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -1103,6 +1104,10 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
             super(reorder, i);
         }
 
+        public Int64Shuffle(IntUnaryOperator f) {
+            super(f);
+        }
+
         @Override
         public Int64Species species() {
             return SPECIES;
@@ -1211,6 +1216,16 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
         @Override
         public Int64Mask maskFromArray(boolean[] bits, int i) {
             return new Int64Mask(bits, i);
+        }
+
+        @Override
+        public Int64Shuffle shuffle(IntUnaryOperator f) {
+            return new Int64Shuffle(f);
+        }
+
+        @Override
+        public Int64Shuffle shuffleIota() {
+            return new Int64Shuffle(AbstractShuffle.IDENTITY);
         }
 
         @Override

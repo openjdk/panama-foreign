@@ -30,6 +30,7 @@ import java.nio.ShortBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
 
 import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
@@ -1033,6 +1034,10 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
             super(reorder, i);
         }
 
+        public Short512Shuffle(IntUnaryOperator f) {
+            super(f);
+        }
+
         @Override
         public Short512Species species() {
             return SPECIES;
@@ -1141,6 +1146,16 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         @Override
         public Short512Mask maskFromArray(boolean[] bits, int i) {
             return new Short512Mask(bits, i);
+        }
+
+        @Override
+        public Short512Shuffle shuffle(IntUnaryOperator f) {
+            return new Short512Shuffle(f);
+        }
+
+        @Override
+        public Short512Shuffle shuffleIota() {
+            return new Short512Shuffle(AbstractShuffle.IDENTITY);
         }
 
         @Override

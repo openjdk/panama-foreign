@@ -28,6 +28,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.util.function.IntUnaryOperator;
 
 /**
  * A {@code Vector} is designed for use in computations that can be transformed
@@ -1068,6 +1069,45 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @return a mask where all lanes are unset
          */
         public abstract Mask<E, S> maskAllFalse();
+
+        /**
+         * Returns a shuffle of mapped indexes where each lane element is
+         * the result of applying a mapping function to the corresponding lane
+         * index.
+         * <p>
+         * Care should be taken to ensure Shuffle values produced from this
+         * method are consumed as constants to ensure optimal generation of
+         * code.  For example, values held in static final fields or values
+         * held in loop constant local variables.
+         * <p>
+         * This method behaves as if a shuffle is created from an array of
+         * mapped indexes as follows:
+         * <pre>{@code
+         *   int[] a = new int[this.length()];
+         *   for (int i = 0; i < a.length; i++) {
+         *       a[i] = f.applyAsInt(i);
+         *   }
+         *   return this.shuffleFromValues(a);
+         * }</pre>
+         *
+         * @param f the lane index mapping function
+         * @return a shuffle of mapped indexes.
+         */
+        public abstract Shuffle<E, S> shuffle(IntUnaryOperator f);
+
+        /**
+         * Returns a shuffle where each lane element is the value of its
+         * corresponding lane index.
+         * <p>
+         * This method behaves as if a shuffle is created from an identity
+         * index mapping function as follows:
+         * <pre>{@code
+         *   return this.shuffle(i -> i);
+         * }</pre>
+         *
+         * @return a shuffle of lane indexes.
+         */
+        public abstract Shuffle<E, S> shuffleIota();
 
         /**
          * Returns a shuffle where each lane element is set to a given
