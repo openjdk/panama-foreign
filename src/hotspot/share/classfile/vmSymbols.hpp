@@ -1501,13 +1501,13 @@
                                                                                                                                                \
   do_intrinsic(_VectorReinterpret, jdk_incubator_vector_VectorIntrinsics, vector_reinterpret_name, vector_reinterpret_sig, F_S)                \
    do_signature(vector_reinterpret_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                 \
-                                      "Ljava/lang/Class;ILjava/lang/Object;"                                                                   \
+                                      "Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;"                                                                   \
                                       "Ljdk/incubator/vector/VectorIntrinsics$VectorReinterpretOp;)Ljava/lang/Object;")                        \
    do_name(vector_reinterpret_name, "reinterpret")                                                                                             \
                                                                                                                                                \
    do_intrinsic(_VectorCast, jdk_incubator_vector_VectorIntrinsics, Class_cast_name, vector_cast_sig, F_S)                                     \
     do_signature(vector_cast_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                       \
-                                  "Ljava/lang/Class;ILjava/lang/Object;"                                                                       \
+                                  "Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;"                                                     \
                                   "Ljdk/incubator/vector/VectorIntrinsics$VectorCastOp;)Ljava/lang/Object;")                                   \
                                                                                                                                                \
   do_intrinsic(_VectorRebox, jdk_incubator_vector_VectorIntrinsics, vector_rebox_name, vector_rebox_sig, F_S)                                  \

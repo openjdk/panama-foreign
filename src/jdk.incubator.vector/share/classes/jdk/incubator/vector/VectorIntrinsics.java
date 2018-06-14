@@ -296,32 +296,36 @@ import java.util.function.*;
 
     /* ============================================================================ */
 
-    interface VectorReinterpretOp<VT, VF> {
-        VT apply(VF v, Class<?> elementType);
+    interface VectorReinterpretOp<S, VIN, V> {
+        V apply(S species, VIN v);
     }
 
     @HotSpotIntrinsicCandidate
     static
-    <VT, VF>
-    VT reinterpret(Class<VF> fromVectorClass, Class<?> fromElementType, int fromVLen,
-                   Class<?> toElementType, int toVLen, VF v,
-                   VectorReinterpretOp<VT,VF> defaultImpl) {
-        return defaultImpl.apply(v, toElementType);
+    <S, VIN, V>
+    V reinterpret(Class<?> fromVectorClass,
+                  Class<?> fromElementType, int fromVLen,
+                  Class<?> toElementType, int toVLen,
+                  VIN v, S s,
+                  VectorReinterpretOp<S, VIN, V> defaultImpl) {
+        return defaultImpl.apply(s, v);
     }
 
     /* ============================================================================ */
 
-    interface VectorCastOp<VT, VF> {
-        VT apply(VF v, Class<?> elementType);
+    interface VectorCastOp<S, VIN, V> {
+        V apply(S species, VIN v);
     }
 
     @HotSpotIntrinsicCandidate
     static
-    <VT, VF>
-    VT cast(Class<VF> fromVectorClass, Class<?> fromElementType, int fromVLen,
-            Class<?> toElementType, int toVLen, VF v,
-            VectorCastOp<VT,VF> defaultImpl) {
-        return defaultImpl.apply(v, toElementType);
+    <S, VIN, V>
+    V cast(Class<?> fromVectorClass,
+           Class<?> fromElementType, int fromVLen,
+           Class<?> toElementType, int toVLen,
+           VIN v, S s,
+           VectorCastOp<S, VIN, V> defaultImpl) {
+        return defaultImpl.apply(s, v);
     }
 
     /* ============================================================================ */

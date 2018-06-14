@@ -1592,57 +1592,13 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
         }
 
         @Override
-        @ForceInline
         public abstract <F> DoubleVector<S> rebracket(Vector<F, S> o);
 
         @Override
-        @ForceInline
         public abstract <T extends Shape> DoubleVector<S> resize(Vector<Double, T> o);
 
         @Override
-        @SuppressWarnings("unchecked")
-        public <F, T extends Shape> DoubleVector<S> cast(Vector<F, T> v) {
-            // Allocate array of required size
-            double[] a = new double[length()];
-
-            Class<?> vtype = v.species().elementType();
-            int limit = Math.min(v.species().length(), length());
-            if (vtype == byte.class) {
-                ByteVector<T> tv = (ByteVector<T>)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (double) tv.get(i);
-                }
-            } else if (vtype == short.class) {
-                ShortVector<T> tv = (ShortVector<T>)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (double) tv.get(i);
-                }
-            } else if (vtype == int.class) {
-                IntVector<T> tv = (IntVector<T>)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (double) tv.get(i);
-                }
-            } else if (vtype == long.class){
-                LongVector<T> tv = (LongVector<T>)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (double) tv.get(i);
-                }
-            } else if (vtype == float.class){
-                FloatVector<T> tv = (FloatVector<T>)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (double) tv.get(i);
-                }
-            } else if (vtype == double.class){
-                DoubleVector<T> tv = (DoubleVector<T>)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (double) tv.get(i);
-                }
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
-            }
-
-            return scalars(a);
-        }
+        public abstract <F, T extends Shape> DoubleVector<S> cast(Vector<F, T> v);
 
     }
 

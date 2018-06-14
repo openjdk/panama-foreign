@@ -1348,250 +1348,65 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        private <S extends Shape> Long256Vector castFromByte(ByteVector<S> o) {
-            if (o.bitSize() == 64) {
-                Byte64Vector so = (Byte64Vector)o;
-                return VectorIntrinsics.cast(
-                    Byte64Vector.class, byte.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 128) {
-                Byte128Vector so = (Byte128Vector)o;
-                return VectorIntrinsics.cast(
-                    Byte128Vector.class, byte.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 256) {
-                Byte256Vector so = (Byte256Vector)o;
-                return VectorIntrinsics.cast(
-                    Byte256Vector.class, byte.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 512) {
-                Byte512Vector so = (Byte512Vector)o;
-                return VectorIntrinsics.cast(
-                    Byte512Vector.class, byte.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else {
-                throw new InternalError("Unimplemented size");
-            }
-        }
-
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        private <S extends Shape> Long256Vector castFromShort(ShortVector<S> o) {
-            if (o.bitSize() == 64) {
-                Short64Vector so = (Short64Vector)o;
-                return VectorIntrinsics.cast(
-                    Short64Vector.class, short.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 128) {
-                Short128Vector so = (Short128Vector)o;
-                return VectorIntrinsics.cast(
-                    Short128Vector.class, short.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 256) {
-                Short256Vector so = (Short256Vector)o;
-                return VectorIntrinsics.cast(
-                    Short256Vector.class, short.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 512) {
-                Short512Vector so = (Short512Vector)o;
-                return VectorIntrinsics.cast(
-                    Short512Vector.class, short.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else {
-                throw new InternalError("Unimplemented size");
-            }
-        }
-
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        private <S extends Shape> Long256Vector castFromInt(IntVector<S> o) {
-            if (o.bitSize() == 64) {
-                Int64Vector so = (Int64Vector)o;
-                return VectorIntrinsics.cast(
-                    Int64Vector.class, int.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 128) {
-                Int128Vector so = (Int128Vector)o;
-                return VectorIntrinsics.cast(
-                    Int128Vector.class, int.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 256) {
-                Int256Vector so = (Int256Vector)o;
-                return VectorIntrinsics.cast(
-                    Int256Vector.class, int.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 512) {
-                Int512Vector so = (Int512Vector)o;
-                return VectorIntrinsics.cast(
-                    Int512Vector.class, int.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else {
-                throw new InternalError("Unimplemented size");
-            }
-        }
-
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        private <S extends Shape> Long256Vector castFromLong(LongVector<S> o) {
-            if (o.bitSize() == 64) {
-                Long64Vector so = (Long64Vector)o;
-                return VectorIntrinsics.cast(
-                    Long64Vector.class, long.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 128) {
-                Long128Vector so = (Long128Vector)o;
-                return VectorIntrinsics.cast(
-                    Long128Vector.class, long.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 256) {
-                Long256Vector so = (Long256Vector)o;
-                return VectorIntrinsics.cast(
-                    Long256Vector.class, long.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 512) {
-                Long512Vector so = (Long512Vector)o;
-                return VectorIntrinsics.cast(
-                    Long512Vector.class, long.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else {
-                throw new InternalError("Unimplemented size");
-            }
-        }
-
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        private <S extends Shape> Long256Vector castFromFloat(FloatVector<S> o) {
-            if (o.bitSize() == 64) {
-                Float64Vector so = (Float64Vector)o;
-                return VectorIntrinsics.cast(
-                    Float64Vector.class, float.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 128) {
-                Float128Vector so = (Float128Vector)o;
-                return VectorIntrinsics.cast(
-                    Float128Vector.class, float.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 256) {
-                Float256Vector so = (Float256Vector)o;
-                return VectorIntrinsics.cast(
-                    Float256Vector.class, float.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 512) {
-                Float512Vector so = (Float512Vector)o;
-                return VectorIntrinsics.cast(
-                    Float512Vector.class, float.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else {
-                throw new InternalError("Unimplemented size");
-            }
-        }
-
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        private <S extends Shape> Long256Vector castFromDouble(DoubleVector<S> o) {
-            if (o.bitSize() == 64) {
-                Double64Vector so = (Double64Vector)o;
-                return VectorIntrinsics.cast(
-                    Double64Vector.class, double.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 128) {
-                Double128Vector so = (Double128Vector)o;
-                return VectorIntrinsics.cast(
-                    Double128Vector.class, double.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 256) {
-                Double256Vector so = (Double256Vector)o;
-                return VectorIntrinsics.cast(
-                    Double256Vector.class, double.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else if (o.bitSize() == 512) {
-                Double512Vector so = (Double512Vector)o;
-                return VectorIntrinsics.cast(
-                    Double512Vector.class, double.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)super.cast(v)
-                );
-            } else {
-                throw new InternalError("Unimplemented size");
-            }
-        }
-
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <E, S extends Shape> Long256Vector cast(Vector<E, S> o) {
+        public <F, T extends Shape> Long256Vector cast(Vector<F, T> o) {
             if (o.length() != LENGTH)
                 throw new IllegalArgumentException("Vector length this species length differ");
 
-            if (o.elementType() == byte.class) {
-                ByteVector<S> so = (ByteVector<S>)o;
-                return castFromByte(so);
-            } else if (o.elementType() == short.class) {
-                ShortVector<S> so = (ShortVector<S>)o;
-                return castFromShort(so);
-            } else if (o.elementType() == int.class) {
-                IntVector<S> so = (IntVector<S>)o;
-                return castFromInt(so);
-            } else if (o.elementType() == long.class) {
-                LongVector<S> so = (LongVector<S>)o;
-                return castFromLong(so);
-            } else if (o.elementType() == float.class) {
-                FloatVector<S> so = (FloatVector<S>)o;
-                return castFromFloat(so);
-            } else if (o.elementType() == double.class) {
-                DoubleVector<S> so = (DoubleVector<S>)o;
-                return castFromDouble(so);
+            return VectorIntrinsics.cast(
+                o.getClass(),
+                o.elementType(), LENGTH,
+                long.class, LENGTH,
+                o, this,
+                (s, v) -> s.castDefault(v)
+            );
+        }
+
+        @SuppressWarnings("unchecked")
+        @ForceInline
+        private <F, T extends Shape> Long256Vector castDefault(Vector<F, T> v) {
+            // Allocate array of required size
+            int limit = length();
+            long[] a = new long[limit];
+
+            Class<?> vtype = v.species().elementType();
+            if (vtype == byte.class) {
+                ByteVector<T> tv = (ByteVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == short.class) {
+                ShortVector<T> tv = (ShortVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == int.class) {
+                IntVector<T> tv = (IntVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == long.class){
+                LongVector<T> tv = (LongVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == float.class){
+                FloatVector<T> tv = (FloatVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
+            } else if (vtype == double.class){
+                DoubleVector<T> tv = (DoubleVector<T>)v;
+                for (int i = 0; i < limit; i++) {
+                    a[i] = (long) tv.get(i);
+                }
             } else {
-                throw new InternalError("Unimplemented type");
+                throw new UnsupportedOperationException("Bad lane type for casting.");
             }
+
+            return scalars(a);
         }
 
         @Override
@@ -1618,44 +1433,56 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             if (o.elementType() == byte.class) {
                 Byte256Vector so = (Byte256Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Byte256Vector.class, byte.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Byte256Vector.class,
+                    byte.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else if (o.elementType() == short.class) {
                 Short256Vector so = (Short256Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Short256Vector.class, short.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Short256Vector.class,
+                    short.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else if (o.elementType() == int.class) {
                 Int256Vector so = (Int256Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Int256Vector.class, int.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Int256Vector.class,
+                    int.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else if (o.elementType() == long.class) {
                 Long256Vector so = (Long256Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Long256Vector.class, long.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Long256Vector.class,
+                    long.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else if (o.elementType() == float.class) {
                 Float256Vector so = (Float256Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Float256Vector.class, float.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Float256Vector.class,
+                    float.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else if (o.elementType() == double.class) {
                 Double256Vector so = (Double256Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Double256Vector.class, double.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Double256Vector.class,
+                    double.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else {
                 throw new InternalError("Unimplemented type");
@@ -1670,30 +1497,38 @@ final class Long256Vector extends LongVector<Shapes.S256Bit> {
             if (o.bitSize() == 64) {
                 Long64Vector so = (Long64Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Long64Vector.class, long.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Long64Vector.class,
+                    long.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else if (o.bitSize() == 128) {
                 Long128Vector so = (Long128Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Long128Vector.class, long.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Long128Vector.class,
+                    long.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else if (o.bitSize() == 256) {
                 Long256Vector so = (Long256Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Long256Vector.class, long.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Long256Vector.class,
+                    long.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else if (o.bitSize() == 512) {
                 Long512Vector so = (Long512Vector)o;
                 return VectorIntrinsics.reinterpret(
-                    Long512Vector.class, long.class, so.length(),
-                    long.class, LENGTH, so,
-                    (v, t) -> (Long256Vector)reshape(v)
+                    Long512Vector.class,
+                    long.class, so.length(),
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long256Vector) s.reshape(v)
                 );
             } else {
                 throw new InternalError("Unimplemented size");
