@@ -42,6 +42,9 @@
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/align.hpp"
 #include "ci/ciMethodType.hpp"
+#if INCLUDE_ZGC
+#include "gc/z/zBarrierSetRuntime.hpp"
+#endif // INCLUDE_ZGC
 
 OptoReg::Name OptoReg::c_frame_pointer;
 
@@ -2125,6 +2128,7 @@ void Matcher::find_shared( Node *n ) {
       mstack.set_state(Post_Visit);
       set_visited(n);   // Flag as visited now
       bool mem_op = false;
+      int mem_addr_idx = MemNode::Address;
 
       switch( nop ) {  // Handle some opcodes special
       case Op_Phi:             // Treat Phis as shared roots
@@ -2213,6 +2217,17 @@ void Matcher::find_shared( Node *n ) {
       case Op_SafePoint:
         mem_op = true;
         break;
+#if INCLUDE_ZGC
+      case Op_CallLeaf:
+        if (UseZGC) {
+          if (n->as_Call()->entry_point() == ZBarrierSetRuntime::load_barrier_on_oop_field_preloaded_addr() ||
+              n->as_Call()->entry_point() == ZBarrierSetRuntime::load_barrier_on_weak_oop_field_preloaded_addr()) {
+            mem_op = true;
+            mem_addr_idx = TypeFunc::Parms+1;
+          }
+          break;
+        }
+#endif
       default:
         if( n->is_Store() ) {
           // Do match stores, despite no ideal reg
@@ -2262,7 +2277,7 @@ void Matcher::find_shared( Node *n ) {
 #endif
 
         // Clone addressing expressions as they are "free" in memory access instructions
-        if (mem_op && i == MemNode::Address && mop == Op_AddP &&
+        if (mem_op && i == mem_addr_idx && mop == Op_AddP &&
             // When there are other uses besides address expressions
             // put it on stack and mark as shared.
             !is_visited(m)) {
