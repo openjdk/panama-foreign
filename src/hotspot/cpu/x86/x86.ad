@@ -1452,7 +1452,7 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           if (is_integral_type(bt) && UseSSE < 3) { ret_value = false; }
           else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
           else if (bt == T_LONG && UseAVX <= 2) { ret_value = false; } // Implementation limitation
-          break; 
+          break;
         case Op_AddVB:
         case Op_SubVB:
           if ((vlen == 64) && (VM_Version::supports_avx512bw() == false))
@@ -1478,7 +1478,7 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_URShiftVL:
           if (op_arity == 2 && UseAVX <= 1)
             ret_value  = false;
-          break;  
+          break;
         case Op_URShiftVS:
         case Op_RShiftVS:
         case Op_LShiftVS:
@@ -2036,6 +2036,60 @@ encode %{
 // Operand definitions must precede instruction definitions for correct parsing
 // in the ADLC because operands constitute user defined types which are used in
 // instruction definitions.
+
+operand immU1() %{
+  predicate(n->get_int() >= 0 && n->get_int() < nth_bit(1));
+  match(ConI);
+
+  op_cost(0);
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+operand immU2() %{
+  predicate(n->get_int() >= 0 && n->get_int() < nth_bit(2));
+  match(ConI);
+
+  op_cost(0);
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+operand immU3() %{
+  predicate(n->get_int() >= 0 && n->get_int() < nth_bit(3));
+  match(ConI);
+
+  op_cost(0);
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+operand immU4() %{
+  predicate(n->get_int() >= 0 && n->get_int() < nth_bit(4));
+  match(ConI);
+
+  op_cost(0);
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+operand immU5() %{
+  predicate(n->get_int() >= 0 && n->get_int() < nth_bit(5));
+  match(ConI);
+
+  op_cost(0);
+  format %{ %}
+  interface(CONST_INTER);
+%}
+
+operand immU6() %{
+  predicate(n->get_int() >= 0 && n->get_int() < nth_bit(6));
+  match(ConI);
+
+  op_cost(0);
+  format %{ %}
+  interface(CONST_INTER);
+%}
 
 // This one generically applies only for evex, so only one version
 operand vecZ() %{
@@ -2805,7 +2859,7 @@ instruct negI_rReg_2(rRegI dst, rFlagsReg cr)
 %{
   match(Set dst (NegI dst));
   effect(KILL cr);
- 
+
   format %{ "negl    $dst\t# int" %}
   ins_encode %{
     __ negl($dst$$Register);
@@ -5105,55 +5159,52 @@ instruct Repl8D_zero_evex(vecZ dst, immD0 zero) %{
 
 // ====================VECTOR INSERT=======================================
 
-instruct rvinsert8B(vecD dst, vecD src, rRegI val, immU31 idx) %{
+instruct rvinsert8B(vecD dst, vecD src, rRegI val, immU3 idx) %{
   predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src\n\t"
             "pinsrb  $dst,$val\t! Insert 8B" %}
   ins_encode %{
-    int id = 0x7 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ pinsrb($dst$$XMMRegister, $val$$Register, id);
+    __ pinsrb($dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert16B(vecX dst, vecX src, rRegI val, immU31 idx) %{
+instruct rvinsert16B(vecX dst, vecX src, rRegI val, immU4 idx) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src\n\t"
             "pinsrb  $dst,$val\t! Insert 16B" %}
   ins_encode %{
-    int id = 0xF & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ pinsrb($dst$$XMMRegister, $val$$Register, id);
+    __ pinsrb($dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert16B_avx(vecX dst, vecX src, rRegI val, immU31 idx) %{
+instruct rvinsert16B_avx(vecX dst, vecX src, rRegI val, immU4 idx) %{
   predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "vmovdqu  $dst,$src\n\t"
             "vpinsrb  $dst,$dst,$val\t! Insert 16B" %}
   ins_encode %{
-    int id = 0xF & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ vpinsrb($dst$$XMMRegister, $dst$$XMMRegister, $val$$Register, id);
+    __ vpinsrb($dst$$XMMRegister, $dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert32B(vecY dst, vecY src, vecY tmp, rRegI val, immU31 idx) %{
+instruct rvinsert32B(vecY dst, vecY src, vecY tmp, rRegI val, immU5 idx) %{
   predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp);
@@ -5162,24 +5213,20 @@ instruct rvinsert32B(vecY dst, vecY src, vecY tmp, rRegI val, immU31 idx) %{
            "vpinsrb  $tmp,$tmp,$val\n\t"
            "vinserti128  $dst,$tmp\t! Insert 32B" %}
   ins_encode %{
-    int id = 0x1F & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    uint x_idx = $idx$$constant & right_n_bits(4);
+    uint y_idx = ($idx$$constant >> 4) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    if(id <= 15) {
-      __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vpinsrb($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id);
-      __ vinserti128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else {
-      __ vextracti128_high($tmp$$XMMRegister, $src$$XMMRegister);
-      __ vpinsrb($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 16);
-      __ vinserti128_high($dst$$XMMRegister, $tmp$$XMMRegister);
-    }
+    __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, y_idx);
+    __ vpinsrb($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, x_idx);
+    __ vinserti128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, y_idx);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert64B(vecZ dst, vecZ src, vecZ tmp, rRegI val, immU31 idx) %{
+instruct rvinsert64B(vecZ dst, vecZ src, vecZ tmp, rRegI val, immU6 idx) %{
   predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp);
@@ -5190,89 +5237,69 @@ instruct rvinsert64B(vecZ dst, vecZ src, vecZ tmp, rRegI val, immU31 idx) %{
             "vinserti128  $tmp,$tmp,$tmp\n\t"
             "vinserti64x4  $dst,$dst,$tmp\t! Insert 64B" %}
   ins_encode %{
-    int id = 0x3F & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    uint x_idx = $idx$$constant & right_n_bits(4);
+    uint y_idx = ($idx$$constant >> 4) & 1;
+    uint z_idx = ($idx$$constant >> 5) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    if(id <= 15) {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vpinsrb($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id);
-      __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else if(id <= 31){
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vextracti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vpinsrb($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 16);
-      __ vinserti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else if(id <= 47) {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-      __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vpinsrb($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 32);
-      __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-    } else {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-      __ vextracti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ pinsrb($tmp$$XMMRegister, $val$$Register, id - 48);
-      __ vinserti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-    }
+    __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, z_idx);
+    __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vpinsrb($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, x_idx);
+    __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, z_idx);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert4S(vecD dst, vecD src, rRegI val, immU31 idx) %{
+instruct rvinsert4S(vecD dst, vecD src, rRegI val, immU2 idx) %{
   predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src\n\t"
             "pinsrw  $dst,$val\t! Insert 4S" %}
   ins_encode %{
-    int id = 0x3 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ pinsrw($dst$$XMMRegister, $val$$Register, id);
+    __ pinsrw($dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert8S(vecX dst, vecX src, rRegI val, immU31 idx) %{
-  predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+instruct rvinsert8S(vecX dst, vecX src, rRegI val, immU3 idx) %{
+  predicate(UseSSE > 3 && UseAVX == 0 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src\n\t"
             "pinsrw  $dst,$val\t! Insert 8S" %}
   ins_encode %{
-    int id = 0x7 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ pinsrw($dst$$XMMRegister, $val$$Register, id);
+    __ pinsrw($dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert8S_avx(vecX dst, vecX src, rRegI val, immU31 idx) %{
+instruct rvinsert8S_avx(vecX dst, vecX src, rRegI val, immU3 idx) %{
   predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "vmovdqu  $dst,$src\n\t"
             "vpinsrw  $dst,$dst,$val\t! Insert 8S" %}
   ins_encode %{
-    int id = 0x7 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ vpinsrw($dst$$XMMRegister, $dst$$XMMRegister, $val$$Register, id);
+    __ vpinsrw($dst$$XMMRegister, $dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
 
-instruct rvinsert16S(vecY dst, vecY src, vecX tmp, rRegI val, immU31 idx) %{
+instruct rvinsert16S(vecY dst, vecY src, vecX tmp, rRegI val, immU4 idx) %{
   predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp);
@@ -5281,24 +5308,20 @@ instruct rvinsert16S(vecY dst, vecY src, vecX tmp, rRegI val, immU31 idx) %{
             "vpinsrw  $tmp,$tmp,$val\n\t"
             "vinserti128  $dst,$dst,$tmp\t! Insert 16S" %}
   ins_encode %{
-    int id = 0xF & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    uint x_idx = $idx$$constant & right_n_bits(3);
+    uint y_idx = ($idx$$constant >> 3) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    if(id <= 7) {
-      __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vpinsrw($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id);
-      __ vinserti128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else {
-      __ vextracti128_high($tmp$$XMMRegister, $src$$XMMRegister);
-      __ vpinsrw($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 8);
-      __ vinserti128_high($dst$$XMMRegister, $tmp$$XMMRegister);
-    }
+    __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, y_idx);
+    __ vpinsrw($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, x_idx);
+    __ vinserti128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, y_idx);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert32S(vecZ dst, vecZ src, vecZ tmp, rRegI val, immU31 idx) %{
+instruct rvinsert32S(vecZ dst, vecZ src, vecZ tmp, rRegI val, immU5 idx) %{
   predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp);
@@ -5309,88 +5332,68 @@ instruct rvinsert32S(vecZ dst, vecZ src, vecZ tmp, rRegI val, immU31 idx) %{
             "vinserti128  $tmp,$tmp,$tmp\n\t"
             "vinserti64x4  $dst,$dst,$tmp\t! Insert 32S" %}
   ins_encode %{
-    int id = 0x1F & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    uint x_idx = $idx$$constant & right_n_bits(3);
+    uint y_idx = ($idx$$constant >> 3) & 1;
+    uint z_idx = ($idx$$constant >> 4) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    if(id <= 7) {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vpinsrw($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id);
-      __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else if(id <= 15){
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vextracti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vpinsrw($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 8);
-      __ vinserti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else if(id <= 23) {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-      __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vpinsrw($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 16);
-      __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-    } else {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-      __ vextracti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vpinsrw($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 24);
-      __ vinserti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-    }
+    __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, z_idx);
+    __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vpinsrw($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, x_idx);
+    __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, z_idx);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert2I(vecD dst, vecD src, rRegI val, immU31 idx) %{
+instruct rvinsert2I(vecD dst, vecD src, rRegI val, immU1 idx) %{
   predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src\n\t"
             "pinsrd  $dst,$val\t! Insert 2I" %}
   ins_encode %{
-    int id = 0x1 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ pinsrd($dst$$XMMRegister, $val$$Register, id);
+    __ pinsrd($dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert4I(vecX dst, vecX src, rRegI val, immU31 idx) %{
-  predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+instruct rvinsert4I(vecX dst, vecX src, rRegI val, immU2 idx) %{
+  predicate(UseSSE > 3 && UseAVX == 0 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src\n\t"
             "pinsrd  $dst,$val\t! Insert 4I" %}
   ins_encode %{
-    int id = 0x3 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ pinsrd($dst$$XMMRegister, $val$$Register, id);
+    __ pinsrd($dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert4I_avx(vecX dst, vecX src, rRegI val, immU31 idx) %{
+instruct rvinsert4I_avx(vecX dst, vecX src, rRegI val, immU2 idx) %{
   predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "vmovdqu  $dst,$src\n\t"
             "vpinsrd  $dst,$val\t! Insert 4I" %}
   ins_encode %{
-    int id = 0x3 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ vpinsrd($dst$$XMMRegister, $dst$$XMMRegister, $val$$Register, id);
+    __ vpinsrd($dst$$XMMRegister, $dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert8I(vecY dst, vecY src, vecY tmp, rRegI val, immU31 idx) %{
+instruct rvinsert8I(vecY dst, vecY src, vecY tmp, rRegI val, immU3 idx) %{
   predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp);
@@ -5399,24 +5402,20 @@ instruct rvinsert8I(vecY dst, vecY src, vecY tmp, rRegI val, immU31 idx) %{
             "vpinsrd  $tmp,$tmp,$val\n\t"
             "vinserti128  $dst,$dst,$tmp\t! Insert 8I" %}
   ins_encode %{
-    int id = 0x7 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    uint x_idx = $idx$$constant & right_n_bits(2);
+    uint y_idx = ($idx$$constant >> 2) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    if(id <= 3) {
-      __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vpinsrd($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id);
-      __ vinserti128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else {
-      __ vextracti128_high($tmp$$XMMRegister, $src$$XMMRegister);
-      __ vpinsrd($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 4);
-      __ vinserti128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-    }
+    __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, y_idx);
+    __ vpinsrd($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, x_idx);
+    __ vinserti128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, y_idx);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert16I(vecZ dst, vecZ src, vecZ tmp, rRegI val, immU31 idx) %{
+instruct rvinsert16I(vecZ dst, vecZ src, vecZ tmp, rRegI val, immU4 idx) %{
   predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp);
@@ -5427,88 +5426,68 @@ instruct rvinsert16I(vecZ dst, vecZ src, vecZ tmp, rRegI val, immU31 idx) %{
             "vinserti128  $tmp,$tmp,$tmp\n\t"
             "vinserti64x4  $dst,$dst,$tmp\t! Insert 16I" %}
   ins_encode %{
-    int id = 0xF & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    uint x_idx = $idx$$constant & right_n_bits(2);
+    uint y_idx = ($idx$$constant >> 2) & 1;
+    uint z_idx = ($idx$$constant >> 3) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    if(id <= 3) {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vpinsrd($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id);
-      __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else if(id <= 7){
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vextracti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vpinsrd($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 4);
-      __ vinserti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else if(id <= 11) {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-      __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vpinsrd($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 8);
-      __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-    } else {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-      __ vextracti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vpinsrd($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 12);
-      __ vinserti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-    }
+    __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, z_idx);
+    __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vpinsrd($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, x_idx);
+    __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, z_idx);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert1L(vecD dst, vecD src, rRegL val, immU31 idx) %{
+instruct rvinsert1L(vecD dst, vecD src, rRegL val, immI0 idx) %{
   predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src\n\t"
             "pinsrq  $dst,$val\t! Insert 1L" %}
   ins_encode %{
-    int id = 0x0 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ pinsrq($dst$$XMMRegister, $val$$Register, id);
+    __ pinsrq($dst$$XMMRegister, $val$$Register, 0);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert2L(vecX dst, vecX src, rRegL val, immU31 idx) %{
-  predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+instruct rvinsert2L(vecX dst, vecX src, rRegL val, immU1 idx) %{
+  predicate(UseSSE > 3 && UseAVX == 0 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "movdqu  $dst,$src\n\t"
             "pinsrq  $dst,$dst\t! Insert 2L" %}
   ins_encode %{
-    int id = 0x1 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ pinsrq($dst$$XMMRegister, $val$$Register, id);
+    __ pinsrq($dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert2L_avx(vecX dst, vecX src, rRegL val, immU31 idx) %{
+instruct rvinsert2L_avx(vecX dst, vecX src, rRegL val, immU1 idx) %{
   predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst);
   format %{ "vmovdqu  $dst,$src\n\t"
             "vpinsrq  $dst,$dst,$val\t! Insert 2L" %}
   ins_encode %{
-    int id = 0x1 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    __ vpinsrq($dst$$XMMRegister, $dst$$XMMRegister, $val$$Register, id);
+    __ vpinsrq($dst$$XMMRegister, $dst$$XMMRegister, $val$$Register, $idx$$constant);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert4L(vecY dst, vecY src, vecY tmp, rRegL val, immU31 idx) %{
+instruct rvinsert4L(vecY dst, vecY src, vecY tmp, rRegL val, immU2 idx) %{
   predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp);
@@ -5517,24 +5496,20 @@ instruct rvinsert4L(vecY dst, vecY src, vecY tmp, rRegL val, immU31 idx) %{
             "vpinsrq  $tmp,$tmp,$val\n\t"
             "vinserti128  $dst,$dst,$tmp\t! Insert 4L" %}
   ins_encode %{
-    int id = 0x3 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    uint x_idx = $idx$$constant & 1;
+    uint y_idx = ($idx$$constant >> 1) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    if(id <= 1) {
-      __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id);
-      __ vinserti128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else {
-      __ vextracti128_high($tmp$$XMMRegister, $src$$XMMRegister);
-      __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 2);
-      __ vinserti128_high($dst$$XMMRegister, $tmp$$XMMRegister);
-    }
+    __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, y_idx);
+    __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, x_idx);
+    __ vinserti128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, y_idx);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert8L(vecZ dst, vecZ src, vecZ tmp, rRegL val, immU31 idx) %{
+instruct rvinsert8L(vecZ dst, vecZ src, vecZ tmp, rRegL val, immU3 idx) %{
   predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (VectorInsert (Binary src val) idx));
   effect(TEMP dst, TEMP tmp);
@@ -5545,298 +5520,232 @@ instruct rvinsert8L(vecZ dst, vecZ src, vecZ tmp, rRegL val, immU31 idx) %{
             "vinserti128  $tmp,$tmp,$tmp\n\t"
             "vinserti64x4  $dst,$dst,$tmp\t! Insert 8L" %}
   ins_encode %{
-    int id = 0x7 & $idx$$constant;
-    if($dst$$XMMRegister != $src$$XMMRegister) {
+    uint x_idx = $idx$$constant & 1;
+    uint y_idx = ($idx$$constant >> 1) & 1;
+    uint z_idx = ($idx$$constant >> 2) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    if(id <= 1) {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id);
-      __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else if(id <= 3){
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-      __ vextracti128_high($tmp$$XMMRegister, $src$$XMMRegister);
-      __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 2);
-      __ vinserti128_high($dst$$XMMRegister, $tmp$$XMMRegister);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-    } else if(id <= 5) {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-      __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 6);
-      __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-    }
-    else {
-      __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-      __ vextracti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, id - 6);
-      __ vinserti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-      __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-    }
+    __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, z_idx);
+    __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$Register, x_idx);
+    __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, z_idx);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct rvinsert2F_avx(vecD dst, vecD src, regF val, immU31 idx) %{
-   predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-   match(Set dst (VectorInsert (Binary src val) idx));
-   effect(TEMP dst);
-   format %{ "movdqu  $dst,$src\n\t"
-             "insertps  $dst,$dst,$val\t! Insert 4F" %}
-   ins_encode %{
-     int id = 0x1 & $idx$$constant;
-     id = id<<4;
-     if($dst$$XMMRegister != $src$$XMMRegister) {
-       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-     }
-     __ vinsertps($dst$$XMMRegister, $dst$$XMMRegister, $val$$XMMRegister, id);
-   %}
-   ins_pipe( pipe_slow );
- %}
-
-instruct rvinsert4F(vecX dst, vecX src, regF val, immU31 idx) %{
-   predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-   match(Set dst (VectorInsert (Binary src val) idx));
-   effect(TEMP dst);
-   format %{ "movdqu  $dst,$src\n\t"
-             "insertps  $dst,$dst,$val\t! Insert 4F" %}
-   ins_encode %{
-     int id = 0x3 & $idx$$constant;
-     id = id<<4;
-     if($dst$$XMMRegister != $src$$XMMRegister) {
-       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-     }
-     __ insertps($dst$$XMMRegister, $val$$XMMRegister, id);
-   %}
-   ins_pipe( pipe_slow );
- %}
-
- instruct rvinsert4F_avx(vecX dst, vecX src, regF val, immU31 idx) %{
-    predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-    match(Set dst (VectorInsert (Binary src val) idx));
-    effect(TEMP dst);
-    format %{ "vmovdqu  $dst,$src\n\t"
-              "vinsertps  $dst,$dst,$val\t! Insert 4F" %}
-    ins_encode %{
-      int id = 0x3 & $idx$$constant;
-      id = id<<4;
-      if($dst$$XMMRegister != $src$$XMMRegister) {
-        __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-      }
-      __ vinsertps($dst$$XMMRegister, $dst$$XMMRegister, $val$$XMMRegister, id);
-    %}
-    ins_pipe( pipe_slow );
+instruct rvinsert2F(vecD dst, vecD src, regF val, immU1 idx) %{
+  predicate(UseSSE > 3 && UseAVX == 0 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst);
+  format %{ "movdqu  $dst,$src\n\t"
+            "insertps  $dst,$dst,$val\t! Insert 2F" %}
+  ins_encode %{
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ insertps($dst$$XMMRegister, $val$$XMMRegister, $idx$$constant);
   %}
+  ins_pipe( pipe_slow );
+%}
 
-  instruct rvinsert8F(vecY dst, vecY src, vecY tmp, regF val, immU31 idx) %{
-    predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-    match(Set dst (VectorInsert (Binary src val) idx));
-    effect(TEMP dst, TEMP tmp);
-    format %{ "vmovdqu  $dst,$src\n\t"
-              "vextractf128  $tmp,$src\n\t"
-              "vinsertps  $tmp,$tmp,$val\n\t"
-              "vinsertf128  $dst,$dst,$tmp\t! Insert 8F" %}
-    ins_encode %{
-      int id = 0x7 & $idx$$constant;
-      if($dst$$XMMRegister != $src$$XMMRegister) {
-        __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-      }
-      if(id <= 3) {
-        id = id<<4;
-        __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-        __ vinsertps($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$XMMRegister, id);
-        __ vinsertf128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      } else {
-        id = (id - 4)<<4;
-        __ vextractf128_high($tmp$$XMMRegister, $src$$XMMRegister);
-        __ vinsertps($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$XMMRegister, id);
-        __ vinsertf128_high($dst$$XMMRegister, $tmp$$XMMRegister);
-      }
-    %}
-    ins_pipe( pipe_slow );
+instruct rvinsert2F_avx(vecD dst, vecD src, regF val, immU1 idx) %{
+  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst);
+  format %{ "movdqu  $dst,$src\n\t"
+            "insertps  $dst,$dst,$val\t! Insert 2F" %}
+  ins_encode %{
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ vinsertps($dst$$XMMRegister, $dst$$XMMRegister, $val$$XMMRegister, $idx$$constant);
   %}
+  ins_pipe( pipe_slow );
+%}
 
-  instruct rvinsert16F(vecZ dst, vecZ src, vecZ tmp, regF val, immU31 idx) %{
-    predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
-    match(Set dst (VectorInsert (Binary src val) idx));
-    effect(TEMP dst, TEMP tmp);
-    format %{ "vmovdqu  $dst,$src\n\t"
-              "vextractf128  $tmp,$src\n\t"
-              "vinsertps  $tmp,$tmp,$val\n\t"
-              "movsbl  $dst,$dst\t! Insert 4I" %}
-    ins_encode %{
-      int id = 0xF & $idx$$constant;
-      if($dst$$XMMRegister != $src$$XMMRegister) {
-        __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-      }
-      if(id <= 3) {
-        id = id<<4;
-        __ vextractf64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-        __ vextractf128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-        __ vinsertps($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$XMMRegister, id);
-        __ vinsertf128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-        __ vinsertf64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      } else if(id <= 7){
-        id = (id - 4)<<4;
-        __ vextractf64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-        __ vextractf128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-        __ vinsertps($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$XMMRegister, id);
-        __ vinsertf128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-        __ vinsertf64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      } else if(id <= 11) {
-        id = (id - 8)<<4;
-        __ vextractf64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-        __ vextractf128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-        __ vinsertps($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$XMMRegister, id - 12);
-        __ vinsertf128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-        __ vinsertf64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-      } else {
-        id = (id - 12)<<4;
-        __ vextractf64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-        __ vextractf128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-        __ vinsertps($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$XMMRegister, id - 12);
-        __ vinsertf128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-        __ vinsertf64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-      }
-    %}
-    ins_pipe( pipe_slow );
+instruct rvinsert4F(vecX dst, vecX src, regF val, immU2 idx) %{
+  predicate(UseSSE > 3 && UseAVX == 0 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst);
+  format %{ "movdqu  $dst,$src\n\t"
+            "insertps  $dst,$dst,$val\t! Insert 4F" %}
+  ins_encode %{
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ insertps($dst$$XMMRegister, $val$$XMMRegister, $idx$$constant);
   %}
+  ins_pipe( pipe_slow );
+%}
 
-  instruct rvinsert1D(vecD dst, vecD src, regD val, rRegL tmp, immU31 idx) %{
-    predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-    match(Set dst (VectorInsert (Binary src val) idx));
-    effect(TEMP dst, TEMP tmp);
-    format %{ "movdqu  $dst,$src\n\t"
-              "movq $tmp,$val\n\t"
-              "pinsrq  $dst,$tmp\t! Insert 1D" %}
-    ins_encode %{
-      int id = 0x0 & $idx$$constant;
-      if($dst$$XMMRegister != $src$$XMMRegister) {
-        __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-      }
-      __ movq($tmp$$Register, $val$$XMMRegister);
-      __ pinsrq($dst$$XMMRegister, $tmp$$Register, id);
-    %}
-    ins_pipe( pipe_slow );
+instruct rvinsert4F_avx(vecX dst, vecX src, regF val, immU2 idx) %{
+  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst);
+  format %{ "vmovdqu  $dst,$src\n\t"
+            "vinsertps  $dst,$dst,$val\t! Insert 4F" %}
+  ins_encode %{
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ vinsertps($dst$$XMMRegister, $dst$$XMMRegister, $val$$XMMRegister, $idx$$constant);
   %}
+  ins_pipe( pipe_slow );
+%}
 
-  instruct rvinsert2D(vecX dst, vecX src, regD val, rRegL tmp, immU31 idx) %{
-    predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-    match(Set dst (VectorInsert (Binary src val) idx));
-    effect(TEMP dst, TEMP tmp);
-    format %{ "movdqu  $dst,$src\n\t"
-              "movq  $dst,$src\n\t"
-              "pinsrq  $dst,$dst\t! Insert 2D" %}
-    ins_encode %{
-      int id = 0x1 & $idx$$constant;
-      if($dst$$XMMRegister != $src$$XMMRegister) {
-        __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-      }
-      __ movq($tmp$$Register, $val$$XMMRegister);
-      __ pinsrq($dst$$XMMRegister, $tmp$$Register, id);
-    %}
-    ins_pipe( pipe_slow );
+instruct rvinsert8F(vecY dst, vecY src, vecY tmp, regF val, immU3 idx) %{
+  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vmovdqu  $dst,$src\n\t"
+            "vextractf128  $tmp,$src\n\t"
+            "vinsertps  $tmp,$tmp,$val\n\t"
+            "vinsertf128  $dst,$dst,$tmp\t! Insert 8F" %}
+  ins_encode %{
+    uint x_idx = $idx$$constant & right_n_bits(2);
+    uint y_idx = ($idx$$constant >> 2) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, y_idx);
+    __ vinsertps($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$XMMRegister, x_idx);
+    __ vinsertf128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, y_idx);
   %}
+  ins_pipe( pipe_slow );
+%}
 
-  instruct rvinsert2D_avx(vecX dst, vecX src, regD val, rRegL tmp, immU31 idx) %{
-    predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-    match(Set dst (VectorInsert (Binary src val) idx));
-    effect(TEMP dst, TEMP tmp);
-    format %{ "vmovdqu  $dst,$src\n\t"
-              "movq  $tmp,$val\n\t"
-              "vpinsrq  $dst,$dst,$tmp\t! Insert 2D" %}
-    ins_encode %{
-      int id = 0x1 & $idx$$constant;
-      if($dst$$XMMRegister != $src$$XMMRegister) {
-        __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-      }
-      __ movq($tmp$$Register, $val$$XMMRegister);
-      __ vpinsrq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$Register, id);
-    %}
-    ins_pipe( pipe_slow );
+instruct rvinsert16F(vecZ dst, vecZ src, vecZ tmp, regF val, immU4 idx) %{
+  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vmovdqu  $dst,$src\n\t"
+            "vextractf128  $tmp,$src\n\t"
+            "vinsertps  $tmp,$tmp,$val\n\t"
+            "movsbl  $dst,$dst\t! Insert 4I" %}
+  ins_encode %{
+    uint x_idx = $idx$$constant & right_n_bits(2);
+    uint y_idx = ($idx$$constant >> 2) & 1;
+    uint z_idx = ($idx$$constant >> 3) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ vextractf64x4($tmp$$XMMRegister, $src$$XMMRegister, z_idx);
+    __ vextractf128($tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vinsertps($tmp$$XMMRegister, $tmp$$XMMRegister, $val$$XMMRegister, x_idx);
+    __ vinsertf128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vinsertf64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, z_idx);
   %}
+  ins_pipe( pipe_slow );
+%}
 
-  instruct rvinsert4D(vecY dst, vecY src, vecY tmp, regD val, rRegL tmp1, immU31 idx) %{
-    predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-    match(Set dst (VectorInsert (Binary src val) idx));
-    effect(TEMP dst, TEMP tmp, TEMP tmp1);
-    format %{ "vmovdqu  $dst,$src\n\t"
-              "vextracti128  $tmp,$src\n\t"
-              "movq $tmp1,$val\n\t"
-              "vpinsrq  $tmp,$tmp,$tmp1\n\t"
-              "vinserti128  $dst,$dst,$tmp\t! Insert 4D" %}
-    ins_encode %{
-      int id = 0x3 & $idx$$constant;
-      if($dst$$XMMRegister != $src$$XMMRegister) {
-        __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-      }
-      if(id <= 1) {
-        __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-        __ movq($tmp1$$Register, $val$$XMMRegister);
-        __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp1$$Register, id);
-        __ vinsertf128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      } else {
-        __ vextracti128_high($tmp$$XMMRegister, $src$$XMMRegister);
-        __ movq($tmp1$$Register, $val$$XMMRegister);
-        __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp1$$Register, id - 2);
-        __ vinserti128_high($dst$$XMMRegister, $tmp$$XMMRegister);
-      }
-    %}
-    ins_pipe( pipe_slow );
+instruct rvinsert1D(vecD dst, vecD src, regD val, rRegL tmp, immI0 idx) %{
+  predicate(UseSSE > 3 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "movdqu  $dst,$src\n\t"
+            "movq $tmp,$val\n\t"
+            "pinsrq  $dst,$tmp\t! Insert 1D" %}
+  ins_encode %{
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ movq($tmp$$Register, $val$$XMMRegister);
+    __ pinsrq($dst$$XMMRegister, $tmp$$Register, 0);
   %}
+  ins_pipe( pipe_slow );
+%}
 
-  instruct rvinsert8D(vecZ dst, vecZ src, vecZ tmp, regD val, rRegL tmp1, immU31 idx) %{
-    predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
-    match(Set dst (VectorInsert (Binary src val) idx));
-    effect(TEMP dst, TEMP tmp, TEMP tmp1);
-    format %{ "vmovdqu  $dst,$src\n\t"
-              "vextracti64x4  $tmp,$src\n\t"
-              "vextracti128  $tmp,$tmp\n\t"
-              "movq $tmp1,$val\n\t"
-              "vpinsrq  $tmp,$tmp,$val\n\t"
-              "vinserti128  $tmp,$tmp,$tmp\n\t"
-              "vinserti64x4  $dst,$dst,$tmp\t! Insert 8D" %}
-    ins_encode %{
-      int id = 0x7 & $idx$$constant;
-      if($dst$$XMMRegister != $src$$XMMRegister) {
-        __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-      }
-      if(id <= 1) {
-        __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-        __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-        __ movq($tmp1$$Register, $val$$XMMRegister);
-        __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp1$$Register, id);
-        __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-        __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      } else if(id <= 3){
-        __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x0);
-        __ vextracti128_high($tmp$$XMMRegister, $src$$XMMRegister);
-        __ movq($tmp1$$Register, $val$$XMMRegister);
-        __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp1$$Register, id - 2);
-        __ vinserti128_high($dst$$XMMRegister, $tmp$$XMMRegister);
-        __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x0);
-      } else if(id <= 5) {
-        __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-        __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-        __ movq($tmp1$$Register, $val$$XMMRegister);
-        __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp1$$Register, id - 4);
-        __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, 0x0);
-        __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-      }
-      else {
-        __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
-        __ vextracti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-        __ movq($tmp1$$Register, $val$$XMMRegister);
-        __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp1$$Register, id - 6);
-        __ vinserti128_high($tmp$$XMMRegister, $tmp$$XMMRegister);
-        __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, 0x1);
-      }
-    %}
-    ins_pipe( pipe_slow );
+instruct rvinsert2D(vecX dst, vecX src, regD val, rRegL tmp, immU1 idx) %{
+  predicate(UseSSE > 3 && UseAVX == 0 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "movdqu  $dst,$src\n\t"
+            "movq  $dst,$src\n\t"
+            "pinsrq  $dst,$dst\t! Insert 2D" %}
+  ins_encode %{
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ movq($tmp$$Register, $val$$XMMRegister);
+    __ pinsrq($dst$$XMMRegister, $tmp$$Register, $idx$$constant);
   %}
+  ins_pipe( pipe_slow );
+%}
 
+instruct rvinsert2D_avx(vecX dst, vecX src, regD val, rRegL tmp, immU1 idx) %{
+  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vmovdqu  $dst,$src\n\t"
+            "movq  $tmp,$val\n\t"
+            "vpinsrq  $dst,$dst,$tmp\t! Insert 2D" %}
+  ins_encode %{
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ movq($tmp$$Register, $val$$XMMRegister);
+    __ vpinsrq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$Register, $idx$$constant);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvinsert4D(vecY dst, vecY src, vecY tmp, regD val, rRegL tmp1, immU2 idx) %{
+  predicate(UseAVX > 0 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst, TEMP tmp, TEMP tmp1);
+  format %{ "vmovdqu  $dst,$src\n\t"
+            "vextracti128  $tmp,$src\n\t"
+            "movq $tmp1,$val\n\t"
+            "vpinsrq  $tmp,$tmp,$tmp1\n\t"
+            "vinserti128  $dst,$dst,$tmp\t! Insert 4D" %}
+  ins_encode %{
+    uint x_idx = $idx$$constant & 1;
+    uint y_idx = ($idx$$constant >> 1) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, y_idx);
+    __ movq($tmp1$$Register, $val$$XMMRegister);
+    __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp1$$Register, x_idx);
+    __ vinsertf128($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, y_idx);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rvinsert8D(vecZ dst, vecZ src, vecZ tmp, regD val, rRegL tmp1, immU3 idx) %{
+  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (VectorInsert (Binary src val) idx));
+  effect(TEMP dst, TEMP tmp, TEMP tmp1);
+  format %{ "vmovdqu  $dst,$src\n\t"
+            "vextracti64x4  $tmp,$src\n\t"
+            "vextracti128  $tmp,$tmp\n\t"
+            "movq $tmp1,$val\n\t"
+            "vpinsrq  $tmp,$tmp,$val\n\t"
+            "vinserti128  $tmp,$tmp,$tmp\n\t"
+            "vinserti64x4  $dst,$dst,$tmp\t! Insert 8D" %}
+  ins_encode %{
+    uint x_idx = $idx$$constant & 1;
+    uint y_idx = ($idx$$constant >> 1) & 1;
+    uint z_idx = ($idx$$constant >> 2) & 1;
+
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    __ vextracti64x4($tmp$$XMMRegister, $src$$XMMRegister, z_idx);
+    __ vextracti128($tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ movq($tmp1$$Register, $val$$XMMRegister);
+    __ vpinsrq($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp1$$Register, x_idx);
+    __ vinserti128($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, y_idx);
+    __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, z_idx);
+  %}
+  ins_pipe( pipe_slow );
+%}
 
 // ====================REDUCTION ARITHMETIC=======================================
 
@@ -5844,7 +5753,7 @@ instruct rsadd8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ 
+  format %{
             "pshufd  $tmp,$src2,0x1\n\t"
             "paddb   $tmp,$src2\n\t"
             "movzbl  $dst,$src1\n\t"
@@ -5947,7 +5856,7 @@ instruct rvadd32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
     __ addb($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ addb($dst$$Register, $tmp3$$Register);  
+    __ addb($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -6003,7 +5912,7 @@ instruct rsadd4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ 
+  format %{
             "movdqu   $tmp,$src2\n\t"
             "phaddw   $tmp,$tmp\n\t"
             "phaddw   $tmp,$tmp\n\t"
@@ -6049,7 +5958,7 @@ instruct rsadd8S_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, rRegI
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AddReductionVI src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ 
+  format %{
             "movdqu   $tmp,$src2\n\t"
             "phaddw  $tmp,$tmp\n\t"
             "phaddw  $tmp,$tmp\n\t"
@@ -8064,7 +7973,7 @@ instruct rsmin4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
     __ cmovl(Assembler::less, $tmp3$$Register, $tmp2$$Register);
     __ cmpl($src1$$Register, $tmp3$$Register);
     __ cmovl(Assembler::less, $tmp3$$Register, $src1$$Register);
-    __ movl($dst$$Register, $tmp3$$Register); 
+    __ movl($dst$$Register, $tmp3$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -9142,7 +9051,7 @@ instruct rsmax4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
     __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
     __ cmpl($src1$$Register, $tmp3$$Register);
     __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
-    __ movl($dst$$Register, $tmp3$$Register); 
+    __ movl($dst$$Register, $tmp3$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -9169,7 +9078,7 @@ instruct rvmax4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
     __ cmovl(Assembler::greater, $tmp3$$Register, $tmp2$$Register);
     __ cmpl($src1$$Register, $tmp3$$Register);
     __ cmovl(Assembler::greater, $tmp3$$Register, $src1$$Register);
-    __ movl($dst$$Register, $tmp3$$Register); 
+    __ movl($dst$$Register, $tmp3$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -9949,7 +9858,7 @@ instruct rsand8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (AndReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ 
+  format %{
             "pshufd  $tmp,$src2,0x1\n\t"
             "pand    $tmp,$src2\n\t"
             "movzbl  $dst,$src1\n\t"
@@ -10052,7 +9961,7 @@ instruct rvand32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
     __ andb($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ andb($dst$$Register, $tmp3$$Register);  
+    __ andb($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10108,7 +10017,7 @@ instruct rsand4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AndReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ 
+  format %{
             "pshufd  $tmp,$src2,0x1\n\t"
             "pand    $tmp,$src2\n\t"
             "movzwl  $dst,$src1\n\t"
@@ -10187,7 +10096,7 @@ instruct rvand16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
     __ pextrw($tmp3$$Register, $tmp$$XMMRegister, 0x0);
     __ andw($dst$$Register, $tmp3$$Register);
     __ pextrw($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ andw($dst$$Register, $tmp3$$Register);  
+    __ andw($dst$$Register, $tmp3$$Register);
     __ movswl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10407,7 +10316,7 @@ instruct rsor8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI 
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (OrReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ 
+  format %{
             "pshufd  $tmp,$src2,0x1\n\t"
             "por    $tmp,$src2\n\t"
             "movzbl  $dst,$src1\n\t"
@@ -10510,7 +10419,7 @@ instruct rvor32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF 
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
     __ orb($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ orb($dst$$Register, $tmp3$$Register);  
+    __ orb($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10566,7 +10475,7 @@ instruct rsor4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI 
   predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (OrReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ 
+  format %{
             "pshufd  $tmp,$src2,0x1\n\t"
             "por    $tmp,$src2\n\t"
             "movzwl  $dst,$src1\n\t"
@@ -10645,7 +10554,7 @@ instruct rvor16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF 
     __ pextrw($tmp3$$Register, $tmp$$XMMRegister, 0x0);
     __ orw($dst$$Register, $tmp3$$Register);
     __ pextrw($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ orw($dst$$Register, $tmp3$$Register);  
+    __ orw($dst$$Register, $tmp3$$Register);
     __ movswl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10868,7 +10777,7 @@ instruct rsxor8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   predicate(UseSSE > 3 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (XorReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ 
+  format %{
             "pshufd  $tmp,$src2,0x1\n\t"
             "pxor    $tmp,$src2\n\t"
             "movzbl  $dst,$src1\n\t"
@@ -10971,7 +10880,7 @@ instruct rvxor32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
     __ xorb($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ xorb($dst$$Register, $tmp3$$Register);  
+    __ xorb($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -11027,7 +10936,7 @@ instruct rsxor4S_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
   predicate(UseSSE > 1 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (XorReductionV src1 src2));
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ 
+  format %{
             "pshufd  $tmp,$src2,0x1\n\t"
             "pxor    $tmp,$src2\n\t"
             "movzwl  $dst,$src1\n\t"
@@ -11106,7 +11015,7 @@ instruct rvxor16S_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
     __ pextrw($tmp3$$Register, $tmp$$XMMRegister, 0x0);
     __ xorw($dst$$Register, $tmp3$$Register);
     __ pextrw($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ xorw($dst$$Register, $tmp3$$Register);  
+    __ xorw($dst$$Register, $tmp3$$Register);
     __ movswl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -13924,7 +13833,7 @@ instruct mul2L_reg(vecX dst, vecX src2, vecX tmp) %{
             "pmovzxdq $tmp,$tmp\n\t"
             "psllq $tmp, 32\n\t"
             "pmuludq $dst,$src2\n\t"
-            "paddq $dst,$tmp\n\t! mul packed2L" %} 
+            "paddq $dst,$tmp\n\t! mul packed2L" %}
 
   ins_encode %{
     int vector_len = 0;
@@ -14601,7 +14510,7 @@ instruct min4S_reg(vecD dst, vecD src1, vecD src2) %{
   predicate(UseSSE >= 2 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd   $dst,$src1\n\t" 
+  format %{ "movsd   $dst,$src1\n\t"
             "pminsw  $dst,$src2\t! " %}
   ins_encode %{
     __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
@@ -14694,7 +14603,7 @@ instruct min2I_reg(vecD dst, vecD src1, vecD src2) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd   $dst,$src1\n\t" 
+  format %{ "movsd   $dst,$src1\n\t"
             "pminsd  $dst,$src2\t! " %}
   ins_encode %{
     __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
@@ -14718,7 +14627,7 @@ instruct min4I_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movdqu   $dst,$src1\n\t" 
+  format %{ "movdqu   $dst,$src1\n\t"
             "pminsd   $dst,$src2\t! " %}
   ins_encode %{
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
@@ -14758,7 +14667,7 @@ instruct min8I_reg_avx(vecY dst, vecY src1, vecY src2) %{
     __ vpminsd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
-%} 
+%}
 
 instruct min8I_reg_evex(vecY dst, vecY src1, vecY src2) %{
   predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
@@ -14849,7 +14758,7 @@ instruct min4L_reg_avx(vecY dst, vecY src1, vecY src2) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t" 
+  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t"
             "vblendvpd  $dst,$src1,$src2,$dst\t! " %}
   ins_encode %{
     int vector_len = 1;
@@ -14894,7 +14803,7 @@ instruct min2F_reg(vecD dst, vecD src1, vecD src2) %{
   predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd  $dst,$src1\n\t" 
+  format %{ "movsd  $dst,$src1\n\t"
             "minps  $dst,$src2\t! " %}
   ins_encode %{
     __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
@@ -14918,7 +14827,7 @@ instruct min4F_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movdqu  $dst,$src1\n\t" 
+  format %{ "movdqu  $dst,$src1\n\t"
             "minps   $dst,$src2\t! " %}
   ins_encode %{
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
@@ -14987,7 +14896,7 @@ instruct minD_reg(vecD dst, vecD src1, vecD src2) %{
   predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd  $dst,$src1\n\t" 
+  format %{ "movsd  $dst,$src1\n\t"
             "minpd  $dst,$src2\t! " %}
   ins_encode %{
     int vector_len = 0;
@@ -15012,7 +14921,7 @@ instruct min2D_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MinV src1 src2));
   effect(TEMP dst);
-  format %{ "movdqu  $dst,$src1\n\t" 
+  format %{ "movdqu  $dst,$src1\n\t"
             "minpd   $dst,$src2\t! " %}
   ins_encode %{
     int vector_len = 0;
@@ -15083,7 +14992,7 @@ instruct max8B_reg(vecD dst, vecD src1, vecD src2) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd   $dst,$src1\n\t" 
+  format %{ "movsd   $dst,$src1\n\t"
             "pmaxsb  $dst,$src2\t! " %}
   ins_encode %{
     __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
@@ -15107,7 +15016,7 @@ instruct max16B_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movdqu  $dst,$src1\n\t" 
+  format %{ "movdqu  $dst,$src1\n\t"
             "pmaxsb  $dst,$src2\t! " %}
   ins_encode %{
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
@@ -15176,7 +15085,7 @@ instruct max4S_reg(vecD dst, vecD src1, vecD src2) %{
   predicate(UseSSE > 1 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd   $dst,$src1\n\t" 
+  format %{ "movsd   $dst,$src1\n\t"
             "pmaxsw  $dst,$src2\t! " %}
   ins_encode %{
     __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
@@ -15200,7 +15109,7 @@ instruct max8S_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE > 1 && UseAVX == 0 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movdqu  $dst,$src1\n\t" 
+  format %{ "movdqu  $dst,$src1\n\t"
             "pmaxsw  $dst,$src2\t! " %}
   ins_encode %{
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
@@ -15269,7 +15178,7 @@ instruct max2I_reg(vecD dst, vecD src1, vecD src2) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movdqu  $dst,$src1\n\t" 
+  format %{ "movdqu  $dst,$src1\n\t"
             "pmaxsd  $dst,$src2\t! " %}
   ins_encode %{
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
@@ -15293,7 +15202,7 @@ instruct max4I_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE > 3 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movdqu  $dst,$src1\n\t" 
+  format %{ "movdqu  $dst,$src1\n\t"
             "pmaxsd  $dst,$src2\t! " %}
   ins_encode %{
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
@@ -15434,7 +15343,7 @@ instruct max4L_reg_avx(vecY dst, vecY src1, vecY src2) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t" 
+  format %{ "vpcmpgtq   $dst,$src1,$src2\n\t"
             "vblendvpd  $dst,$src2,$src1,$dst\t! " %}
   ins_encode %{
     int vector_len = 1;
@@ -15469,7 +15378,7 @@ instruct max2F_reg(vecD dst, vecD src1, vecD src2) %{
   predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd  $dst,$src1\n\t" 
+  format %{ "movsd  $dst,$src1\n\t"
             "maxps  $dst,$src2\t! " %}
   ins_encode %{
     __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
@@ -15493,7 +15402,7 @@ instruct max4F_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movdqu  $dst,$src1\n\t" 
+  format %{ "movdqu  $dst,$src1\n\t"
             "maxps   $dst,$src2\t! " %}
   ins_encode %{
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
@@ -15562,7 +15471,7 @@ instruct maxD_reg(vecD dst, vecD src1, vecD src2) %{
   predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 1 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movsd  $dst,$src1\n\t" 
+  format %{ "movsd  $dst,$src1\n\t"
             "maxpd  $dst,$src2\t! " %}
   ins_encode %{
     __ movsd($dst$$XMMRegister, $src1$$XMMRegister);
@@ -15586,7 +15495,7 @@ instruct max2D_reg(vecX dst, vecX src1, vecX src2) %{
   predicate(UseSSE > 0 && UseAVX == 0 && n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (MaxV src1 src2));
   effect(TEMP dst);
-  format %{ "movdqu  $dst,$src1\n\t" 
+  format %{ "movdqu  $dst,$src1\n\t"
             "maxpd   $dst,$src2\t! " %}
   ins_encode %{
     __ movdqu($dst$$XMMRegister, $src1$$XMMRegister);
@@ -17730,7 +17639,7 @@ instruct vsrlv8L_reg(vecZ dst, vecZ src, vecZ shift) %{
 %}
 
 // ------------------- Variable Bit Shift Right Arithmetic -----------------------------
-//Integer Variable right shift 
+//Integer Variable right shift
 instruct vsrav2I_reg(vecD dst, vecD src, vecD shift) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
   match(Set dst (RShiftVI src shift));
@@ -22398,7 +22307,7 @@ instruct vnot64B_reg(vecZ dst, vecZ src, rRegL scratch) %{
 instruct vptest4inae(rRegI dst, vecX src1, vecX src2) %{
   predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::carrySet);
   match(Set dst (VectorTest src1 src2 ));
-  format %{ "vptest  $src1,$src2\n\t" 
+  format %{ "vptest  $src1,$src2\n\t"
             "setb  $dst\t!" %}
   ins_encode %{
     int vector_len = 0;
@@ -22412,7 +22321,7 @@ instruct vptest4inae(rRegI dst, vecX src1, vecX src2) %{
 instruct vptest4ieq(rRegI dst, vecX src1, vecX src2) %{
   predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::notZero);
   match(Set dst (VectorTest src1 src2 ));
-  format %{ "vptest  $src1,$src2\n\t" 
+  format %{ "vptest  $src1,$src2\n\t"
             "setb  $dst\t!" %}
   ins_encode %{
     int vector_len = 0;
@@ -22426,7 +22335,7 @@ instruct vptest4ieq(rRegI dst, vecX src1, vecX src2) %{
 instruct vptest8inae(rRegI dst, vecY src1, vecY src2) %{
   predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::carrySet);
   match(Set dst (VectorTest src1 src2 ));
-  format %{ "vptest  $src1,$src2\n\t" 
+  format %{ "vptest  $src1,$src2\n\t"
             "setb  $dst\t!" %}
   ins_encode %{
     int vector_len = 1;
@@ -22440,7 +22349,7 @@ instruct vptest8inae(rRegI dst, vecY src1, vecY src2) %{
 instruct vptest8ieq(rRegI dst, vecY src1, vecY src2) %{
   predicate(UseAVX > 0 && static_cast<const VectorTestNode*>(n)->get_predicate() == Assembler::notZero);
   match(Set dst (VectorTest src1 src2 ));
-  format %{ "vptest  $src1,$src2\n\t" 
+  format %{ "vptest  $src1,$src2\n\t"
             "setb  $dst\t!" %}
   ins_encode %{
     int vector_len = 1;
@@ -22568,7 +22477,7 @@ instruct loadmask32s(vecZ dst, vecY src) %{
 %}
 
 instruct loadmask2i(vecD dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 && 
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadMask src));
@@ -22585,7 +22494,7 @@ instruct loadmask2i(vecD dst, vecS src) %{
 %}
 
 instruct loadmask4i(vecX dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 4 && 
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 4 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadMask src));
@@ -22603,7 +22512,7 @@ instruct loadmask4i(vecX dst, vecS src) %{
 %}
 
 instruct loadmask8i(vecY dst, vecD src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 && 
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 8 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadMask src));
@@ -22621,7 +22530,7 @@ instruct loadmask8i(vecY dst, vecD src) %{
 %}
 
 instruct loadmask16i(vecZ dst, vecX src, vecZ tmp) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && 
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadMask src));
@@ -22639,7 +22548,7 @@ instruct loadmask16i(vecZ dst, vecX src, vecZ tmp) %{
 %}
 
 instruct loadmask1l(vecD dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 1 && 
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 1 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
              n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadMask src));
@@ -22656,7 +22565,7 @@ instruct loadmask1l(vecD dst, vecS src) %{
 %}
 
 instruct loadmask2l(vecX dst, vecS src) %{
-  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 && 
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
              n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadMask src));
@@ -22673,7 +22582,7 @@ instruct loadmask2l(vecX dst, vecS src) %{
 %}
 
 instruct loadmask4l(vecY dst, vecS src) %{
-  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && 
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
              n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadMask src));
@@ -22691,7 +22600,7 @@ instruct loadmask4l(vecY dst, vecS src) %{
 %}
 
 instruct loadmask8l(vecZ dst, vecD src, vecZ tmp) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && 
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
              n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
   match(Set dst (VectorLoadMask src));

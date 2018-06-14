@@ -160,6 +160,7 @@ public class Short512VectorTests extends AbstractVectorTest {
             Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
+
     static final List<IntFunction<short[]>> SHORT_GENERATORS = List.of(
             withToString("short[i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -189,6 +190,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
+
     @DataProvider
     public Object[][] shortBinaryOpProvider() {
         return SHORT_GENERATOR_PAIRS.stream().map(List::toArray).
@@ -203,6 +205,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
 
     @DataProvider
     public Object[][] shortUnaryOpProvider() {
@@ -977,6 +980,9 @@ public class Short512VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Short512VectorTests::blend);
     }
+
+
+
 
 
 

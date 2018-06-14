@@ -160,6 +160,46 @@ public class Float128VectorTests extends AbstractVectorTest {
             Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
         }
     }
+
+    interface FTernOp {
+        float apply(float a, float b, float c);
+    }
+
+    interface FTernMaskOp {
+        float apply(float a, float b, float c, boolean m);
+
+        static FTernMaskOp lift(FTernOp f) {
+            return (a, b, c, m) -> m ? f.apply(a, b, c) : a;
+        }
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] c, float[] r, FTernOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(r[i], f.apply(a[i], b[i], c[i]));
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(r[i], f.apply(a[i], b[i], c[i]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i] + ", input3 = " + c[i]);
+        }
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] c, float[] r, boolean[] mask, FTernOp f) {
+        assertArraysEquals(a, b, c, r, mask, FTernMaskOp.lift(f));
+    }
+
+    static void assertArraysEquals(float[] a, float[] b, float[] c, float[] r, boolean[] mask, FTernMaskOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(r[i], f.apply(a[i], b[i], c[i], mask[i % SPECIES.length()]));
+            }
+        } catch (AssertionError err) {
+            Assert.assertEquals(r[i], f.apply(a[i], b[i], c[i], mask[i % SPECIES.length()]), "at index #" + i + ", input1 = " + a[i] + ", input2 = "
+              + b[i] + ", input3 = " + c[i] + ", mask = " + mask[i % SPECIES.length()]);
+        }
+    }
+
     static boolean isWithin1Ulp(float actual, float expected) {
         if (Float.isNaN(expected) && !Float.isNaN(actual)) {
             return false;
@@ -237,6 +277,11 @@ public class Float128VectorTests extends AbstractVectorTest {
                 toArray(Object[][]::new);
     }
 
+    static final List<List<IntFunction<float[]>>> FLOAT_GENERATOR_TRIPLES =
+        FLOAT_GENERATOR_PAIRS.stream().
+                flatMap(pair -> FLOAT_GENERATORS.stream().map(f -> List.of(pair.get(0), pair.get(1), f))).
+                collect(Collectors.toList());
+
     @DataProvider
     public Object[][] floatBinaryOpProvider() {
         return FLOAT_GENERATOR_PAIRS.stream().map(List::toArray).
@@ -247,6 +292,21 @@ public class Float128VectorTests extends AbstractVectorTest {
     public Object[][] floatBinaryOpMaskProvider() {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> FLOAT_GENERATOR_PAIRS.stream().map(lfa -> {
+                    return Stream.concat(lfa.stream(), Stream.of(fm)).toArray();
+                })).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] floatTernaryOpProvider() {
+        return FLOAT_GENERATOR_TRIPLES.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] floatTernaryOpMaskProvider() {
+        return BOOLEAN_MASK_GENERATORS.stream().
+                flatMap(fm -> FLOAT_GENERATOR_TRIPLES.stream().map(lfa -> {
                     return Stream.concat(lfa.stream(), Stream.of(fm)).toArray();
                 })).
                 toArray(Object[][]::new);
@@ -1243,6 +1303,52 @@ public class Float128VectorTests extends AbstractVectorTest {
         }
 
         assertArraysEqualsWithinOneUlp(a, b, r, Float128VectorTests::atan2, Float128VectorTests::strictatan2);
+    }
+
+
+    static float fma(float a, float b, float c) {
+        return (float)(Math.fma(a, b, c));
+    }
+
+
+    @Test(dataProvider = "floatTernaryOpProvider")
+    static void fmaFloat128VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb, IntFunction<float[]> fc) {
+        float[] a = fa.apply(SPECIES.length()); 
+        float[] b = fb.apply(SPECIES.length()); 
+        float[] c = fc.apply(SPECIES.length()); 
+        float[] r = new float[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                FloatVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                FloatVector<Shapes.S128Bit> cv = SPECIES.fromArray(c, i);
+                av.fma(bv, cv).intoArray(r, i);
+            }
+        }
+        assertArraysEquals(a, b, c, r, Float128VectorTests::fma);
+    }
+
+
+    @Test(dataProvider = "floatTernaryOpMaskProvider")
+    static void fmaFloat128VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb,
+                                          IntFunction<float[]> fc, IntFunction<boolean[]> fm) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] b = fb.apply(SPECIES.length());
+        float[] c = fc.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Float, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                FloatVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                FloatVector<Shapes.S128Bit> cv = SPECIES.fromArray(c, i);
+                av.fma(bv, cv, vmask).intoArray(r, i);
+            }
+        }
+        assertArraysEquals(a, b, c, r, mask, Float128VectorTests::fma);
     }
 
 
