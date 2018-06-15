@@ -114,8 +114,10 @@ class NativeInvoker {
             throw new IllegalArgumentException("Not expecting primitive type " + c.getName());
         }
 
-        if (c == Integer.class) {
-            return int.class;
+        if (c == Byte.class || c == Short.class || c == Character.class || c == Integer.class || c == Long.class) {
+            return long.class;
+        } else if (c == Float.class || c == Double.class) {
+            return double.class;
         } else if (Pointer.class.isAssignableFrom(c)) {
             return Pointer.class;
         } else {

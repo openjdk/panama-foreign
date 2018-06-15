@@ -84,10 +84,12 @@ public final class Util {
 
     public static Layout variadicLayout(Class<?> c) {
         c = (Class<?>)unboxIfNeeded(c);
-        if (c.isPrimitive()) {
+        if (c == char.class || c == byte.class || c == short.class || c == int.class || c == long.class) {
             //it is ok to approximate with a machine word here; numerics arguments in a prototype-less
             //function call are always rounded up to a register size anyway.
             return Types.INT64;
+        } else if (c == float.class || c == double.class) {
+            return Types.DOUBLE;
         } else if (Pointer.class.isAssignableFrom(c)) {
             return Types.POINTER;
         } else if (isCallback(c)) {
