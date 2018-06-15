@@ -151,8 +151,6 @@ public class Runner {
     private void verifyMethodAnnotation(Method actual, Method expected) {
         Annotation[] aa = actual.getAnnotations();
         Annotation[] ea = expected.getAnnotations();
-        // allow test case has extra annotation used by test case
-        assertTrue(ea.length >= aa.length);
 
         for (Annotation a: ea) {
             if (a instanceof NativeLocation) {
@@ -195,8 +193,6 @@ public class Runner {
     public void testAnnotations(Class<?> actual, Class<?> expected) {
         Annotation[] aa = actual.getAnnotations();
         Annotation[] ea = expected.getAnnotations();
-        // allow test case has extra annotation used by test case
-        assertTrue(ea.length >= aa.length);
 
         if (actual.getName().contains("$")) {
             assertTrue(actual.getName().contains("$"));
@@ -205,9 +201,11 @@ public class Runner {
             NativeStruct ant = actual.getAnnotation(NativeStruct.class);
             assertNotNull(ant);
             assertEquals(ant, expected.getAnnotation(NativeStruct.class));
-            NativeLocation loc = actual.getAnnotation(NativeLocation.class);
-            assertNotNull(loc);
-            verifyNativeLocation(loc, expected.getAnnotation(NativeLocation.class));
+            if (expected.isAnnotationPresent(NativeLocation.class)) {
+                NativeLocation loc = actual.getAnnotation(NativeLocation.class);
+                assertNotNull(loc);
+                verifyNativeLocation(loc, expected.getAnnotation(NativeLocation.class));
+            }
         } else {
             NativeHeader ah = actual.getAnnotation(NativeHeader.class);
             assertNotNull(ah);
@@ -310,7 +308,8 @@ public class Runner {
         return new Object[][] {
             { "simple.h", "com.acme", new String[] { "simple.java" }},
             { "recursive.h", "com.acme", new String[] { "recursive.java" }},
-            { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct.java" }}
+            { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct.java" }},
+            { "pad.h", "com.acme", new String[] { "pad.java" }}
         };
     }
 }

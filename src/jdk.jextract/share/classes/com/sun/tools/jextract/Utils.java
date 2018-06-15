@@ -25,6 +25,7 @@ package com.sun.tools.jextract;
 
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
+import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
 import jdk.internal.nicl.types.Types;
@@ -43,8 +44,10 @@ import java.nicl.layout.Value;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /**
@@ -111,9 +114,15 @@ public class Utils {
         // or enum prefix
         String nativeName = cursor.spelling();
         if (nativeName.isEmpty()) {
-            // This happens when a typedef an anonymouns struct, i.e., typedef struct {} type;
+            // This happens when a typedef an anonymous struct, i.e., typedef struct {} type;
             Type t = cursor.type();
             nativeName = t.spelling();
+            if (nativeName.contains("::")) {
+                SourceLocation.Location loc = cursor.getSourceLocation().getFileLocation();
+                return "anon$"
+                        + loc.path().getFileName().toString().replaceAll("\\.", "_")
+                        + "$" + loc.offset();
+            }
         }
 
         return nativeName;
@@ -337,37 +346,56 @@ public class Utils {
     }
 
     public static Group getRecordLayout(Type t, java.util.function.BiFunction<String, Layout, Layout> fieldMapper) {
+        return getRecordLayoutInternal(0, t, t, fieldMapper);
+    }
+
+    static Group getRecordLayoutInternal(long offset, Type parent, Type t, java.util.function.BiFunction<String, Layout, Layout> fieldMapper) {
         Cursor cu = t.getDeclarationCursor().getDefinition();
         assert !cu.isInvalid();
         final boolean isUnion = cu.kind() == CursorKind.UnionDecl;
-        Stream<Cursor> fieldTypes = cu.stream()
-                .filter(cx -> cx.kind() == CursorKind.FieldDecl);
-        long offset = 0L;
+        Stream<Cursor> fieldTypes = cu.children()
+                .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
         List<Layout> fieldLayouts = new ArrayList<>();
+        long actualSize = 0L;
         for (Cursor c : fieldTypes.collect(Collectors.toList())) {
-            String fieldName = c.spelling();
-            long fieldOffset = t.getOffsetOf(c.spelling());
-            if (fieldOffset != offset) {
-                //add padding
-                fieldLayouts.add(Padding.of(fieldOffset - offset));
-                offset = fieldOffset;
+            long expectedOffset = offsetOf(parent, c);
+            if (expectedOffset > offset) {
+                if (isUnion) {
+                    throw new IllegalStateException("No padding in union elements!");
+                }
+                fieldLayouts.add(Padding.of(expectedOffset - offset));
+                actualSize += (expectedOffset - offset);
+                offset = expectedOffset;
             }
-            Layout fieldLayout = c.isAnonymousStruct() ?
-                    getRecordLayout(c.type(), fieldMapper) :
-                    getLayout(c.type());
-            fieldLayouts.add(fieldMapper.apply(fieldName, fieldLayout));
-            if (!isUnion) {
-                offset += c.type().size() * 8;
+            Layout fieldLayout = (c.isAnonymous()) ?
+                    getRecordLayoutInternal(offset, parent, c.type(), fieldMapper) :
+                    fieldMapper.apply(c.spelling(), getLayout(c.type()));
+            fieldLayouts.add(fieldLayout);
+            long size = c.type().size() * 8;
+            if (isUnion) {
+                actualSize = Math.max(actualSize, size);
+            } else {
+                offset += size;
+                actualSize += size;
             }
         }
-        long size = t.size() * 8;
-        if (offset != size) {
-            //add final padding
-            fieldLayouts.add(Padding.of(size - offset));
+        long expectedSize = t.size() * 8;
+        if (actualSize < expectedSize) {
+            fieldLayouts.add(Padding.of(expectedSize - actualSize));
         }
         Layout[] fields = fieldLayouts.toArray(new Layout[0]);
         Group g = isUnion ?
                 Group.union(fields) : Group.struct(fields);
-        return g.withAnnotation(Layout.NAME, getIdentifier(t));
+        return g.withAnnotation(Layout.NAME, getIdentifier(cu));
+    }
+
+    static long offsetOf(Type parent, Cursor c) {
+        if (c.kind() == CursorKind.FieldDecl) {
+            return parent.getOffsetOf(c.spelling());
+        } else {
+            return c.children()
+                    .mapToLong(child -> offsetOf(parent, child))
+                    .findFirst().orElseThrow(IllegalStateException::new);
+        }
     }
 }
