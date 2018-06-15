@@ -612,7 +612,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
-    public $vectortype$ ashiftR(Vector<$Boxtype$,Shapes.$shape$> s) {
+    public $vectortype$ aShiftR(Vector<$Boxtype$,Shapes.$shape$> s) {
         $vectortype$ shiftv = ($vectortype$)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast({#if[int]?0x1f:0x3f}));

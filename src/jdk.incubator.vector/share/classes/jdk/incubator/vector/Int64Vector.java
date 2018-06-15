@@ -497,7 +497,7 @@ final class Int64Vector extends IntVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Int64Vector ashiftR(Vector<Integer,Shapes.S64Bit> s) {
+    public Int64Vector aShiftR(Vector<Integer,Shapes.S64Bit> s) {
         Int64Vector shiftv = (Int64Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x1f));

@@ -497,7 +497,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector ashiftR(Vector<Integer,Shapes.S256Bit> s) {
+    public Int256Vector aShiftR(Vector<Integer,Shapes.S256Bit> s) {
         Int256Vector shiftv = (Int256Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x1f));

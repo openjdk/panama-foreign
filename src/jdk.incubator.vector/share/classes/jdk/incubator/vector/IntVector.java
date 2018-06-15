@@ -708,7 +708,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public abstract IntVector<S> ashiftR(Vector<Integer,S> v);
+    public abstract IntVector<S> aShiftR(Vector<Integer,S> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
@@ -722,7 +722,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public IntVector<S> ashiftR(Vector<Integer,S> v, Mask<Integer, S> m) {
+    public IntVector<S> aShiftR(Vector<Integer,S> v, Mask<Integer, S> m) {
         return bOp(v, m, (i, a, b) -> (int) (a >> b));
     }
 

@@ -497,7 +497,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Long512Vector ashiftR(Vector<Long,Shapes.S512Bit> s) {
+    public Long512Vector aShiftR(Vector<Long,Shapes.S512Bit> s) {
         Long512Vector shiftv = (Long512Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x3f));

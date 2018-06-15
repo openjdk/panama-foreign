@@ -708,7 +708,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public abstract LongVector<S> ashiftR(Vector<Long,S> v);
+    public abstract LongVector<S> aShiftR(Vector<Long,S> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
@@ -722,7 +722,7 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public LongVector<S> ashiftR(Vector<Long,S> v, Mask<Long, S> m) {
+    public LongVector<S> aShiftR(Vector<Long,S> v, Mask<Long, S> m) {
         return bOp(v, m, (i, a, b) -> (long) (a >> b));
     }
 

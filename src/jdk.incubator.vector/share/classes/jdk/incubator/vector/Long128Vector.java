@@ -497,7 +497,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector ashiftR(Vector<Long,Shapes.S128Bit> s) {
+    public Long128Vector aShiftR(Vector<Long,Shapes.S128Bit> s) {
         Long128Vector shiftv = (Long128Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x3f));

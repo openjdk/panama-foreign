@@ -497,7 +497,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Long64Vector ashiftR(Vector<Long,Shapes.S64Bit> s) {
+    public Long64Vector aShiftR(Vector<Long,Shapes.S64Bit> s) {
         Long64Vector shiftv = (Long64Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x3f));

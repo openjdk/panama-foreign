@@ -1473,7 +1473,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public abstract $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> v);
+    public abstract $abstractvectortype$<S> aShiftR(Vector<$Boxtype$,S> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
@@ -1487,7 +1487,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public $abstractvectortype$<S> ashiftR(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
+    public $abstractvectortype$<S> aShiftR(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
         return bOp(v, m, (i, a, b) -> ($type$) (a >> b));
     }
 

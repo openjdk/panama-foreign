@@ -146,6 +146,21 @@ public class Double512VectorTests extends AbstractVectorTest {
         }
     }
 
+    static void assertArraysEquals(double[] a, double[] b, double[] r, boolean[] mask, FBinOp f) {
+        assertArraysEquals(a, b, r, mask, FBinMaskOp.lift(f));
+    }
+
+    static void assertArraysEquals(double[] a, double[] b, double[] r, boolean[] mask, FBinMaskOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]));
+            }
+        } catch (AssertionError err) {
+            Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
+        }
+    }
+
     static void assertShiftArraysEquals(double[] a, double[] b, double[] r, FBinOp f) {
         int i = 0;
         int j = 0;
@@ -160,18 +175,21 @@ public class Double512VectorTests extends AbstractVectorTest {
         }
     }
 
-    static void assertArraysEquals(double[] a, double[] b, double[] r, boolean[] mask, FBinOp f) {
-        assertArraysEquals(a, b, r, mask, FBinMaskOp.lift(f));
+    static void assertShiftArraysEquals(double[] a, double[] b, double[] r, boolean[] mask, FBinOp f) {
+        assertShiftArraysEquals(a, b, r, mask, FBinMaskOp.lift(f));
     }
 
-    static void assertArraysEquals(double[] a, double[] b, double[] r, boolean[] mask, FBinMaskOp f) {
+    static void assertShiftArraysEquals(double[] a, double[] b, double[] r, boolean[] mask, FBinMaskOp f) {
         int i = 0;
+        int j = 0;
         try {
-            for (; i < a.length; i++) {
-                Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]));
+            for (; j < a.length; j += SPECIES.length()) {
+              for (i = 0; i < SPECIES.length(); i++) {
+                Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]));
+              }
             }
         } catch (AssertionError err) {
-            Assert.assertEquals(r[i], f.apply(a[i], b[i], mask[i % SPECIES.length()]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i] + ", mask = " + mask[i % SPECIES.length()]);
+            Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]), "at index #" + i + ", input1 = " + a[i+j] + ", input2 = " + b[j] + ", mask = " + mask[i]);
         }
     }
 
@@ -576,6 +594,11 @@ public class Double512VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Double512VectorTests::mul);
     }
+
+
+
+
+
 
 
 
