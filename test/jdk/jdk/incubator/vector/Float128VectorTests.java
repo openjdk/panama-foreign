@@ -142,7 +142,21 @@ public class Float128VectorTests extends AbstractVectorTest {
                 Assert.assertEquals(r[i], f.apply(a[i], b[i]));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(r[i], f.apply(a[i], b[i]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i]);
+            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "(" + a[i] + ", " + b[i] + ") at index #" + i);
+        }
+    }
+
+    static void assertShiftArraysEquals(float[] a, float[] b, float[] r, FBinOp f) {
+        int i = 0;
+        int j = 0;
+        try {
+            for (; j < a.length; j += SPECIES.length()) {
+              for (i = 0; i < SPECIES.length(); i++) {
+                Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
+              }
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j], "at index #" + i + ", " + j);
         }
     }
 
@@ -249,6 +263,10 @@ public class Float128VectorTests extends AbstractVectorTest {
         }
     }
     static final List<IntFunction<float[]>> FLOAT_GENERATORS = List.of(
+            withToString("float[-i * 5]", (int s) -> {
+                return fill(s * 1000,
+                            i -> (float)(-i * 5));
+            }),
             withToString("float[i * 5]", (int s) -> {
                 return fill(s * 1000,
                             i -> (float)(i * 5));
@@ -558,6 +576,16 @@ public class Float128VectorTests extends AbstractVectorTest {
         }
         assertArraysEquals(a, b, r, mask, Float128VectorTests::mul);
     }
+
+
+
+
+
+
+
+
+
+
 
 
 

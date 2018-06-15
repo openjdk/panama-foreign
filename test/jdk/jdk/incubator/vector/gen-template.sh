@@ -46,6 +46,7 @@ binary_math_template="$TEMPLATE_FOLDER/Binary-op-math.template"
 bool_reduction_scalar="$TEMPLATE_FOLDER/BoolReduction-Scalar-op.template"
 bool_reduction_template="$TEMPLATE_FOLDER/BoolReduction-op.template"
 with_op_template="$TEMPLATE_FOLDER/With-Op.template"
+shift_template="$TEMPLATE_FOLDER/Shift-op.template"
 
 function gen_op_tmpl { 
   template=$1
@@ -152,8 +153,14 @@ gen_binary_alu_op "mul" "a \* b" $template_file
 gen_binary_alu_op "and" "a \& b" $template_file "BITWISE"
 gen_binary_alu_op "or" "a | b" $template_file "BITWISE"
 gen_binary_alu_op "xor" "a ^ b" $template_file "BITWISE"
-#gen_binary_alu_op "addSaturate" "((a >= Integer.MAX_VALUE || Integer.MAX_VALUE - b > a) ? Integer.MAX_VALUE : a + b)" $template_file
-#gen_binary_alu_op "subSaturate" "((a >= Integer.MIN_VALUE || Integer.MIN_VALUE + b > a) ? Integer.MAX_VALUE : a - b)" $template_file
+
+# Shifts
+gen_binary_alu_op "shiftR" "(a >>> b)" $template_file "intOrLong"
+gen_binary_alu_op "shiftL" "(a << b)" $template_file "intOrLong"
+gen_op_tmpl $binary_scalar "aShiftR" "a >> b" $template_file "intOrLong"
+gen_op_tmpl $shift_template "aShiftR" "a >> b" $template_file "intOrLong"
+gen_op_tmpl $shift_template "shiftR" "a >> b" $template_file "intOrLong"
+gen_op_tmpl $shift_template "shiftL" "a << b" $template_file "intOrLong"
 
 # Masked reductions.
 gen_binary_op "max" "(a > b) ? a : b" $template_file

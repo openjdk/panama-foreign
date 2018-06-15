@@ -70,14 +70,14 @@ do
       fptype=float
       Fptype=Float
       Boxfptype=Float
-      args="$args -KintOrlong"
+      args="$args -KintOrLong"
       ;;
     long)
       Wideboxtype=Long
       fptype=double
       Fptype=Double
       Boxfptype=Double
-      args="$args -KintOrlong"
+      args="$args -KintOrLong"
       ;;
     float)
       kind=FP

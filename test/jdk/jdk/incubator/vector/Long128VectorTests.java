@@ -142,7 +142,21 @@ public class Long128VectorTests extends AbstractVectorTest {
                 Assert.assertEquals(r[i], f.apply(a[i], b[i]));
             }
         } catch (AssertionError e) {
-            Assert.assertEquals(r[i], f.apply(a[i], b[i]), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i]);
+            Assert.assertEquals(f.apply(a[i], b[i]), r[i], "(" + a[i] + ", " + b[i] + ") at index #" + i);
+        }
+    }
+
+    static void assertShiftArraysEquals(long[] a, long[] b, long[] r, FBinOp f) {
+        int i = 0;
+        int j = 0;
+        try {
+            for (; j < a.length; j += SPECIES.length()) {
+              for (i = 0; i < SPECIES.length(); i++) {
+                Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
+              }
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j], "at index #" + i + ", " + j);
         }
     }
 
@@ -162,6 +176,10 @@ public class Long128VectorTests extends AbstractVectorTest {
     }
 
     static final List<IntFunction<long[]>> LONG_GENERATORS = List.of(
+            withToString("long[-i * 5]", (int s) -> {
+                return fill(s * 1000,
+                            i -> (long)(-i * 5));
+            }),
             withToString("long[i * 5]", (int s) -> {
                 return fill(s * 1000,
                             i -> (long)(i * 5));
@@ -540,6 +558,153 @@ public class Long128VectorTests extends AbstractVectorTest {
             }
         }
         assertArraysEquals(a, b, r, mask, Long128VectorTests::xor);
+    }
+
+
+
+    static long shiftR(long a, long b) {
+        return (long)((a >>> b));
+    }
+
+
+
+    @Test(dataProvider = "longBinaryOpProvider")
+    static void shiftRLong128VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+        long[] a = fa.apply(SPECIES.length()); 
+        long[] b = fb.apply(SPECIES.length()); 
+        long[] r = new long[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                LongVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.shiftR(bv).intoArray(r, i);
+            }
+        }
+        assertArraysEquals(a, b, r, Long128VectorTests::shiftR);
+    }
+
+
+
+    @Test(dataProvider = "longBinaryOpMaskProvider")
+    static void shiftRLong128VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] b = fb.apply(SPECIES.length());
+        long[] r = new long[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Long, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                LongVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.shiftR(bv, vmask).intoArray(r, i);
+            }
+        }
+        assertArraysEquals(a, b, r, mask, Long128VectorTests::shiftR);
+    }
+
+
+
+    static long shiftL(long a, long b) {
+        return (long)((a << b));
+    }
+
+
+
+    @Test(dataProvider = "longBinaryOpProvider")
+    static void shiftLLong128VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+        long[] a = fa.apply(SPECIES.length()); 
+        long[] b = fb.apply(SPECIES.length()); 
+        long[] r = new long[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                LongVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.shiftL(bv).intoArray(r, i);
+            }
+        }
+        assertArraysEquals(a, b, r, Long128VectorTests::shiftL);
+    }
+
+
+
+    @Test(dataProvider = "longBinaryOpMaskProvider")
+    static void shiftLLong128VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] b = fb.apply(SPECIES.length());
+        long[] r = new long[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Long, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                LongVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                av.shiftL(bv, vmask).intoArray(r, i);
+            }
+        }
+        assertArraysEquals(a, b, r, mask, Long128VectorTests::shiftL);
+    }
+
+
+
+    static long aShiftR(long a, long b) {
+        return (long)(a >> b);
+    }
+
+
+
+    @Test(dataProvider = "longBinaryOpProvider")
+    static void aShiftRLong128VectorTestsShift(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+        long[] a = fa.apply(SPECIES.length()); 
+        long[] b = fb.apply(SPECIES.length()); 
+        long[] r = new long[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.aShiftR((int)b[i]).intoArray(r, i);
+            }
+        }
+        assertShiftArraysEquals(a, b, r, Long128VectorTests::aShiftR);
+    }
+
+
+
+    @Test(dataProvider = "longBinaryOpProvider")
+    static void shiftRLong128VectorTestsShift(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+        long[] a = fa.apply(SPECIES.length()); 
+        long[] b = fb.apply(SPECIES.length()); 
+        long[] r = new long[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.shiftR((int)b[i]).intoArray(r, i);
+            }
+        }
+        assertShiftArraysEquals(a, b, r, Long128VectorTests::shiftR);
+    }
+
+
+
+    @Test(dataProvider = "longBinaryOpProvider")
+    static void shiftLLong128VectorTestsShift(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+        long[] a = fa.apply(SPECIES.length()); 
+        long[] b = fb.apply(SPECIES.length()); 
+        long[] r = new long[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.shiftL((int)b[i]).intoArray(r, i);
+            }
+        }
+        assertShiftArraysEquals(a, b, r, Long128VectorTests::shiftL);
     }
 
 
