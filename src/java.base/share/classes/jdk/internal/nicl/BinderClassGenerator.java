@@ -91,7 +91,7 @@ abstract class BinderClassGenerator {
         BinderClassWriter cw = new BinderClassWriter();
 
         if (DEBUG) {
-            System.out.println("Generating header implementation class for " + implClassName + " using impl name " + implClassName);
+            System.out.println("Generating header implementation class for " + hostClass.getName() + " using impl name " + implClassName);
         }
 
         String[] interfaceNames = (interfaces == null) ? null : Stream.of(interfaces).map(Type::getInternalName).toArray(String[]::new);

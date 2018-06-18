@@ -69,6 +69,10 @@ public class Cursor {
         return isAnonymousStruct() || isAnonymousEnum();
     }
 
+    public boolean isMacroFunctionLike() {
+        return LibClang.lib.clang_Cursor_isMacroFunctionLike(cursor) != 0;
+    }
+
     public String spelling() {
         return LibClang.CXStrToString(
                 LibClang.lib.clang_getCursorSpelling(cursor));

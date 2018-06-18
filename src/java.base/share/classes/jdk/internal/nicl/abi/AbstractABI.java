@@ -26,11 +26,11 @@
 package jdk.internal.nicl.abi;
 
 import java.nicl.layout.Address;
-import java.nicl.layout.Sequence;
 import java.nicl.layout.Group;
 import java.nicl.layout.Group.Kind;
 import java.nicl.layout.Layout;
-import java.nicl.layout.Unresolved;
+import java.nicl.layout.Padding;
+import java.nicl.layout.Sequence;
 import java.nicl.layout.Value;
 
 /**
@@ -82,6 +82,8 @@ public abstract class AbstractABI implements SystemABI {
             return alignmentOfContainer((Group) t);
         } else if (t instanceof Address) {
             return 8;
+        } else if (t instanceof Padding) {
+            return 1;
         } else {
             throw new IllegalArgumentException("Invalid type: " + t);
         }

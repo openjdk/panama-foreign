@@ -23,14 +23,12 @@
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /*
@@ -76,6 +74,7 @@ public class TestJextractFFI {
                 .start();
         String cmdline = proc.info().commandLine().orElse(String.join(" ", command));
         proc.waitFor(3, TimeUnit.MINUTES);
+        Files.lines(err.toPath()).forEachOrdered(System.err::println);
         if (proc.exitValue() != 0) {
             throw new Error("Command '" + cmdline +
                 "' exit with non-zero value: " + proc.exitValue());

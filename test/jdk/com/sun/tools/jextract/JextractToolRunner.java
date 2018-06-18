@@ -156,7 +156,7 @@ class JextractToolRunner {
         }
     }
 
-    protected void checkIntField(Class<?> cls, String name, int value) {
+    protected Field checkIntField(Class<?> cls, String name, int value) {
         Field field = findField(cls, name);
         assertNotNull(field);
         assertEquals(field.getType(), int.class);
@@ -166,6 +166,7 @@ class JextractToolRunner {
             System.err.println(exp);
             assertTrue(false, "should not reach here");
         }
+        return field;
     }
 
     protected Class<?> findClass(Class<?>[] clz, String name) {
@@ -177,12 +178,14 @@ class JextractToolRunner {
         return null;
     }
 
-    protected void checkMethod(Class<?> cls, String name, Class<?> returnType, Class<?>... args) {
+    protected Method checkMethod(Class<?> cls, String name, Class<?> returnType, Class<?>... args) {
         try {
             Method m = cls.getDeclaredMethod(name, args);
             assertTrue(m.getReturnType() == returnType);
+            return m;
         } catch (NoSuchMethodException nsme) {
             fail("Expect method " + name);
         }
+        return null;
     }
 }

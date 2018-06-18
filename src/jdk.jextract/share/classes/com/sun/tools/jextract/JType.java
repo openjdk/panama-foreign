@@ -125,7 +125,11 @@ public interface JType {
             jt = ((JType2) jt).getDelegate();
         }
         if (jt instanceof TypeAlias) {
-            jt = ((TypeAlias) jt).canonicalType();
+            JType tmp = ((TypeAlias) jt).baseType;
+            // Respect alias signature, like FnIf has its own rule about signature
+            if (tmp instanceof PointerType) {
+                jt = tmp;
+            }
         }
         if (jt instanceof PointerType) {
             return ((PointerType) jt).getSignature(true);
