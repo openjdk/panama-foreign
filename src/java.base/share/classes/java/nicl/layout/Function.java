@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 public final class Function {
     private final Optional<Layout> resLayout;
     private final Layout[] argLayouts;
-    private boolean variadic;
+    private final boolean variadic;
 
     private Function(Optional<Layout> resLayout, boolean variadic, Layout... argLayouts) {
         this.resLayout = resLayout;
@@ -108,5 +108,23 @@ public final class Function {
                         .collect(Collectors.joining()),
                 variadic ? "*" : "",
                 resLayout.map(Object::toString).orElse("v"));
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Function)) {
+            return false;
+        }
+        Function f = (Function)other;
+        return resLayout.equals(f.resLayout) && Arrays.equals(argLayouts, f.argLayouts) &&
+            variadic == f.variadic;
+    }
+
+    @Override
+    public int hashCode() {
+        return resLayout.hashCode() ^ Arrays.hashCode(argLayouts) ^ Boolean.hashCode(variadic);
     }
 }

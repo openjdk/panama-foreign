@@ -78,6 +78,23 @@ public final class Sequence extends Group {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Sequence)) {
+            return false;
+        }
+        Sequence s = (Sequence)other;
+        return size == s.size && elementLayout.equals(s.elementLayout);
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(size) ^ elementLayout.hashCode();
+    }
+
+    @Override
     Sequence dup(Map<String, String> annotations) {
         return new Sequence(elementsSize(), elementLayout, annotations);
     }

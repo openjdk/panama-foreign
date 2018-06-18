@@ -63,6 +63,23 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Padding)) {
+            return false;
+        }
+        Padding p = (Padding)other;
+        return size == p.size;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(size);
+    }
+
+    @Override
     Padding dup(Map<String, String> annotations) {
         return new Padding(size, annotations);
     }

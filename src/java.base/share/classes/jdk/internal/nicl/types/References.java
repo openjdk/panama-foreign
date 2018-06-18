@@ -54,7 +54,7 @@ public final class References {
 
         static final MethodHandle MH_GET_LONG_BITS;
         static final MethodHandle MH_SET_LONG_BITS;
-        
+
         Class<?> carrier;
 
         static {
@@ -539,7 +539,7 @@ public final class References {
         @SuppressWarnings("unchecked")
         public Array<X> get(Pointer<?> pointer) {
             Sequence seq = (Sequence)pointer.type().layout();
-            return new BoundedArray<>((BoundedPointer<X>)pointer.cast(elementType), seq.elementsSize());
+            return new BoundedArray<>((BoundedPointer<X>)Util.unsafeCast(pointer, elementType), seq.elementsSize());
         }
 
         @Override
@@ -596,7 +596,7 @@ public final class References {
     /**
      * Reference factory for the {@code char} primitive type.
      */
-    public static OfChar ofChar = new OfChar(); 
+    public static OfChar ofChar = new OfChar();
 
     /**
      * Reference factory for the {@code boolean} primitive type.

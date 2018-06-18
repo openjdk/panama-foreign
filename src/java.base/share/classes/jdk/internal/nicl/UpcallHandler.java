@@ -208,7 +208,7 @@ public class UpcallHandler {
             if ((binding.getOffset() % LONG_LAYOUT_TYPE.bytesSize()) != 0) {
                 throw new Error("Invalid offset: " + binding.getOffset());
             }
-            Pointer<Long> dst = r.ptr().cast(LONG_LAYOUT_TYPE).offset(binding.getOffset() / LONG_LAYOUT_TYPE.bytesSize());
+            Pointer<Long> dst = Util.unsafeCast(r.ptr(), LONG_LAYOUT_TYPE).offset(binding.getOffset() / LONG_LAYOUT_TYPE.bytesSize());
 
             if (DEBUG) {
                 System.err.println("Copying struct data, value: 0x" + Long.toHexString(src.get()));
@@ -218,7 +218,7 @@ public class UpcallHandler {
 
             return r;
         } else {
-            return src.cast(Util.makeType(carrierType, layout)).get();
+            return Util.unsafeCast(src, Util.makeType(carrierType, layout)).get();
         }
     }
 
@@ -264,7 +264,7 @@ public class UpcallHandler {
 
             Struct<?> struct = (Struct<?>) o;
 
-            Pointer<Long> src = struct.ptr().cast(LONG_LAYOUT_TYPE);
+            Pointer<Long> src = Util.unsafeCast(struct.ptr(), LONG_LAYOUT_TYPE);
 
             if (returnsInMemory) {
                 // the first integer argument register contains a pointer to caller allocated struct
@@ -285,7 +285,7 @@ public class UpcallHandler {
             }
         } else {
             try {
-                dst.cast(Util.makeType(c, ftype.returnLayout().get())).type().setter().invoke(dst, o);
+                Util.unsafeCast(dst, Util.makeType(c, ftype.returnLayout().get())).type().setter().invoke(dst, o);
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }

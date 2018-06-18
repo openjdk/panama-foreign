@@ -93,6 +93,23 @@ public class Group extends AbstractLayout<Group> implements Layout {
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Group)) {
+            return false;
+        }
+        Group g = (Group)other;
+        return kind.equals(g.kind) && elements.equals(g.elements);
+    }
+
+    @Override
+    public int hashCode() {
+        return kind.hashCode() ^ elements.hashCode();
+    }
+
+    @Override
     public long bitsSize() {
         return kind.sizeFunc.applyAsLong(elements.stream().mapToLong(Layout::bitsSize));
     }

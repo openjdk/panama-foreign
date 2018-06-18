@@ -60,6 +60,33 @@ public final class Address extends Value {
             this.info = info;
         }
 
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof Info)) {
+                return false;
+            }
+            Info i = (Info)other;
+            if (!kind.equals(i.kind)) {
+                return false;
+            }
+
+            switch (kind) {
+                case LAYOUT:
+                    return layout().equals(i.layout());
+                case FUNCTION:
+                    return function().equals(i.function());
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return kind.hashCode() ^ info.hashCode();
+        }
+
         /**
          * Test as to whether this addressee info has given kind (see {@link Kind}).
          * @param kind the kind this address is compared with.
@@ -218,6 +245,23 @@ public final class Address extends Value {
      */
     public static Address ofFunction(long size, Function function, Kind kind, Endianness endianness) {
         return new Address(Optional.of(Info.ofFunction(function)), size, kind, endianness, Optional.empty(), NO_ANNOS);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Address)) {
+            return false;
+        }
+        Address addr = (Address)other;
+        return super.equals(other) && info.equals(addr.info);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ info.hashCode();
     }
 
     @Override

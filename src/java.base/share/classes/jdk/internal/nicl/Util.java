@@ -164,7 +164,7 @@ public final class Util {
             if (carrier instanceof ParameterizedType) {
                 ParameterizedType pt = (ParameterizedType)carrier;
                 Type arg = pt.getActualTypeArguments()[0];
-                if (arg instanceof WildcardType) {
+                if (arg instanceof WildcardType || arg == Void.class) {
                     return NativeTypes.VOID.pointer();
                 }
                 Address addr = (Address)layout;
@@ -238,5 +238,9 @@ public final class Util {
         BoundedPointer<?> bdst = (BoundedPointer<?>)Objects.requireNonNull(dst);
 
         bsrc.copyTo(bdst, bytes);
+    }
+
+    public static <Z> Pointer<Z> unsafeCast(Pointer<?> ptr, LayoutType<Z> layoutType) {
+        return ptr.cast(NativeTypes.VOID).cast(layoutType);
     }
 }

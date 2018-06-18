@@ -52,7 +52,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
             this.tag = tag;
         }
     }
-    
+
     /**
      * value endianness.
      */
@@ -179,6 +179,25 @@ public class Value extends AbstractLayout<Value> implements Layout {
                         kind.tag.toUpperCase() : kind.tag,
                 size));
         return contents().map(g -> prefix + "=" + g).orElse(prefix);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Value)) {
+            return false;
+        }
+        Value v = (Value)other;
+        return kind.equals(v.kind) && endianness.equals(v.endianness) &&
+            size == v.size && contents.equals(v.contents);
+    }
+
+    @Override
+    public int hashCode() {
+        return kind.hashCode() ^ endianness.hashCode() ^
+            Long.hashCode(size) ^ contents.hashCode();
     }
 
     @Override

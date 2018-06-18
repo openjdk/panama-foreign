@@ -23,6 +23,7 @@
 package jdk.internal.nicl.types;
 
 import java.nicl.NativeTypes;
+import java.nicl.layout.Layout;
 import java.nicl.types.Array;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
@@ -32,6 +33,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import jdk.internal.nicl.Util;
 
 public class BoundedPointer<X> implements Pointer<X> {
 
@@ -130,7 +132,22 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     public <Z> BoundedPointer<Z> cast(LayoutType<Z> layoutType) {
-        return new BoundedPointer<>(layoutType, region, offset, mode);
+        if (isCompatible(type.layout(), layoutType.layout())) {
+            return new BoundedPointer<>(layoutType, region, offset, mode);
+        } else {
+            throw new ClassCastException("Pointer to " + type.layout() +
+                " cannot be cast to pointer to " + layoutType.layout());
+        }
+    }
+    // where
+    private static boolean isCompatible(Layout src, Layout dest) {
+        /*
+         * 1. Any pointer can be converted to void* and vice-versa.
+         * 2. Any pointer can be converted to a pointer with same layout
+         */
+        return src.equals(NativeTypes.VOID.layout()) ||
+            dest.equals(NativeTypes.VOID.layout()) ||
+            src.equals(dest);
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(long offset) {

@@ -266,7 +266,7 @@ class NativeInvoker {
             Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);
             ptr.set(returnValues[0]);
             try {
-                return ptr.cast(Util.makeType(genericReturnType, function.returnLayout().get())).type().getter().invoke(ptr);
+                return Util.unsafeCast(ptr, Util.makeType(genericReturnType, function.returnLayout().get())).type().getter().invoke(ptr);
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
@@ -277,7 +277,7 @@ class NativeInvoker {
         if ((offset % LAYOUT_TYPE_LONG.bytesSize()) != 0) {
             throw new IllegalArgumentException("Invalid offset: " + offset);
         }
-        return struct.ptr().cast(LAYOUT_TYPE_LONG).offset(offset / LAYOUT_TYPE_LONG.bytesSize());
+        return Util.unsafeCast(struct.ptr(), LAYOUT_TYPE_LONG).offset(offset / LAYOUT_TYPE_LONG.bytesSize());
     }
 
     public void rawStructWrite(Struct<?> struct, long offset, long value) {
@@ -297,8 +297,7 @@ class NativeInvoker {
             long[] values = new long[(int)n];
             Struct<?> r = (Struct<?>)arg;
 
-            Pointer<Long> src = r.ptr().cast(NativeTypes.UINT8).offset(binding.getOffset()).cast(NativeTypes.UINT64);
-
+            Pointer<Long> src = Util.unsafeCast(Util.unsafeCast(r.ptr(), NativeTypes.UINT8).offset(binding.getOffset()), NativeTypes.UINT64);
             for (int i = 0; i < n; i++) {
                 values[i] = src.offset(i).get();
             }
@@ -307,7 +306,7 @@ class NativeInvoker {
             return new long[] { UpcallHandler.make(carrierType, arg).getNativeEntryPoint().addr() };
         } else {
             Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);
-            ptr.cast(Util.makeType(carrierType, function.argumentLayouts().get(binding.getMember().getArgumentIndex())))
+            Util.unsafeCast(ptr, Util.makeType(carrierType, function.argumentLayouts().get(binding.getMember().getArgumentIndex())))
                     .type().setter().invoke(ptr, arg);
             return new long[] { ptr.get() };
         }

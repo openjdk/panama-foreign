@@ -227,7 +227,7 @@ public class UnixSystem {
 
         {
             // Pointer version
-            Pointer<Pointer<Byte>> pp = i.environ$get().cast(NativeTypes.UINT8.pointer());
+            Pointer<Pointer<Byte>> pp = i.environ$get().cast(NativeTypes.VOID).cast(NativeTypes.UINT8.pointer());
             Pointer<Byte> sp = pp.get();
             System.out.println("testEnviron.str: " + Pointer.toString(sp));
         }
@@ -235,8 +235,8 @@ public class UnixSystem {
         {
             // Reference version
             Pointer<Pointer<Pointer<Byte>>> r = i.environ$ptr();
-            Pointer<Pointer<Byte>> spp = r.get().cast(NativeTypes.UINT8.pointer());
-            Pointer<Byte> sp = spp.get().cast(NativeTypes.UINT8);
+            Pointer<Pointer<Byte>> spp = r.get().cast(NativeTypes.VOID).cast(NativeTypes.UINT8.pointer());
+            Pointer<Byte> sp = spp.get().cast(NativeTypes.VOID).cast(NativeTypes.UINT8);
         }
     }
 

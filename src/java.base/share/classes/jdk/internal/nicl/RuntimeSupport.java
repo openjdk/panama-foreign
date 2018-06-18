@@ -34,9 +34,8 @@ final class RuntimeSupport {
     // These static utility methods are invoked from generated code
 
     static <T> Pointer<T> buildPtr(Pointer<?> p, long offset, LayoutType<T> type) {
-        return p
-                .cast(NativeTypes.UINT8)
-                .offset(offset)
-                .cast(type);
+        return Util.unsafeCast(
+            Util.unsafeCast(p, NativeTypes.UINT8).offset(offset),
+            type);
     }
 }
