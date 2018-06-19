@@ -41,6 +41,7 @@ import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.api.JavacTaskPool;
 import jdk.internal.clang.Cursor;
+import jdk.internal.clang.SourceLocation.Location;
 
 import javax.lang.model.element.VariableElement;
 import javax.tools.*;
@@ -93,6 +94,10 @@ public class MacroParser {
             } catch (UnresolvableMacroException ex) {
                 return false;
             }
+        }
+
+        Location getFileLocation() {
+            return cursor.getSourceLocation().getFileLocation();
         }
 
         String expand() {

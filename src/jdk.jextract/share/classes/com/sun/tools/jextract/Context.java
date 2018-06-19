@@ -47,6 +47,7 @@ import java.util.function.Predicate;
 import java.util.jar.JarOutputStream;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -271,8 +272,10 @@ public final class Context {
         macroParser.parse(cursor, tokens);
     }
 
-    List<MacroParser.Macro> macros() {
-        return macroParser.macros();
+    List<MacroParser.Macro> macros(HeaderFile header) {
+        return macroParser.macros().stream()
+                .filter(m -> m.getFileLocation().path().equals(header.path))
+                .collect(Collectors.toList());
     }
 
     void processCursor(Cursor c, HeaderFile main, Function<HeaderFile, CodeFactory> fn) {

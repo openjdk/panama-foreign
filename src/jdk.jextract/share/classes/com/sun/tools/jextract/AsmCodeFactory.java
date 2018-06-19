@@ -22,12 +22,6 @@
  */
 package com.sun.tools.jextract;
 
-import com.sun.tools.jextract.MacroParser.Macro;
-import jdk.internal.clang.*;
-import jdk.internal.clang.Type;
-import jdk.internal.nicl.Util;
-import jdk.internal.org.objectweb.asm.*;
-
 import java.io.IOException;
 import java.nicl.layout.Layout;
 import java.nio.file.Path;
@@ -39,8 +33,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
+import jdk.internal.clang.Cursor;
+import jdk.internal.clang.CursorKind;
+import jdk.internal.clang.SourceLocation;
+import jdk.internal.clang.Type;
+import jdk.internal.nicl.Util;
+import jdk.internal.org.objectweb.asm.AnnotationVisitor;
+import jdk.internal.org.objectweb.asm.ClassVisitor;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.MethodVisitor;
+import jdk.internal.org.objectweb.asm.TypeReference;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.*;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_ABSTRACT;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_ANNOTATION;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_INTERFACE;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_VARARGS;
+import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.DRETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.FRETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.I2C;
+import static jdk.internal.org.objectweb.asm.Opcodes.IRETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.LRETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
 
 /**
  * Scan a header file and generate classes for entities defined in that header
@@ -60,6 +77,7 @@ final class AsmCodeFactory extends CodeFactory {
     private final Map<String, byte[]> types;
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private final List<String> headerDeclarations = new ArrayList<>();
+    private transient boolean built = false;
 
     AsmCodeFactory(Context ctx, HeaderFile header) {
         this.ctx = ctx;
@@ -456,11 +474,11 @@ final class AsmCodeFactory extends CodeFactory {
     }
 
     CodeFactory generateMacros() {
-        for (Macro macro : ctx.macros()) {
+        for (MacroParser.Macro macro : ctx.macros(owner)) {
             if (macro.isConstantMacro()) {
                 logger.fine(() -> "Adding macro " + macro.name());
                 Object value = macro.value();
-                Class<?> macroType = (Class<?>)Util.unboxIfNeeded(value.getClass());
+                Class<?> macroType = (Class<?>) Util.unboxIfNeeded(value.getClass());
 
                 String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(macroType));
                 MethodVisitor mv = global_cw.visitMethod(ACC_PUBLIC, macro.name(), sig, sig, null);
@@ -504,7 +522,11 @@ final class AsmCodeFactory extends CodeFactory {
     }
 
     @Override
-    protected void produce() {
+    protected synchronized void produce() {
+        if (built) {
+            throw new IllegalStateException("Produce is called multiple times");
+        }
+        built = true;
         generateNativeHeader();
         try {
             writeClassFile(global_cw, owner.clsName);
@@ -516,7 +538,7 @@ final class AsmCodeFactory extends CodeFactory {
     @Override
     protected Map<String, byte[]> collect() {
         // Ensure classes are produced
-        produce();
+        if (!built) produce();
         HashMap<String, byte[]> rv = new HashMap<>();
         // Not copying byte[] for efficiency, perhaps not a safe idea though
         if (owner.pkgName.isEmpty()) {

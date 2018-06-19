@@ -43,44 +43,60 @@ import static org.testng.Assert.assertTrue;
  */
 public class ConstantsTest extends JextractToolRunner {
 
-    Object constants;
+    Object[] constants;
     Path clzPath;
+    Path dirPath;
 
     @BeforeTest
     public void setup() {
         clzPath = getOutputFilePath("ConstantsTest.c.jar");
-        checkSuccess(null,"-o", clzPath.toString(),
+        dirPath = getOutputFilePath("ConstantsTest.c.dir");
+        checkSuccess(null,"-o", clzPath.toString(), "-d", dirPath.toString(),
                 getInputFilePath("constants.h").toString());
-        Class<?> cls = loadClass("constants", clzPath);
-        constants = Proxy.newProxyInstance(cls.getClassLoader(),
-                new Class<?>[]{ cls },
-                (proxy, method, args) -> MethodHandles.privateLookupIn(cls, MethodHandles.lookup())
-                            .unreflectSpecial(method, cls)
-                            .bindTo(proxy)
-                            .invokeWithArguments(args));
+        Class<?>[] cls = {
+                loadClass("constants", clzPath),
+                loadClass("constants", dirPath)
+        };
+        constants = new Object[cls.length];
+        for (int i = 0 ; i < cls.length ; i++) {
+            Class<?> cl = cls[i];
+            constants[i] = Proxy.newProxyInstance(cl.getClassLoader(),
+                    new Class<?>[]{ cl },
+                    (proxy, method, args) -> MethodHandles.privateLookupIn(cl, MethodHandles.lookup())
+                                .unreflectSpecial(method, cl)
+                                .bindTo(proxy)
+                                .invokeWithArguments(args));
+        }
     }
 
     @AfterTest
     public void cleanup() {
         deleteFile(clzPath);
+        deleteDir(dirPath);
     }
 
 
     @Test(dataProvider = "definedConstants")
     public void checkConstantsSignatures(String name, Class<?> type, Object value) {
-        checkMethod(constants.getClass(), name, type);
+        for (Object c : constants) {
+            checkMethod(c.getClass(), name, type);
+        }
     }
 
     @Test(dataProvider = "definedConstants")
     public void checkConstantsValues(String name, Class<?> type, Object value) throws ReflectiveOperationException {
-        Object actual = constants.getClass().getDeclaredMethod(name).invoke(constants);
-        assertEquals(actual, value);
+        for (Object c : constants) {
+            Object actual = c.getClass().getDeclaredMethod(name).invoke(c);
+            assertEquals(actual, value);
+        }
     }
 
     @Test(dataProvider = "missingConstants")
     public void checkMissingConstants(String name) {
-        assertTrue(Stream.of(constants.getClass().getDeclaredMethods())
-                .noneMatch(m -> m.getName().equals(name)));
+        for (Object c : constants) {
+            assertTrue(Stream.of(c.getClass().getDeclaredMethods())
+                    .noneMatch(m -> m.getName().equals(name)));
+        }
     }
 
     @DataProvider
@@ -97,7 +113,8 @@ public class ConstantsTest extends JextractToolRunner {
                 { "FLOAT_VALUE", float.class, 1.32f },
                 { "DOUBLE_VALUE", double.class, 1.32 },
                 { "QUOTE", String.class, "QUOTE" },
-                { "CHAR_VALUE", char.class, 'h'}
+                { "CHAR_VALUE", char.class, 'h'},
+                { "SUB", int.class, 7 }
         };
     }
 
@@ -110,7 +127,9 @@ public class ConstantsTest extends JextractToolRunner {
                 { "BLOCK_END" },
                 { "INTEGER_MAX_VALUE" },
                 { "CYCLIC_1" },
-                { "CYCLIC_2" }
+                { "CYCLIC_2" },
+                { "SUP" },
+                { "UNUSED" }
         };
     }
 }

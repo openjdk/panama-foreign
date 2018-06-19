@@ -163,7 +163,7 @@ public final class HeaderFile {
                 cf.addType(jt, c);
             }
         } else if (c.isPreprocessing()) {
-            if (cf != null && c.kind() == CursorKind.MacroDefinition && !isBuiltIn) {
+            if (c.kind() == CursorKind.MacroDefinition && !isBuiltIn) {
                 ctx.defineMacro(c);
             }
         }

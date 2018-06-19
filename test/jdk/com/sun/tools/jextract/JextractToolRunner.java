@@ -28,9 +28,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.spi.ToolProvider;
 
 import static org.testng.Assert.assertEquals;
@@ -96,6 +99,26 @@ class JextractToolRunner {
     protected static void deleteFile(Path path) {
         try {
             Files.delete(path);
+        } catch (IOException ioExp) {
+            System.err.println(ioExp);
+        }
+    }
+
+    protected static void deleteDir(Path path) {
+        try {
+            Files.walkFileTree(path, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                   deleteFile(file);
+                   return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                   deleteFile(dir);
+                   return FileVisitResult.CONTINUE;
+                }
+            });
         } catch (IOException ioExp) {
             System.err.println(ioExp);
         }

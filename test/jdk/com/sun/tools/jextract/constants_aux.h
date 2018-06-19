@@ -23,39 +23,6 @@
  * questions.
  */
 
-#include "constants_aux.h"
+#define SUP 5 //this is used by the main test header file
 
-#define ZERO 0
-#define ONE ZERO + 1 //backward ref
-#define THREE ONE + TWO /* forward ref */
-#define TWO ONE + ONE
-
-#define FOUR 0x1L + THREE
-#define FIVE 0x1UL + FOUR
-
-#define SIX ONE +\
-              TWO +\
-              THREE
-
-#define STR "Hello" // a string
-
-#define ID(x) x //function-like
-#define SUM(x,y) x + y //function-like
-
-#define BLOCK_BEGIN { //not a constant
-#define BLOCK_END } //not a constant
-
-#define INTEGER_MAX_VALUE Integer.MAX_VALUE //constant in Java, not in C
-#define QUOTE "QUOTE" //should be ok
-
-#define FLOAT_VALUE 1.32F;
-#define DOUBLE_VALUE 1.32;
-
-#define CYCLIC_1 1 + CYCLIC_1 //cycle
-
-#define CYCLIC_2 1 + TEMP //indirect cycle
-#define TEMP 1 + CYCLIC_2
-
-#define CHAR_VALUE 'h'
-
-#define SUB SUP + 2 //dependency
+#define UNUSED "unused" //this should not be used
