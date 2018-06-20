@@ -156,8 +156,7 @@ module java.base {
         jdk.jartool,
         jdk.jfr,
         jdk.jlink,
-        jdk.scripting.nashorn,
-        jdk.internal.vm.ci;
+        jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jfr,
         jdk.jlink;
@@ -186,7 +185,6 @@ module java.base {
         jdk.charsets,
         jdk.compiler,
         java.net.http,
-        jdk.jdeps,
         jdk.jfr,
         jdk.jlink,
         jdk.jshell,
@@ -216,11 +214,11 @@ module java.base {
         jdk.scripting.nashorn,
         jdk.unsupported;
     exports jdk.internal.vm to
-        jdk.management.agent,
-        jdk.internal.jvmstat;
+        jdk.internal.jvmstat,
+        jdk.management.agent;
     exports jdk.internal.vm.annotation to
-        jdk.unsupported,
-        jdk.internal.vm.ci;
+        jdk.internal.vm.ci,
+        jdk.unsupported;
     exports jdk.internal.util.jar to
         jdk.jartool;
     exports jdk.internal.util.xml to
@@ -264,8 +262,7 @@ module java.base {
         java.management,
         java.management.rmi,
         java.rmi,
-        java.sql.rowset,
-        java.xml;
+        java.sql.rowset;
     exports sun.security.action to
         java.desktop,
         java.security.jgss;
@@ -316,12 +313,9 @@ module java.base {
     exports sun.security.x509 to
         jdk.crypto.ec,
         jdk.crypto.cryptoki,
-        jdk.jartool,
-        jdk.security.auth;
+        jdk.jartool;
     exports sun.security.validator to
         jdk.jartool;
-    exports sun.text.resources to
-        jdk.localedata;
     exports sun.util.cldr to
         jdk.jlink;
     exports sun.util.locale.provider to
