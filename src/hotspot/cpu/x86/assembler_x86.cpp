@@ -925,6 +925,8 @@ address Assembler::locate_operand(address inst, WhichOperand which) {
     case 0x61: // pcmpestri r, r/a, #8
     case 0x70: // pshufd r, r/a, #8
     case 0x73: // psrldq r, #8
+    case 0x1f: // evpcmpd/evpcmpq
+    case 0x3f: // evpcmpb/evpcmpw
       tail_size = 1;  // the imm8
       break;
     default:
@@ -8477,8 +8479,8 @@ int Assembler::simd_prefix_and_encode(XMMRegister dst, XMMRegister nds, XMMRegis
 }
 
 void Assembler::vcmppd(XMMRegister dst, XMMRegister nds, XMMRegister src, int cop, int vector_len) {
+  // This encoding is upto AVX2
   assert(VM_Version::supports_avx(), "");
-  assert(!VM_Version::supports_evex(), "");
   InstructionAttr attributes(vector_len, /* vex_w */ false, /* legacy_mode */ true, /* no_mask_reg */ false, /* uses_vl */ false);
   int encode = simd_prefix_and_encode(dst, nds, src, VEX_SIMD_66, VEX_OPCODE_0F, &attributes);
   emit_int8((unsigned char)0xC2);
