@@ -53,21 +53,6 @@ public class Argument {
         return type;
     }
 
-    public Class<?> getCarrierType(MethodType method) {
-        return (argumentIndex == -1) ?
-           method.returnType() : method.parameterType(argumentIndex);
-    }
-
-    public Type getCarrierType(Method method) {
-        return (argumentIndex == -1) ?
-           method.getGenericReturnType() : method.getGenericParameterTypes()[argumentIndex];
-    }
-
-    public Layout getLayout(Function func) {
-        return (argumentIndex == -1) ?
-           func.returnLayout().get() : func.argumentLayouts().get(argumentIndex);
-    }
-
     public String getName() {
         return name != null ? name : "<anonymous>";
     }

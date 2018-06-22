@@ -41,6 +41,8 @@ import java.nicl.layout.Layout;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 import java.util.ArrayList;
+import java.util.List;
+
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 public class UpcallHandler {
@@ -54,9 +56,8 @@ public class UpcallHandler {
     private static final Object HANDLERS_LOCK = new Object();
     private static final ArrayList<UpcallHandler> ID2HANDLER = new ArrayList<>();
 
-    private final MethodHandle mh;
-    private final Function ftype;
-    private final Method ficMethod;
+    private MethodHandle mh;
+    private final UpcallHandlerFactory factory;
 
     private final UpcallStub stub;
 
@@ -73,16 +74,9 @@ public class UpcallHandler {
         }
     }
 
-    public static UpcallHandler make(Class<?> c, Object o) throws Throwable {
+    public static UpcallHandlerFactory makeFactory(Class<?> c) {
         if (!Util.isCallback(c)) {
             throw new IllegalArgumentException("Class is not a @FunctionalInterface: " + c.getName());
-        }
-        if (o == null) {
-            throw new NullPointerException();
-        }
-
-        if (!c.isInstance(o)) {
-            throw new IllegalArgumentException("Object must implement FunctionalInterface class: " + c.getName());
         }
 
         Method ficMethod = Util.findFunctionalInterfaceMethod(c);
@@ -90,22 +84,48 @@ public class UpcallHandler {
         resolver.scanMethod(ficMethod);
         Function ftype = resolver.resolve(Util.functionof(c));
 
-        MethodHandle mh = MethodHandles.publicLookup().unreflect(ficMethod);
-
-        return UpcallHandler.make(mh.bindTo(o), ftype, ficMethod);
+        try {
+            MethodHandle mh = MethodHandles.publicLookup().unreflect(ficMethod);
+            return new UpcallHandlerFactory(mh, ftype, ficMethod);
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
-    private static UpcallHandler make(MethodHandle mh, Function ftype, Method ficMethod) throws Throwable {
-        synchronized (HANDLERS_LOCK) {
-            int id = ID2HANDLER.size();
-            UpcallHandler handler = new UpcallHandler(mh, ftype, ficMethod, id);
-            ID2HANDLER.add(handler);
+    static class UpcallHandlerFactory {
 
-            if (DEBUG) {
-                System.err.println("Allocated upcall handler with id " + id);
+        final MethodHandle mh;
+        final CallingSequence callingSequence;
+        final LayoutType<?> returnLayout;
+        final LayoutType<?>[] argLayouts;
+
+        UpcallHandlerFactory(MethodHandle mh, Function ftype, Method ficMethod) throws Throwable {
+            this.mh = mh;
+            this.callingSequence = SystemABI.getInstance().arrangeCall(ftype);
+            if (ftype.returnLayout().isPresent()) {
+                returnLayout = Util.makeType(ficMethod.getGenericReturnType(), ftype.returnLayout().get());
+            } else {
+                returnLayout = null;
             }
+            List<Layout> args = ftype.argumentLayouts();
+            argLayouts = new LayoutType<?>[args.size()];
+            for (int i = 0 ; i < args.size() ; i++) {
+                argLayouts[i] = Util.makeType(ficMethod.getGenericParameterTypes()[i], args.get(i));
+            }
+        }
 
-            return handler;
+        UpcallHandler buildHandler(Object arg) throws Throwable {
+            synchronized (HANDLERS_LOCK) {
+                int id = ID2HANDLER.size();
+                UpcallHandler handler = new UpcallHandler(mh.bindTo(arg), this, id);
+                ID2HANDLER.add(handler);
+
+                if (DEBUG) {
+                    System.err.println("Allocated upcall handler with id " + id);
+                }
+
+                return handler;
+            }
         }
     }
 
@@ -126,10 +146,9 @@ public class UpcallHandler {
         }
     }
 
-    private UpcallHandler(MethodHandle mh, Function ftype, Method ficMethod, int id) throws Throwable {
+    private UpcallHandler(MethodHandle mh, UpcallHandlerFactory factory, int id) throws Throwable {
         this.mh = mh;
-        this.ftype = ftype;
-        this.ficMethod = ficMethod;
+        this.factory = factory;
         this.stub = new UpcallStub(id);
     }
 
@@ -172,21 +191,20 @@ public class UpcallHandler {
         }
     }
 
-    private Object boxArgument(Scope scope, UpcallContext context, Struct<?>[] structs, ArgumentBinding binding) throws IllegalAccessException {
-        Type carrierType = binding.getMember().getCarrierType(ficMethod);
-        Class<?> carrierClass = Util.erasure(carrierType);
-        Layout layout = binding.getMember().getLayout(ftype);
+    private Object boxArgument(Scope scope, UpcallContext context, Pointer<?>[] structPtrs, ArgumentBinding binding) throws IllegalAccessException {
+        LayoutType<?> layoutType = factory.argLayouts[binding.getMember().getArgumentIndex()];
+        Class<?> carrierClass = ((LayoutTypeImpl<?>)layoutType).carrier();
 
         Pointer<Long> src = context.getPtr(binding.getStorage());
 
         if (DEBUG) {
-            System.err.println("boxArgument carrier type: " + carrierType);
+            System.err.println("boxArgument carrier type: " + carrierClass);
         }
 
 
         if (Util.isCStruct(carrierClass)) {
             int index = binding.getMember().getArgumentIndex();
-            Struct<?> r = structs[index];
+            Pointer<?> r = structPtrs[index];
             if (r == null) {
                 /*
                  * FIXME (STRUCT-LIFECYCLE):
@@ -196,9 +214,9 @@ public class UpcallHandler {
                 scope = Scope.newNativeScope();
 
                 @SuppressWarnings({"rawtypes", "unchecked"})
-                Struct<?> rtmp = scope.allocateStruct((Class)carrierClass);
+                Pointer<?> rtmp = ((ScopeImpl)scope).allocate(layoutType, 8);
 
-                structs[index] = r = rtmp;
+                structPtrs[index] = r = rtmp;
             }
 
             if (DEBUG) {
@@ -208,7 +226,7 @@ public class UpcallHandler {
             if ((binding.getOffset() % LONG_LAYOUT_TYPE.bytesSize()) != 0) {
                 throw new Error("Invalid offset: " + binding.getOffset());
             }
-            Pointer<Long> dst = Util.unsafeCast(r.ptr(), LONG_LAYOUT_TYPE).offset(binding.getOffset() / LONG_LAYOUT_TYPE.bytesSize());
+            Pointer<Long> dst = Util.unsafeCast(r, LONG_LAYOUT_TYPE).offset(binding.getOffset() / LONG_LAYOUT_TYPE.bytesSize());
 
             if (DEBUG) {
                 System.err.println("Copying struct data, value: 0x" + Long.toHexString(src.get()));
@@ -216,16 +234,16 @@ public class UpcallHandler {
 
             Util.copy(src, dst, binding.getStorage().getSize());
 
-            return r;
+            return r.get();
         } else {
-            return Util.unsafeCast(src, Util.makeType(carrierType, layout)).get();
+            return Util.unsafeCast(src, layoutType).get();
         }
     }
 
     private Object[] boxArguments(Scope scope, UpcallContext context, CallingSequence callingSequence) {
         Object[] args = new Object[mh.type().parameterCount()];
 
-        Struct<?>[] structs = new Struct<?>[mh.type().parameterCount()];
+        Pointer<?>[] structPtrs = new Pointer<?>[mh.type().parameterCount()];
 
         if (DEBUG) {
             System.out.println("boxArguments " + callingSequence.asString());
@@ -240,7 +258,7 @@ public class UpcallHandler {
                 .filter(binding -> binding != null)
                 .forEach(binding -> {
                     try {
-                        args[binding.getMember().getArgumentIndex()] = boxArgument(scope, context, structs, binding);
+                        args[binding.getMember().getArgumentIndex()] = boxArgument(scope, context, structPtrs, binding);
                     } catch (IllegalAccessException e) {
                         throw new IllegalArgumentException("Failed to box argument", e);
                     }
@@ -269,8 +287,8 @@ public class UpcallHandler {
             if (returnsInMemory) {
                 // the first integer argument register contains a pointer to caller allocated struct
                 long structAddr = context.getPtr(new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, 0, Constants.INTEGER_REGISTER_SIZE)).get();
-                long size = Util.alignUp(ftype.returnLayout().get().bitsSize() / 8, 8);
-                Pointer<?> dstStructPtr = new BoundedPointer<>(Util.makeType(c, ftype.returnLayout().get()), new BoundedMemoryRegion(structAddr, size));
+                long size = Util.alignUp(factory.returnLayout.bytesSize(), 8);
+                Pointer<?> dstStructPtr = new BoundedPointer<>(factory.returnLayout, new BoundedMemoryRegion(structAddr, size));
                 try {
                     ((BoundedPointer<?>) dstStructPtr).type.setter().invoke(dstStructPtr, o);
                 } catch (Throwable ex) {
@@ -285,7 +303,7 @@ public class UpcallHandler {
             }
         } else {
             try {
-                Util.unsafeCast(dst, Util.makeType(c, ftype.returnLayout().get())).type().setter().invoke(dst, o);
+                Util.unsafeCast(dst, factory.returnLayout).type().setter().invoke(dst, o);
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
@@ -295,8 +313,7 @@ public class UpcallHandler {
     private void invoke(UpcallContext context) {
         try (Scope scope = Scope.newNativeScope()) {
             // FIXME: Handle varargs upcalls here
-            CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(ftype);
-
+            CallingSequence callingSequence = factory.callingSequence;
             if (DEBUG) {
                 System.err.println("=== UpcallHandler.invoke ===");
                 System.err.println(callingSequence.asString());

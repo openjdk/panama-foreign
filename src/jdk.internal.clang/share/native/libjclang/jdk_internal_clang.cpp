@@ -23,6 +23,7 @@ static jmethodID ctorLocation;
 static jclass clsSourceRange;
 static jmethodID ctorSourceRange;
 
+
 jstring CX2JString(JNIEnv *env, CXString str) {
     const char* cstr = clang_getCString(str);
     jstring rv = env->NewStringUTF(cstr);

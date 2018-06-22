@@ -62,6 +62,7 @@ public class Group extends AbstractLayout<Group> implements Layout {
 
     private final Kind kind;
     private final List<Layout> elements;
+    private long size = -1L;
 
     protected Group(Kind kind, List<Layout> elements, Map<String, String> annotations) {
         super(annotations);
@@ -111,7 +112,10 @@ public class Group extends AbstractLayout<Group> implements Layout {
 
     @Override
     public long bitsSize() {
-        return kind.sizeFunc.applyAsLong(elements.stream().mapToLong(Layout::bitsSize));
+        if (size == -1L) {
+            size = kind.sizeFunc.applyAsLong(elements.stream().mapToLong(Layout::bitsSize));
+        }
+        return size;
     }
 
     @Override

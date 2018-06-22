@@ -22,6 +22,7 @@
  */
 package jdk.internal.nicl;
 
+import jdk.internal.nicl.UpcallHandler.UpcallHandlerFactory;
 import jdk.internal.nicl.abi.ArgumentBinding;
 import jdk.internal.nicl.abi.CallingSequence;
 import jdk.internal.nicl.abi.ShuffleRecipe;
@@ -40,6 +41,7 @@ import java.nicl.layout.Layout;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
@@ -91,6 +93,11 @@ class NativeInvoker {
     private final java.lang.reflect.Type genericReturnType;
     private final MethodHandle targetMethodHandle;
     private final Function function;
+    private final CallingSequence callingSequence;
+    private final ShuffleRecipe shuffleRecipe;
+    private final LayoutType<?> returnLayoutType;
+    private final LayoutType<?>[] argLayoutTypes;
+    private final UpcallHandlerFactory[] upcallHandlers;
 
     NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, SymbolLookup lookup, String symbolName, String debugMethodString, java.lang.reflect.Type genericReturnType) throws NoSuchMethodException, IllegalAccessException {
         this(function, methodType, isVarArgs, lookupNativeFunction(lookup, symbolName), debugMethodString, genericReturnType);
@@ -103,6 +110,24 @@ class NativeInvoker {
         this.targetMethodHandle = targetMethodHandle;
         this.debugMethodString = debugMethodString;
         this.genericReturnType = genericReturnType;
+        this.callingSequence = SystemABI.getInstance().arrangeCall(function);
+        this.shuffleRecipe = ShuffleRecipe.make(callingSequence);
+        if (function.returnLayout().isPresent()) {
+            returnLayoutType = Util.makeType(genericReturnType, function.returnLayout().get());
+        } else {
+            returnLayoutType = null;
+        }
+        List<Layout> args = function.argumentLayouts();
+        argLayoutTypes = new LayoutType<?>[args.size()];
+        upcallHandlers = new UpcallHandlerFactory[args.size()];
+        for (int i = 0 ; i < args.size() ; i++) {
+            Class<?> carrier = methodType.parameterType(i);
+            if (Util.isCallback(carrier)) {
+                upcallHandlers[i] = UpcallHandler.makeFactory(carrier);
+            } else if (!Util.isCStruct(carrier)) {
+                argLayoutTypes[i] = Util.makeType(carrier, args.get(i));
+            }
+        }
     }
 
     MethodHandle getBoundMethodHandle() {
@@ -173,10 +198,9 @@ class NativeInvoker {
 
     private Object invokeNormal(Object[] args) throws Throwable {
         //Fixme: this should use the function field, not creating the layout via reflection!!!
-        CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(function);
-        ShuffleRecipe shuffleRecipe = ShuffleRecipe.make(callingSequence);
 
-        Struct<?> returnStruct = null;
+
+        Pointer<?> returnStructPtr = null;
         if (Util.isCStruct(methodType.returnType())) {
             // FIXME (STRUCT-LIFECYCLE):
             // Leak the allocated structs for now until the life cycle has been figured out
@@ -184,9 +208,9 @@ class NativeInvoker {
 
             Class<?> c = methodType.returnType();
             @SuppressWarnings("unchecked")
-            Struct<?> r = scope.allocateStruct((Class)c);
+            Pointer<?> r = ((ScopeImpl)scope).allocate(returnLayoutType, 8);
 
-            returnStruct = r;
+            returnStructPtr = r;
         }
 
         int nValues = shuffleRecipe.getNoofArgumentPulls();
@@ -203,16 +227,16 @@ class NativeInvoker {
                     if (c == StorageClass.INTEGER_ARGUMENT_REGISTER &&
                         callingSequence.returnsInMemory() &&
                         binding.getStorage().getStorageIndex() == 0) {
-                        values[curValueArrayIndex] = returnStruct.ptr().addr();
+                        values[curValueArrayIndex] = returnStructPtr.addr();
                         curValueArrayIndex++;
                     } else {
                         long n = binding.getStorage().getSize() / 8;
 
                         int argIndex = binding.getMember().getArgumentIndex();
-
-                        long[] argValues = getArgumentValues(binding.getMember().getCarrierType(methodType), binding, n, args[argIndex]);
+                        Class<?> argCarrier = methodType.parameterType(argIndex);
+                        long[] argValues = getArgumentValues(argCarrier, binding, n, args[argIndex]);
                         if (n != argValues.length) {
-                            throw new InternalError("carrierType: " + binding.getMember().getCarrierType(methodType) + " binding: " + binding + " n: " + n + " argValues.length: " + argValues.length);
+                            throw new InternalError("carrierType: " + argCarrier + " binding: " + binding + " n: " + n + " argValues.length: " + argValues.length);
                         }
                         System.arraycopy(argValues, 0, values, curValueArrayIndex, (int)n);
                         curValueArrayIndex += n;
@@ -239,10 +263,10 @@ class NativeInvoker {
             }
         }
 
-        return processReturnValue(callingSequence, returnValues, returnStruct);
+        return processReturnValue(callingSequence, returnValues, returnStructPtr);
     }
 
-    private Object processReturnValue(CallingSequence callingSequence, long[] returnValues, Struct<?> returnStruct) {
+    private Object processReturnValue(CallingSequence callingSequence, long[] returnValues, Pointer<?> returnStructPtr) {
         if (methodType.returnType() == void.class) {
             return null;
         } else if (Util.isCStruct(methodType.returnType())) {
@@ -252,42 +276,42 @@ class NativeInvoker {
                 for (StorageClass c : Constants.RETURN_STORAGE_CLASSES) {
                     for (ArgumentBinding binding : callingSequence.getBindings(c)) {
                         assert binding != null;
-                        assert returnStruct != null;
+                        assert returnStructPtr != null;
 
                         int n = (int)(binding.getStorage().getSize() / 8);
-                        copyStructReturnValue(returnStruct, binding.getOffset(), returnValues, curValueArrayIndex, n);
+                        copyStructReturnValue(returnStructPtr, binding.getOffset(), returnValues, curValueArrayIndex, n);
                         curValueArrayIndex += n;
                     }
                 }
             }
 
-            return returnStruct;
+            return returnStructPtr.get();
         } else {
             Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);
             ptr.set(returnValues[0]);
             try {
-                return Util.unsafeCast(ptr, Util.makeType(genericReturnType, function.returnLayout().get())).type().getter().invoke(ptr);
+                return returnLayoutType.getter().invoke(Util.unsafeCast(ptr, returnLayoutType));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
     }
 
-    private Pointer<Long> rawStructPointer(Struct<?> struct, long offset) {
+    private Pointer<Long> rawStructPointer(Pointer<?> structPtr, long offset) {
         if ((offset % LAYOUT_TYPE_LONG.bytesSize()) != 0) {
             throw new IllegalArgumentException("Invalid offset: " + offset);
         }
-        return Util.unsafeCast(struct.ptr(), LAYOUT_TYPE_LONG).offset(offset / LAYOUT_TYPE_LONG.bytesSize());
+        return Util.unsafeCast(structPtr, LAYOUT_TYPE_LONG).offset(offset / LAYOUT_TYPE_LONG.bytesSize());
     }
 
-    public void rawStructWrite(Struct<?> struct, long offset, long value) {
-        rawStructPointer(struct, offset).set(value);
+    public void rawStructWrite(Pointer<?> structPtr, long offset, long value) {
+        rawStructPointer(structPtr, offset).set(value);
     }
 
-    private void copyStructReturnValue(Struct<?> structReturn, long structOffset, long[] returnValues, int curReturnValuesIndex, int n) {
+    private void copyStructReturnValue(Pointer<?> structPtr, long structOffset, long[] returnValues, int curReturnValuesIndex, int n) {
         for (int i = 0; i < n; i++) {
             long offs = structOffset + i * 8;
-            rawStructWrite(structReturn, offs, returnValues[curReturnValuesIndex]);
+            rawStructWrite(structPtr, offs, returnValues[curReturnValuesIndex]);
             curReturnValuesIndex++;
         }
     }
@@ -303,10 +327,11 @@ class NativeInvoker {
             }
             return values;
         } else if (Util.isCallback(carrierType)) {
-            return new long[] { UpcallHandler.make(carrierType, arg).getNativeEntryPoint().addr() };
+            return new long[] { upcallHandlers[binding.getMember().getArgumentIndex()].
+                    buildHandler(arg).getNativeEntryPoint().addr() };
         } else {
             Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);
-            Util.unsafeCast(ptr, Util.makeType(carrierType, function.argumentLayouts().get(binding.getMember().getArgumentIndex())))
+            Util.unsafeCast(ptr, argLayoutTypes[binding.getMember().getArgumentIndex()])
                     .type().setter().invoke(ptr, arg);
             return new long[] { ptr.get() };
         }

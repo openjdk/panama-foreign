@@ -26,13 +26,11 @@
 package java.nicl.types;
 
 import jdk.internal.nicl.types.DescriptorParser;
-import jdk.internal.nicl.types.Reference;
+import jdk.internal.nicl.types.LayoutTypeImpl;
 import jdk.internal.nicl.types.References;
 
-import java.nicl.layout.Address;
 import java.nicl.layout.Group;
 import java.nicl.layout.Layout;
-import java.nicl.layout.Sequence;
 
 import java.lang.invoke.MethodHandle;
 import java.nicl.metadata.NativeStruct;
@@ -42,31 +40,21 @@ import java.nicl.metadata.NativeStruct;
  * (e.g. {@code int}, {@code long}, or any Java reference type. A {@code LayoutType} defines operation for getting/setting
  * the layout contents using a given Java carrier (see {@link LayoutType#getter()} and {@link LayoutType#setter()}).
  * Moreover, a {@code LayoutType} defines operation for creating array and pointer derived {@code LayoutType} instances
- * (see {@link LayoutType#array()}, {@link LayoutType#array(int)} and {@link LayoutType#pointer()}).
+ * (see {@link LayoutType#array()}, {@link LayoutType#array(long)} and {@link LayoutType#pointer()}).
  */
-public class LayoutType<X> {
+public interface LayoutType<X> {
 
-    private final Reference reference;
-    private final Layout layout;
-
-    /* package */ LayoutType(Layout layout, Reference reference) {
-        this.reference = reference;
-        this.layout = layout;
-    }
-
-    public long bytesSize() {
+    default long bytesSize() {
         return layout().bitsSize() / 8;
     }
-
+    
     /**
      * Retrieves the memory layout associated with this {@code LayoutType}.
      * @return the layout.
      */
-    public Layout layout() {
-        return layout;
-    }
-
-    /**
+    Layout layout();
+    
+        /**
      * A {@link MethodHandle} which can be used to retrieve the contents of memory layout associated
      * with this {@code LayoutType}. Note: the pointer passed as argument must be compatible with said layout.
      * <p>
@@ -76,9 +64,7 @@ public class LayoutType<X> {
      * </p>
      * @return a 'getter' method handle.
      */
-    public MethodHandle getter() {
-        return reference.getter();
-    }
+    MethodHandle getter();
 
     /**
      * A {@link MethodHandle} which can be used to store a value into the memory layout associated
@@ -91,16 +77,14 @@ public class LayoutType<X> {
      * the pointer passed as argument.
      * @return a 'setter' method handle.
      */
-    public MethodHandle setter() {
-        return reference.setter();
-    }
+    MethodHandle setter();
 
     /**
      * Create an array {@code LayoutType} from this instance.
      * @return the array {@code LayoutType}.
      */
     @SuppressWarnings("unchecked")
-    public LayoutType<Array<X>> array() {
+    default LayoutType<Array<X>> array() {
         return array(0);
     }
 
@@ -109,27 +93,21 @@ public class LayoutType<X> {
      * @param size the array size.
      * @return the array {@code LayoutType}.
      */
-    @SuppressWarnings("unchecked")
-    public LayoutType<Array<X>> array(long size) {
-        return new LayoutType<>(Sequence.of(size, layout), References.ofArray(this));
-    }
+    LayoutType<Array<X>> array(long size);
 
     /**
      * Create a pointer {@code LayoutType} from this instance.
      * @return the pointer {@code LayoutType}.
      */
-    @SuppressWarnings("unchecked")
-    public LayoutType<Pointer<X>> pointer() {
-        return new LayoutType<>(Address.ofLayout(64, layout), References.ofPointer(this));
-    }
+    LayoutType<Pointer<X>> pointer();
 
     /**
      * Create a {@code LayoutType} from the {@code boolean} Java primitive carrier and given layout.
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<Boolean> ofBoolean(Layout layout) {
-        return new LayoutType<>(layout, References.ofBoolean);
+    static LayoutType<Boolean> ofBoolean(Layout layout) {
+        return new LayoutTypeImpl<>(boolean.class, layout, References.ofBoolean);
     }
 
     /**
@@ -137,8 +115,8 @@ public class LayoutType<X> {
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<Character> ofChar(Layout layout) {
-        return new LayoutType<>(layout, References.ofChar);
+    static LayoutType<Character> ofChar(Layout layout) {
+        return new LayoutTypeImpl<>(char.class, layout, References.ofChar);
     }
 
     /**
@@ -146,8 +124,8 @@ public class LayoutType<X> {
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<Byte> ofByte(Layout layout) {
-        return new LayoutType<>(layout, References.ofByte);
+    static LayoutType<Byte> ofByte(Layout layout) {
+        return new LayoutTypeImpl<>(byte.class, layout, References.ofByte);
     }
 
     /**
@@ -155,8 +133,8 @@ public class LayoutType<X> {
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<Short> ofShort(Layout layout) {
-        return new LayoutType<>(layout, References.ofShort);
+    static LayoutType<Short> ofShort(Layout layout) {
+        return new LayoutTypeImpl<>(short.class, layout, References.ofShort);
     }
 
     /**
@@ -164,8 +142,8 @@ public class LayoutType<X> {
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<Integer> ofInt(Layout layout) {
-        return new LayoutType<>(layout, References.ofInt);
+    static LayoutType<Integer> ofInt(Layout layout) {
+        return new LayoutTypeImpl<>(int.class, layout, References.ofInt);
     }
 
     /**
@@ -173,8 +151,8 @@ public class LayoutType<X> {
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<Float> ofFloat(Layout layout) {
-        return new LayoutType<>(layout, References.ofFloat);
+    static LayoutType<Float> ofFloat(Layout layout) {
+        return new LayoutTypeImpl<>(float.class, layout, References.ofFloat);
     }
 
     /**
@@ -182,8 +160,8 @@ public class LayoutType<X> {
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<Long> ofLong(Layout layout) {
-        return new LayoutType<>(layout, References.ofLong);
+    static LayoutType<Long> ofLong(Layout layout) {
+        return new LayoutTypeImpl<>(long.class, layout, References.ofLong);
     }
 
     /**
@@ -191,8 +169,8 @@ public class LayoutType<X> {
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<Double> ofDouble(Layout layout) {
-        return new LayoutType<>(layout, References.ofDouble);
+    static LayoutType<Double> ofDouble(Layout layout) {
+        return new LayoutTypeImpl<>(double.class, layout, References.ofDouble);
     }
 
     /**
@@ -200,8 +178,8 @@ public class LayoutType<X> {
      * @param layout the layout.
      * @return the {@code LayoutType}.
      */
-    public static LayoutType<Void> ofVoid(Layout layout) {
-        return new LayoutType<>(layout, null) {
+    static LayoutType<Void> ofVoid(Layout layout) {
+        return new LayoutTypeImpl<>(Void.class, layout, null) {
             @Override
             public MethodHandle getter() throws UnsupportedOperationException {
                 throw new UnsupportedOperationException();
@@ -221,12 +199,12 @@ public class LayoutType<X> {
      * @return the {@code LayoutType}.
      * @throws IllegalArgumentException if the given carrier is not annotated with the {@link java.nicl.metadata.NativeStruct} annotation.
      */
-    public static <T extends Struct<T>> LayoutType<T> ofStruct(Class<T> carrier) throws IllegalArgumentException {
+    static <T extends Struct<T>> LayoutType<T> ofStruct(Class<T> carrier) throws IllegalArgumentException {
         NativeStruct nativeStruct = carrier.getAnnotation(NativeStruct.class);
         if (nativeStruct == null) {
             throw new IllegalArgumentException("Not a struct type!");
         }
         Group type = (Group) new DescriptorParser(nativeStruct.value()).parseLayout();
-        return new LayoutType<>(type, References.ofStruct(carrier));
+        return new LayoutTypeImpl<>(carrier, type, References.ofStruct);
     }
 }

@@ -31,6 +31,7 @@ import jdk.internal.nicl.types.BoundedMemoryRegion;
 import jdk.internal.nicl.types.BoundedPointer;
 
 import java.nicl.Scope;
+import java.nicl.layout.Layout;
 import java.nicl.types.Array;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
@@ -50,9 +51,9 @@ public abstract class ScopeImpl implements Scope {
 
     abstract BoundedMemoryRegion allocateRegion(long size);
 
-    private <T> BoundedPointer<T> allocateInternal(LayoutType<T> type, long count) {
+    private <T> BoundedPointer<T> allocateInternal(LayoutType<T> type, long count, int align) {
         // FIXME: when allocating structs align size up to 8 bytes to allow for raw reads/writes?
-        long size = type.bytesSize();
+        long size = Util.alignUp(type.bytesSize(), align);
         if (size < 0) {
             throw new UnsupportedOperationException("Unknown size for type " + type);
         }
@@ -67,12 +68,16 @@ public abstract class ScopeImpl implements Scope {
 
     @Override
     public <X> Array<X> allocateArray(LayoutType<X> elementType, long size) {
-        return new BoundedArray<>(allocateInternal(elementType, size), size);
+        return new BoundedArray<>(allocateInternal(elementType, size, 1), size);
     }
 
     @Override
     public <T> Pointer<T> allocate(LayoutType<T> type) {
-        return allocateInternal(type, 1);
+        return allocate(type, 1);
+    }
+
+    public <T> Pointer<T> allocate(LayoutType<T> type, int align) {
+        return allocateInternal(type, 1, align);
     }
 
     @Override

@@ -37,6 +37,8 @@ import java.nicl.types.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Helper class for references. Defines several reference subclasses, specialized in well-known Java carrier
@@ -46,16 +48,32 @@ public final class References {
 
     private References() {}
 
+    static class AbstractReference implements Reference {
+        protected MethodHandle getter, setter;
+
+        AbstractReference(MethodHandle getter, MethodHandle setter) {
+            this.getter = getter;
+            this.setter = setter;
+        }
+
+        public final MethodHandle getter() {
+            return getter;
+        }
+
+        public final MethodHandle setter() {
+            return setter;
+        }
+    }
+
+
     /**
      * Reference for primitive carriers. It exposes specialized accessors for getting/setting
      * the contents of a reference.
      */
-    static class OfPrimitive implements Reference {
+    static class OfPrimitive extends AbstractReference {
 
         static final MethodHandle MH_GET_LONG_BITS;
         static final MethodHandle MH_SET_LONG_BITS;
-
-        Class<?> carrier;
 
         static {
             try {
@@ -78,6 +96,29 @@ public final class References {
             ptr.region.putBits(ptr.offset, ptr.type.layout().bitsSize() / 8, value);
         }
 
+        OfPrimitive(Class<?> carrier) {
+            super(MethodHandles.explicitCastArguments(MH_GET_LONG_BITS, MH_GET_LONG_BITS.type().changeReturnType(carrier)),
+                    MethodHandles.explicitCastArguments(MH_SET_LONG_BITS, MH_SET_LONG_BITS.type().changeParameterType(1, carrier)));
+        }
+    }
+
+    /**
+     * A reference for the Java primitive type {@code boolean}.
+     */
+    public static class OfBoolean extends AbstractReference {
+
+        static final MethodHandle MH_TO_BOOLEAN;
+        static final MethodHandle MH_FROM_BOOLEAN;
+
+        static {
+            try {
+                MH_TO_BOOLEAN = MethodHandles.lookup().findStatic(OfBoolean.class, "toBoolean", MethodType.methodType(boolean.class, long.class));
+                MH_FROM_BOOLEAN = MethodHandles.lookup().findStatic(OfBoolean.class, "fromBoolean", MethodType.methodType(long.class, boolean.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
         static boolean toBoolean(long value) {
             return value != 0;
         }
@@ -86,218 +127,17 @@ public final class References {
             return value ? 1 : 0;
         }
 
-        public OfPrimitive(Class<?> carrier) {
-            super();
-            this.carrier = carrier;
-        }
-
-        @Override
-        public MethodHandle getter() {
-            return MethodHandles.explicitCastArguments(MH_GET_LONG_BITS, MH_GET_LONG_BITS.type().changeReturnType(carrier));
-        }
-
-        @Override
-        public MethodHandle setter() {
-            return MethodHandles.explicitCastArguments(MH_SET_LONG_BITS, MH_SET_LONG_BITS.type().changeParameterType(1, carrier));
-        }
-    }
-
-    /**
-     * A reference for the Java primitive type {@code boolean}.
-     */
-    public static class OfBoolean extends OfPrimitive {
-
-        static final MethodHandle MH_TO_BOOLEAN;
-        static final MethodHandle MH_FROM_BOOLEAN;
-
-        static {
-            try {
-                MH_TO_BOOLEAN = MethodHandles.lookup().findStatic(OfPrimitive.class, "toBoolean", MethodType.methodType(boolean.class, long.class));
-                MH_FROM_BOOLEAN = MethodHandles.lookup().findStatic(OfPrimitive.class, "fromBoolean", MethodType.methodType(long.class, boolean.class));
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
 
         OfBoolean() {
-            super(boolean.class);
-        }
-
-        @Override
-        public MethodHandle getter() {
-            return MethodHandles.filterReturnValue(MH_GET_LONG_BITS, MH_TO_BOOLEAN);
-        }
-
-        @Override
-        public MethodHandle setter() {
-            return MethodHandles.filterArguments(MH_SET_LONG_BITS, 1, MH_FROM_BOOLEAN);
-        }
-
-        /**
-         * Read the contents of this reference as a boolean value.
-         * @return the boolean value.
-         */
-        public boolean get(Pointer<?> pointer) {
-            try {
-                return (boolean)getter().invokeExact(pointer);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
-        /**
-         * Store a given boolean value in this reference.
-         * @param value the boolean value.
-         */
-        public void set(Pointer<?> pointer, boolean value) {
-            try {
-                setter().invokeExact(pointer, value);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-    }
-
-    /**
-     * A reference for the Java primitive type {@code char}.
-     */
-    public static class OfChar extends OfPrimitive {
-
-        OfChar() {
-            super(char.class);
-        }
-
-        /**
-         * Read the contents of this reference as a char value.
-         * @return the char value.
-         */
-        public char get(Pointer<?> pointer) {
-            try {
-                return (char)getter().invokeExact(pointer);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
-        /**
-         * Store a given char value in this reference.
-         * @param value the char value.
-         */
-        public void set(Pointer<?> pointer, char value) {
-            try {
-                setter().invokeExact(pointer, value);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-    }
-
-    /**
-     * A reference for the Java primitive type {@code byte}.
-     */
-    public static final class OfByte extends OfPrimitive {
-
-        OfByte() {
-            super(byte.class);
-        }
-
-        /**
-         * Read the contents of this reference as a byte value.
-         * @return the byte value.
-         */
-        public byte get(Pointer<?> pointer) {
-            try {
-                return (byte)getter().invokeExact(pointer);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
-        /**
-         * Store a given byte value in this reference.
-         * @param value the byte value.
-         */
-        public void set(Pointer<?> pointer, byte value) {
-            try {
-                setter().invokeExact(pointer, value);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-    }
-
-    /**
-     * A reference for the Java primitive type {@code short}.
-     */
-    public static class OfShort extends OfPrimitive {
-
-        OfShort() {
-            super(short.class);
-        }
-
-        /**
-         * Read the contents of this reference as a short value.
-         * @return the short value.
-         */
-        public short get(Pointer<?> pointer) {
-            try {
-                return (short)getter().invokeExact(pointer);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
-        /**
-         * Store a given short value in this reference.
-         * @param value the short value.
-         */
-        public void set(Pointer<?> pointer, short value) {
-            try {
-                setter().invokeExact(pointer, value);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-    }
-
-    /**
-     * A reference for the Java primitive type {@code int}.
-     */
-    public static class OfInt extends OfPrimitive {
-        OfInt() {
-            super(int.class);
-        }
-
-        /**
-         * Read the contents of this reference as an int value.
-         * @return the int value.
-         */
-        public int get(Pointer<?> pointer) {
-            try {
-                return (int)getter().invokeExact(pointer);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
-        /**
-         * Store a given int value in this reference.
-         * @param value the int value.
-         */
-        public void set(Pointer<?> pointer, int value) {
-            try {
-                setter().invokeExact(pointer, value);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
+            super(MethodHandles.filterReturnValue(OfPrimitive.MH_GET_LONG_BITS, MH_TO_BOOLEAN),
+                    MethodHandles.filterArguments(OfPrimitive.MH_SET_LONG_BITS, 1, MH_FROM_BOOLEAN));
         }
     }
 
     /**
      * A reference for the Java primitive type {@code float}.
      */
-    public static class OfFloat extends OfPrimitive {
+    public static class OfFloat extends AbstractReference {
 
         static final MethodHandle MH_TO_FLOAT;
         static final MethodHandle MH_FROM_FLOAT;
@@ -312,82 +152,15 @@ public final class References {
         }
 
         OfFloat() {
-            super(float.class);
-        }
-
-        @Override
-        public MethodHandle getter() {
-            return MethodHandles.filterReturnValue(MH_GET_LONG_BITS, MH_TO_FLOAT);
-        }
-
-        @Override
-        public MethodHandle setter() {
-            return MethodHandles.filterArguments(MH_SET_LONG_BITS, 1, MH_FROM_FLOAT);
-        }
-
-        /**
-         * Read the contents of this reference as a float value.
-         * @return the float value.
-         */
-        public float get(Pointer<?> pointer) {
-            try {
-                return (float)getter().invokeExact(pointer);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
-        /**
-         * Store a given float value in this reference.
-         * @param value the float value.
-         */
-        public void set(Pointer<?> pointer, float value) {
-            try {
-                setter().invokeExact(pointer, value);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-    }
-
-    /**
-     * A reference for the Java primitive type {@code long}.
-     */
-    public static class OfLong extends OfPrimitive {
-
-        OfLong() {
-            super(long.class);
-        }
-
-        /**
-         * Read the contents of this reference as a long value.
-         * @return the long value.
-         */
-        public long get(Pointer<?> pointer) {
-            try {
-                return (long)getter().invokeExact(pointer);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
-        /**
-         * Store a given long value in this reference.
-         * @param value the long value.
-         */
-        public void set(Pointer<?> pointer, long value) {
-            try {
-                setter().invokeExact(pointer, value);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
+            super(MethodHandles.filterReturnValue(OfPrimitive.MH_GET_LONG_BITS, MH_TO_FLOAT),
+                    MethodHandles.filterArguments(OfPrimitive.MH_SET_LONG_BITS, 1, MH_FROM_FLOAT));
         }
     }
 
     /**
      * A reference for the Java primitive type {@code double}.
      */
-    public static class OfDouble extends OfPrimitive {
+    public static class OfDouble extends AbstractReference {
 
         static final MethodHandle MH_TO_DOUBLE;
         static final MethodHandle MH_FROM_DOUBLE;
@@ -402,17 +175,8 @@ public final class References {
         }
 
         OfDouble() {
-            super(double.class);
-        }
-
-        @Override
-        public MethodHandle getter() {
-            return MethodHandles.filterReturnValue(MH_GET_LONG_BITS, MH_TO_DOUBLE);
-        }
-
-        @Override
-        public MethodHandle setter() {
-            return MethodHandles.filterArguments(MH_SET_LONG_BITS, 1, MH_FROM_DOUBLE);
+            super(MethodHandles.filterReturnValue(OfPrimitive.MH_GET_LONG_BITS, MH_TO_DOUBLE),
+                    MethodHandles.filterArguments(OfPrimitive.MH_SET_LONG_BITS, 1, MH_FROM_DOUBLE));
         }
 
         /**
@@ -441,81 +205,38 @@ public final class References {
     }
 
     /**
-     * This class models a reference to a Java class type (non-primitive). It provides strongly typed operations
-     * to get/set the contents of the reference.
-     * @param <T> the Java type.
+     * Reference for pointers.
      */
-    public static abstract class OfClass<T> implements Reference {
+    public static class OfPointer extends AbstractReference {
 
-        static final MethodHandle MH_GET;
-        static final MethodHandle MH_SET;
+        static final MethodHandle MH_PTR_GET;
+        static final MethodHandle MH_PTR_SET;
 
         static {
             try {
-                MH_GET = MethodHandles.lookup().findVirtual(OfClass.class, "get", MethodType.methodType(Object.class, Pointer.class));
-                MH_SET = MethodHandles.lookup().findVirtual(OfClass.class, "set", MethodType.methodType(void.class, Pointer.class, Object.class));
+                MH_PTR_GET = MethodHandles.lookup().findStatic(OfPointer.class, "get", MethodType.methodType(Pointer.class, Pointer.class));
+                MH_PTR_SET = MethodHandles.lookup().findStatic(OfPointer.class, "set", MethodType.methodType(void.class, Pointer.class, Pointer.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
-        protected Class<T> carrier;
-
-        public OfClass(Class<T> carrier) {
-            super();
-            this.carrier = carrier;
+        public OfPointer() {
+            super(MH_PTR_GET, MH_PTR_SET);
         }
 
-        @Override
-        public final MethodHandle getter() {
-            return MH_GET.asType(MH_GET.type().changeReturnType(carrier)).bindTo(this);
-        }
-
-        @Override
-        public final MethodHandle setter() {
-            return MH_SET.asType(MH_SET.type().changeParameterType(2, carrier)).bindTo(this);
-        }
-
-        /**
-         * Read the contents of the memory associated with this reference.
-         * @return a value of type {@code T}.
-         */
-        public abstract T get(Pointer<?> pointer);
-
-        /**
-         * Store a value of type {@code T} in this reference.
-         * @param value a value of type {@code T}.
-         */
-        public abstract void set(Pointer<?> pointer, T value);
-    }
-
-    /**
-     * Reference for pointers.
-     */
-    public static class OfPointer<X> extends OfClass<Pointer<X>> {
-
-        private final LayoutType<X> pointeeType;
-
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        public OfPointer(LayoutType<X> pointeeType) {
-            super((Class) Pointer.class);
-            this.pointeeType = pointeeType;
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public Pointer<X> get(Pointer<?> pointer) {
-            long addr = ofLong.get(pointer);
-            BoundedPointer<X> rp = addr == 0 ?
+        static Pointer<?> get(Pointer<?> pointer) {
+            long addr = OfPrimitive.getLongBits(pointer);
+            LayoutType<?> pointeeType = ((LayoutTypeImpl<?>)pointer.type()).pointeeType();
+            BoundedPointer<?> rp = addr == 0 ?
                     Pointer.nullPointer() :
                     new BoundedPointer<>(pointeeType, new BoundedMemoryRegion(null, addr, Long.MAX_VALUE), 0);
             return rp;
         }
 
-        @Override
-        public void set(Pointer<?> pointer, Pointer<X> pointerValue) {
+        static void set(Pointer<?> pointer, Pointer<?> pointerValue) {
             try {
-                ofLong.set(pointer, pointerValue.addr());
+                OfPrimitive.setLongBits(pointer, pointerValue.addr());
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException("Access denied", iae);
             }
@@ -525,30 +246,39 @@ public final class References {
     /**
      * Reference for arrays.
      */
-    public static class OfArray<X> extends OfClass<Array<X>> {
+    public static class OfArray extends AbstractReference {
 
-        private final LayoutType<X> elementType;
+        static final MethodHandle MH_ARR_GET;
+        static final MethodHandle MH_ARR_SET;
+
+        static {
+            try {
+                MH_ARR_GET = MethodHandles.lookup().findStatic(OfArray.class, "get", MethodType.methodType(Array.class, Pointer.class));
+                MH_ARR_SET = MethodHandles.lookup().findStatic(OfArray.class, "set", MethodType.methodType(void.class, Pointer.class, Array.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
 
         @SuppressWarnings({"unchecked", "rawtypes"})
-        public OfArray(LayoutType<X> elementType) {
-            super((Class) Array.class);
-            this.elementType = elementType;
+        public OfArray() {
+            super(MH_ARR_GET, MH_ARR_SET);
         }
 
-        @Override
-        @SuppressWarnings("unchecked")
-        public Array<X> get(Pointer<?> pointer) {
+        static Array<?> get(Pointer<?> pointer) {
             Sequence seq = (Sequence)pointer.type().layout();
-            return new BoundedArray<>((BoundedPointer<X>)Util.unsafeCast(pointer, elementType), seq.elementsSize());
+            LayoutType<?> elementType = ((LayoutTypeImpl<?>)pointer.type()).elementType();
+            return new BoundedArray<>((BoundedPointer<?>)Util.unsafeCast(pointer, elementType), seq.elementsSize());
         }
 
-        @Override
-        public void set(Pointer<?> pointer, Array<X> arrayValue) {
+        static void set(Pointer<?> pointer, Array<?> arrayValue) {
             try {
+                LayoutType<?> elementType = ((LayoutTypeImpl<?>)pointer.type()).elementType();
                 MethodHandle elemGetter = elementType.getter();
                 MethodHandle elemSetter = elementType.setter();
                 Pointer<?> toElemPointer = ((Array<?>)pointer.get()).elementPointer();
-                Pointer<X> fromElemPointer = arrayValue.elementPointer();
+                Pointer<?> fromElemPointer = arrayValue.elementPointer();
                 // @@@ Perform a bulk copy from the array into the pointers
                 // memory region
                 Sequence seq = ((Sequence)pointer.type().layout());
@@ -565,26 +295,38 @@ public final class References {
 
     /**
      * A reference for native structs.
-     * @param <T> The Java type associated with the native struct.
      */
-    public static class OfStruct<T extends Struct<T>> extends OfClass<T> {
-        OfStruct(Class<T> carrier) {
-            super(carrier);
+    @SuppressWarnings("unchecked")
+    public static class OfStruct extends AbstractReference {
+
+        static final MethodHandle MH_STR_GET;
+        static final MethodHandle MH_STR_SET;
+
+        static {
+            try {
+                MH_STR_GET = MethodHandles.lookup().findStatic(OfStruct.class, "get", MethodType.methodType(Struct.class, Pointer.class));
+                MH_STR_SET = MethodHandles.lookup().findStatic(OfStruct.class, "set", MethodType.methodType(void.class, Pointer.class, Struct.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
         }
 
-        @Override
+        OfStruct() {
+            super(MH_STR_GET, MH_STR_SET);
+        }
+
         @SuppressWarnings("unchecked")
-        public T get(Pointer<?> pointer) {
+        static Struct<?> get(Pointer<?> pointer) {
+            Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).carrier();
             Class<?> structClass = LibrariesHelper.getStructImplClass(carrier);
             try {
-                return (T)structClass.getConstructor(Pointer.class).newInstance(pointer);
+                return (Struct<?>)structClass.getConstructor(Pointer.class).newInstance(pointer);
             } catch (ReflectiveOperationException ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
-        @Override
-        public void set(Pointer<?> pointer, T t) {
+        static void set(Pointer<?> pointer, Struct<?> t) {
             try {
                 Util.copy(t.ptr(), pointer, pointer.type().layout().bitsSize() / 8);
             } catch (IllegalAccessException iae) {
@@ -596,7 +338,7 @@ public final class References {
     /**
      * Reference factory for the {@code char} primitive type.
      */
-    public static OfChar ofChar = new OfChar();
+    public static OfPrimitive ofChar = new OfPrimitive(char.class);
 
     /**
      * Reference factory for the {@code boolean} primitive type.
@@ -606,17 +348,17 @@ public final class References {
     /**
      * Reference factory for the {@code byte} primitive type.
      */
-    public static OfByte ofByte = new OfByte();
+    public static OfPrimitive ofByte = new OfPrimitive(byte.class);
 
     /**
      * Reference factory for the {@code short} primitive type.
      */
-    public static OfShort ofShort = new OfShort();
+    public static OfPrimitive ofShort = new OfPrimitive(short.class);
 
     /**
      * Reference factory for the {@code int} primitive type.
      */
-    public static OfInt ofInt = new OfInt();
+    public static OfPrimitive ofInt = new OfPrimitive(int.class);
 
     /**
      * Reference factory for the {@code float} primitive type.
@@ -626,37 +368,16 @@ public final class References {
     /**
      * Reference factory for the {@code long} primitive type.
      */
-    public static OfLong ofLong = new OfLong();
+    public static OfPrimitive ofLong = new OfPrimitive(long.class);
 
     /**
      * Reference for the {@code double} primitive type.
      */
     public static OfDouble ofDouble = new OfDouble();
 
-    public static <X> OfPointer<X> ofPointer(LayoutType<X> pointeeType) {
-        return new OfPointer<>(pointeeType);
-    }
+    public static OfPointer ofPointer = new OfPointer();
 
-    /**
-     * Create an array reference factory from a given carrier class.
-     * @param elementType the array carrier.
-     * @param <T> the array type.
-     * @return a reference factory for array references.
-     * @throws IllegalArgumentException if the carrier is not an array type.
-     */
-    public static <T> OfArray<T> ofArray(LayoutType<T> elementType) { return new OfArray<>(elementType); }
+    public static OfArray ofArray = new OfArray();
 
-    /**
-     * Create a struct reference factory from a given carrier class.
-     * @param clazz the native struct carrier.
-     * @param <T> the native struct type.
-     * @return a reference factory for native struct references.
-     * @throws IllegalArgumentException if the carrier is not annotated with the {@link NativeStruct} annotation.
-     */
-    public static <T extends Struct<T>> OfStruct<T> ofStruct(Class<T> clazz) throws IllegalArgumentException {
-        if (!clazz.isAnnotationPresent(NativeStruct.class)) {
-            throw new IllegalArgumentException("Not a native struct!");
-        }
-        return new OfStruct<>(clazz);
-    }
+    public static OfStruct ofStruct = new OfStruct();
 }
