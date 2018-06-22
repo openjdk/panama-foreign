@@ -44,6 +44,11 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
       [CLANG_INCLUDE_PATH="$withval"],
       [CLANG_INLCUDE_PATH=""]
     )
+    AC_ARG_WITH([libclang-include-aux], [AS_HELP_STRING([--with-libclang-include-aux=<path>],
+        [Specify where to find libclang auxiliary header files, lib/clang/<clang-version>/include/stddef.h ])],
+      [CLANG_INCLUDE_AUX_PATH="$withval"],
+      [CLANG_INLCUDE_AUX_PATH=""]
+    )
     AC_ARG_WITH([libclang-lib], [AS_HELP_STRING([--with-libclang-lib=<path>],
         [Specify where to find libclang binary, so/dylib/dll ])],
       [CLANG_LIB_PATH="$withval"],
@@ -52,6 +57,8 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
 
     if test "x$with_libclang" != "xyes"; then
       CLANG_INCLUDE_PATH="$with_libclang/include"
+      VER=`ls $with_libclang/lib/clang/`
+      CLANG_INCLUDE_AUX_PATH="$with_libclang/lib/clang/$VER/include"
       CLANG_LIB_PATH="$with_libclang/lib"
     fi
 
@@ -93,6 +100,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
 
   if test "x$ENABLE_LIBCLANG" = "xno"; then
     CLANG_INCLUDE_PATH=""
+    CLANG_INCLUDE_AUX_PATH=""
     CLANG_LIB_PATH=""
     LIBCLANG_CPPFLAGS=""
     LIBCLANG_LDFLAGS=""
@@ -101,6 +109,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
 
   AC_SUBST(ENABLE_LIBCLANG)
   AC_SUBST(CLANG_INCLUDE_PATH)
+  AC_SUBST(CLANG_INCLUDE_AUX_PATH)
   AC_SUBST(CLANG_LIB_PATH)
   AC_SUBST(LIBCLANG_CPPFLAGS)
   AC_SUBST(LIBCLANG_LDFLAGS)

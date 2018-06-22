@@ -42,14 +42,15 @@ public class LibClang {
         Library libclang = Libraries.loadLibrary(MethodHandles.lookup(), "clang");
         lib = Libraries.bind(clang.Index.class, libclang);
         lcxstr = Libraries.bind(clang.CXString.class, libclang);
+    }
+
+    public static Index createIndex() {
+        Index index = new Index(lib.clang_createIndex(0, 0));
         lib.clang_toggleCrashRecovery(0);
         if (DEBUG) {
             System.err.println("LibClang crash recovery disabled");
         }
-    }
-
-    public static Index createIndex() {
-        return new Index(lib.clang_createIndex(0, 0));
+        return index;
     }
 
     public static String CXStrToString(CXString cxstr) {

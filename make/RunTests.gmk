@@ -517,6 +517,7 @@ define SetupRunJtregTestBody
   ifeq ($(ENABLE_LIBCLANG), yes)
     $1_JTREG_BASIC_OPTIONS += \
         -Dclang.include.path=$(CLANG_INCLUDE_PATH) \
+        -Dclang.include.aux.path=$(CLANG_INCLUDE_AUX_PATH) \
         -Dclang.lib.path=$(CLANG_LIB_PATH)
   endif
 
