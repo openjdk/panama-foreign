@@ -150,15 +150,6 @@ public class StdLibTest {
         }
     }
 
-    @Test
-    void test_errno() {
-        stdLibHelper.setErrno(0);
-        assertEquals(stdLibHelper.getErrno(), 0);
-        Pointer<Void> file = stdLibHelper.fopen("/tmp/java/StdLibTest/nosuchdir/nosuchfile", "r");
-        assertTrue(file.isNull());
-        assertEquals(stdLibHelper.getErrno(), 2);
-    }
-
     static class StdLibHelper {
         StdLib stdLib = Libraries.bind(MethodHandles.lookup(), StdLib.class);
 
@@ -224,14 +215,6 @@ public class StdLibTest {
             }
         }
 
-        int getErrno() {
-            return stdLib.errno();
-        }
-
-        void setErrno(int val) {
-            stdLib.setErrno(val);
-        }
-
         Pointer<Void> fopen(String filename, String mode) {
             try (Scope s = Scope.newNativeScope()) {
                 return stdLib.fopen(s.toCString(filename), s.toCString(mode));
@@ -248,7 +231,6 @@ public class StdLibTest {
                 "qsort=(u64:[0i32]i32i32u64:(u64:i32u64:i32)i32)v" +
                 "rand=()i32" +
                 "printf=(u64:u8*)i32" +
-                "errno=i32(get=errno)(set=setErrno)" +
                 "fopen=(u64:u8u64:i8)u64:v")
         public interface StdLib {
             int puts(Pointer<Byte> str);
@@ -260,8 +242,6 @@ public class StdLibTest {
             void qsort(Pointer<Integer> base, int nitems, int size, QsortComparator comparator);
             int rand();
             int printf(Pointer<Byte> format, Object... args);
-            int errno();
-            void setErrno(int value);
             Pointer<Void> fopen(Pointer<Byte> filename, Pointer<Byte> mode);
 
             @NativeCallback("(u64:i32u64:i32)i32")

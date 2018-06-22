@@ -36,6 +36,7 @@ public class BoundedMemoryRegion {
 
     public static final BoundedMemoryRegion EVERYTHING = new BoundedMemoryRegion(0, Long.MAX_VALUE); // FIXME: Not actually MAX_VALUE
     public static final BoundedMemoryRegion NOTHING = new BoundedMemoryRegion(0, 0);
+
     private static final Unsafe U = Unsafe.getUnsafe();
 
     private final Scope scope;
@@ -70,6 +71,9 @@ public class BoundedMemoryRegion {
     }
 
     public BoundedMemoryRegion(Object base, long min, long length, int mode, Scope scope) {
+        if (min < 0 || length < 0) {
+            throw new IllegalArgumentException();
+        }
         this.base = base;
         this.min = min;
         this.length = length;
@@ -102,20 +106,24 @@ public class BoundedMemoryRegion {
     }
 
     public void checkBounds(long offset) {
+        if (length == 0 && offset == 0) {
+            return;
+        }
         if (offset < 0 || offset >= length) {
             // FIXME: Objects.checkIndex(long, long) ?
             throw new IndexOutOfBoundsException("offset=0x" + Long.toHexString(offset) + " length=0x" + Long.toHexString(length));
         }
     }
 
-    private void checkRange(long offset, long length) {
+    void checkRange(long offset, long length) {
         checkBounds(offset);
-        if (length == 0) return;
-        checkBounds(offset + length - 1);
+        if (length != 0) {
+            checkBounds(offset + length - 1);
+        }
     }
 
     BoundedMemoryRegion limit(long newLength) {
-        if (newLength > length) {
+        if (newLength > length || newLength < 0) {
             throw new IllegalArgumentException();
         }
         return new BoundedMemoryRegion(base, min, newLength, mode, scope);

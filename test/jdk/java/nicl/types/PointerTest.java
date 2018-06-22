@@ -27,6 +27,7 @@
  */
 
 import java.lang.invoke.MethodHandles;
+import java.nio.ByteBuffer;
 import java.nicl.Libraries;
 import java.nicl.Library;
 import java.nicl.NativeTypes;
@@ -258,6 +259,19 @@ public class PointerTest {
         }
     }
 
+    public void testMemoryRegionRange() {
+        try {
+            ByteBuffer bb = ByteBuffer.allocate(4);
+            Pointer<Byte> ptr = Pointer.fromByteBuffer(bb);
+            ptr.cast(NativeTypes.VOID).cast(NativeTypes.UINT64);
+            throw new AssertionError("should have thrown exception");
+        } catch (RuntimeException re) {
+            // expected
+            System.err.println("Got exception as expected");
+            re.printStackTrace();
+        }
+    }
+
     public void test() {
         testStrings();
         testStrings2();
@@ -267,6 +281,7 @@ public class PointerTest {
         testStructs2();
         testNullPointer();
         testNotExistWontCrash();
+        testMemoryRegionRange();
     }
 
     static void assertEquals(Object expected, Object actual) {

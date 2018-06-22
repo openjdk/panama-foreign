@@ -62,6 +62,7 @@ public class BoundedPointer<X> implements Pointer<X> {
         this.offset = offset;
         this.type = Objects.requireNonNull(type);
         this.mode = mode;
+        region.checkRange(offset, type.layout().bitsSize() / 8);
     }
 
     @Override
@@ -117,8 +118,6 @@ public class BoundedPointer<X> implements Pointer<X> {
         }
 
         long newOffset = this.offset + nElements * elemSize;
-
-        region.checkBounds(newOffset);
 
         // Note: the pointer may point outside of the memory region bounds.
         // This is allowed, as long as the pointer/data is not dereferenced
