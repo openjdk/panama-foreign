@@ -280,6 +280,22 @@ public class Double256VectorTests extends AbstractVectorTest {
             Assert.assertTrue(isWithin1Ulp(r[i], strictmathf.apply(a[i], b[i])), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i]);
         }
     }
+
+    interface FBinArrayOp {
+        double apply(double[] a, int b);
+    }
+    
+    static void assertArraysEquals(double[] a, double[] r, FBinArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a, i), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
+        }
+    }
+
     static final List<IntFunction<double[]>> DOUBLE_GENERATORS = List.of(
             withToString("double[-i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -431,6 +447,9 @@ public class Double256VectorTests extends AbstractVectorTest {
                 return (double)-0.0;
         }
     }
+   static double get(double[] a, int i) {
+     return (double) a[i]; 
+   }
 
 
     static double add(double a, double b) {
@@ -935,6 +954,21 @@ public class Double256VectorTests extends AbstractVectorTest {
             }
         }
         assertArraysEquals(a, b, r, mask, Double256VectorTests::blend);
+    }
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void getDouble256VectorTests(IntFunction<double[]> fa) {
+        double[] a = fa.apply(SPECIES.length());
+        double[] r = new double[a.length];
+        
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+		for (int j = 0; j < SPECIES.length(); j++) {
+                  r[i+j]=av.get(j);  
+                }
+            }
+        }
+        assertArraysEquals(a, r, Double256VectorTests::get);
     }
 
     static double sin(double a) {

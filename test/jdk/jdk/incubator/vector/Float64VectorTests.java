@@ -280,6 +280,22 @@ public class Float64VectorTests extends AbstractVectorTest {
             Assert.assertTrue(isWithin1Ulp(r[i], strictmathf.apply(a[i], b[i])), "at index #" + i + ", input1 = " + a[i] + ", input2 = " + b[i]);
         }
     }
+
+    interface FBinArrayOp {
+        float apply(float[] a, int b);
+    }
+    
+    static void assertArraysEquals(float[] a, float[] r, FBinArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a, i), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
+        }
+    }
+
     static final List<IntFunction<float[]>> FLOAT_GENERATORS = List.of(
             withToString("float[-i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -431,6 +447,9 @@ public class Float64VectorTests extends AbstractVectorTest {
                 return (float)-0.0;
         }
     }
+   static float get(float[] a, int i) {
+     return (float) a[i]; 
+   }
 
 
     static float add(float a, float b) {
@@ -935,6 +954,21 @@ public class Float64VectorTests extends AbstractVectorTest {
             }
         }
         assertArraysEquals(a, b, r, mask, Float64VectorTests::blend);
+    }
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void getFloat64VectorTests(IntFunction<float[]> fa) {
+        float[] a = fa.apply(SPECIES.length());
+        float[] r = new float[a.length];
+        
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+		for (int j = 0; j < SPECIES.length(); j++) {
+                  r[i+j]=av.get(j);  
+                }
+            }
+        }
+        assertArraysEquals(a, r, Float64VectorTests::get);
     }
 
     static float sin(float a) {

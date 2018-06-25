@@ -299,6 +299,22 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 #end[FP]
+
+    interface FBinArrayOp {
+        $type$ apply($type$[] a, int b);
+    }
+    
+    static void assertArraysEquals($type$[] a, $type$[] r, FBinArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a, i), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
+        }
+    }
+
     static final List<IntFunction<$type$[]>> $TYPE$_GENERATORS = List.of(
             withToString("$type$[-i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -469,4 +485,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
 #end[FP]
     }
+   static $type$ get($type$[] a, int i) {
+     return ($type$) a[i]; 
+   }
 

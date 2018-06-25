@@ -193,6 +193,22 @@ public class Long512VectorTests extends AbstractVectorTest {
         }
     }
 
+
+    interface FBinArrayOp {
+        long apply(long[] a, int b);
+    }
+    
+    static void assertArraysEquals(long[] a, long[] r, FBinArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a, i), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
+        }
+    }
+
     static final List<IntFunction<long[]>> LONG_GENERATORS = List.of(
             withToString("long[-i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -322,6 +338,9 @@ public class Long512VectorTests extends AbstractVectorTest {
                 return (long)0;
         }
     }
+   static long get(long[] a, int i) {
+     return (long) a[i]; 
+   }
 
 
     static long add(long a, long b) {
@@ -1261,6 +1280,21 @@ public class Long512VectorTests extends AbstractVectorTest {
             }
         }
         assertArraysEquals(a, b, r, mask, Long512VectorTests::blend);
+    }
+    @Test(dataProvider = "longUnaryOpProvider")
+    static void getLong512VectorTests(IntFunction<long[]> fa) {
+        long[] a = fa.apply(SPECIES.length());
+        long[] r = new long[a.length];
+        
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+		for (int j = 0; j < SPECIES.length(); j++) {
+                  r[i+j]=av.get(j);  
+                }
+            }
+        }
+        assertArraysEquals(a, r, Long512VectorTests::get);
     }
 
 

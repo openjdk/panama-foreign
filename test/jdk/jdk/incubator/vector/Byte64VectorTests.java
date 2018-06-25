@@ -193,6 +193,22 @@ public class Byte64VectorTests extends AbstractVectorTest {
         }
     }
 
+
+    interface FBinArrayOp {
+        byte apply(byte[] a, int b);
+    }
+    
+    static void assertArraysEquals(byte[] a, byte[] r, FBinArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a, i), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
+        }
+    }
+
     static final List<IntFunction<byte[]>> BYTE_GENERATORS = List.of(
             withToString("byte[-i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -322,6 +338,9 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 return (byte)0;
         }
     }
+   static byte get(byte[] a, int i) {
+     return (byte) a[i]; 
+   }
 
 
     static byte add(byte a, byte b) {
@@ -1030,6 +1049,21 @@ public class Byte64VectorTests extends AbstractVectorTest {
             }
         }
         assertArraysEquals(a, b, r, mask, Byte64VectorTests::blend);
+    }
+    @Test(dataProvider = "byteUnaryOpProvider")
+    static void getByte64VectorTests(IntFunction<byte[]> fa) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+        
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+		for (int j = 0; j < SPECIES.length(); j++) {
+                  r[i+j]=av.get(j);  
+                }
+            }
+        }
+        assertArraysEquals(a, r, Byte64VectorTests::get);
     }
 
 

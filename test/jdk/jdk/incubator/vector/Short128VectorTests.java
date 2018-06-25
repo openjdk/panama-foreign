@@ -193,6 +193,22 @@ public class Short128VectorTests extends AbstractVectorTest {
         }
     }
 
+
+    interface FBinArrayOp {
+        short apply(short[] a, int b);
+    }
+    
+    static void assertArraysEquals(short[] a, short[] r, FBinArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a, i), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
+        }
+    }
+
     static final List<IntFunction<short[]>> SHORT_GENERATORS = List.of(
             withToString("short[-i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -322,6 +338,9 @@ public class Short128VectorTests extends AbstractVectorTest {
                 return (short)0;
         }
     }
+   static short get(short[] a, int i) {
+     return (short) a[i]; 
+   }
 
 
     static short add(short a, short b) {
@@ -1030,6 +1049,21 @@ public class Short128VectorTests extends AbstractVectorTest {
             }
         }
         assertArraysEquals(a, b, r, mask, Short128VectorTests::blend);
+    }
+    @Test(dataProvider = "shortUnaryOpProvider")
+    static void getShort128VectorTests(IntFunction<short[]> fa) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] r = new short[a.length];
+        
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+		for (int j = 0; j < SPECIES.length(); j++) {
+                  r[i+j]=av.get(j);  
+                }
+            }
+        }
+        assertArraysEquals(a, r, Short128VectorTests::get);
     }
 
 

@@ -193,6 +193,22 @@ public class Int64VectorTests extends AbstractVectorTest {
         }
     }
 
+
+    interface FBinArrayOp {
+        int apply(int[] a, int b);
+    }
+    
+    static void assertArraysEquals(int[] a, int[] r, FBinArrayOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i++) {
+                Assert.assertEquals(f.apply(a, i), r[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
+        }
+    }
+
     static final List<IntFunction<int[]>> INT_GENERATORS = List.of(
             withToString("int[-i * 5]", (int s) -> {
                 return fill(s * 1000,
@@ -322,6 +338,9 @@ public class Int64VectorTests extends AbstractVectorTest {
                 return (int)0;
         }
     }
+   static int get(int[] a, int i) {
+     return (int) a[i]; 
+   }
 
 
     static int add(int a, int b) {
@@ -1261,6 +1280,21 @@ public class Int64VectorTests extends AbstractVectorTest {
             }
         }
         assertArraysEquals(a, b, r, mask, Int64VectorTests::blend);
+    }
+    @Test(dataProvider = "intUnaryOpProvider")
+    static void getInt64VectorTests(IntFunction<int[]> fa) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] r = new int[a.length];
+        
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+		for (int j = 0; j < SPECIES.length(); j++) {
+                  r[i+j]=av.get(j);  
+                }
+            }
+        }
+        assertArraysEquals(a, r, Int64VectorTests::get);
     }
 
 

@@ -1786,6 +1786,10 @@ private:
   // Shuffle Packed Low Words
   void pshuflw(XMMRegister dst, XMMRegister src, int mode);
   void pshuflw(XMMRegister dst, Address src,     int mode);
+  
+  //shuffle floats and doubles
+  void vpshufps(XMMRegister, XMMRegister, XMMRegister, int, int);
+  void vpshufpd(XMMRegister, XMMRegister, XMMRegister, int, int);
 
   // Shuffle packed values at 128 bit granularity
   void evshufi64x2(XMMRegister dst, XMMRegister nds, XMMRegister src, int imm8, int vector_len);

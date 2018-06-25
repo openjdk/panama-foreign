@@ -48,6 +48,7 @@ bool_reduction_template="$TEMPLATE_FOLDER/BoolReduction-op.template"
 with_op_template="$TEMPLATE_FOLDER/With-Op.template"
 shift_template="$TEMPLATE_FOLDER/Shift-op.template"
 shift_masked_template="$TEMPLATE_FOLDER/Shift-Masked-op.template"
+get_template="$TEMPLATE_FOLDER/Get-op.template"
 
 function gen_op_tmpl { 
   template=$1
@@ -141,6 +142,11 @@ function gen_with_op {
   gen_op_tmpl $with_op_template "$@"
 }
 
+function gen_get_op {
+  echo "Generating get op $1 ($2)..."
+  gen_op_tmpl $get_template "$@"
+}
+
 function gen_header {
   cat $TEMPLATE_FOLDER/header.template > $1
 }
@@ -200,6 +206,9 @@ gen_op_tmpl $compare_template "greaterThanEq" ">=" $template_file
 
 # Blend.
 gen_op_tmpl $blend "blend" "" $template_file
+
+# Get
+gen_get_op "" "" $template_file
 
 # Math
 gen_op_tmpl $unary_math_template "sin" "Math.sin((double)a)" $template_file "FP"
