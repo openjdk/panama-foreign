@@ -2174,8 +2174,12 @@ public final class System {
 
             //Panama
             @Override
-            public Library findLibrary(MethodHandles.Lookup lookup, String libname) {
-                return Runtime.getRuntime().findLibrary(lookup, libname);
+            public Library loadLibrary(MethodHandles.Lookup lookup, String libname) {
+                return Runtime.getRuntime().loadLibrary(lookup, libname);
+            }
+            @Override
+            public Library load(MethodHandles.Lookup lookup, String libname) {
+                return Runtime.getRuntime().load0(lookup.lookupClass(), libname);
             }
             @Override
             public Library defaultLibrary() {

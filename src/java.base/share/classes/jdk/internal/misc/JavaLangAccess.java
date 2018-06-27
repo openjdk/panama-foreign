@@ -310,7 +310,7 @@ public interface JavaLangAccess {
     //Panama
 
     /**
-     * Panama: find a native library.
+     * Panama: load a native library.
      * @param lookup the lookup object.
      * @param libname the name of the library.
      * @return the found library
@@ -319,7 +319,19 @@ public interface JavaLangAccess {
      *             linked with the VM,  or the library cannot be mapped to a
      *             native library image by the host system.
      */
-    Library findLibrary(MethodHandles.Lookup lookup, String libname);
+    Library loadLibrary(MethodHandles.Lookup lookup, String libname);
+
+    /**
+     * Panama: load a native library.
+     * @param lookup the lookup object.
+     * @param libname the absolute path of the library.
+     * @return the loaded library
+     * @throws     UnsatisfiedLinkError if either the libname argument is not an
+     *             absolute path name, the native library is not statically
+     *             linked with the VM, or the library cannot be mapped to
+     *             a native library image by the host system.
+     */
+    Library load(MethodHandles.Lookup lookup, String libname);
 
     /**
      * Panama: lookup default library

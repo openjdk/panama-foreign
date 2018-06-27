@@ -124,7 +124,7 @@ public final class Libraries {
             throw new UnsatisfiedLinkError(
                 "Expecting an absolute path of the library: " + filename);
         }
-        return LibrariesHelper.loadLibrary(checkLookup(lookup), filename);
+        return LibrariesHelper.load(checkLookup(lookup), filename);
     }
 
     public static Library getDefaultLibrary() {

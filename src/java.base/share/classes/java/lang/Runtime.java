@@ -761,7 +761,7 @@ public class Runtime {
         load0(Reflection.getCallerClass(), filename);
     }
 
-    synchronized void load0(Class<?> fromClass, String filename) {
+    synchronized NativeLibrary load0(Class<?> fromClass, String filename) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(filename);
@@ -770,7 +770,7 @@ public class Runtime {
             throw new UnsatisfiedLinkError(
                 "Expecting an absolute path of the library: " + filename);
         }
-        ClassLoader.loadLibrary(fromClass, filename, true);
+        return ClassLoader.loadLibrary(fromClass, filename, true);
     }
 
     /**
@@ -825,9 +825,9 @@ public class Runtime {
 
     /**
      * Panama specific: find library given name and lookup.
-     * See {@link jdk.internal.misc.JavaLangAccess#findLibrary(Lookup, String)}.
+     * See {@link jdk.internal.misc.JavaLangAccess#loadLibrary(Lookup, String)}.
      */
-    Library findLibrary(MethodHandles.Lookup lookup, String libname) {
+    Library loadLibrary(MethodHandles.Lookup lookup, String libname) {
         return loadLibrary0(lookup.lookupClass(), libname);
     }
 

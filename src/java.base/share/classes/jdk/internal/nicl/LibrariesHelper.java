@@ -134,7 +134,17 @@ public final class LibrariesHelper {
      * @param name Name of the shared library to load.
      */
     public static Library loadLibrary(Lookup lookup, String name) {
-        return jlAccess.findLibrary(lookup, name);
+        return jlAccess.loadLibrary(lookup, name);
+    }
+
+    /**
+     * Load the specified shared library.
+     *
+     * @param lookup Lookup object of the caller.
+     * @param path Path of the shared library to load.
+     */
+    public static Library load(Lookup lookup, String path) {
+        return jlAccess.load(lookup, path);
     }
 
     // return the absolute path of the library of given name by searching
