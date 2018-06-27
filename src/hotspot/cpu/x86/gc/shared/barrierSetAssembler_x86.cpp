@@ -24,8 +24,10 @@
 
 #include "precompiled.hpp"
 #include "gc/shared/barrierSetAssembler.hpp"
+#include "gc/shared/collectedHeap.hpp"
 #include "interpreter/interp_masm.hpp"
 #include "runtime/jniHandles.hpp"
+#include "runtime/thread.hpp"
 
 #define __ masm->
 
@@ -33,7 +35,7 @@ void BarrierSetAssembler::load_at(MacroAssembler* masm, DecoratorSet decorators,
                                   Register dst, Address src, Register tmp1, Register tmp_thread) {
   bool in_heap = (decorators & IN_HEAP) != 0;
   bool in_native = (decorators & IN_NATIVE) != 0;
-  bool oop_not_null = (decorators & OOP_NOT_NULL) != 0;
+  bool is_not_null = (decorators & IS_NOT_NULL) != 0;
   bool atomic = (decorators & MO_RELAXED) != 0;
 
   switch (type) {
@@ -43,7 +45,7 @@ void BarrierSetAssembler::load_at(MacroAssembler* masm, DecoratorSet decorators,
 #ifdef _LP64
       if (UseCompressedOops) {
         __ movl(dst, src);
-        if (oop_not_null) {
+        if (is_not_null) {
           __ decode_heap_oop_not_null(dst);
         } else {
           __ decode_heap_oop(dst);
@@ -98,7 +100,7 @@ void BarrierSetAssembler::store_at(MacroAssembler* masm, DecoratorSet decorators
                                    Address dst, Register val, Register tmp1, Register tmp2) {
   bool in_heap = (decorators & IN_HEAP) != 0;
   bool in_native = (decorators & IN_NATIVE) != 0;
-  bool oop_not_null = (decorators & OOP_NOT_NULL) != 0;
+  bool is_not_null = (decorators & IS_NOT_NULL) != 0;
   bool atomic = (decorators & MO_RELAXED) != 0;
 
   switch (type) {
@@ -106,7 +108,7 @@ void BarrierSetAssembler::store_at(MacroAssembler* masm, DecoratorSet decorators
   case T_ARRAY: {
     if (in_heap) {
       if (val == noreg) {
-        assert(!oop_not_null, "inconsistent access");
+        assert(!is_not_null, "inconsistent access");
 #ifdef _LP64
         if (UseCompressedOops) {
           __ movl(dst, (int32_t)NULL_WORD);
@@ -120,7 +122,7 @@ void BarrierSetAssembler::store_at(MacroAssembler* masm, DecoratorSet decorators
 #ifdef _LP64
         if (UseCompressedOops) {
           assert(!dst.uses(val), "not enough registers");
-          if (oop_not_null) {
+          if (is_not_null) {
             __ encode_heap_oop_not_null(val);
           } else {
             __ encode_heap_oop(val);
@@ -212,4 +214,111 @@ void BarrierSetAssembler::try_resolve_jobject_in_native(MacroAssembler* masm, Re
                                                         Register obj, Register tmp, Label& slowpath) {
   __ clear_jweak_tag(obj);
   __ movptr(obj, Address(obj, 0));
+}
+
+void BarrierSetAssembler::tlab_allocate(MacroAssembler* masm,
+                                        Register thread, Register obj,
+                                        Register var_size_in_bytes,
+                                        int con_size_in_bytes,
+                                        Register t1,
+                                        Register t2,
+                                        Label& slow_case) {
+  assert_different_registers(obj, t1, t2);
+  assert_different_registers(obj, var_size_in_bytes, t1);
+  Register end = t2;
+  if (!thread->is_valid()) {
+#ifdef _LP64
+    thread = r15_thread;
+#else
+    assert(t1->is_valid(), "need temp reg");
+    thread = t1;
+    __ get_thread(thread);
+#endif
+  }
+
+  __ verify_tlab();
+
+  __ movptr(obj, Address(thread, JavaThread::tlab_top_offset()));
+  if (var_size_in_bytes == noreg) {
+    __ lea(end, Address(obj, con_size_in_bytes));
+  } else {
+    __ lea(end, Address(obj, var_size_in_bytes, Address::times_1));
+  }
+  __ cmpptr(end, Address(thread, JavaThread::tlab_end_offset()));
+  __ jcc(Assembler::above, slow_case);
+
+  // update the tlab top pointer
+  __ movptr(Address(thread, JavaThread::tlab_top_offset()), end);
+
+  // recover var_size_in_bytes if necessary
+  if (var_size_in_bytes == end) {
+    __ subptr(var_size_in_bytes, obj);
+  }
+  __ verify_tlab();
+}
+
+// Defines obj, preserves var_size_in_bytes
+void BarrierSetAssembler::eden_allocate(MacroAssembler* masm,
+                                        Register thread, Register obj,
+                                        Register var_size_in_bytes,
+                                        int con_size_in_bytes,
+                                        Register t1,
+                                        Label& slow_case) {
+  assert(obj == rax, "obj must be in rax, for cmpxchg");
+  assert_different_registers(obj, var_size_in_bytes, t1);
+  if (!Universe::heap()->supports_inline_contig_alloc()) {
+    __ jmp(slow_case);
+  } else {
+    Register end = t1;
+    Label retry;
+    __ bind(retry);
+    ExternalAddress heap_top((address) Universe::heap()->top_addr());
+    __ movptr(obj, heap_top);
+    if (var_size_in_bytes == noreg) {
+      __ lea(end, Address(obj, con_size_in_bytes));
+    } else {
+      __ lea(end, Address(obj, var_size_in_bytes, Address::times_1));
+    }
+    // if end < obj then we wrapped around => object too long => slow case
+    __ cmpptr(end, obj);
+    __ jcc(Assembler::below, slow_case);
+    __ cmpptr(end, ExternalAddress((address) Universe::heap()->end_addr()));
+    __ jcc(Assembler::above, slow_case);
+    // Compare obj with the top addr, and if still equal, store the new top addr in
+    // end at the address of the top addr pointer. Sets ZF if was equal, and clears
+    // it otherwise. Use lock prefix for atomicity on MPs.
+    __ locked_cmpxchgptr(end, heap_top);
+    __ jcc(Assembler::notEqual, retry);
+    incr_allocated_bytes(masm, thread, var_size_in_bytes, con_size_in_bytes, thread->is_valid() ? noreg : t1);
+  }
+}
+
+void BarrierSetAssembler::incr_allocated_bytes(MacroAssembler* masm, Register thread,
+                                               Register var_size_in_bytes,
+                                               int con_size_in_bytes,
+                                               Register t1) {
+  if (!thread->is_valid()) {
+#ifdef _LP64
+    thread = r15_thread;
+#else
+    assert(t1->is_valid(), "need temp reg");
+    thread = t1;
+    __ get_thread(thread);
+#endif
+  }
+
+#ifdef _LP64
+  if (var_size_in_bytes->is_valid()) {
+    __ addq(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())), var_size_in_bytes);
+  } else {
+    __ addq(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())), con_size_in_bytes);
+  }
+#else
+  if (var_size_in_bytes->is_valid()) {
+    __ addl(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())), var_size_in_bytes);
+  } else {
+    __ addl(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())), con_size_in_bytes);
+  }
+  __ adcl(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())+4), 0);
+#endif
 }
