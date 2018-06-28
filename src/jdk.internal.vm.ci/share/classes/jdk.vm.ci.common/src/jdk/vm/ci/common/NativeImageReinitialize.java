@@ -20,19 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package jdk.vm.ci.common;
 
-/*
- * @test
- * @summary run CTW for all classes from javafx.media module
- *
- * @library /test/lib / /testlibrary/ctw/src
- * @modules java.base/jdk.internal.jimage
- *          java.base/jdk.internal.misc
- *          java.base/jdk.internal.reflect
- * @modules javafx.media
- *
- * @build sun.hotspot.WhiteBox
- * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                                sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main/timeout=7200 sun.hotspot.tools.ctw.CtwRunner modules:javafx.media
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Denotes a field that should have the default value for its type when building a native image.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD})
+public @interface NativeImageReinitialize {
+}
