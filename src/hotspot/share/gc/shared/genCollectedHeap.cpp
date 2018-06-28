@@ -1042,12 +1042,7 @@ bool GenCollectedHeap::is_in_partial_collection(const void* p) {
 }
 #endif
 
-void GenCollectedHeap::oop_iterate_no_header(OopClosure* cl) {
-  NoHeaderExtendedOopClosure no_header_cl(cl);
-  oop_iterate(&no_header_cl);
-}
-
-void GenCollectedHeap::oop_iterate(ExtendedOopClosure* cl) {
+void GenCollectedHeap::oop_iterate(OopIterateClosure* cl) {
   _young_gen->oop_iterate(cl);
   _old_gen->oop_iterate(cl);
 }

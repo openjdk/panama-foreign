@@ -967,6 +967,8 @@ private:
   void aesenc(XMMRegister dst, XMMRegister src);
   void aesenclast(XMMRegister dst, Address src);
   void aesenclast(XMMRegister dst, XMMRegister src);
+  void vaesdec(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  void vaesdeclast(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
   void andb(Register dst, Register src);
   void andw(Register dst, Register src);
@@ -1868,6 +1870,7 @@ private:
 
   void palignr(XMMRegister dst, XMMRegister src, int imm8);
   void vpalignr(XMMRegister dst, XMMRegister src1, XMMRegister src2, int imm8, int vector_len);
+  void evalignq(XMMRegister dst, XMMRegister nds, XMMRegister src, uint8_t imm8);
 
   void pblendw(XMMRegister dst, XMMRegister src, int imm8);
 
@@ -2279,6 +2282,9 @@ private:
   void evpbroadcastd(XMMRegister dst, Address src, int vector_len);
   void evpbroadcastq(XMMRegister dst, XMMRegister src, int vector_len);
   void evpbroadcastq(XMMRegister dst, Address src, int vector_len);
+
+  void evbroadcasti64x2(XMMRegister dst, XMMRegister src, int vector_len);
+  void evbroadcasti64x2(XMMRegister dst, Address src, int vector_len);
 
   // scalar single/double precision replicate
   void evpbroadcastss(XMMRegister dst, XMMRegister src, int vector_len);
