@@ -20,6 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+
 package org.graalvm.compiler.hotspot;
 
 import jdk.vm.ci.hotspot.HotSpotVMConfigAccess;
@@ -84,4 +86,7 @@ final class GraalHotSpotVMConfigVersioned extends HotSpotVMConfigAccess {
     // JDK-8015774
     final long codeCacheLowBound = getFieldValue("CodeCache::_low_bound", Long.class, "address");
     final long codeCacheHighBound = getFieldValue("CodeCache::_high_bound", Long.class, "address");
+
+    // JDK-8205105
+    boolean useFastTLABRefill = false;
 }

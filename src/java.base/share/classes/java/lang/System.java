@@ -44,6 +44,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.nicl.Library;
+import java.nio.charset.CharacterCodingException;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.security.AccessController;
@@ -62,6 +63,7 @@ import java.util.function.Supplier;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import jdk.internal.util.StaticProperty;
 import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.CallerSensitive;
@@ -672,7 +674,16 @@ public final class System {
      * {@code getProperties} operation, it may choose to permit the
      * {@link #getProperty(String)} operation.
      *
-     * @implNote In addition to the standard system properties, the system
+     * @apiNote
+     * <strong>Changing a standard system property may have unpredictable results
+     * unless otherwise specified.</strong>
+     * Property values may be cached during initialization or on first use.
+     * Setting a standard property after initialization using {@link #getProperties()},
+     * {@link #setProperties(Properties)}, {@link #setProperty(String, String)}, or
+     * {@link #clearProperty(String)} may not have the desired effect.
+     *
+     * @implNote
+     * In addition to the standard system properties, the system
      * properties may include the following keys:
      * <table class="striped">
      * <caption style="display:none">Shows property keys and associated values</caption>
@@ -739,6 +750,11 @@ public final class System {
      * {@code null}, then the current set of system properties is
      * forgotten.
      *
+     * @apiNote
+     * <strong>Changing a standard system property may have unpredictable results
+     * unless otherwise specified</strong>.
+     * See {@linkplain #getProperties getProperties} for details.
+     *
      * @param      props   the new system properties.
      * @throws     SecurityException  if a security manager exists and its
      *             {@code checkPropertiesAccess} method doesn't allow access
@@ -770,6 +786,11 @@ public final class System {
      * If there is no current set of system properties, a set of system
      * properties is first created and initialized in the same manner as
      * for the {@code getProperties} method.
+     *
+     * @apiNote
+     * <strong>Changing a standard system property may have unpredictable results
+     * unless otherwise specified</strong>.
+     * See {@linkplain #getProperties getProperties} for details.
      *
      * @param      key   the name of the system property.
      * @return     the string value of the system property,
@@ -840,6 +861,11 @@ public final class System {
      * If no exception is thrown, the specified property is set to the given
      * value.
      *
+     * @apiNote
+     * <strong>Changing a standard system property may have unpredictable results
+     * unless otherwise specified</strong>.
+     * See {@linkplain #getProperties getProperties} for details.
+     *
      * @param      key   the name of the system property.
      * @param      value the value of the system property.
      * @return     the previous value of the system property,
@@ -877,6 +903,11 @@ public final class System {
      * is called with a {@code PropertyPermission(key, "write")}
      * permission. This may result in a SecurityException being thrown.
      * If no exception is thrown, the specified property is removed.
+     *
+     * @apiNote
+     * <strong>Changing a standard system property may have unpredictable results
+     * unless otherwise specified</strong>.
+     * See {@linkplain #getProperties getProperties} method for details.
      *
      * @param      key   the name of the system property to be removed.
      * @return     the previous string value of the system property,
@@ -1930,6 +1961,7 @@ public final class System {
         VM.saveAndRemoveProperties(props);
 
         lineSeparator = props.getProperty("line.separator");
+        StaticProperty.javaHome();          // Load StaticProperty to cache the property values
         VersionProps.init();
 
         FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
@@ -2156,11 +2188,11 @@ public final class System {
                 return ModuleLayer.layers(loader);
             }
 
-            public String newStringNoRepl(byte[] bytes, Charset cs) {
+            public String newStringNoRepl(byte[] bytes, Charset cs) throws CharacterCodingException  {
                 return StringCoding.newStringNoRepl(bytes, cs);
             }
 
-            public byte[] getBytesNoRepl(String s, Charset cs) {
+            public byte[] getBytesNoRepl(String s, Charset cs) throws CharacterCodingException {
                 return StringCoding.getBytesNoRepl(s, cs);
             }
 
