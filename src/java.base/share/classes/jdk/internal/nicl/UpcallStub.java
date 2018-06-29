@@ -34,19 +34,17 @@ class UpcallStub {
     private static final Cleaner cleaner = Cleaner.create();
 
     static class Stub implements Runnable {
-        private final int id;
         private final Pointer<?> entryPoint;
 
-        Stub(int id) throws Throwable {
-            this.id = id;
+        Stub(UpcallHandler handler) throws Throwable {
             this.entryPoint = new BoundedPointer<>(NativeTypes.VOID,
-                    new BoundedMemoryRegion(NativeInvoker.allocateUpcallStub(id), 0), 0, 0);
+                    new BoundedMemoryRegion(NativeInvoker.allocateUpcallStub(handler), 0), 0, 0);
         }
 
         @Override
         public void run() {
             try {
-                NativeInvoker.freeUpcallStub(id, entryPoint.addr());
+                NativeInvoker.freeUpcallStub(entryPoint.addr());
             } catch (Throwable t) {
                 // all exception in cleanser atr ignored anyway
             }
@@ -55,7 +53,7 @@ class UpcallStub {
 
     private Stub stub;
 
-    UpcallStub(int id) throws Throwable {
+    UpcallStub(UpcallHandler id) throws Throwable {
         stub = new Stub(id);
         cleaner.register(this, stub);
     }

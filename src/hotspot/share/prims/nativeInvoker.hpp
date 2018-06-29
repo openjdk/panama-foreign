@@ -47,7 +47,8 @@ private:
   static BufferBlob* _invoke_native_blob;
 
 public:
-  static address generate_upcall_stub(int id);
+  static address generate_upcall_stub(Handle& rec);
+  static void free_upcall_stub(char *addr);
   static void invoke_native(arrayHandle recipe, arrayHandle args, arrayHandle rets, address code, JavaThread* thread);
   // Generate invoke native stub
   static void generate_invoke_native(MacroAssembler* masm);

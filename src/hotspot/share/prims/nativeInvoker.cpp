@@ -57,12 +57,13 @@ JVM_ENTRY(void, NI_invokeNative(JNIEnv* env, jobject _unused, jlongArray args_jh
 }
 JVM_END
 
-JVM_ENTRY(static jlong, NI_AllocateUpcallStub(JNIEnv *env, jobject _unused, jint id))
-  return (jlong)NativeInvoker::generate_upcall_stub(id);
+JVM_ENTRY(static jlong, NI_AllocateUpcallStub(JNIEnv *env, jobject _unused, jobject rec))
+  Handle receiver(THREAD, JNIHandles::resolve(rec));
+  return (jlong)NativeInvoker::generate_upcall_stub(receiver);
 JVM_END
 
-JVM_ENTRY(void, NI_FreeUpcallStub(JNIEnv *env, jobject _unused, jint id, jlong addr))
-  ::fprintf(stderr, "WARNING: Leaking upcall stub\n");
+JVM_ENTRY(void, NI_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
+  NativeInvoker::free_upcall_stub((char*)addr);
 JVM_END
 
 JVM_ENTRY(static jlong, NI_FindNativeAddress(JNIEnv *env, jobject _unused, jstring name)) {
@@ -96,8 +97,8 @@ JVM_END
 // These are the native methods on jdk.internal.nicl.NativeInvoker.
 static JNINativeMethod NI_methods[] = {
   {CC "invokeNative",       CC "([J[J[JJ)V",           FN_PTR(NI_invokeNative)},
-  {CC "allocateUpcallStub", CC "(I)J",                 FN_PTR(NI_AllocateUpcallStub)},
-  {CC "freeUpcallStub",     CC "(IJ)V",                FN_PTR(NI_FreeUpcallStub)},
+  {CC "allocateUpcallStub", CC "(Ljdk/internal/nicl/UpcallHandler;)J",                 FN_PTR(NI_AllocateUpcallStub)},
+  {CC "freeUpcallStub",     CC "(J)V",                FN_PTR(NI_FreeUpcallStub)},
   {CC "findNativeAddress",  CC "(" LANG "String;)J",   FN_PTR(NI_FindNativeAddress)}
 };
 

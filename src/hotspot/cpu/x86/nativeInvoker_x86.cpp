@@ -11,6 +11,7 @@
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "oops/arrayOop.inline.hpp"
+#include "runtime/jniHandles.inline.hpp"
 
 #define __ _masm->
 
@@ -102,7 +103,7 @@ static void upcall_init(void) {
 
   const char* cname = "jdk/internal/nicl/UpcallHandler";
   const char* mname = "invoke";
-  const char* mdesc = "(IJJJJJ)V";
+  const char* mdesc = "(Ljdk/internal/nicl/UpcallHandler;JJJJJ)V";
   Symbol* cname_sym = SymbolTable::lookup(cname, (int)strlen(cname), THREAD);
   Symbol* mname_sym = SymbolTable::lookup(mname, (int)strlen(mname), THREAD);
   Symbol* mdesc_sym = SymbolTable::lookup(mdesc, (int)strlen(mdesc), THREAD);
@@ -198,9 +199,9 @@ struct upcall_context {
   } returns;
 };
 
-static void upcall_helper(int index, struct upcall_context* context) {
+static void upcall_helper(jobject rec, struct upcall_context* context) {
 #if 0
-  ::fprintf(stderr, "upcall_helper(%d, %p)\n", index, context);
+  ::fprintf(stderr, "upcall_helper(%p, %p)\n", rec, context);
 #endif
 
   JavaThread* thread = JavaThread::current();
@@ -249,8 +250,9 @@ static void upcall_helper(int index, struct upcall_context* context) {
   ThreadInVMfromNative __tiv(thread);
 
   JavaValue result(T_VOID);
-  JavaCallArguments args(1 + (5 * 2));
-  args.push_int(index);
+  JavaCallArguments args(6 * 2);
+
+  args.push_jobject(rec);
 #ifdef _LP64
   args.push_long((jlong)&context->args.integer.regs);
   args.push_long((jlong)&context->args.vector.regs);
@@ -271,18 +273,24 @@ static void upcall_helper(int index, struct upcall_context* context) {
 #endif
 }
 
-address NativeInvoker::generate_upcall_stub(int id) {
+address NativeInvoker::generate_upcall_stub(Handle& rec_handle) {
   CodeBuffer buffer("upcall_stub", 1024, 1024);
 
   MacroAssembler* _masm = new MacroAssembler(&buffer);
 
+  jobject rec = JNIHandles::make_weak_global(rec_handle);
+
 #if 0
-  fprintf(stderr, "generate_upcall_stub(%d)\n", id);
+  fprintf(stderr, "generate_upcall_stub(%p)\n", rec);
 #endif
 
 
   // stub code
   __ enter();
+
+  // save pointer to JNI receiver handle into constant segment
+  Address rec_adr = __ as_Address(InternalAddress(__ address_constant((address)rec)));
+
   __ subptr(rsp, sizeof(struct upcall_context));
   __ andptr(rsp, -64);
 
@@ -331,13 +339,13 @@ address NativeInvoker::generate_upcall_stub(int id) {
 
   // Call upcall helper
 #ifdef _LP64
-  __ movptr(c_rarg0, id);
+  __ movptr(c_rarg0, rec_adr);
   __ movptr(c_rarg1, rsp);
 #else
   __ movptr(rax, rsp);
   __ subptr(rsp, 8);
   __ movptr(Address(rsp, 4), rax);
-  __ movptr(rax, id);
+  __ movptr(rax, rec_adr);
   __ movptr(Address(rsp, 0), rax);
 #endif
   __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, upcall_helper)));
@@ -1199,4 +1207,14 @@ void NativeInvoker::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, 
 
   ShuffleDowncall call(recipe, args_arr, rets_arr, code, invoke_native_address());
   call.invoke(thread);
+}
+
+void NativeInvoker::free_upcall_stub(char *addr) {
+  //find code blob
+  CodeBlob* cb = CodeCache::find_blob(addr);
+  //free global JNI handle
+  jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
+  JNIHandles::destroy_weak_global(*rec_ptr);
+  //free code blob
+  CodeCache::free(cb);
 }

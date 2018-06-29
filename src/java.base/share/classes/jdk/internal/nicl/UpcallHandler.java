@@ -33,14 +33,12 @@ import jdk.internal.nicl.types.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.nicl.NativeTypes;
 import java.nicl.Scope;
 import java.nicl.layout.Function;
 import java.nicl.layout.Layout;
 import java.nicl.types.*;
 import java.nicl.types.Pointer;
-import java.util.ArrayList;
 import java.util.List;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
@@ -53,10 +51,7 @@ public class UpcallHandler {
 
     private static final long MAX_STACK_ARG_BYTES = 64 * 1024; // FIXME: Arbitrary limitation for now...
 
-    private static final Object HANDLERS_LOCK = new Object();
-    private static final ArrayList<UpcallHandler> ID2HANDLER = new ArrayList<>();
-
-    private MethodHandle mh;
+    private Object receiver;
     private final UpcallHandlerFactory factory;
 
     private final UpcallStub stub;
@@ -86,7 +81,7 @@ public class UpcallHandler {
 
         try {
             MethodHandle mh = MethodHandles.publicLookup().unreflect(ficMethod);
-            return new UpcallHandlerFactory(mh, ftype, ficMethod);
+            return new UpcallHandlerFactory(mh.asSpreader(Object[].class, ftype.argumentLayouts().size()), ftype, ficMethod);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -115,29 +110,13 @@ public class UpcallHandler {
         }
 
         UpcallHandler buildHandler(Object arg) throws Throwable {
-            synchronized (HANDLERS_LOCK) {
-                int id = ID2HANDLER.size();
-                UpcallHandler handler = new UpcallHandler(mh.bindTo(arg), this, id);
-                ID2HANDLER.add(handler);
-
-                if (DEBUG) {
-                    System.err.println("Allocated upcall handler with id " + id);
-                }
-
-                return handler;
-            }
+            return new UpcallHandler(arg, this);
         }
     }
 
-    public static void invoke(int id, long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
-        UpcallHandler handler;
-
+    public static void invoke(UpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
         if (DEBUG) {
-            System.err.println("UpcallHandler.invoke(" + id + ", ...) with " + ID2HANDLER.size() + " stubs allocated");
-        }
-
-        synchronized (HANDLERS_LOCK) {
-            handler = ID2HANDLER.get(id);
+            System.err.println("UpcallHandler.invoke(" + handler + ", ...)");
         }
 
         try (Scope scope = Scope.newNativeScope()) {
@@ -146,10 +125,10 @@ public class UpcallHandler {
         }
     }
 
-    private UpcallHandler(MethodHandle mh, UpcallHandlerFactory factory, int id) throws Throwable {
-        this.mh = mh;
+    private UpcallHandler(Object receiver, UpcallHandlerFactory factory) throws Throwable {
+        this.receiver = receiver;
         this.factory = factory;
-        this.stub = new UpcallStub(id);
+        this.stub = new UpcallStub(this);
     }
 
     public Pointer<?> getNativeEntryPoint() {
@@ -241,9 +220,8 @@ public class UpcallHandler {
     }
 
     private Object[] boxArguments(Scope scope, UpcallContext context, CallingSequence callingSequence) {
-        Object[] args = new Object[mh.type().parameterCount()];
-
-        Pointer<?>[] structPtrs = new Pointer<?>[mh.type().parameterCount()];
+        Object[] args = new Object[factory.argLayouts.length];
+        Pointer<?>[] structPtrs = new Pointer<?>[factory.argLayouts.length];
 
         if (DEBUG) {
             System.out.println("boxArguments " + callingSequence.asString());
@@ -321,12 +299,12 @@ public class UpcallHandler {
 
             Object[] args = boxArguments(scope, context, callingSequence);
 
-            Object o = mh.asSpreader(Object[].class, args.length).invoke(args);
+            Object o = factory.mh.invoke(receiver, args);
 
-            if (mh.type().returnType() != void.class) {
+            if (factory.mh.type().returnType() != void.class) {
                 for (StorageClass c : Constants.RETURN_STORAGE_CLASSES) {
                     for (ArgumentBinding binding : callingSequence.getBindings(c)) {
-                        unboxReturn(mh.type().returnType(), context, binding, o);
+                        unboxReturn(factory.mh.type().returnType(), context, binding, o);
                     }
                 }
             }

@@ -213,6 +213,11 @@ class NativeInvoker {
             returnStructPtr = r;
         }
 
+        // we need to keep upcall handlers alive until native invocation completes, otherwise the native stub
+        // is going to attempt an upcall using an already GC'ed handler instance. We do this by saving all handlers
+        // into this local list.
+        List<UpcallHandler> upcallHandlers = new ArrayList<>();
+
         int nValues = shuffleRecipe.getNoofArgumentPulls();
         long[] values = new long[nValues];
         if (nValues != 0) {
@@ -234,7 +239,7 @@ class NativeInvoker {
 
                         int argIndex = binding.getMember().getArgumentIndex();
                         Class<?> argCarrier = methodType.parameterType(argIndex);
-                        long[] argValues = getArgumentValues(argCarrier, binding, n, args[argIndex]);
+                        long[] argValues = getArgumentValues(argCarrier, binding, n, args[argIndex], upcallHandlers);
                         if (n != argValues.length) {
                             throw new InternalError("carrierType: " + argCarrier + " binding: " + binding + " n: " + n + " argValues.length: " + argValues.length);
                         }
@@ -316,7 +321,7 @@ class NativeInvoker {
         }
     }
 
-    private long[] getArgumentValues(Class<?> carrierType, ArgumentBinding binding, long n, Object arg) throws Throwable {
+    private long[] getArgumentValues(Class<?> carrierType, ArgumentBinding binding, long n, Object arg, List<UpcallHandler> handlers) throws Throwable {
         if (Util.isCStruct(carrierType)) {
             long[] values = new long[(int)n];
             Struct<?> r = (Struct<?>)arg;
@@ -327,8 +332,9 @@ class NativeInvoker {
             }
             return values;
         } else if (Util.isCallback(carrierType)) {
-            return new long[] { upcallHandlers[binding.getMember().getArgumentIndex()].
-                    buildHandler(arg).getNativeEntryPoint().addr() };
+            UpcallHandler handler = upcallHandlers[binding.getMember().getArgumentIndex()].buildHandler(arg);
+            handlers.add(handler);
+            return new long[] { handler.getNativeEntryPoint().addr() };
         } else {
             Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);
             Util.unsafeCast(ptr, argLayoutTypes[binding.getMember().getArgumentIndex()])
@@ -365,8 +371,8 @@ class NativeInvoker {
     //natives
 
     static native void invokeNative(long[] args, long[] rets, long[] recipe, long addr);
-    static native long allocateUpcallStub(int id);
-    static native void freeUpcallStub(int id, long addr);
+    static native long allocateUpcallStub(UpcallHandler handler);
+    static native void freeUpcallStub(long addr);
     static native long findNativeAddress(String name);
 
     private static native void registerNatives();
