@@ -32,6 +32,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.nicl.layout.Group;
 import java.nicl.layout.Layout;
+import java.nicl.layout.Value;
 import java.nicl.metadata.*;
 import java.nicl.types.LayoutType;
 import java.nicl.types.Pointer;
@@ -42,18 +43,6 @@ class StructImplGenerator extends BinderClassGenerator {
 
     // name of pointer field, only used for record types
     private static final String POINTER_FIELD_NAME = "ptr";
-
-    // support method handles
-    private static final MethodHandle BUILD_PTR_MH;
-
-    static {
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        try {
-            BUILD_PTR_MH = lookup.findStatic(RuntimeSupport.class, "buildPtr", MethodType.methodType(Pointer.class, Pointer.class, long.class, LayoutType.class));
-        } catch (ReflectiveOperationException ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
 
     private Group layout;
 
@@ -67,7 +56,6 @@ class StructImplGenerator extends BinderClassGenerator {
         layoutResolver.scanType(interfaces[0]);
         generatePointerField(cw);
         generatePointerGetter(cw);
-        generatePtrHelper(cw);
         super.generateMembers(cw);
     }
 
@@ -110,27 +98,6 @@ class StructImplGenerator extends BinderClassGenerator {
         mv.visitEnd();
     }
 
-    private void generatePtrHelper(BinderClassWriter cw) {
-        /*
-         * private <T> Pointer<T> makePtr(long offset, LayoutType<T> t) {
-         *     MethodHandle buildPtr = ldc <buildPtr>
-         *     return buildPtr.invokeExact(p, offset, t);
-         * }
-         */
-        MethodVisitor mv = cw.visitMethod(ACC_PRIVATE, "makePtr", Type.getMethodDescriptor(Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), null, null);
-        mv.visitCode();
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(BUILD_PTR_MH));
-        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
-        mv.visitVarInsn(LLOAD, 1);
-        mv.visitVarInsn(ALOAD, 3);
-        mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact", Type.getMethodDescriptor(Type.getType(Pointer.class), Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), false);
-        mv.visitInsn(ARETURN);
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
-    }
-
     @Override
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
         for (AccessorKind accessorKind : AccessorKind.values()) {
@@ -145,9 +112,6 @@ class StructImplGenerator extends BinderClassGenerator {
         java.lang.reflect.Type javaType = accessorKind.carrier(method);
         Layout l = path.layout();
         LayoutType<?> lt = Util.makeType(javaType, l);
-
-        long offset = path.offset() / 8;
-
         Class<?> erasedType = Util.erasure(javaType);
 
         switch (accessorKind) {
@@ -158,19 +122,21 @@ class StructImplGenerator extends BinderClassGenerator {
                 MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(),
                         accType.toMethodDescriptorString(), null, null);
                 mv.visitCode();
-                //load MH receiver
                 MethodHandle accessor = accessorKind == AccessorKind.GET ?
-                        lt.getter() : lt.setter();
+                            RuntimeSupport.getterHandle(lt, path) :
+                            RuntimeSupport.setterHandle(lt, path);
+
                 mv.visitLdcInsn(cw.makeConstantPoolPatch(accessor));
                 mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
                 //load arguments
-                pushPtr(cw, mv, offset, lt);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
                 if (accessorKind == AccessorKind.SET) {
                     mv.visitVarInsn(loadInsn(erasedType), 1);
                 }
                 //call MH
                 mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
-                        accType.insertParameterTypes(0, Pointer.class).toMethodDescriptorString(), false);
+                        accessor.type().toMethodDescriptorString(), false);
                 //handle return
                 if (accessorKind == AccessorKind.GET) {
                     mv.visitInsn(returnInsn(erasedType));
@@ -182,27 +148,30 @@ class StructImplGenerator extends BinderClassGenerator {
                 break;
             }
             case PTR: {
+                if (path.enclosing.layout() instanceof Value) {
+                    throw new IllegalStateException("Cannot generate pointer accessor for bitfield!");
+                }
                 MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, method.getName(),
                         Type.getMethodDescriptor(Type.getType(Pointer.class)), null, null);
                 mv.visitCode();
-                pushPtr(cw, mv, offset, lt);
+
+                MethodHandle caster = RuntimeSupport.casterHandle(path, lt);
+
+                mv.visitLdcInsn(cw.makeConstantPoolPatch(caster));
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
+
+                //call MH
+                mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
+                        caster.type().toMethodDescriptorString(), false);
                 mv.visitInsn(ARETURN);
                 mv.visitMaxs(0, 0);
                 mv.visitEnd();
                 break;
             }
         }
-    }
-
-    private void pushPtr(BinderClassWriter cw, MethodVisitor mv, long off, LayoutType<?> layoutType) {
-        /*
-         * ref(<offset>, this.<layoutTypeField>)
-         */
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitLdcInsn(off);
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(layoutType));
-        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(LayoutType.class));
-        mv.visitMethodInsn(INVOKEVIRTUAL, implClassName, "makePtr", Type.getMethodDescriptor(Type.getType(Pointer.class), Type.LONG_TYPE, Type.getType(LayoutType.class)), false);
     }
 
     private LayoutPath findAccessor(Method method, AccessorKind kind) {
