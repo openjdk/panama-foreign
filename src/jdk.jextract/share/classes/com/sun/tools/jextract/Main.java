@@ -165,6 +165,9 @@ public final class Main {
             options.valuesOf("I").forEach(p -> ctx.addClangArg("-I" + p));
         }
 
+        // append the built-in headers directory
+        ctx.addClangArg("-I" + getBuiltinHeadersDir());
+
         if (options.has("C")) {
             options.valuesOf("C").forEach(p -> ctx.addClangArg((String) p));
         }
@@ -280,6 +283,10 @@ public final class Main {
         }
 
         return 0;
+    }
+
+    private static Path getBuiltinHeadersDir() {
+        return Paths.get(System.getProperty("java.home"), "conf", "jextract");
     }
 
     public static void main(String... args) {

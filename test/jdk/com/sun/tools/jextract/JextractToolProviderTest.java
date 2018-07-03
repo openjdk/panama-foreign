@@ -440,4 +440,13 @@ public class JextractToolProviderTest extends JextractToolRunner {
             deleteFile(elaboratedTypeJar);
         }
     }
+
+    @Test
+    public void testBuiltinHeader() {
+        Path stdargincJar = getOutputFilePath("stdarginc.jar");
+        deleteFile(stdargincJar);
+        Path stdargincH = getInputFilePath("stdarginc.h");
+        checkSuccess(null, "-o", stdargincJar.toString(), stdargincH.toString());
+        deleteFile(stdargincJar);
+    }
 }
