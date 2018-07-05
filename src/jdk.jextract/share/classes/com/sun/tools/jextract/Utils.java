@@ -23,14 +23,6 @@
 
 package com.sun.tools.jextract;
 
-import jdk.internal.clang.Cursor;
-import jdk.internal.clang.CursorKind;
-import jdk.internal.clang.SourceLocation;
-import jdk.internal.clang.Type;
-import jdk.internal.clang.TypeKind;
-import jdk.internal.foreign.memory.Types;
-
-import javax.lang.model.SourceVersion;
 import java.foreign.layout.Address;
 import java.foreign.layout.Function;
 import java.foreign.layout.Group;
@@ -44,6 +36,13 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.lang.model.SourceVersion;
+import jdk.internal.clang.Cursor;
+import jdk.internal.clang.CursorKind;
+import jdk.internal.clang.SourceLocation;
+import jdk.internal.clang.Type;
+import jdk.internal.clang.TypeKind;
+import jdk.internal.foreign.memory.Types;
 
 /**
  * General utility functions
@@ -327,26 +326,20 @@ public class Utils {
     }
 
     private static Layout getRecordReferenceLayout(Type t) {
-        Cursor cu = t.getDeclarationCursor().getDefinition();
-        if (cu.isInvalid()) {
-            // Have no idea what's inside - likely a pointer to undefined struct
-            return t.size() < 0 ?
-                    Types.CHAR :
-                    Sequence.of(t.size(), Types.CHAR);
-        } else {
-            //symbolic reference
-            return Unresolved.of()
-                    .withAnnotation(Layout.NAME, getIdentifier(t.canonicalType()));
-        }
+        //symbolic reference
+        return Unresolved.of()
+                .withAnnotation(Layout.NAME, getIdentifier(t.canonicalType()));
     }
 
-    public static Group getRecordLayout(Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {
+    public static Layout getRecordLayout(Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {
         return getRecordLayoutInternal(0, t, t, fieldMapper);
     }
 
-    static Group getRecordLayoutInternal(long offset, Type parent, Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {
+    static Layout getRecordLayoutInternal(long offset, Type parent, Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {
         Cursor cu = t.getDeclarationCursor().getDefinition();
-        assert !cu.isInvalid();
+        if (cu.isInvalid()) {
+            return getRecordReferenceLayout(t);
+        }
         final boolean isUnion = cu.kind() == CursorKind.UnionDecl;
         Stream<Cursor> fieldTypes = cu.children()
                 .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);

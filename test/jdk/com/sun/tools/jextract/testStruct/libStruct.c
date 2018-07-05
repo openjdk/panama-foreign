@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+char* LastCalledMethod;
+
 struct UndefinedStruct {
     int x;
     int y;
@@ -49,6 +51,10 @@ UndefinedStruct* allocateUndefinedStruct() {
     p->x = 0x1234;
     p->y = 0x3412;
     return p;
+}
+
+struct Plain fromUndefinedStruct(UndefinedStruct *p) {
+    return *((struct Plain*) p);
 }
 
 // intentionally mismatch prototype with same type
@@ -79,11 +85,13 @@ TypedefAnonymous getAnonymous(TypedefNamedDifferent_t fns, int x, int y) {
 }
 
 void emptyArguments() {
-    printf("emptyArgumenrs");
+    LastCalledMethod = "emptyArguments";
+    printf("%s\n", LastCalledMethod);
 }
 
 void voidArguments(void) {
-    printf("voidArguments");
+    LastCalledMethod = "voidArguments";
+    printf("%s\n", LastCalledMethod);
 }
 
 void* FunctionWithVoidPointer(void *data, void **array_data) {

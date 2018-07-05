@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import clang.Index.CXTranslationUnit;
+import clang.Index.CXTranslationUnitImpl;
 import clang.Index.CXDiagnostic;
 import static clang.Index.CXTranslationUnit_DetailedPreprocessingRecord;
 import static clang.Index.CXTranslationUnit_None;
@@ -38,7 +38,7 @@ public class Index {
     // Pointer to CXIndex
     private final Pointer<Void> ptr;
     // Set of TranslationUnit
-    public final List<Pointer<Void>> translationUnits;
+    public final List<Pointer<CXTranslationUnitImpl>> translationUnits;
 
     Index(Pointer<Void> ptr) {
         this.ptr = ptr;
@@ -51,7 +51,7 @@ public class Index {
         try (Scope scope = Scope.newNativeScope()) {
             Pointer<Byte> src = scope.toCString(file);
             Pointer<Pointer<Byte>> cargs = scope.toCStrArray(args);
-            @CXTranslationUnit Pointer<Void> tu = lclang.clang_parseTranslationUnit(
+            Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
                     ptr, src, cargs, args.length, null, 0,
                     CXTranslationUnit_DetailedPreprocessingRecord);
             return new TranslationUnit(tu);
@@ -64,7 +64,7 @@ public class Index {
         try (Scope scope = Scope.newNativeScope()) {
             Pointer<Byte> src = scope.toCString(file);
             Pointer<Pointer<Byte>> cargs = scope.toCStrArray(args);
-            @CXTranslationUnit Pointer<Void> tu = lclang.clang_parseTranslationUnit(
+            Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
                     ptr, src, cargs, args.length, Pointer.nullPointer(), 0,
                     detailedPreprocessorRecord ?
                             CXTranslationUnit_DetailedPreprocessingRecord :
@@ -85,7 +85,7 @@ public class Index {
     }
 
     public void dispose() {
-        for (Pointer<Void> tu: translationUnits) {
+        for (Pointer<CXTranslationUnitImpl> tu: translationUnits) {
             LibClang.lib.clang_disposeTranslationUnit(tu);
         }
         LibClang.lib.clang_disposeIndex(ptr);

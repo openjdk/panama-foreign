@@ -33,8 +33,11 @@ import jdk.internal.foreign.Util;
 import java.foreign.layout.Sequence;
 import java.foreign.layout.Value;
 import java.foreign.layout.Value.Kind;
-import java.foreign.memory.*;
-
+import java.foreign.memory.Array;
+import java.foreign.memory.Callback;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
+import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;

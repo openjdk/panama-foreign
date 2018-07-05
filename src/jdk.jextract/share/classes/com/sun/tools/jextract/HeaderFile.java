@@ -206,16 +206,11 @@ public final class HeaderFile {
         // case of #typedef struct Foo Bar, struct Foo is a Record type
         // as no definition found, we consider it an annotation
         Cursor defC = dcl.getDefinition();
-        if (defC.isInvalid()) {
-            name = Utils.toInternalName(pkgName, clsName, name);
-            jt = JType2.bind(TypeAlias.of(name, JType.Void), t, dcl);
-        } else {
-            jt = JType2.bind(
-                    new JType.InnerType(Utils.toInternalName(pkgName, clsName), name),
-                    t, defC);
-            if (gen_code) {
-                cf.addType(jt, defC);
-            }
+        jt = JType2.bind(
+                new JType.InnerType(Utils.toInternalName(pkgName, clsName), name),
+                t, defC.isInvalid() ? dcl : defC);
+        if (gen_code) {
+            cf.addType(jt, defC);
         }
         return jt;
     }

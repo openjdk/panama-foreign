@@ -56,7 +56,10 @@ public class StructTest extends JextractToolRunner {
             "TypedefNamedDifferent",
             "TypedefAnonymous",
             "Plain",
-            "IncompleteArray"
+            "IncompleteArray",
+            "UndefinedStruct",
+            "UndefinedStructForPointer",
+            "Opaque"
     };
 
     private static final String[] ExpectedFIs = {
@@ -67,10 +70,7 @@ public class StructTest extends JextractToolRunner {
     };
 
     private static final String[] ExpectedTypeAnnotations = {
-            "UndefinedStruct",
-            // "UndefineStructForPointer",
             "UndefinedStructPointer",
-            // "Opaque",
             "TypedefNamedDifferent_t"
     };
 
@@ -116,6 +116,13 @@ public class StructTest extends JextractToolRunner {
         } else {
             assertEquals(tas[0], Void.class);
         }
+    }
+
+    private void assertPointerType(ParameterizedType ptr, Class<?> pointee) {
+        assertEquals(ptr.getRawType(), java.foreign.memory.Pointer.class);
+        Type[] tas = ptr.getActualTypeArguments();
+        assertEquals(tas.length, 1);
+        assertEquals(tas[0], pointee);
     }
 
     private void verifyIncompleteArray(Class<?> incomplete) {
@@ -174,22 +181,28 @@ public class StructTest extends JextractToolRunner {
     }
 
     private void verifyUndefinedStructFunctions(Class<?> header) {
+        final String POINTEE = "UndefinedStructForPointer";
         NativeHeader nh = header.getAnnotation(NativeHeader.class);
         Map<String, Object> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
 
         Method m = findMethod(header, "getParent", java.foreign.memory.Pointer.class);
         assertNotNull(m);
-        ParameterizedType pVoid = (ParameterizedType) m.getGenericReturnType();
-        assertVoidPointer(pVoid, false);
+        ParameterizedType pReturn = (ParameterizedType) m.getGenericReturnType();
+        Class<?> undefined = findClass(header.getDeclaredClasses(), POINTEE);
+        assertNotNull(undefined);
+        assertPointerType(pReturn, undefined);
         Type[] args = m.getGenericParameterTypes();
         assertEquals(args.length, 1);
-        ParameterizedType pWildcard = (ParameterizedType) args[0];
-        assertVoidPointer(pWildcard, true);
+        ParameterizedType pArg = (ParameterizedType) args[0];
+        assertPointerType(pArg, undefined);
 
+        String expected = "(u64:$(" + POINTEE + "))u64:$(" + POINTEE + ")";
         Function fn = (Function) map.get("getParent");
+        assertEquals(fn.toString(), expected);
         fn = (Function) map.get("getSibling");
+        assertEquals(fn.toString(), expected);
         fn = (Function) map.get("getFirstChild");
-        assertEquals(fn.toString(), "(u64:i8)u64:i8");
+        assertEquals(fn.toString(), expected);
     }
 
     private void verifyTypedefAnonymous(Class<?> cls) {

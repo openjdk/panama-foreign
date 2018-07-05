@@ -101,7 +101,12 @@ public final class LayoutResolver {
     //where
     private void addCStruct(Class<?> cl) {
         String layout = cl.getAnnotation(NativeStruct.class).value();
-        Group group = descriptorToGroup.computeIfAbsent(layout, l -> (Group) Layout.of(l));
+        Layout l = Layout.of(layout);
+        if (l instanceof Unresolved) {
+            // ignore undefined struct
+            return;
+        }
+        Group group = descriptorToGroup.computeIfAbsent(layout, ignored -> (Group) l);
         group.name().ifPresent(name -> {
             if (name.isEmpty()) {
                 throw new IllegalArgumentException("name cannot be empty");

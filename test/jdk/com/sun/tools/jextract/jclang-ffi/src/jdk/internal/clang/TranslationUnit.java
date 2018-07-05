@@ -34,13 +34,13 @@ import clang.CXString.CXString;
 import clang.Index.CXDiagnostic;
 import clang.Index.CXToken;
 import clang.Index.CXTokenKind;
-import clang.Index.CXTranslationUnit;
+import clang.Index.CXTranslationUnitImpl;
 
 public class TranslationUnit {
-    private final @CXTranslationUnit Pointer<Void> tu;
+    private final Pointer<CXTranslationUnitImpl> tu;
     private final Scope scope = Scope.newNativeScope();
 
-    TranslationUnit(@CXTranslationUnit Pointer<Void> tu) {
+    TranslationUnit(Pointer<CXTranslationUnitImpl> tu) {
         this.tu = tu;
     }
 

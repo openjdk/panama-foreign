@@ -108,12 +108,12 @@ public final class NativeTypes {
     /**
      * The {@code long} type.
      */
-    public static LayoutType<Integer> LONG = LayoutType.ofInt(
+    public static LayoutType<Long> LONG = LayoutType.ofLong(
             ABI.layoutFor(SystemABI.CType.Long));
 
     /**
      * The {@code long long} type.
      */
-    public static LayoutType<Integer> LONGLONG = LayoutType.ofInt(
+    public static LayoutType<Long> LONGLONG = LayoutType.ofLong(
             ABI.layoutFor(SystemABI.CType.LongLong));
 }

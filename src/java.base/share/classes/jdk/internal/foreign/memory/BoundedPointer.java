@@ -25,6 +25,7 @@ package jdk.internal.foreign.memory;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.layout.Layout;
+import java.foreign.layout.Unresolved;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
@@ -62,7 +63,9 @@ public class BoundedPointer<X> implements Pointer<X> {
         this.offset = offset;
         this.type = Objects.requireNonNull(type);
         this.mode = mode;
-        region.checkRange(offset, type.layout().bitsSize() / 8);
+        if (! (type.layout() instanceof Unresolved)) {
+            region.checkRange(offset, type.layout().bitsSize() / 8);
+        }
     }
 
     @Override

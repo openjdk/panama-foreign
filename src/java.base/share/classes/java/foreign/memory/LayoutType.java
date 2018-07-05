@@ -33,10 +33,9 @@ import jdk.internal.foreign.memory.References;
 import java.foreign.layout.Address;
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
-
-import java.lang.invoke.MethodHandle;
 import java.foreign.annotations.NativeCallback;
 import java.foreign.annotations.NativeStruct;
+import java.lang.invoke.MethodHandle;
 
 /**
  * This class describes the relationship between a memory layout (usually described in bits) and a Java carrier
@@ -197,7 +196,7 @@ public interface LayoutType<X> {
             throw new IllegalArgumentException("Not a struct type!");
         }
         NativeStruct nativeStruct = carrier.getAnnotation(NativeStruct.class);
-        Group type = (Group) new DescriptorParser(nativeStruct.value()).parseLayout();
+        Layout type = new DescriptorParser(nativeStruct.value()).parseLayout();
         return LayoutTypeImpl.of(carrier, type, References.ofStruct);
     }
 

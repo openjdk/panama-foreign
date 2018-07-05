@@ -461,18 +461,19 @@ final class AsmCodeFactory {
             }
             return this;
         }
+        boolean noDef = cursor.isInvalid();
+        if (noDef) {
+            cursor = jt2.getCursor();
+        }
+
+        final Cursor c = cursor;
 
         try {
-            logger.fine(() -> "Process cursor " + cursor.spelling());
+            logger.fine(() -> "Process cursor " + c.spelling());
             switch (cursor.kind()) {
                 case StructDecl:
                 case UnionDecl:
-                    if (!cursor.getDefinition().isInvalid()) {
-                        createStruct(cursor);
-                    } else {
-                        logger.fine(() -> "Skipping undeclared struct or union:");
-                        logger.fine(() -> Printer.Stringifier(p -> p.dumpCursor(cursor, true)));
-                    }
+                    createStruct(cursor);
                     break;
                 case FunctionDecl:
                     assert (jt instanceof JType.Function);
@@ -492,13 +493,13 @@ final class AsmCodeFactory {
                     break;
                 default:
                     logger.warning(() -> "Unsupported declaration Cursor:");
-                    logger.warning(() -> Printer.Stringifier(p -> p.dumpCursor(cursor, true)));
+                    logger.warning(() -> Printer.Stringifier(p -> p.dumpCursor(c, true)));
                     break;
             }
         } catch (Exception ex) {
             handleException(ex);
-            logger.warning("Cursor causing above exception is: " + cursor.spelling());
-            logger.warning(() -> Printer.Stringifier(p -> p.dumpCursor(cursor, true)));
+            logger.warning("Cursor causing above exception is: " + c.spelling());
+            logger.warning(() -> Printer.Stringifier(p -> p.dumpCursor(c, true)));
         }
         return this;
     }

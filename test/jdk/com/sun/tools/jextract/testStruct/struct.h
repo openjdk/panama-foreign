@@ -65,6 +65,8 @@ struct Plain {
     int y;
 };
 
+struct Plain fromUndefinedStruct(UndefinedStruct *p);
+
 TypedefAnonymous getAnonymous(TypedefNamedDifferent_t fn, int x, int y);
 
 void emptyArguments();
@@ -86,6 +88,8 @@ void** GetArrayData(struct IncompleteArray *par);
 
 // This works with C, but incomplete array is omitted as not exist
 void* GetData(struct IncompleteArray ar);
+
+extern char* LastCalledMethod;
 
 #ifdef __cplusplus
 }
