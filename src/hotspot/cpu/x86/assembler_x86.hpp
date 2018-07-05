@@ -184,8 +184,10 @@ class Address {
  private:
   Register         _base;
   Register         _index;
+  XMMRegister      _xmmindex;
   ScaleFactor      _scale;
   int              _disp;
+  bool             _isxmmindex;
   RelocationHolder _rspec;
 
   // Easily misused constructors make them private
@@ -201,8 +203,10 @@ class Address {
   Address()
     : _base(noreg),
       _index(noreg),
+      _xmmindex(xnoreg),
       _scale(no_scale),
-      _disp(0) {
+      _disp(0),
+      _isxmmindex(false){
   }
 
   // No default displacement otherwise Register can be implicitly
@@ -211,15 +215,19 @@ class Address {
   Address(Register base, int disp)
     : _base(base),
       _index(noreg),
+      _xmmindex(xnoreg),
       _scale(no_scale),
-      _disp(disp) {
+      _disp(disp),
+      _isxmmindex(false){
   }
 
   Address(Register base, Register index, ScaleFactor scale, int disp = 0)
     : _base (base),
       _index(index),
+      _xmmindex(xnoreg),
       _scale(scale),
-      _disp (disp) {
+      _disp (disp),
+      _isxmmindex(false) {
     assert(!index->is_valid() == (scale == Address::no_scale),
            "inconsistent address");
   }
@@ -227,11 +235,24 @@ class Address {
   Address(Register base, RegisterOrConstant index, ScaleFactor scale = times_1, int disp = 0)
     : _base (base),
       _index(index.register_or_noreg()),
+      _xmmindex(xnoreg),
       _scale(scale),
-      _disp (disp + (index.constant_or_zero() * scale_size(scale))) {
+      _disp (disp + (index.constant_or_zero() * scale_size(scale))),
+      _isxmmindex(false){
     if (!index.is_register())  scale = Address::no_scale;
     assert(!_index->is_valid() == (scale == Address::no_scale),
            "inconsistent address");
+  }
+
+  Address(Register base, XMMRegister index, ScaleFactor scale, int disp = 0)
+    : _base (base),
+      _index(noreg),
+      _xmmindex(index),
+      _scale(scale),
+      _disp(disp),
+      _isxmmindex(true) {
+      assert(!index->is_valid() == (scale == Address::no_scale),
+             "inconsistent address");
   }
 
   Address plus_disp(int disp) const {
@@ -269,24 +290,29 @@ class Address {
   Address(Register base, ByteSize disp)
     : _base(base),
       _index(noreg),
+      _xmmindex(xnoreg),
       _scale(no_scale),
-      _disp(in_bytes(disp)) {
+      _disp(in_bytes(disp)),
+      _isxmmindex(false){
   }
 
   Address(Register base, Register index, ScaleFactor scale, ByteSize disp)
     : _base(base),
       _index(index),
+      _xmmindex(xnoreg),
       _scale(scale),
-      _disp(in_bytes(disp)) {
+      _disp(in_bytes(disp)),
+      _isxmmindex(false){
     assert(!index->is_valid() == (scale == Address::no_scale),
            "inconsistent address");
   }
-
   Address(Register base, RegisterOrConstant index, ScaleFactor scale, ByteSize disp)
     : _base (base),
       _index(index.register_or_noreg()),
+      _xmmindex(xnoreg),
       _scale(scale),
-      _disp (in_bytes(disp) + (index.constant_or_zero() * scale_size(scale))) {
+      _disp (in_bytes(disp) + (index.constant_or_zero() * scale_size(scale))),
+      _isxmmindex(false) {
     if (!index.is_register())  scale = Address::no_scale;
     assert(!_index->is_valid() == (scale == Address::no_scale),
            "inconsistent address");
@@ -298,8 +324,10 @@ class Address {
   bool        uses(Register reg) const { return _base == reg || _index == reg; }
   Register    base()             const { return _base;  }
   Register    index()            const { return _index; }
+  XMMRegister xmmindex()         const { return _xmmindex; }
   ScaleFactor scale()            const { return _scale; }
   int         disp()             const { return _disp;  }
+  bool        isxmmindex()       const { return _isxmmindex; }
 
   // Convert the raw encoding form into the form expected by the constructor for
   // Address.  An index of 4 (rsp) corresponds to having no index, so convert
@@ -315,6 +343,10 @@ class Address {
 
   bool index_needs_rex() const {
     return _index != noreg &&_index->encoding() >= 8;
+  }
+
+  bool xmmindex_needs_rex() const {
+    return _xmmindex != xnoreg && _xmmindex->encoding() >= 8;
   }
 
   relocInfo::relocType reloc() const { return _rspec.type(); }
@@ -721,6 +753,10 @@ private:
                     int disp,
                     RelocationHolder const& rspec,
                     int rip_relative_correction = 0);
+
+  void emit_operand(XMMRegister reg, Register base, XMMRegister index,
+                    Address::ScaleFactor scale,
+                    int disp, RelocationHolder const& rspec);
 
   void emit_operand(Register reg, Address adr, int rip_relative_correction = 0);
 
@@ -1647,6 +1683,7 @@ private:
   void vperm2f128(XMMRegister dst, XMMRegister nds, XMMRegister src, int imm8);
   void vpermilps(XMMRegister dst, XMMRegister src, int imm8, int vector_len);
   void vpermpd(XMMRegister dst, XMMRegister src, int imm8, int vector_len);
+  void evpermi2q(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
   void pause();
 
@@ -1729,6 +1766,7 @@ private:
   void pmovzxbw(XMMRegister dst, Address src);
   void vpmovzxbw( XMMRegister dst, Address src, int vector_len);
   void pmovzxdq(XMMRegister dst, XMMRegister src);
+  void vpmovzxbw(XMMRegister dst, XMMRegister src, int vector_len);
   void vpmovzxdq(XMMRegister dst, XMMRegister src, int vector_len);
   void vpmovzxbd(XMMRegister dst, XMMRegister src, int vector_len);
   void vpmovzxbq(XMMRegister dst, XMMRegister src, int vector_len);
@@ -1747,6 +1785,10 @@ private:
 
   void evpmovwb(Address dst, XMMRegister src, int vector_len);
   void evpmovwb(Address dst, KRegister mask, XMMRegister src, int vector_len);
+
+  void vpmovzxwd(XMMRegister dst, XMMRegister src, int vector_len);
+
+  void evpmovdb(Address dst, XMMRegister src, int vector_len);
 
 #ifndef _LP64 // no 32bit push/pop on amd64
   void popl(Address dst);
@@ -1788,7 +1830,7 @@ private:
   // Shuffle Packed Low Words
   void pshuflw(XMMRegister dst, XMMRegister src, int mode);
   void pshuflw(XMMRegister dst, Address src,     int mode);
-  
+
   //shuffle floats and doubles
   void vpshufps(XMMRegister, XMMRegister, XMMRegister, int, int);
   void vpshufpd(XMMRegister, XMMRegister, XMMRegister, int, int);
@@ -2186,6 +2228,8 @@ private:
   void vpsrlw(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
   void vpsrld(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
   void vpsrlq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+  void evpsrlvw(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
+  void evpsllvw(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
   // Arithmetic shift right packed integers (only shorts and ints, no instructions for longs)
   void psraw(XMMRegister dst, int shift);
@@ -2297,6 +2341,8 @@ private:
   void evpbroadcastw(XMMRegister dst, Register src, int vector_len);
   void evpbroadcastd(XMMRegister dst, Register src, int vector_len);
   void evpbroadcastq(XMMRegister dst, Register src, int vector_len);
+
+  void evpgatherdd(XMMRegister dst, KRegister k1, Address src, int vector_len);
 
   // Carry-Less Multiplication Quadword
   void pclmulqdq(XMMRegister dst, XMMRegister src, int mask);
