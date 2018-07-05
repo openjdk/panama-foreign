@@ -41,7 +41,6 @@ public class TestJextractFFI {
     final String javac_cmd;
     final Path jclang_src_path;
     final Path clang_header_path;
-    final Path clang_header_aux_path;
     final Path clang_lib_path;
 
     final static String CLANG_JAR = "clang.jar";
@@ -49,9 +48,8 @@ public class TestJextractFFI {
     final static String CLANG_FFI_PATH = "clang_ffi";
     final static String JCLANG_PATH = "jclang";
 
-    TestJextractFFI(Path clang_header_path, Path clang_header_aux_path, Path clang_lib_path, Path jclang_src) {
+    TestJextractFFI(Path clang_header_path, Path clang_lib_path, Path jclang_src) {
         this.clang_header_path = clang_header_path;
-        this.clang_header_aux_path = clang_header_aux_path;
         this.clang_lib_path = clang_lib_path;
         this.jclang_src_path = jclang_src;
 
@@ -87,7 +85,6 @@ public class TestJextractFFI {
     public void jextractJNI() throws IOException, InterruptedException {
         List<String> command = List.of(jextract_cmd,
                 "-I", clang_header_path.toString(),
-                "-I", clang_header_aux_path.toString(),
                 "-t", "clang",
                 "-o", CLANG_JAR,
                 "-d", CLANG_JNI_PATH,
@@ -111,7 +108,6 @@ public class TestJextractFFI {
     public void jextractFFI() throws IOException, InterruptedException {
         List<String> command = List.of(jextract_cmd,
                 "-I", clang_header_path.toString(),
-                "-I", clang_header_aux_path.toString(),
                 "-t", "clang",
                 "-d", CLANG_FFI_PATH,
                 "-J-Dlibclang.debug=true",
@@ -176,13 +172,11 @@ public class TestJextractFFI {
     public static int main(String... args) throws IOException, InterruptedException {
         final Path srcPath = Paths.get(System.getProperty("test.src"));
         final String clangInclude = System.getProperty("clang.include.path");
-        final String clangIncludeAux = System.getProperty("clang.include.aux.path");
         final String clangLib = System.getProperty("clang.lib.path");
 
         if (clangInclude != null && clangLib != null) {
             TestJextractFFI test = new TestJextractFFI(
                     Paths.get(clangInclude).toAbsolutePath(),
-                    Paths.get(clangIncludeAux).toAbsolutePath(),
                     Paths.get(clangLib).toAbsolutePath(),
                     srcPath.resolve("src").toAbsolutePath()
             );
