@@ -8998,11 +8998,10 @@ instruct rvmax64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rReg
             "cmpl  $tmp3,$dst\n\t"
             "cmovl  $dst,$tmp3\t! max reduction32B" %}
   ins_encode %{
-    int vector_len = 0;
     __ vextracti64x4_high($tmp4$$XMMRegister, $src2$$XMMRegister);
-    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, 2);
     __ vextracti128_high($tmp$$XMMRegister, $tmp4$$XMMRegister);
-    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, vector_len);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 1);
     __ pshufd($tmp4$$XMMRegister, $tmp$$XMMRegister, 0xE);
     __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $tmp$$XMMRegister, 0);
     __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
@@ -13427,6 +13426,84 @@ instruct vmul32B_reg_avx(vecY dst, vecY src1, vecY src2, vecY tmp1, vecY tmp2, v
     __ vpand($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
     __ vpackuswb($dst$$XMMRegister, $tmp2$$XMMRegister, $tmp1$$XMMRegister, vector_len);
     __ vpermq($dst$$XMMRegister, $dst$$XMMRegister, 0xD8, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vmul64B_reg_avx(vecZ dst, vecZ src1, vecZ src2, vecZ tmp1, vecZ tmp2, vecZ tmp3, vecZ tmp4, vecZ tmp5, vecZ tmp6) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 64);
+  match(Set dst (MulVB src1 src2));
+  effect(TEMP dst, TEMP tmp1, TEMP tmp2, TEMP tmp3, TEMP tmp4, TEMP tmp5, TEMP tmp6);
+  format %{"vextracti64x4_high  $tmp4,$src1\n\t"
+           "vextracti64x4_high  $tmp5,$src2\n\t"
+           "vextracti128_high  $tmp1,$tmp4\n\t"
+           "vextracti128_high  $tmp3,$tmp5\n\t"
+           "vpmovsxbw $tmp1,$tmp1\n\t"
+           "vpmovsxbw $tmp3,$tmp3\n\t"
+           "vpmullw $tmp1,$tmp1,$tmp3\n\t"
+           "vpmovsxbw $tmp2,$tmp4\n\t"
+           "vpmovsxbw $tmp3,$tmp5\n\t"
+           "vpmullw $tmp2,$tmp2,$tmp3\n\t"
+           "vmovdqu $tmp3, [0x00ff00ff0x00ff00ff]\n\t"
+           "vpbroadcastd $tmp3, $tmp3\n\t"
+           "vpand $tmp1,$tmp1,$tmp3\n\t"
+           "vpand $tmp2,$tmp2,$tmp3\n\t"
+           "vpackuswb $tmp6,$tmp2,$tmp1\n\t"
+           "vpermq $tmp6, $tmp6, 0xD8\n\t"
+           "vextracti64x4  $tmp4,$src1\n\t"
+           "vextracti64x4  $tmp5,$src2\n\t"
+           "vextracti128_high  $tmp1,$tmp4\n\t"
+           "vextracti128_high  $tmp3,$tmp5\n\t"
+           "vpmovsxbw $tmp1,$tmp1\n\t"
+           "vpmovsxbw $tmp3,$tmp3\n\t"
+           "vpmullw $tmp1,$tmp1,$tmp3\n\t"
+           "vpmovsxbw $tmp2,$tmp4\n\t"
+           "vpmovsxbw $tmp3,$tmp5\n\t"
+           "vpmullw $tmp2,$tmp2,$tmp3\n\t"
+           "vmovdqu $tmp3, [0x00ff00ff0x00ff00ff]\n\t"
+           "vpbroadcastd $tmp3, $tmp3\n\t"
+           "vpand $tmp1,$tmp1,$tmp3\n\t"
+           "vpand $tmp2,$tmp2,$tmp3\n\t"
+           "vpackuswb $tmp2,$tmp2,$tmp1\n\t"
+           "vpermq $tmp2, $tmp2, 0xD8\n\t"
+           "vinserti64x4 $dst,$dst,$tmp2\n\t"
+           "vinserti64x4 $dst,$dst,$tmp6\t! mul packed64B" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vextracti64x4_high($tmp4$$XMMRegister, $src1$$XMMRegister);
+    __ vextracti64x4_high($tmp5$$XMMRegister, $src2$$XMMRegister);
+    __ vextracti128_high($tmp1$$XMMRegister, $tmp4$$XMMRegister);
+    __ vextracti128_high($tmp3$$XMMRegister, $tmp5$$XMMRegister);
+    __ vpmovsxbw($tmp1$$XMMRegister, $tmp1$$XMMRegister, vector_len);
+    __ vpmovsxbw($tmp3$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpmullw($tmp1$$XMMRegister, $tmp1$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpmovsxbw($tmp2$$XMMRegister, $tmp4$$XMMRegister, vector_len);
+    __ vpmovsxbw($tmp3$$XMMRegister, $tmp5$$XMMRegister, vector_len);
+    __ vpmullw($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vmovdqu($tmp3$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()));
+    __ vpbroadcastd($tmp3$$XMMRegister, $tmp3$$XMMRegister);
+    __ vpand($tmp1$$XMMRegister, $tmp1$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpand($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpackuswb($tmp6$$XMMRegister, $tmp2$$XMMRegister, $tmp1$$XMMRegister, vector_len);
+    __ vpermq($tmp6$$XMMRegister, $tmp6$$XMMRegister, 0xD8, vector_len);
+    __ vextracti64x4($tmp4$$XMMRegister, $src1$$XMMRegister, 0x00);
+    __ vextracti64x4($tmp5$$XMMRegister, $src2$$XMMRegister, 0x00);
+    __ vextracti128_high($tmp1$$XMMRegister, $tmp4$$XMMRegister);
+    __ vextracti128_high($tmp3$$XMMRegister, $tmp5$$XMMRegister);
+    __ vpmovsxbw($tmp1$$XMMRegister, $tmp1$$XMMRegister, vector_len);
+    __ vpmovsxbw($tmp3$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpmullw($tmp1$$XMMRegister, $tmp1$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpmovsxbw($tmp2$$XMMRegister, $tmp4$$XMMRegister, vector_len);
+    __ vpmovsxbw($tmp3$$XMMRegister, $tmp5$$XMMRegister, vector_len);
+    __ vpmullw($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vmovdqu($tmp3$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()));
+    __ vpbroadcastd($tmp3$$XMMRegister, $tmp3$$XMMRegister);
+    __ vpand($tmp1$$XMMRegister, $tmp1$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpand($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpackuswb($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp1$$XMMRegister, vector_len);
+    __ vpermq($tmp2$$XMMRegister, $tmp2$$XMMRegister, 0xD8, vector_len);
+    __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp2$$XMMRegister, 0x01);
+    __ vinserti64x4($dst$$XMMRegister, $dst$$XMMRegister, $tmp6$$XMMRegister, 0x00);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -23079,7 +23156,7 @@ instruct storemask64b(vecZ dst, vecZ src, rRegL scratch) %{
     KRegister ktmp = k2; // Use a hardcoded temp due to no k register allocation.
     Assembler::ComparisonPredicate cp = Assembler::eq;
     __ evpcmpb(ktmp, k0, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), cp, vector_len, $scratch$$Register);
-    __ evmovdqub($dst$$XMMRegister, ktmp, ExternalAddress(vector_byte_bitset()), true, vector_len, $scratch$$Register);
+    __ evmovdqub($dst$$XMMRegister, ktmp, ExternalAddress(vector_byte_bitset()), false, vector_len, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -23138,7 +23215,7 @@ instruct storemask32s(vecY dst, vecZ src, rRegL scratch) %{
     Assembler::ComparisonPredicate cp = Assembler::eq;
     __ evpcmpw(ktmp, k0, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), cp, vector_len, $scratch$$Register);
     // The dst is 256-bit - thus we can do a smaller move.
-    __ evmovdqub($dst$$XMMRegister, ktmp, ExternalAddress(vector_byte_bitset()), true, 1, $scratch$$Register);
+    __ evmovdqub($dst$$XMMRegister, ktmp, ExternalAddress(vector_byte_bitset()), false, 1, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -23205,7 +23282,7 @@ instruct storemask16i(vecX dst, vecZ src, rRegL scratch) %{
     KRegister ktmp = k2; // Use a hardcoded temp due to no k register allocation.
     __ evpcmpeqd(ktmp, k0, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), vector_len, $scratch$$Register);
     // The dst is only 128-bit - thus we can do a smaller move.
-    __ evmovdqub($dst$$XMMRegister, ktmp, ExternalAddress(vector_byte_bitset()), true, 0, $scratch$$Register);
+    __ evmovdqub($dst$$XMMRegister, ktmp, ExternalAddress(vector_byte_bitset()), false, 0, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -23275,7 +23352,7 @@ instruct storemask8l(vecD dst, vecZ src, rRegL scratch) %{
     Assembler::ComparisonPredicate cp = Assembler::eq;
     __ evpcmpq(ktmp, k0, $src$$XMMRegister, ExternalAddress(vector_all_bits_set()), cp, vector_len, $scratch$$Register);
     // The dst is only 128-bit - thus we can do a smaller move.
-    __ evmovdqub($dst$$XMMRegister, ktmp, ExternalAddress(vector_byte_bitset()), true, 0, $scratch$$Register);
+    __ evmovdqub($dst$$XMMRegister, ktmp, ExternalAddress(vector_byte_bitset()), false, 0, $scratch$$Register);
   %}
   ins_pipe( pipe_slow );
 %}
