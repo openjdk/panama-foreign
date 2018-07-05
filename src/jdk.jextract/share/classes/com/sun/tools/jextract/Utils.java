@@ -29,25 +29,20 @@ import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
 import jdk.internal.nicl.types.Types;
-import jdk.internal.nicl.types.Types.UNSIGNED;
 
 import javax.lang.model.SourceVersion;
 import java.nicl.layout.Address;
 import java.nicl.layout.Function;
 import java.nicl.layout.Group;
-import java.nicl.layout.Group.Kind;
 import java.nicl.layout.Layout;
 import java.nicl.layout.Padding;
 import java.nicl.layout.Sequence;
 import java.nicl.layout.Unresolved;
 import java.nicl.layout.Value;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.OptionalLong;
-import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /**
@@ -345,19 +340,22 @@ public class Utils {
         }
     }
 
-    public static Group getRecordLayout(Type t, java.util.function.BiFunction<String, Layout, Layout> fieldMapper) {
+    public static Group getRecordLayout(Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {
         return getRecordLayoutInternal(0, t, t, fieldMapper);
     }
 
-    static Group getRecordLayoutInternal(long offset, Type parent, Type t, java.util.function.BiFunction<String, Layout, Layout> fieldMapper) {
+    static Group getRecordLayoutInternal(long offset, Type parent, Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {
         Cursor cu = t.getDeclarationCursor().getDefinition();
         assert !cu.isInvalid();
         final boolean isUnion = cu.kind() == CursorKind.UnionDecl;
         Stream<Cursor> fieldTypes = cu.children()
                 .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
         List<Layout> fieldLayouts = new ArrayList<>();
+        int pendingBitfieldStart = -1;
         long actualSize = 0L;
         for (Cursor c : fieldTypes.collect(Collectors.toList())) {
+            boolean isBitfield = c.isBitField();
+            if (isBitfield && c.getBitFieldWidth() == 0) continue;
             long expectedOffset = offsetOf(parent, c);
             if (expectedOffset > offset) {
                 if (isUnion) {
@@ -367,11 +365,19 @@ public class Utils {
                 actualSize += (expectedOffset - offset);
                 offset = expectedOffset;
             }
+            if (isBitfield && !isUnion && pendingBitfieldStart == -1) {
+                pendingBitfieldStart = fieldLayouts.size();
+            }
+            if (!isBitfield && pendingBitfieldStart >= 0) {
+                //emit/replace bitfields
+                replaceBitfields(fieldLayouts, pendingBitfieldStart);
+                pendingBitfieldStart = -1;
+            }
             Layout fieldLayout = (c.isAnonymous()) ?
                     getRecordLayoutInternal(offset, parent, c.type(), fieldMapper) :
-                    fieldMapper.apply(c.spelling(), getLayout(c.type()));
+                    fieldLayout(isUnion, c, fieldMapper);
             fieldLayouts.add(fieldLayout);
-            long size = c.type().size() * 8;
+            long size = fieldSize(isUnion, c);
             if (isUnion) {
                 actualSize = Math.max(actualSize, size);
             } else {
@@ -383,10 +389,79 @@ public class Utils {
         if (actualSize < expectedSize) {
             fieldLayouts.add(Padding.of(expectedSize - actualSize));
         }
+        if (pendingBitfieldStart >= 0) {
+            //emit/replace bitfields
+            replaceBitfields(fieldLayouts, pendingBitfieldStart);
+        }
         Layout[] fields = fieldLayouts.toArray(new Layout[0]);
         Group g = isUnion ?
                 Group.union(fields) : Group.struct(fields);
         return g.withAnnotation(Layout.NAME, getIdentifier(cu));
+    }
+
+    static Layout fieldLayout(boolean isUnion, Cursor c, BiFunction<Cursor, Layout, Layout> fieldMapper) {
+        Layout layout = getLayout(c.type());
+        if (c.isBitField()) {
+            boolean isSigned = ((Value)layout).kind() == Value.Kind.INTEGRAL_SIGNED;
+            Layout sublayout = isSigned ?
+                    Value.ofSignedInt(c.getBitFieldWidth()) :
+                    Value.ofUnsignedInt(c.getBitFieldWidth());
+            sublayout = fieldMapper.apply(c, sublayout);
+            return isUnion ?
+                    bitfield((Value)layout, List.of(sublayout)) :
+                    sublayout;
+        } else {
+            return fieldMapper.apply(c, layout);
+        }
+    }
+
+    static long fieldSize(boolean isUnion, Cursor c) {
+        if (!c.isBitField() || isUnion) {
+            return c.type().size() * 8;
+        } else {
+            return c.getBitFieldWidth();
+        }
+    }
+
+    static void replaceBitfields(List<Layout> layouts, int pendingBitfieldsStart) {
+        long storageSize = storageSize(layouts);
+        long offset = 0L;
+        List<Layout> newFields = new ArrayList<>();
+        List<Layout> pendingFields = new ArrayList<>();
+        while (layouts.size() > pendingBitfieldsStart) {
+            Layout l = layouts.remove(pendingBitfieldsStart);
+            offset += l.bitsSize();
+            pendingFields.add(l);
+            if (!pendingFields.isEmpty() &&
+                    offset == storageSize) {
+                //emit new
+                newFields.add(bitfield(Value.ofUnsignedInt(storageSize), pendingFields));
+                pendingFields.clear();
+                offset = 0L;
+            } else if (offset > storageSize) {
+                throw new IllegalStateException("Crossing storage unit boundaries");
+            }
+        }
+        if (!pendingFields.isEmpty()) {
+            throw new IllegalStateException("Partially used storage unit");
+        }
+        //add back new fields
+        newFields.forEach(layouts::add);
+    }
+
+    static long storageSize(List<Layout> layouts) {
+        long size = layouts.stream().mapToLong(Layout::bitsSize).sum();
+        int[] sizes = { 64, 32, 16, 8 };
+        for (int s : sizes) {
+            if (size % s == 0) {
+                return s;
+            }
+        }
+        throw new IllegalStateException("Cannot infer storage size");
+    }
+
+    static Value bitfield(Value v, List<Layout> sublayouts) {
+        return v.withContents(Group.struct(sublayouts.toArray(new Layout[0])));
     }
 
     static long offsetOf(Type parent, Cursor c) {

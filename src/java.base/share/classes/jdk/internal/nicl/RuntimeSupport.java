@@ -25,6 +25,7 @@ package jdk.internal.nicl;
 
 import jdk.internal.nicl.LayoutPaths.LayoutPath;
 import jdk.internal.nicl.types.LayoutTypeImpl;
+import jdk.internal.nicl.types.References;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -58,8 +59,9 @@ final class RuntimeSupport {
 
     static MethodHandle getterHandle(LayoutType<?> type, LayoutPath layoutPath) {
         if (layoutPath.enclosing.layout instanceof Value) {
+            LayoutType<?> enclosingType = LayoutTypeImpl.of(long.class, layoutPath.enclosing.layout, References.ofLong);
             MethodHandle bfGetter = bitfieldGetterHandle(layoutPath, type);
-            MethodHandle containerGetter = getterHandle(NativeTypes.INT64, layoutPath.enclosing);
+            MethodHandle containerGetter = getterHandle(enclosingType, layoutPath.enclosing);
             MethodHandle getter = MethodHandles.filterArguments(bfGetter, 0, containerGetter);
             Class<?> expectedReturnType = ((LayoutTypeImpl<?>)type).carrier();
             return getter.asType(getter.type().changeReturnType(expectedReturnType));
@@ -73,10 +75,11 @@ final class RuntimeSupport {
 
     public static MethodHandle setterHandle(LayoutType<?> type, LayoutPath layoutPath) {
         if (layoutPath.enclosing.layout instanceof Value) {
+            LayoutType<?> enclosingType = LayoutTypeImpl.of(long.class, layoutPath.enclosing.layout, References.ofLong);
             MethodHandle bfSetter = bitfieldSetterHandle(layoutPath, type);
-            MethodHandle containerGetter = getterHandle(NativeTypes.INT64, layoutPath.enclosing);
+            MethodHandle containerGetter = getterHandle(enclosingType, layoutPath.enclosing);
             MethodHandle updater = MethodHandles.filterArguments(bfSetter, 0, containerGetter);
-            MethodHandle containerSetter = setterHandle(NativeTypes.INT64, layoutPath.enclosing);
+            MethodHandle containerSetter = setterHandle(enclosingType, layoutPath.enclosing);
             MethodHandle setter = MethodHandles.collectArguments(containerSetter, 1, updater);
             setter = MethodHandles.permuteArguments(setter, setter.type().dropParameterTypes(0, 1), new int[] {0, 0, 1});
             Class<?> expectedArgType = ((LayoutTypeImpl<?>)type).carrier();
@@ -110,7 +113,7 @@ final class RuntimeSupport {
     private static Object bitfieldGetImpl(long bits, LayoutPath layoutPath, LayoutType<?> type) {
         long offsetInBitfield = layoutPath.offset() - layoutPath.enclosing.offset();
         bits = bits >> offsetInBitfield;
-        bits = bits & ((int)Math.pow(2, layoutPath.layout.bitsSize()) - 1);
+        bits = bits & mask(layoutPath.layout.bitsSize());
         Class<?> carrier = ((LayoutTypeImpl<?>)type).carrier();
         if (carrier == boolean.class) {
             return Boolean.valueOf((byte)bits != 0);
@@ -131,7 +134,7 @@ final class RuntimeSupport {
 
     private static long bitfieldSetImpl(long bits, Object value, LayoutPath layoutPath, LayoutType<?> type) {
         long offsetInBitfield = layoutPath.offset() - layoutPath.enclosing.offset();
-        int mask = (((int)Math.pow(2, layoutPath.layout.bitsSize()) - 1) << offsetInBitfield);
+        long mask = mask(layoutPath.layout.bitsSize()) << offsetInBitfield;
         bits &= ~mask; //all bits in the slice are now zeroed
         long newBits;
         Class<?> carrier = ((LayoutTypeImpl<?>)type).carrier();
@@ -152,5 +155,9 @@ final class RuntimeSupport {
         }
         bits |= ((newBits << offsetInBitfield) & mask);
         return bits;
+    }
+
+    private static long mask(long size) {
+        return size == 64 ? -1L : (1L << size) - 1;
     }
 }

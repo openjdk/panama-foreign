@@ -431,5 +431,17 @@ public final class References {
 
     public static OfStruct ofStruct = new OfStruct();
 
+    public static Reference ofVoid = new Reference() {
+        @Override
+        public MethodHandle getter() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public MethodHandle setter() {
+            throw new UnsupportedOperationException();
+        }
+    };
+
     public static OfFunction ofFunction = new OfFunction();
 }

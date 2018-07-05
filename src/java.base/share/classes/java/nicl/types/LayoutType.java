@@ -110,7 +110,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Boolean> ofBoolean(Layout layout) {
-        return new LayoutTypeImpl<>(boolean.class, layout, References.ofBoolean);
+        return LayoutTypeImpl.of(boolean.class, layout, References.ofBoolean);
     }
 
     /**
@@ -119,7 +119,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Character> ofChar(Layout layout) {
-        return new LayoutTypeImpl<>(char.class, layout, References.ofChar);
+        return LayoutTypeImpl.of(char.class, layout, References.ofChar);
     }
 
     /**
@@ -128,7 +128,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Byte> ofByte(Layout layout) {
-        return new LayoutTypeImpl<>(byte.class, layout, References.ofByte);
+        return LayoutTypeImpl.of(byte.class, layout, References.ofByte);
     }
 
     /**
@@ -137,7 +137,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Short> ofShort(Layout layout) {
-        return new LayoutTypeImpl<>(short.class, layout, References.ofShort);
+        return LayoutTypeImpl.of(short.class, layout, References.ofShort);
     }
 
     /**
@@ -146,7 +146,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Integer> ofInt(Layout layout) {
-        return new LayoutTypeImpl<>(int.class, layout, References.ofInt);
+        return LayoutTypeImpl.of(int.class, layout, References.ofInt);
     }
 
     /**
@@ -155,7 +155,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Float> ofFloat(Layout layout) {
-        return new LayoutTypeImpl<>(float.class, layout, References.ofFloat);
+        return LayoutTypeImpl.of(float.class, layout, References.ofFloat);
     }
 
     /**
@@ -164,7 +164,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Long> ofLong(Layout layout) {
-        return new LayoutTypeImpl<>(long.class, layout, References.ofLong);
+        return LayoutTypeImpl.of(long.class, layout, References.ofLong);
     }
 
     /**
@@ -173,7 +173,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Double> ofDouble(Layout layout) {
-        return new LayoutTypeImpl<>(double.class, layout, References.ofDouble);
+        return LayoutTypeImpl.of(double.class, layout, References.ofDouble);
     }
 
     /**
@@ -182,17 +182,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Void> ofVoid(Layout layout) {
-        return new LayoutTypeImpl<>(Void.class, layout, null) {
-            @Override
-            public MethodHandle getter() throws UnsupportedOperationException {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public MethodHandle setter() throws UnsupportedOperationException {
-                throw new UnsupportedOperationException();
-            }
-        };
+        return LayoutTypeImpl.of(Void.class, layout, References.ofVoid);
     }
 
     /**
@@ -208,7 +198,7 @@ public interface LayoutType<X> {
         }
         NativeStruct nativeStruct = carrier.getAnnotation(NativeStruct.class);
         Group type = (Group) new DescriptorParser(nativeStruct.value()).parseLayout();
-        return new LayoutTypeImpl<>(carrier, type, References.ofStruct);
+        return LayoutTypeImpl.of(carrier, type, References.ofStruct);
     }
 
     /**
@@ -223,6 +213,6 @@ public interface LayoutType<X> {
         if (!Util.isCallback(funcIntf)) {
             throw new IllegalArgumentException("Not a callback type!");
         }
-        return new LayoutTypeImpl<>(funcIntf, layout, References.ofFunction);
+        return LayoutTypeImpl.of(funcIntf, layout, References.ofFunction);
     }
 }

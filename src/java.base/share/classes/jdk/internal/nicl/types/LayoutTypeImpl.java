@@ -37,13 +37,13 @@ import java.nicl.types.Pointer;
 
 public class LayoutTypeImpl<X> implements LayoutType<X> {
 
-    private final Class<?> carrier;
+    private final Class<X> carrier;
     private final Reference reference;
     private final Layout layout;
 
     private static long PTR_SIZE = SystemABI.getInstance().layoutFor(SystemABI.CType.Pointer).bitsSize();
 
-    public LayoutTypeImpl(Class<?> carrier, Layout layout, Reference reference) {
+    LayoutTypeImpl(Class<X> carrier, Layout layout, Reference reference) {
         this.carrier = carrier;
         this.reference = reference;
         this.layout = layout;
@@ -77,8 +77,9 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public LayoutType<Array<X>> array(long size) {
-        return new LayoutTypeImpl<>(Array.class, Sequence.of(size, layout), References.ofArray) {
+        return new LayoutTypeImpl<>((Class)Array.class, Sequence.of(size, layout), References.ofArray) {
             @Override
             public LayoutType<?> elementType() {
                 return LayoutTypeImpl.this;
@@ -87,12 +88,17 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public LayoutType<Pointer<X>> pointer() {
-        return new LayoutTypeImpl<>(Pointer.class, Address.ofLayout(PTR_SIZE, layout), References.ofPointer) {
+        return new LayoutTypeImpl<>((Class)Pointer.class, Address.ofLayout(PTR_SIZE, layout), References.ofPointer) {
             @Override
             public LayoutType<?> pointeeType() {
                 return LayoutTypeImpl.this;
             }
         };
+    }
+
+    public static <X> LayoutType<X> of(Class<X> carrier, Layout layout, Reference reference) {
+        return new LayoutTypeImpl<>(carrier, layout, reference);
     }
 }

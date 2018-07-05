@@ -149,6 +149,10 @@ final class AsmCodeFactory extends CodeFactory {
      */
     private void addField(ClassVisitor cw, Cursor c, Type parentType) {
         String fieldName = c.spelling();
+        if (fieldName.isEmpty()) {
+            //skip anon fields
+            return;
+        }
         Type t = c.type();
         JType jt = owner.globalLookup(t);
         assert (jt != null);
@@ -169,16 +173,17 @@ final class AsmCodeFactory extends CodeFactory {
         cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
                 "(" + JType.getPointerVoidAsWildcard(jt) + ")V", null);
-        JType ptrType = new PointerType(jt);
-        cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
-                "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(), null);
+        if (!c.isBitField()) {
+            JType ptrType = new PointerType(jt);
+            cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
+                    "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(), null);
+        }
     }
 
     private void addVar(ClassVisitor cw, Cursor c, Type parentType) {
         addField(cw, c, parentType);
         Layout layout = Utils.getLayout(c.type());
-        String globalName = c.spelling();
-        String descStr = decorateAsAccessor(globalName, layout).toString();
+        String descStr = decorateAsAccessor(c, layout).toString();
         addHeaderDecl(c.spelling(), descStr);
     }
 
@@ -237,11 +242,16 @@ final class AsmCodeFactory extends CodeFactory {
         }
     }
 
-    Layout decorateAsAccessor(String accessorName, Layout layout) {
-        return layout
+    Layout decorateAsAccessor(Cursor accessorCursor, Layout layout) {
+        String accessorName = accessorCursor.spelling();
+        layout = layout
                     .withAnnotation("get", accessorName + "$get")
-                    .withAnnotation("set", accessorName + "$set")
-                    .withAnnotation("ptr", accessorName + "$ptr");
+                    .withAnnotation("set", accessorName + "$set");
+        if (!accessorCursor.isBitField()) {
+            //no pointer accessors for bitfield!
+            layout = layout.withAnnotation("ptr", accessorName + "$ptr");
+        }
+        return layout;
     }
 
     // A stream of fields of a struct (or union). Note that we have to include

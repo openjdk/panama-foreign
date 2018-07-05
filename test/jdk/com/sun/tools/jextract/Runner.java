@@ -309,7 +309,8 @@ public class Runner {
             { "simple.h", "com.acme", new String[] { "simple.java" }},
             { "recursive.h", "com.acme", new String[] { "recursive.java" }},
             { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct.java" }},
-            { "pad.h", "com.acme", new String[] { "pad.java" }}
+            { "pad.h", "com.acme", new String[] { "pad.java" }},
+            { "bitfields.h", "com.acme", new String[] { "bitfields.java" }}
         };
     }
 }
