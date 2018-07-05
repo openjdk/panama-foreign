@@ -51,7 +51,7 @@ public class UpcallHandler {
 
     private static final long MAX_STACK_ARG_BYTES = 64 * 1024; // FIXME: Arbitrary limitation for now...
 
-    private Object receiver;
+    private Callback<?> receiver;
     private final UpcallHandlerFactory factory;
 
     private final UpcallStub stub;
@@ -87,7 +87,7 @@ public class UpcallHandler {
         }
     }
 
-    static class UpcallHandlerFactory {
+    public static class UpcallHandlerFactory {
 
         final MethodHandle mh;
         final CallingSequence callingSequence;
@@ -109,7 +109,7 @@ public class UpcallHandler {
             }
         }
 
-        UpcallHandler buildHandler(Object arg) throws Throwable {
+        public UpcallHandler buildHandler(Callback<?> arg) throws Throwable {
             return new UpcallHandler(arg, this);
         }
     }
@@ -125,7 +125,7 @@ public class UpcallHandler {
         }
     }
 
-    private UpcallHandler(Object receiver, UpcallHandlerFactory factory) throws Throwable {
+    private UpcallHandler(Callback<?> receiver, UpcallHandlerFactory factory) throws Throwable {
         this.receiver = receiver;
         this.factory = factory;
         this.stub = new UpcallStub(this);
@@ -133,6 +133,10 @@ public class UpcallHandler {
 
     public Pointer<?> getNativeEntryPoint() {
         return stub.getEntryPoint();
+    }
+
+    public Callback<?> getCallbackObject() {
+        return receiver;
     }
 
     static class UpcallContext {

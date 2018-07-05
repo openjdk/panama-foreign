@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,21 +23,8 @@
  * questions.
  */
 
-
-import java.nicl.metadata.NativeCallback;
-import java.nicl.metadata.NativeHeader;
-import java.nicl.metadata.NativeLocation;
-import java.nicl.types.Callback;
-import java.nicl.types.Pointer;
-
-@NativeHeader(path="stdlib.h", declarations = "qsort=(u64:vu32u32u64:(u64:vu64:v)i32)v")
-public interface stdlib {
-    @NativeCallback("(u64:vu64:v)i32")
-    @FunctionalInterface
-    static interface compar extends Callback<compar> {
-        public int fn(Pointer<Void> e1, Pointer<Void> e2);
-    }
-
-    @NativeLocation(file="stdlib.h", line=47, column=11, USR="c:@F@qsort")
-    public abstract void qsort(Pointer<?> base, long nmemb, long size, compar compar);
+int square(int x) {
+  return x * x;
 }
+
+int (*fp)(int) = square;

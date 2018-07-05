@@ -79,7 +79,8 @@ public final class Util {
     }
 
     public static boolean isCStruct(Class<?> clz) {
-        return clz.isAnnotationPresent(NativeStruct.class);
+        return Struct.class.isAssignableFrom(clz) &&
+                clz.isAnnotationPresent(NativeStruct.class);
     }
 
     public static Layout variadicLayout(Class<?> c) {
@@ -124,7 +125,8 @@ public final class Util {
     }
 
     public static boolean isCallback(Class<?> c) {
-        return c.isAnnotationPresent(NativeCallback.class);
+        return Callback.class.isAssignableFrom(c) &&
+                c.isAnnotationPresent(NativeCallback.class);
     }
 
     public static Method findFunctionalInterfaceMethod(Class<?> c) {
@@ -185,8 +187,10 @@ public final class Util {
             } else {
                 return NativeTypes.VOID.array();
             }
-        } else if (Struct.class.isAssignableFrom(erasure(carrier))) {
+        } else if (isCStruct(erasure(carrier))) {
             return LayoutType.ofStruct((Class) carrier);
+        } else if (isCallback(erasure(carrier))){
+            return LayoutType.ofFunction((Address)layout, (Class)erasure(carrier));
         } else {
             throw new IllegalStateException("Unknown carrier: " + carrier.getTypeName());
         }

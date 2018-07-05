@@ -26,9 +26,10 @@
 package jdk.internal.nicl.types;
 
 import jdk.internal.nicl.LibrariesHelper;
+import jdk.internal.nicl.NativeInvoker;
+import jdk.internal.nicl.UpcallHandler;
 import jdk.internal.nicl.Util;
 
-import java.nicl.metadata.NativeStruct;
 import java.nicl.layout.Sequence;
 import java.nicl.layout.Value;
 import java.nicl.layout.Value.Kind;
@@ -37,8 +38,6 @@ import java.nicl.types.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Helper class for references. Defines several reference subclasses, specialized in well-known Java carrier
@@ -336,6 +335,57 @@ public final class References {
     }
 
     /**
+     * Reference for function pointers.
+     */
+    public static class OfFunction extends AbstractReference {
+
+        static final MethodHandle MH_FUNC_GET;
+        static final MethodHandle MH_FUNC_SET;
+
+        static {
+            try {
+                MH_FUNC_GET = MethodHandles.lookup().findStatic(OfFunction.class, "get", MethodType.methodType(Callback.class, Pointer.class));
+                MH_FUNC_SET = MethodHandles.lookup().findStatic(OfFunction.class, "set", MethodType.methodType(void.class, Pointer.class, Callback.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        OfFunction() {
+            super(MH_FUNC_GET, MH_FUNC_SET);
+        }
+
+        @SuppressWarnings("unchecked")
+        static Callback<?> get(Pointer<?> pointer) {
+            try {
+                long addr = (long)ofLong.getter().invokeExact(pointer);
+                Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).carrier();
+                Class<?> callbackClass = LibrariesHelper.getCallbackImplClass(carrier);
+                Pointer<?> resource = BoundedPointer.createNativeVoidPointer(((BoundedPointer<?>)pointer).scope(), addr);
+                return (Callback<?>)callbackClass.getConstructor(Pointer.class).newInstance(resource);
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        static void set(Pointer<?> pointer, Callback<?> funcIntfInstance) {
+            try {
+                final Pointer<?> ptr;
+                Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).carrier();
+                if (funcIntfInstance.resource().isPresent()) {
+                    //shortcut - direct set
+                    ptr = (Pointer<?>)funcIntfInstance.resource().get();
+                } else {
+                    ptr = UpcallHandler.makeFactory(carrier).buildHandler(funcIntfInstance).getNativeEntryPoint();
+                }
+                ofLong.setter().invokeExact(pointer, ptr.addr());
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+    }
+
+    /**
      * Reference factory for the {@code char} primitive type.
      */
     public static OfPrimitive ofChar = new OfPrimitive(char.class);
@@ -380,4 +430,6 @@ public final class References {
     public static OfArray ofArray = new OfArray();
 
     public static OfStruct ofStruct = new OfStruct();
+
+    public static OfFunction ofFunction = new OfFunction();
 }

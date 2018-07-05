@@ -24,7 +24,6 @@ package jdk.internal.nicl;
 
 import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.Type;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -121,14 +120,14 @@ class HeaderImplGenerator extends BinderClassGenerator {
     void generateFunctionMethod(BinderClassWriter cw, Method method, FunctionInfo info) {
         MethodType methodType = Util.methodTypeFor(method);
         Function function = info.descriptor;
-        NativeInvoker invoker;
         try {
-            invoker = new NativeInvoker(layoutResolver.resolve(function), methodType, method.isVarArgs(), lookup,
-                    info.symbolName, method.toString(), method.getGenericReturnType());
-        } catch (NoSuchMethodException | IllegalAccessException e) {
+            NativeInvoker invoker = new NativeInvoker(layoutResolver.resolve(function), methodType, method.isVarArgs(), method.toString(), method.getGenericReturnType());
+            long addr = lookup.lookup(info.symbolName).getAddress().addr();
+            addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), invoker.getBoundMethodHandle(),
+                mv -> mv.visitLdcInsn(addr));
+        } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
-        addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), invoker.getBoundMethodHandle());
     }
 
     private void generateGlobalVariableMethod(BinderClassWriter cw, Method method, GlobalVarInfo info) {
@@ -167,49 +166,6 @@ class HeaderImplGenerator extends BinderClassGenerator {
                 throw new InternalError("Unexpected access method type: " + kind);
         }
 
-        addMethodFromHandle(cw, methodName, kind.getMethodType(c), false, target);
-    }
-
-    // code generation helpers
-
-    private void addMethodFromHandle(BinderClassWriter cw, String methodName, MethodType methodType, boolean isVarArgs, MethodHandle targetMethodHandle) {
-        String descriptor = methodType.toMethodDescriptorString();
-
-        int flags = ACC_PUBLIC;
-        if (isVarArgs) {
-            flags |= ACC_VARARGS;
-        }
-
-        MethodVisitor mv = cw.visitMethod(flags, methodName, descriptor, null, null);
-
-        mv.visitCode();
-
-        // push the method handle
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(targetMethodHandle));
-        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
-
-        //copy arguments
-        for (int i = 0, curSlot = 1; i < methodType.parameterCount(); i++) {
-            Class<?> c = methodType.parameterType(i);
-            mv.visitVarInsn(loadInsn(c), curSlot);
-            curSlot += getSlotsForType(c);
-        }
-
-        //call MH
-        mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
-                targetMethodHandle.type().toMethodDescriptorString(), false);
-
-        mv.visitInsn(returnInsn(methodType.returnType()));
-
-        mv.visitMaxs(0, 0);
-        mv.visitEnd();
-    }
-
-    //where
-    private static int getSlotsForType(Class<?> c) {
-        if (c == long.class || c == double.class) {
-            return 2;
-        }
-        return 1;
+        addMethodFromHandle(cw, methodName, kind.getMethodType(c), false, target, mv -> {});
     }
 }

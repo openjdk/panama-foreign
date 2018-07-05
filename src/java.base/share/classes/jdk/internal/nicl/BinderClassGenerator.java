@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -39,6 +40,7 @@ import java.nicl.layout.Layout;
 import java.nicl.types.Pointer;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
@@ -123,11 +125,11 @@ abstract class BinderClassGenerator {
     //where
     private Class<?> defineClass(BinderClassWriter cw, byte[] classBytes) {
         try {
-            Object[] patches = cw.resolvePatches(classBytes);
-            Class<?> c = U.defineAnonymousClass(hostClass, classBytes, patches);
             if (DEBUG_DUMP_CLASSES_DIR != null) {
                 debugWriteClassToFile(classBytes);
             }
+            Object[] patches = cw.resolvePatches(classBytes);
+            Class<?> c = U.defineAnonymousClass(hostClass, classBytes, patches);
             return c;
         } catch (VerifyError e) {
             debugPrintClass(classBytes);
@@ -144,8 +146,10 @@ abstract class BinderClassGenerator {
     protected void generateMembers(BinderClassWriter cw) {
         for (Method m : interfaces[0].getMethods()) {
             try {
-                layoutResolver.scanMethod(m);
-                generateMethodImplementation(cw, m);
+                if (!m.isDefault()) {
+                    layoutResolver.scanMethod(m);
+                    generateMethodImplementation(cw, m);
+                }
             } catch (Exception | Error e) {
                 throw new RuntimeException("Failed to generate method " + m, e);
             }
@@ -153,6 +157,52 @@ abstract class BinderClassGenerator {
     }
 
     // shared code generation helpers
+
+    // code generation helpers
+
+    void addMethodFromHandle(BinderClassWriter cw, String methodName, MethodType methodType, boolean isVarArgs, MethodHandle targetMethodHandle,
+                                     Consumer<MethodVisitor> preArgs) {
+        String descriptor = methodType.toMethodDescriptorString();
+
+        int flags = ACC_PUBLIC;
+        if (isVarArgs) {
+            flags |= ACC_VARARGS;
+        }
+
+        MethodVisitor mv = cw.visitMethod(flags, methodName, descriptor, null, null);
+
+        mv.visitCode();
+
+        // push the method handle
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(targetMethodHandle));
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+
+        preArgs.accept(mv);
+
+        //copy arguments
+        for (int i = 0, curSlot = 1; i < methodType.parameterCount(); i++) {
+            Class<?> c = methodType.parameterType(i);
+            mv.visitVarInsn(loadInsn(c), curSlot);
+            curSlot += getSlotsForType(c);
+        }
+
+        //call MH
+        mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
+                targetMethodHandle.type().toMethodDescriptorString(), false);
+
+        mv.visitInsn(returnInsn(methodType.returnType()));
+
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+    }
+
+    //where
+    private static int getSlotsForType(Class<?> c) {
+        if (c == long.class || c == double.class) {
+            return 2;
+        }
+        return 1;
+    }
 
     int returnInsn(Class<?> cls) {
         if (cls.isPrimitive()) {

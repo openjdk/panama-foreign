@@ -29,6 +29,7 @@ import jdk.internal.org.objectweb.asm.Type;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.nicl.Library;
 import java.nicl.Libraries;
+import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeStruct;
 import java.nio.file.Files;
@@ -69,7 +70,7 @@ public final class LibrariesHelper {
     private static final ClassValue<Class<?>> STRUCT_IMPLEMENTATIONS = new ClassValue<>() {
         @Override
         protected Class<?> computeValue(Class<?> c) {
-            assert c.isAnnotationPresent(NativeStruct.class);
+            assert Util.isCStruct(c);
             return generateImpl(c, new StructImplGenerator(c, generateImplName(c), c));
         }
     };
@@ -82,11 +83,35 @@ public final class LibrariesHelper {
      */
     @SuppressWarnings("unchecked")
     public static <T> Class<? extends T> getStructImplClass(Class<T> c) {
-        if (!c.isAnnotationPresent(NativeStruct.class)) {
+        if (!Util.isCStruct(c)) {
             throw new IllegalArgumentException("Not a Struct interface: " + c);
         }
 
         return (Class<? extends T>)STRUCT_IMPLEMENTATIONS.get(c);
+    }
+
+    // Cache: Callback interface Class -> Impl Class.
+    private static final ClassValue<Class<?>> CALLBACK_IMPLEMENTATIONS = new ClassValue<>() {
+        @Override
+        protected Class<?> computeValue(Class<?> c) {
+            assert Util.isCallback(c);
+            return generateImpl(c, new CallbackImplGenerator(c, generateImplName(c), c));
+        }
+    };
+
+    /**
+     * Get the implementation for a Callback interface.
+     *
+     * @param c the Callback interface for which to return an implementation class
+     * @return a class implementing the interface
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Class<? extends T> getCallbackImplClass(Class<T> c) {
+        if (!Util.isCallback(c)) {
+            throw new IllegalArgumentException("Not a Callback interface: " + c);
+        }
+
+        return (Class<? extends T>)CALLBACK_IMPLEMENTATIONS.get(c);
     }
 
     // This is used to pass the current SymbolLookup object to the header computeValue method below.

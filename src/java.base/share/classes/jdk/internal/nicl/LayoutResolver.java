@@ -80,7 +80,7 @@ public final class LayoutResolver {
             Class<?> cl = (Class<?>)t;
             if (cl.isArray()) {
                 scanType(cl.getComponentType());
-            } else if (cl.isAnnotationPresent(NativeStruct.class)) {
+            } else if (Util.isCStruct(cl)) {
                 String layout = cl.getAnnotation(NativeStruct.class).value();
                 Group g = descriptorToGroup.containsKey(layout)? descriptorToGroup.get(layout) : (Group)Layout.of(layout);
                 descriptorToGroup.put(layout, g);

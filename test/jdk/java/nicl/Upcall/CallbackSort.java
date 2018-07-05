@@ -33,6 +33,7 @@ import java.nicl.Scope;
 import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
+import java.nicl.types.Callback;
 import java.nicl.types.Pointer;
 import java.util.Iterator;
 
@@ -44,7 +45,7 @@ public class CallbackSort {
     public static interface stdlib {
         @NativeCallback("(u64:vu64:v)i32")
         @FunctionalInterface
-        static interface compar {
+        static interface compar extends Callback<compar> {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public int fn(Pointer<Void> e1, Pointer<Void> e2);
         }

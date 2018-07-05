@@ -25,14 +25,17 @@
 
 package java.nicl.types;
 
+import jdk.internal.nicl.Util;
 import jdk.internal.nicl.types.DescriptorParser;
 import jdk.internal.nicl.types.LayoutTypeImpl;
 import jdk.internal.nicl.types.References;
 
+import java.nicl.layout.Address;
 import java.nicl.layout.Group;
 import java.nicl.layout.Layout;
 
 import java.lang.invoke.MethodHandle;
+import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeStruct;
 
 /**
@@ -200,11 +203,26 @@ public interface LayoutType<X> {
      * @throws IllegalArgumentException if the given carrier is not annotated with the {@link java.nicl.metadata.NativeStruct} annotation.
      */
     static <T extends Struct<T>> LayoutType<T> ofStruct(Class<T> carrier) throws IllegalArgumentException {
-        NativeStruct nativeStruct = carrier.getAnnotation(NativeStruct.class);
-        if (nativeStruct == null) {
+        if (!Util.isCStruct(carrier)) {
             throw new IllegalArgumentException("Not a struct type!");
         }
+        NativeStruct nativeStruct = carrier.getAnnotation(NativeStruct.class);
         Group type = (Group) new DescriptorParser(nativeStruct.value()).parseLayout();
         return new LayoutTypeImpl<>(carrier, type, References.ofStruct);
+    }
+
+    /**
+     * Create a {@code LayoutType} from a {@link Callback} interface carrier.
+     * @param <Z> the callback type (a functional interface).
+     * @param layout the address layout associated with a callback.
+     * @param funcIntf the callback carrier (a functional interface).
+     * @return the {@code LayoutType}.
+     * @throws IllegalArgumentException if the given carrier is not annotated with the {@link NativeCallback} annotation.
+     */
+    static <Z extends Callback<Z>> LayoutType<Z> ofFunction(Address layout, Class<Z> funcIntf) {
+        if (!Util.isCallback(funcIntf)) {
+            throw new IllegalArgumentException("Not a callback type!");
+        }
+        return new LayoutTypeImpl<>(funcIntf, layout, References.ofFunction);
     }
 }

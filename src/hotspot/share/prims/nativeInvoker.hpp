@@ -55,6 +55,7 @@ public:
   static address invoke_native_address() {
       return _invoke_native_blob->code_begin();
   }
+  static jobject get_upcall_handler(char *addr);
 
   static void generate_adapter();
 };

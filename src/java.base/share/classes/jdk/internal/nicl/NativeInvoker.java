@@ -47,7 +47,7 @@ import java.util.stream.Stream;
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-class NativeInvoker {
+public class NativeInvoker {
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.nicl.NativeInvoker.DEBUG"));
 
@@ -81,12 +81,6 @@ class NativeInvoker {
         }
     }
 
-
-    private static MethodHandle lookupNativeFunction(SymbolLookup lookup, String symbolName) throws NoSuchMethodException, IllegalAccessException {
-        long addr = lookup.lookup(symbolName).getAddress().addr();
-        return MethodHandles.insertArguments(INVOKE_NATIVE_MH, INVOKE_NATIVE_MH.type().parameterCount() - 1, addr);
-    }
-
     private final MethodType methodType;
     private final boolean isVarArgs;
     private final String debugMethodString;
@@ -99,8 +93,8 @@ class NativeInvoker {
     private final LayoutType<?>[] argLayoutTypes;
     private final UpcallHandlerFactory[] upcallHandlers;
 
-    NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, SymbolLookup lookup, String symbolName, String debugMethodString, java.lang.reflect.Type genericReturnType) throws NoSuchMethodException, IllegalAccessException {
-        this(function, methodType, isVarArgs, lookupNativeFunction(lookup, symbolName), debugMethodString, genericReturnType);
+    NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, String debugMethodString, java.lang.reflect.Type genericReturnType) throws NoSuchMethodException, IllegalAccessException {
+        this(function, methodType, isVarArgs, INVOKE_NATIVE_MH, debugMethodString, genericReturnType);
     }
 
     private NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, MethodHandle targetMethodHandle, String debugMethodString, java.lang.reflect.Type genericReturnType) {
@@ -131,7 +125,8 @@ class NativeInvoker {
     }
 
     MethodHandle getBoundMethodHandle() {
-        return BRIDGE_METHOD_HANDLE.bindTo(this).asCollector(Object[].class, methodType.parameterCount()).asType(methodType);
+        return BRIDGE_METHOD_HANDLE.bindTo(this).asCollector(Object[].class, methodType.parameterCount())
+                .asType(methodType.insertParameterTypes(0, long.class));
     }
 
     private Class<?> computeClass(Class<?> c) {
@@ -184,19 +179,19 @@ class NativeInvoker {
 
 
     @InvokerMethod
-    private Object invoke(Object[] args) throws Throwable {
+    private Object invoke(long addr, Object[] args) throws Throwable {
         if (DEBUG) {
             dumpArgs(debugMethodString, isVarArgs, args);
         }
 
         if (isVarArgs) {
-            return invokeVarargs(args);
+            return invokeVarargs(addr, args);
         } else {
-            return invokeNormal(args);
+            return invokeNormal(addr, args);
         }
     }
 
-    private Object invokeNormal(Object[] args) throws Throwable {
+    private Object invokeNormal(long addr, Object[] args) throws Throwable {
         //Fixme: this should use the function field, not creating the layout via reflection!!!
 
 
@@ -259,7 +254,7 @@ class NativeInvoker {
 
         long[] returnValues = new long[shuffleRecipe.getNoofReturnPulls()];
 
-        targetMethodHandle.invokeExact(values, returnValues, shuffleRecipe.getRecipe());
+        targetMethodHandle.invokeExact(values, returnValues, shuffleRecipe.getRecipe(), addr);
 
         if (DEBUG) {
             System.err.println("Returned from method " + debugMethodString + " with " + returnValues.length + " return values");
@@ -332,7 +327,7 @@ class NativeInvoker {
             }
             return values;
         } else if (Util.isCallback(carrierType)) {
-            UpcallHandler handler = upcallHandlers[binding.getMember().getArgumentIndex()].buildHandler(arg);
+            UpcallHandler handler = upcallHandlers[binding.getMember().getArgumentIndex()].buildHandler((Callback<?>)arg);
             handlers.add(handler);
             return new long[] { handler.getNativeEntryPoint().addr() };
         } else {
@@ -343,7 +338,7 @@ class NativeInvoker {
         }
     }
 
-    private Object invokeVarargs(Object[] args) throws Throwable {
+    private Object invokeVarargs(long addr, Object[] args) throws Throwable {
         // one trailing Object[]
         int nNamedArgs = methodType.parameterCount() - 1;
         Object[] unnamedArgs = (Object[]) args[args.length - 1];
@@ -365,7 +360,7 @@ class NativeInvoker {
         MethodType dynamicMethodType = getDynamicMethodType(methodType, unnamedArgs);
 
         NativeInvoker delegate = new NativeInvoker(varargFunc, dynamicMethodType, false, targetMethodHandle, debugMethodString, genericReturnType);
-        return delegate.invoke(allArgs);
+        return delegate.invoke(addr, allArgs);
     }
 
     //natives
@@ -373,7 +368,7 @@ class NativeInvoker {
     static native void invokeNative(long[] args, long[] rets, long[] recipe, long addr);
     static native long allocateUpcallStub(UpcallHandler handler);
     static native void freeUpcallStub(long addr);
-    static native long findNativeAddress(String name);
+    public static native UpcallHandler getUpcallHandler(long addr);
 
     private static native void registerNatives();
     static {

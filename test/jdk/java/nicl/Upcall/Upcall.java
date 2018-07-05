@@ -31,6 +31,7 @@ import java.nicl.Libraries;
 import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
+import java.nicl.types.Callback;
 
 public class Upcall {
     private static final boolean DEBUG = false;
@@ -41,7 +42,7 @@ public class Upcall {
     public static interface upcall {
         @NativeCallback("(i32)v")
         @FunctionalInterface
-        static interface visitor {
+        static interface visitor extends Callback<visitor> {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public void fn(int i);
         }

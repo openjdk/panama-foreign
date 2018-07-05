@@ -23,6 +23,7 @@
 package jdk.internal.nicl.types;
 
 import java.nicl.NativeTypes;
+import java.nicl.Scope;
 import java.nicl.layout.Layout;
 import java.nicl.types.Array;
 import java.nicl.types.LayoutType;
@@ -151,6 +152,14 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     public static BoundedPointer<?> createNativeVoidPointer(long offset) {
         return new BoundedPointer<>(NativeTypes.VOID, BoundedMemoryRegion.EVERYTHING, offset);
+    }
+
+    public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset) {
+        return new BoundedPointer<>(NativeTypes.VOID, new BoundedMemoryRegion(offset, Long.MAX_VALUE, BoundedMemoryRegion.MODE_R, scope));
+    }
+
+    public Scope scope() {
+        return region.scope();
     }
 
     @Override

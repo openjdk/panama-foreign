@@ -36,6 +36,7 @@ import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeStruct;
 import java.nicl.types.Array;
+import java.nicl.types.Callback;
 import java.nicl.types.Pointer;
 import java.nicl.types.Struct;
 import java.sql.Timestamp;
@@ -245,7 +246,7 @@ public class StdLibTest {
             Pointer<Void> fopen(Pointer<Byte> filename, Pointer<Byte> mode);
 
             @NativeCallback("(u64:i32u64:i32)i32")
-            interface QsortComparator {
+            interface QsortComparator extends Callback<QsortComparator> {
                 int compare(Pointer<Integer> u1, Pointer<Integer> u2);
             }
         }

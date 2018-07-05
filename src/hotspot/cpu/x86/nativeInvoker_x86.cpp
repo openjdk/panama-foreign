@@ -1212,9 +1212,22 @@ void NativeInvoker::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, 
 void NativeInvoker::free_upcall_stub(char *addr) {
   //find code blob
   CodeBlob* cb = CodeCache::find_blob(addr);
+  assert(cb != NULL, "Attempting to free non-existent stub");
   //free global JNI handle
   jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
   JNIHandles::destroy_weak_global(*rec_ptr);
   //free code blob
   CodeCache::free(cb);
+}
+
+jobject NativeInvoker::get_upcall_handler(char *addr) {
+  //find code blob
+  CodeBlob* cb = CodeCache::find_blob(addr);
+  if (cb != NULL) {
+      //free global JNI handle
+      jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
+      return *rec_ptr;
+  } else {
+      return NULL;
+  }
 }

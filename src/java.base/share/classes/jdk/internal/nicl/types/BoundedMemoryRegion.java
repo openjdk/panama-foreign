@@ -93,6 +93,10 @@ public class BoundedMemoryRegion {
         return min;
     }
 
+    public Scope scope() {
+        return scope;
+    }
+
     public void checkAccess(int mode) {
         if ((this.mode & mode) == 0) {
             throw new AccessControlException("Access denied");

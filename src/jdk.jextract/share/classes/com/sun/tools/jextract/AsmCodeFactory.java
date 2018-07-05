@@ -319,7 +319,8 @@ final class AsmCodeFactory extends CodeFactory {
         global_cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
-                name, null, "java/lang/Object", null);
+                name, "Ljava/lang/Object;Ljava/nicl/types/Callback<L" + name + ";>;",
+                "java/lang/Object", new String[] {"java/nicl/types/Callback"});
         if (dcl != null) {
             annotateNativeLocation(cw, dcl);
         }

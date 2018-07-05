@@ -31,6 +31,7 @@ import java.nicl.Libraries;
 import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
+import java.nicl.types.Callback;
 
 public class DoubleUpcall {
     private static final boolean DEBUG = false;
@@ -39,7 +40,7 @@ public class DoubleUpcall {
     public static interface upcall {
         @NativeCallback("(f64f64)f64")
         @FunctionalInterface
-        static interface cb {
+        static interface cb extends Callback<cb> {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public double fn(double d1, double d2);
         }

@@ -66,28 +66,8 @@ JVM_ENTRY(void, NI_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
   NativeInvoker::free_upcall_stub((char*)addr);
 JVM_END
 
-JVM_ENTRY(static jlong, NI_FindNativeAddress(JNIEnv *env, jobject _unused, jstring name)) {
-  ThreadToNativeFromVM ttnfv(thread);
-  if (name != NULL) {
-    char utfName[128];
-    uint len = env->GetStringUTFLength(name);
-    int unicode_len = env->GetStringLength(name);
-    if (len >= sizeof (utfName)) {
-      // FIXME: don't bother with memory allocation for now.
-      THROW_(vmSymbols::java_lang_NullPointerException(), 0);
-    }
-    env->GetStringUTFRegion(name, 0, unicode_len, utfName);
-
-#ifndef _WINDOWS
-    void* handle = RTLD_DEFAULT;
-#else
-    void* handle = 0; // FIXME
-#endif // _WINDOWS
-    return (jlong)os::dll_lookup(handle, utfName);
-  } else {
-    THROW_(vmSymbols::java_lang_NullPointerException(), 0);
-  }
-}
+JVM_ENTRY(jobject, NI_GetUpcallHandler(JNIEnv *env, jobject _unused, jlong addr))
+  return NativeInvoker::get_upcall_handler((char*)addr);
 JVM_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
@@ -99,7 +79,7 @@ static JNINativeMethod NI_methods[] = {
   {CC "invokeNative",       CC "([J[J[JJ)V",           FN_PTR(NI_invokeNative)},
   {CC "allocateUpcallStub", CC "(Ljdk/internal/nicl/UpcallHandler;)J",                 FN_PTR(NI_AllocateUpcallStub)},
   {CC "freeUpcallStub",     CC "(J)V",                FN_PTR(NI_FreeUpcallStub)},
-  {CC "findNativeAddress",  CC "(" LANG "String;)J",   FN_PTR(NI_FindNativeAddress)}
+  {CC "getUpcallHandler",  CC "(J)Ljdk/internal/nicl/UpcallHandler;",   FN_PTR(NI_GetUpcallHandler)}
 };
 
 /**

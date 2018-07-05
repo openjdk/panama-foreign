@@ -35,6 +35,7 @@ import java.nicl.metadata.NativeCallback;
 import java.nicl.metadata.NativeHeader;
 import java.nicl.metadata.NativeLocation;
 import java.nicl.metadata.NativeStruct;
+import java.nicl.types.Callback;
 import java.nicl.types.Pointer;
 import java.nicl.types.Struct;
 
@@ -80,7 +81,7 @@ public class StructUpcall {
 
         @NativeCallback("($(mystruct))v")
         @FunctionalInterface
-        static interface MyStructVisitor {
+        static interface MyStructVisitor extends Callback<MyStructVisitor> {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public void fn(MyStruct s);
         }
