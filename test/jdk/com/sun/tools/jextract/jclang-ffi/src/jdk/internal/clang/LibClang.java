@@ -25,9 +25,9 @@ package jdk.internal.clang;
 import clang.CXString.CXString;
 
 import java.lang.invoke.MethodHandles;
-import java.nicl.Libraries;
-import java.nicl.Library;
-import java.nicl.types.Pointer;
+import java.foreign.Libraries;
+import java.foreign.Library;
+import java.foreign.memory.Pointer;
 
 public class LibClang {
     private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");

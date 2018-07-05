@@ -25,11 +25,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
-import java.nicl.layout.Function;
-import java.nicl.metadata.NativeHeader;
+import java.foreign.layout.Function;
+import java.foreign.annotations.NativeHeader;
 import java.nio.file.Path;
 import java.util.Map;
-import jdk.internal.nicl.types.DescriptorParser;
+import jdk.internal.foreign.memory.DescriptorParser;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -38,7 +38,7 @@ import static org.testng.Assert.assertTrue;
 
 /*
  * @test
- * @modules jdk.jextract java.base/jdk.internal.nicl.types
+ * @modules jdk.jextract java.base/jdk.internal.foreign.memory
  * @build StructTest
  * @run testng StructTest
  */
@@ -78,10 +78,10 @@ public class StructTest extends JextractToolRunner {
         assertNotNull(plain);
         checkMethod(plain, "x$get", int.class);
         checkMethod(plain, "x$set", void.class, int.class);
-        checkMethod(plain, "x$ptr", java.nicl.types.Pointer.class);
+        checkMethod(plain, "x$ptr", java.foreign.memory.Pointer.class);
         checkMethod(plain, "y$get", int.class);
         checkMethod(plain, "y$set", void.class, int.class);
-        checkMethod(plain, "y$ptr", java.nicl.types.Pointer.class);
+        checkMethod(plain, "y$ptr", java.foreign.memory.Pointer.class);
     }
 
     private void verifyTypedefNamedAsIs(Class<?> asIs) {
@@ -97,7 +97,7 @@ public class StructTest extends JextractToolRunner {
     }
 
     private void assertVoidPointer(ParameterizedType pvoid, boolean isWildcard) {
-        assertEquals(pvoid.getRawType(), java.nicl.types.Pointer.class);
+        assertEquals(pvoid.getRawType(), java.foreign.memory.Pointer.class);
         Type[] tas = pvoid.getActualTypeArguments();
         assertEquals(tas.length, 1);
         if (isWildcard) {
@@ -115,7 +115,7 @@ public class StructTest extends JextractToolRunner {
         Method f = findMethod(incomplete, "ptr$get");
         ParameterizedType pVoid = (ParameterizedType) f.getGenericReturnType();
         assertVoidPointer(pVoid, false);
-        f = findMethod(incomplete, "ptr$set", java.nicl.types.Pointer.class);
+        f = findMethod(incomplete, "ptr$set", java.foreign.memory.Pointer.class);
         // Setter for void* should be wildcard
         ParameterizedType pWildcard = (ParameterizedType) f.getGenericParameterTypes()[0];
         assertVoidPointer(pWildcard, true);
@@ -123,14 +123,14 @@ public class StructTest extends JextractToolRunner {
         f = findMethod(incomplete, "junk$get");
         ParameterizedType ppVoid = (ParameterizedType) f.getGenericReturnType();
         assertEquals(ppVoid.getActualTypeArguments()[0], pVoid);
-        f = findMethod(incomplete, "junk$set", java.nicl.types.Pointer.class);
+        f = findMethod(incomplete, "junk$set", java.foreign.memory.Pointer.class);
         assertEquals(f.getGenericParameterTypes()[0], ppVoid);
     }
 
     private void verifyFunctionWithVoidPointer(Class<?> cls) {
         Method m = findMethod(cls, "FunctionWithVoidPointer",
-                java.nicl.types.Pointer.class,
-                java.nicl.types.Pointer.class);
+                java.foreign.memory.Pointer.class,
+                java.foreign.memory.Pointer.class);
         assertNotNull(m);
 
         ParameterizedType pVoid = (ParameterizedType) m.getGenericReturnType();
@@ -148,8 +148,8 @@ public class StructTest extends JextractToolRunner {
 
     private void verifyFunctionPointer(Class<?> cls) {
         Method m = findMethod(cls, "fn",
-                java.nicl.types.Pointer.class,
-                java.nicl.types.Pointer.class);
+                java.foreign.memory.Pointer.class,
+                java.foreign.memory.Pointer.class);
         assertNotNull(m);
 
         ParameterizedType pVoid = (ParameterizedType) m.getGenericReturnType();
@@ -169,7 +169,7 @@ public class StructTest extends JextractToolRunner {
         NativeHeader nh = header.getAnnotation(NativeHeader.class);
         Map<String, Object> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
 
-        Method m = findMethod(header, "getParent", java.nicl.types.Pointer.class);
+        Method m = findMethod(header, "getParent", java.foreign.memory.Pointer.class);
         assertNotNull(m);
         ParameterizedType pVoid = (ParameterizedType) m.getGenericReturnType();
         assertVoidPointer(pVoid, false);

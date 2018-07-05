@@ -24,7 +24,7 @@
 import com.sun.tools.jextract.JType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import java.nicl.metadata.NativeLocation;
+import java.foreign.annotations.NativeLocation;
 import org.testng.annotations.Test;
 
 import static java.lang.annotation.ElementType.TYPE_USE;

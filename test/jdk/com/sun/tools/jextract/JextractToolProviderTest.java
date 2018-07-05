@@ -24,8 +24,8 @@
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
-import java.nicl.metadata.NativeHeader;
-import java.nicl.types.Pointer;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.memory.Pointer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;

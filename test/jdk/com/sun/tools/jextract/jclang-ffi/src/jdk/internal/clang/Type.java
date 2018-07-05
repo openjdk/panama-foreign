@@ -24,8 +24,8 @@
 package jdk.internal.clang;
 
 import clang.Index.CXType;
-import java.nicl.Scope;
-import java.nicl.types.Pointer;
+import java.foreign.Scope;
+import java.foreign.memory.Pointer;
 
 public class Type {
     private final CXType type;

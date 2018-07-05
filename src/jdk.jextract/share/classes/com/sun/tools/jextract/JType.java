@@ -192,14 +192,14 @@ public interface JType {
 
         @Override
         public String getDescriptor() {
-            return JType.of(java.nicl.types.Array.class).getDescriptor();
+            return JType.of(java.foreign.memory.Array.class).getDescriptor();
         }
 
         @Override
         public String getSignature() {
             StringBuilder sb = new StringBuilder();
             sb.append("L");
-            sb.append(java.nicl.types.Array.class.getName().replace('.', '/'));
+            sb.append(java.foreign.memory.Array.class.getName().replace('.', '/'));
             sb.append("<");
             JType pt = elementType;
             if (pt instanceof JType2) {
@@ -222,9 +222,9 @@ public interface JType {
         final JType returnType;
         final JType[] args;
         final boolean isVarArgs;
-        final java.nicl.layout.Function layout;
+        final java.foreign.layout.Function layout;
 
-        Function(java.nicl.layout.Function layout, boolean isVarArgs, JType returnType, JType... args) {
+        Function(java.foreign.layout.Function layout, boolean isVarArgs, JType returnType, JType... args) {
             this.layout = layout;
             this.returnType = returnType;
             this.args = args;

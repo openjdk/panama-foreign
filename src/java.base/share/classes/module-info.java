@@ -86,10 +86,10 @@ module java.base {
     exports java.math;
     exports java.net;
     exports java.net.spi;
-    exports java.nicl;
-    exports java.nicl.metadata;
-    exports java.nicl.types;
-    exports java.nicl.layout;
+    exports java.foreign;
+    exports java.foreign.annotations;
+    exports java.foreign.memory;
+    exports java.foreign.layout;
     exports java.nio;
     exports java.nio.channels;
     exports java.nio.channels.spi;
@@ -152,9 +152,9 @@ module java.base {
         jdk.jlink;
     exports jdk.internal.logger to
         java.logging;
-    exports jdk.internal.nicl to
+    exports jdk.internal.foreign to
         jdk.jextract;
-    exports jdk.internal.nicl.types to
+    exports jdk.internal.foreign.memory to
         jdk.jextract;
     exports jdk.internal.org.objectweb.asm to
         jdk.jartool,

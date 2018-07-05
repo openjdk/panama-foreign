@@ -23,8 +23,8 @@
 
 import org.testng.annotations.Test;
 
-import java.nicl.layout.Layout;
-import java.nicl.metadata.NativeStruct;
+import java.foreign.layout.Layout;
+import java.foreign.annotations.NativeStruct;
 import java.nio.file.Path;
 
 import static org.testng.Assert.assertEquals;

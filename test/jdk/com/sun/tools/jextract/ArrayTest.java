@@ -22,7 +22,7 @@
  */
 
 import java.lang.reflect.Method;
-import java.nicl.metadata.NativeStruct;
+import java.foreign.annotations.NativeStruct;
 import java.nio.file.Path;
 import org.testng.annotations.Test;
 
@@ -51,7 +51,7 @@ public class ArrayTest extends JextractToolRunner {
         NativeStruct ns = struct.getAnnotation(NativeStruct.class);
         assertNotNull(ns);
 
-        Method m = findMethod(cls, "construct", int.class, int.class, java.nicl.types.Array.class);
+        Method m = findMethod(cls, "construct", int.class, int.class, java.foreign.memory.Array.class);
         assertNotNull(m);
 
         deleteFile(clzPath);

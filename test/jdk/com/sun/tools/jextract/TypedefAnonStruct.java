@@ -23,11 +23,11 @@
 
 package com.acme;
 
-import java.nicl.metadata.NativeHeader;
-import java.nicl.metadata.NativeLocation;
-import java.nicl.metadata.NativeStruct;
-import java.nicl.types.Struct;
-import java.nicl.types.Pointer;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeLocation;
+import java.foreign.annotations.NativeStruct;
+import java.foreign.memory.Struct;
+import java.foreign.memory.Pointer;
 
 @NativeHeader(path="TypedefAnonStruct.h")
 public interface TypedefAnonStruct {

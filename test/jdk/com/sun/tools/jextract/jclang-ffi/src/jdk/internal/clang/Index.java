@@ -23,8 +23,8 @@
 
 package jdk.internal.clang;
 
-import java.nicl.Scope;
-import java.nicl.types.Pointer;
+import java.foreign.Scope;
+import java.foreign.memory.Pointer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;

@@ -23,7 +23,7 @@
 package com.sun.tools.jextract;
 
 import java.io.IOException;
-import java.nicl.layout.Layout;
+import java.foreign.layout.Layout;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
-import jdk.internal.nicl.Util;
+import jdk.internal.foreign.Util;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -64,7 +64,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
  * file.
  */
 final class AsmCodeFactory extends CodeFactory {
-    private static final String ANNOTATION_PKG_PREFIX = "Ljava/nicl/metadata/";
+    private static final String ANNOTATION_PKG_PREFIX = "Ljava/foreign/annotations/";
     private static final String NATIVE_CALLBACK = ANNOTATION_PKG_PREFIX + "NativeCallback;";
     private static final String NATIVE_HEADER = ANNOTATION_PKG_PREFIX + "NativeHeader;";
     private static final String NATIVE_LOCATION = ANNOTATION_PKG_PREFIX + "NativeLocation;";
@@ -222,8 +222,8 @@ final class AsmCodeFactory extends CodeFactory {
         global_cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V1_8, ACC_PUBLIC /*| ACC_STATIC*/ | ACC_INTERFACE | ACC_ABSTRACT,
-                name, "Ljava/lang/Object;Ljava/nicl/types/Struct<L" + name + ";>;",
-                "java/lang/Object", new String[] {"java/nicl/types/Struct"});
+                name, "Ljava/lang/Object;Ljava/foreign/memory/Struct<L" + name + ";>;",
+                "java/lang/Object", new String[] {"java/foreign/memory/Struct"});
         annotateNativeLocation(cw, cursor);
 
         AnnotationVisitor av = cw.visitAnnotation(NATIVE_STRUCT, true);
@@ -329,8 +329,8 @@ final class AsmCodeFactory extends CodeFactory {
         global_cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
-                name, "Ljava/lang/Object;Ljava/nicl/types/Callback<L" + name + ";>;",
-                "java/lang/Object", new String[] {"java/nicl/types/Callback"});
+                name, "Ljava/lang/Object;Ljava/foreign/memory/Callback<L" + name + ";>;",
+                "java/lang/Object", new String[] {"java/foreign/memory/Callback"});
         if (dcl != null) {
             annotateNativeLocation(cw, dcl);
         }

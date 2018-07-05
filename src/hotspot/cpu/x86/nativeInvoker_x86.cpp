@@ -88,7 +88,7 @@ static struct {
     Klass* klass;
     Symbol* name;
     Symbol* sig;
-  } upcall_method;  // java.nicl.UpcallHandler::invoke
+  } upcall_method;  // jdk.internal.foreign.UpcallHandler::invoke
 } upcall_info;
 
 #include "classfile/symbolTable.hpp"
@@ -101,9 +101,9 @@ static void upcall_init(void) {
   TRAPS = Thread::current();
   ResourceMark rm;
 
-  const char* cname = "jdk/internal/nicl/UpcallHandler";
+  const char* cname = "jdk/internal/foreign/UpcallHandler";
   const char* mname = "invoke";
-  const char* mdesc = "(Ljdk/internal/nicl/UpcallHandler;JJJJJ)V";
+  const char* mdesc = "(Ljdk/internal/foreign/UpcallHandler;JJJJJ)V";
   Symbol* cname_sym = SymbolTable::lookup(cname, (int)strlen(cname), THREAD);
   Symbol* mname_sym = SymbolTable::lookup(mname, (int)strlen(mname), THREAD);
   Symbol* mdesc_sym = SymbolTable::lookup(mdesc, (int)strlen(mdesc), THREAD);

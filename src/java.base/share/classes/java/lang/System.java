@@ -43,7 +43,7 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URI;
-import java.nicl.Library;
+import java.foreign.Library;
 import java.nio.charset.CharacterCodingException;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;

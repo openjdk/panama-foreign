@@ -30,9 +30,8 @@ import static clang.Index.CXCursor;
 import static clang.Index.CXSourceLocation;
 import static clang.Index.CXSourceRange;
 
-import java.nicl.types.Pointer;
+import java.foreign.memory.Pointer;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Stream;
 
 public class Cursor {

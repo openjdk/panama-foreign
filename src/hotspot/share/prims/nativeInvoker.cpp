@@ -73,13 +73,14 @@ JVM_END
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 #define LANG "Ljava/lang/"
+#define UPCALL "Ljdk/internal/foreign/UpcallHandler;"
 
-// These are the native methods on jdk.internal.nicl.NativeInvoker.
+// These are the native methods on jdk.internal.foreign.NativeInvoker.
 static JNINativeMethod NI_methods[] = {
   {CC "invokeNative",       CC "([J[J[JJ)V",           FN_PTR(NI_invokeNative)},
-  {CC "allocateUpcallStub", CC "(Ljdk/internal/nicl/UpcallHandler;)J",                 FN_PTR(NI_AllocateUpcallStub)},
+  {CC "allocateUpcallStub", CC "(" UPCALL ")J",                 FN_PTR(NI_AllocateUpcallStub)},
   {CC "freeUpcallStub",     CC "(J)V",                FN_PTR(NI_FreeUpcallStub)},
-  {CC "getUpcallHandler",  CC "(J)Ljdk/internal/nicl/UpcallHandler;",   FN_PTR(NI_GetUpcallHandler)}
+  {CC "getUpcallHandler",  CC "(J)" UPCALL,   FN_PTR(NI_GetUpcallHandler)}
 };
 
 /**
@@ -91,7 +92,7 @@ JVM_ENTRY(void, JVM_RegisterNativeInvokerMethods(JNIEnv *env, jclass NI_class)) 
 
     int status = env->RegisterNatives(NI_class, NI_methods, sizeof(NI_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.nicl.NativeInvoker natives");
+              "register jdk.internal.foreign.NativeInvoker natives");
   }
 }
 JVM_END

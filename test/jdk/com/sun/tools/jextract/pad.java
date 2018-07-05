@@ -23,9 +23,9 @@
 
 package com.acme;
 
-import java.nicl.metadata.NativeHeader;
-import java.nicl.metadata.NativeStruct;
-import java.nicl.types.Struct;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeStruct;
+import java.foreign.memory.Struct;
 
 @NativeHeader(path="pad.h")
 public interface pad {
@@ -48,22 +48,22 @@ public interface pad {
     interface PaddyStruct extends Struct<PaddyStruct> {
         public abstract byte c1$get();
         public abstract void c1$set(byte c1);
-        public abstract java.nicl.types.Pointer<java.lang.Byte> c1$ptr();
+        public abstract java.foreign.memory.Pointer<java.lang.Byte> c1$ptr();
         public abstract long l$get();
         public abstract void l$set(long l);
-        public abstract java.nicl.types.Pointer<java.lang.Long> l$ptr();
+        public abstract java.foreign.memory.Pointer<java.lang.Long> l$ptr();
         public abstract byte x1$get();
         public abstract void x1$set(byte x1);
-        public abstract java.nicl.types.Pointer<java.lang.Byte> x1$ptr();
+        public abstract java.foreign.memory.Pointer<java.lang.Byte> x1$ptr();
         public abstract double y1$get();
         public abstract void y1$set(double y1);
-        public abstract java.nicl.types.Pointer<java.lang.Double> y1$ptr();
+        public abstract java.foreign.memory.Pointer<java.lang.Double> y1$ptr();
         public abstract anon$pad_h$1190 p2$get();
         public abstract void p2$set(anon$pad_h$1190 p2);
-        public abstract java.nicl.types.Pointer<anon$pad_h$1190> p2$ptr();
+        public abstract java.foreign.memory.Pointer<anon$pad_h$1190> p2$ptr();
         public abstract float f1$get();
         public abstract void f1$set(float f1);
-        public abstract java.nicl.types.Pointer<java.lang.Float> f1$ptr();
+        public abstract java.foreign.memory.Pointer<java.lang.Float> f1$ptr();
     }
 
     @NativeStruct(
@@ -73,15 +73,15 @@ public interface pad {
                 "u8(get=z2$get)(set=z2$set)(ptr=z2$ptr)" +
                 "x24" +
             "](anon$pad_h$1190)")
-    interface anon$pad_h$1190 extends java.nicl.types.Struct<anon$pad_h$1190> {
+    interface anon$pad_h$1190 extends java.foreign.memory.Struct<anon$pad_h$1190> {
         public abstract double x2$get();
         public abstract void x2$set(double x2);
-        public abstract java.nicl.types.Pointer<java.lang.Double> x2$ptr();
+        public abstract java.foreign.memory.Pointer<java.lang.Double> x2$ptr();
         public abstract float y2$get();
         public abstract void y2$set(float y2);
-        public abstract java.nicl.types.Pointer<java.lang.Float> y2$ptr();
+        public abstract java.foreign.memory.Pointer<java.lang.Float> y2$ptr();
         public abstract byte z2$get();
         public abstract void z2$set(byte z2);
-        public abstract java.nicl.types.Pointer<java.lang.Byte> z2$ptr();
+        public abstract java.foreign.memory.Pointer<java.lang.Byte> z2$ptr();
     }
 }

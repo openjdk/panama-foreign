@@ -22,10 +22,9 @@
  */
 package jdk.internal.clang;
 
-import java.nicl.NativeTypes;
-import java.nicl.Scope;
-import java.nicl.types.LayoutType;
-import java.nicl.types.Pointer;
+import java.foreign.NativeTypes;
+import java.foreign.Scope;
+import java.foreign.memory.Pointer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 

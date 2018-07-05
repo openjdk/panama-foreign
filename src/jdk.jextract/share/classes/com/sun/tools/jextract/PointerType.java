@@ -22,7 +22,7 @@
  */
 package com.sun.tools.jextract;
 
-import java.nicl.types.Pointer;
+import java.foreign.memory.Pointer;
 
 public final class PointerType implements JType {
     final JType referenced;

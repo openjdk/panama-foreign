@@ -22,7 +22,7 @@
  */
 package jdk.internal.clang;
 
-import java.nicl.types.Pointer;
+import java.foreign.memory.Pointer;
 
 public class Diagnostic {
     final Pointer<Void> ptr;

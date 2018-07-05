@@ -23,7 +23,7 @@
 package com.sun.tools.jextract;
 
 import jdk.internal.clang.*;
-import jdk.internal.nicl.LibrariesHelper;
+import jdk.internal.foreign.LibrariesHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +31,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
-import java.nicl.Library;
+import java.foreign.Library;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;

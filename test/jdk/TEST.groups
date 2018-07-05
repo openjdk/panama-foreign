@@ -108,7 +108,7 @@ jdk_lang = \
     jdk/internal/math \
     jdk/modules \
     vm \
-    :jdk_nicl
+    :jdk_foreign
 
 # All of the java.util package
 jdk_util = \
@@ -344,8 +344,8 @@ jdk_svc = \
     :jdk_jfr \
     :svc_tools
 
-jdk_nicl = \
-    java/nicl \
+jdk_foreign = \
+    java/foreign \
     com/sun/tools/jextract
 
 #############################

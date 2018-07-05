@@ -1,11 +1,11 @@
 package com.acme;
 
-import java.nicl.metadata.NativeHeader;
-import java.nicl.metadata.NativeLocation;
-import java.nicl.metadata.NativeStruct;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeLocation;
+import java.foreign.annotations.NativeStruct;
 import java.math.BigDecimal;
-import java.nicl.types.Pointer;
-import java.nicl.types.Struct;
+import java.foreign.memory.Pointer;
+import java.foreign.memory.Struct;
 
 /**
  * This test is platform dependent, as the C type size may vary on platform.
