@@ -343,7 +343,12 @@ final class AsmCodeFactory {
         cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
 
         // add the method
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, "fn",
+
+        int flags = ACC_PUBLIC | ACC_ABSTRACT;
+        if (fn.isVarArgs) {
+            flags |= ACC_VARARGS;
+        }
+        MethodVisitor mv = cw.visitMethod(flags, "fn",
                 fn.getDescriptor(), fn.getSignature(), null);
         mv.visitEnd();
         // Write class

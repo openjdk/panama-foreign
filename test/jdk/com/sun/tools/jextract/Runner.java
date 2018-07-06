@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.foreign.annotations.NativeCallback;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeLocation;
 import java.foreign.annotations.NativeStruct;
@@ -175,6 +176,7 @@ public class Runner {
                 System.out.println("Missing " + sig);
                 ems.put(m.toGenericString(), m);
             } else {
+                assertEquals(ma.isVarArgs(), m.isVarArgs());
                 try {
                     verifyMethodAnnotation(ma, m);
                 } catch (Throwable t) {
@@ -198,9 +200,16 @@ public class Runner {
             assertTrue(actual.getName().contains("$"));
             assertTrue(expected.isMemberClass());
             assertTrue(actual.isMemberClass());
-            NativeStruct ant = actual.getAnnotation(NativeStruct.class);
-            assertNotNull(ant);
-            assertEquals(ant, expected.getAnnotation(NativeStruct.class));
+            if (actual.isAnnotationPresent(NativeStruct.class)) {
+                NativeStruct ant = actual.getAnnotation(NativeStruct.class);
+                assertNotNull(ant);
+                assertEquals(ant, expected.getAnnotation(NativeStruct.class));
+            } else if (actual.isAnnotationPresent(NativeCallback.class)) {
+                NativeCallback cb = actual.getAnnotation(NativeCallback.class);
+                assertNotNull(cb);
+                assertEquals(cb, expected.getAnnotation(NativeCallback.class));
+            }
+
             if (expected.isAnnotationPresent(NativeLocation.class)) {
                 NativeLocation loc = actual.getAnnotation(NativeLocation.class);
                 assertNotNull(loc);
@@ -310,7 +319,8 @@ public class Runner {
             { "recursive.h", "com.acme", new String[] { "recursive.java" }},
             { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct.java" }},
             { "pad.h", "com.acme", new String[] { "pad.java" }},
-            { "bitfields.h", "com.acme", new String[] { "bitfields.java" }}
+            { "bitfields.h", "com.acme", new String[] { "bitfields.java" }},
+            { "globalFuncPointer.h", "com.acme", new String[] { "globalFuncPointer.java" }}
         };
     }
 }

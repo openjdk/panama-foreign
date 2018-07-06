@@ -449,4 +449,17 @@ public class JextractToolProviderTest extends JextractToolRunner {
         checkSuccess(null, "-o", stdargincJar.toString(), stdargincH.toString());
         deleteFile(stdargincJar);
     }
+
+    @Test
+    public void testGlobalFuncPointerCallback() {
+        Path globalFuncPointerJar = getOutputFilePath("globalFuncPointer.jar");
+        deleteFile(globalFuncPointerJar);
+        Path globalFuncPointerH = getInputFilePath("globalFuncPointer.h");
+        checkSuccess(null, "-o", globalFuncPointerJar.toString(), globalFuncPointerH.toString());
+        Class<?> callbackCls = loadClass("globalFuncPointer$FI1", globalFuncPointerJar);
+        Method callback = findFirstMethod(callbackCls, "fn");
+        assertNotNull(callback);
+        assertTrue(callback.isVarArgs());
+        deleteFile(globalFuncPointerJar);
+    }
 }
