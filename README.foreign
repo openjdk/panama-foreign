@@ -1,5 +1,5 @@
-README.nicl
-===========
+README.foreign
+==============
 
 Build prerequisite:
 
@@ -32,12 +32,4 @@ Run:
 
 The working scenario is basically run jextract on a C header file should to generate a jar file contains the Java interfaces. Then in java code, simply bind the interface to the library to obtain an instance and then that should enable the native call.
 
-Look into src/demo/share/panama for some examples.
-
-
-
-Caveat:
-
-libclang used by jextract doesn't have same default search path as setup for clang compiler, we are looking into a programmatic solution. For now, developer may need to provide system header location via -I flag.
-
-The default search path can be found by looking into output of `echo | clang -E -Wp,-v -` command.
+Look into test/jdk/java/foreign for some examples.
