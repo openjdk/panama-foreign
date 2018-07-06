@@ -278,7 +278,7 @@ public final class Context {
                 .collect(Collectors.toList());
     }
 
-    void processCursor(Cursor c, HeaderFile main, Function<HeaderFile, CodeFactory> fn) {
+    void processCursor(Cursor c, HeaderFile main, Function<HeaderFile, AsmCodeFactory> fn) {
         SourceLocation loc = c.getSourceLocation();
         if (loc == null) {
             logger.info(() -> "Ignore Cursor " + c.spelling() + "@" + c.USR() + " has no SourceLocation");
@@ -328,7 +328,7 @@ public final class Context {
         parse(header -> new AsmCodeFactory(this, header));
     }
 
-    public void parse(Function<HeaderFile, CodeFactory> fn) {
+    public void parse(Function<HeaderFile, AsmCodeFactory> fn) {
         if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
             Library[] libs = LibrariesHelper.loadLibraries(MethodHandles.lookup(),
                 linkCheckPaths.toArray(new String[0]),
@@ -408,18 +408,18 @@ public final class Context {
         });
     }
 
-    private Map<String, List<CodeFactory>> getPkgCfMap() {
-        final Map<String, List<CodeFactory>> mapPkgCf = new HashMap<>();
+    private Map<String, List<AsmCodeFactory>> getPkgCfMap() {
+        final Map<String, List<AsmCodeFactory>> mapPkgCf = new HashMap<>();
         // Build the pkg to CodeFactory map
         headerMap.values().forEach(header -> {
-            CodeFactory cf = header.getCodeFactory();
+            AsmCodeFactory cf = header.getCodeFactory();
             String pkg = header.pkgName;
             logger.config(() -> "File " + header + " is in package: " + pkg);
             if (cf == null) {
                 logger.config(() -> "File " + header + " code generation is not activated!");
                 return;
             }
-            List<CodeFactory> l = mapPkgCf.computeIfAbsent(pkg, k -> new ArrayList<>());
+            List<AsmCodeFactory> l = mapPkgCf.computeIfAbsent(pkg, k -> new ArrayList<>());
             l.add(cf);
             logger.config(() -> "Add cf " + cf + " to pkg " + pkg + ", size is now " + l.size());
         });
@@ -428,7 +428,7 @@ public final class Context {
 
     public Map<String, byte[]> collectClasses(String... pkgs) {
         final Map<String, byte[]> rv = new HashMap<>();
-        final Map<String, List<CodeFactory>> mapPkgCf = getPkgCfMap();
+        final Map<String, List<AsmCodeFactory>> mapPkgCf = getPkgCfMap();
         for (String pkg_name : pkgs) {
             mapPkgCf.getOrDefault(pkg_name, Collections.emptyList())
                     .forEach(cf -> rv.putAll(cf.collect()));
@@ -457,7 +457,7 @@ public final class Context {
         }
     }
 
-    private void writeJar(CodeFactory cf, JarOutputStream jar) {
+    private void writeJar(AsmCodeFactory cf, JarOutputStream jar) {
         cf.collect().entrySet().stream().forEach(e -> {
             try {
                 String path = e.getKey().replace('.', File.separatorChar) + ".class";
@@ -472,7 +472,7 @@ public final class Context {
     }
 
     public void collectJarFile(final JarOutputStream jos, String... pkgs) {
-        final Map<String, List<CodeFactory>> mapPkgCf = getPkgCfMap();
+        final Map<String, List<AsmCodeFactory>> mapPkgCf = getPkgCfMap();
 
         for (String pkg_name : pkgs) {
             // convert '.' to '/' to use as a path

@@ -43,7 +43,7 @@ public final class HeaderFile {
     private final TypeDictionary dict;
     // The top header file cause this file to be parsed
     private HeaderFile main;
-    private CodeFactory cf;
+    private AsmCodeFactory cf;
     List<String> libraries; // immutable
     List<String> libraryPaths; // immutable
 
@@ -66,7 +66,7 @@ public final class HeaderFile {
         this.libraryPaths = Collections.unmodifiableList(libraryPaths);
     }
 
-    CodeFactory getCodeFactory() {
+    AsmCodeFactory getCodeFactory() {
         return cf;
     }
 
@@ -75,7 +75,7 @@ public final class HeaderFile {
      * This function should only be called once to turn on code generation and before process any cursor.
      * @param cf The CodeFactory used to generate code
      */
-    void useCodeFactory(CodeFactory cf) {
+    void useCodeFactory(AsmCodeFactory cf) {
         if (null != this.cf) {
             logger.config(() -> "CodeFactory had been initialized for " + path);
             // Diagnosis code

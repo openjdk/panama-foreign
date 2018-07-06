@@ -63,7 +63,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
  * Scan a header file and generate classes for entities defined in that header
  * file.
  */
-final class AsmCodeFactory extends CodeFactory {
+final class AsmCodeFactory {
     private static final String ANNOTATION_PKG_PREFIX = "Ljava/foreign/annotations/";
     private static final String NATIVE_CALLBACK = ANNOTATION_PKG_PREFIX + "NativeCallback;";
     private static final String NATIVE_HEADER = ANNOTATION_PKG_PREFIX + "NativeHeader;";
@@ -423,8 +423,7 @@ final class AsmCodeFactory extends CodeFactory {
         mv.visitEnd();
     }
 
-    @Override
-    protected CodeFactory addType(JType jt, Cursor cursor) {
+    protected AsmCodeFactory addType(JType jt, Cursor cursor) {
         JType2 jt2 = null;
         if (jt instanceof JType2) {
             jt2 = (JType2) jt;
@@ -484,7 +483,7 @@ final class AsmCodeFactory extends CodeFactory {
         return this;
     }
 
-    CodeFactory generateMacros() {
+    AsmCodeFactory generateMacros() {
         for (MacroParser.Macro macro : ctx.macros(owner)) {
             if (macro.isConstantMacro()) {
                 logger.fine(() -> "Adding macro " + macro.name());
@@ -532,7 +531,6 @@ final class AsmCodeFactory extends CodeFactory {
         return this;
     }
 
-    @Override
     protected synchronized void produce() {
         if (built) {
             throw new IllegalStateException("Produce is called multiple times");
@@ -546,7 +544,6 @@ final class AsmCodeFactory extends CodeFactory {
         }
     }
 
-    @Override
     protected Map<String, byte[]> collect() {
         // Ensure classes are produced
         if (!built) produce();
