@@ -258,7 +258,7 @@ public final class HeaderFile {
                 jt = doRecord(t);
                 break;
             case Pointer:
-                Type pointee = t.getPointeeType();
+                Type pointee = t.getPointeeType().canonicalType();
                 jt2 = (JType2) globalLookup(pointee);
                 jt = jt2.getDelegate();
                 if (jt instanceof JType.Function) {

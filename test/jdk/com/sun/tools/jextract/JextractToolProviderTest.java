@@ -462,4 +462,18 @@ public class JextractToolProviderTest extends JextractToolRunner {
         assertTrue(callback.isVarArgs());
         deleteFile(globalFuncPointerJar);
     }
+
+    @Test
+    public void testFuncPtrTypedef() {
+        Path funcPtrTypedefJar = getOutputFilePath("funcPtrTypedef.jar");
+        deleteFile(funcPtrTypedefJar);
+        Path funcPtrTypedefH = getInputFilePath("funcPtrTypedef.h");
+        checkSuccess(null, "-o", funcPtrTypedefJar.toString(), funcPtrTypedefH.toString());
+        // force parsing of class, method
+        Class<?> headerCls = loadClass("funcPtrTypedef", funcPtrTypedefJar);
+        Method getter = findFirstMethod(headerCls, "my_function$get");
+        assertNotNull(getter);
+        assertNotNull(getter.getGenericParameterTypes());
+        deleteFile(funcPtrTypedefJar);
+    }
 }
