@@ -157,6 +157,10 @@ public class BoundedPointer<X> implements Pointer<X> {
         return new BoundedPointer<>(NativeTypes.VOID, new BoundedMemoryRegion(offset, Long.MAX_VALUE, BoundedMemoryRegion.MODE_R, scope));
     }
 
+    public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset, int mode) {
+        return new BoundedPointer<>(NativeTypes.VOID, new BoundedMemoryRegion(offset, Long.MAX_VALUE, mode, scope));
+    }
+
     public Scope scope() {
         return region.scope();
     }

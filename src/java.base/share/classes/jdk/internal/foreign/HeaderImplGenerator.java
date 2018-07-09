@@ -22,9 +22,12 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 
+import java.foreign.Scope;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -47,9 +50,13 @@ class HeaderImplGenerator extends BinderClassGenerator {
     // dictionary from method name to member info
     final Map<String, MemberInfo<?>> nameToInfo = new HashMap<>();
 
-    HeaderImplGenerator(Class<?> hostClass, String implClassName, Class<?> c, SymbolLookup lookup) {
+    // global scope for this library
+    private final Scope libScope;
+
+    HeaderImplGenerator(Class<?> hostClass, String implClassName, Class<?> c, SymbolLookup lookup, Scope libScope) {
         super(hostClass, implClassName, new Class<?>[] { c });
         this.lookup = lookup;
+        this.libScope = libScope;
     }
 
     abstract class MemberInfo<D> {
@@ -140,8 +147,10 @@ class HeaderImplGenerator extends BinderClassGenerator {
         Pointer<?> p;
 
         try {
-            p = lookup.lookup(info.symbolName).getAddress().cast(lt);
-        } catch (NoSuchMethodException e) {
+            p = BoundedPointer.createNativeVoidPointer(libScope,
+                    lookup.lookup(info.symbolName).getAddress().addr(), BoundedMemoryRegion.MODE_RW).
+                    cast(lt).limit(1);
+        } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new IllegalStateException(e);
         }
 

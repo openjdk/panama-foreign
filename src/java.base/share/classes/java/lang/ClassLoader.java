@@ -25,6 +25,7 @@
 
 package java.lang;
 
+import java.foreign.memory.Pointer;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -2426,7 +2427,20 @@ public abstract class ClassLoader {
             if (0 == addr) {
                 throw new NoSuchMethodException("Cannot find symbol " + name + " in library " + this.name);
             }
-            return new Symbol(Objects.requireNonNull(name), BoundedPointer.createNativeVoidPointer(findEntry(name)));
+            return new Symbol() {
+
+                Pointer<?> addr = BoundedPointer.createNativeVoidPointer(findEntry(name));
+
+                @Override
+                public String getName() {
+                    return name;
+                }
+
+                @Override
+                public Pointer<?> getAddress() {
+                    return addr;
+                }
+            };
         }
 
         /*

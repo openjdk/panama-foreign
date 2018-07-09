@@ -26,10 +26,12 @@ import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.org.objectweb.asm.Type;
 
+import java.foreign.Scope;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.foreign.Library;
 import java.foreign.Libraries;
 import java.foreign.annotations.NativeHeader;
+import java.lang.ref.Cleaner;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -115,6 +117,9 @@ public final class LibrariesHelper {
     // This is used to pass the current SymbolLookup object to the header computeValue method below.
     private static final ThreadLocal<SymbolLookup> curSymLookup = new ThreadLocal<>();
 
+    // This is used to clear global scopes when libraries are unloaded
+    private static final Cleaner cleaner = Cleaner.create();
+
     // Cache: Header interface Class -> Impl Class.
     private static final ClassValue<Class<?>> HEADER_IMPLEMENTATIONS = new ClassValue<>() {
         @Override
@@ -122,8 +127,11 @@ public final class LibrariesHelper {
             assert c.isAnnotationPresent(NativeHeader.class);
             assert curSymLookup.get() != null;
             String implName = generateImplName(c);
-            BinderClassGenerator generator = new HeaderImplGenerator(c, implName, c, curSymLookup.get());
-            return generateImpl(c, generator);
+            Scope libScope = Scope.newNativeScope();
+            BinderClassGenerator generator = new HeaderImplGenerator(c, implName, c, curSymLookup.get(), libScope);
+            Class<?> lib = generateImpl(c, generator);
+            cleaner.register(lib, libScope::close);
+            return lib;
         }
     };
 

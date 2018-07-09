@@ -23,26 +23,34 @@
 package java.foreign;
 
 import java.foreign.memory.Pointer;
-import java.util.Objects;
 
+/**
+ * A native library. Native libraries expose lookup operation for searching symbols, see {@link Library#lookup(String)}.
+ */
 public interface Library {
-    public static class Symbol {
-        private final String name;
-        private final Pointer<?> address;
 
-        public Symbol(String name, Pointer<?> address) {
-            this.name = Objects.requireNonNull(name);
-            this.address = Objects.requireNonNull(address);
-        }
+    /**
+     * A native library symbol.
+     */
+    interface Symbol {
+        /**
+         * The library symbol's name.
+         * @return the library symbol's name.
+         */
+        String getName();
 
-        public String getName() {
-            return name;
-        }
-    
-        public Pointer<?> getAddress() {
-            return address;
-        }
+        /**
+         * The library symbol's address.
+         * @return the library symbol's address.
+         */
+        Pointer<?> getAddress();
     }
 
+    /**
+     * Lookups a symbol with given name in this library.
+     * @param name the symbol name.
+     * @return the library symbol (if any)
+     * @throws NoSuchMethodException if no symbol with given name could be found.
+     */
     Symbol lookup(String name) throws NoSuchMethodException;
 }

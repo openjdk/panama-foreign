@@ -195,6 +195,17 @@ public class GlobalVariable {
         assertEquals(47, i.global_struct$ptr().get().i$get());
     }
 
+    public void testOutOfBounds() {
+        assertThrows(() -> i.global_boolean$ptr().offset(1));
+        assertThrows(() -> i.global_i8$ptr().offset(1));
+        assertThrows(() -> i.global_i16$ptr().offset(1));
+        assertThrows(() -> i.global_i32$ptr().offset(1));
+        assertThrows(() -> i.global_i64$ptr().offset(1));
+        assertThrows(() -> i.global_f32$ptr().offset(1));
+        assertThrows(() -> i.global_d64$ptr().offset(1));
+        assertThrows(() -> i.global_struct$ptr().offset(1));
+    }
+
 
     static void assertEquals(long expected, long actual) {
         if (expected != actual) {
@@ -226,6 +237,15 @@ public class GlobalVariable {
         }
     }
 
+    static void assertThrows(Runnable action) {
+        try {
+            action.run();
+            throw new AssertionError("Expected exception");
+        } catch (Throwable t) {
+            //ok
+        }
+    }
+
     public static void main(String[] args) {
         GlobalVariable t = new GlobalVariable();
 
@@ -237,5 +257,6 @@ public class GlobalVariable {
         t.testf32();
         t.testd64();
         t.teststruct();
+        t.testOutOfBounds();
     }
 }
