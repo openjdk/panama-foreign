@@ -441,13 +441,18 @@ public class JextractToolProviderTest extends JextractToolRunner {
         }
     }
 
+    private void testBuiltinInclude(String name) {
+        Path fileJar = getOutputFilePath(name + "inc.jar");
+        deleteFile(fileJar);
+        Path fileH = getInputFilePath(name + "inc.h");
+        checkSuccess(null, "-o", fileJar.toString(), fileH.toString());
+        deleteFile(fileJar);
+    }
+
     @Test
     public void testBuiltinHeader() {
-        Path stdargincJar = getOutputFilePath("stdarginc.jar");
-        deleteFile(stdargincJar);
-        Path stdargincH = getInputFilePath("stdarginc.h");
-        checkSuccess(null, "-o", stdargincJar.toString(), stdargincH.toString());
-        deleteFile(stdargincJar);
+        testBuiltinInclude("stdarg");
+        testBuiltinInclude("stdbool");
     }
 
     @Test
