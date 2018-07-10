@@ -481,4 +481,16 @@ public class JextractToolProviderTest extends JextractToolRunner {
         assertNotNull(getter.getGenericParameterTypes());
         deleteFile(funcPtrTypedefJar);
     }
+
+    @Test
+    public void testDuplicatedecls() {
+        Path duplicatedeclsJar = getOutputFilePath("duplicatedecls.jar");
+        deleteFile(duplicatedeclsJar);
+        Path duplicatedeclsH = getInputFilePath("duplicatedecls.h");
+        checkSuccess(null, "-o", duplicatedeclsJar.toString(), duplicatedeclsH.toString());
+        // load the class to make sure no duplicate methods generated in it
+        Class<?> headerCls = loadClass("duplicatedecls", duplicatedeclsJar);
+        assertNotNull(headerCls);
+        deleteFile(duplicatedeclsJar);
+    }
 }

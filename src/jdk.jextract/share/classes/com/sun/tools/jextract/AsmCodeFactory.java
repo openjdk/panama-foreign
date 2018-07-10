@@ -29,8 +29,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 import jdk.internal.clang.Cursor;
@@ -72,6 +74,9 @@ final class AsmCodeFactory {
 
     private final Context ctx;
     private final ClassWriter global_cw;
+    // to avoid duplicate generation of methods, field accessors
+    private final Set<String> global_methods = new HashSet<>();
+    private final Set<String> global_fields = new HashSet<>();
     private final String internal_name;
     private final HeaderFile owner;
     private final Map<String, byte[]> types;
@@ -156,6 +161,12 @@ final class AsmCodeFactory {
         Type t = c.type();
         JType jt = owner.globalLookup(t);
         assert (jt != null);
+        if (cw == global_cw) {
+            String uniqueName = fieldName + "." + jt.getDescriptor();
+            if (! global_fields.add(uniqueName)) {
+                return; // added already
+            }
+        }
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$get",
                 "()" + jt.getDescriptor(), "()" + jt.getSignature(), null);
 
@@ -372,6 +383,10 @@ final class AsmCodeFactory {
     }
 
     private void addMethod(Cursor dcl, JType.Function fn) {
+        String uniqueName = dcl.spelling() + "." + fn.getDescriptor();
+        if (! global_methods.add(uniqueName)) {
+            return; // added already
+        }
         logger.fine(() -> "Add method: " + fn.getSignature());
         int flags = ACC_PUBLIC | ACC_ABSTRACT;
         if (fn.isVarArgs) {
