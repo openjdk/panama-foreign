@@ -26,6 +26,7 @@
 package jdk.internal.foreign.memory;
 
 import jdk.internal.foreign.LibrariesHelper;
+import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.UpcallHandler;
 import jdk.internal.foreign.Util;
 
@@ -375,7 +376,9 @@ public final class References {
                     //shortcut - direct set
                     ptr = (Pointer<?>)funcIntfInstance.resource().get();
                 } else {
-                    ptr = UpcallHandler.makeFactory(carrier).buildHandler(funcIntfInstance).getNativeEntryPoint();
+                    UpcallHandler handler = UpcallHandler.makeFactory(carrier).buildHandler(funcIntfInstance);
+                    ((ScopeImpl)((BoundedPointer<?>)pointer).scope()).addStub(handler);
+                    ptr = handler.getNativeEntryPoint();
                 }
                 ofLong.setter().invokeExact(pointer, ptr.addr());
             } catch (Throwable ex) {

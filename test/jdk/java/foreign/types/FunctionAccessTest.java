@@ -56,6 +56,7 @@ public class FunctionAccessTest {
             Resource<?> resource = func.resource().get();
             //do a roundtrip
             m.setFunction(func);
+            System.gc();
             func = m.getFunction();
 
             //check resource is still there
@@ -96,6 +97,7 @@ public class FunctionAccessTest {
         globalFunc gf = Libraries.bind(globalFunc.class, lib);
         assertEquals(gf.fp().f(8), 64);
         gf.setFp(x -> x / 2);
+        System.gc();
         assertEquals(gf.fp().f(8), 4);
     }
 

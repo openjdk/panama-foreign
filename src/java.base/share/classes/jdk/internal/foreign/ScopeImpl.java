@@ -36,10 +36,13 @@ import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class ScopeImpl implements Scope {
 
     private boolean isAlive = true;
+
+    private List<UpcallHandler> stubs = new ArrayList<>();
 
     @Override
     public void checkAlive() {
@@ -90,6 +93,11 @@ public abstract class ScopeImpl implements Scope {
     @Override
     public void close() {
         isAlive = false;
+        stubs = null;
+    }
+
+    public void addStub(UpcallHandler upcallHandler) {
+        stubs.add(upcallHandler);
     }
 
     public static class NativeScope extends ScopeImpl {

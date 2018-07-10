@@ -166,10 +166,7 @@ class CallbackImplGenerator extends BinderClassGenerator {
 
     static long checkPointer(Pointer<?> ptr) throws Throwable {
         Scope s = ((BoundedPointer<?>)ptr).scope();
-        if (s != null) {
-            //globals don't have scope
-            s.checkAlive();
-        }
+        s.checkAlive();
         return ptr.addr();
     }
 }
