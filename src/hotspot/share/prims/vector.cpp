@@ -26,6 +26,7 @@
 #include "classfile/javaClasses.hpp"
 #include "oops/oop.inline.hpp"
 #include "jni.h"
+#include "memory/resourceArea.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "utilities/exceptions.hpp"
