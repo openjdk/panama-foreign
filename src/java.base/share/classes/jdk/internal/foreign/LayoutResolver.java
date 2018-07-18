@@ -46,8 +46,9 @@ import java.util.stream.Stream;
  * will fail).
  */
 public final class LayoutResolver {
-
-    private LayoutResolver() { }
+    private LayoutResolver(Class<?> root) {
+        addClass(root);
+    }
 
     private final Map<String, Group> descriptorToGroup = new HashMap<>();
     private final Map<String, Group> nameToGroup = new HashMap<>();
@@ -59,7 +60,7 @@ public final class LayoutResolver {
     private static final ClassValue<LayoutResolver> resolvers = new ClassValue<>() {
         @Override
         protected LayoutResolver computeValue(Class<?> c) {
-            return new LayoutResolver();
+            return new LayoutResolver(c);
         }
     };
 
@@ -68,6 +69,18 @@ public final class LayoutResolver {
             c = c.getEnclosingClass();
         }
         return resolvers.get(c);
+    }
+
+    private void addClass(Class<?> enclosing) {
+        Class<?>[] inner = enclosing.getClasses();
+
+        for (Class<?> c : inner) {
+            if (Util.isCStruct(c)) {
+                addCStruct(c);
+            } else {
+                addClass(c);
+            }
+        }
     }
 
     void scanType(Type t) {
@@ -81,15 +94,14 @@ public final class LayoutResolver {
             if (cl.isArray()) {
                 scanType(cl.getComponentType());
             } else if (Util.isCStruct(cl)) {
-                String layout = cl.getAnnotation(NativeStruct.class).value();
-                Group g = descriptorToGroup.containsKey(layout)? descriptorToGroup.get(layout) : (Group)Layout.of(layout);
-                descriptorToGroup.put(layout, g);
-                addRoot(g);
+                addCStruct(cl);
             }
         }
     }
     //where
-    private void addRoot(Group group) {
+    private void addCStruct(Class<?> cl) {
+        String layout = cl.getAnnotation(NativeStruct.class).value();
+        Group group = descriptorToGroup.computeIfAbsent(layout, l -> (Group) Layout.of(l));
         group.name().ifPresent(name -> {
             if (name.isEmpty()) {
                 throw new IllegalArgumentException("name cannot be empty");
@@ -106,7 +118,7 @@ public final class LayoutResolver {
         scanType(m.getGenericReturnType());
     }
 
-    Function resolve(Function f) {
+    public Function resolve(Function f) {
         if (!f.isPartial()) {
             return f;
         } else {
@@ -119,23 +131,35 @@ public final class LayoutResolver {
         }
     }
 
-    Layout resolve(Layout l) {
+    public Layout resolve(Layout l) {
         if (!l.isPartial()) {
             return l;
         } else {
+            Map<String, String> annotations = l.annotations();
+            Layout rv;
+
             if (l instanceof Unresolved) {
-                return resolveRoot(l.name().get()).orElseThrow(IllegalStateException::new);
+                rv = resolveRoot(l.name().get()).orElseThrow(IllegalStateException::new);
+                if (rv.isPartial()) {
+                    return resolve(rv);
+                }
             } else if (l instanceof Group) {
                 Group g = (Group)l;
                 Layout[] newElems = g.elements().stream()
                         .map(this::resolve)
                         .toArray(Layout[]::new);
-                return g.kind() == Kind.STRUCT ?
+                rv = g.kind() == Kind.STRUCT ?
                         Group.struct(newElems) :
                         Group.union(newElems);
             } else {
                 return l;
             }
+
+            // Put back original annotations
+            for (Map.Entry<String, String> e : annotations.entrySet()) {
+                rv = rv.withAnnotation(e.getKey(), e.getValue());
+            }
+            return rv;
         }
     }
 }

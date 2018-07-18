@@ -46,6 +46,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         privilegedGetProperty("jdk.internal.foreign.abi.sysv.x64.DEBUG"));
 
     // The AVX 512 enlightened ABI says "eight eightbytes"
+    // Although AMD64 0.99.6 states 4 eightbytes
     private static final int MAX_AGGREGATE_REGS_SIZE = 8;
 
     public CallingSequenceBuilderImpl(Argument returned, ArrayList<Argument> arguments) {
@@ -190,11 +191,6 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
     // TODO: handle zero length arrays
     // TODO: Handle nested structs (and primitives)
     private ArrayList<ArgumentClass> classifyStructType(Group type, boolean named) {
-        if (type.kind() == Kind.UNION) {
-            // TODO: how to deal with union?
-            throw new UnsupportedOperationException("Union is not yet supported.");
-        }
-
         SystemABI abi = SystemABI.getInstance();
 
         long nWords = Util.alignUp((type.bitsSize() / 8), 8) / 8;
@@ -208,14 +204,19 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
             classes.add(ArgumentClass.NO_CLASS);
         }
 
-        // TODO: handle zero length arrays here
-
         long offset = 0;
         final int count = type.elements().size();
         for (int idx = 0; idx < count; idx++) {
             Layout t = type.elements().get(idx);
             if (t instanceof Padding) {
                 continue;
+            }
+            // ignore zero-length array for now
+            // TODO: handle zero length arrays here
+            if (t instanceof Sequence) {
+                if (((Sequence) t).elementsSize() == 0) {
+                    continue;
+                }
             }
             offset = abi.align(t, false, offset);
             ArrayList<ArgumentClass> subclasses = classifyType(t, named);
@@ -229,7 +230,10 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                 classes.set(i + pos, newClass);
             }
 
-            offset += t.bitsSize() / 8;
+            // TODO: validate union strategy is sound
+            if (type.kind() != Kind.UNION) {
+                offset += t.bitsSize() / 8;
+            }
         }
 
         for (int i = 0; i < classes.size(); i++) {

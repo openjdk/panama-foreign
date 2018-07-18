@@ -21,25 +21,33 @@
  * questions.
  */
 
+import java.foreign.NativeTypes;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeStruct;
+import java.foreign.layout.Function;
+import java.foreign.layout.Group;
+import java.foreign.layout.Layout;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
-import java.foreign.layout.Function;
-import java.foreign.annotations.NativeHeader;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import jdk.internal.foreign.LayoutResolver;
 import jdk.internal.foreign.memory.DescriptorParser;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 /*
  * @test
- * @modules jdk.jextract java.base/jdk.internal.foreign.memory
- * @build StructTest
+ * @modules jdk.jextract java.base/jdk.internal.foreign.memory java.base/jdk.internal.foreign
+ * @library ..
+ * @build JextractToolRunner
  * @run testng StructTest
  */
 public class StructTest extends JextractToolRunner {
@@ -184,6 +192,43 @@ public class StructTest extends JextractToolRunner {
         assertEquals(fn.toString(), "(u64:i8)u64:i8");
     }
 
+    private void verifyTypedefAnonymous(Class<?> cls) {
+        NativeStruct ns = cls.getAnnotation(NativeStruct.class);
+
+        Layout layout = Layout.of(ns.value());
+        assertTrue(layout.isPartial());
+        System.out.println("Unresolved layout = " + layout.toString());
+
+        LayoutResolver resolver = LayoutResolver.get(cls);
+        layout = resolver.resolve(layout);
+        assertFalse(layout.isPartial());
+
+        assertTrue(layout instanceof Group);
+        Group g = (Group) layout;
+        System.out.println("Resolved layout   = " + g.toString());
+        assertEquals(g.bitsSize(), 8 * 4 * NativeTypes.INT.bytesSize());
+    }
+
+    private void verifyGetAnonymous(Class<?> header) {
+        NativeHeader nh = header.getAnnotation(NativeHeader.class);
+        Map<String, Object> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
+        Method m = findFirstMethod(header, "getAnonymous");
+        assertNotNull(m);
+
+        LayoutResolver resolver = LayoutResolver.get(header);
+        Function fn = (Function) map.get("getAnonymous");
+        assertTrue(fn.isPartial());
+        System.out.println("Function unresolved  = " + fn.toString());
+        fn = resolver.resolve(fn);
+        System.out.println("Function resolved as = " + fn.toString());
+        assertFalse(fn.isPartial());
+
+        List<Layout> args = fn.argumentLayouts();
+        Group g = (Group) args.get(0);
+        assertFalse(g.isPartial());
+        assertEquals(g.bitsSize(), NativeTypes.VOID.pointer().bytesSize() * 8);
+    }
+
     private void verifyClass(Class<?> cls) {
         Class<?>[] clz = cls.getDeclaredClasses();
         assertEquals(clz.length, NumberOfInnerClasses);
@@ -193,8 +238,10 @@ public class StructTest extends JextractToolRunner {
         verifyFunctionWithVoidPointer(cls);
         verifyFunctionPointer(findClass(clz,"FunctionPointer"));
         verifyIncompleteArray(findClass(clz, "IncompleteArray"));
+        verifyTypedefAnonymous(findClass(clz, "TypedefAnonymous"));
         checkMethod(cls, "voidArguments", void.class);
         verifyUndefinedStructFunctions(cls);
+        verifyGetAnonymous(cls);
     }
 
     private void verifyAsCpp(Class<?> cls) {
