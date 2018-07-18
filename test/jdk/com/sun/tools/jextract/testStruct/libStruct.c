@@ -21,7 +21,7 @@
  * questions.
  */
 
-cd #include "struct.h"
+#include "struct.h"
 #include <stdio.h>
 #include <stdlib.h>
 
