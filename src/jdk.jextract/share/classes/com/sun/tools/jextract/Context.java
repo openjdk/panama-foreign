@@ -25,6 +25,7 @@ package com.sun.tools.jextract;
 import jdk.internal.clang.*;
 import jdk.internal.foreign.LibrariesHelper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -436,7 +438,21 @@ public final class Context {
         return Collections.unmodifiableMap(rv);
     }
 
-    void collectClassFiles(Path destDir, String... pkgs) throws IOException {
+    private static final String JEXTRACT_MANIFEST = "META-INFO" + File.separatorChar + "jextract.properties";
+
+    @SuppressWarnings("deprecation")
+    private byte[] getJextractProperties(String[] args) {
+        Properties props = new Properties();
+        props.setProperty("os.name", System.getProperty("os.name"));
+        props.setProperty("os.version", System.getProperty("os.version"));
+        props.setProperty("os.arch", System.getProperty("os.arch"));
+        props.setProperty("jextract.args", Arrays.toString(args));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        props.save(baos, "jextract meta data");
+        return baos.toByteArray();
+    }
+
+    void collectClassFiles(Path destDir, String[] args, String... pkgs) throws IOException {
         try {
             collectClasses(pkgs).entrySet().stream().forEach(e -> {
                 try {
@@ -452,6 +468,13 @@ public final class Context {
                     throw new UncheckedIOException(ioe);
                 }
             });
+
+            Path propsPath = destDir.resolve(JEXTRACT_MANIFEST).normalize();
+            Files.createDirectories(propsPath.getParent());
+            try (OutputStream fos = Files.newOutputStream(propsPath)) {
+                fos.write(getJextractProperties(args));
+                fos.flush();
+            }
         } catch (UncheckedIOException uioe) {
             throw uioe.getCause();
         }
@@ -471,7 +494,7 @@ public final class Context {
         });
     }
 
-    public void collectJarFile(final JarOutputStream jos, String... pkgs) {
+    public void collectJarFile(final JarOutputStream jos, String[] args, String... pkgs) {
         final Map<String, List<AsmCodeFactory>> mapPkgCf = getPkgCfMap();
 
         for (String pkg_name : pkgs) {
@@ -489,13 +512,21 @@ public final class Context {
             mapPkgCf.getOrDefault(pkg_name, Collections.emptyList())
                     .forEach(cf -> writeJar(cf, jos));
         }
+
+        try {
+            jos.putNextEntry(new ZipEntry(JEXTRACT_MANIFEST));
+            jos.write(getJextractProperties(args));
+            jos.closeEntry();
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
     }
 
-    void collectJarFile(final Path jar, String... pkgs) throws IOException {
+    void collectJarFile(final Path jar, String[] args, String... pkgs) throws IOException {
         logger.info(() -> "Collecting jar file " + jar);
         try (OutputStream os = Files.newOutputStream(jar, CREATE, TRUNCATE_EXISTING, WRITE);
                 JarOutputStream jo = new JarOutputStream(os)) {
-            collectJarFile(jo, pkgs);
+            collectJarFile(jo, args, pkgs);
         } catch (UncheckedIOException uioe) {
             throw uioe.getCause();
         }

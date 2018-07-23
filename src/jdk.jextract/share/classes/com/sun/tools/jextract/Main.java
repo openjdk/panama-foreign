@@ -253,7 +253,7 @@ public final class Main {
                     ctx.err.println(format("not.a.directory", dest));
                     return 4;
                 }
-                ctx.collectClassFiles(dest, targetPackage);
+                ctx.collectClassFiles(dest, args, targetPackage);
             } catch (IOException ex) {
                 ctx.err.println(format("cannot.write.class.file", dest, ex));
                 if (Main.DEBUG) {
@@ -273,7 +273,7 @@ public final class Main {
         }
 
         try {
-            ctx.collectJarFile(Paths.get(outputName), targetPackage);
+            ctx.collectJarFile(Paths.get(outputName), args, targetPackage);
         } catch (IOException ex) {
             ctx.err.println(format("cannot.write.jar.file", outputName, ex));
             if (Main.DEBUG) {

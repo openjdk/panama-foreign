@@ -116,7 +116,7 @@ public class Runner {
     public void testJarManifest() throws IOException {
         // Get the jar
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ctx.collectJarFile(new JarOutputStream(bos), pkg);
+        ctx.collectJarFile(new JarOutputStream(bos), new String[0], pkg);
 
         System.out.println("Jar built, verifying...");
         JarInputStream jis = new JarInputStream(new ByteArrayInputStream(bos.toByteArray()));
@@ -128,12 +128,14 @@ public class Runner {
                 continue;
             }
             String name = e.getName();
-            if (! name.endsWith(".class")) {
-                // Should not have file not class files
-                System.err.println("Warning: unexpected file " + name);
+            if (! name.endsWith(".properties")) {
+                if (! name.endsWith(".class")) {
+                    // Should not have file not class files
+                    System.err.println("Warning: unexpected file " + name);
+                }
+                name = name.substring(0, name.length() - 6);
+                files.add(name.replace(File.separatorChar, '.'));
             }
-            name = name.substring(0, name.length() - 6);
-            files.add(name.replace(File.separatorChar, '.'));
         }
 
         assertEquals(files, mfm.listClasses());

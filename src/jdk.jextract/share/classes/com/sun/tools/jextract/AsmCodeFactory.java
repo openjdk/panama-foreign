@@ -589,6 +589,6 @@ final class AsmCodeFactory {
         ctx.usePackageForFolder(Paths.get("/usr/include"), "system");
         ctx.addSource(file);
         ctx.parse();
-        ctx.collectJarFile(Paths.get(args[2]), pkg);
+        ctx.collectJarFile(Paths.get(args[2]), args, pkg);
     }
 }
