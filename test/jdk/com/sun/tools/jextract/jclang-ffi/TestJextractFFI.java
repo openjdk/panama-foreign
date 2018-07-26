@@ -152,6 +152,10 @@ public class TestJextractFFI {
                 throw new Error("Mismatch file type: " + pathJNI.getFileName()
                         + " vs " + pathFFI.getFileName());
             }
+            // ignore non-class files
+            if (!pathJNI.getFileName().endsWith("class")) {
+                continue;
+            }
             // Classfile
             if (! Arrays.equals(
                     Files.readAllBytes(pathJNI),
