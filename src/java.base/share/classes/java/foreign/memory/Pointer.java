@@ -22,14 +22,14 @@
  */
 package java.foreign.memory;
 
-import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.foreign.memory.BoundedMemoryRegion;
-import jdk.internal.foreign.Util;
-
-import java.io.ByteArrayOutputStream;
 import java.foreign.NativeTypes;
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.stream.Stream;
+import jdk.internal.foreign.Util;
+import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  * This interface models a native pointer.
@@ -189,6 +189,14 @@ public interface Pointer<X> extends Resource<Pointer<X>> {
             //     primitive array
         };
         return new BoundedPointer<>(NativeTypes.UINT8, mr);
+    }
+
+    static ByteBuffer asDirectByteBuffer(Pointer<?> buf, int bytes) throws IllegalAccessException {
+        if (bytes > buf.bytesSize()) {
+            throw new IllegalAccessException();
+        }
+        return SharedSecrets.getJavaNioAccess()
+                .newDirectByteBuffer(buf.addr(), bytes, null);
     }
 
     static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {

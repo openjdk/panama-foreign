@@ -25,11 +25,6 @@
 
 package jdk.internal.foreign;
 
-import jdk.internal.misc.Unsafe;
-import jdk.internal.foreign.memory.BoundedArray;
-import jdk.internal.foreign.memory.BoundedMemoryRegion;
-import jdk.internal.foreign.memory.BoundedPointer;
-
 import java.foreign.Scope;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
@@ -37,6 +32,10 @@ import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 import java.util.ArrayList;
 import java.util.List;
+import jdk.internal.foreign.memory.BoundedArray;
+import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.misc.Unsafe;
 
 public abstract class ScopeImpl implements Scope {
 
@@ -63,6 +62,8 @@ public abstract class ScopeImpl implements Scope {
         size *= count;
         if (size > Integer.MAX_VALUE) {
             throw new UnsupportedOperationException("allocate size to large");
+        } else if (size == 0) {
+            return Pointer.nullPointer();
         }
 
         return new BoundedPointer<>(type, allocateRegion(size));
@@ -131,6 +132,10 @@ public abstract class ScopeImpl implements Scope {
         }
 
         BoundedMemoryRegion allocateRegion(long size) {
+            if (size == 0) {
+                return BoundedMemoryRegion.NOTHING;
+            }
+
             return new BoundedMemoryRegion(allocate(size), size, this);
         }
 

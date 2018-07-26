@@ -116,9 +116,11 @@ public interface Scope extends AutoCloseable {
      * @throws IllegalArgumentException if the array initializer type is not compatible with the required type.
      */
     default <X> Array<X> allocateArray(LayoutType<X> elementType, Object init) throws IllegalArgumentException {
-        int size = java.lang.reflect.Array.getLength(init);
+        int size = (init == null) ? 0 : java.lang.reflect.Array.getLength(init);
         Array<X> arr = allocateArray(elementType, size);
-        BoundedArray.copyFrom(arr, init, size);
+        if (size > 0) {
+            BoundedArray.copyFrom(arr, init, size);
+        }
         return arr;
     }
 
