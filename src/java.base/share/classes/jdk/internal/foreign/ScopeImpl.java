@@ -86,6 +86,7 @@ public abstract class ScopeImpl implements Scope {
     @Override
     public <T extends Struct<T>> T allocateStruct(Class<T> clazz) {
         LayoutType<T> type = LayoutType.ofStruct(clazz);
+        // FIXME: is this alignment needed?
         long size = Util.alignUp(type.bytesSize(), 8);
         BoundedPointer<T> p = new BoundedPointer<>(type, allocateRegion(size), 0);
         return p.get();

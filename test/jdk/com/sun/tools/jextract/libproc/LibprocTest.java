@@ -27,26 +27,34 @@ import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.Array;
 import java.foreign.memory.Pointer;
+import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandles;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-import test.jextract.lp.libproc;
+import test.jextract.lp.*;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 /*
  * @test
  * @library ..
  * @requires (os.family == "mac")
- * @run driver JtregJextract -t test.jextract.lp -lproc -rpath /usr/lib -- /usr/include/libproc.h
+ * @run driver JtregJextract -t test.jextract.lp -lproc -rpath /usr/lib -- /usr/include/libproc.h /usr/include/sys/proc_info.h
  * @run testng LibprocTest
  */
 public class LibprocTest {
     private static final int NAME_BUF_MAX = 256;
 
-    @Test
-    public void libprocTest() {
-        libproc lp = Libraries.bind(MethodHandles.lookup(), libproc.class);
+    private libproc lp;
 
+    @BeforeTest
+    public void init() {
+        lp = Libraries.bind(MethodHandles.lookup(), libproc.class);
+    }
+
+    @Test
+    public void processListTest() {
         long curProcPid = ProcessHandle.current().pid();
         boolean foundCurProc = false;
 
@@ -76,5 +84,20 @@ public class LibprocTest {
             }
         }
         assertTrue(foundCurProc);
+    }
+
+    @Test
+    public void processInfoTest() {
+        long curProcPid = ProcessHandle.current().pid();
+        proc_info pi = Libraries.bind(MethodHandles.lookup(), proc_info.class);
+        try (Scope s = Scope.newNativeScope()) {
+            proc_info.proc_taskinfo ti = s.allocateStruct(proc_info.proc_taskinfo.class);
+            int taskInfoSize = (int)Struct.sizeof(proc_info.proc_taskinfo.class);
+            int resultSize = lp.proc_pidinfo((int)curProcPid, pi.PROC_PIDTASKINFO(), 0, ti.ptr(), taskInfoSize);
+            assertEquals(resultSize, taskInfoSize);
+            System.out.println("total virtual memory size = " + ti.pti_virtual_size$get());
+            System.out.println("resident memory size = " + ti.pti_resident_size$get());
+            System.out.println("total time = " + ti.pti_total_user$get());
+        }
     }
 }

@@ -35,4 +35,14 @@ public interface Struct<T extends Struct<T>> extends Resource<T> {
      * @return a pointer.
      */
     Pointer<T> ptr();
+
+    /**
+     * Return the size of the struct represented by the given class.
+     *
+     * @param clazz Class object representing the struct.
+     * @return the size of the struct in bytes.
+     */
+    public static <X extends Struct<X>> long sizeof(Class<X> clazz) {
+        return LayoutType.ofStruct(clazz).bytesSize();
+    }
 }
