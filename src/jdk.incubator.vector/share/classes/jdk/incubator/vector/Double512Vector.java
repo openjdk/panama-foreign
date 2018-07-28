@@ -364,6 +364,166 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             this,
             v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.exp((double) a)));
     }
+    
+    @Override
+    @ForceInline
+    public Double512Vector log1p() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG1P, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.log1p((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector log() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.log((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector log10() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG10, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.log10((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector expm1() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXPM1, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.expm1((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector cbrt() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_CBRT, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.cbrt((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector sin() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SIN, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.sin((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector cos() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_COS, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.cos((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector tan() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_TAN, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.tan((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector asin() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ASIN, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.asin((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector acos() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ACOS, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.acos((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector atan() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ATAN, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.atan((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector sinh() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SINH, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.sinh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector cosh() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_COSH, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.cosh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector tanh() {
+        return (Double512Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_TANH, Double512Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double512Vector)v1).uOp((i, a) -> (double) Math.tanh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector pow(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_POW, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.pow(a,b))));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector hypot(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_HYPOT, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.hypot(a,b))));
+    }
+    
+    @Override
+    @ForceInline
+    public Double512Vector atan2(Vector<Double,Shapes.S512Bit> o) {
+        Objects.requireNonNull(o);
+        Double512Vector v = (Double512Vector)o;
+        return (Double512Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ATAN2, Double512Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double512Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.atan2(a,b))));
+    }
+    
 
     // Binary operations
 

@@ -364,6 +364,166 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             this,
             v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.exp((double) a)));
     }
+    
+    @Override
+    @ForceInline
+    public Float256Vector log1p() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG1P, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.log1p((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector log() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.log((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector log10() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG10, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.log10((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector expm1() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXPM1, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.expm1((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector cbrt() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_CBRT, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.cbrt((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector sin() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SIN, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.sin((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector cos() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_COS, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.cos((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector tan() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_TAN, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.tan((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector asin() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ASIN, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.asin((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector acos() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ACOS, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.acos((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector atan() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ATAN, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.atan((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector sinh() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SINH, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.sinh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector cosh() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_COSH, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.cosh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector tanh() {
+        return (Float256Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_TANH, Float256Vector.class, float.class, LENGTH,
+            this,
+            v1 -> ((Float256Vector)v1).uOp((i, a) -> (float) Math.tanh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector pow(Vector<Float,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Float256Vector v = (Float256Vector)o;
+        return (Float256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_POW, Float256Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float256Vector)v1).bOp(v2, (i, a, b) -> (float)(Math.pow(a,b))));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector hypot(Vector<Float,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Float256Vector v = (Float256Vector)o;
+        return (Float256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_HYPOT, Float256Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float256Vector)v1).bOp(v2, (i, a, b) -> (float)(Math.hypot(a,b))));
+    }
+    
+    @Override
+    @ForceInline
+    public Float256Vector atan2(Vector<Float,Shapes.S256Bit> o) {
+        Objects.requireNonNull(o);
+        Float256Vector v = (Float256Vector)o;
+        return (Float256Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ATAN2, Float256Vector.class, float.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Float256Vector)v1).bOp(v2, (i, a, b) -> (float)(Math.atan2(a,b))));
+    }
+    
 
     // Binary operations
 

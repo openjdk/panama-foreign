@@ -364,6 +364,166 @@ final class Double128Vector extends DoubleVector<Shapes.S128Bit> {
             this,
             v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.exp((double) a)));
     }
+    
+    @Override
+    @ForceInline
+    public Double128Vector log1p() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG1P, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.log1p((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector log() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.log((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector log10() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG10, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.log10((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector expm1() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXPM1, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.expm1((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector cbrt() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_CBRT, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.cbrt((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector sin() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SIN, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.sin((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector cos() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_COS, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.cos((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector tan() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_TAN, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.tan((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector asin() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ASIN, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.asin((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector acos() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ACOS, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.acos((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector atan() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ATAN, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.atan((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector sinh() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SINH, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.sinh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector cosh() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_COSH, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.cosh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector tanh() {
+        return (Double128Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_TANH, Double128Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double128Vector)v1).uOp((i, a) -> (double) Math.tanh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector pow(Vector<Double,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+        return (Double128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_POW, Double128Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double128Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.pow(a,b))));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector hypot(Vector<Double,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+        return (Double128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_HYPOT, Double128Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double128Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.hypot(a,b))));
+    }
+    
+    @Override
+    @ForceInline
+    public Double128Vector atan2(Vector<Double,Shapes.S128Bit> o) {
+        Objects.requireNonNull(o);
+        Double128Vector v = (Double128Vector)o;
+        return (Double128Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ATAN2, Double128Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double128Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.atan2(a,b))));
+    }
+    
 
     // Binary operations
 

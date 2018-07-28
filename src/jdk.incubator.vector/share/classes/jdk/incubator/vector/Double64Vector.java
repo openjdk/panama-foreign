@@ -364,6 +364,166 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
             this,
             v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.exp((double) a)));
     }
+    
+    @Override
+    @ForceInline
+    public Double64Vector log1p() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG1P, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.log1p((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector log() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.log((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector log10() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_LOG10, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.log10((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector expm1() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_EXPM1, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.expm1((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector cbrt() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_CBRT, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.cbrt((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector sin() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SIN, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.sin((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector cos() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_COS, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.cos((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector tan() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_TAN, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.tan((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector asin() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ASIN, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.asin((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector acos() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ACOS, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.acos((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector atan() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_ATAN, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.atan((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector sinh() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_SINH, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.sinh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector cosh() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_COSH, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.cosh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector tanh() {
+        return (Double64Vector) VectorIntrinsics.unaryOp(
+            VECTOR_OP_TANH, Double64Vector.class, double.class, LENGTH,
+            this,
+            v1 -> ((Double64Vector)v1).uOp((i, a) -> (double) Math.tanh((double) a)));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector pow(Vector<Double,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Double64Vector v = (Double64Vector)o;
+        return (Double64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_POW, Double64Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.pow(a,b))));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector hypot(Vector<Double,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Double64Vector v = (Double64Vector)o;
+        return (Double64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_HYPOT, Double64Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.hypot(a,b))));
+    }
+    
+    @Override
+    @ForceInline
+    public Double64Vector atan2(Vector<Double,Shapes.S64Bit> o) {
+        Objects.requireNonNull(o);
+        Double64Vector v = (Double64Vector)o;
+        return (Double64Vector) VectorIntrinsics.binaryOp(
+            VECTOR_OP_ATAN2, Double64Vector.class, double.class, LENGTH,
+            this, v,
+            (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.atan2(a,b))));
+    }
+    
 
     // Binary operations
 

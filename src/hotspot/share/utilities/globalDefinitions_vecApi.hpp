@@ -35,8 +35,8 @@
 #define __VECTOR_API_MATH_INTRINSICS_WINDOWS
 #endif
 
-// GCC 5+ can build all .s files for Linux
-#if defined(LINUX) && defined(AMD64) && (defined(__GNUC__) && (__GNUC__ >= 5))
+// GCC 4.9+ can build all .s files for Linux
+#if defined(LINUX) && defined(AMD64) && (defined(__GNUC__) && (__GNUC__ >= 4))
 #define __VECTOR_API_MATH_INTRINSICS_COMMON
 #define __VECTOR_API_MATH_INTRINSICS_LINUX
 #endif
