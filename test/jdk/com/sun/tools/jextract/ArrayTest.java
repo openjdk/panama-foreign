@@ -51,7 +51,7 @@ public class ArrayTest extends JextractToolRunner {
         NativeStruct ns = struct.getAnnotation(NativeStruct.class);
         assertNotNull(ns);
 
-        Method m = findMethod(cls, "construct", int.class, int.class, java.foreign.memory.Array.class);
+        Method m = findMethod(cls, "construct", int.class, int.class, java.foreign.memory.Pointer.class);
         assertNotNull(m);
 
         deleteFile(clzPath);

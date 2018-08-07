@@ -243,7 +243,8 @@ public class Utils {
         final int argSize = t.numberOfArgs();
         Layout[] args = new Layout[argSize];
         for (int i = 0; i < argSize; i++) {
-            args[i] = getLayout(t.argType(i));
+            Layout l = getLayout(t.argType(i));
+            args[i] = l instanceof Sequence? Address.ofLayout(64, ((Sequence)l).element()) : l;
         }
         if (t.resultType().kind() == TypeKind.Void) {
             return Function.ofVoid(t.isVariadic(), args);

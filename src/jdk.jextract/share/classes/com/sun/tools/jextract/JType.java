@@ -190,6 +190,10 @@ public interface JType {
             elementType = type;
         }
 
+        PointerType asPointer() {
+            return new PointerType(elementType);
+        }
+
         @Override
         public String getDescriptor() {
             return JType.of(java.foreign.memory.Array.class).getDescriptor();
@@ -228,7 +232,20 @@ public interface JType {
             this.layout = layout;
             this.returnType = returnType;
             this.args = args;
+            for (int i = 0; i < args.length; i++) {
+                args[i] = arrayAsPointer(args[i]);
+            }
             this.isVarArgs = isVarArgs;
+        }
+
+        private static JType arrayAsPointer(JType t) {
+            if (t instanceof JType2) {
+                t = ((JType2)t).getDelegate();
+            }
+            if (t instanceof TypeAlias) {
+                t = ((TypeAlias)t).canonicalType();
+            }
+            return t instanceof ArrayType? ((ArrayType)t).asPointer() : t;
         }
 
         @Override
