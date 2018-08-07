@@ -99,7 +99,7 @@ public class NativeInvoker {
 
     private NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, MethodHandle targetMethodHandle, String debugMethodString, java.lang.reflect.Type genericReturnType) {
         this.function = function;
-        this.methodType = methodType;
+        this.methodType = Util.checkNoArrays(methodType);
         this.isVarArgs = isVarArgs;
         this.targetMethodHandle = targetMethodHandle;
         this.debugMethodString = debugMethodString;

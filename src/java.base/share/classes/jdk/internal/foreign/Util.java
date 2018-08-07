@@ -27,6 +27,7 @@ import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.foreign.memory.Types;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.foreign.NativeTypes;
@@ -246,5 +247,21 @@ public final class Util {
 
     public static <Z> Pointer<Z> unsafeCast(Pointer<?> ptr, LayoutType<Z> layoutType) {
         return ptr.cast(NativeTypes.VOID).cast(layoutType);
+    }
+
+    public static MethodType checkNoArrays(MethodHandles.Lookup lookup, Class<?> fi) {
+        try {
+            return checkNoArrays(lookup.unreflect(findFunctionalInterfaceMethod(fi)).type());
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+    public static MethodType checkNoArrays(MethodType mt) {
+        if (Stream.concat(Stream.of(mt.returnType()), mt.parameterList().stream())
+                .anyMatch(c -> Array.class.isAssignableFrom(c))) {
+            //arrays in functions not supported!
+            throw new UnsupportedOperationException("Array carriers not supported in functions");
+        }
+        return mt;
     }
 }

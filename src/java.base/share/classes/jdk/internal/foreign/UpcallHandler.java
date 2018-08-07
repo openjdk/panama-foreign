@@ -81,6 +81,7 @@ public class UpcallHandler {
 
         try {
             MethodHandle mh = MethodHandles.publicLookup().unreflect(ficMethod);
+            Util.checkNoArrays(mh.type());
             return new UpcallHandlerFactory(mh.asSpreader(Object[].class, ftype.argumentLayouts().size()), ftype, ficMethod);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);

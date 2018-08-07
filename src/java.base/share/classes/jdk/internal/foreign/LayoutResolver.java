@@ -25,6 +25,7 @@
 
 package jdk.internal.foreign;
 
+import java.foreign.layout.Sequence;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -148,6 +149,10 @@ public final class LayoutResolver {
                 if (rv.isPartial()) {
                     return resolve(rv);
                 }
+            } else if (l instanceof Sequence) {
+                Sequence s = (Sequence)l;
+                Layout elem = resolve(s.element());
+                rv = Sequence.of(s.elementsSize(), elem);
             } else if (l instanceof Group) {
                 Group g = (Group)l;
                 Layout[] newElems = g.elements().stream()
