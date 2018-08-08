@@ -298,7 +298,7 @@ class LateInlineCallGenerator : public DirectCallGenerator {
 
  public:
   LateInlineCallGenerator(ciMethod* method, CallGenerator* inline_cg) :
-    DirectCallGenerator(method, true), _inline_cg(inline_cg), _unique_id(0) {}
+    DirectCallGenerator(method, true), _unique_id(0), _inline_cg(inline_cg) {}
 
   virtual bool is_late_inline() const { return true; }
   virtual bool is_intrinsic() const { return _inline_cg != NULL ? _inline_cg->is_intrinsic() : false; }

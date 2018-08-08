@@ -23,7 +23,7 @@
  */
 
 #include "precompiled.hpp"
-#include "classfile/classLoaderData.hpp"
+#include "classfile/classLoaderData.inline.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
@@ -614,8 +614,7 @@ private:
 
 public:
   ParallelSPCleanupThreadClosure(DeflateMonitorCounters* counters) :
-    _counters(counters),
-    _nmethod_cl(NMethodSweeper::prepare_mark_active_nmethods()) {}
+    _nmethod_cl(NMethodSweeper::prepare_mark_active_nmethods()), _counters(counters) {}
 
   void do_thread(Thread* thread) {
     ObjectSynchronizer::deflate_thread_local_monitors(thread, _counters);
@@ -636,9 +635,9 @@ private:
 public:
   ParallelSPCleanupTask(uint num_workers, DeflateMonitorCounters* counters) :
     AbstractGangTask("Parallel Safepoint Cleanup"),
+    _subtasks(SubTasksDone(SafepointSynchronize::SAFEPOINT_CLEANUP_NUM_TASKS)),
     _cleanup_threads_cl(ParallelSPCleanupThreadClosure(counters)),
     _num_workers(num_workers),
-    _subtasks(SubTasksDone(SafepointSynchronize::SAFEPOINT_CLEANUP_NUM_TASKS)),
     _counters(counters) {}
 
   void work(uint worker_id) {
@@ -720,6 +719,7 @@ public:
         post_safepoint_cleanup_task_event(&event, name);
       }
     }
+
     _subtasks.all_tasks_completed(_num_workers);
   }
 };
@@ -749,8 +749,18 @@ void SafepointSynchronize::do_cleanup_tasks() {
     cleanup.work(0);
   }
 
+  // Needs to be done single threaded by the VMThread.  This walks
+  // the thread stacks looking for references to metadata before
+  // deciding to remove it from the metaspaces.
+  if (ClassLoaderDataGraph::should_clean_metaspaces_and_reset()) {
+    const char* name = "cleanup live ClassLoaderData metaspaces";
+    TraceTime timer(name, TRACETIME_LOG(Info, safepoint, cleanup));
+    ClassLoaderDataGraph::walk_metadata_and_clean_metaspaces();
+  }
+
   // Finish monitor deflation.
   ObjectSynchronizer::finish_deflate_idle_monitors(&deflate_counters);
+
 }
 
 
