@@ -27,3 +27,11 @@ typedef int IA[];
 int g(IA x, int len);
 
 int k(int x[4], int len);
+
+int map_sum(int arr[], int len, int (*f)(int arr[], int idx, int val));
+
+struct FPPtrFieldStruct {
+    int (*map)(int arr[], int idx, int len);
+};
+
+int map_sum2(int arr[], int len, struct FPPtrFieldStruct s);

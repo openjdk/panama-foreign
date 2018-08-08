@@ -38,3 +38,15 @@ int g(IA x, int len) {
 int k(int x[3], int len) {
     return f(x, len);
 }
+
+int map_sum(int arr[], int len, int (*map)(int arr[], int idx, int val)) {
+    int res = 0, idx = 0;
+    for (; idx < len; idx++) {
+        res += map(arr, idx, arr[idx]);
+    }
+    return res;
+}
+
+int map_sum2(int arr[], int len, struct FPPtrFieldStruct s) {
+    return map_sum(arr, len, s.map);
+}
