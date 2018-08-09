@@ -696,7 +696,7 @@ static void dump_return_registers(struct ShuffleDowncallContext* ctxt) {
 class ShuffleDowncall : public StackObj {
 public:
   ShuffleDowncall(ShuffleRecipe& recipe, arrayHandle args, arrayHandle rets, address code, address stub)
-    : _recipe(recipe), _args(args), _rets(rets), _code(code), _stub((InvokeNativeStub)stub), _stream(recipe) {
+    : _recipe(recipe), _stream(recipe), _args(args), _rets(rets), _code(code), _stub((InvokeNativeStub)stub) {
     memset(&_context.arguments, 0, sizeof(_context.arguments));
     memset(&_context.returns, 0, sizeof(_context.returns));
 
