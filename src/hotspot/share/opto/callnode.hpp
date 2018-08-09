@@ -331,8 +331,8 @@ public:
                 // A plain safepoint advertises no memory effects (NULL):
                 const TypePtr* adr_type = NULL)
     : MultiNode( edges ),
-      _jvms(jvms),
       _oop_map(NULL),
+      _jvms(jvms),
       _adr_type(adr_type)
   {
     init_class_id(Class_SafePoint);
@@ -665,10 +665,10 @@ public:
   const int       _bci;         // Byte Code Index of call byte code
   CallJavaNode(const TypeFunc* tf , address addr, ciMethod* method, int bci)
     : CallNode(tf, addr, TypePtr::BOTTOM),
-      _method(method), _bci(bci),
       _optimized_virtual(false),
       _method_handle_invoke(false),
-      _override_symbolic_info(false)
+      _override_symbolic_info(false),
+      _method(method), _bci(bci)
   {
     init_class_id(Class_CallJava);
   }
@@ -816,8 +816,8 @@ public:
                   ciMethodType* mt, ciObject* reg_masks, ciObject* generator, bool is_cfg,
                   ciObject* killed_reg_mask, const char* name, const TypePtr* adr_type)
     : CallLeafNode(tf, (address)-1, name, adr_type),
-        _mt(mt), _reg_masks(reg_masks), _generator(generator), _is_cfg(is_cfg),
-        _killed_reg_mask(killed_reg_mask)
+        _is_cfg(is_cfg), _mt(mt), _reg_masks(reg_masks),
+        _killed_reg_mask(killed_reg_mask), _generator(generator)
   {
     init_class_id(Class_CallSnippet);
   }

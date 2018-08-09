@@ -625,7 +625,7 @@ private:
     G1CMBitMap* _bitmap;
     G1ConcurrentMark* _cm;
   public:
-    G1ClearBitmapHRClosure(G1CMBitMap* bitmap, G1ConcurrentMark* cm) : HeapRegionClosure(), _cm(cm), _bitmap(bitmap) {
+    G1ClearBitmapHRClosure(G1CMBitMap* bitmap, G1ConcurrentMark* cm) : HeapRegionClosure(), _bitmap(bitmap), _cm(cm) {
     }
 
     virtual bool do_heap_region(HeapRegion* r) {
@@ -1095,7 +1095,7 @@ class G1UpdateRemSetTrackingBeforeRebuildTask : public AbstractGangTask {
 
   public:
     G1UpdateRemSetTrackingBeforeRebuild(G1CollectedHeap* g1h, G1ConcurrentMark* cm, G1PrintRegionLivenessInfoClosure* cl) :
-      _g1h(g1h), _cm(cm), _num_regions_selected_for_rebuild(0), _cl(cl) { }
+      _g1h(g1h), _cm(cm), _cl(cl), _num_regions_selected_for_rebuild(0) { }
 
     virtual bool do_heap_region(HeapRegion* r) {
       update_remset_before_rebuild(r);
@@ -1415,10 +1415,9 @@ class G1CMKeepAliveAndDrainClosure : public OopClosure {
   bool              _is_serial;
 public:
   G1CMKeepAliveAndDrainClosure(G1ConcurrentMark* cm, G1CMTask* task, bool is_serial) :
-    _cm(cm), _task(task), _is_serial(is_serial),
-    _ref_counter_limit(G1RefProcDrainInterval) {
+    _cm(cm), _task(task), _ref_counter_limit(G1RefProcDrainInterval),
+    _ref_counter(_ref_counter_limit), _is_serial(is_serial) {
     assert(!_is_serial || _task->worker_id() == 0, "only task 0 for serial code");
-    _ref_counter = _ref_counter_limit;
   }
 
   virtual void do_oop(narrowOop* p) { do_oop_work(p); }
@@ -2466,8 +2465,8 @@ void G1CMTask::print_stats() {
                        hits, misses, percent_of(hits, hits + misses));
 }
 
-bool G1ConcurrentMark::try_stealing(uint worker_id, int* hash_seed, G1TaskQueueEntry& task_entry) {
-  return _task_queues->steal(worker_id, hash_seed, task_entry);
+bool G1ConcurrentMark::try_stealing(uint worker_id, G1TaskQueueEntry& task_entry) {
+  return _task_queues->steal(worker_id, task_entry);
 }
 
 /*****************************************************************************
@@ -2773,7 +2772,7 @@ void G1CMTask::do_marking_step(double time_target_ms,
            "only way to reach here");
     while (!has_aborted()) {
       G1TaskQueueEntry entry;
-      if (_cm->try_stealing(_worker_id, &_hash_seed, entry)) {
+      if (_cm->try_stealing(_worker_id, entry)) {
         scan_task_entry(entry);
 
         // And since we're towards the end, let's totally drain the
@@ -2915,7 +2914,6 @@ G1CMTask::G1CMTask(uint worker_id,
   _refs_reached(0),
   _refs_reached_limit(0),
   _real_refs_reached_limit(0),
-  _hash_seed(17),
   _has_aborted(false),
   _has_timed_out(false),
   _draining_satb_buffers(false),
