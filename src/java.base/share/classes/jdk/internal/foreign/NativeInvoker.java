@@ -35,6 +35,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.lang.ref.Reference;
 import java.foreign.*;
 import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
@@ -255,6 +256,9 @@ public class NativeInvoker {
         long[] returnValues = new long[shuffleRecipe.getNoofReturnPulls()];
 
         targetMethodHandle.invokeExact(values, returnValues, shuffleRecipe.getRecipe(), addr);
+
+        //defeat JIT dead code analysis
+        Reference.reachabilityFence(upcallHandlers);
 
         if (DEBUG) {
             System.err.println("Returned from method " + debugMethodString + " with " + returnValues.length + " return values");

@@ -1210,6 +1210,8 @@ void NativeInvoker::invoke_native(arrayHandle recipe_arr, arrayHandle args_arr, 
 }
 
 void NativeInvoker::free_upcall_stub(char *addr) {
+  //acquire code cache lock
+  MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
   CodeBlob* cb = CodeCache::find_blob(addr);
   assert(cb != NULL, "Attempting to free non-existent stub");
@@ -1221,6 +1223,8 @@ void NativeInvoker::free_upcall_stub(char *addr) {
 }
 
 jobject NativeInvoker::get_upcall_handler(char *addr) {
+  //acquire code cache lock
+  MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
   CodeBlob* cb = CodeCache::find_blob(addr);
   if (cb != NULL) {
