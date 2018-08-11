@@ -26,7 +26,7 @@
 IFDEF RAX
 
 ; Used to check the version of toolchain. Version 1200 is equivalent to _MSC_VER 1800 (Visual Studio 2013)
-IF @Version GE 1200
+IF @Version GE 1900
 __VECTOR_API_MATH_INTRINSICS_WINDOWS TEXTEQU <"vector_api">
 ELSE
 __VECTOR_API_MATH_INTRINSICS_WINDOWS TEXTEQU <>
