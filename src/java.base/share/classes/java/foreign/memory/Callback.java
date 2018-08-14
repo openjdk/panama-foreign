@@ -37,7 +37,7 @@ public interface Callback<T extends Callback<T>> {
      * Obtain the native resource associated with this callback (if any).
      * @return the (optional) resource.
      */
-    default Optional<Resource<?>> resource() {
+    default Optional<Resource> resource() {
         return Optional.empty();
     }
 }

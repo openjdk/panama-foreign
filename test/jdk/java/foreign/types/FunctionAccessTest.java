@@ -53,7 +53,7 @@ public class FunctionAccessTest {
             m.setFunction(() -> 42);
             NativeToIntFunction func = m.getFunction();
             assertTrue(func.resource().isPresent());
-            Resource<?> resource = func.resource().get();
+            Resource resource = func.resource().get();
             //do a roundtrip
             m.setFunction(func);
             System.gc();

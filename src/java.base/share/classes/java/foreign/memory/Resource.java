@@ -22,9 +22,16 @@
  */
 package java.foreign.memory;
 
+import java.foreign.Scope;
+
 /**
- * Common interface for all managed resources, such as pointers and native struct and callback stubs.
- * @param <X> the carrier type associated with the resource.
+ * Common interface for all managed resources, such as pointers and native struct and callback stubs; such managed
+ * resources are attached to a scope (see {@link Scope}).
  */
-public interface Resource<X extends Resource<X>> {
+public interface Resource {
+    /**
+     * The scope this managed resource belongs to.
+     * @return the owning scope.
+     */
+    Scope scope();
 }

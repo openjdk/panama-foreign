@@ -22,13 +22,15 @@
  */
 package java.foreign.memory;
 
+import java.foreign.Scope;
+
 /**
  * This interface acts as the root type for all native types handled by the binder. A native type must be annotated
  * with the {@link java.foreign.annotations.NativeStruct} annotation, which contains information about the native type's
  * layout.
  * @param <T> the Java type modelling this native type.
  */
-public interface Struct<T extends Struct<T>> extends Resource<T> {
+public interface Struct<T extends Struct<T>> extends Resource {
 
     /**
      * Return a pointer to the managed struct.
@@ -36,13 +38,18 @@ public interface Struct<T extends Struct<T>> extends Resource<T> {
      */
     Pointer<T> ptr();
 
+    @Override
+    default Scope scope() {
+        return ptr().scope();
+    }
+
     /**
      * Return the size of the struct represented by the given class.
      *
      * @param clazz Class object representing the struct.
      * @return the size of the struct in bytes.
      */
-    public static <X extends Struct<X>> long sizeof(Class<X> clazz) {
+    static <X extends Struct<X>> long sizeof(Class<X> clazz) {
         return LayoutType.ofStruct(clazz).bytesSize();
     }
 }

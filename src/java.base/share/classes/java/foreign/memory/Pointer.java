@@ -35,7 +35,7 @@ import jdk.internal.misc.SharedSecrets;
  * This interface models a native pointer.
  * @param <X> the carrier type associated with the pointee.
  */
-public interface Pointer<X> extends Resource<Pointer<X>> {
+public interface Pointer<X> extends Resource {
 
     /**
      * Obtains the {@code NULL} pointer.

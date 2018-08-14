@@ -27,13 +27,14 @@ package java.foreign.memory;
 
 import jdk.internal.foreign.memory.BoundedArray;
 
+import java.foreign.Scope;
 import java.util.function.IntFunction;
 
 /**
  * This interface models a native array. An array is composed by a base pointer and a size.
  * @param <X> the carrier type associated with the array element.
  */
-public interface Array<X> extends Resource<Array<X>> {
+public interface Array<X> extends Resource {
 
     /**
      * Obtain the array size.
@@ -52,6 +53,11 @@ public interface Array<X> extends Resource<Array<X>> {
      * @return the array element type's {@code LayoutType}.
      */
     LayoutType<X> type();
+
+    @Override
+    default Scope scope() {
+        return elementPointer().scope();
+    }
 
     /**
      * Cast the array to given {@code LayoutType}.
