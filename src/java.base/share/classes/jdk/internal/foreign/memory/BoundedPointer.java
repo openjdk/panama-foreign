@@ -22,6 +22,8 @@
  */
 package jdk.internal.foreign.memory;
 
+import jdk.internal.foreign.Util;
+
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.layout.Layout;
@@ -162,6 +164,11 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset, int mode) {
         return new BoundedPointer<>(NativeTypes.VOID, new BoundedMemoryRegion(offset, Long.MAX_VALUE, mode, scope));
+    }
+
+    public static BoundedPointer<Long> fromLongArray(long[] values) {
+        return new BoundedPointer<>(NativeTypes.UINT64,
+                        new BoundedMemoryRegion(values, Util.LONG_ARRAY_BASE, values.length * Util.LONG_ARRAY_SCALE), 0);
     }
 
     public Scope scope() {

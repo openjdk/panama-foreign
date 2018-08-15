@@ -29,6 +29,7 @@ import jdk.internal.foreign.abi.ShuffleRecipe;
 import jdk.internal.foreign.abi.StorageClass;
 import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.abi.sysv.x64.Constants;
+import jdk.internal.foreign.memory.BoundedPointer;
 
 import java.lang.annotation.Retention;
 import java.lang.invoke.MethodHandle;
@@ -57,6 +58,7 @@ public class NativeInvoker {
     // Unbound MH for the invoke() method
     private static final MethodHandle BRIDGE_METHOD_HANDLE;
     private static final MethodHandle INVOKE_NATIVE_MH;
+
 
     @Retention(RUNTIME)
     private @interface InvokerMethod {
@@ -217,7 +219,8 @@ public class NativeInvoker {
         int nValues = shuffleRecipe.getNoofArgumentPulls();
         long[] values = new long[nValues];
         if (nValues != 0) {
-            int curValueArrayIndex = 0;
+            Pointer<Long> argsPtr = BoundedPointer.fromLongArray(values);
+            long offset = 0L;
             for (StorageClass c : Constants.ARGUMENT_STORAGE_CLASSES) {
                 for (ArgumentBinding binding : callingSequence.getBindings(c)) {
                     if (binding == null) {
@@ -228,19 +231,14 @@ public class NativeInvoker {
                     if (c == StorageClass.INTEGER_ARGUMENT_REGISTER &&
                         callingSequence.returnsInMemory() &&
                         binding.getStorage().getStorageIndex() == 0) {
-                        values[curValueArrayIndex] = returnStructPtr.addr();
-                        curValueArrayIndex++;
+                        argsPtr.type().setter().invokeExact(argsPtr.offset(offset), returnStructPtr.addr());
+                        offset += 1;
                     } else {
                         long n = binding.getStorage().getSize() / 8;
-
                         int argIndex = binding.getMember().getArgumentIndex();
                         Class<?> argCarrier = methodType.parameterType(argIndex);
-                        long[] argValues = getArgumentValues(argCarrier, binding, n, args[argIndex], upcallHandlers);
-                        if (n != argValues.length) {
-                            throw new InternalError("carrierType: " + argCarrier + " binding: " + binding + " n: " + n + " argValues.length: " + argValues.length);
-                        }
-                        System.arraycopy(argValues, 0, values, curValueArrayIndex, (int)n);
-                        curValueArrayIndex += n;
+                        getArgumentValues(argsPtr.offset(offset), argCarrier, binding, n, args[argIndex], upcallHandlers);
+                        offset += n;
                     }
                 }
             }
@@ -274,71 +272,52 @@ public class NativeInvoker {
         if (methodType.returnType() == void.class) {
             return null;
         } else if (Util.isCStruct(methodType.returnType())) {
+            assert returnStructPtr != null;
             if (!callingSequence.returnsInMemory()) {
-                int curValueArrayIndex = 0;
+                Pointer<Long> retValuesPtr = BoundedPointer.fromLongArray(returnValues);
+                Pointer<Long> retStructPtr = Util.unsafeCast(returnStructPtr, NativeTypes.UINT64);
+                long offset = 0L;
 
-                for (StorageClass c : Constants.RETURN_STORAGE_CLASSES) {
-                    for (ArgumentBinding binding : callingSequence.getBindings(c)) {
-                        assert binding != null;
-                        assert returnStructPtr != null;
+                try {
+                    for (StorageClass c : Constants.RETURN_STORAGE_CLASSES) {
+                        for (ArgumentBinding binding : callingSequence.getBindings(c)) {
+                            assert binding != null;
 
-                        int n = (int)(binding.getStorage().getSize() / 8);
-                        copyStructReturnValue(returnStructPtr, binding.getOffset(), returnValues, curValueArrayIndex, n);
-                        curValueArrayIndex += n;
+                            int n = (int)(binding.getStorage().getSize() / 8);
+                            Util.copy(retValuesPtr.offset(offset), retStructPtr.offset(binding.getOffset() / 8), n * Util.LONG_ARRAY_SCALE);
+                            offset += n;
+                        }
                     }
+                } catch (IllegalAccessException ex) {
+                    throw new IllegalStateException(ex);
                 }
             }
 
             return returnStructPtr.get();
         } else {
-            Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);
-            ptr.set(returnValues[0]);
+            Pointer<Long> retValuesPtr = BoundedPointer.fromLongArray(returnValues);
             try {
-                return returnLayoutType.getter().invoke(Util.unsafeCast(ptr, returnLayoutType));
+                return returnLayoutType.getter().invoke(Util.unsafeCast(retValuesPtr, returnLayoutType));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
     }
 
-    private Pointer<Long> rawStructPointer(Pointer<?> structPtr, long offset) {
-        if ((offset % LAYOUT_TYPE_LONG.bytesSize()) != 0) {
-            throw new IllegalArgumentException("Invalid offset: " + offset);
-        }
-        return Util.unsafeCast(structPtr, LAYOUT_TYPE_LONG).offset(offset / LAYOUT_TYPE_LONG.bytesSize());
-    }
-
-    public void rawStructWrite(Pointer<?> structPtr, long offset, long value) {
-        rawStructPointer(structPtr, offset).set(value);
-    }
-
-    private void copyStructReturnValue(Pointer<?> structPtr, long structOffset, long[] returnValues, int curReturnValuesIndex, int n) {
-        for (int i = 0; i < n; i++) {
-            long offs = structOffset + i * 8;
-            rawStructWrite(structPtr, offs, returnValues[curReturnValuesIndex]);
-            curReturnValuesIndex++;
-        }
-    }
-
-    private long[] getArgumentValues(Class<?> carrierType, ArgumentBinding binding, long n, Object arg, List<UpcallHandler> handlers) throws Throwable {
+    private void getArgumentValues(Pointer<Long> argsPtr, Class<?> carrierType, ArgumentBinding binding, long n, Object arg, List<UpcallHandler> handlers) throws Throwable {
         if (Util.isCStruct(carrierType)) {
-            long[] values = new long[(int)n];
             Struct<?> r = (Struct<?>)arg;
-
             Pointer<Long> src = Util.unsafeCast(Util.unsafeCast(r.ptr(), NativeTypes.UINT8).offset(binding.getOffset()), NativeTypes.UINT64);
-            for (int i = 0; i < n; i++) {
-                values[i] = src.offset(i).get();
-            }
-            return values;
+            Util.copy(src, argsPtr, n * Util.LONG_ARRAY_SCALE);
         } else if (Util.isCallback(carrierType)) {
+            assert n == 1;
             UpcallHandler handler = upcallHandlers[binding.getMember().getArgumentIndex()].buildHandler((Callback<?>)arg);
             handlers.add(handler);
-            return new long[] { handler.getNativeEntryPoint().addr() };
+            argsPtr.type().setter().invokeExact(argsPtr, handler.getNativeEntryPoint().addr());
         } else {
-            Pointer<Long> ptr = Scope.newHeapScope().allocate(NativeTypes.INT64);
-            Util.unsafeCast(ptr, argLayoutTypes[binding.getMember().getArgumentIndex()])
-                    .type().setter().invoke(ptr, arg);
-            return new long[] { ptr.get() };
+            assert n == 1;
+            int argIndex = binding.getMember().getArgumentIndex();
+            Util.unsafeCast(argsPtr, argLayoutTypes[argIndex]).type().setter().invoke(argsPtr, arg);
         }
     }
 

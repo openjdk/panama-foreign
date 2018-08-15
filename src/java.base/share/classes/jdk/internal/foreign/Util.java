@@ -49,6 +49,8 @@ public final class Util {
 
     public static final long BYTE_BUFFER_BASE;
     public static final long BUFFER_ADDRESS;
+    public static final long LONG_ARRAY_BASE;
+    public static final long LONG_ARRAY_SCALE;
 
     static {
         try {
@@ -58,6 +60,9 @@ public final class Util {
 
             BYTE_BUFFER_BASE = UNSAFE.objectFieldOffset(ByteBuffer.class.getDeclaredField("hb"));
             BUFFER_ADDRESS = UNSAFE.objectFieldOffset(Buffer.class.getDeclaredField("address"));
+
+            LONG_ARRAY_BASE = UNSAFE.arrayBaseOffset(long[].class);
+            LONG_ARRAY_SCALE = UNSAFE.arrayIndexScale(long[].class);
         }
         catch (Exception e) {
             throw new InternalError(e);
