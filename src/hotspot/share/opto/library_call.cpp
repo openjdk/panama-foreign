@@ -7260,7 +7260,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_float512_exp"; *addr_ptr = StubRoutines::vector_float512_exp(); break;
             default: Unimplemented(); break;
           }
-        } 
+        }
+        break;
       case OP_LOG1P: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_log1p"; *addr_ptr = StubRoutines::vector_float64_log1p(); break;  
@@ -7270,6 +7271,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_LOG: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_log"; *addr_ptr = StubRoutines::vector_float64_log(); break;  
@@ -7279,6 +7281,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_LOG10: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_log10"; *addr_ptr = StubRoutines::vector_float64_log10(); break;  
@@ -7288,6 +7291,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_EXPM1: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_expm1"; *addr_ptr = StubRoutines::vector_float64_expm1(); break;  
@@ -7297,6 +7301,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_SIN: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_sin"; *addr_ptr = StubRoutines::vector_float64_sin(); break;    
@@ -7305,7 +7310,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_float512_sin"; *addr_ptr = StubRoutines::vector_float512_sin(); break;
             default: Unimplemented(); break;
           }
-        }    
+        }
+        break;
       case OP_COS: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_cos"; *addr_ptr = StubRoutines::vector_float64_cos(); break;    
@@ -7315,6 +7321,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_TAN: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_tan"; *addr_ptr = StubRoutines::vector_float64_tan(); break;    
@@ -7324,6 +7331,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_SINH: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_sinh"; *addr_ptr = StubRoutines::vector_float64_sinh(); break;    
@@ -7332,7 +7340,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_float512_sinh"; *addr_ptr = StubRoutines::vector_float512_sinh(); break;
             default: Unimplemented(); break;
           }
-        }    
+        }
+        break;
       case OP_COSH: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_cosh"; *addr_ptr = StubRoutines::vector_float64_cosh(); break;    
@@ -7342,6 +7351,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_TANH: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_tanh"; *addr_ptr = StubRoutines::vector_float64_tanh(); break;    
@@ -7350,7 +7360,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_float512_tanh"; *addr_ptr = StubRoutines::vector_float512_tanh(); break;
             default: Unimplemented(); break;
           }
-        }  
+        }
+        break;
       case OP_ASIN: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_asin"; *addr_ptr = StubRoutines::vector_float64_asin(); break;    
@@ -7359,7 +7370,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_float512_asin"; *addr_ptr = StubRoutines::vector_float512_asin(); break;
             default: Unimplemented(); break;
           }
-        }    
+        }
+        break;
       case OP_ACOS: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_acos"; *addr_ptr = StubRoutines::vector_float64_acos(); break;    
@@ -7369,6 +7381,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_ATAN: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_atan"; *addr_ptr = StubRoutines::vector_float64_atan(); break;    
@@ -7378,6 +7391,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break; 
           }
         }
+        break;
       case OP_CBRT: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_cbrt"; *addr_ptr = StubRoutines::vector_float64_cbrt(); break;    
@@ -7386,7 +7400,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_float512_cbrt"; *addr_ptr = StubRoutines::vector_float512_cbrt(); break;
             default: Unimplemented(); break; 
           }
-        }  
+        }
+        break;
        case OP_HYPOT: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_hypot"; *addr_ptr = StubRoutines::vector_float64_hypot(); break;    
@@ -7395,7 +7410,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_float512_hypot"; *addr_ptr = StubRoutines::vector_float512_hypot(); break;
             default: Unimplemented(); break;
           }
-        }  
+        }
+        break;
       case OP_POW: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_pow"; *addr_ptr = StubRoutines::vector_float64_pow(); break;    
@@ -7405,6 +7421,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_ATAN2: {
           switch(bits) {
             case 64: *name_ptr = "vector_float64_atan2"; *addr_ptr = StubRoutines::vector_float64_atan2(); break;    
@@ -7413,7 +7430,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_float512_atan2"; *addr_ptr = StubRoutines::vector_float512_atan2(); break;
             default: Unimplemented(); break;
           }
-        }             
+        }
         break;
       default:
         *name_ptr = "invalid";
@@ -7431,7 +7448,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_double512_exp"; *addr_ptr = StubRoutines::vector_double512_exp(); break;
             default: Unimplemented(); break;
           }
-        } 
+        }
+        break;
       case OP_LOG1P: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_log1p"; *addr_ptr = StubRoutines::vector_double64_log1p(); break;    
@@ -7441,6 +7459,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_LOG: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_log"; *addr_ptr = StubRoutines::vector_double64_log(); break;    
@@ -7450,6 +7469,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_LOG10: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_log10"; *addr_ptr = StubRoutines::vector_double64_log10(); break;    
@@ -7458,7 +7478,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_double512_log10"; *addr_ptr = StubRoutines::vector_double512_log10(); break;
             default: Unimplemented(); break;
           }
-        } 
+        }
+        break;
       case OP_EXPM1: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_expm1"; *addr_ptr = StubRoutines::vector_double64_expm1(); break;    
@@ -7468,6 +7489,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_SIN: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_sin"; *addr_ptr = StubRoutines::vector_double64_sin(); break;
@@ -7476,7 +7498,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_double512_sin"; *addr_ptr = StubRoutines::vector_double512_sin(); break;
             default: Unimplemented(); break;
           }
-        }    
+        }
+        break;
       case OP_COS: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_cos"; *addr_ptr = StubRoutines::vector_double64_cos(); break;
@@ -7486,6 +7509,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_TAN: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_tan"; *addr_ptr = StubRoutines::vector_double64_tan(); break;
@@ -7495,6 +7519,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_SINH: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_sinh"; *addr_ptr = StubRoutines::vector_double64_sinh(); break;
@@ -7503,7 +7528,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_double512_sinh"; *addr_ptr = StubRoutines::vector_double512_sinh(); break;
             default: Unimplemented(); break;
           }
-        }    
+        }
+        break;
       case OP_COSH: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_cosh"; *addr_ptr = StubRoutines::vector_double64_cosh(); break;
@@ -7513,6 +7539,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_TANH: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_tanh"; *addr_ptr = StubRoutines::vector_double64_tanh(); break;
@@ -7521,7 +7548,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_double512_tanh"; *addr_ptr = StubRoutines::vector_double512_tanh(); break;
             default: Unimplemented(); break;
           }
-        }  
+        }
+        break;
       case OP_ASIN: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_asin"; *addr_ptr = StubRoutines::vector_double64_asin(); break;
@@ -7530,7 +7558,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_double512_asin"; *addr_ptr = StubRoutines::vector_double512_asin(); break;
             default: Unimplemented(); break;
           }
-        }     
+        }
+        break;
       case OP_ACOS: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_acos"; *addr_ptr = StubRoutines::vector_double64_acos(); break;
@@ -7540,6 +7569,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_ATAN: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_atan"; *addr_ptr = StubRoutines::vector_double64_atan(); break;
@@ -7549,6 +7579,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break; 
           }
         }
+        break;
       case OP_CBRT: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_cbrt"; *addr_ptr = StubRoutines::vector_double64_cbrt(); break;
@@ -7557,7 +7588,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_double512_cbrt"; *addr_ptr = StubRoutines::vector_double512_cbrt(); break;
             default: Unimplemented(); break; 
           }
-        }    
+        }
+        break;
       case OP_HYPOT: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_hypot"; *addr_ptr = StubRoutines::vector_double64_hypot(); break; 
@@ -7566,7 +7598,8 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             case 512: *name_ptr = "vector_double512_hypot"; *addr_ptr = StubRoutines::vector_double512_hypot(); break;
             default: Unimplemented(); break;
           }
-        }  
+        }
+        break;
       case OP_POW: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_pow"; *addr_ptr = StubRoutines::vector_double64_pow(); break;
@@ -7576,6 +7609,7 @@ static void get_svml_address(int op, int bits, BasicType bt, const char** name_p
             default: Unimplemented(); break;
           }
         }
+        break;
       case OP_ATAN2: {
           switch(bits) {
             case 64: *name_ptr = "vector_double64_atan2"; *addr_ptr = StubRoutines::vector_double64_atan2(); break;
