@@ -13967,7 +13967,8 @@ instruct vmul4L_reg_avx(vecY dst, vecY src1, vecY src2, vecY tmp, vecY tmp1,) %{
     int vector_len = 1;
     __ vpshufd($tmp$$XMMRegister, $src2$$XMMRegister, 177, vector_len);
     __ vpmulld($tmp$$XMMRegister, $src1$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ vphaddd($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vextracti128_high($tmp1$$XMMRegister, $tmp$$XMMRegister);
+    __ vphaddd($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp1$$XMMRegister, vector_len);
     __ vpmovzxdq($tmp$$XMMRegister, $tmp$$XMMRegister, vector_len);
     __ vpsllq($tmp$$XMMRegister, $tmp$$XMMRegister, 32, vector_len);
     __ vpmuludq($tmp1$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
