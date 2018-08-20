@@ -1,1 +1,1 @@
-foreign vectorSnippets
+foreign vectorIntrinsics
