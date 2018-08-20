@@ -37,7 +37,9 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.lang.Integer;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -121,6 +123,20 @@ public class Long256VectorTests extends AbstractVectorTest {
             else
               Assert.assertEquals(b[i], a[i], "at index #" + i);
       }
+    }
+
+    static void assertRearrangeArraysEquals(long[] a, long[] r, int[] order, int vector_len) {
+        int i = 0, j = 0;
+        try {
+            for (; i < a.length; i += vector_len) {
+                for (j = 0; j < vector_len; j++) {
+                    Assert.assertEquals(r[i+j], a[i+order[i+j]]);
+                }
+            }
+        } catch (AssertionError e) {
+            int idx = i + j;
+            Assert.assertEquals(r[i+j], a[i+order[i+j]], "at index #" + idx + ", input = " + a[i+order[i+j]]);
+        }
     }
 
     interface FBinOp {
@@ -271,6 +287,15 @@ public class Long256VectorTests extends AbstractVectorTest {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> LONG_GENERATORS.stream().map(fa -> {
                     return new Object[] {fa, fm};
+                })).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] longUnaryOpShuffleProvider() {
+        return INT_SHUFFLE_GENERATORS.stream().
+                flatMap(fs -> LONG_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
                 })).
                 toArray(Object[][]::new);
     }
@@ -1284,6 +1309,26 @@ public class Long256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, Long256VectorTests::blend);
     }
+
+    @Test(dataProvider = "longUnaryOpShuffleProvider")
+    static void RearrangeLong256VectorTests(IntFunction<long[]> fa,
+                                           BiFunction<Integer,Integer,int[]> fs) {
+        long[] a = fa.apply(SPECIES.length());
+        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        long[] r = new long[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
+            }
+        }
+
+        assertRearrangeArraysEquals(a, r, order, SPECIES.length());
+    }
+
+
+
+
     @Test(dataProvider = "longUnaryOpProvider")
     static void getLong256VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());

@@ -37,7 +37,9 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.lang.Integer;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -121,6 +123,20 @@ public class Float256VectorTests extends AbstractVectorTest {
             else
               Assert.assertEquals(b[i], a[i], "at index #" + i);
       }
+    }
+
+    static void assertRearrangeArraysEquals(float[] a, float[] r, int[] order, int vector_len) {
+        int i = 0, j = 0;
+        try {
+            for (; i < a.length; i += vector_len) {
+                for (j = 0; j < vector_len; j++) {
+                    Assert.assertEquals(r[i+j], a[i+order[i+j]]);
+                }
+            }
+        } catch (AssertionError e) {
+            int idx = i + j;
+            Assert.assertEquals(r[i+j], a[i+order[i+j]], "at index #" + idx + ", input = " + a[i+order[i+j]]);
+        }
     }
 
     interface FBinOp {
@@ -376,6 +392,15 @@ public class Float256VectorTests extends AbstractVectorTest {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> FLOAT_GENERATORS.stream().map(fa -> {
                     return new Object[] {fa, fm};
+                })).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] floatUnaryOpShuffleProvider() {
+        return INT_SHUFFLE_GENERATORS.stream().
+                flatMap(fs -> FLOAT_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
                 })).
                 toArray(Object[][]::new);
     }
@@ -952,6 +977,26 @@ public class Float256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, Float256VectorTests::blend);
     }
+
+    @Test(dataProvider = "floatUnaryOpShuffleProvider")
+    static void RearrangeFloat256VectorTests(IntFunction<float[]> fa,
+                                           BiFunction<Integer,Integer,int[]> fs) {
+        float[] a = fa.apply(SPECIES.length());
+        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        float[] r = new float[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
+                av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
+            }
+        }
+
+        assertRearrangeArraysEquals(a, r, order, SPECIES.length());
+    }
+
+
+
+
     @Test(dataProvider = "floatUnaryOpProvider")
     static void getFloat256VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());

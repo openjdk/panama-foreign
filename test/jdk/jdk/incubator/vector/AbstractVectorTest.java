@@ -21,14 +21,20 @@
  * questions.
  */
 
+import java.lang.Integer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.Random;
 
 public class AbstractVectorTest {
+
+    static final Random RAND = new Random(Integer.getInteger("jdk.incubator.vector.test.random-seed", 1337));
+
     interface ToBoolF {
         boolean apply(int i);
     }
@@ -49,6 +55,20 @@ public class AbstractVectorTest {
             @Override
             public R apply(int v) {
                 return f.apply(v);
+            }
+
+            @Override
+            public String toString() {
+                return s;
+            }
+        };
+    }
+
+    static <R> BiFunction<Integer,Integer,R> withToStringBi(String s, BiFunction<Integer,Integer,R> f) {
+        return new BiFunction<Integer,Integer,R>() {
+            @Override
+            public R apply(Integer v, Integer u) {
+                return f.apply(v, u);
             }
 
             @Override
@@ -140,6 +160,12 @@ public class AbstractVectorTest {
                 return a;
             }),
             withToString("mask[false]", boolean[]::new)
+    );
+    
+    static final List<BiFunction<Integer,Integer,int[]>> INT_SHUFFLE_GENERATORS = List.of(
+            withToStringBi("shuffle[random]", (Integer l, Integer m) -> {
+                return RAND.ints(l.intValue(), 0, m.intValue()).toArray();
+            })
     );
 
     static int countTrailingFalse(boolean[] m) {

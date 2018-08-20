@@ -37,7 +37,9 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.lang.Integer;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -121,6 +123,20 @@ public class Short128VectorTests extends AbstractVectorTest {
             else
               Assert.assertEquals(b[i], a[i], "at index #" + i);
       }
+    }
+
+    static void assertRearrangeArraysEquals(short[] a, short[] r, int[] order, int vector_len) {
+        int i = 0, j = 0;
+        try {
+            for (; i < a.length; i += vector_len) {
+                for (j = 0; j < vector_len; j++) {
+                    Assert.assertEquals(r[i+j], a[i+order[i+j]]);
+                }
+            }
+        } catch (AssertionError e) {
+            int idx = i + j;
+            Assert.assertEquals(r[i+j], a[i+order[i+j]], "at index #" + idx + ", input = " + a[i+order[i+j]]);
+        }
     }
 
     interface FBinOp {
@@ -271,6 +287,15 @@ public class Short128VectorTests extends AbstractVectorTest {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> SHORT_GENERATORS.stream().map(fa -> {
                     return new Object[] {fa, fm};
+                })).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] shortUnaryOpShuffleProvider() {
+        return INT_SHUFFLE_GENERATORS.stream().
+                flatMap(fs -> SHORT_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
                 })).
                 toArray(Object[][]::new);
     }
@@ -1047,6 +1072,26 @@ public class Short128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, mask, Short128VectorTests::blend);
     }
+
+    @Test(dataProvider = "shortUnaryOpShuffleProvider")
+    static void RearrangeShort128VectorTests(IntFunction<short[]> fa,
+                                           BiFunction<Integer,Integer,int[]> fs) {
+        short[] a = fa.apply(SPECIES.length());
+        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        short[] r = new short[a.length];
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
+            }
+        }
+
+        assertRearrangeArraysEquals(a, r, order, SPECIES.length());
+    }
+
+
+
+
     @Test(dataProvider = "shortUnaryOpProvider")
     static void getShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());

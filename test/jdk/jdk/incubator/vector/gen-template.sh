@@ -50,6 +50,7 @@ with_op_template="With-Op"
 shift_template="Shift-op"
 shift_masked_template="Shift-Masked-op"
 get_template="Get-op"
+rearrange_template="Rearrange"
 
 function replace_variables {
   filename=$1
@@ -260,6 +261,9 @@ gen_op_tmpl $compare_template "greaterThanEq" ">=" $unit_output $perf_output
 
 # Blend.
 gen_op_tmpl $blend "blend" "" $unit_output $perf_output
+
+# Rearrange
+gen_op_tmpl $rearrange_template "rearrange" "" $unit_output $perf_output
 
 # Get
 gen_get_op "" "" $unit_output $perf_output
