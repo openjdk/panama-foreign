@@ -46,6 +46,7 @@
 #include "opto/runtime.hpp"
 #include "opto/subnode.hpp"
 #include "opto/type.hpp"
+#include "opto/vectornode.hpp"
 #include "runtime/sharedRuntime.hpp"
 #if INCLUDE_G1GC
 #include "gc/g1/g1ThreadLocalData.hpp"
@@ -1093,12 +1094,16 @@ bool PhaseMacroExpand::eliminate_allocate_node(AllocateNode *alloc) {
 
 #ifndef PRODUCT
   if (PrintEliminateAllocations) {
-    if (alloc->is_AllocateArray())
-      tty->print_cr("++++ Eliminated: %d AllocateArray", alloc->_idx);
-    else
-      tty->print_cr("++++ Eliminated: %d Allocate", alloc->_idx);
+    if (alloc->is_AllocateArray()) {
+      tty->print("++++ Eliminated: %d AllocateArray ", alloc->_idx);
+    } else {
+      tty->print("++++ Eliminated: %d Allocate ", alloc->_idx);
+    }
+    tklass->klass()->print_name_on(tty);
+    tty->cr();
+    alloc->jvms()->print_on(tty);
   }
-#endif
+#endif // PRODUCT
 
   return true;
 }
@@ -1137,6 +1142,7 @@ bool PhaseMacroExpand::eliminate_boxing_node(CallStaticJavaNode *boxing) {
     tty->print("++++ Eliminated: %d ", boxing->_idx);
     boxing->method()->print_short_name(tty);
     tty->cr();
+    boxing->jvms()->print_on(tty);
   }
 #endif
 
@@ -1245,6 +1251,16 @@ void PhaseMacroExpand::expand_allocate_common(
   Node* size_in_bytes     = alloc->in(AllocateNode::AllocSize);
   Node* klass_node        = alloc->in(AllocateNode::KlassNode);
   Node* initial_slow_test = alloc->in(AllocateNode::InitialTest);
+
+#ifndef PRODUCT
+  if (PrintEliminateAllocations) {
+    tty->print("++++ Expand: %d %s ", alloc->_idx, alloc->Name());
+    const TypeKlassPtr* tklass = _igvn.type(klass_node)->is_klassptr();
+    tklass->klass()->print_name_on(tty);
+    tty->cr();
+    alloc->jvms()->print_on(tty);
+  }
+#endif // PRODUCT
 
   assert(ctrl != NULL, "must have control");
   // We need a Region and corresponding Phi's to merge the slow-path and fast-path results.
@@ -2149,6 +2165,7 @@ bool PhaseMacroExpand::eliminate_locking_node(AbstractLockNode *alock) {
     } else {
       tty->print_cr("++++ Eliminated: %d Unlock", alock->_idx);
     }
+    alock->jvms()->print_on(tty);
   }
 #endif
 
@@ -2576,7 +2593,7 @@ void PhaseMacroExpand::eliminate_macro_nodes() {
                n->Opcode() == Op_Opaque2   ||
                n->Opcode() == Op_Opaque3   ||
                BarrierSet::barrier_set()->barrier_set_c2()->is_gc_barrier_node(n),
-               "unknown node type in macro list");
+               "unknown node type in macro list: %s", n->Name());
       }
       assert(success == (C->macro_count() < old_macro_count), "elimination reduces macro count");
       progress = progress || success;
@@ -2707,3 +2724,4 @@ bool PhaseMacroExpand::expand_macro_nodes() {
   BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
   return bs->expand_macro_nodes(this);
 }
+

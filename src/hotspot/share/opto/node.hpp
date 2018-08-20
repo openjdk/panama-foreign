@@ -151,6 +151,8 @@ class UnlockNode;
 class VectorNode;
 class LoadVectorNode;
 class StoreVectorNode;
+class VectorBoxNode;
+class VectorMaskCmpNode;
 class VectorSet;
 typedef void (*NFunc)(Node&,void*);
 extern "C" {
@@ -649,6 +651,7 @@ public:
               DEFINE_CLASS_ID(MachCallDynamicJava,  MachCallJava, 1)
             DEFINE_CLASS_ID(MachCallRuntime,      MachCall, 1)
               DEFINE_CLASS_ID(MachCallLeaf,         MachCallRuntime, 0)
+
       DEFINE_CLASS_ID(MachBranch, Mach, 1)
         DEFINE_CLASS_ID(MachIf,         MachBranch, 0)
         DEFINE_CLASS_ID(MachGoto,       MachBranch, 1)
@@ -713,7 +716,9 @@ public:
     DEFINE_CLASS_ID(Add,      Node, 11)
     DEFINE_CLASS_ID(Mul,      Node, 12)
     DEFINE_CLASS_ID(Vector,   Node, 13)
+      DEFINE_CLASS_ID(VectorMaskCmp, Vector, 0)
     DEFINE_CLASS_ID(ClearArray, Node, 14)
+
 
     _max_classes  = ClassMask_ClearArray
   };
@@ -877,6 +882,7 @@ public:
   DEFINE_CLASS_QUERY(Vector)
   DEFINE_CLASS_QUERY(LoadVector)
   DEFINE_CLASS_QUERY(StoreVector)
+  DEFINE_CLASS_QUERY(VectorMaskCmp)
   DEFINE_CLASS_QUERY(Unlock)
 
   #undef DEFINE_CLASS_QUERY

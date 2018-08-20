@@ -419,6 +419,8 @@ Form::CallType InstructForm::is_ideal_call() const {
   idx = 0;
   if(_matrule->find_type("CallLeafNoFP",idx))     return Form::JAVA_LEAF;
   idx = 0;
+  if(_matrule->find_type("CallLeafVector",idx))   return Form::JAVA_LEAF;
+  idx = 0;
 
   return Form::invalid_type;
 }
@@ -3808,7 +3810,8 @@ void MatchNode::count_commutative_op(int& count) {
     "AndV",
     "MaxI","MinI",
     "MulI","MulL","MulF","MulD",
-    "MulVS","MulVI","MulVL","MulVF","MulVD",
+    "MulVB","MulVS","MulVI","MulVL","MulVF","MulVD",
+    "MinV","MaxV",
     "OrI","OrL",
     "OrV",
     "XorI","XorL",
@@ -4085,6 +4088,12 @@ int MatchRule::is_expensive() const {
         strcmp(opType,"MulReductionVL")==0 ||
         strcmp(opType,"MulReductionVF")==0 ||
         strcmp(opType,"MulReductionVD")==0 ||
+        strcmp(opType, "MinReductionV") == 0 ||
+        strcmp(opType, "MaxReductionV") == 0 ||
+        strcmp(opType,"AndReductionV")==0 ||
+        strcmp(opType,"OrReductionV")==0 ||
+        strcmp(opType,"XorReductionV")==0 ||
+        strcmp(opType,"SubReductionV")==0 ||
         0 /* 0 to line up columns nicely */ )
       return 1;
   }
@@ -4174,23 +4183,31 @@ bool MatchRule::is_vector() const {
   static const char *vector_list[] = {
     "AddVB","AddVS","AddVI","AddVL","AddVF","AddVD",
     "SubVB","SubVS","SubVI","SubVL","SubVF","SubVD",
-    "MulVS","MulVI","MulVL","MulVF","MulVD",
+    "MulVB","MulVS","MulVI","MulVL","MulVF","MulVD",
     "CMoveVD", "CMoveVF",
     "DivVF","DivVD",
-    "AbsVF","AbsVD",
-    "NegVF","NegVD",
+    "MinV","MaxV",
+    "AbsVF","AbsVD","AbsV",
+    "NegVF","NegVD","NegVI",
     "SqrtVD","SqrtVF",
-    "AndV" ,"XorV" ,"OrV",
+    "AndV" ,"XorV" ,"OrV", "NotV",
     "AddReductionVI", "AddReductionVL",
     "AddReductionVF", "AddReductionVD",
     "MulReductionVI", "MulReductionVL",
     "MulReductionVF", "MulReductionVD",
+    "MinReductionV", "MaxReductionV",
+    "AndReductionV", "OrReductionV",
+    "XorReductionV", "SubReductionV",
     "LShiftCntV","RShiftCntV",
     "LShiftVB","LShiftVS","LShiftVI","LShiftVL",
     "RShiftVB","RShiftVS","RShiftVI","RShiftVL",
     "URShiftVB","URShiftVS","URShiftVI","URShiftVL",
     "ReplicateB","ReplicateS","ReplicateI","ReplicateL","ReplicateF","ReplicateD",
     "LoadVector","StoreVector",
+    "VectorLoadMask", "VectorStoreMask", "VectorBlend", "VectorInsert",
+    "VectorCastB2X", "VectorCastS2X", "VectorCastI2X",
+    "VectorCastL2X", "VectorCastF2X", "VectorCastD2X",
+    "VectorMaskWrapper", "VectorMaskCmp", "VectorReinterpret",
     "FmaVD", "FmaVF","PopCountVI",
     // Next are not supported currently.
     "PackB","PackS","PackI","PackL","PackF","PackD","Pack2L","Pack2D",

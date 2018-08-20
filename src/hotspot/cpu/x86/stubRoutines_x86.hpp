@@ -54,6 +54,18 @@ class x86 {
   static address _float_sign_flip;
   static address _double_sign_mask;
   static address _double_sign_flip;
+  static address _vector_float_sign_mask;
+  static address _vector_float_sign_flip;
+  static address _vector_double_sign_mask;
+  static address _vector_double_sign_flip;
+  static address _vector_all_bits_set;
+  static address _vector_byte_bitset;
+  static address _vector_long_perm_mask;
+  static address _vector_short_to_byte_mask;
+  static address _vector_int_to_byte_mask;
+  static address _vector_int_to_short_mask;
+  static address _vector_32_bit_mask;
+  static address _vector_64_bit_mask;
 
  public:
 
@@ -96,6 +108,55 @@ class x86 {
   static address double_sign_flip() {
     return _double_sign_flip;
   }
+
+  static address vector_float_sign_mask() {
+    return _vector_float_sign_mask;
+  }
+
+  static address vector_float_sign_flip() {
+    return _vector_float_sign_flip;
+  }
+
+  static address vector_double_sign_mask() {
+    return _vector_double_sign_mask;
+  }
+
+  static address vector_double_sign_flip() {
+    return _vector_double_sign_flip;
+  }
+
+  static address vector_all_bits_set() {
+    return _vector_all_bits_set;
+  }
+
+  static address vector_byte_bitset() {
+    return _vector_byte_bitset;
+  }
+
+  static address vector_long_perm_mask() {
+    return _vector_long_perm_mask;
+  }
+
+  static address vector_short_to_byte_mask() {
+    return _vector_short_to_byte_mask;
+  }
+
+  static address vector_int_to_byte_mask() {
+    return _vector_int_to_byte_mask;
+  }
+
+  static address vector_int_to_short_mask() {
+    return _vector_int_to_short_mask;
+  }
+
+  static address vector_32_bit_mask() {
+    return _vector_32_bit_mask;
+  }
+
+  static address vector_64_bit_mask() {
+    return _vector_64_bit_mask;
+  }
+
 #else // !LP64
 
  private:

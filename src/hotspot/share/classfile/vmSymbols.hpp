@@ -81,6 +81,95 @@
   template(java_lang_Integer_IntegerCache,            "java/lang/Integer$IntegerCache")           \
   template(java_lang_Long,                            "java/lang/Long")                           \
   template(java_lang_Long_LongCache,                  "java/lang/Long$LongCache")                 \
+  template(jdk_incubator_vector_VectorIntrinsics,        "jdk/incubator/vector/VectorIntrinsics")         \
+  template(jdk_incubator_vector_Vector,                  "jdk/incubator/vector/Vector")                   \
+  template(jdk_incubator_vector_VectorSpecies,           "jdk/incubator/vector/Vector$Species")           \
+  template(jdk_incubator_vector_VectorMask,              "jdk/incubator/vector/Vector$Mask")              \
+  template(jdk_incubator_vector_VectorAbstractMask,      "jdk/incubator/vector/AbstractMask")             \
+  template(jdk_incubator_vector_FloatVector,             "jdk/incubator/vector/FloatVector")              \
+  template(jdk_incubator_vector_FloatVector_FloatSpecies,"jdk/incubator/vector/FloatVector$FloatSpecies") \
+  template(jdk_incubator_vector_Float64Vector,          "jdk/incubator/vector/Float64Vector")                             \
+  template(jdk_incubator_vector_Float64Vector_Float64Species,"jdk/incubator/vector/Float64Vector$Float64Species")         \
+  template(jdk_incubator_vector_Float64Vector_Float64Mask,"jdk/incubator/vector/Float64Vector$Float64Mask")               \
+  template(jdk_incubator_vector_Float128Vector,          "jdk/incubator/vector/Float128Vector")                           \
+  template(jdk_incubator_vector_Float128Vector_Float128Species,"jdk/incubator/vector/Float128Vector$Float128Species")     \
+  template(jdk_incubator_vector_Float128Vector_Float128Mask,"jdk/incubator/vector/Float128Vector$Float128Mask")           \
+  template(jdk_incubator_vector_Float256Vector,          "jdk/incubator/vector/Float256Vector")                           \
+  template(jdk_incubator_vector_Float256Vector_Float256Species,"jdk/incubator/vector/Float256Vector$Float256Species")     \
+  template(jdk_incubator_vector_Float256Vector_Float256Mask,"jdk/incubator/vector/Float256Vector$Float256Mask")           \
+  template(jdk_incubator_vector_Float512Vector,          "jdk/incubator/vector/Float512Vector")                           \
+  template(jdk_incubator_vector_Float512Vector_Float512Species,"jdk/incubator/vector/Float512Vector$Float512Species")     \
+  template(jdk_incubator_vector_Float512Vector_Float512Mask,"jdk/incubator/vector/Float512Vector$Float512Mask")           \
+  template(jdk_incubator_vector_DoubleVector,             "jdk/incubator/vector/DoubleVector")                            \
+  template(jdk_incubator_vector_DoubleVector_DoubleSpecies,"jdk/incubator/vector/DoubleVector$DoubleSpecies")             \
+  template(jdk_incubator_vector_Double64Vector,             "jdk/incubator/vector/Double64Vector")                        \
+  template(jdk_incubator_vector_Double64Vector_Double64Species,"jdk/incubator/vector/Double64Vector$Double64Species")     \
+  template(jdk_incubator_vector_Double64Vector_Double64Mask,"jdk/incubator/vector/Double64Vector$Double64Mask")           \
+  template(jdk_incubator_vector_Double128Vector,             "jdk/incubator/vector/Double128Vector")                      \
+  template(jdk_incubator_vector_Double128Vector_Double128Species,"jdk/incubator/vector/Double128Vector$Double128Species") \
+  template(jdk_incubator_vector_Double128Vector_Double128Mask,"jdk/incubator/vector/Double128Vector$Double128Mask")       \
+  template(jdk_incubator_vector_Double256Vector,             "jdk/incubator/vector/Double256Vector")                      \
+  template(jdk_incubator_vector_Double256Vector_Double256Species,"jdk/incubator/vector/Double256Vector$Double256Species") \
+  template(jdk_incubator_vector_Double256Vector_Double256Mask,"jdk/incubator/vector/Double256Vector$Double256Mask")       \
+  template(jdk_incubator_vector_Double512Vector,             "jdk/incubator/vector/Double512Vector")                      \
+  template(jdk_incubator_vector_Double512Vector_Double512Species,"jdk/incubator/vector/Double512Vector$Double512Species") \
+  template(jdk_incubator_vector_Double512Vector_Double512Mask,"jdk/incubator/vector/Double512Vector$Double512Mask")       \
+  template(jdk_incubator_vector_LongVector,               "jdk/incubator/vector/LongVector")                        \
+  template(jdk_incubator_vector_LongVector_LongSpecies,    "jdk/incubator/vector/LongVector$LongSpecies")           \
+  template(jdk_incubator_vector_Long64Vector,            "jdk/incubator/vector/Long64Vector")                       \
+  template(jdk_incubator_vector_Long64Vector_Long64Species,"jdk/incubator/vector/Long64Vector$Long64Species")       \
+  template(jdk_incubator_vector_Long64Vector_Long64Mask,"jdk/incubator/vector/Long64Vector$Long64Mask")             \
+  template(jdk_incubator_vector_Long128Vector,            "jdk/incubator/vector/Long128Vector")                     \
+  template(jdk_incubator_vector_Long128Vector_Long128Species,"jdk/incubator/vector/Long128Vector$Long128Species")   \
+  template(jdk_incubator_vector_Long128Vector_Long128Mask,"jdk/incubator/vector/Long128Vector$Long128Mask")         \
+  template(jdk_incubator_vector_Long256Vector,            "jdk/incubator/vector/Long256Vector")                     \
+  template(jdk_incubator_vector_Long256Vector_Long256Species,"jdk/incubator/vector/Long256Vector$Long256Species")   \
+  template(jdk_incubator_vector_Long256Vector_Long256Mask,"jdk/incubator/vector/Long256Vector$Long256Mask")         \
+  template(jdk_incubator_vector_Long512Vector,            "jdk/incubator/vector/Long512Vector")                     \
+  template(jdk_incubator_vector_Long512Vector_Long512Species,"jdk/incubator/vector/Long512Vector$Long512Species")   \
+  template(jdk_incubator_vector_Long512Vector_Long512Mask,"jdk/incubator/vector/Long512Vector$Long512Mask")         \
+  template(jdk_incubator_vector_IntVector,               "jdk/incubator/vector/IntVector")                          \
+  template(jdk_incubator_vector_IntVector_IntSpecies,    "jdk/incubator/vector/IntVector$IntSpecies")               \
+  template(jdk_incubator_vector_Int64Vector,            "jdk/incubator/vector/Int64Vector")                         \
+  template(jdk_incubator_vector_Int64Vector_Int64Species,"jdk/incubator/vector/Int64Vector$Int64Species")           \
+  template(jdk_incubator_vector_Int64Vector_Int64Mask,"jdk/incubator/vector/Int64Vector$Int64Mask")                 \
+  template(jdk_incubator_vector_Int128Vector,            "jdk/incubator/vector/Int128Vector")                       \
+  template(jdk_incubator_vector_Int128Vector_Int128Species,"jdk/incubator/vector/Int128Vector$Int128Species")       \
+  template(jdk_incubator_vector_Int128Vector_Int128Mask,"jdk/incubator/vector/Int128Vector$Int128Mask")             \
+  template(jdk_incubator_vector_Int256Vector,            "jdk/incubator/vector/Int256Vector")                       \
+  template(jdk_incubator_vector_Int256Vector_Int256Species,"jdk/incubator/vector/Int256Vector$Int256Species")       \
+  template(jdk_incubator_vector_Int256Vector_Int256Mask,"jdk/incubator/vector/Int256Vector$Int256Mask")             \
+  template(jdk_incubator_vector_Int512Vector,            "jdk/incubator/vector/Int512Vector")                       \
+  template(jdk_incubator_vector_Int512Vector_Int512Species,"jdk/incubator/vector/Int512Vector$Int512Species")       \
+  template(jdk_incubator_vector_Int512Vector_Int512Mask,"jdk/incubator/vector/Int512Vector$Int512Mask")             \
+  template(jdk_incubator_vector_ByteVector,               "jdk/incubator/vector/ByteVector")                        \
+  template(jdk_incubator_vector_ByteVector_ByteSpecies,    "jdk/incubator/vector/ByteVector$ByteSpecies")           \
+  template(jdk_incubator_vector_Byte64Vector,            "jdk/incubator/vector/Byte64Vector")                       \
+  template(jdk_incubator_vector_Byte64Vector_Byte64Species,"jdk/incubator/vector/Byte64Vector$Byte64Species")       \
+  template(jdk_incubator_vector_Byte64Vector_Byte64Mask,"jdk/incubator/vector/Byte64Vector$Byte64Mask")             \
+  template(jdk_incubator_vector_Byte128Vector,            "jdk/incubator/vector/Byte128Vector")                     \
+  template(jdk_incubator_vector_Byte128Vector_Byte128Species,"jdk/incubator/vector/Byte128Vector$Byte128Species")   \
+  template(jdk_incubator_vector_Byte128Vector_Byte128Mask,"jdk/incubator/vector/Byte128Vector$Byte128Mask")         \
+  template(jdk_incubator_vector_Byte256Vector,            "jdk/incubator/vector/Byte256Vector")                     \
+  template(jdk_incubator_vector_Byte256Vector_Byte256Species,"jdk/incubator/vector/Byte256Vector$Byte256Species")   \
+  template(jdk_incubator_vector_Byte256Vector_Byte256Mask,"jdk/incubator/vector/Byte256Vector$Byte256Mask")         \
+  template(jdk_incubator_vector_Byte512Vector,            "jdk/incubator/vector/Byte512Vector")                     \
+  template(jdk_incubator_vector_Byte512Vector_Byte512Species,"jdk/incubator/vector/Byte512Vector$Byte512Species")   \
+  template(jdk_incubator_vector_Byte512Vector_Byte512Mask,"jdk/incubator/vector/Byte512Vector$Byte512Mask")         \
+  template(jdk_incubator_vector_ShortVector,               "jdk/incubator/vector/ShortVector")                        \
+  template(jdk_incubator_vector_ShortVector_ShortSpecies,    "jdk/incubator/vector/ShortVector$ShortSpecies")         \
+  template(jdk_incubator_vector_Short64Vector,            "jdk/incubator/vector/Short64Vector")                       \
+  template(jdk_incubator_vector_Short64Vector_Short64Species,"jdk/incubator/vector/Short64Vector$Short64Species")     \
+  template(jdk_incubator_vector_Short64Vector_Short64Mask,"jdk/incubator/vector/Short64Vector$Short64Mask")           \
+  template(jdk_incubator_vector_Short128Vector,            "jdk/incubator/vector/Short128Vector")                     \
+  template(jdk_incubator_vector_Short128Vector_Short128Species,"jdk/incubator/vector/Short128Vector$Short128Species") \
+  template(jdk_incubator_vector_Short128Vector_Short128Mask,"jdk/incubator/vector/Short128Vector$Short128Mask")       \
+  template(jdk_incubator_vector_Short256Vector,            "jdk/incubator/vector/Short256Vector")                     \
+  template(jdk_incubator_vector_Short256Vector_Short256Species,"jdk/incubator/vector/Short256Vector$Short256Species") \
+  template(jdk_incubator_vector_Short256Vector_Short256Mask,"jdk/incubator/vector/Short256Vector$Short256Mask")       \
+  template(jdk_incubator_vector_Short512Vector,            "jdk/incubator/vector/Short512Vector")                     \
+  template(jdk_incubator_vector_Short512Vector_Short512Species,"jdk/incubator/vector/Short512Vector$Short512Species") \
+  template(jdk_incubator_vector_Short512Vector_Short512Mask,"jdk/incubator/vector/Short512Vector$Short512Mask")       \
   template(java_lang_Shutdown,                        "java/lang/Shutdown")                       \
   template(java_lang_ref_Reference,                   "java/lang/ref/Reference")                  \
   template(java_lang_ref_SoftReference,               "java/lang/ref/SoftReference")              \
@@ -397,7 +486,6 @@
   template(bitCount_name,                             "bitCount")                                 \
   template(profile_name,                              "profile")                                  \
   template(equals_name,                               "equals")                                   \
-  template(length_name,                               "length")                                   \
   template(target_name,                               "target")                                   \
   template(toString_name,                             "toString")                                 \
   template(values_name,                               "values")                                   \
@@ -1366,6 +1454,84 @@
   do_intrinsic(_getAndSetObject,          jdk_internal_misc_Unsafe,     getAndSetObject_name, getAndSetObject_signature,  F_R)\
    do_name(     getAndSetObject_name,                                   "getAndSetObject")                                    \
    do_signature(getAndSetObject_signature,                              "(Ljava/lang/Object;JLjava/lang/Object;)Ljava/lang/Object;" ) \
+                                                                                                                                               \
+  /* Vector API intrinsification support */                                                                                                    \
+  do_intrinsic(_VectorUnaryOp, jdk_incubator_vector_VectorIntrinsics, vector_unary_op_name, vector_unary_op_sig, F_S)                          \
+   do_signature(vector_unary_op_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;") \
+   do_name(vector_unary_op_name,     "unaryOp")                                                                                                \
+                                                                                                                                               \
+  do_intrinsic(_VectorBinaryOp, jdk_incubator_vector_VectorIntrinsics, vector_binary_op_name, vector_binary_op_sig, F_S)                       \
+   do_signature(vector_binary_op_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;") \
+   do_name(vector_binary_op_name,     "binaryOp")                                                                                              \
+                                                                                                                                               \
+  do_intrinsic(_VectorTernaryOp, jdk_incubator_vector_VectorIntrinsics, vector_ternary_op_name, vector_ternary_op_sig, F_S)                    \
+   do_signature(vector_ternary_op_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljdk/incubator/vector/VectorIntrinsics$TernaryOperation;)Ljava/lang/Object;") \
+   do_name(vector_ternary_op_name,     "ternaryOp")                                                                                            \
+                                                                                                                                               \
+  do_intrinsic(_VectorBroadcastCoerced, jdk_incubator_vector_VectorIntrinsics, vector_broadcast_coerced_name, vector_broadcast_coerced_sig, F_S) \
+   do_signature(vector_broadcast_coerced_sig, "(Ljava/lang/Class;Ljava/lang/Class;IJLjava/util/function/LongFunction;)Ljava/lang/Object;")     \
+   do_name(vector_broadcast_coerced_name, "broadcastCoerced")                                                                                  \
+                                                                                                                                               \
+  do_intrinsic(_VectorLoadOp, jdk_incubator_vector_VectorIntrinsics, vector_load_op_name, vector_load_op_sig, F_S)                             \
+   do_signature(vector_load_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjava/lang/Object;ILjdk/incubator/vector/VectorIntrinsics$LoadVectorOperation;)Ljdk/incubator/vector/Vector;") \
+   do_name(vector_load_op_name,     "load")                                                                                                    \
+  do_intrinsic(_VectorStoreOp, jdk_incubator_vector_VectorIntrinsics, vector_store_op_name, vector_store_op_sig, F_S)                          \
+   do_signature(vector_store_op_sig, "(Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;JLjdk/incubator/vector/Vector;Ljava/lang/Object;ILjdk/incubator/vector/VectorIntrinsics$StoreVectorOperation;)V") \
+   do_name(vector_store_op_name,     "store")                                                                                                  \
+                                                                                                                                               \
+  do_intrinsic(_VectorReductionCoerced, jdk_incubator_vector_VectorIntrinsics, vector_reduction_coerced_name, vector_reduction_coerced_sig, F_S) \
+   do_signature(vector_reduction_coerced_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjdk/incubator/vector/Vector;Ljava/util/function/Function;)J") \
+   do_name(vector_reduction_coerced_name, "reductionCoerced")                                                                                  \
+                                                                                                                                               \
+  do_intrinsic(_VectorTest, jdk_incubator_vector_VectorIntrinsics, vector_test_name, vector_test_sig, F_S)                                     \
+   do_signature(vector_test_sig, "(ILjava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Z") \
+   do_name(vector_test_name, "test")                                                                                                           \
+                                                                                                                                               \
+  do_intrinsic(_VectorBlend, jdk_incubator_vector_VectorIntrinsics, vector_blend_name, vector_blend_sig, F_S)                                  \
+   do_signature(vector_blend_sig, "(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;I"                                                      \
+                                   "Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector$Mask;"              \
+                                   "Ljdk/incubator/vector/VectorIntrinsics$VectorBlendOp;)Ljdk/incubator/vector/Vector;")                      \
+   do_name(vector_blend_name, "blend")                                                                                                         \
+                                                                                                                                               \
+  do_intrinsic(_VectorCompare, jdk_incubator_vector_VectorIntrinsics, vector_compare_name, vector_compare_sig, F_S)                            \
+   do_signature(vector_compare_sig, "(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;I"                                                   \
+                                    "Ljdk/incubator/vector/Vector;Ljdk/incubator/vector/Vector;"                                               \
+                                    "Ljdk/incubator/vector/VectorIntrinsics$VectorCompareOp;)Ljdk/incubator/vector/Vector$Mask;")              \
+   do_name(vector_compare_name, "compare")                                                                                                     \
+                                                                                                                                               \
+  do_intrinsic(_VectorExtract, jdk_incubator_vector_VectorIntrinsics, vector_extract_name, vector_extract_sig, F_S)                            \
+   do_signature(vector_extract_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                     \
+                                    "Ljdk/incubator/vector/Vector;I"                                                                           \
+                                    "Ljdk/incubator/vector/VectorIntrinsics$VecExtractOp;)J")                                                  \
+   do_name(vector_extract_name, "extract")                                                                                                     \
+                                                                                                                                               \
+ do_intrinsic(_VectorInsert, jdk_incubator_vector_VectorIntrinsics, vector_insert_name, vector_insert_sig, F_S)                                \
+   do_signature(vector_insert_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                      \
+                                     "Ljdk/incubator/vector/Vector;IJ"                                                                         \
+                                     "Ljdk/incubator/vector/VectorIntrinsics$VecInsertOp;)Ljdk/incubator/vector/Vector;")                      \
+   do_name(vector_insert_name, "insert")                                                                                                       \
+                                                                                                                                               \
+  do_intrinsic(_VectorBroadcastInt, jdk_incubator_vector_VectorIntrinsics, vector_broadcast_int_name, vector_broadcast_int_sig, F_S)           \
+   do_signature(vector_broadcast_int_sig, "(ILjava/lang/Class;Ljava/lang/Class;I"                                                              \
+                                          "Ljdk/incubator/vector/Vector;I"                                                                     \
+                                          "Ljdk/incubator/vector/VectorIntrinsics$VectorBroadcastIntOp;)Ljdk/incubator/vector/Vector;")        \
+   do_name(vector_broadcast_int_name, "broadcastInt")                                                                                          \
+                                                                                                                                               \
+  do_intrinsic(_VectorReinterpret, jdk_incubator_vector_VectorIntrinsics, vector_reinterpret_name, vector_reinterpret_sig, F_S)                \
+   do_signature(vector_reinterpret_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                 \
+                                      "Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;"                                                                   \
+                                      "Ljdk/incubator/vector/VectorIntrinsics$VectorReinterpretOp;)Ljava/lang/Object;")                        \
+   do_name(vector_reinterpret_name, "reinterpret")                                                                                             \
+                                                                                                                                               \
+   do_intrinsic(_VectorCast, jdk_incubator_vector_VectorIntrinsics, Class_cast_name, vector_cast_sig, F_S)                                     \
+    do_signature(vector_cast_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                       \
+                                  "Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;"                                                     \
+                                  "Ljdk/incubator/vector/VectorIntrinsics$VectorCastOp;)Ljava/lang/Object;")                                   \
+                                                                                                                                               \
+  do_intrinsic(_VectorRebox, jdk_incubator_vector_VectorIntrinsics, vector_rebox_name, vector_rebox_sig, F_S)                                  \
+   do_alias(vector_rebox_sig, object_object_signature)                                                                                         \
+   do_name(vector_rebox_name, "maybeRebox")                                                                                                    \
+                                                                                                                                               \
                                                                                                                                \
    /* (2) Bytecode intrinsics                                                                        */                        \
                                                                                                                                \
@@ -1486,7 +1652,7 @@ class vmSymbols: AllStatic {
     FIRST_SID = NO_SID + 1
   };
   enum {
-    log2_SID_LIMIT = 10         // checked by an assert at start-up
+    log2_SID_LIMIT = 12         // checked by an assert at start-up
   };
 
  private:
@@ -1552,7 +1718,9 @@ class vmIntrinsics: AllStatic {
     #undef VM_INTRINSIC_ENUM
 
     ID_LIMIT,
-    LAST_COMPILER_INLINE = _getAndSetObject,
+    LAST_COMPILER_INLINE = _VectorCast,
+    FIRST_VECTOR_API     = _VectorUnaryOp,
+    LAST_VECTOR_API      = _VectorRebox,
     FIRST_MH_SIG_POLY    = _invokeGeneric,
     FIRST_MH_STATIC      = _linkToVirtual,
     LAST_MH_SIG_POLY     = _linkToInterface,

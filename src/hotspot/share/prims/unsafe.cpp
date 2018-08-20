@@ -50,6 +50,9 @@
 #include "utilities/copy.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/macros.hpp"
+#if COMPILER2
+#  include "opto/matcher.hpp"
+#endif // COMPILER2
 
 /**
  * Implementation of the jdk.internal.misc.Unsafe class
@@ -252,6 +255,31 @@ public:
       HeapAccess<MO_SEQ_CST>::store_at(_obj, _offset, normalize_for_write(x));
     }
   }
+
+
+#ifndef SUPPORTS_NATIVE_CX8
+  jlong get_jlong_locked() {
+    GuardUnsafeAccess guard(_thread, _obj);
+
+    MutexLockerEx mu(UnsafeJlong_lock, Mutex::_no_safepoint_check_flag);
+
+    jlong* p = (jlong*)addr();
+
+    jlong x = Atomic::load(p);
+
+    return x;
+  }
+
+  void put_jlong_locked(jlong x) {
+    GuardUnsafeAccess guard(_thread, _obj);
+
+    MutexLockerEx mu(UnsafeJlong_lock, Mutex::_no_safepoint_check_flag);
+
+    jlong* p = (jlong*)addr();
+
+    Atomic::store(normalize_for_write(x),  p);
+  }
+#endif
 };
 
 // These functions allow a null base pointer with an arbitrary address.
@@ -1009,6 +1037,17 @@ UNSAFE_ENTRY(jint, Unsafe_GetLoadAverage0(JNIEnv *env, jobject unsafe, jdoubleAr
 } UNSAFE_END
 
 
+UNSAFE_ENTRY(jint, Unsafe_GetMaxVectorSize(JNIEnv *env, jobject unsafe, jobject clazz))
+  oop mirror = JNIHandles::resolve_non_null(clazz);
+  if (java_lang_Class::is_primitive(mirror)) {
+    BasicType bt = java_lang_Class::primitive_type(mirror);
+#ifdef COMPILER2
+    return Matcher::max_vector_size(bt);
+#endif // COMPILER2
+  }
+  return -1;
+UNSAFE_END
+
 /// JVM_RegisterUnsafeMethods
 
 #define ADR "J"
@@ -1092,7 +1131,10 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
     {CC "fullFence",          CC "()V",                  FN_PTR(Unsafe_FullFence)},
 
     {CC "isBigEndian0",       CC "()Z",                  FN_PTR(Unsafe_isBigEndian0)},
-    {CC "unalignedAccess0",   CC "()Z",                  FN_PTR(Unsafe_unalignedAccess0)}
+    {CC "unalignedAccess0",   CC "()Z",                  FN_PTR(Unsafe_unalignedAccess0)},
+
+    {CC "getMaxVectorSize",   CC "(" CLS ")I",              FN_PTR(Unsafe_GetMaxVectorSize)},
+
 };
 
 #undef CC

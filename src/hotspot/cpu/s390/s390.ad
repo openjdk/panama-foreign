@@ -1522,7 +1522,7 @@ const bool Matcher::match_rule_supported(int opcode) {
                 // BUT: make sure match rule is not disabled by a false predicate!
 }
 
-const bool Matcher::match_rule_supported_vector(int opcode, int vlen) {
+const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType bt) {
   // TODO
   // Identify extra cases that we might want to provide match rules for
   // e.g. Op_ vector nodes and other intrinsics while guarding with vlen.
@@ -1539,6 +1539,20 @@ int Matcher::regnum_to_fpu_offset(int regnum) {
 
 const bool Matcher::has_predicated_vectors(void) {
   return false;
+}
+
+// Vector calling convention not yet implemented.
+const bool Matcher::supports_vector_calling_convention() {
+  return false;
+}
+
+void Matcher::vector_calling_convention(VMRegPair *regs, uint num_bits, uint total_args_passed) {
+  (void) SharedRuntime::vector_calling_convention(regs, num_bits, total_args_passed);
+}
+
+OptoRegPair Matcher::vector_return_value(uint ideal_reg) {
+  Unimplemented();
+  return OptoRegPair(0, 0);
 }
 
 const int Matcher::float_pressure(int default_pressure_threshold) {
