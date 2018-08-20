@@ -741,7 +741,7 @@ class MethodType implements java.io.Serializable {
     }
 
     /**
-     * Presents the parameter types as a list (a convenience method).
+     * Presents the Directparameter types as a list (a convenience method).
      * The list will be immutable.
      * @return the parameter types (as an immutable list)
      */
