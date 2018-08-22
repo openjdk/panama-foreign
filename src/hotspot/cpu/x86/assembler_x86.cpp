@@ -7541,6 +7541,7 @@ void Assembler::vextracti64x2(XMMRegister dst, XMMRegister src, uint8_t imm8) {
   assert(VM_Version::supports_avx512dq(), "");
   assert(imm8 <= 0x03, "imm8: %u", imm8);
   InstructionAttr attributes(AVX_512bit, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ false);
+  attributes.set_is_evex_instruction();
   int encode = vex_prefix_and_encode(src->encoding(), 0, dst->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_3A, &attributes);
   emit_int8(0x39);
   emit_int8((unsigned char)(0xC0 | encode));
@@ -7555,6 +7556,7 @@ void Assembler::vextracti64x4(XMMRegister dst, XMMRegister src, uint8_t imm8) {
   assert(VM_Version::supports_evex(), "");
   assert(imm8 <= 0x01, "imm8: %u", imm8);
   InstructionAttr attributes(AVX_512bit, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ false);
+  attributes.set_is_evex_instruction();
   int encode = vex_prefix_and_encode(src->encoding(), 0, dst->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_3A, &attributes);
   emit_int8(0x3B);
   emit_int8((unsigned char)(0xC0 | encode));
@@ -7633,6 +7635,7 @@ void Assembler::vextractf64x2(XMMRegister dst, XMMRegister src, uint8_t imm8) {
   assert(VM_Version::supports_avx512dq(), "");
   assert(imm8 <= 0x03, "imm8: %u", imm8);
   InstructionAttr attributes(AVX_512bit, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ false);
+  attributes.set_is_evex_instruction();
   int encode = vex_prefix_and_encode(src->encoding(), 0, dst->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_3A, &attributes);
   emit_int8(0x19);
   emit_int8((unsigned char)(0xC0 | encode));
@@ -7647,6 +7650,7 @@ void Assembler::vextractf64x4(XMMRegister dst, XMMRegister src, uint8_t imm8) {
   assert(VM_Version::supports_evex(), "");
   assert(imm8 <= 0x01, "imm8: %u", imm8);
   InstructionAttr attributes(AVX_512bit, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ false);
+  attributes.set_is_evex_instruction();
   int encode = vex_prefix_and_encode(src->encoding(), 0, dst->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_3A, &attributes);
   emit_int8(0x1B);
   emit_int8((unsigned char)(0xC0 | encode));
