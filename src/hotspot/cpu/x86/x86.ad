@@ -18588,7 +18588,7 @@ instruct vcvt16Bto16F_reg(vecZ dst, vecX src) %{
 instruct vcvt4Bto4D_reg(vecY dst, vecS src) %{
   predicate(UseAVX >= 2 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbq   $dst,$src\n\t"
+  format %{ "vpmovsxbd   $dst,$src\n\t"
             "vcvtdq2pd   $dst,$dst\t! convert 4B to 4D vector" %}
   ins_encode %{
     int vector_len = 1;
@@ -18601,7 +18601,7 @@ instruct vcvt4Bto4D_reg(vecY dst, vecS src) %{
 instruct vcvt8Bto8D_reg(vecZ dst, vecD src) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorCastB2X src));
-  format %{ "vpmovsxbq   $dst,$src\n\t"
+  format %{ "vpmovsxbd   $dst,$src\n\t"
             "vcvtdq2pd   $dst,$dst\t! convert 8B to 8D vector" %}
   ins_encode %{
     int vector_len = 2;
