@@ -14521,18 +14521,7 @@ instruct min16B_reg_avx(vecX dst, vecX src1, vecX src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct min16B_reg_evex(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (MinV src1 src2));
-  format %{ "vpminsb  $dst,$src1,$src2\t! " %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpminsb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct min32B_reg_avx(vecY dst, vecY src1, vecY src2) %{
+instruct min32B_reg(vecY dst, vecY src1, vecY src2) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinV src1 src2));
   format %{ "vpminsb    $dst,$src1,$src2\t! " %}
@@ -14543,19 +14532,8 @@ instruct min32B_reg_avx(vecY dst, vecY src1, vecY src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct min32B_reg_evex(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (MinV src1 src2));
-  format %{ "vpminsb  $dst,$src1,$src2\t! " %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpminsb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
 instruct min64B_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MinV src1 src2));
   format %{ "vpminsb  $dst,$src1,$src2\t! " %}
   ins_encode %{
@@ -14614,18 +14592,7 @@ instruct min8S_reg_avx(vecX dst, vecX src1, vecX src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct min8S_reg_evex(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (MinV src1 src2));
-  format %{ "vpminsw  $dst,$src1,$src2\t! " %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpminsw($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct min16S_reg_avx(vecY dst, vecY src1, vecY src2) %{
+instruct min16S_reg(vecY dst, vecY src1, vecY src2) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinV src1 src2));
   format %{ "vpminsw    $dst,$src1,$src2\t! " %}
@@ -14636,19 +14603,8 @@ instruct min16S_reg_avx(vecY dst, vecY src1, vecY src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct min16S_reg_evex(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (MinV src1 src2));
-  format %{ "vpminsw  $dst,$src1,$src2\t! " %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpminsw($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
 instruct min32S_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MinV src1 src2));
   format %{ "vpminsw  $dst,$src1,$src2\t! " %}
   ins_encode %{
@@ -15096,18 +15052,7 @@ instruct max16B_reg_avx(vecX dst, vecX src1, vecX src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct max16B_reg_evex(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (MaxV src1 src2));
-  format %{ "vpmaxsb  $dst,$src1,$src2\t! " %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpmaxsb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct max32B_reg_avx(vecY dst, vecY src1, vecY src2) %{
+instruct max32B_reg(vecY dst, vecY src1, vecY src2) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MaxV src1 src2));
   format %{ "vpmaxsb    $dst,$src1,$src2\t! " %}
@@ -15118,19 +15063,8 @@ instruct max32B_reg_avx(vecY dst, vecY src1, vecY src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct max32B_reg_evex(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
-  match(Set dst (MaxV src1 src2));
-  format %{ "vpmaxsb  $dst,$src1,$src2\t! " %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmaxsb($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
 instruct max64B_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MaxV src1 src2));
   format %{ "vpmaxsb  $dst,$src1,$src2\t! " %}
   ins_encode %{
@@ -15189,18 +15123,7 @@ instruct max8S_reg_avx(vecX dst, vecX src1, vecX src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct max8S_reg_evex(vecX dst, vecX src1, vecX src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (MaxV src1 src2));
-  format %{ "vpmaxsw  $dst,$src1,$src2\t! " %}
-  ins_encode %{
-    int vector_len = 0;
-    __ vpmaxsw($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
-instruct max16S_reg_avx(vecY dst, vecY src1, vecY src2) %{
+instruct max16S_reg(vecY dst, vecY src1, vecY src2) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MaxV src1 src2));
   format %{ "vpmaxsw    $dst,$src1,$src2\t! " %}
@@ -15211,19 +15134,8 @@ instruct max16S_reg_avx(vecY dst, vecY src1, vecY src2) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct max16S_reg_evex(vecY dst, vecY src1, vecY src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
-  match(Set dst (MaxV src1 src2));
-  format %{ "vpmaxsw  $dst,$src1,$src2\t! " %}
-  ins_encode %{
-    int vector_len = 1;
-    __ vpmaxsw($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
-  %}
-  ins_pipe( pipe_slow );
-%}
-
 instruct max32S_reg_evex(vecZ dst, vecZ src1, vecZ src2) %{
-  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512bw() && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (MaxV src1 src2));
   format %{ "vpmaxsw  $dst,$src1,$src2\t! " %}
   ins_encode %{
