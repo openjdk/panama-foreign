@@ -1,5 +1,3 @@
-    @Test(dataProvider = "boolUnaryOpProvider")
-    static void [[TEST]]$vectorteststype$(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
         boolean[] r = new boolean[mask.length];
 
@@ -10,5 +8,4 @@
             }
         }
 
-        assertReductionBoolArraysEquals(mask, r, $vectorteststype$::[[TEST]]);
-    }
+

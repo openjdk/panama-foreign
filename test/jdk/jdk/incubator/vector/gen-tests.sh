@@ -116,8 +116,8 @@ do
     Shape=S_${bits}_BIT
     bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dvectorteststype=$vectorteststype -Dmasktype=$masktype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
 
-    # Generate
-    Log true "Generating $vectorteststype... "
+    # Generate jtreg tests
+    Log true "Generating jtreg $vectorteststype... "
     Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${TEMPLATE_FILE} > $vectorteststype.java "
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
       < ${TEMPLATE_FILE} \
@@ -127,6 +127,20 @@ do
       mv temp $vectorteststype.java
     fi
     Log true "done\n"
+
+    # Generate jmh performance tests
+    if [ $# -gt 0 ] && [ "$1" == "jmh" ]; then
+      Log true "Generating jmh $vectorteststype... "
+      Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${PERF_TEMPLATE_FILE} > ${vectorteststype}Perf.java "
+      ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
+        < ${PERF_TEMPLATE_FILE} \
+        > ${vectorteststype}Perf.java
+      if [ VAR_OS_ENV==windows.cygwin ]; then
+        tr -d  '\r' < ${vectorteststype}Perf.java > temp
+        mv temp ${vectorteststype}Perf.java
+      fi
+      Log true "done\n"
+    fi
   done
 
   # Generate tests for loads and stores
@@ -153,6 +167,20 @@ do
       mv temp $vectorteststype.java
     fi
     Log true "done\n"
+
+    # Generate jmh performance tests
+    if [ $# -gt 0 ] && [ "$1" == "jmh" ]; then
+      Log true "Generating jmh $vectorteststype... "
+      Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${PERF_TEMPLATE_FILE} > ${vectorteststype}Perf.java "
+      ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
+        < ${PERF_TEMPLATE_FILE} \
+        > ${vectorteststype}Perf.java
+      if [ VAR_OS_ENV==windows.cygwin ]; then
+        tr -d  '\r' < ${vectorteststype}Perf.java > temp
+        mv temp ${vectorteststype}Perf.java
+      fi
+      Log true "done\n"
+    fi
   done
 
 done

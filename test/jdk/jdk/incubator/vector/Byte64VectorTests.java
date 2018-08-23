@@ -342,7 +342,6 @@ public class Byte64VectorTests extends AbstractVectorTest {
      return (byte) a[i]; 
    }
 
-
     static byte add(byte a, byte b) {
         return (byte)(a + b);
     }
@@ -360,6 +359,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.add(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Byte64VectorTests::add);
     }
 
@@ -379,9 +379,9 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Byte64VectorTests::add);
     }
-
     static byte sub(byte a, byte b) {
         return (byte)(a - b);
     }
@@ -399,6 +399,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.sub(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Byte64VectorTests::sub);
     }
 
@@ -418,10 +419,9 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Byte64VectorTests::sub);
     }
-
-
 
 
     static byte mul(byte a, byte b) {
@@ -441,6 +441,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.mul(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Byte64VectorTests::mul);
     }
 
@@ -460,15 +461,13 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Byte64VectorTests::mul);
     }
-
 
     static byte and(byte a, byte b) {
         return (byte)(a & b);
     }
-
-
 
     @Test(dataProvider = "byteBinaryOpProvider")
     static void andByte64VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
@@ -483,6 +482,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.and(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Byte64VectorTests::and);
     }
 
@@ -504,16 +504,14 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.and(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Byte64VectorTests::and);
     }
-
 
 
     static byte or(byte a, byte b) {
         return (byte)(a | b);
     }
-
-
 
     @Test(dataProvider = "byteBinaryOpProvider")
     static void orByte64VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
@@ -528,6 +526,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.or(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Byte64VectorTests::or);
     }
 
@@ -549,16 +548,14 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.or(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Byte64VectorTests::or);
     }
-
 
 
     static byte xor(byte a, byte b) {
         return (byte)(a ^ b);
     }
-
-
 
     @Test(dataProvider = "byteBinaryOpProvider")
     static void xorByte64VectorTests(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
@@ -573,6 +570,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.xor(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Byte64VectorTests::xor);
     }
 
@@ -594,12 +592,9 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.xor(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Byte64VectorTests::xor);
     }
-
-
-
-
 
 
 
@@ -630,9 +625,9 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.max(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Byte64VectorTests::max);
     }
-
     static byte min(byte a, byte b) {
         return (byte)((a < b) ? a : b);
     }
@@ -650,6 +645,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.min(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Byte64VectorTests::min);
     }
 
@@ -1048,6 +1044,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Byte64VectorTests::blend);
     }
     @Test(dataProvider = "byteUnaryOpProvider")
@@ -1063,6 +1060,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
                 }
             }
         }
+
         assertArraysEquals(a, r, Byte64VectorTests::get);
     }
 
@@ -1123,6 +1121,10 @@ public class Byte64VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, Byte64VectorTests::neg);
     }
 
+
+
+
+
     static byte abs(byte a) {
         return (byte)(Math.abs((byte)a));
     }
@@ -1158,6 +1160,10 @@ public class Byte64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Byte64VectorTests::abs);
     }
+
+
+
+
 
 
     static byte not(byte a) {
@@ -1199,6 +1205,10 @@ public class Byte64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Byte64VectorTests::not);
     }
+
+
+
+
 
 
 

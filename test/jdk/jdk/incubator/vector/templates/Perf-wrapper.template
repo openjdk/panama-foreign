@@ -1,0 +1,5 @@
+
+    @Benchmark
+    static void [[TEST]][[TEST_TYPE]]$vectorteststype$() {
+[[KERNEL]]
+    }

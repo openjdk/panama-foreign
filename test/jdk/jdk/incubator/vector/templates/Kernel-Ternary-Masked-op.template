@@ -1,6 +1,3 @@
-    @Test(dataProvider = "$type$TernaryOpMaskProvider")
-    static void [[TEST]]$vectorteststype$(IntFunction<$type$[]> fa, IntFunction<$type$[]> fb,
-                                          IntFunction<$type$[]> fc, IntFunction<boolean[]> fm) {
         $type$[] a = fa.apply(SPECIES.length());
         $type$[] b = fb.apply(SPECIES.length());
         $type$[] c = fc.apply(SPECIES.length());
@@ -16,5 +13,4 @@
                 av.[[TEST]](bv, cv, vmask).intoArray(r, i);
             }
         }
-        assertArraysEquals(a, b, c, r, mask, $vectorteststype$::[[TEST]]);
-    }
+
