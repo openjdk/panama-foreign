@@ -342,7 +342,6 @@ public class Short512VectorTests extends AbstractVectorTest {
      return (short) a[i]; 
    }
 
-
     static short add(short a, short b) {
         return (short)(a + b);
     }
@@ -360,6 +359,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.add(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Short512VectorTests::add);
     }
 
@@ -379,9 +379,9 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Short512VectorTests::add);
     }
-
     static short sub(short a, short b) {
         return (short)(a - b);
     }
@@ -399,6 +399,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.sub(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Short512VectorTests::sub);
     }
 
@@ -418,10 +419,9 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Short512VectorTests::sub);
     }
-
-
 
 
     static short mul(short a, short b) {
@@ -441,6 +441,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.mul(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Short512VectorTests::mul);
     }
 
@@ -460,15 +461,13 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Short512VectorTests::mul);
     }
-
 
     static short and(short a, short b) {
         return (short)(a & b);
     }
-
-
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void andShort512VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
@@ -483,6 +482,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.and(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Short512VectorTests::and);
     }
 
@@ -504,16 +504,14 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.and(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Short512VectorTests::and);
     }
-
 
 
     static short or(short a, short b) {
         return (short)(a | b);
     }
-
-
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void orShort512VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
@@ -528,6 +526,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.or(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Short512VectorTests::or);
     }
 
@@ -549,16 +548,14 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.or(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Short512VectorTests::or);
     }
-
 
 
     static short xor(short a, short b) {
         return (short)(a ^ b);
     }
-
-
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void xorShort512VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
@@ -573,6 +570,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.xor(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Short512VectorTests::xor);
     }
 
@@ -594,12 +592,9 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.xor(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Short512VectorTests::xor);
     }
-
-
-
-
 
 
 
@@ -630,9 +625,9 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.max(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Short512VectorTests::max);
     }
-
     static short min(short a, short b) {
         return (short)((a < b) ? a : b);
     }
@@ -650,6 +645,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.min(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Short512VectorTests::min);
     }
 
@@ -1048,6 +1044,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Short512VectorTests::blend);
     }
     @Test(dataProvider = "shortUnaryOpProvider")
@@ -1063,6 +1060,7 @@ public class Short512VectorTests extends AbstractVectorTest {
                 }
             }
         }
+
         assertArraysEquals(a, r, Short512VectorTests::get);
     }
 
@@ -1123,6 +1121,10 @@ public class Short512VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, Short512VectorTests::neg);
     }
 
+
+
+
+
     static short abs(short a) {
         return (short)(Math.abs((short)a));
     }
@@ -1158,6 +1160,10 @@ public class Short512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Short512VectorTests::abs);
     }
+
+
+
+
 
 
     static short not(short a) {
@@ -1199,6 +1205,10 @@ public class Short512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Short512VectorTests::not);
     }
+
+
+
+
 
 
 

@@ -1,5 +1,3 @@
-    @Test(dataProvider = "$type$UnaryOpProvider")
-    static void [[TEST]]$vectorteststype$(IntFunction<$type$[]> fa) {
         $type$[] a = fa.apply(SPECIES.length());
         $type$[] r = new $type$[a.length];
 
@@ -10,5 +8,3 @@
             }
         }
 
-        assertReductionArraysEquals(a, r, $vectorteststype$::[[TEST]]);
-    }

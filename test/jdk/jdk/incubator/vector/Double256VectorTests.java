@@ -451,7 +451,6 @@ public class Double256VectorTests extends AbstractVectorTest {
      return (double) a[i]; 
    }
 
-
     static double add(double a, double b) {
         return (double)(a + b);
     }
@@ -469,6 +468,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.add(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Double256VectorTests::add);
     }
 
@@ -488,9 +488,9 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Double256VectorTests::add);
     }
-
     static double sub(double a, double b) {
         return (double)(a - b);
     }
@@ -508,6 +508,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.sub(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Double256VectorTests::sub);
     }
 
@@ -527,15 +528,13 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Double256VectorTests::sub);
     }
-
 
     static double div(double a, double b) {
         return (double)(a / b);
     }
-
-
 
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void divDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
@@ -550,6 +549,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.div(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Double256VectorTests::div);
     }
 
@@ -571,9 +571,9 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.div(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Double256VectorTests::div);
     }
-
 
     static double mul(double a, double b) {
         return (double)(a * b);
@@ -592,6 +592,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.mul(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Double256VectorTests::mul);
     }
 
@@ -611,15 +612,9 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Double256VectorTests::mul);
     }
-
-
-
-
-
-
-
 
 
 
@@ -655,9 +650,9 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.max(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Double256VectorTests::max);
     }
-
     static double min(double a, double b) {
         return (double)((a < b) ? a : b);
     }
@@ -675,6 +670,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.min(bv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, Double256VectorTests::min);
     }
 
@@ -953,6 +949,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, r, mask, Double256VectorTests::blend);
     }
     @Test(dataProvider = "doubleUnaryOpProvider")
@@ -968,6 +965,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 }
             }
         }
+
         assertArraysEquals(a, r, Double256VectorTests::get);
     }
 
@@ -1336,9 +1334,10 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.hypot(bv).intoArray(r, i);
             }
         }
-
-        assertArraysEqualsWithinOneUlp(a, b, r, Double256VectorTests::hypot, Double256VectorTests::stricthypot);
+ 
+				assertArraysEqualsWithinOneUlp(a, b, r, Double256VectorTests::hypot, Double256VectorTests::stricthypot);
     }
+
 
 
     static double pow(double a, double b) {
@@ -1361,9 +1360,10 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.pow(bv).intoArray(r, i);
             }
         }
-
-        assertArraysEqualsWithinOneUlp(a, b, r, Double256VectorTests::pow, Double256VectorTests::strictpow);
+ 
+				assertArraysEqualsWithinOneUlp(a, b, r, Double256VectorTests::pow, Double256VectorTests::strictpow);
     }
+
 
 
     static double atan2(double a, double b) {
@@ -1386,9 +1386,10 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.atan2(bv).intoArray(r, i);
             }
         }
-
-        assertArraysEqualsWithinOneUlp(a, b, r, Double256VectorTests::atan2, Double256VectorTests::strictatan2);
+ 
+				assertArraysEqualsWithinOneUlp(a, b, r, Double256VectorTests::atan2, Double256VectorTests::strictatan2);
     }
+
 
 
     static double fma(double a, double b, double c) {
@@ -1411,6 +1412,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.fma(bv, cv).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, c, r, Double256VectorTests::fma);
     }
 
@@ -1433,6 +1435,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                 av.fma(bv, cv, vmask).intoArray(r, i);
             }
         }
+
         assertArraysEquals(a, b, c, r, mask, Double256VectorTests::fma);
     }
 
@@ -1473,6 +1476,10 @@ public class Double256VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, Double256VectorTests::neg);
     }
 
+
+
+
+
     static double abs(double a) {
         return (double)(Math.abs((double)a));
     }
@@ -1508,6 +1515,10 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Double256VectorTests::abs);
     }
+
+
+
+
 
 
 
@@ -1552,6 +1563,10 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Double256VectorTests::sqrt);
     }
+
+
+
+
 
 }
 

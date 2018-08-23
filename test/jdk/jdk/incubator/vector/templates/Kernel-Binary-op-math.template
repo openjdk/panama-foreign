@@ -1,15 +1,11 @@
-    @Test(dataProvider = "$type$UnaryOpProvider")
-    static void get$vectorteststype$(IntFunction<$type$[]> fa) {
         $type$[] a = fa.apply(SPECIES.length());
+        $type$[] b = fb.apply(SPECIES.length()); 
         $type$[] r = new $type$[a.length];
-        
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
-		for (int j = 0; j < SPECIES.length(); j++) {
-                  r[i+j]=av.get(j);  
-                }
+                $abstractvectortype$<Shapes.S$bits$Bit> bv = SPECIES.fromArray(b, i);
+                av.[[TEST]](bv).intoArray(r, i);
             }
         }
-        assertArraysEquals(a, r, $vectorteststype$::get);
-    }
+
