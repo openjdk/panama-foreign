@@ -8937,9 +8937,8 @@ instruct rvmax32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, rReg
             "cmpl  $tmp3,$dst\n\t"
             "cmovl  $dst,$tmp3\t! min reduction4S" %}
   ins_encode %{
-    int vector_len = 1;
     __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
-    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, 0);
     __ pshufd($tmp4$$XMMRegister, $tmp$$XMMRegister, 0xE);
     __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $tmp$$XMMRegister, 0);
     __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
@@ -8969,7 +8968,7 @@ instruct rvmax32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, rReg
 instruct rvmax64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MaxReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
   format %{ "vextracti64x4_high  $tmp4,$src2\n\t"
             "vpmaxsb  $tmp4,$tmp4,$src2\n\t"
             "vextracti128_high  $tmp,$tmp4\n\t"
@@ -8999,9 +8998,9 @@ instruct rvmax64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rReg
             "cmovl  $dst,$tmp3\t! max reduction32B" %}
   ins_encode %{
     __ vextracti64x4_high($tmp4$$XMMRegister, $src2$$XMMRegister);
-    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, 2);
+    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, 1);
     __ vextracti128_high($tmp$$XMMRegister, $tmp4$$XMMRegister);
-    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 1);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 0);
     __ pshufd($tmp4$$XMMRegister, $tmp$$XMMRegister, 0xE);
     __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $tmp$$XMMRegister, 0);
     __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
