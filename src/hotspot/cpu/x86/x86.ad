@@ -18591,9 +18591,8 @@ instruct vcvt4Bto4D_reg(vecY dst, vecS src) %{
   format %{ "vpmovsxbd   $dst,$src\n\t"
             "vcvtdq2pd   $dst,$dst\t! convert 4B to 4D vector" %}
   ins_encode %{
-    int vector_len = 1;
-    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, 0);
+    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, 1);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -18604,9 +18603,8 @@ instruct vcvt8Bto8D_reg(vecZ dst, vecD src) %{
   format %{ "vpmovsxbd   $dst,$src\n\t"
             "vcvtdq2pd   $dst,$dst\t! convert 8B to 8D vector" %}
   ins_encode %{
-    int vector_len = 2;
-    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, 1);
+    __ vcvtdq2pd($dst$$XMMRegister, $dst$$XMMRegister, 2);
   %}
   ins_pipe( pipe_slow );
 %}
