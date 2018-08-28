@@ -189,11 +189,6 @@ class OopStorage;
   do_klass(jdk_internal_loader_ClassLoaders_AppClassLoader_klass,      jdk_internal_loader_ClassLoaders_AppClassLoader,       Pre ) \
   do_klass(jdk_internal_loader_ClassLoaders_PlatformClassLoader_klass, jdk_internal_loader_ClassLoaders_PlatformClassLoader,  Pre ) \
   do_klass(CodeSource_klass,                            java_security_CodeSource,                  Pre                 ) \
-  do_klass(Configuration_klass,                         java_lang_module_Configuration,            Pre                 ) \
-  do_klass(ImmutableCollections_ListN_klass,            java_util_ImmutableCollections_ListN,      Pre                 ) \
-  do_klass(ImmutableCollections_MapN_klass,             java_util_ImmutableCollections_MapN,       Pre                 ) \
-  do_klass(ImmutableCollections_SetN_klass,             java_util_ImmutableCollections_SetN,       Pre                 ) \
-  do_klass(ArchivedModuleGraph_klass,                   jdk_internal_module_ArchivedModuleGraph,   Pre                 ) \
                                                                                                                          \
   do_klass(StackTraceElement_klass,                     java_lang_StackTraceElement,               Opt                 ) \
                                                                                                                          \
@@ -217,7 +212,6 @@ class OopStorage;
   do_klass(Byte_klass,                                  java_lang_Byte,                            Pre                 ) \
   do_klass(Short_klass,                                 java_lang_Short,                           Pre                 ) \
   do_klass(Integer_klass,                               java_lang_Integer,                         Pre                 ) \
-  do_klass(Integer_IntegerCache_klass,                  java_lang_Integer_IntegerCache,            Pre                 ) \
   do_klass(Long_klass,                                  java_lang_Long,                            Pre                 ) \
   do_klass(Long2_klass,                                 java_lang_Long2,                           Pre                 ) \
   do_klass(Long4_klass,                                 java_lang_Long4,                           Pre                 ) \
@@ -309,7 +303,7 @@ public:
                         class_loader,
                         protection_domain,
                         st,
-                        NULL, // host klass
+                        NULL, // unsafe_anonymous_host
                         NULL, // cp_patches
                         THREAD);
   }
@@ -317,7 +311,7 @@ public:
                                      Handle class_loader,
                                      Handle protection_domain,
                                      ClassFileStream* st,
-                                     const InstanceKlass* host_klass,
+                                     const InstanceKlass* unsafe_anonymous_host,
                                      GrowableArray<Handle>* cp_patches,
                                      TRAPS);
 
