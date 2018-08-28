@@ -47,6 +47,47 @@
 // correspondingly. The names in the enums must be identical to the actual field
 // names in order for the verification code to work.
 
+#define BASIC_JAVA_CLASSES_DO_PART1(f) \
+  f(java_lang_Class) \
+  f(java_lang_String) \
+  //end
+
+#define BASIC_JAVA_CLASSES_DO_PART2(f) \
+  f(java_lang_System) \
+  f(java_lang_ClassLoader) \
+  f(java_lang_Throwable) \
+  f(java_lang_Thread) \
+  f(java_lang_ThreadGroup) \
+  f(java_lang_AssertionStatusDirectives) \
+  f(java_lang_ref_SoftReference) \
+  f(java_lang_invoke_MethodHandle) \
+  f(java_lang_invoke_DirectMethodHandle) \
+  f(java_lang_invoke_MemberName) \
+  f(java_lang_invoke_ResolvedMethodName) \
+  f(java_lang_invoke_LambdaForm) \
+  f(java_lang_invoke_MethodType) \
+  f(java_lang_invoke_CallSite) \
+  f(java_lang_invoke_MethodHandleNatives_CallSiteContext) \
+  f(java_security_AccessControlContext) \
+  f(java_lang_reflect_AccessibleObject) \
+  f(java_lang_reflect_Method) \
+  f(java_lang_reflect_Constructor) \
+  f(java_lang_reflect_Field) \
+  f(java_nio_Buffer) \
+  f(reflect_ConstantPool) \
+  f(reflect_UnsafeStaticFieldAccessorImpl) \
+  f(java_lang_reflect_Parameter) \
+  f(java_lang_Module) \
+  f(java_lang_StackTraceElement) \
+  f(java_lang_StackFrameInfo) \
+  f(java_lang_LiveStackFrameInfo) \
+  f(java_util_concurrent_locks_AbstractOwnableSynchronizer) \
+  f(java_lang_invoke_NativeEntryPoint)
+  //end
+
+#define BASIC_JAVA_CLASSES_DO(f) \
+        BASIC_JAVA_CLASSES_DO_PART1(f) \
+        BASIC_JAVA_CLASSES_DO_PART2(f)
 
 // Interface to java.lang.String objects
 
@@ -71,7 +112,7 @@ class java_lang_String : AllStatic {
   };
 
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Instance creation
   static Handle create_from_unicode(jchar* unicode, int len, TRAPS);
@@ -224,7 +265,7 @@ class java_lang_Class : AllStatic {
   static oop  create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS);
 
   // Archiving
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
   static void archive_basic_type_mirrors(TRAPS) NOT_CDS_JAVA_HEAP_RETURN;
   static oop  archive_mirror(Klass* k, TRAPS) NOT_CDS_JAVA_HEAP_RETURN_(NULL);
   static oop  process_archived_mirror(Klass* k, oop mirror, oop archived_mirror, Thread *THREAD)
@@ -317,7 +358,7 @@ class java_lang_Thread : AllStatic {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Instance creation
   static oop create();
@@ -419,7 +460,7 @@ class java_lang_ThreadGroup : AllStatic {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // parent ThreadGroup
   static oop  parent(oop java_thread_group);
@@ -500,7 +541,7 @@ class java_lang_Throwable: AllStatic {
   static void print_stack_usage(Handle stream);
 
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Allocate space for backtrace (created but stack trace not filled in)
   static void allocate_backtrace(Handle throwable, TRAPS);
@@ -531,7 +572,7 @@ class java_lang_reflect_AccessibleObject: AllStatic {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Accessors
   static jboolean override(oop reflect);
@@ -564,7 +605,7 @@ class java_lang_reflect_Method : public java_lang_reflect_AccessibleObject {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Allocation
   static Handle create(TRAPS);
@@ -635,7 +676,7 @@ class java_lang_reflect_Constructor : public java_lang_reflect_AccessibleObject 
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Allocation
   static Handle create(TRAPS);
@@ -695,7 +736,7 @@ class java_lang_reflect_Field : public java_lang_reflect_AccessibleObject {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Allocation
   static Handle create(TRAPS);
@@ -752,7 +793,7 @@ class java_lang_reflect_Parameter {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Allocation
   static Handle create(TRAPS);
@@ -784,7 +825,7 @@ class java_lang_Module {
     static void compute_offsets();
 
   public:
-    static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+    static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
     // Allocation
     static Handle create(Handle loader, Handle module_name, TRAPS);
@@ -815,7 +856,7 @@ class reflect_ConstantPool {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Allocation
   static Handle create(TRAPS);
@@ -839,7 +880,7 @@ class reflect_UnsafeStaticFieldAccessorImpl {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   static int base_offset() {
     return _base_offset;
@@ -944,7 +985,7 @@ class java_lang_ref_SoftReference: public java_lang_ref_Reference {
   static void set_clock(jlong value);
 
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 };
 
 // Interface to java.lang.invoke.MethodHandle objects
@@ -961,7 +1002,7 @@ class java_lang_invoke_MethodHandle: AllStatic {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Accessors
   static oop            type(oop mh);
@@ -992,7 +1033,7 @@ class java_lang_invoke_DirectMethodHandle: AllStatic {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Accessors
   static oop  member(oop mh);
@@ -1019,7 +1060,7 @@ class java_lang_invoke_LambdaForm: AllStatic {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Accessors
   static oop            vmentry(oop lform);
@@ -1063,6 +1104,8 @@ class java_lang_invoke_NativeEntryPoint: AllStatic {
   static typeArrayOop reg_masks(oop entry);
   static oop        generator(oop entry);
 
+  static void serialize_offsets(SerializeClosure* soc) { /* TODO: CDS */ }
+
   // Testers
   static bool is_subclass(Klass* klass) {
     return SystemDictionary::NativeEntryPoint_klass() != NULL &&
@@ -1091,7 +1134,7 @@ class java_lang_invoke_ResolvedMethodName : AllStatic {
 
   static void compute_offsets();
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   static int vmtarget_offset_in_bytes() { return _vmtarget_offset; }
 
@@ -1130,7 +1173,7 @@ class java_lang_invoke_MemberName: AllStatic {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
   // Accessors
   static oop            clazz(oop mname);
   static void       set_clazz(oop mname, oop clazz);
@@ -1195,7 +1238,7 @@ class java_lang_invoke_MethodType: AllStatic {
   static void compute_offsets();
 
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
   // Accessors
   static oop            rtype(oop mt);
   static objArrayOop    ptypes(oop mt);
@@ -1231,7 +1274,7 @@ private:
   static void compute_offsets();
 
 public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
   // Accessors
   static oop              target(          oop site);
   static void         set_target(          oop site, oop target);
@@ -1265,7 +1308,7 @@ private:
   static void compute_offsets();
 
 public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
   // Accessors
   static DependencyContext vmdependencies(oop context);
 
@@ -1289,7 +1332,7 @@ class java_security_AccessControlContext: AllStatic {
 
   static void compute_offsets();
  public:
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
   static oop create(objArrayHandle context, bool isPrivileged, Handle privileged_context, TRAPS);
 
   static bool is_authorized(Handle context);
@@ -1316,7 +1359,7 @@ class java_lang_ClassLoader : AllStatic {
 
  public:
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   static ClassLoaderData* loader_data(oop loader);
   static ClassLoaderData* cmpxchg_loader_data(ClassLoaderData* new_data, oop loader, ClassLoaderData* expected_data);
@@ -1369,7 +1412,7 @@ class java_lang_System : AllStatic {
   static bool has_security_manager();
 
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Debugging
   friend class JavaClasses;
@@ -1407,7 +1450,7 @@ class java_lang_StackTraceElement: AllStatic {
                       int version, int bci, Symbol* name, TRAPS);
 
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Debugging
   friend class JavaClasses;
@@ -1451,7 +1494,7 @@ public:
   static void set_version(oop info, short value);
 
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   static void to_stack_trace_element(Handle stackFrame, Handle stack_trace_element, TRAPS);
 
@@ -1473,7 +1516,7 @@ class java_lang_LiveStackFrameInfo: AllStatic {
   static void set_mode(oop info, int value);
 
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Debugging
   friend class JavaClasses;
@@ -1498,7 +1541,7 @@ class java_lang_AssertionStatusDirectives: AllStatic {
   static void set_deflt(oop obj, bool val);
 
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
   // Debugging
   friend class JavaClasses;
@@ -1512,7 +1555,7 @@ class java_nio_Buffer: AllStatic {
  public:
   static int  limit_offset();
   static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 };
 
 class java_util_concurrent_locks_AbstractOwnableSynchronizer : AllStatic {
@@ -1521,67 +1564,7 @@ class java_util_concurrent_locks_AbstractOwnableSynchronizer : AllStatic {
  public:
   static void compute_offsets();
   static oop  get_owner_threadObj(oop obj);
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
-};
-
-class java_lang_Integer_IntegerCache: AllStatic {
- private:
-  static int _archivedCache_offset;
- public:
-  static int archivedCache_offset()  { return _archivedCache_offset; }
-  static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
-};
-
-class jdk_internal_module_ArchivedModuleGraph: AllStatic {
- private:
-  static int _archivedSystemModules_offset;
-  static int _archivedModuleFinder_offset;
-  static int _archivedMainModule_offset;
-  static int _archivedConfiguration_offset;
- public:
-  static int  archivedSystemModules_offset()      { return _archivedSystemModules_offset; }
-  static int  archivedModuleFinder_offset()       { return _archivedModuleFinder_offset; }
-  static int  archivedMainModule_offset()         { return _archivedMainModule_offset; }
-  static int  archivedConfiguration_offset()      { return _archivedConfiguration_offset; }
-  static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
-};
-
-class java_lang_module_Configuration: AllStatic {
- private:
-  static int _EMPTY_CONFIGURATION_offset;
- public:
-  static int EMPTY_CONFIGURATION_offset() { return _EMPTY_CONFIGURATION_offset; }
-  static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
-};
-
-class java_util_ImmutableCollections_ListN : AllStatic {
- private:
-  static int _EMPTY_LIST_offset;
- public:
-  static int EMPTY_LIST_offset() { return _EMPTY_LIST_offset; }
-  static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
-};
-
-class java_util_ImmutableCollections_SetN : AllStatic {
- private:
-  static int _EMPTY_SET_offset;
- public:
-  static int EMPTY_SET_offset() { return _EMPTY_SET_offset; }
-  static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
-};
-
-class java_util_ImmutableCollections_MapN : AllStatic {
- private:
-  static int _EMPTY_MAP_offset;
- public:
-  static int EMPTY_MAP_offset() { return _EMPTY_MAP_offset; }
-  static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 };
 
 // Use to declare fields that need to be injected into Java classes
@@ -1644,7 +1627,7 @@ class JavaClasses : AllStatic {
   static void compute_hard_coded_offsets();
   static void compute_offsets();
   static void check_offsets() PRODUCT_RETURN;
-
+  static void serialize_offsets(SerializeClosure* soc) NOT_CDS_RETURN;
   static InjectedField* get_injected(Symbol* class_name, int* field_count);
 };
 

@@ -516,7 +516,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   nonstatic_field(ClassLoaderData,             _class_loader,                                 OopHandle)                             \
   nonstatic_field(ClassLoaderData,             _next,                                         ClassLoaderData*)                      \
   volatile_nonstatic_field(ClassLoaderData,    _klasses,                                      Klass*)                                \
-  nonstatic_field(ClassLoaderData,             _is_anonymous,                                 bool)                                  \
+  nonstatic_field(ClassLoaderData,             _is_unsafe_anonymous,                          bool)                                  \
   volatile_nonstatic_field(ClassLoaderData,    _dictionary,                                   Dictionary*)                           \
                                                                                                                                      \
      static_field(ClassLoaderDataGraph,        _head,                                         ClassLoaderData*)                      \
@@ -1095,11 +1095,11 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   /* FileMapInfo fields (CDS archive related) */                                                                                     \
   /********************************************/                                                                                     \
                                                                                                                                      \
-  CDS_ONLY(nonstatic_field(FileMapInfo,                            _header,                   FileMapInfo::FileMapHeader*))          \
-  CDS_ONLY(   static_field(FileMapInfo,                            _current_info,             FileMapInfo*))                         \
-  CDS_ONLY(nonstatic_field(FileMapInfo::FileMapHeader,             _space[0],                 FileMapInfo::FileMapHeader::space_info))\
-  CDS_ONLY(nonstatic_field(FileMapInfo::FileMapHeader::space_info, _addr._base,               char*))                                \
-  CDS_ONLY(nonstatic_field(FileMapInfo::FileMapHeader::space_info, _used,                     size_t))                               \
+  CDS_ONLY(nonstatic_field(FileMapInfo,        _header,                   FileMapHeader*))                                           \
+  CDS_ONLY(   static_field(FileMapInfo,        _current_info,             FileMapInfo*))                                             \
+  CDS_ONLY(nonstatic_field(FileMapHeader,      _space[0],                 CDSFileMapRegion))                                         \
+  CDS_ONLY(nonstatic_field(CDSFileMapRegion,   _addr._base,               char*))                                                    \
+  CDS_ONLY(nonstatic_field(CDSFileMapRegion,   _used,                     size_t))                                                   \
                                                                                                                                      \
   /******************/                                                                                                               \
   /* VMError fields */                                                                                                               \
@@ -1978,9 +1978,8 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_toplevel_type(Annotations*)                                     \
   declare_type(OopMapValue, StackObj)                                     \
   declare_type(FileMapInfo, CHeapObj<mtInternal>)                         \
-  declare_type(FileMapInfo::FileMapHeaderBase, CHeapObj<mtClass>)         \
-  declare_type(FileMapInfo::FileMapHeader, FileMapInfo::FileMapHeaderBase)\
-  declare_toplevel_type(FileMapInfo::FileMapHeader::space_info)           \
+  declare_toplevel_type(FileMapHeader)                                    \
+  declare_toplevel_type(CDSFileMapRegion)                                 \
                                                                           \
   /************/                                                          \
   /* GC types */                                                          \
@@ -2267,7 +2266,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_constant(InstanceKlass::_misc_rewritten)                        \
   declare_constant(InstanceKlass::_misc_has_nonstatic_fields)             \
   declare_constant(InstanceKlass::_misc_should_verify_class)              \
-  declare_constant(InstanceKlass::_misc_is_anonymous)                     \
+  declare_constant(InstanceKlass::_misc_is_unsafe_anonymous)              \
   declare_constant(InstanceKlass::_misc_is_contended)                     \
   declare_constant(InstanceKlass::_misc_has_nonstatic_concrete_methods)   \
   declare_constant(InstanceKlass::_misc_declares_nonstatic_concrete_methods)\
