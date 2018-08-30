@@ -20643,31 +20643,41 @@ instruct vcmpge16B(vecX dst, vecX src1, vecX src2, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct extract8d(regD dst, vecZ src, immI idx) %{
+instruct extract8d(regD dst, vecZ src, vecZ tmp, immI idx) %{
   predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractD src idx));
+  effect(TEMP tmp);
   ins_encode %{
     int vector_len = 2;
     int midx = 0x7 & $idx$$constant;
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else if (midx >= 1 && midx <= 7) {
+    } else if (midx == 1) {
       __ vpshufpd($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
-    }
+    } else if (midx > 1 && midx <= 7) {
+      int extr_idx1 = midx / 2;
+      int extr_idx2 = midx % 2;
+      __ vextractf32x4($tmp$$XMMRegister, $src$$XMMRegister, extr_idx1);
+      __ vpshufpd($dst$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, extr_idx2, vector_len);
+  }
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct extract4d(regD dst, vecY src, immI idx) %{
+instruct extract4d(regD dst, vecY src, vecY tmp, immI idx) %{
   predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 4);
   match(Set dst (ExtractD src idx));
+  effect(TEMP tmp);
   ins_encode %{
     int vector_len = 1;
     int midx = 0x3 & $idx$$constant;
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else if (midx >= 1 && midx <= 3) {
+    } else if (midx == 1) {
       __ vpshufpd($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
+    } else if (midx > 1 && midx <= 3) {
+      __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
+      __ vpshufpd($dst$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, midx - 2, vector_len);
     }
        
   %}
@@ -20714,9 +20724,9 @@ instruct extract16f(regF dst, vecZ src, vecZ tmp, immI idx) %{
     } else if (midx >= 1 && midx <= 3) {
       __ vpshufps($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
     } else {
-        int extr_idx1 = midx / 4;
-        int extr_idx2 = midx % 4;
-        __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, extr_idx1);
+      int extr_idx1 = midx / 4;
+      int extr_idx2 = midx % 4;
+      __ vextractf32x4($tmp$$XMMRegister, $src$$XMMRegister, extr_idx1);
       __ vpshufps($dst$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, extr_idx2, vector_len);
   }
   %}
