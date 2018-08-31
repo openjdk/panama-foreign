@@ -1192,11 +1192,6 @@ void Assembler::addl(Address dst, int32_t imm32) {
   emit_arith_operand(0x81, rax, dst, imm32);
 }
 
-void Assembler::addb(Register dst, Register src) {
-  (void)prefix_and_encode(dst->encoding(), src->encoding());
-  emit_arith(0x02, 0xC0, dst, src);
-}
-
 void Assembler::addb(Address dst, int imm8) {
   InstructionMark im(this);
   prefix(dst);
@@ -1406,11 +1401,6 @@ void Assembler::aesenclast(XMMRegister dst, XMMRegister src) {
   int encode = simd_prefix_and_encode(dst, dst, src, VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
   emit_int8((unsigned char)0xDD);
   emit_int8((unsigned char)(0xC0 | encode));
-}
-
-void Assembler::andb(Register dst, Register src) {
-  (void)prefix_and_encode(dst->encoding(), src->encoding());
-  emit_arith(0x22, 0xC0, dst, src);
 }
 
 void Assembler::andw(Register dst, Register src) {
@@ -3668,11 +3658,6 @@ void Assembler::notl(Register dst) {
   emit_int8((unsigned char)(0xD0 | encode));
 }
 
-void Assembler::orb(Register dst, Register src) {
-  (void)prefix_and_encode(dst->encoding(), src->encoding());
-  emit_arith(0x0A, 0xC0, dst, src);
-}
-
 void Assembler::orw(Register dst, Register src) {
   (void)prefix_and_encode(dst->encoding(), src->encoding());
   emit_arith(0x0B, 0xC0, dst, src);
@@ -5521,11 +5506,6 @@ void Assembler::xorb(Register dst, Address src) {
   prefix(src, dst);
   emit_int8(0x32);
   emit_operand(dst, src);
-}
-
-void Assembler::xorb(Register dst, Register src) {
-  (void)prefix_and_encode(dst->encoding(), src->encoding());
-  emit_arith(0x32, 0xC0, dst, src);
 }
 
 void Assembler::xorw(Register dst, Register src) {
