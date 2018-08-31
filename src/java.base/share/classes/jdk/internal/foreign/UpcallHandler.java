@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package jdk.internal.foreign;
 import jdk.internal.foreign.abi.ArgumentBinding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.Storage;
-import jdk.internal.foreign.abi.StorageClass;
 import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.abi.sysv.x64.Constants;
 import jdk.internal.foreign.memory.*;
@@ -121,7 +120,7 @@ public class UpcallHandler {
         }
 
         try (Scope scope = Scope.newNativeScope()) {
-            UpcallContext context = new UpcallContext(scope, integers, vectors, stack, integerReturn, vectorReturn);
+            UpcallContext context = handler.new UpcallContext(scope, integers, vectors, stack, integerReturn, vectorReturn);
             handler.invoke(context);
         }
     }
@@ -140,7 +139,7 @@ public class UpcallHandler {
         return receiver;
     }
 
-    static class UpcallContext {
+    class UpcallContext {
 
         private final Pointer<Long> integers;
         private final Pointer<Long> vectors;
@@ -156,7 +155,8 @@ public class UpcallHandler {
             this.vectorReturns = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(vectorReturn, Constants.MAX_VECTOR_RETURN_REGISTERS * Constants.VECTOR_REGISTER_SIZE, scope), 0, BoundedMemoryRegion.MODE_W);
         }
 
-        Pointer<Long> getPtr(Storage storage) {
+        Pointer<Long> getPtr(ArgumentBinding binding) {
+            Storage storage = binding.getStorage();
             switch (storage.getStorageClass()) {
             case INTEGER_ARGUMENT_REGISTER:
                 return integers.offset(storage.getStorageIndex());
@@ -173,148 +173,43 @@ public class UpcallHandler {
                 throw new Error("Unhandled storage: " + storage);
             }
         }
-    }
 
-    private Object boxArgument(Scope scope, UpcallContext context, Pointer<?>[] structPtrs, ArgumentBinding binding) throws IllegalAccessException {
-        LayoutType<?> layoutType = factory.argLayouts[binding.getMember().getArgumentIndex()];
-        Class<?> carrierClass = ((LayoutTypeImpl<?>)layoutType).carrier();
-
-        Pointer<Long> src = context.getPtr(binding.getStorage());
-
-        if (DEBUG) {
-            System.err.println("boxArgument carrier type: " + carrierClass);
-        }
-
-
-        if (Util.isCStruct(carrierClass)) {
-            int index = binding.getMember().getArgumentIndex();
-            Pointer<?> r = structPtrs[index];
-            if (r == null) {
-                /*
-                 * FIXME (STRUCT-LIFECYCLE):
-                 *
-                 * Leak memory for now
-                 */
-                scope = Scope.newNativeScope();
-
-                @SuppressWarnings({"rawtypes", "unchecked"})
-                Pointer<?> rtmp = ((ScopeImpl)scope).allocate(layoutType, 8);
-
-                structPtrs[index] = r = rtmp;
-            }
-
-            if (DEBUG) {
-                System.out.println("Populating struct at arg index " + index + " at offset 0x" + Long.toHexString(binding.getOffset()));
-            }
-
-            if ((binding.getOffset() % LONG_LAYOUT_TYPE.bytesSize()) != 0) {
-                throw new Error("Invalid offset: " + binding.getOffset());
-            }
-            Pointer<Long> dst = Util.unsafeCast(r, LONG_LAYOUT_TYPE).offset(binding.getOffset() / LONG_LAYOUT_TYPE.bytesSize());
-
-            if (DEBUG) {
-                System.err.println("Copying struct data, value: 0x" + Long.toHexString(src.get()));
-            }
-
-            Util.copy(src, dst, binding.getStorage().getSize());
-
-            return r.get();
-        } else {
-            return Util.unsafeCast(src, layoutType).get();
-        }
-    }
-
-    private Object[] boxArguments(Scope scope, UpcallContext context, CallingSequence callingSequence) {
-        Object[] args = new Object[factory.argLayouts.length];
-        Pointer<?>[] structPtrs = new Pointer<?>[factory.argLayouts.length];
-
-        if (DEBUG) {
-            System.out.println("boxArguments " + callingSequence.asString());
-        }
-
-        for (StorageClass c : Constants.ARGUMENT_STORAGE_CLASSES) {
-            int skip = (c == StorageClass.INTEGER_ARGUMENT_REGISTER && callingSequence.returnsInMemory()) ? 1 : 0;
-            callingSequence
-                .getBindings(c)
-                .stream()
-                .skip(skip)
-                .filter(binding -> binding != null)
-                .forEach(binding -> {
-                    try {
-                        args[binding.getMember().getArgumentIndex()] = boxArgument(scope, context, structPtrs, binding);
-                    } catch (IllegalAccessException e) {
-                        throw new IllegalArgumentException("Failed to box argument", e);
-                    }
-                });
-        }
-
-        return args;
-    }
-
-    private void unboxReturn(Class<?> c, UpcallContext context, ArgumentBinding binding, Object o) throws IllegalAccessException {
-        if (DEBUG) {
-            System.out.println("unboxReturn " + c.getName());
-            System.out.println(binding.toString());
-        }
-
-        Pointer<Long> dst = context.getPtr(binding.getStorage());
-
-        if (Util.isCStruct(c)) {
-            Function ft = Function.of(Util.layoutof(c), false, new Layout[0]);
-            boolean returnsInMemory = SystemABI.getInstance().arrangeCall(ft).returnsInMemory();
-
-            Struct<?> struct = (Struct<?>) o;
-
-            Pointer<Long> src = Util.unsafeCast(struct.ptr(), LONG_LAYOUT_TYPE);
-
-            if (returnsInMemory) {
-                // the first integer argument register contains a pointer to caller allocated struct
-                long structAddr = context.getPtr(new Storage(StorageClass.INTEGER_ARGUMENT_REGISTER, 0, Constants.INTEGER_REGISTER_SIZE)).get();
-                long size = Util.alignUp(factory.returnLayout.bytesSize(), 8);
-                Pointer<?> dstStructPtr = new BoundedPointer<>(factory.returnLayout, new BoundedMemoryRegion(structAddr, size));
-                try {
-                    ((BoundedPointer<?>) dstStructPtr).type.setter().invoke(dstStructPtr, o);
-                } catch (Throwable ex) {
-                    throw new IllegalStateException(ex);
-                }
-            } else {
-                if ((binding.getOffset() % LONG_LAYOUT_TYPE.bytesSize()) != 0) {
-                    throw new Error("Invalid offset: " + binding.getOffset());
-                }
-                Pointer<Long> srcPtr = src.offset(binding.getOffset() / LONG_LAYOUT_TYPE.bytesSize());
-                Util.copy(srcPtr, dst, binding.getStorage().getSize());
-            }
-        } else {
-            try {
-                Util.unsafeCast(dst, factory.returnLayout).type().setter().invoke(dst, o);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
+        @SuppressWarnings("unchecked")
+        Pointer<Object> inMemoryPtr() {
+            assert factory.callingSequence.returnsInMemory();
+            Pointer<Long> res = getPtr(factory.callingSequence.getReturnBindings().get(0));
+            long structAddr = res.get();
+            long size = Util.alignUp(factory.returnLayout.bytesSize(), 8);
+            return new BoundedPointer<Object>((LayoutType)factory.returnLayout, new BoundedMemoryRegion(structAddr, size));
         }
     }
 
     private void invoke(UpcallContext context) {
-        try (Scope scope = Scope.newNativeScope()) {
+        try {
             // FIXME: Handle varargs upcalls here
-            CallingSequence callingSequence = factory.callingSequence;
             if (DEBUG) {
                 System.err.println("=== UpcallHandler.invoke ===");
-                System.err.println(callingSequence.asString());
+                System.err.println(factory.callingSequence.asString());
             }
 
-            Object[] args = boxArguments(scope, context, callingSequence);
+            Object[] args = new Object[factory.argLayouts.length];
+            for (int i = 0 ; i < factory.argLayouts.length ; i++) {
+                args[i] = NativeInvoker.boxValue(factory.argLayouts[i], context::getPtr, factory.callingSequence.getArgumentBindings(i));
+            }
 
             Object o = factory.mh.invoke(receiver, args);
 
             if (factory.mh.type().returnType() != void.class) {
-                for (StorageClass c : Constants.RETURN_STORAGE_CLASSES) {
-                    for (ArgumentBinding binding : callingSequence.getBindings(c)) {
-                        unboxReturn(factory.mh.type().returnType(), context, binding, o);
-                    }
+                if (!factory.callingSequence.returnsInMemory()) {
+                    NativeInvoker.unboxValue(o, factory.returnLayout, context::getPtr,
+                            b -> { throw new UnsupportedOperationException("Callbacks return not supported here!"); },
+                            factory.callingSequence.getReturnBindings());
+                } else {
+                    context.inMemoryPtr().set(o);
                 }
             }
         } catch (Throwable t) {
-            throw new RuntimeException(t);
+            throw new IllegalStateException(t);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,10 +26,9 @@ import jdk.internal.foreign.UpcallHandler.UpcallHandlerFactory;
 import jdk.internal.foreign.abi.ArgumentBinding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.ShuffleRecipe;
-import jdk.internal.foreign.abi.StorageClass;
 import jdk.internal.foreign.abi.SystemABI;
-import jdk.internal.foreign.abi.sysv.x64.Constants;
 import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.foreign.memory.LayoutTypeImpl;
 
 import java.lang.annotation.Retention;
 import java.lang.invoke.MethodHandle;
@@ -52,8 +51,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public class NativeInvoker {
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.foreign.NativeInvoker.DEBUG"));
-
-    private static final LayoutType<Long> LAYOUT_TYPE_LONG = NativeTypes.INT64;
 
     // Unbound MH for the invoke() method
     private static final MethodHandle BRIDGE_METHOD_HANDLE;
@@ -94,7 +91,7 @@ public class NativeInvoker {
     private final ShuffleRecipe shuffleRecipe;
     private final LayoutType<?> returnLayoutType;
     private final LayoutType<?>[] argLayoutTypes;
-    private final UpcallHandlerFactory[] upcallHandlers;
+    private final UpcallHandlerFactory[] upcallHandlerFactories;
 
     NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, String debugMethodString, java.lang.reflect.Type genericReturnType) throws NoSuchMethodException, IllegalAccessException {
         this(function, methodType, isVarArgs, INVOKE_NATIVE_MH, debugMethodString, genericReturnType);
@@ -116,11 +113,11 @@ public class NativeInvoker {
         }
         List<Layout> args = function.argumentLayouts();
         argLayoutTypes = new LayoutType<?>[args.size()];
-        upcallHandlers = new UpcallHandlerFactory[args.size()];
+        upcallHandlerFactories = new UpcallHandlerFactory[args.size()];
         for (int i = 0 ; i < args.size() ; i++) {
             Class<?> carrier = methodType.parameterType(i);
             if (Util.isCallback(carrier)) {
-                upcallHandlers[i] = UpcallHandler.makeFactory(carrier);
+                upcallHandlerFactories[i] = UpcallHandler.makeFactory(carrier);
             } else if (!Util.isCStruct(carrier)) {
                 argLayoutTypes[i] = Util.makeType(carrier, args.get(i));
             }
@@ -195,53 +192,48 @@ public class NativeInvoker {
     }
 
     private Object invokeNormal(long addr, Object[] args) throws Throwable {
-        //Fixme: this should use the function field, not creating the layout via reflection!!!
 
-
-        Pointer<?> returnStructPtr = null;
-        if (Util.isCStruct(methodType.returnType())) {
-            // FIXME (STRUCT-LIFECYCLE):
-            // Leak the allocated structs for now until the life cycle has been figured out
-            Scope scope = Scope.newNativeScope();
-
-            Class<?> c = methodType.returnType();
-            @SuppressWarnings("unchecked")
-            Pointer<?> r = ((ScopeImpl)scope).allocate(returnLayoutType, 8);
-
-            returnStructPtr = r;
-        }
+        boolean isVoid = methodType.returnType() == void.class;
+        int nValues = shuffleRecipe.getNoofArgumentPulls();
+        long[] values = new long[nValues];
+        Pointer<Long> argsPtr = nValues > 0 ?
+                BoundedPointer.fromLongArray(values) :
+                Pointer.nullPointer();
 
         // we need to keep upcall handlers alive until native invocation completes, otherwise the native stub
         // is going to attempt an upcall using an already GC'ed handler instance. We do this by saving all handlers
         // into this local list.
         List<UpcallHandler> upcallHandlers = new ArrayList<>();
 
-        int nValues = shuffleRecipe.getNoofArgumentPulls();
-        long[] values = new long[nValues];
-        if (nValues != 0) {
-            Pointer<Long> argsPtr = BoundedPointer.fromLongArray(values);
-            long offset = 0L;
-            for (StorageClass c : Constants.ARGUMENT_STORAGE_CLASSES) {
-                for (ArgumentBinding binding : callingSequence.getBindings(c)) {
-                    if (binding == null) {
-                        // stack slot padding/alignment
-                        continue;
-                    }
+        for (int i = 0 ; i < args.length ; i++) {
+            Object arg = args[i];
+            unboxValue(arg, argLayoutTypes[i], b -> argsPtr.offset(callingSequence.storageOffset(b)),
+                    b -> {
+                        try {
+                            //callback conversion
+                            UpcallHandler up = upcallHandlerFactories[b.getMember().getArgumentIndex()].buildHandler((Callback)arg);
+                            upcallHandlers.add(up);
+                            return up;
+                        } catch (Throwable ex) {
+                            throw new IllegalStateException(ex);
+                        }
+                    }, callingSequence.getArgumentBindings(i));
+        }
 
-                    if (c == StorageClass.INTEGER_ARGUMENT_REGISTER &&
-                        callingSequence.returnsInMemory() &&
-                        binding.getStorage().getStorageIndex() == 0) {
-                        argsPtr.type().setter().invokeExact(argsPtr.offset(offset), returnStructPtr.addr());
-                        offset += 1;
-                    } else {
-                        long n = binding.getStorage().getSize() / 8;
-                        int argIndex = binding.getMember().getArgumentIndex();
-                        Class<?> argCarrier = methodType.parameterType(argIndex);
-                        getArgumentValues(argsPtr.offset(offset), argCarrier, binding, n, args[argIndex], upcallHandlers);
-                        offset += n;
-                    }
-                }
-            }
+        final Pointer<?> retPtr;
+        long[] returnValues = new long[shuffleRecipe.getNoofReturnPulls()];
+        if (callingSequence.returnsInMemory()) {
+            // FIXME (STRUCT-LIFECYCLE):
+            // Leak the allocated structs for now until the life cycle has been figured out
+            Scope scope = Scope.newNativeScope();
+            retPtr = ((ScopeImpl)scope).allocate(returnLayoutType, 8);
+            unboxValue(retPtr, NativeTypes.UINT64.pointer(), b -> argsPtr.offset(callingSequence.storageOffset(b)),
+                    b -> { throw new UnsupportedOperationException("Callbacks return not supported here!"); },
+                    callingSequence.getReturnBindings());
+        } else if (!isVoid) {
+            retPtr = BoundedPointer.fromLongArray(returnValues);
+        } else {
+            retPtr = Pointer.nullPointer();
         }
 
         if (DEBUG) {
@@ -251,8 +243,6 @@ public class NativeInvoker {
             }
         }
 
-        long[] returnValues = new long[shuffleRecipe.getNoofReturnPulls()];
-
         targetMethodHandle.invokeExact(values, returnValues, shuffleRecipe.getRecipe(), addr);
 
         //defeat JIT dead code analysis
@@ -260,64 +250,18 @@ public class NativeInvoker {
 
         if (DEBUG) {
             System.err.println("Returned from method " + debugMethodString + " with " + returnValues.length + " return values");
+            System.err.println("structPtr = 0x" + Long.toHexString(retPtr.addr()));
             for (int i = 0; i < returnValues.length; i++) {
                 System.err.println("returnValues[" + i + "] = 0x" + Long.toHexString(returnValues[i]));
             }
         }
 
-        return processReturnValue(callingSequence, returnValues, returnStructPtr);
-    }
-
-    private Object processReturnValue(CallingSequence callingSequence, long[] returnValues, Pointer<?> returnStructPtr) {
-        if (methodType.returnType() == void.class) {
+        if (isVoid) {
             return null;
-        } else if (Util.isCStruct(methodType.returnType())) {
-            assert returnStructPtr != null;
-            if (!callingSequence.returnsInMemory()) {
-                Pointer<Long> retValuesPtr = BoundedPointer.fromLongArray(returnValues);
-                Pointer<Long> retStructPtr = Util.unsafeCast(returnStructPtr, NativeTypes.UINT64);
-                long offset = 0L;
-
-                try {
-                    for (StorageClass c : Constants.RETURN_STORAGE_CLASSES) {
-                        for (ArgumentBinding binding : callingSequence.getBindings(c)) {
-                            assert binding != null;
-
-                            int n = (int)(binding.getStorage().getSize() / 8);
-                            Util.copy(retValuesPtr.offset(offset), retStructPtr.offset(binding.getOffset() / 8), n * Util.LONG_ARRAY_SCALE);
-                            offset += n;
-                        }
-                    }
-                } catch (IllegalAccessException ex) {
-                    throw new IllegalStateException(ex);
-                }
-            }
-
-            return returnStructPtr.get();
+        } else if (!callingSequence.returnsInMemory()) {
+            return boxValue(returnLayoutType, b -> retPtr.offset(b.getOffset() / 8), callingSequence.getReturnBindings());
         } else {
-            Pointer<Long> retValuesPtr = BoundedPointer.fromLongArray(returnValues);
-            try {
-                return returnLayoutType.getter().invoke(Util.unsafeCast(retValuesPtr, returnLayoutType));
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-    }
-
-    private void getArgumentValues(Pointer<Long> argsPtr, Class<?> carrierType, ArgumentBinding binding, long n, Object arg, List<UpcallHandler> handlers) throws Throwable {
-        if (Util.isCStruct(carrierType)) {
-            Struct<?> r = (Struct<?>)arg;
-            Pointer<Long> src = Util.unsafeCast(Util.unsafeCast(r.ptr(), NativeTypes.UINT8).offset(binding.getOffset()), NativeTypes.UINT64);
-            Util.copy(src, argsPtr, n * Util.LONG_ARRAY_SCALE);
-        } else if (Util.isCallback(carrierType)) {
-            assert n == 1;
-            UpcallHandler handler = upcallHandlers[binding.getMember().getArgumentIndex()].buildHandler((Callback<?>)arg);
-            handlers.add(handler);
-            argsPtr.type().setter().invokeExact(argsPtr, handler.getNativeEntryPoint().addr());
-        } else {
-            assert n == 1;
-            int argIndex = binding.getMember().getArgumentIndex();
-            Util.unsafeCast(argsPtr, argLayoutTypes[argIndex]).type().setter().invoke(argsPtr, arg);
+            return retPtr.get();
         }
     }
 
@@ -344,6 +288,54 @@ public class NativeInvoker {
 
         NativeInvoker delegate = new NativeInvoker(varargFunc, dynamicMethodType, false, targetMethodHandle, debugMethodString, genericReturnType);
         return delegate.invoke(addr, allArgs);
+    }
+
+    // helper routines for marshalling/unmarshalling Java values to and from registers
+
+    static void unboxValue(Object o, LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> dstPtrFunc,
+                           java.util.function.Function<ArgumentBinding, UpcallHandler> handlerFactory, List<ArgumentBinding> bindings) throws Throwable {
+        if (o instanceof Struct) {
+            Struct<?> struct = (Struct<?>) o;
+            Pointer<Long> src = Util.unsafeCast(struct.ptr(), NativeTypes.UINT64);
+            for (ArgumentBinding binding : bindings) {
+                Pointer<?> dst = dstPtrFunc.apply(binding);
+                Pointer<Long> srcPtr = src.offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
+                Util.copy(srcPtr, dst, binding.getStorage().getSize());
+            }
+        } else if (o instanceof Callback) {
+            assert bindings.size() == 1;
+            UpcallHandler handler = handlerFactory.apply(bindings.get(0));
+            Pointer<?> dst = dstPtrFunc.apply(bindings.get(0));
+            dst.type().setter().invokeExact(dst, handler.getNativeEntryPoint().addr());
+        } else {
+            assert bindings.size() == 1;
+            Pointer<?> dst = dstPtrFunc.apply(bindings.get(0));
+            Util.unsafeCast(dst, type).type().setter().invoke(dst, o);
+        }
+    }
+
+    static Object boxValue(LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> srcPtrFunc,
+                           List<ArgumentBinding> bindings) throws IllegalAccessException {
+        Class<?> carrier = ((LayoutTypeImpl<?>)type).carrier();
+        if (Util.isCStruct(carrier)) {
+            /*
+             * Leak memory for now
+             */
+            Scope scope = Scope.newNativeScope();
+
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            Pointer<?> rtmp = ((ScopeImpl)scope).allocate(type, 8);
+
+            for (ArgumentBinding binding : bindings) {
+                Pointer<Long> dst = Util.unsafeCast(rtmp, NativeTypes.UINT64).offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
+                Util.copy(srcPtrFunc.apply(binding), dst, binding.getStorage().getSize());
+            }
+
+            return rtmp.get();
+        } else {
+            assert bindings.size() == 1;
+            return Util.unsafeCast(srcPtrFunc.apply(bindings.get(0)), type).get();
+        }
     }
 
     //natives
