@@ -2140,6 +2140,16 @@ encode %{
     assert(off1 - off0 == clear_avx_size(), "correct size prediction");
   %}
 
+  enc_class restore_k1 %{
+    if (UseAVX > 2 && ra_->C->max_vector_size() > 16) {
+      MacroAssembler _masm(&cbuf);
+      __ push(rbx);
+      __ movl(rbx, 0xffff);
+      __ kmovwl(k1, rbx);
+      __ pop(rbx);
+    }
+  %}
+
   enc_class Java_To_Runtime(method meth) %{
     // No relocation needed
     MacroAssembler _masm(&cbuf);
@@ -12439,7 +12449,7 @@ instruct CallLeafDirectVector(method meth)
 
   ins_cost(300);
   format %{ "call_leaf,vector " %}
-  ins_encode(Java_To_Runtime(meth));
+  ins_encode(Java_To_Runtime(meth),restore_k1);
   ins_pipe(pipe_slow);
 %}
 
