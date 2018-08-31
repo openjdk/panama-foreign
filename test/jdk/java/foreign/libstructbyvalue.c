@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,31 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi;
 
-public enum StorageClass {
+struct tuple {
+   int one;
+   int two;
+   int three;
+   int four;
+};
 
-    //Note: The order of the argument register classes is subtly relevant, as that is the order in which the
-    //binding words will be laid out in the long array by the universal invoker.
-    STACK_ARGUMENT_SLOT(true, false),
-    VECTOR_ARGUMENT_REGISTER(true, false),
-    INTEGER_ARGUMENT_REGISTER(true, false),
-    INTEGER_RETURN_REGISTER(false, true),
-    VECTOR_RETURN_REGISTER(false, true);
+struct big_tuple {
+   int one;
+   int two;
+   int three;
+   int four;
+   int five;
+};
 
-    final boolean isArgumentClass;
-    final boolean isReturnClass;
+struct tuple T = { 1, 2, 3, 4 };
+struct big_tuple BIG_T = { 1, 2, 3, 4, 5 };
 
-    StorageClass(boolean isArgumentClass, boolean isReturnClass) {
-        this.isArgumentClass = isArgumentClass;
-        this.isReturnClass = isReturnClass;
-    }
+struct tuple make() {
+    return T;
+}
 
-    public boolean isArgumentClass() {
-        return isArgumentClass;
-    }
+struct tuple id(struct tuple t) {
+    return t;
+}
 
-    public boolean isReturnClass() {
-        return isReturnClass;
-    }
+struct big_tuple big_make() {
+    return BIG_T;
+}
+
+struct big_tuple big_id(struct big_tuple t) {
+    return t;
 }

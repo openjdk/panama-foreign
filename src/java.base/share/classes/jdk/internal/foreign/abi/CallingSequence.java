@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,23 +22,75 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.internal.foreign.abi.sysv.x64.Constants;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class CallingSequence {
-    private final ArrayList<ArgumentBinding>[] bindings;
+    private final List<ArgumentBinding>[] bindings;
     private final boolean returnsInMemory;
+    private final List<ArgumentBinding>[] argBindings;
+    private final List<ArgumentBinding> retBindings = new ArrayList<>();
+    private final int[] offsets = new int[Constants.ARGUMENT_STORAGE_CLASSES.length];
 
-    public CallingSequence(ArrayList<ArgumentBinding>[] bindings, boolean returnsInMemory) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public CallingSequence(int argSize, ArrayList<ArgumentBinding>[] bindings, boolean returnsInMemory) {
         this.bindings = bindings;
         this.returnsInMemory = returnsInMemory;
+        argBindings = new List[argSize];
+        classifyBindings();
     }
 
-    public ArrayList<ArgumentBinding> getBindings(StorageClass storageClass) {
+    public List<ArgumentBinding> getBindings(StorageClass storageClass) {
         return bindings[storageClass.ordinal()];
     }
 
     public boolean returnsInMemory() {
         return returnsInMemory;
+    }
+
+    private void classifyBindings() {
+        for (StorageClass storageClass : StorageClass.values()) {
+            for (ArgumentBinding binding : getBindings(storageClass)) {
+                if (storageClass.isArgumentClass()) {
+                    //update offsets
+                    for (int i = storageClass.ordinal() + 1 ; i < offsets.length ; i++) {
+                        offsets[i]++;
+                    }
+                    //classify arguments
+                    if (storageClass == StorageClass.INTEGER_ARGUMENT_REGISTER &&
+                            returnsInMemory() && binding.getStorage().getStorageIndex() == 0) {
+                        retBindings.add(binding);
+                    } else {
+                        int index = binding.getMember().getArgumentIndex();
+                        List<ArgumentBinding> args = argBindings[index];
+                        if (args == null) {
+                            argBindings[index] = args = new ArrayList<>();
+                        }
+                        args.add(binding);
+                    }
+                } else {
+                    if (!returnsInMemory()) {
+                        //classify returns
+                        retBindings.add(binding);
+                    }
+                }
+            }
+        }
+    }
+
+    public List<ArgumentBinding> getArgumentBindings(int i) {
+        return argBindings[i];
+    }
+
+    public List<ArgumentBinding> getReturnBindings() {
+        return retBindings;
+    }
+
+    public long storageOffset(ArgumentBinding b) {
+        return offsets[b.getStorage().getStorageClass().ordinal()] +
+                 b.getStorage().getStorageIndex();
     }
 
     public String asString() {
