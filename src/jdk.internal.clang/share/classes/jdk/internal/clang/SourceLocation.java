@@ -25,6 +25,7 @@ package jdk.internal.clang;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public class SourceLocation extends StructType {
 
@@ -41,6 +42,23 @@ public class SourceLocation extends StructType {
     public native Location getSpellingLocation();
     public native boolean isInSystemHeader();
     public native boolean isFromMainFile();
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof SourceLocation)) {
+            return false;
+        }
+        SourceLocation sloc = (SourceLocation)other;
+        return Objects.equals(getFileLocation(), sloc.getFileLocation());
+    }
+
+    @Override
+    public int hashCode() {
+        return getFileLocation().hashCode();
+    }
 
     public final static class Location {
         private final Path path;
@@ -74,6 +92,25 @@ public class SourceLocation extends StructType {
 
         public int offset() {
             return offset;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof Location)) {
+                return false;
+            }
+            Location loc = (Location)other;
+            return Objects.equals(path, loc.path) &&
+                line == loc.line && column == loc.column &&
+                offset == loc.offset;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(path) ^ line ^ column ^ offset;
         }
     }
 }

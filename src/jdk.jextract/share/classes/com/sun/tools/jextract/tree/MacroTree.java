@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,39 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.clang;
+package com.sun.tools.jextract.tree;
 
-import java.nio.ByteBuffer;
-import java.util.Objects;
+import java.util.Optional;
+import jdk.internal.clang.Cursor;
 
-public class SourceRange extends StructType {
+public class MacroTree extends Tree {
+    private final Optional<Object> value;
 
-    SourceRange(ByteBuffer buf) {
-        super(buf);
+    public MacroTree(Cursor c, Optional<Object> value) {
+        super(c);
+        this.value = value;
     }
 
-    protected SourceRange(ByteBuffer buf, boolean copy) {
-        super(buf, copy);
-    }
-
-    public native SourceLocation getBegin();
-    public native SourceLocation getEnd();
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(this instanceof SourceRange)) {
-            return false;
-        }
-        SourceRange sr = (SourceRange)other;
-        return Objects.equals(getBegin(), sr.getBegin()) &&
-            Objects.equals(getEnd(), sr.getEnd());
+    public Optional<Object> value() {
+        return value;
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(getBegin()) ^ Objects.hashCode(getEnd());
+    public <R,D> R accept(TreeVisitor<R,D> visitor, D data) {
+        return visitor.visitMacro(this, data);
+    }
+
+    public boolean isConstant() {
+        return value().isPresent();
     }
 }

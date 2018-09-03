@@ -35,16 +35,24 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-import jdk.internal.clang.Cursor;
-import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
+import jdk.internal.clang.TypeKind;
 import jdk.internal.foreign.Util;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.TypeReference;
+import com.sun.tools.jextract.tree.EnumTree;
+import com.sun.tools.jextract.tree.FieldTree;
+import com.sun.tools.jextract.tree.FunctionTree;
+import com.sun.tools.jextract.tree.MacroTree;
+import com.sun.tools.jextract.tree.SimpleTreeVisitor;
+import com.sun.tools.jextract.tree.StructTree;
+import com.sun.tools.jextract.tree.Tree;
+import com.sun.tools.jextract.tree.TypedefTree;
+import com.sun.tools.jextract.tree.VarTree;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_ABSTRACT;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_ANNOTATION;
@@ -65,7 +73,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
  * Scan a header file and generate classes for entities defined in that header
  * file.
  */
-final class AsmCodeFactory {
+final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
     private static final String ANNOTATION_PKG_PREFIX = "Ljava/foreign/annotations/";
     private static final String NATIVE_CALLBACK = ANNOTATION_PKG_PREFIX + "NativeCallback;";
     private static final String NATIVE_HEADER = ANNOTATION_PKG_PREFIX + "NativeHeader;";
@@ -74,9 +82,10 @@ final class AsmCodeFactory {
 
     private final Context ctx;
     private final ClassWriter global_cw;
-    // to avoid duplicate generation of methods, field accessors
+    // to avoid duplicate generation of methods, field accessors, macros
     private final Set<String> global_methods = new HashSet<>();
     private final Set<String> global_fields = new HashSet<>();
+    private final Set<String> global_macros = new HashSet<>();
     private final String internal_name;
     private final HeaderFile owner;
     private final Map<String, byte[]> types;
@@ -97,7 +106,6 @@ final class AsmCodeFactory {
     }
 
     private void generateNativeHeader() {
-        generateMacros();
         AnnotationVisitor av = global_cw.visitAnnotation(NATIVE_HEADER, true);
         av.visit("path", owner.path.toAbsolutePath().toString());
         if (owner.libraries != null && !owner.libraries.isEmpty()) {
@@ -125,15 +133,15 @@ final class AsmCodeFactory {
         }
     }
 
-    private void annotateNativeLocation(ClassVisitor cw, Cursor dcl) {
+    private void annotateNativeLocation(ClassVisitor cw, Tree tree) {
         AnnotationVisitor av = cw.visitAnnotation(NATIVE_LOCATION, true);
-        SourceLocation src = dcl.getSourceLocation();
+        SourceLocation src = tree.location();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
         av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
         av.visit("line", loc.line());
         av.visit("column", loc.column());
-        av.visit("USR", dcl.USR());
+        av.visit("USR", tree.USR());
         av.visitEnd();
     }
 
@@ -146,20 +154,24 @@ final class AsmCodeFactory {
         }
     }
 
+    private static boolean isBitField(Tree tree) {
+        return tree instanceof FieldTree && ((FieldTree)tree).isBitField();
+    }
+
     /**
      *
      * @param cw ClassWriter for the struct
-     * @param c The FieldDecl cursor
+     * @param tree The Tree
      * @param parentType The struct type
      */
-    private void addField(ClassVisitor cw, Cursor c, Type parentType) {
-        String fieldName = c.spelling();
+    private void addField(ClassVisitor cw, Tree tree, Type parentType) {
+        String fieldName = tree.name();
         if (fieldName.isEmpty()) {
             //skip anon fields
             return;
         }
-        Type t = c.type();
-        JType jt = owner.globalLookup(t);
+        Type type = tree.type();
+        JType jt = owner.globalLookup(type);
         assert (jt != null);
         if (cw == global_cw) {
             String uniqueName = fieldName + "." + jt.getDescriptor();
@@ -171,56 +183,59 @@ final class AsmCodeFactory {
                 "()" + jt.getDescriptor(), "()" + jt.getSignature(), null);
 
         AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
-        SourceLocation src = c.getSourceLocation();
+        SourceLocation src = tree.location();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
         av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
         av.visit("line", loc.line());
         av.visit("column", loc.column());
-        av.visit("USR", c.USR());
+        av.visit("USR", tree.USR());
         av.visitEnd();
 
         mv.visitEnd();
         cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
                 "(" + JType.getPointerVoidAsWildcard(jt) + ")V", null);
-        if (!c.isBitField()) {
+        if (tree instanceof VarTree || !isBitField(tree)) {
             JType ptrType = new PointerType(jt);
             cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
                     "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(), null);
         }
     }
 
-    private void addVar(ClassVisitor cw, Cursor c, Type parentType) {
-        addField(cw, c, parentType);
-        Layout layout = Utils.getLayout(c.type());
-        String descStr = decorateAsAccessor(c, layout).toString();
-        addHeaderDecl(c.spelling(), descStr);
+    @Override
+    public Void visitVar(VarTree varTree, JType jt) {
+        addField(global_cw, varTree, null);
+        Layout layout = varTree.layout();
+        String descStr = decorateAsAccessor(varTree, layout).toString();
+        addHeaderDecl(varTree.name(), descStr);
+        return null;
     }
 
     private void addHeaderDecl(String symbol, String desc) {
         headerDeclarations.add(String.format("%s=%s", symbol, desc));
     }
 
-    private void addConstant(ClassVisitor cw, Cursor c) {
-        assert (c.kind() == CursorKind.EnumConstantDecl);
-        String name = c.spelling();
-        String desc = owner.globalLookup(c.type()).getDescriptor();
+    private void addConstant(ClassVisitor cw, FieldTree fieldTree) {
+        assert (fieldTree.isEnumConstant());
+        String name = fieldTree.name();
+        String desc = owner.globalLookup(fieldTree.type()).getDescriptor();
         Object value = null;
         switch (desc) {
             case "J":
-                value = c.getEnumConstantValue();
+                value = fieldTree.enumConstant().get();
                 break;
             case "I":
-                value = (int) c.getEnumConstantValue();
+                value = fieldTree.enumConstant().get().intValue();
                 break;
         }
         cw.visitField(ACC_PUBLIC | ACC_FINAL | ACC_STATIC, name, desc, null, value);
     }
 
-    private void createStruct(Cursor cursor) {
-        String nativeName = Utils.getIdentifier(cursor);
-        Type t = cursor.type();
+    @Override
+    public Void visitStruct(StructTree structTree, JType jt) {
+        String nativeName = structTree.identifier();
+        Type type = structTree.type();
         logger.fine(() -> "Create struct: " + nativeName);
 
         String intf = Utils.toClassName(nativeName);
@@ -235,61 +250,62 @@ final class AsmCodeFactory {
         cw.visit(V1_8, ACC_PUBLIC /*| ACC_STATIC*/ | ACC_INTERFACE | ACC_ABSTRACT,
                 name, "Ljava/lang/Object;Ljava/foreign/memory/Struct<L" + name + ";>;",
                 "java/lang/Object", new String[] {"java/foreign/memory/Struct"});
-        annotateNativeLocation(cw, cursor);
+        annotateNativeLocation(cw, structTree);
 
         AnnotationVisitor av = cw.visitAnnotation(NATIVE_STRUCT, true);
-        Layout structLayout = Utils.getRecordLayout(t, this::decorateAsAccessor);
+        Layout structLayout = structTree.layout(this::decorateAsAccessor);
         av.visit("value", structLayout.toString());
         av.visitEnd();
         cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
 
         // fields
-        structFields(cursor).forEach(cx -> addField(cw, cx, cursor.type()));
+        structTree.fields().forEach(fieldTree -> addField(cw, fieldTree, type));
         // Write class
         try {
             writeClassFile(cw, owner.clsName + "$" + intf);
         } catch (IOException ex) {
             handleException(ex);
         }
+        return null;
     }
 
-    Layout decorateAsAccessor(Cursor accessorCursor, Layout layout) {
-        String accessorName = accessorCursor.spelling();
-        layout = layout
-                    .withAnnotation("get", accessorName + "$get")
-                    .withAnnotation("set", accessorName + "$set");
-        if (!accessorCursor.isBitField()) {
+    Layout addGetterSetterName(Layout layout, String accessorName) {
+        return layout
+            .withAnnotation("get", accessorName + "$get")
+            .withAnnotation("set", accessorName + "$set");
+    }
+
+    Layout decorateAsAccessor(VarTree varTree, Layout layout) {
+        return addGetterSetterName(layout, varTree.name()).
+            withAnnotation("ptr", varTree.name() + "$ptr");
+    }
+
+    Layout decorateAsAccessor(FieldTree fieldTree, Layout layout) {
+        layout = addGetterSetterName(layout, fieldTree.name());
+        if (!fieldTree.isBitField()) {
             //no pointer accessors for bitfield!
-            layout = layout.withAnnotation("ptr", accessorName + "$ptr");
+            layout = layout.withAnnotation("ptr", fieldTree.name() + "$ptr");
         }
         return layout;
     }
 
-    // A stream of fields of a struct (or union). Note that we have to include
-    // fields from nested annoymous unions and structs in the containing struct.
-    private Stream<Cursor> structFields(Cursor cursor) {
-        return cursor.children()
-            .flatMap(c -> c.isAnonymousStruct()? structFields(c) : Stream.of(c))
-            .filter(c -> c.kind() == CursorKind.FieldDecl);
-    }
-
-    private void createEnum(Cursor cursor) {
+    @Override
+    public Void visitEnum(EnumTree enumTree, JType jt) {
         // define enum constants in global_cw
-        cursor.stream()
-                .filter(cx -> cx.kind() == CursorKind.EnumConstantDecl)
-                .forEachOrdered(cx -> addConstant(global_cw, cx));
+        enumTree.constants().forEach(constant -> addConstant(global_cw, constant));
 
-        if (cursor.isAnonymousEnum()) {
+        if (enumTree.isAnonymous()) {
             // We are done with anonymous enum
-            return;
+            return null;
         }
 
         // generate annotation class for named enum
-        createAnnotationCls(cursor);
+        createAnnotationCls(enumTree);
+        return null;
     }
 
-    private void createAnnotationCls(Cursor dcl) {
-        String nativeName = Utils.getIdentifier(dcl);
+    private void createAnnotationCls(Tree tree) {
+        String nativeName = tree.identifier();
         logger.fine(() -> "Create annotation for: " + nativeName);
 
         String intf = Utils.toClassName(nativeName);
@@ -302,8 +318,8 @@ final class AsmCodeFactory {
         String[] superAnno = { "java/lang/annotation/Annotation" };
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE | ACC_ANNOTATION,
                 name, null, "java/lang/Object", superAnno);
-        annotateNativeLocation(cw, dcl);
-        Type t = dcl.type().canonicalType();
+        annotateNativeLocation(cw, tree);
+        Type type = tree.type().canonicalType();
         AnnotationVisitor av = cw.visitAnnotation("Ljava/lang/annotation/Target;", true);
         av.visitEnum("value", "Ljava/lang/annotation/ElementType;", "TYPE_USE");
         av.visitEnd();
@@ -320,16 +336,16 @@ final class AsmCodeFactory {
         }
     }
 
-    private void createFunctionalInterface(Cursor dcl, JType.FnIf fnif) {
+    private void createFunctionalInterface(Tree tree, JType.FnIf fnif) {
         JType.Function fn = fnif.getFunction();
         String intf;
         String nativeName;
         String nDesc = fnif.getFunction().getNativeDescriptor();
-        if (dcl == null) {
+        if (tree == null) {
             intf = ((JType.InnerType) fnif.type).getName();
             nativeName = "anonymous function";
         } else {
-            nativeName = Utils.getIdentifier(dcl);
+            nativeName = tree.identifier();
             intf = Utils.toClassName(nativeName);
         }
         logger.fine(() -> "Create FunctionalInterface " + intf);
@@ -342,8 +358,8 @@ final class AsmCodeFactory {
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
                 name, "Ljava/lang/Object;Ljava/foreign/memory/Callback<L" + name + ";>;",
                 "java/lang/Object", new String[] {"java/foreign/memory/Callback"});
-        if (dcl != null) {
-            annotateNativeLocation(cw, dcl);
+        if (tree != null) {
+            annotateNativeLocation(cw, tree);
         }
         AnnotationVisitor av = cw.visitAnnotation(
                 "Ljava/lang/FunctionalInterface;", true);
@@ -370,22 +386,45 @@ final class AsmCodeFactory {
         }
     }
 
-    private void defineType(Cursor dcl, TypeAlias alias) {
-        if (alias.getAnnotationDescriptor() != null) {
-            createAnnotationCls(dcl);
-        } else {
-            JType real = alias.canonicalType();
-            if (real instanceof JType.FnIf) {
-                createFunctionalInterface(dcl, (JType.FnIf) real);
-            }
-            // Otherwise, type alias is a same named stuct
+    @Override
+    public Void visitTypedef(TypedefTree typedefTree, JType jt) {
+        Type t = typedefTree.type();
+        if (t.canonicalType().kind() == TypeKind.Enum &&
+            t.spelling().equals(t.canonicalType().getDeclarationCursor().spelling())) {
+            logger.fine("Skip redundant typedef " + t.spelling());
+            return null;
         }
+
+        // anonymous typedef struct {} xxx will not get TypeAlias
+        if (jt instanceof TypeAlias) {
+            TypeAlias alias = (TypeAlias) jt;
+            if (alias.getAnnotationDescriptor() != null) {
+                createAnnotationCls(typedefTree);
+            } else {
+                JType real = alias.canonicalType();
+                if (real instanceof JType.FnIf) {
+                    createFunctionalInterface(typedefTree, (JType.FnIf) real);
+                }
+                // Otherwise, type alias is a same named stuct
+            }
+        }
+        return null;
     }
 
-    private void addMethod(Cursor dcl, JType.Function fn) {
-        String uniqueName = dcl.spelling() + "." + fn.getDescriptor();
+    @Override
+    public Void visitTree(Tree tree, JType jt) {
+        logger.warning(() -> "Unsupported declaration tree:");
+        logger.warning(() -> tree.toString());
+        return null;
+    }
+
+    @Override
+    public Void visitFunction(FunctionTree funcTree, JType jt) {
+        assert (jt instanceof JType.Function);
+        JType.Function fn = (JType.Function)jt;
+        String uniqueName = funcTree.name() + "." + fn.getDescriptor();
         if (! global_methods.add(uniqueName)) {
-            return; // added already
+            return null; // added already
         }
         logger.fine(() -> "Add method: " + fn.getSignature());
         int flags = ACC_PUBLIC | ACC_ABSTRACT;
@@ -393,26 +432,26 @@ final class AsmCodeFactory {
             flags |= ACC_VARARGS;
         }
         MethodVisitor mv = global_cw.visitMethod(flags,
-                dcl.spelling(), fn.getDescriptor(), fn.getSignature(), null);
-        final int arg_cnt = dcl.numberOfArgs();
+                funcTree.name(), fn.getDescriptor(), fn.getSignature(), null);
+        final int arg_cnt = funcTree.numParams();
         for (int i = 0; i < arg_cnt; i++) {
-            String name = dcl.getArgument(i).spelling();
+            String name = funcTree.paramName(i);
             final int tmp = i;
             logger.finer(() -> "  arg " + tmp + ": " + name);
             mv.visitParameter(name, 0);
         }
         AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
-        SourceLocation src = dcl.getSourceLocation();
+        SourceLocation src = funcTree.location();
         SourceLocation.Location loc = src.getFileLocation();
         Path p = loc.path();
         av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
         av.visit("line", loc.line());
         av.visit("column", loc.column());
-        av.visit("USR", dcl.USR());
+        av.visit("USR", funcTree.USR());
         av.visitEnd();
-        Type t = dcl.type();
-        final String descStr = Utils.getFunction(t).toString();
-        addHeaderDecl(dcl.spelling(), descStr);
+        Type type = funcTree.type();
+        final String descStr = Utils.getFunction(type).toString();
+        addHeaderDecl(funcTree.name(), descStr);
 
         int idx = 0;
         for (JType arg: fn.args) {
@@ -441,9 +480,10 @@ final class AsmCodeFactory {
             }
         }
         mv.visitEnd();
+        return null;
     }
 
-    protected AsmCodeFactory addType(JType jt, Cursor cursor) {
+    protected AsmCodeFactory addType(JType jt, Tree tree) {
         JType2 jt2 = null;
         if (jt instanceof JType2) {
             jt2 = (JType2) jt;
@@ -454,102 +494,79 @@ final class AsmCodeFactory {
                 new Throwable().printStackTrace(ctx.err);
             }
         }
-        if (cursor == null) {
+        if (tree == null) {
             assert (jt2 != null);
             if (jt instanceof JType.FnIf) {
                 createFunctionalInterface(null, (JType.FnIf) jt);
             }
             return this;
         }
+        /*
+        // FIXME: what is this?
         boolean noDef = cursor.isInvalid();
         if (noDef) {
             cursor = jt2.getCursor();
         }
-
-        final Cursor c = cursor;
+        */
 
         try {
-            logger.fine(() -> "Process cursor " + c.spelling());
-            switch (cursor.kind()) {
-                case StructDecl:
-                case UnionDecl:
-                    createStruct(cursor);
-                    break;
-                case FunctionDecl:
-                    assert (jt instanceof JType.Function);
-                    addMethod(cursor, (JType.Function) jt);
-                    break;
-                case EnumDecl:
-                    createEnum(cursor);
-                    break;
-                case TypedefDecl:
-                    // anonymous typedef struct {} xxx will not get TypeAlias
-                    if (jt instanceof TypeAlias) {
-                        defineType(cursor, (TypeAlias) jt);
-                    }
-                    break;
-                case VarDecl:
-                    addVar(global_cw, cursor, null);
-                    break;
-                default:
-                    logger.warning(() -> "Unsupported declaration Cursor:");
-                    logger.warning(() -> Printer.Stringifier(p -> p.dumpCursor(c, true)));
-                    break;
-            }
+            logger.fine(() -> "Process tree " + tree.name());
+            tree.accept(this, jt);
         } catch (Exception ex) {
             handleException(ex);
-            logger.warning("Cursor causing above exception is: " + c.spelling());
-            logger.warning(() -> Printer.Stringifier(p -> p.dumpCursor(c, true)));
+            logger.warning("Tree causing above exception is: " + tree.name());
+            logger.warning(() -> tree.toString());
         }
         return this;
     }
 
-    AsmCodeFactory generateMacros() {
-        for (MacroParser.Macro macro : ctx.macros(owner)) {
-            if (macro.isConstantMacro()) {
-                logger.fine(() -> "Adding macro " + macro.name());
-                Object value = macro.value();
-                Class<?> macroType = (Class<?>) Util.unboxIfNeeded(value.getClass());
-
-                String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(macroType));
-                MethodVisitor mv = global_cw.visitMethod(ACC_PUBLIC, macro.name(), sig, sig, null);
-
-                Cursor cursor = macro.cursor();
-                AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
-                SourceLocation src = cursor.getSourceLocation();
-                SourceLocation.Location loc = src.getFileLocation();
-                Path p = loc.path();
-                av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
-                av.visit("line", loc.line());
-                av.visit("column", loc.column());
-                av.visit("USR", cursor.USR());
-                av.visitEnd();
-
-                mv.visitCode();
-
-                mv.visitLdcInsn(value);
-                if (macroType.equals(char.class)) {
-                    mv.visitInsn(I2C);
-                    mv.visitInsn(IRETURN);
-                } else if (macroType.equals(int.class)) {
-                    mv.visitInsn(IRETURN);
-                } else if (macroType.equals(float.class)) {
-                    mv.visitInsn(FRETURN);
-                } else if (macroType.equals(long.class)) {
-                    mv.visitInsn(LRETURN);
-                } else if (macroType.equals(double.class)) {
-                    mv.visitInsn(DRETURN);
-                } else if (macroType.equals(String.class)) {
-                    mv.visitInsn(ARETURN);
-                }
-                mv.visitMaxs(0, 0);
-                mv.visitEnd();
-            } else {
-                logger.fine(() -> "Skipping unrecognized object-like macro " + macro.name());
-            }
+    @Override
+    public Void visitMacro(MacroTree macroTree, JType jt) {
+        if (!macroTree.isConstant()) {
+            logger.fine(() -> "Skipping unrecognized object-like macro " + macroTree.name());
+            return null;
         }
+        String name = macroTree.name();
+        Object value = macroTree.value().get();
+        if (! global_macros.add(name)) {
+            return null; // added already
+        }
+        logger.fine(() -> "Adding macro " + name);
+        Class<?> macroType = (Class<?>) Util.unboxIfNeeded(value.getClass());
 
-        return this;
+        String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(macroType));
+        MethodVisitor mv = global_cw.visitMethod(ACC_PUBLIC, name, sig, sig, null);
+
+        AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
+        SourceLocation src = macroTree.location();
+        SourceLocation.Location loc = src.getFileLocation();
+        Path p = loc.path();
+        av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+        av.visit("line", loc.line());
+        av.visit("column", loc.column());
+        av.visit("USR", macroTree.USR());
+        av.visitEnd();
+
+        mv.visitCode();
+
+        mv.visitLdcInsn(value);
+        if (macroType.equals(char.class)) {
+            mv.visitInsn(I2C);
+            mv.visitInsn(IRETURN);
+        } else if (macroType.equals(int.class)) {
+            mv.visitInsn(IRETURN);
+        } else if (macroType.equals(float.class)) {
+            mv.visitInsn(FRETURN);
+        } else if (macroType.equals(long.class)) {
+            mv.visitInsn(LRETURN);
+        } else if (macroType.equals(double.class)) {
+            mv.visitInsn(DRETURN);
+        } else if (macroType.equals(String.class)) {
+            mv.visitInsn(ARETURN);
+        }
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+        return null;
     }
 
     protected synchronized void produce() {
@@ -580,16 +597,5 @@ final class AsmCodeFactory {
             });
         }
         return Collections.unmodifiableMap(rv);
-    }
-
-    public static void main(String[] args) throws IOException {
-        final Path file = Paths.get(args[1]);
-        final String pkg = args[0];
-        Context ctx = new Context();
-        ctx.usePackageForFolder(file, pkg);
-        ctx.usePackageForFolder(Paths.get("/usr/include"), "system");
-        ctx.addSource(file);
-        ctx.parse();
-        ctx.collectJarFile(Paths.get(args[2]), args, pkg);
     }
 }

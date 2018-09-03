@@ -84,7 +84,7 @@ public final class Main {
             }
         }
 
-        Validators.validPackageName(pkgName);
+        Utils.validPackageName(pkgName);
         ctx.usePackageForFolder(p, pkgName);
     }
 
@@ -218,7 +218,7 @@ public final class Main {
 
         targetPackage = options.has("t") ? (String) options.valueOf("t") : "";
         if (!targetPackage.isEmpty()) {
-            Validators.validPackageName(targetPackage);
+            Utils.validPackageName(targetPackage);
         }
 
         if (options.has("m")) {
