@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
+import com.sun.tools.jextract.tree.Printer;
 
 /**
  * A dictionary that find Java type for a given native type.

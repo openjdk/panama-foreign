@@ -21,35 +21,44 @@
  * questions.
  */
 
-package com.sun.tools.jextract;
+package com.sun.tools.jextract.parser;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Collection;
 import java.util.function.Predicate;
-import jdk.internal.clang.Cursor;
-import jdk.internal.clang.Index;
-import jdk.internal.clang.LibClang;
+import com.sun.tools.jextract.tree.Tree;
+import com.sun.tools.jextract.tree.HeaderTree;
+import com.sun.tools.jextract.tree.Printer;
 
 public class FindSymbol {
     public static void main(String[] args) {
         if (args.length == 0) {
-            System.err.println("libclang version: " + LibClang.version());
+            System.err.println("Expected a header file");
             return;
         }
 
-        Index index = LibClang.createIndex();
-        Cursor tuCursor = index.parse(args[0], diag -> { System.err.println(diag.toString()); }, false);
+        final List<Path> paths = List.of(Paths.get(args[0]));
+        final Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
+        final List<String> clangArgs = List.of("-I" + builtinInc);
+
+        final Parser parser = new Parser(true);
+        final List<HeaderTree> headers = parser.parse(paths, clangArgs, c->true);
         final Printer p = new Printer();
+        final HeaderTree tu = headers.get(0);
 
         if (args.length == 1) {
-            p.printTree(tuCursor, Integer.MAX_VALUE);
+            p.printRecursive(tu, Integer.MAX_VALUE);
             return;
         }
 
         final Collection<String> set = Arrays.asList(Arrays.copyOfRange(args, 1, args.length));
-        Predicate<Cursor> matchName = c -> c.isDeclaration() && set.contains(c.spelling());
-        tuCursor.stream()
+        final Predicate<Tree> matchName = tree -> tree.isDeclaration() && set.contains(tree.name());
+        tu.declarations().stream()
                 .filter(matchName)
-                .forEach(c -> p.printTree(c, Integer.MAX_VALUE));
+                .forEach(declTree -> p.printRecursive(declTree, Integer.MAX_VALUE));
     }
 }

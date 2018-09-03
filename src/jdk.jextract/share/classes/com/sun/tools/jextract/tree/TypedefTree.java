@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,39 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.clang;
+package com.sun.tools.jextract.tree;
 
-import java.nio.ByteBuffer;
-import java.util.Objects;
+import jdk.internal.clang.Cursor;
 
-public class SourceRange extends StructType {
-
-    SourceRange(ByteBuffer buf) {
-        super(buf);
-    }
-
-    protected SourceRange(ByteBuffer buf, boolean copy) {
-        super(buf, copy);
-    }
-
-    public native SourceLocation getBegin();
-    public native SourceLocation getEnd();
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(this instanceof SourceRange)) {
-            return false;
-        }
-        SourceRange sr = (SourceRange)other;
-        return Objects.equals(getBegin(), sr.getBegin()) &&
-            Objects.equals(getEnd(), sr.getEnd());
+public class TypedefTree extends Tree {
+    public TypedefTree(Cursor c) {
+        super(c);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(getBegin()) ^ Objects.hashCode(getEnd());
+    public <R,D> R accept(TreeVisitor<R,D> visitor, D data) {
+        return visitor.visitTypedef(this, data);
     }
 }

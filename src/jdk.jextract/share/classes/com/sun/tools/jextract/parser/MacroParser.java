@@ -23,7 +23,7 @@
  * questions.
  */
 
-package com.sun.tools.jextract;
+package com.sun.tools.jextract.parser;
 
 import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.ClassTree;
@@ -56,7 +56,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MacroParser {
+class MacroParser {
 
     private final Map<String, Macro> macros = new HashMap<>();
     private final JavacTaskPool pool = new JavacTaskPool(1);
@@ -65,12 +65,12 @@ public class MacroParser {
 
     static JavaFileManager fm = ToolProvider.getSystemJavaCompiler().getStandardFileManager(null, null, null);
 
-    public void parse(Cursor cursor, String... tokens) {
+    void parse(Cursor cursor, String... tokens) {
         Macro macro = new Macro(cursor, tokens);
         macros.put(cursor.spelling(), macro);
     }
 
-    public boolean isDefined(String macroName) {
+    boolean isDefined(String macroName) {
         return macros.containsKey(macroName);
     }
 
@@ -166,20 +166,20 @@ public class MacroParser {
             }
         }
 
-        public String name() {
+        String name() {
             return cursor.spelling();
         }
 
-        public Cursor cursor() {
+        Cursor cursor() {
             return cursor;
         }
 
-        public Object value() throws UnresolvableMacroException {
+        Object value() throws UnresolvableMacroException {
             eval();
             return ve.getConstantValue();
         }
 
-        public String type() throws UnresolvableMacroException {
+        String type() throws UnresolvableMacroException {
             eval();
             return ve.asType().toString();
         }

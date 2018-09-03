@@ -28,9 +28,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import jdk.internal.clang.Cursor;
-import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
+import com.sun.tools.jextract.tree.MacroTree;
+import com.sun.tools.jextract.tree.StructTree;
+import com.sun.tools.jextract.tree.Tree;
 
 /**
  * This class represent a native code header file
@@ -96,75 +98,25 @@ public final class HeaderFile {
         return serialNo.incrementAndGet();
     }
 
-    void processCursor(Cursor c, HeaderFile main, boolean isBuiltIn) {
-        if (c.isDeclaration()) {
-            logger.finest(() -> "Looking at cursor " + c.spelling() + " of kind " + c.kind());
-            if (c.kind() == CursorKind.UnexposedDecl ||
-                    c.kind() == CursorKind.Namespace) {
-                c.children()
-                        .filter(c1 -> c1.isDeclaration())
-                        .peek(c1 -> logger.finest(
-                                () -> "Cursor: " + c1.spelling() + "@" + c1.USR() + "?" + c1.isDeclaration()))
-                        .forEach(c1 -> processCursor(c1, main, isBuiltIn));
-                return;
-            }
-            Type t = c.type();
-            if (t.kind() == TypeKind.FunctionProto ||
-                t.kind() == TypeKind.FunctionNoProto) {
-                String name = c.spelling();
-
-                if (ctx.isSymbolExcluded(name)) {
-                    return;
-                }
-
-                if (!ctx.isSymbolFound(name)) {
-                    ctx.err.println(Main.format("warn.symbol.not.found", name));
-                }
-            }
-
-            // C structs and unions can have nested structs, unions and enums.
-            // And nested types are hoisted to the containing scope - i.e., nested
-            // structs/unions/enums are not scoped types. We recursively visit all
-            // nested types.
-            if (c.kind() == CursorKind.StructDecl ||
-                c.kind() == CursorKind.UnionDecl) {
-                c.children()
-                    .filter(c1 -> c1.isDeclaration() &&
-                         (c1.kind() == CursorKind.StructDecl ||
-                         c1.kind() == CursorKind.UnionDecl ||
-                         c1.kind() == CursorKind.EnumDecl))
-                    .peek(c1 -> logger.finest(
-                         () -> "Cursor: " + c1.spelling() + "@" + c1.USR() + "?" + c1.isDeclaration()))
-                    .forEach(c1 -> processCursor(c1, main, isBuiltIn));
-            }
-
-            // generate nothing for anonymous structs/unions. Fields are generated in the
-            // containing struct or union
-            if (c.isAnonymousStruct()) {
-                return;
-            }
-
-            JType jt = dict.computeIfAbsent(t, type -> {
-                logger.fine(() -> "PH: Compute type for " + type.spelling());
-                return define(type);
+    void processTree(Tree tree, HeaderFile main, boolean isBuiltIn) {
+        if (tree.isDeclaration()) {
+            JType jt = dict.computeIfAbsent(tree.type(), type -> {
+                 logger.fine(() -> "PH: Compute type for " + type.spelling());
+                 return define(type);
             });
             assert (jt instanceof JType2);
 
-            if (t.kind() == TypeKind.Typedef &&
-                    t.canonicalType().kind() == TypeKind.Enum &&
-                    t.spelling().equals(t.canonicalType().getDeclarationCursor().spelling()))
-            {
-                logger.fine("Skip redundant typedef " + t.spelling());
-                return;
+            if (tree instanceof StructTree) {
+                ((StructTree)tree).nestedTypes().forEach(nt -> processTree(nt, main, isBuiltIn));
             }
 
             // Only main file can define interface
             if (cf != null && this.main == main) {
-                cf.addType(jt, c);
+                cf.addType(jt, tree);
             }
-        } else if (c.isPreprocessing()) {
-            if (c.kind() == CursorKind.MacroDefinition && !isBuiltIn) {
-                ctx.defineMacro(c);
+        } else if (tree.isPreprocessing() && !isBuiltIn) {
+            if (cf != null) {
+                tree.accept(cf, null);
             }
         }
     }
@@ -210,7 +162,8 @@ public final class HeaderFile {
                 new JType.InnerType(Utils.toInternalName(pkgName, clsName), name),
                 t, defC.isInvalid() ? dcl : defC);
         if (gen_code) {
-            cf.addType(jt, defC);
+            // FIXME: what is this?
+            // cf.addType(jt, defC);
         }
         return jt;
     }

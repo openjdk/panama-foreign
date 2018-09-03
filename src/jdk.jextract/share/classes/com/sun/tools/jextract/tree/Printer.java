@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.tools.jextract;
+package com.sun.tools.jextract.tree;
 
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.SourceLocation;
@@ -32,7 +32,7 @@ import java.io.PrintStream;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
-public class Printer {
+public final class Printer {
     private int level = 0;
     private final PrintStream ps;
 
@@ -48,7 +48,7 @@ public class Printer {
         println(ps, str);
     }
 
-    public void println(PrintStream ps, String str) {
+    void println(PrintStream ps, String str) {
         int l = level;
         while (l > 0) {
             ps.append("  ");
@@ -57,7 +57,7 @@ public class Printer {
         ps.println(str);
     }
 
-    public void showCursorLocation(Cursor c) {
+    void showCursorLocation(Cursor c) {
         if (!c.isInvalid()) {
             SourceLocation src = c.getSourceLocation();
             if (null != src) {
@@ -117,7 +117,7 @@ public class Printer {
         }
     }
 
-    public void dumpCursor(Cursor c) {
+    void dumpCursor(Cursor c) {
         println("------------------------");
         println("Cursor: " + c.spelling());
         try {
@@ -145,7 +145,7 @@ public class Printer {
         }
     }
 
-    public void dumpCursor(Cursor c, final boolean indent) {
+    void dumpCursor(Cursor c, final boolean indent) {
         try {
             if (indent) {
                 level++;
@@ -158,7 +158,11 @@ public class Printer {
         }
     }
 
-    public void printTree(Cursor c, int depth) {
+    public void printRecursive(Tree tree, int depth) {
+        printRecursive(tree.cursor(), depth);
+    }
+
+    void printRecursive(Cursor c, int depth) {
         if (depth == 0) {
             return;
         }
@@ -168,13 +172,13 @@ public class Printer {
             println("+--->");
             level++;
             c.children()
-             .forEachOrdered(cx -> printTree(cx, depth - 1));
+             .forEachOrdered(cx -> printRecursive(cx, depth - 1));
         } finally {
             level--;
         }
     }
 
-    static String Stringifier(Consumer<Printer> print) {
+    public static String Stringifier(Consumer<Printer> print) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PrintStream ps = new PrintStream(bos);
         Printer p = new Printer(ps);

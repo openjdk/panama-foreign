@@ -51,6 +51,9 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
+import com.sun.tools.jextract.parser.Parser;
+import com.sun.tools.jextract.tree.Tree;
+import com.sun.tools.jextract.tree.HeaderTree;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
@@ -85,7 +88,7 @@ public final class Context {
     private Predicate<String> symChecker;
     private Predicate<String> symFilter;
 
-    private final MacroParser macroParser;
+    private final Parser parser;
 
     private final static String defaultPkg = "jextract.dump";
     final Logger logger = Logger.getLogger(getClass().getPackage().getName());
@@ -100,7 +103,7 @@ public final class Context {
         this.libraryPaths = new ArrayList<>();
         this.linkCheckPaths = new ArrayList<>();
         this.excludeSymbols = new ArrayList<>();
-        this.macroParser = new MacroParser();
+        this.parser = new Parser(out, err, Main.INCLUDE_MACROS);
         this.out = out;
         this.err = err;
     }
@@ -137,11 +140,52 @@ public final class Context {
         excludeSymbols.add(Pattern.compile(pattern));
     }
 
-    boolean isSymbolFound(String name) {
+    private void initSymChecker() {
+        if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
+            Library[] libs = LibrariesHelper.loadLibraries(MethodHandles.lookup(),
+                linkCheckPaths.toArray(new String[0]),
+                libraryNames.toArray(new String[0]));
+
+            // check if the given symbol is found in any of the libraries or not.
+            // If not found, warn the user for the missing symbol.
+            symChecker = name -> {
+                if (Main.DEBUG) {
+                    err.println("Searching symbol: " + name);
+                }
+                return (Arrays.stream(libs).filter(lib -> {
+                        try {
+                            lib.lookup(name);
+                            if (Main.DEBUG) {
+                                err.println("Found symbol: " + name);
+                            }
+                            return true;
+                        } catch (NoSuchMethodException nsme) {
+                            return false;
+                        }
+                    }).findFirst().isPresent());
+            };
+        } else {
+            symChecker = null;
+        }
+    }
+
+    private boolean isSymbolFound(String name) {
         return symChecker == null? true : symChecker.test(name);
     }
 
-    boolean isSymbolExcluded(String name) {
+    private void initSymFilter() {
+        if (!excludeSymbols.isEmpty()) {
+            Pattern[] pats = excludeSymbols.toArray(new Pattern[0]);
+            symFilter = name -> {
+                return Arrays.stream(pats).filter(pat -> pat.matcher(name).matches()).
+                    findFirst().isPresent();
+            };
+        } else {
+            symFilter = null;
+        }
+    }
+
+    private boolean isSymbolExcluded(String name) {
         return symFilter == null? false : symFilter.test(name);
     }
 
@@ -252,57 +296,24 @@ public final class Context {
         return new HeaderFile(this, header, e.pkg, e.entity, main);
     }
 
-    void defineMacro(Cursor cursor) {
-        String macroName = cursor.spelling();
-        if (cursor.isMacroFunctionLike()) {
-            logger.fine(() -> "Skipping function-like macro " + macroName);
-            return;
-        }
-
-
-        if (macroParser.isDefined(macroName)) {
-            logger.fine(() -> "Macro " + macroName + " already handled");
-            return;
-        }
-
-        logger.fine(() -> "Defining macro " + macroName);
-
-        TranslationUnit tu = cursor.getTranslationUnit();
-        SourceRange range = cursor.getExtent();
-        String[] tokens = tu.tokens(range);
-
-        macroParser.parse(cursor, tokens);
-    }
-
-    List<MacroParser.Macro> macros(HeaderFile header) {
-        return macroParser.macros().stream()
-                .filter(m -> m.getFileLocation().path().equals(header.path))
-                .collect(Collectors.toList());
-    }
-
-    void processCursor(Cursor c, HeaderFile main, Function<HeaderFile, AsmCodeFactory> fn) {
-        SourceLocation loc = c.getSourceLocation();
-        if (loc == null) {
-            logger.info(() -> "Ignore Cursor " + c.spelling() + "@" + c.USR() + " has no SourceLocation");
-            return;
-        }
-        logger.fine(() -> "Do cursor: " + c.spelling() + "@" + c.USR());
+    void processTree(Tree tree, HeaderFile main, Function<HeaderFile, AsmCodeFactory> fn) {
+        SourceLocation loc = tree.location();
 
         HeaderFile header;
         boolean isBuiltIn = false;
 
-        if (loc.isFromMainFile()) {
+        if (tree.isFromMain()) {
             header = main;
         } else {
             SourceLocation.Location src = loc.getFileLocation();
             if (src == null) {
-                logger.info(() -> "Cursor " + c.spelling() + "@" + c.USR() + " has no FileLocation");
+                logger.info(() -> "Tree " + tree.name() + "@" + tree.USR() + " has no FileLocation");
                 return;
             }
 
             Path p = src.path();
             if (p == null) {
-                logger.fine(() -> "Found built-in type: " + c.spelling());
+                logger.fine(() -> "Found built-in type: " + tree.name());
                 header = main;
                 isBuiltIn = true;
             } else {
@@ -323,90 +334,51 @@ public final class Context {
             }
         }
 
-        header.processCursor(c, main, isBuiltIn);
+        header.processTree(tree, main, isBuiltIn);
     }
 
     public void parse() {
         parse(header -> new AsmCodeFactory(this, header));
     }
 
-    public void parse(Function<HeaderFile, AsmCodeFactory> fn) {
-        if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
-            Library[] libs = LibrariesHelper.loadLibraries(MethodHandles.lookup(),
-                linkCheckPaths.toArray(new String[0]),
-                libraryNames.toArray(new String[0]));
+    private boolean filterCursor(Cursor c) {
+        if (c.isDeclaration()) {
+            Type type = c.type();
+            if (type.kind() == TypeKind.FunctionProto ||
+                type.kind() == TypeKind.FunctionNoProto) {
+                String name = c.spelling();
 
-            // check if the given symbol is found in any of the libraries or not.
-            // If not found, warn the user for the missing symbol.
-            symChecker = name -> {
-                if (Main.DEBUG) {
-                    err.println("Searching symbol: " + name);
+                if (isSymbolExcluded(name)) {
+                    return false;
                 }
-                return (Arrays.stream(libs).filter(lib -> {
-                        try {
-                            lib.lookup(name);
-                            if (Main.DEBUG) {
-                                err.println("Found symbol: " + name);
-                            }
-                            return true;
-                        } catch (NoSuchMethodException nsme) {
-                            return false;
-                        }
-                    }).findFirst().isPresent());
-            };
-        } else {
-            symChecker = null;
-        }
 
-        if (!excludeSymbols.isEmpty()) {
-            Pattern[] pats = excludeSymbols.toArray(new Pattern[0]);
-            symFilter = name -> {
-                return Arrays.stream(pats).filter(pat -> pat.matcher(name).matches()).
-                    findFirst().isPresent();
-            };
-        } else {
-            symFilter = null;
-        }
-
-        sources.forEach(path -> {
-            if (headerMap.containsKey(path)) {
-                logger.info(() -> path.toString() + " seen earlier via #include");
-                return;
+                if (!isSymbolFound(name)) {
+                    err.println(Main.format("warn.symbol.not.found", name));
+                }
             }
+        }
+        return true;
+    }
 
-            HeaderFile hf = headerMap.computeIfAbsent(path, p -> getHeaderFile(p, null));
+    public void parse(Function<HeaderFile, AsmCodeFactory> fn) {
+        initSymChecker();
+        initSymFilter();
+
+        List<HeaderTree> headers = parser.parse(sources, clangArgs, this::filterCursor);
+        processHeaders(headers, fn);
+    }
+
+    private void processHeaders(List<HeaderTree> headers, Function<HeaderFile, AsmCodeFactory> fn) {
+        headers.forEach(header -> {
+            HeaderFile hf = headerMap.computeIfAbsent(header.path(), p -> getHeaderFile(p, null));
             hf.useLibraries(libraryNames, libraryPaths);
             hf.useCodeFactory(fn.apply(hf));
-            logger.info(() -> {
-                StringBuilder sb = new StringBuilder(
-                        "Parsing header file " + path + " with following args:\n");
-                int i = 0;
-                for (String arg : clangArgs) {
-                    sb.append("arg[");
-                    sb.append(i++);
-                    sb.append("] = ");
-                    sb.append(arg);
-                    sb.append("\n");
-                }
-                return sb.toString();
-            });
+            logger.info(() -> "Processing header file " + header.path());
 
-            Index index = LibClang.createIndex();
-            Cursor tuCursor = index.parse(path.toString(),
-                    d -> {
-                        err.println(d);
-                        if (d.severity() >  Diagnostic.CXDiagnostic_Warning) {
-                            throw new RuntimeException(d.toString());
-                        }
-                    },
-                    Main.INCLUDE_MACROS,
-                    clangArgs.toArray(new String[0]));
-
-            tuCursor.children()
-                    .peek(c -> logger.finest(
-                        () -> "Cursor: " + c.spelling() + "@" + c.USR() + "?" + c.isDeclaration()))
-                    .filter(c -> c.isDeclaration() || c.isPreprocessing())
-                    .forEach(c -> processCursor(c, hf, fn));
+            header.declarations().stream()
+                    .peek(decl -> logger.finest(
+                        () -> "Cursor: " + decl.name() + "@" + decl.USR() + "?" + decl.isDeclaration()))
+                    .forEach(decl -> processTree(decl, hf, fn));
         });
     }
 

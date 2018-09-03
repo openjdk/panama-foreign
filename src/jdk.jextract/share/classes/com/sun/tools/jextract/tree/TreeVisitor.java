@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,39 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.clang;
+package com.sun.tools.jextract.tree;
 
-import java.nio.ByteBuffer;
-import java.util.Objects;
-
-public class SourceRange extends StructType {
-
-    SourceRange(ByteBuffer buf) {
-        super(buf);
-    }
-
-    protected SourceRange(ByteBuffer buf, boolean copy) {
-        super(buf, copy);
-    }
-
-    public native SourceLocation getBegin();
-    public native SourceLocation getEnd();
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(this instanceof SourceRange)) {
-            return false;
-        }
-        SourceRange sr = (SourceRange)other;
-        return Objects.equals(getBegin(), sr.getBegin()) &&
-            Objects.equals(getEnd(), sr.getEnd());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getBegin()) ^ Objects.hashCode(getEnd());
-    }
+public interface TreeVisitor<R,P> {
+    R visitEnum(EnumTree t, P p);
+    R visitField(FieldTree t, P p);
+    R visitFunction(FunctionTree t, P p);
+    R visitHeader(HeaderTree t, P p);
+    R visitMacro(MacroTree t, P p);
+    R visitStruct(StructTree t, P p);
+    R visitTree(Tree t, P p);
+    R visitTypedef(TypedefTree t, P p);
+    R visitVar(VarTree t, P p);
 }
