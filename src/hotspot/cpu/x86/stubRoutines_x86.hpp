@@ -157,6 +157,10 @@ class x86 {
     return _vector_64_bit_mask;
   }
 
+  static address vector_all_ones_mask() {
+    return _vector_double_sign_flip;
+  }
+
 #else // !LP64
 
  private:
