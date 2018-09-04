@@ -7041,6 +7041,25 @@ void Assembler::vpsrad(XMMRegister dst, XMMRegister src, XMMRegister shift, int 
   emit_int8((unsigned char)(0xC0 | encode));
 }
 
+void Assembler::evpsraq(XMMRegister dst, XMMRegister src, int shift, int vector_len) {
+  assert(UseAVX > 2, "requires AVX512");
+  InstructionAttr attributes(vector_len, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  attributes.set_is_evex_instruction();
+  int encode = vex_prefix_and_encode(xmm4->encoding(), dst->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F, &attributes);
+  emit_int8((unsigned char)0x72);
+  emit_int8((unsigned char)(0xC0 | encode));
+  emit_int8(shift & 0xFF);
+}
+
+void Assembler::evpsraq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
+  assert(UseAVX > 2, "requires AVX512");
+  InstructionAttr attributes(vector_len, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  attributes.set_is_evex_instruction();
+  int encode = vex_prefix_and_encode(dst->encoding(), src->encoding(), shift->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
+  emit_int8((unsigned char)0xE2);
+  emit_int8((unsigned char)(0xC0 | encode));
+}
+
 //Variable Shift packed integers logically left.
 void Assembler::vpsllvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
   assert(UseAVX > 1, "requires AVX2");
@@ -7084,9 +7103,10 @@ void Assembler::vpsravd(XMMRegister dst, XMMRegister src, XMMRegister shift, int
   emit_int8((unsigned char)(0xC0 | encode));
 }
 
-void Assembler::vpsravq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
-  assert(UseAVX > 1, "requires AVX2");
+void Assembler::evpsravq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len) {
+  assert(UseAVX > 2, "requires AVX512");
   InstructionAttr attributes(vector_len, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
+  attributes.set_is_evex_instruction();
   int encode = vex_prefix_and_encode(dst->encoding(), src->encoding(), shift->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
   emit_int8(0x46);
   emit_int8((unsigned char)(0xC0 | encode));

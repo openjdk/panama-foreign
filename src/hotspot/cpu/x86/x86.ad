@@ -1348,6 +1348,7 @@ int HandlerImpl::emit_deopt_handler(CodeBuffer& cbuf) {
   static address vector_int_to_short_mask() { return StubRoutines::x86::vector_int_to_short_mask(); }
   static address vector_32_bit_mask() { return StubRoutines::x86::vector_32_bit_mask(); }
   static address vector_64_bit_mask() { return StubRoutines::x86::vector_64_bit_mask(); }
+  static address vector_all_ones_mask() { return StubRoutines::x86::vector_all_ones_mask(); }
 #else
   static address float_signmask()  { return (address)float_signmask_pool; }
   static address float_signflip()  { return (address)float_signflip_pool; }
@@ -17425,7 +17426,245 @@ instruct vsra16I_reg_imm(vecZ dst, vecZ src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-// There are no longs vector arithmetic right shift instructions.
+// Long vector arithmetic right shift
+instruct vsra1L(vecD dst, vecD src, vecS shift, vecD tmp) %{
+  predicate(n->as_Vector()->length() == 1);
+  match(Set dst (RShiftVL src shift));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "movdqu  $dst,$src\n\t"
+            "psrlq   $dst,$shift\n\t"
+            "movdqu  $tmp,[0x8000000000000000]\n\t"
+            "psrlq   $tmp,$shift\n\t"
+            "pxor    $dst,$tmp\n\t"
+            "psubq   $dst,$tmp\t! arithmetic right shift packed1L" %}
+  ins_encode %{
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ psrlq($dst$$XMMRegister, $shift$$XMMRegister);
+    __ movdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ psrlq($tmp$$XMMRegister, $shift$$XMMRegister);
+    __ pxor($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ psubq($dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra1L_imm(vecD dst, vecD src, immI8 shift, vecD tmp) %{
+  predicate(n->as_Vector()->length() == 1);
+  match(Set dst (RShiftVL src shift));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "movdqu  $dst,$src\n\t"
+            "psrlq   $dst,$shift\n\t"
+            "movdqu  $tmp,[0x8000000000000000]\n\t"
+            "psrlq   $tmp,$shift\n\t"
+            "pxor    $dst,$tmp\n\t"
+            "psubq   $dst,$tmp\t! arithmetic right shift packed1L" %}
+  ins_encode %{
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ psrlq($dst$$XMMRegister, (int)$shift$$constant);
+    __ movdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ psrlq($tmp$$XMMRegister, (int)$shift$$constant);
+    __ pxor($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ psubq($dst$$XMMRegister, $tmp$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra1L_reg(vecD dst, vecD src, vecS shift, vecD tmp) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 1);
+  match(Set dst (RShiftVL src shift));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpsrlq   $dst,$src,$shift\n\t"
+            "vmovdqu  $tmp,[0x8000000000000000]\n\t"
+            "vpsrlq   $tmp,$tmp,$shift\n\t"
+            "vpxor    $dst,$dst,$tmp\n\t"
+            "vpsubq   $dst,$dst,$tmp\t! arithmetic right shift packed1L" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpsrlq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ vpsrlq($tmp$$XMMRegister, $tmp$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra1L_reg_imm(vecD dst, vecD src, immI8 shift, vecD tmp) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 1);
+  match(Set dst (RShiftVL src shift));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpsrlq   $dst,$src,$shift\n\t"
+            "vmovdqu  $tmp,[0x8000000000000000]\n\t"
+            "vpsrlq   $tmp,$tmp,$shift\n\t"
+            "vpxor    $dst,$dst,$tmp\n\t"
+            "vpsubq   $dst,$dst,$tmp\t! arithmetic right shift packed1L" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpsrlq($dst$$XMMRegister, $src$$XMMRegister, (int)$shift$$constant, vector_len);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ vpsrlq($tmp$$XMMRegister, $tmp$$XMMRegister, (int)$shift$$constant, vector_len);
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra1L_reg_evex(vecD dst, vecD src, vecS shift) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 1);
+  match(Set dst (RShiftVL src shift));
+  format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed1L" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ evpsraq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra2L_reg_imm(vecX dst, vecX src, immI8 shift, vecX tmp) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
+  match(Set dst (RShiftVL src shift));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpsrlq   $dst,$src,$shift\n\t"
+            "vmovdqu  $tmp,[0x8000000000000000]\n\t"
+            "vpsrlq   $tmp,$tmp,$shift\n\t"
+            "vpxor    $dst,$dst,$tmp\n\t"
+            "vpsubq   $dst,$dst,$tmp\t! arithmetic right shift packed2L" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpsrlq($dst$$XMMRegister, $src$$XMMRegister, (int)$shift$$constant, vector_len);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ vpsrlq($tmp$$XMMRegister, $tmp$$XMMRegister, (int)$shift$$constant, vector_len);
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra2L_reg(vecX dst, vecX src, vecS shift, vecX tmp) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
+  match(Set dst (RShiftVL src shift));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpsrlq   $dst,$src,$shift\n\t"
+            "vmovdqu  $tmp,[0x8000000000000000]\n\t"
+            "vpsrlq   $tmp,$tmp,$shift\n\t"
+            "vpxor    $dst,$dst,$tmp\n\t"
+            "vpsubq   $dst,$dst,$tmp\t! arithmetic right shift packed2L" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ vpsrlq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ vpsrlq($tmp$$XMMRegister, $tmp$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra2L_reg_evex_imm(vecX dst, vecX src, immI8 shift) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 2);
+  match(Set dst (RShiftVL src shift));
+  format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed2L" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ evpsraq($dst$$XMMRegister, $src$$XMMRegister, (int)$shift$$constant, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra2L_reg_evex(vecX dst, vecX src, vecS shift) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 2);
+  match(Set dst (RShiftVL src shift));
+  format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed2L" %}
+  ins_encode %{
+    int vector_len = 0;
+    __ evpsraq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra4L_reg_imm(vecY dst, vecY src, immI8 shift, vecY tmp) %{
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4);
+  match(Set dst (RShiftVL src shift));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpsrlq   $dst,$src,$shift\n\t"
+            "vmovdqu  $tmp,[0x8000000000000000]\n\t"
+            "vpsrlq   $tmp,$tmp,$shift\n\t"
+            "vpxor    $dst,$dst,$tmp\n\t"
+            "vpsubq   $dst,$dst,$tmp\t! arithmetic right shift packed4L" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpsrlq($dst$$XMMRegister, $src$$XMMRegister, (int)$shift$$constant, vector_len);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ vpsrlq($tmp$$XMMRegister, $tmp$$XMMRegister, (int)$shift$$constant, vector_len);
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra4L_reg(vecY dst, vecY src, vecS shift, vecY tmp) %{
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4);
+  match(Set dst (RShiftVL src shift));
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpsrlq   $dst,$src,$shift\n\t"
+            "vmovdqu  $tmp,[0x8000000000000000]\n\t"
+            "vpsrlq   $tmp,$tmp,$shift\n\t"
+            "vpxor    $dst,$dst,$tmp\n\t"
+            "vpsubq   $dst,$dst,$tmp\t! arithmetic right shift packed4L" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpsrlq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ vpsrlq($tmp$$XMMRegister, $tmp$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra4L_reg_evex_imm(vecY dst, vecY src, immI8 shift) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 4);
+  match(Set dst (RShiftVL src shift));
+  format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed2L" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ evpsraq($dst$$XMMRegister, $src$$XMMRegister, (int)$shift$$constant, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra4L_reg_evex(vecY dst, vecY src, vecS shift) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 4);
+  match(Set dst (RShiftVL src shift));
+  format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed4L" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ evpsraq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra8L_reg_evex_imm(vecZ dst, vecZ src, immI8 shift) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8);
+  match(Set dst (RShiftVL src shift));
+  format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed2L" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpsraq($dst$$XMMRegister, $src$$XMMRegister, (int)$shift$$constant, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct vsra8L_reg_evex(vecZ dst, vecZ src, vecS shift) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8);
+  match(Set dst (RShiftVL src shift));
+  format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed8L" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpsraq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
 
 // ------------------- Variable Bit Shift Left Logical -----------------------------
 //Integer Variable left shift
@@ -17766,46 +18005,84 @@ instruct vsrav16I_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
 %}
 
 //Long Variable right shift arithmetic
-instruct vsrav1L_reg(vecD dst, vecD src, vecD shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 1 && n->in(2)->Opcode() != Op_RShiftCntV);
+instruct vsrav1L_reg(vecD dst, vecD src, vecD shift, vecD tmp) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->in(2)->Opcode() != Op_RShiftCntV);
   match(Set dst (RShiftVL src shift));
-  format %{ "vpsravq  $dst,$src,$shift\t! variable bit shift right shift packed1L" %}
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpsrlvq   $dst,$src,$shift\n\t"
+            "vmovdqu   $tmp,[0x8000000000000000]\n\t"
+            "vpsrlvq   $tmp,$tmp,$shift\n\t"
+            "vpxor     $dst,$dst,$tmp\n\t"
+            "vpsubq    $dst,$dst,$tmp\t! variable arithmetic right shift packed1L" %}
+   ins_encode %{
+     int vector_len = 0;
+     __ vpsrlvq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+     __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+     __ vpsrlvq($tmp$$XMMRegister, $tmp$$XMMRegister, $shift$$XMMRegister, vector_len);
+     __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+     __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+   %}
+   ins_pipe( pipe_slow );
+ %}
+
+instruct vsrav1L_reg_evex(vecD dst, vecD src, vecD shift) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 1 && n->in(2)->Opcode() != Op_RShiftCntV);
+  match(Set dst (RShiftVL src shift));
+  format %{ "evpsravq  $dst,$src,$shift\t! variable arithmetic right shift packed1L" %}
   ins_encode %{
     int vector_len = 0;
-    __ vpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ evpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vsrav2L_reg(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
+instruct vsrav2L_reg(vecX dst, vecX src, vecX shift, vecX tmp) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
   match(Set dst (RShiftVL src shift));
-  format %{ "vpsravq  $dst,$src,$shift\t! variable bit shift right shift packed2L" %}
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpsrlvq   $dst,$src,$shift\n\t"
+            "vmovdqu   $tmp,[0x8000000000000000]\n\t"
+            "vpsrlvq   $tmp,$tmp,$shift\n\t"
+            "vpxor     $dst,$dst,$tmp\n\t"
+            "vpsubq    $dst,$dst,$tmp\t! variable arithmetic right shift packed2L" %}
   ins_encode %{
     int vector_len = 0;
-    __ vpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vpsrlvq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ vpsrlvq($tmp$$XMMRegister, $tmp$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct vsrav2L_reg_evex(vecX dst, vecX src, vecX shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 2 && n->in(2)->Opcode() != Op_RShiftCntV);
   match(Set dst (RShiftVL src shift));
-  format %{ "vpsravq  $dst,$src,$shift\t! variable bit shift right shift packed2L" %}
+  format %{ "evpsravq  $dst,$src,$shift\t! variable arithmetic right shift packed2L" %}
   ins_encode %{
     int vector_len = 0;
-    __ vpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ evpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vsrav4L_reg(vecY dst, vecY src, vecY shift) %{
+instruct vsrav4L_reg(vecY dst, vecY src, vecY shift, vecY tmp) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_RShiftCntV);
   match(Set dst (RShiftVL src shift));
-  format %{ "vpsravq  $dst,$src,$shift\t! variable bit shift right shift packed4L" %}
+  effect(TEMP dst, TEMP tmp);
+  format %{ "vpsrlvq   $dst,$src,$shift\n\t"
+            "vmovdqu   $tmp,[0x8000000000000000]\n\t"
+            "vpsrlvq   $tmp,$tmp,$shift\n\t"
+            "vpxor     $dst,$dst,$tmp\n\t"
+            "vpsubq    $dst,$dst,$tmp\t! variable arithmetic right shift packed4L" %}
   ins_encode %{
     int vector_len = 1;
-    __ vpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vpsrlvq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ vpsrlvq($tmp$$XMMRegister, $tmp$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -17813,21 +18090,21 @@ instruct vsrav4L_reg(vecY dst, vecY src, vecY shift) %{
 instruct vsrav4L_reg_evex(vecY dst, vecY src, vecY shift) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 4 && n->in(2)->Opcode() != Op_RShiftCntV);
   match(Set dst (RShiftVL src shift));
-  format %{ "vpsravq  $dst,$src,$shift\t! variable bit shift right shift packed4L" %}
+  format %{ "evpsravq  $dst,$src,$shift\t! variable bit shift right shift packed4L" %}
   ins_encode %{
     int vector_len = 1;
-    __ vpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ evpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct vsrav8L_reg(vecZ dst, vecZ src, vecZ shift) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_RShiftCntV);
+instruct vsrav8L_reg_evex(vecZ dst, vecZ src, vecZ shift) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->in(2)->Opcode() != Op_RShiftCntV);
   match(Set dst (RShiftVL src shift));
-  format %{ "vpsravq  $dst,$src,$shift\t! variable bit shift right shift packed8L" %}
+  format %{ "evpsravq  $dst,$src,$shift\t! variable bit shift right shift packed8L" %}
   ins_encode %{
     int vector_len = 2;
-    __ vpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
+    __ evpsravq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
