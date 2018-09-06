@@ -956,7 +956,6 @@ private:
   void adcq(Register dst, Address src);
   void adcq(Register dst, Register src);
 
-  void addb(Register dst, Register src);
   void addb(Address dst, int imm8);
   void addw(Register dst, Register src);
   void addw(Address dst, int imm16);
@@ -1006,7 +1005,6 @@ private:
   void vaesdec(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vaesdeclast(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
-  void andb(Register dst, Register src);
   void andw(Register dst, Register src);
 
   void andl(Address  dst, int32_t imm32);
@@ -1660,7 +1658,6 @@ private:
   void notq(Register dst);
 #endif
 
-  void orb(Register dst, Register src);
   void orw(Register dst, Register src);
 
   void orl(Address dst, int32_t imm32);
@@ -2038,7 +2035,6 @@ private:
   void xorl(Register dst, Register src);
 
   void xorb(Register dst, Address src);
-  void xorb(Register dst, Register src);
   void xorw(Register dst, Register src);
 
   void xorq(Register dst, Address src);

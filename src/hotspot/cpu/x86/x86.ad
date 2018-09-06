@@ -5759,26 +5759,26 @@ instruct rsadd8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
             "paddb   $tmp,$src2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp2,$tmp, 0x0\n\t"
-            "addb    $dst,$tmp2\n\t"
+            "addl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "addb    $dst,$tmp2\n\t"
+            "addl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x2\n\t"
-            "addb    $dst,$tmp2\n\t"
+            "addl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x3\n\t"
-            "addb    $dst,$tmp2\n\t"
+            "addl    $dst,$tmp2\n\t"
             "movsbl  $dst,$dst\t! add reduction8B" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
     __ paddb($tmp$$XMMRegister, $src2$$XMMRegister);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x0);
-    __ addb($dst$$Register, $tmp2$$Register);
+    __ addl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x1);
-    __ addb($dst$$Register, $tmp2$$Register);
+    __ addl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x2);
-    __ addb($dst$$Register, $tmp2$$Register);
+    __ addl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x3);
-    __ addb($dst$$Register, $tmp2$$Register);
+    __ addl($dst$$Register, $tmp2$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -5794,13 +5794,13 @@ instruct rsadd16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF
             "paddb   $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! add reduction16B" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
@@ -5809,13 +5809,13 @@ instruct rsadd16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF
     __ paddb($tmp$$XMMRegister, $tmp2$$XMMRegister);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x0);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -5833,13 +5833,13 @@ instruct rvadd32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
             "vpaddb  $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! add reduction32B" %}
   ins_encode %{
     int vector_len = 0;
@@ -5851,13 +5851,13 @@ instruct rvadd32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
     __ vpaddb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x0);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -5877,13 +5877,13 @@ instruct rvadd64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
             "vpaddb  $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "movdl   $tmp3,$tmp\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "addb    $dst,$tmp3\n\t"
+            "addl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! add reduction64B" %}
   ins_encode %{
     int vector_len = 0;
@@ -5897,13 +5897,13 @@ instruct rvadd64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
     __ vpaddb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ movzbl($dst$$Register, $src1$$Register);
     __ movdl($tmp3$$Register, $tmp$$XMMRegister);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ addb($dst$$Register, $tmp3$$Register);
+    __ addl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -8937,9 +8937,8 @@ instruct rvmax32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, rReg
             "cmpl  $tmp3,$dst\n\t"
             "cmovl  $dst,$tmp3\t! min reduction4S" %}
   ins_encode %{
-    int vector_len = 1;
     __ vextracti128_high($tmp$$XMMRegister, $src2$$XMMRegister);
-    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, vector_len);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $src2$$XMMRegister, 0);
     __ pshufd($tmp4$$XMMRegister, $tmp$$XMMRegister, 0xE);
     __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $tmp$$XMMRegister, 0);
     __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
@@ -8969,7 +8968,7 @@ instruct rvmax32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, rReg
 instruct rvmax64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rRegI tmp2, rRegI tmp3, regF tmp4) %{
   predicate(UseAVX > 2 && n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (MaxReductionV src1 src2));
-  effect(TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP tmp3, TEMP tmp4);
   format %{ "vextracti64x4_high  $tmp4,$src2\n\t"
             "vpmaxsb  $tmp4,$tmp4,$src2\n\t"
             "vextracti128_high  $tmp,$tmp4\n\t"
@@ -8999,9 +8998,9 @@ instruct rvmax64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, rReg
             "cmovl  $dst,$tmp3\t! max reduction32B" %}
   ins_encode %{
     __ vextracti64x4_high($tmp4$$XMMRegister, $src2$$XMMRegister);
-    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, 2);
+    __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $src2$$XMMRegister, 1);
     __ vextracti128_high($tmp$$XMMRegister, $tmp4$$XMMRegister);
-    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 1);
+    __ vpmaxsb($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp4$$XMMRegister, 0);
     __ pshufd($tmp4$$XMMRegister, $tmp$$XMMRegister, 0xE);
     __ vpmaxsb($tmp4$$XMMRegister, $tmp4$$XMMRegister, $tmp$$XMMRegister, 0);
     __ pshufd($tmp$$XMMRegister, $tmp4$$XMMRegister,0x1);
@@ -9865,26 +9864,26 @@ instruct rsand8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
             "pand    $tmp,$src2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp2,$tmp, 0x0\n\t"
-            "andb    $dst,$tmp2\n\t"
+            "andl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "andb    $dst,$tmp2\n\t"
+            "andl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x2\n\t"
-            "andb    $dst,$tmp2\n\t"
+            "andl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x3\n\t"
-            "andb    $dst,$tmp2\n\t"
+            "andl    $dst,$tmp2\n\t"
             "movsbl  $dst,$dst\t! and reduction8B" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
     __ pand($tmp$$XMMRegister, $src2$$XMMRegister);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x0);
-    __ andb($dst$$Register, $tmp2$$Register);
+    __ andl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x1);
-    __ andb($dst$$Register, $tmp2$$Register);
+    __ andl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x2);
-    __ andb($dst$$Register, $tmp2$$Register);
+    __ andl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x3);
-    __ andb($dst$$Register, $tmp2$$Register);
+    __ andl($dst$$Register, $tmp2$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -9900,13 +9899,13 @@ instruct rsand16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF
             "pand    $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! and reduction16B" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
@@ -9915,13 +9914,13 @@ instruct rsand16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF
     __ pand($tmp$$XMMRegister, $tmp2$$XMMRegister);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x0);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -9939,13 +9938,13 @@ instruct rvand32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
             "vpand   $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! and reduction32B" %}
   ins_encode %{
     int vector_len = 0;
@@ -9957,13 +9956,13 @@ instruct rvand32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
     __ vpand($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x0);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -9983,13 +9982,13 @@ instruct rvand64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
             "vpand   $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "movdl   $tmp3,$tmp\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "andb    $dst,$tmp3\n\t"
+            "andl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! and reduction64B" %}
   ins_encode %{
     int vector_len = 0;
@@ -10003,13 +10002,13 @@ instruct rvand64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
     __ vpand($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ movzbl($dst$$Register, $src1$$Register);
     __ movdl($tmp3$$Register, $tmp$$XMMRegister);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ andb($dst$$Register, $tmp3$$Register);
+    __ andl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10323,26 +10322,26 @@ instruct rsor8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI 
             "por    $tmp,$src2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp2,$tmp, 0x0\n\t"
-            "orb    $dst,$tmp2\n\t"
+            "orl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "orb    $dst,$tmp2\n\t"
+            "orl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x2\n\t"
-            "orb    $dst,$tmp2\n\t"
+            "orl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x3\n\t"
-            "orb    $dst,$tmp2\n\t"
+            "orl    $dst,$tmp2\n\t"
             "movsbl  $dst,$dst\t! or reduction8B" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
     __ por($tmp$$XMMRegister, $src2$$XMMRegister);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x0);
-    __ orb($dst$$Register, $tmp2$$Register);
+    __ orl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x1);
-    __ orb($dst$$Register, $tmp2$$Register);
+    __ orl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x2);
-    __ orb($dst$$Register, $tmp2$$Register);
+    __ orl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x3);
-    __ orb($dst$$Register, $tmp2$$Register);
+    __ orl($dst$$Register, $tmp2$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10358,13 +10357,13 @@ instruct rsor16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
             "por    $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! or reduction16B" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
@@ -10373,13 +10372,13 @@ instruct rsor16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF 
     __ por($tmp$$XMMRegister, $tmp2$$XMMRegister);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x0);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10397,13 +10396,13 @@ instruct rvor32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF 
             "vpor   $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! or reduction32B" %}
   ins_encode %{
     int vector_len = 0;
@@ -10415,13 +10414,13 @@ instruct rvor32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF 
     __ vpor($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x0);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10441,13 +10440,13 @@ instruct rvor64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF 
             "vpor   $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "movdl   $tmp3,$tmp\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "orb    $dst,$tmp3\n\t"
+            "orl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! or reduction64B" %}
   ins_encode %{
     int vector_len = 0;
@@ -10461,13 +10460,13 @@ instruct rvor64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF 
     __ vpor($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ movzbl($dst$$Register, $src1$$Register);
     __ movdl($tmp3$$Register, $tmp$$XMMRegister);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ orb($dst$$Register, $tmp3$$Register);
+    __ orl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10784,26 +10783,26 @@ instruct rsxor8B_reduction_reg(rRegI dst, rRegI src1, vecD src2, regF tmp, rRegI
             "pxor    $tmp,$src2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp2,$tmp, 0x0\n\t"
-            "xorb    $dst,$tmp2\n\t"
+            "xorl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x1\n\t"
-            "xorb    $dst,$tmp2\n\t"
+            "xorl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x2\n\t"
-            "xorb    $dst,$tmp2\n\t"
+            "xorl    $dst,$tmp2\n\t"
             "pextrb  $tmp2,$tmp, 0x3\n\t"
-            "xorb    $dst,$tmp2\n\t"
+            "xorl    $dst,$tmp2\n\t"
             "movsbl  $dst,$dst\t! xor reduction8B" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0x1);
     __ pxor($tmp$$XMMRegister, $src2$$XMMRegister);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x0);
-    __ xorb($dst$$Register, $tmp2$$Register);
+    __ xorl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x1);
-    __ xorb($dst$$Register, $tmp2$$Register);
+    __ xorl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x2);
-    __ xorb($dst$$Register, $tmp2$$Register);
+    __ xorl($dst$$Register, $tmp2$$Register);
     __ pextrb($tmp2$$Register, $tmp$$XMMRegister, 0x3);
-    __ xorb($dst$$Register, $tmp2$$Register);
+    __ xorl($dst$$Register, $tmp2$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10819,13 +10818,13 @@ instruct rsxor16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF
             "pxor    $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! xor reduction16B" %}
   ins_encode %{
     __ pshufd($tmp$$XMMRegister, $src2$$XMMRegister, 0xE);
@@ -10834,13 +10833,13 @@ instruct rsxor16B_reduction_reg(rRegI dst, rRegI src1, vecX src2, regF tmp, regF
     __ pxor($tmp$$XMMRegister, $tmp2$$XMMRegister);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x0);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10858,13 +10857,13 @@ instruct rvxor32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
             "vpxor   $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "pextrb  $tmp3,$tmp, 0x0\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x1\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x2\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "pextrb  $tmp3,$tmp, 0x3\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! xor reduction32B" %}
   ins_encode %{
     int vector_len = 0;
@@ -10876,13 +10875,13 @@ instruct rvxor32B_reduction_reg(rRegI dst, rRegI src1, vecY src2, regF tmp, regF
     __ vpxor($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ movzbl($dst$$Register, $src1$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x0);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x1);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x2);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ pextrb($tmp3$$Register, $tmp$$XMMRegister, 0x3);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -10902,13 +10901,13 @@ instruct rvxor64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
             "vpxor   $tmp,$tmp,$tmp2\n\t"
             "movzbl  $dst,$src1\n\t"
             "movdl   $tmp3,$tmp\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "shrl    $tmp3,0x8\n\t"
-            "xorb    $dst,$tmp3\n\t"
+            "xorl    $dst,$tmp3\n\t"
             "movsbl  $dst,$dst\t! xor reduction64B" %}
   ins_encode %{
     int vector_len = 0;
@@ -10922,13 +10921,13 @@ instruct rvxor64B_reduction_reg(rRegI dst, rRegI src1, vecZ src2, regF tmp, regF
     __ vpxor($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, vector_len);
     __ movzbl($dst$$Register, $src1$$Register);
     __ movdl($tmp3$$Register, $tmp$$XMMRegister);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ shrl($tmp3$$Register, 8);
-    __ xorb($dst$$Register, $tmp3$$Register);
+    __ xorl($dst$$Register, $tmp3$$Register);
     __ movsbl($dst$$Register, $dst$$Register);
   %}
   ins_pipe( pipe_slow );
@@ -20644,31 +20643,41 @@ instruct vcmpge16B(vecX dst, vecX src1, vecX src2, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct extract8d(regD dst, vecZ src, immI idx) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->basic_type() == T_DOUBLE);
+instruct extract8d(regD dst, vecZ src, vecZ tmp, immI idx) %{
+  predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractD src idx));
+  effect(TEMP tmp);
   ins_encode %{
     int vector_len = 2;
     int midx = 0x7 & $idx$$constant;
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else if (midx >= 1 && midx <= 7) {
+    } else if (midx == 1) {
       __ vpshufpd($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
-    }
+    } else if (midx > 1 && midx <= 7) {
+      int extr_idx1 = midx / 2;
+      int extr_idx2 = midx % 2;
+      __ vextractf32x4($tmp$$XMMRegister, $src$$XMMRegister, extr_idx1);
+      __ vpshufpd($dst$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, extr_idx2, vector_len);
+  }
   %}
   ins_pipe( pipe_slow );
 %}
 
-instruct extract4d(regD dst, vecY src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->basic_type() == T_DOUBLE);
+instruct extract4d(regD dst, vecY src, vecY tmp, immI idx) %{
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 4);
   match(Set dst (ExtractD src idx));
+  effect(TEMP tmp);
   ins_encode %{
     int vector_len = 1;
     int midx = 0x3 & $idx$$constant;
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else if (midx >= 1 && midx <= 3) {
+    } else if (midx == 1) {
       __ vpshufpd($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
+    } else if (midx > 1 && midx <= 3) {
+      __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
+      __ vpshufpd($dst$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, midx - 2, vector_len);
     }
        
   %}
@@ -20676,7 +20685,7 @@ instruct extract4d(regD dst, vecY src, immI idx) %{
 %}
 
 instruct extract2d(regD dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->basic_type() == T_DOUBLE);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 2);
   match(Set dst (ExtractD src idx));
   ins_encode %{
     int vector_len = 0;
@@ -20691,7 +20700,7 @@ instruct extract2d(regD dst, vecX src, immI idx) %{
 %}
 
 instruct extract1d(regD dst, vecD src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->basic_type() == T_DOUBLE);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 1);
   match(Set dst (ExtractD src idx));
   ins_encode %{
     int vector_len = 0;
@@ -20704,7 +20713,7 @@ instruct extract1d(regD dst, vecD src, immI idx) %{
 %}
 
 instruct extract16f(regF dst, vecZ src, vecZ tmp, immI idx) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->basic_type() == T_FLOAT);
+  predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 16);
   match(Set dst (ExtractF src idx));
   effect(TEMP tmp);
   ins_encode %{
@@ -20715,9 +20724,9 @@ instruct extract16f(regF dst, vecZ src, vecZ tmp, immI idx) %{
     } else if (midx >= 1 && midx <= 3) {
       __ vpshufps($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
     } else {
-        int extr_idx1 = midx / 4;
-        int extr_idx2 = midx % 4;
-        __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, extr_idx1);
+      int extr_idx1 = midx / 4;
+      int extr_idx2 = midx % 4;
+      __ vextractf32x4($tmp$$XMMRegister, $src$$XMMRegister, extr_idx1);
       __ vpshufps($dst$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, extr_idx2, vector_len);
   }
   %}
@@ -20725,7 +20734,7 @@ instruct extract16f(regF dst, vecZ src, vecZ tmp, immI idx) %{
 %}
 
 instruct extract8f(regF dst, vecY src, vecY tmp, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->basic_type() == T_FLOAT);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractF src idx));
   effect(TEMP tmp);
   ins_encode %{
@@ -20744,7 +20753,7 @@ instruct extract8f(regF dst, vecY src, vecY tmp, immI idx) %{
 %}
 
 instruct extract4f(regF dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->basic_type() == T_FLOAT);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 4);
   match(Set dst (ExtractF src idx));
   ins_encode %{
     int vector_len=0;
@@ -20759,7 +20768,7 @@ instruct extract4f(regF dst, vecX src, immI idx) %{
 %}
 
 instruct extract2f(regF dst, vecD src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->basic_type() == T_FLOAT);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 2);
   match(Set dst (ExtractF src idx));
   ins_encode %{
     int vector_len=0;
@@ -20774,7 +20783,7 @@ instruct extract2f(regF dst, vecD src, immI idx) %{
 %}
  
 instruct extract8l(rRegL dst, vecZ src, vecZ tmp, immI idx) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->basic_type() == T_LONG);
+  predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractL src idx));
   effect(TEMP tmp);
   ins_encode %{
@@ -20793,7 +20802,7 @@ instruct extract8l(rRegL dst, vecZ src, vecZ tmp, immI idx) %{
 %}
 
 instruct extract4l(rRegL dst, vecY src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->basic_type() == T_LONG);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 4);
   match(Set dst (ExtractL src idx));
   ins_encode %{
     int midx = 0x3 & $idx$$constant;
@@ -20807,7 +20816,7 @@ instruct extract4l(rRegL dst, vecY src, immI idx) %{
 %}
 
 instruct extract2l(rRegL dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->basic_type() == T_LONG);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 2);
   match(Set dst (ExtractL src idx));
   ins_encode %{
     int midx = 0x1 & $idx$$constant;
@@ -20821,7 +20830,7 @@ instruct extract2l(rRegL dst, vecX src, immI idx) %{
 %}
 
 instruct extract1l(rRegL dst, vecD src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 1 && n->bottom_type()->basic_type() == T_LONG);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 1);
   match(Set dst (ExtractL src idx));
   ins_encode %{
     int midx = 0x1 & $idx$$constant;
@@ -20833,7 +20842,7 @@ instruct extract1l(rRegL dst, vecD src, immI idx) %{
 %}
 
 instruct extract16i(rRegI dst, vecZ src, vecZ tmp, immI idx) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->basic_type() == T_INT);
+  predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 16);
   match(Set dst (ExtractI src idx));
   effect(TEMP tmp);
     ins_encode %{
@@ -20856,7 +20865,7 @@ instruct extract16i(rRegI dst, vecZ src, vecZ tmp, immI idx) %{
 %}
  
 instruct extract8i(rRegI dst, vecY src, vecY tmp, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->basic_type() == T_INT);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractI src idx));
   effect(TEMP tmp);
   ins_encode %{
@@ -20874,7 +20883,7 @@ instruct extract8i(rRegI dst, vecY src, vecY tmp, immI idx) %{
 %}
 
 instruct extract4i(rRegI dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->basic_type() == T_INT);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 4);
   match(Set dst (ExtractI src idx));
   ins_encode %{
     int midx = 0x3 & $idx$$constant;
@@ -20888,7 +20897,7 @@ instruct extract4i(rRegI dst, vecX src, immI idx) %{
 %}
 
 instruct extract2i(rRegI dst, vecD src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && n->bottom_type()->basic_type() == T_INT);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 2);
   match(Set dst (ExtractI src idx));
   ins_encode %{
     int midx = 0x1 & $idx$$constant;
@@ -20902,7 +20911,7 @@ instruct extract2i(rRegI dst, vecD src, immI idx) %{
 %}
  
 instruct extract32s(rRegI dst, vecZ src, vecZ tmp, immI idx) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->bottom_type()->basic_type() == T_SHORT);
+  predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 32);
   match(Set dst (ExtractS src idx));
   effect(TEMP tmp);
     ins_encode %{
@@ -20927,7 +20936,7 @@ instruct extract32s(rRegI dst, vecZ src, vecZ tmp, immI idx) %{
 %}
 
 instruct extract16s(rRegI dst, vecY src, vecY tmp, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 16 && n->bottom_type()->basic_type() == T_SHORT);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 16);
   match(Set dst (ExtractS src idx));
   effect(TEMP tmp);
   ins_encode %{
@@ -20949,7 +20958,7 @@ instruct extract16s(rRegI dst, vecY src, vecY tmp, immI idx) %{
 %}
  
 instruct extract8s(rRegI dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->basic_type() == T_SHORT);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractS src idx));
   ins_encode %{
     int midx = 0x7 & $idx$$constant;
@@ -20965,7 +20974,7 @@ instruct extract8s(rRegI dst, vecX src, immI idx) %{
 %}
 
 instruct extract4s(rRegI dst, vecD src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && n->bottom_type()->basic_type() == T_SHORT);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 4);
   match(Set dst (ExtractS src idx));
   ins_encode %{
     int midx = 0x3 & $idx$$constant;
@@ -20981,7 +20990,7 @@ instruct extract4s(rRegI dst, vecD src, immI idx) %{
 %}
  
 instruct extract64b(rRegI dst, vecZ src, vecZ tmp, immI idx) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 64 && n->bottom_type()->basic_type() == T_BYTE);
+  predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 64);
   match(Set dst (ExtractB src idx));
   effect(TEMP tmp);
     ins_encode %{
@@ -21006,7 +21015,7 @@ instruct extract64b(rRegI dst, vecZ src, vecZ tmp, immI idx) %{
 %}
 
 instruct extract32b(rRegI dst, vecY src, vecY tmp, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 32 && n->bottom_type()->basic_type() == T_BYTE);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 32);
   match(Set dst (ExtractB src idx));
   effect(TEMP tmp);
     ins_encode %{
@@ -21031,7 +21040,7 @@ instruct extract32b(rRegI dst, vecY src, vecY tmp, immI idx) %{
 %}
 
 instruct extract16b(rRegI dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 16 && n->bottom_type()->basic_type() == T_BYTE);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 16);
   match(Set dst (ExtractB src idx));
   ins_encode %{
     int midx = 0xF & $idx$$constant;
@@ -21047,7 +21056,7 @@ instruct extract16b(rRegI dst, vecX src, immI idx) %{
 %}
 
 instruct extract8b(rRegI dst, vecD src, immI idx) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && n->bottom_type()->basic_type() == T_BYTE);
+  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractB src idx));
   ins_encode %{
     int midx = 0x7 & $idx$$constant;
