@@ -59,17 +59,12 @@ public class Cursor extends StructType {
     public native boolean isPreprocessing();
     public native boolean isInvalid();
     public native boolean isDefinition();
+
+    // Determine whether the given cursor represents an anonymous record declaration.
+    // "Anonymous" here is not just about name (spelling) being empty. This is an
+    // anonymous struct or union embedded in another struct or union.
     public native boolean isAnonymousStruct();
     public native boolean isMacroFunctionLike();
-
-    public boolean isAnonymousEnum() {
-        // libclang::clang_Cursor_isAnonymous only applies to struct, not enum
-        return (type().kind() == TypeKind.Enum && spelling().isEmpty());
-    }
-
-    public boolean isAnonymous() {
-        return isAnonymousStruct() || isAnonymousEnum();
-    }
 
     public native String spelling();
     public native String USR();
@@ -77,8 +72,6 @@ public class Cursor extends StructType {
     public native int kind1();
 
     public native int visitChildren(Visitor visitor, Object data);
-
-    public native boolean equalCursor(Cursor other);
 
     public native Type type();
     public native Type getEnumDeclIntegerType();
@@ -112,10 +105,6 @@ public class Cursor extends StructType {
         return CursorKind.valueOf(v);
     }
 
-    public boolean equals(Cursor other) {
-        return getData().equals(other.getData());
-    }
-
     public Stream<Cursor> children() {
         ArrayList<Cursor> ar = new ArrayList<>();
         visitChildren((c, p, d) -> {
@@ -127,7 +116,25 @@ public class Cursor extends StructType {
         return ar.stream();
     }
 
-    public Stream<Cursor> stream() {
+    public Stream<Cursor> allChildren() {
         return children().flatMap(c -> Stream.concat(Stream.of(c), c.children()));
+    }
+
+    public native boolean equalCursor(Cursor other);
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Cursor)) {
+            return false;
+        }
+        return equalCursor((Cursor)other);
+    }
+
+    @Override
+    public int hashCode() {
+        return spelling().hashCode();
     }
 }

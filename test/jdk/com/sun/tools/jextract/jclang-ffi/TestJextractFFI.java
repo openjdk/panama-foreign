@@ -110,6 +110,7 @@ public class TestJextractFFI {
                 "-I", clang_header_path.toString(),
                 "-t", "clang",
                 "-d", CLANG_FFI_PATH,
+                "-J-Djextract.debug=true",
                 "-J-Dlibclang.debug=true",
                 "-J-Djava.library.path=" + clang_lib_path.toString(),
                 "-J--module-path", "-J" + CLANG_JAR,

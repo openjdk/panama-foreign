@@ -27,6 +27,7 @@ import java.foreign.Scope;
 import java.foreign.memory.Pointer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 import static clang.CXString.CXString;
 import static clang.Index.CXSourceLocation;
@@ -71,6 +72,23 @@ public class SourceLocation {
         return LibClang.lib.clang_Location_isFromMainFile(loc) != 0;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof SourceLocation)) {
+            return false;
+        }
+        SourceLocation sloc = (SourceLocation)other;
+        return Objects.equals(getFileLocation(), sloc.getFileLocation());
+    }
+
+    @Override
+    public int hashCode() {
+        return getFileLocation().hashCode();
+    }
+
     public final static class Location {
         private final Path path;
         private final int line;
@@ -103,6 +121,30 @@ public class SourceLocation {
 
         public int offset() {
             return offset;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof Location)) {
+                return false;
+            }
+            Location loc = (Location)other;
+            return Objects.equals(path, loc.path) &&
+                line == loc.line && column == loc.column &&
+                offset == loc.offset;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(path) ^ line ^ column ^ offset;
+        }
+
+        @Override
+        public String toString() {
+            return Objects.toString(path) + ":" + line + ":" + column + ":" + offset;
         }
     }
 }

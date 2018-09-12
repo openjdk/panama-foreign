@@ -42,8 +42,4 @@ public class EnumTree extends Tree {
     public <R,D> R accept(TreeVisitor<R,D> visitor, D data) {
         return visitor.visitEnum(this, data);
     }
-
-    public boolean isAnonymous() {
-        return cursor().isAnonymousEnum();
-    }
 }

@@ -408,13 +408,6 @@ JNIEXPORT jint JNICALL Java_jdk_internal_clang_Cursor_visitChildren
     return clang_visitChildren(*ptr, visitorFunc, &ctx);
 }
 
-JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Cursor_equalCursor
-  (JNIEnv *env, jobject cursor, jobject other) {
-    CXCursor *ptr = (CXCursor*) J2P(env, cursor);
-    CXCursor *ptrOther = (CXCursor*) J2P(env, other);
-    return clang_equalCursors(*ptr, *ptrOther);
-}
-
 JNIEXPORT jobject JNICALL Java_jdk_internal_clang_Cursor_type
   (JNIEnv *env, jobject cursor) {
     CXCursor *ptr = (CXCursor*) J2P(env, cursor);
@@ -517,6 +510,13 @@ JNIEXPORT jstring JNICALL Java_jdk_internal_clang_Cursor_getMangling
     return CX2JString(env, mangled);
 }
 
+JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Cursor_equalCursor
+  (JNIEnv *env, jobject cursor, jobject other) {
+    CXCursor *ptr = (CXCursor*) J2P(env, cursor);
+    CXCursor *ptrOther = (CXCursor*) J2P(env, other);
+    return clang_equalCursors(*ptr, *ptrOther);
+}
+
 /*************************************
  * Type <-> CXType related functions
  *************************************/
@@ -611,6 +611,13 @@ JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Type_getOffsetOf
     long long offset = clang_Type_getOffsetOf(*ptr, name);
     env->ReleaseStringUTFChars(field_name, name);
     return offset;
+}
+
+JNIEXPORT jboolean JNICALL Java_jdk_internal_clang_Type_equalType
+  (JNIEnv *env, jobject type, jobject other) {
+    CXType *ptr = (CXType*) J2P(env, type);
+    CXType *ptrOther = (CXType*) J2P(env, other);
+    return clang_equalTypes(*ptr, *ptrOther);
 }
 
 JNIEXPORT jobject JNICALL Java_jdk_internal_clang_Type_getDeclarationCursor
