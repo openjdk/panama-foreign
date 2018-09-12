@@ -997,12 +997,19 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
     }
 
     @Override
-    public Double64Vector rearrange(Shuffle<Double, Shapes.S64Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Double64Vector rearrange(Shuffle<Double, Shapes.S64Bit> o1) {
+    Objects.requireNonNull(o1);
+    Double64Shuffle s =  (Double64Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Double64Vector.class, Double64Shuffle.class, double.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             double[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override

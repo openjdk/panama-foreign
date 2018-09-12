@@ -915,12 +915,19 @@ final class Int512Vector extends IntVector<Shapes.S512Bit> {
     }
 
     @Override
-    public Int512Vector rearrange(Shuffle<Integer, Shapes.S512Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Int512Vector rearrange(Shuffle<Integer, Shapes.S512Bit> o1) {
+    Objects.requireNonNull(o1);
+    Int512Shuffle s =  (Int512Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Int512Vector.class, Int512Shuffle.class, int.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             int[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override

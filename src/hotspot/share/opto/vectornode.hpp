@@ -1266,6 +1266,19 @@ public:
   Node* vec_mask() const { return in(3); }
 };
 
+class VectorRearrangeNode : public VectorNode {
+public:
+  VectorRearrangeNode(Node* vec1, Node* shuffle)
+    : VectorNode(vec1, shuffle, vec1->bottom_type()->is_vect()) {
+    // assert(mask->is_VectorMask(), "VectorBlendNode requires that third argument be a mask");
+  }
+
+  virtual int Opcode() const;
+  Node* vec1() const { return in(1); }
+  Node* vec_shuffle() const { return in(2); }
+};
+
+
 class VectorLoadMaskNode : public VectorNode {
  public:
   VectorLoadMaskNode(Node* in, const TypeVect* vt)
@@ -1275,6 +1288,18 @@ class VectorLoadMaskNode : public VectorNode {
   }
 
   int GetOutMaskSize() const { return type2aelembytes(vect_type()->element_basic_type()); }
+  virtual int Opcode() const;
+};
+
+class VectorLoadShuffleNode : public VectorNode {
+public:
+  VectorLoadShuffleNode(Node* in, const TypeVect* vt)
+    : VectorNode(in, vt) {
+    assert(in->is_LoadVector(), "expected load vector");
+    assert(in->as_LoadVector()->vect_type()->element_basic_type() == T_BYTE, "must be BYTE");
+  }
+
+  int GetOutShuffleSize() const { return type2aelembytes(vect_type()->element_basic_type()); }
   virtual int Opcode() const;
 };
 

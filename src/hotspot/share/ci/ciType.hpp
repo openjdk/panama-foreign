@@ -74,6 +74,7 @@ public:
   bool is_two_word() const                  { return size() == 2; }
 
   bool is_vectormask();
+  bool is_vectorshuffle();
   bool is_vectorapi_vector();
   int vectorapi_vector_size();
   BasicType vectorapi_vector_bt();

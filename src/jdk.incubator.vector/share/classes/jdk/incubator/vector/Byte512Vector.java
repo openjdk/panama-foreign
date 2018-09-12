@@ -844,12 +844,19 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
     }
 
     @Override
-    public Byte512Vector rearrange(Shuffle<Byte, Shapes.S512Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Byte512Vector rearrange(Shuffle<Byte, Shapes.S512Bit> o1) {
+    Objects.requireNonNull(o1);
+    Byte512Shuffle s =  (Byte512Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Byte512Vector.class, Byte512Shuffle.class, byte.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             byte[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override

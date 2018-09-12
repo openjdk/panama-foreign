@@ -915,12 +915,19 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
     }
 
     @Override
-    public Long64Vector rearrange(Shuffle<Long, Shapes.S64Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Long64Vector rearrange(Shuffle<Long, Shapes.S64Bit> o1) {
+    Objects.requireNonNull(o1);
+    Long64Shuffle s =  (Long64Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Long64Vector.class, Long64Shuffle.class, long.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             long[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override

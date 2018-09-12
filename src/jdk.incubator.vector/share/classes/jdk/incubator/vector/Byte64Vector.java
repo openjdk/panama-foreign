@@ -844,12 +844,19 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     }
 
     @Override
-    public Byte64Vector rearrange(Shuffle<Byte, Shapes.S64Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Byte64Vector rearrange(Shuffle<Byte, Shapes.S64Bit> o1) {
+    Objects.requireNonNull(o1);
+    Byte64Shuffle s =  (Byte64Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Byte64Vector.class, Byte64Shuffle.class, byte.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             byte[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override

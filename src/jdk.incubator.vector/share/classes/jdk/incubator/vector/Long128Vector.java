@@ -915,12 +915,19 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
     @Override
-    public Long128Vector rearrange(Shuffle<Long, Shapes.S128Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Long128Vector rearrange(Shuffle<Long, Shapes.S128Bit> o1) {
+    Objects.requireNonNull(o1);
+    Long128Shuffle s =  (Long128Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Long128Vector.class, Long128Shuffle.class, long.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             long[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override

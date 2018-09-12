@@ -997,12 +997,19 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
     }
 
     @Override
-    public Float128Vector rearrange(Shuffle<Float, Shapes.S128Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Float128Vector rearrange(Shuffle<Float, Shapes.S128Bit> o1) {
+    Objects.requireNonNull(o1);
+    Float128Shuffle s =  (Float128Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Float128Vector.class, Float128Shuffle.class, float.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             float[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override

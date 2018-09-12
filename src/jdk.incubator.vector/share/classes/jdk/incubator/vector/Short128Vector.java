@@ -845,12 +845,19 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
     }
 
     @Override
-    public Short128Vector rearrange(Shuffle<Short, Shapes.S128Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Short128Vector rearrange(Shuffle<Short, Shapes.S128Bit> o1) {
+    Objects.requireNonNull(o1);
+    Short128Shuffle s =  (Short128Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Short128Vector.class, Short128Shuffle.class, short.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             short[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override
