@@ -6116,6 +6116,12 @@ address generate_cipherBlockChaining_decryptVectorAESCrypt() {
                                                                         0xFFFFFFFF, 0, 0, 0);
     StubRoutines::x86::_vector_64_bit_mask = generate_vector_custom_i32("vector_64_bit_mask", Assembler::AVX_512bit,
                                                                         0xFFFFFFFF, 0xFFFFFFFF, 0, 0);
+    StubRoutines::x86::_vector_int_shuffle_mask = generate_vector_fp_mask("vector_int_shuffle_mask", 0x0302010003020100);
+    StubRoutines::x86::_vector_int_size_mask = generate_vector_fp_mask("vector_int_size_mask", 0x0000000400000004);
+    StubRoutines::x86::_vector_short_shuffle_mask = generate_vector_fp_mask("vector_short_shuffle_mask", 0x0100010001000100);
+    StubRoutines::x86::_vector_short_size_mask = generate_vector_fp_mask("vector_short_size_mask", 0x0002000200020002);
+    StubRoutines::x86::_vector_long_shuffle_mask = generate_vector_fp_mask("vector_long_shuffle_mask", 0x0000000100000000);
+    StubRoutines::x86::_vector_long_size_mask = generate_vector_fp_mask("vector_long_size_mask", 0x0000000200000002);
 
     // support for verify_oop (must happen after universe_init)
     StubRoutines::_verify_oop_subroutine_entry = generate_verify_oop();

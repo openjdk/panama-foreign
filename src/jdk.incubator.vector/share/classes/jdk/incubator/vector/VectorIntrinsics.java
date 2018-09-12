@@ -262,6 +262,25 @@ import java.util.function.*;
 
     /* ============================================================================ */
 
+    interface VectorRearrangeOp<V extends Vector<E,S>,
+                            Sh extends Vector.Shuffle<E,S>,
+                            S extends Vector.Shape, E> {
+        V apply(V v1, Sh shuffle);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static
+    <V extends Vector<E,S>,
+     Sh extends Vector.Shuffle<E,S>,
+     S extends Vector.Shape, E>
+    V rearrangeOp(Class<V> vectorClass, Class<Sh> shuffleClass, Class<?> elementType, int vlen,
+            V v1, Sh sh,
+            VectorRearrangeOp<V,Sh,S,E> defaultImpl) {
+        return defaultImpl.apply(v1, sh);
+    }
+
+    /* ============================================================================ */
+
     interface VectorBlendOp<V extends Vector<E,S>,
                             M extends Vector.Mask<E,S>,
                             S extends Vector.Shape, E> {

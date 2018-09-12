@@ -915,12 +915,19 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
     }
 
     @Override
-    public Long512Vector rearrange(Shuffle<Long, Shapes.S512Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Long512Vector rearrange(Shuffle<Long, Shapes.S512Bit> o1) {
+    Objects.requireNonNull(o1);
+    Long512Shuffle s =  (Long512Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Long512Vector.class, Long512Shuffle.class, long.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             long[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override

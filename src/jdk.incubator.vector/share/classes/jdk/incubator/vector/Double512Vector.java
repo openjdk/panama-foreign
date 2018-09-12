@@ -997,12 +997,19 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
     }
 
     @Override
-    public Double512Vector rearrange(Shuffle<Double, Shapes.S512Bit> s) {
-        return uOp((i, a) -> {
+    @ForceInline
+    public Double512Vector rearrange(Shuffle<Double, Shapes.S512Bit> o1) {
+    Objects.requireNonNull(o1);
+    Double512Shuffle s =  (Double512Shuffle)o1;
+
+        return VectorIntrinsics.rearrangeOp(
+            Double512Vector.class, Double512Shuffle.class, double.class, LENGTH,
+            this, s,
+            (v1, s_) -> v1.uOp((i, a) -> {
             double[] vec = this.getElements();
-            int ei = s.getElement(i);
+            int ei = s_.getElement(i);
             return vec[ei];
-        });
+        }));
     }
 
     @Override

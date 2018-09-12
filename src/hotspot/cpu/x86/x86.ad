@@ -1349,6 +1349,12 @@ int HandlerImpl::emit_deopt_handler(CodeBuffer& cbuf) {
   static address vector_32_bit_mask() { return StubRoutines::x86::vector_32_bit_mask(); }
   static address vector_64_bit_mask() { return StubRoutines::x86::vector_64_bit_mask(); }
   static address vector_all_ones_mask() { return StubRoutines::x86::vector_all_ones_mask(); }
+  static address vector_int_shufflemask() { return StubRoutines::x86::vector_int_shuffle_mask(); }
+  static address vector_int_sizemask() { return StubRoutines::x86::vector_int_size_mask(); }
+  static address vector_short_shufflemask() { return StubRoutines::x86::vector_short_shuffle_mask(); }
+  static address vector_short_sizemask() { return StubRoutines::x86::vector_short_size_mask(); }
+  static address vector_long_shufflemask() { return StubRoutines::x86::vector_long_shuffle_mask(); }
+  static address vector_long_sizemask() { return StubRoutines::x86::vector_long_size_mask(); }
 #else
   static address float_signmask()  { return (address)float_signmask_pool; }
   static address float_signflip()  { return (address)float_signflip_pool; }
@@ -1527,6 +1533,13 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           if (UseSSE <= 3) { ret_value = false; }
           else if (vlen == 1 || vlen == 2) { ret_value = false; } // Implementation limitation
           else if (size_in_bits >= 256 && UseAVX < 2) { ret_value = false; } // Implementation limitation
+          break;
+        case Op_VectorLoadShuffle:
+        case Op_VectorRearrange:
+          if (vlen == 1 || vlen == 2) { ret_value = false; } // Implementation limitation due to how shuffle is loaded
+          else if (size_in_bits >= 256 && UseAVX < 2) { ret_value = false; } // Implementation limitation
+          else if (bt == T_BYTE && size_in_bits >= 256 && !VM_Version::supports_avx512vbmi())  { ret_value = false; } // Implementation limitation
+          else if (bt == T_SHORT && size_in_bits >= 256 && !VM_Version::supports_avx512vlbw())  { ret_value = false; } // Implementation limitation
           break;
         case Op_VectorStoreMask:
           if (UseAVX < 0) { ret_value = false; } // Implementation limitation
@@ -23535,6 +23548,416 @@ instruct storemask8l(vecD dst, vecZ src, rRegL scratch) %{
   ins_pipe( pipe_slow );
 %}
 
+//-------------------------------- LOAD_SHUFFLE ----------------------------------
+
+instruct loadshuffle8b(vecD dst, vecD src) %{
+  predicate(UseSSE > 1  && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadShuffle src));
+  format %{ "movdqu $dst, $src\t! load shuffle (load 8B for 8BRearrange)" %}
+  ins_encode %{
+     __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle16b(vecX dst, vecX src) %{
+  predicate(UseSSE > 1 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadShuffle src));
+  format %{ "movdqu $dst, $src\t! load shuffle (load 16B for 16BRearrange)" %}
+  ins_encode %{
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle32b(vecY dst, vecY src) %{
+  predicate(UseAVX > 0 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadShuffle src));
+  format %{ "vmovdqu $dst, $src\t! load shuffle (load 32B for 32BRearrange)" %}
+  ins_encode %{
+    __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle64b(vecZ dst, vecZ src) %{
+  predicate(UseAVX > 2  && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorLoadShuffle src));
+  format %{ "vmovdqu $dst, $src\t! load shuffle (load 64B for 64BRearrange)" %}
+  ins_encode %{
+    __ evmovdqul($dst$$XMMRegister, $src$$XMMRegister, 2);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle4s(vecD dst, vecS src, vecD tmp, vecD tmp2, rRegI scratch) %{
+  predicate(UseSSE > 3 && n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorLoadShuffle src));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
+   format %{ "pmovsxbw    $tmp, $src \n\t"
+             "movdqu      $tmp2,0x0002000200020002\n\t"
+             "pmullw      $tmp,$tmp2\n\t"
+             "movdqu      $tmp2,$tmp\n\t"
+             "psllw       $tmp2,0x8\n\t"
+             "paddb       $tmp2,$tmp\n\t"
+             "movdqu      $tmp, 0x0100010001000100 \n\t"
+             "paddb       $tmp2,$tmp\n\t"
+             "movdqu      $dst, $tmp2\t! load shuffle (load 4B for 4SRearrange)" %}
+  ins_encode %{
+    __ pmovsxbw($tmp$$XMMRegister, $src$$XMMRegister);
+    __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_short_sizemask()), $scratch$$Register);
+    __ pmullw($tmp$$XMMRegister, $tmp2$$XMMRegister);
+    __ movdqu($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ psllw($tmp2$$XMMRegister, 0x8);
+    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdqu($tmp$$XMMRegister, ExternalAddress(vector_short_shufflemask()), $scratch$$Register);
+    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle8s(vecX dst, vecD src, vecX tmp, vecX tmp2, rRegI scratch) %{
+  predicate(UseSSE > 3 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorLoadShuffle src));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
+  format %{  "pmovsxbw    $tmp, $src \n\t"
+             "movdqu      $tmp2,0x0002000200020002\n\t"
+             "pmullw      $tmp,$tmp2\n\t"
+             "movdqu      $tmp2,$tmp\n\t"
+             "psllw       $tmp2,0x8\n\t"
+             "paddb       $tmp2,$tmp\n\t"
+             "movdqu      $tmp, 0x0100010001000100 \n\t"
+             "paddb       $tmp2,$tmp\n\t"
+             "movdqu      $dst, $tmp2\t! load shuffle (load 8B for 8SRearrange)" %}
+  ins_encode %{
+    __ pmovsxbw($tmp$$XMMRegister, $src$$XMMRegister);
+    __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_short_sizemask()), $scratch$$Register);
+    __ pmullw($tmp$$XMMRegister, $tmp2$$XMMRegister);
+    __ movdqu($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ psllw($tmp2$$XMMRegister, 0x8);
+    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdqu($tmp$$XMMRegister, ExternalAddress(vector_short_shufflemask()), $scratch$$Register);
+    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle16s(vecY dst, vecX src) %{
+  predicate(UseAVX >= 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorLoadShuffle src));
+  format %{ "vpmovsxbw   $dst,$src\t! load shuffle (load 16B for 16SRearrange)" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle32s(vecZ dst, vecY src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorLoadShuffle src));
+  format %{ "vpmovsxbw   $dst,$src\t! load shuffle (load 32B for 32SRearrange)" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpmovsxbw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle4i(vecX dst, vecS src, vecX tmp, vecX tmp2, rRegI scratch) %{
+  predicate(UseSSE > 3 && n->as_Vector()->length() == 4 &&
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorLoadShuffle src));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
+  format %{ "vpmovsxbd   $tmp, $src \n\t"
+            "movdqu      $tmp2, 0x0000000400000004 \n\t"
+            "pmulld      $tmp2, $tmp \n\t"
+            "movdqu      $tmp,$tmp2\n\t"
+            "pslld       $tmp2,0x8\n\t"
+            "paddb       $tmp2,$tmp\n\t"
+            "pslld       $tmp2,0x8\n\t"
+            "paddb       $tmp2,$tmp\n\t"
+            "pslld       $tmp2,0x8\n\t"
+            "paddb       $tmp2,$tmp\n\t"
+            "movdqu      $tmp, 0x0302010003020100 \n\t"
+            "paddb       $tmp2,$tmp\n\t"
+            "movdqu      $dst, $tmp2\t! load shuffle (load 4B for 4IRearrange)" %}
+  ins_encode %{
+    __ vpmovsxbd($tmp$$XMMRegister, $src$$XMMRegister, 0);
+    __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_int_sizemask()), $scratch$$Register);
+    __ pmulld($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdqu($tmp$$XMMRegister, $tmp2$$XMMRegister);
+    __ pslld($tmp2$$XMMRegister, 0x8);
+    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ pslld($tmp2$$XMMRegister, 0x8);
+    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ pslld($tmp2$$XMMRegister, 0x8);
+    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdqu($tmp$$XMMRegister, ExternalAddress(vector_int_shufflemask()), $scratch$$Register);
+    __ paddb($tmp2$$XMMRegister, $tmp$$XMMRegister);
+    __ movdqu($dst$$XMMRegister, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle8i(vecY dst, vecD src) %{
+  predicate(UseAVX >= 1 && n->as_Vector()->length() == 8 &&
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorLoadShuffle src));
+  format %{ "vpmovsxbd $dst, $src\t! load shuffle (load 8B for 8IRearrange)" %}
+  ins_encode %{
+  int vector_len = 1;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle16i(vecZ dst, vecX src) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorLoadShuffle src));
+  format %{ "vpmovsxbd $dst, $src\t! load shuffle (load 16B for 16IRearrange)" %}
+  ins_encode %{
+  int vector_len = 2;
+    __ vpmovsxbd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle4l(vecY dst, vecS src, vecY tmp, vecY tmp2, rRegI scratch) %{
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 &&
+            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
+  match(Set dst (VectorLoadShuffle src));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
+   format %{ "vpmovsxbd   $tmp2, $src \n\t"
+             "movdqu     $tmp, 0x0000000200000002 \n\t"
+             "pmulld     $tmp, $tmp2 \n\t"
+             "vpmovsxdq  $tmp2,$tmp\n\t"
+             "vpsllq     $tmp2,0x20\n\t"
+             "vpaddd     $tmp2,$tmp\n\t"
+             "vmovdqu    $tmp, 0x0000000100000000 \n\t"
+             "vpaddd     $tmp2,$tmp\n\t"
+             "vmovdqu    $dst, $tmp2\t! load shuffle (load 4L for 4LRearrange)" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpmovsxbd($tmp2$$XMMRegister, $src$$XMMRegister, 0);
+    __ movdqu($tmp$$XMMRegister, ExternalAddress(vector_long_sizemask()), $scratch$$Register);
+    __ pmulld($tmp$$XMMRegister, $tmp2$$XMMRegister);
+    __ vpmovsxdq($tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsllq($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x20, vector_len);
+    __ vpaddd($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_long_shufflemask()), $scratch$$Register);
+    __ vpaddd($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vmovdqu($dst$$XMMRegister, $tmp2$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct loadshuffle8l(vecZ dst, vecD src, vecZ tmp, vecZ tmp2, rRegI scratch) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 &&
+            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
+  match(Set dst (VectorLoadShuffle src));
+  effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
+  format %{ "vpmovsxbd  $tmp2, $src \n\t"
+            "movdqu     $tmp, 0x0000000200000002 \n\t"
+            "pmulld     $tmp, $tmp2\n\t"
+            "vpmovsxdq  $tmp2,$tmp\n\t"
+            "vpsllq     $tmp2,0x20\n\t"
+            "vpaddd     $tmp2,$tmp\n\t"
+            "vmovdqu    $tmp, 0x0000000100000000 \n\t"
+            "vpaddd     $tmp2,$tmp\n\t"
+            "vmovdqu    $dst, $tmp2\t! load shuffle (load 8L for 8LRearrange)" %}
+  ins_encode %{
+  int vector_len = 2;
+    __ vpmovsxbd($tmp2$$XMMRegister, $src$$XMMRegister, 1);
+    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_long_sizemask()), $scratch$$Register);
+    __ vpmulld($tmp$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, 1);
+    __ vpmovsxdq($tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ vpsllq($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x20, vector_len);
+    __ vpaddd($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ evmovdqul($tmp$$XMMRegister, k1, ExternalAddress(vector_long_shufflemask()), false, vector_len, $scratch$$Register);
+    __ vpaddd($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ evmovdqul($dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+//-------------------------------- Rearrange -------------------------------------
+
+instruct rearrange8b(vecD dst, vecD shuffle) %{
+  predicate(UseSSE > 2 && n->as_Vector()->length() == 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorRearrange dst shuffle));
+  effect(TEMP dst);
+  format %{ "pshufb $dst, $shuffle\t! rerrrange (8BRearrange)" %}
+  ins_encode %{
+    __ pshufb($dst$$XMMRegister, $shuffle$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange16b(vecX dst, vecX shuffle) %{
+  predicate(UseSSE > 2 && n->as_Vector()->length() == 16 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorRearrange dst shuffle));
+  effect(TEMP dst);
+  format %{ "pshufb $dst, $shuffle\t! rearrange (16BRearrange)" %}
+  ins_encode %{
+    __ pshufb($dst$$XMMRegister, $shuffle$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange32b(vecY dst, vecY src, vecY shuffle) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vbmi() && n->as_Vector()->length() == 32 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorRearrange src shuffle));
+  effect(TEMP dst);
+  format %{ "vpermb $dst, $shuffle\t! rearrange (32BRearrange)" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpermb($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange64b(vecZ dst, vecZ src, vecZ shuffle) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vbmi() && n->as_Vector()->length() == 64 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (VectorRearrange src shuffle));
+  effect(TEMP dst);
+  format %{ "vpermb $dst, $shuffle\t! rearrange (64BRearrange)" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ vpermb($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange4s(vecD dst, vecD shuffle) %{
+  predicate(UseSSE > 2 && n->as_Vector()->length() == 4 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorRearrange dst shuffle));
+  effect(TEMP dst);
+  format %{ "pshufb $dst, $shuffle\t! rerrrange (4SRearrange)" %}
+  ins_encode %{
+    __ pshufb($dst$$XMMRegister, $shuffle$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange8s(vecX dst, vecX shuffle) %{
+  predicate(UseSSE > 2 && n->as_Vector()->length() == 8 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorRearrange dst shuffle));
+  effect(TEMP dst);
+  format %{ "pshufb $dst, $shuffle\t! rearrange (8SRearrange)" %}
+  ins_encode %{
+    __ pshufb($dst$$XMMRegister, $shuffle$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange16s(vecY dst, vecY src, vecY shuffle) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vlbw() && n->as_Vector()->length() == 16 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorRearrange src shuffle));
+  effect(TEMP dst);
+  format %{ "vpermw $dst, $shuffle\t! rearrange (16SRearrange)" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpermw($dst$$XMMRegister, k0, $shuffle$$XMMRegister, $src$$XMMRegister, false,vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange32s(vecZ dst, vecZ src, vecZ shuffle) %{
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vlbw() && n->as_Vector()->length() == 32 &&
+            n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (VectorRearrange src shuffle));
+  effect(TEMP dst);
+  format %{ "vpermw $dst, $shuffle\t! rearrange (32SRearrange)" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ __ vpermw($dst$$XMMRegister, k0, $shuffle$$XMMRegister, $src$$XMMRegister, false,vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange4i(vecX dst, vecX shuffle) %{
+ predicate(UseSSE > 2 && n->as_Vector()->length() == 4 &&
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorRearrange dst shuffle));
+  effect(TEMP dst);
+  format %{ "pshufb $dst, $shuffle\t! rearrange (4IRearrange)" %}
+  ins_encode %{
+    __ pshufb($dst$$XMMRegister, $shuffle$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange8i(vecY dst, vecY src, vecY shuffle) %{
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorRearrange src shuffle));
+  effect(TEMP dst);
+  format %{ "vpermd $dst, $src, $shuffle\t! rearrange (8IRearrange)" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange16i(vecZ dst, vecZ src, vecZ shuffle) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && 
+            (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
+  match(Set dst (VectorRearrange src shuffle));
+  effect(TEMP dst);
+  format %{ "vpermd $dst, $src, $shuffle\t! rearrange (16IRearrange)" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange4l(vecY dst, vecY src, vecY shuffle) %{
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 4 &&
+            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
+  match(Set dst (VectorRearrange src shuffle));
+  effect(TEMP dst);
+  format %{ "vpermd $dst, $src, $shuffle\t! rearrange (4LRearrange)" %}
+  ins_encode %{
+    int vector_len = 1;
+    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct rearrange8l(vecZ dst, vecZ src, vecZ shuffle) %{
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 8 &&
+            (n->bottom_type()->is_vect()->element_basic_type() == T_LONG ||
+             n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE));
+  match(Set dst (VectorRearrange src shuffle));
+  effect(TEMP dst);
+  format %{ "vpermd $dst, $src, $shuffle\t! rearrange (8LRearrange)" %}
+  ins_encode %{
+    int vector_len = 2;
+    __ evpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
+  %}
+  ins_pipe( pipe_slow );
+%}
 // --------------------------------- FMA --------------------------------------
 
 // a * b + c

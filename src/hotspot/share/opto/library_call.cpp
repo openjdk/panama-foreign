@@ -336,6 +336,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_vector_reduction();
   bool inline_vector_test();
   bool inline_vector_blend();
+  bool inline_vector_rearrange();
   bool inline_vector_compare();
   bool inline_vector_broadcast_int();
   bool inline_vector_cast_reinterpret(bool is_cast);
@@ -908,6 +909,8 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     return inline_vector_test();
   case vmIntrinsics::_VectorBlend:
     return inline_vector_blend();
+  case vmIntrinsics::_VectorRearrange:
+    return inline_vector_rearrange();
   case vmIntrinsics::_VectorCompare:
     return inline_vector_compare();
   case vmIntrinsics::_VectorBroadcastInt:
@@ -7359,6 +7362,57 @@ bool LibraryCallKit::inline_vector_compare() {
 
   Node* box = box_vector(operation, mbox_type, mask_bt, num_elem);
   set_vector_result(box);
+
+  C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
+  return true;
+}
+
+// static
+// <V extends Vector, Sh extends Shuffle>
+//  V rearrangeOp(Class<V> vectorClass, Class<Sh> shuffleClass, Class< ? > elementType, int vlen,
+//    V v1, Sh sh,
+//    VectorSwizzleOp<V, Sh, S, E> defaultImpl) { ...
+
+bool LibraryCallKit::inline_vector_rearrange() {
+  const TypeInstPtr* vector_klass = gvn().type(argument(0))->is_instptr();
+  const TypeInstPtr* shuffle_klass = gvn().type(argument(1))->is_instptr();
+  const TypeInstPtr* elem_klass = gvn().type(argument(2))->is_instptr();
+  const TypeInt*     vlen = gvn().type(argument(3))->is_int();
+
+  if (shuffle_klass->const_oop() == NULL || vector_klass->const_oop() == NULL ||
+    elem_klass->const_oop() == NULL || !vlen->is_con()) {
+    return false; // not enough info for intrinsification
+  }
+  ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
+  if (!elem_type->is_primitive_type()) {
+    return false; // should be primitive type
+  }
+  BasicType elem_bt = elem_type->basic_type();
+  BasicType shuffle_bt = elem_bt;
+  int num_elem = vlen->get_con();
+
+  if (!arch_supports_vector(Op_VectorLoadShuffle, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false; // not supported
+  }
+  if (!arch_supports_vector(Op_VectorRearrange, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false; // not supported
+  }
+  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
+
+  ciKlass* shbox_klass = shuffle_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  const TypeInstPtr* shbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, shbox_klass);
+
+  Node* v1 = unbox_vector(argument(4), vbox_type, elem_bt, num_elem);
+  Node* shuffle = unbox_vector(argument(5), shbox_type, shuffle_bt, num_elem);
+
+  if (v1 == NULL || shuffle == NULL) {
+    return false; // operand unboxing failed
+  }
+
+  Node* rearrange = _gvn.transform(new VectorRearrangeNode(v1, shuffle));
+  Node* box = box_vector(rearrange, vbox_type, elem_bt, num_elem);
+  set_result(box);
 
   C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
   return true;

@@ -2853,6 +2853,9 @@ void Compile::expand_vunbox_node(VectorUnboxNode* vec_unbox) {
     if (from_kls->is_vectormask()) {
       field_name = "bits";
       bt = T_BOOLEAN;
+    } else if (from_kls->is_vectorshuffle()) {
+      field_name = "reorder";
+      bt = T_BYTE;
     }
 
     ciField* field = from_kls->get_field_by_name(ciSymbol::make(field_name),
@@ -2888,6 +2891,9 @@ void Compile::expand_vunbox_node(VectorUnboxNode* vec_unbox) {
     if (from_kls->is_vectormask() && masktype != T_BOOLEAN) {
       assert(vec_unbox->bottom_type()->is_vect()->element_basic_type() == masktype, "expect mask type consistency");
       vec_val_load = gvn.transform(new VectorLoadMaskNode(vec_val_load, TypeVect::make(masktype, num_elem)));
+    } else if (from_kls->is_vectorshuffle()) {
+      assert(vec_unbox->bottom_type()->is_vect()->element_basic_type() == masktype, "expect shuffle type consistency");
+      vec_val_load = gvn.transform(new VectorLoadShuffleNode(vec_val_load, TypeVect::make(masktype, num_elem)));
     }
 
     gvn.hash_delete(vec_unbox);
