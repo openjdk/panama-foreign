@@ -59,15 +59,6 @@ public class Cursor {
 
     public boolean isAnonymousStruct() { return LibClang.lib.clang_Cursor_isAnonymous(cursor) != 0; }
 
-    public boolean isAnonymousEnum() {
-        // libclang::clang_Cursor_isAnonymous only applies to struct, not enum
-        return (type().kind() == TypeKind.Enum && spelling().isEmpty());
-    }
-
-    public boolean isAnonymous() {
-        return isAnonymousStruct() || isAnonymousEnum();
-    }
-
     public boolean isMacroFunctionLike() {
         return LibClang.lib.clang_Cursor_isMacroFunctionLike(cursor) != 0;
     }
@@ -144,10 +135,6 @@ public class Cursor {
         return CursorKind.valueOf(kind);
     }
 
-    public boolean equals(Cursor other) {
-        return (LibClang.lib.clang_equalCursors(cursor, other.cursor) != 0);
-    }
-
     public Stream<Cursor> children() {
         final ArrayList<Cursor> ar = new ArrayList<>();
         // FIXME: need a way to pass ar down as user data d
@@ -158,7 +145,7 @@ public class Cursor {
         return ar.stream();
     }
 
-    public Stream<Cursor> stream() {
+    public Stream<Cursor> allChildren() {
         return children().flatMap(c -> Stream.concat(Stream.of(c), c.children()));
     }
 
@@ -169,5 +156,21 @@ public class Cursor {
 
     public TranslationUnit getTranslationUnit() {
         return new TranslationUnit(LibClang.lib.clang_Cursor_getTranslationUnit(cursor));
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Cursor)) {
+            return false;
+        }
+        return (LibClang.lib.clang_equalCursors(cursor, ((Cursor)other).cursor) != 0);
+    }
+
+    @Override
+    public int hashCode() {
+        return spelling().hashCode();
     }
 }

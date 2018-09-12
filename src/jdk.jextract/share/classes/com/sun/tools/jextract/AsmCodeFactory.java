@@ -294,7 +294,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         // define enum constants in global_cw
         enumTree.constants().forEach(constant -> addConstant(global_cw, constant));
 
-        if (enumTree.isAnonymous()) {
+        if (enumTree.name().isEmpty()) {
             // We are done with anonymous enum
             return null;
         }

@@ -234,7 +234,7 @@ public final class LayoutUtils {
                 replaceBitfields(fieldLayouts, pendingBitfieldStart);
                 pendingBitfieldStart = -1;
             }
-            Layout fieldLayout = (c.isAnonymous()) ?
+            Layout fieldLayout = (c.isAnonymousStruct()) ?
                     getRecordLayoutInternal(offset, parent, c.type(), fieldMapper) :
                     fieldLayout(isUnion, c, fieldMapper);
             fieldLayouts.add(fieldLayout);

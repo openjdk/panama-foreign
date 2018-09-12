@@ -101,4 +101,20 @@ public class Type {
     public Cursor getDeclarationCursor() {
         return new Cursor(LibClang.lib.clang_getTypeDeclaration(type));
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Type)) {
+            return false;
+        }
+        return LibClang.lib.clang_equalTypes(type, ((Type)other).type) != 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return spelling().hashCode();
+    }
 }

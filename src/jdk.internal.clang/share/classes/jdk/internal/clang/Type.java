@@ -68,4 +68,22 @@ public class Type extends StructType {
     }
 
     public native Cursor getDeclarationCursor();
+
+    public native boolean equalType(Type other);
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof Type)) {
+            return false;
+        }
+        return equalType((Type)other);
+    }
+
+    @Override
+    public int hashCode() {
+        return spelling().hashCode();
+    }
 }

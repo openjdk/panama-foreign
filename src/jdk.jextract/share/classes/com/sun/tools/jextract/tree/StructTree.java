@@ -87,6 +87,26 @@ public class StructTree extends Tree {
         return cursor().kind() == CursorKind.UnionDecl;
     }
 
+    /**
+     * Is this struct/union declared as anonymous member of another struct/union?
+     *
+     * Example:
+     *
+     *    struct X {
+     *        struct { int i; int j; }; // <-- anonymous struct
+     *        long l;
+     *    };
+     *
+     * Note: this is specific use of the word 'anonymous'. A struct with name()
+     * being empty is not necessarily anonymous in this usage.
+     *
+     * The structs in the following declarations are *not* anonymous eventhough
+     * the names of these structs are empty.
+     *
+     *    struct { int i; int j; } thePoint;
+     *    void func(struct { char* name; int len; } p1);
+     *    typedef struct { int i; int j; } Point;
+     */
     public boolean isAnonymous() {
         return cursor().isAnonymousStruct();
     }

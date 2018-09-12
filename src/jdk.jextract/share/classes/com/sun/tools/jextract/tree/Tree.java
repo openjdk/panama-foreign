@@ -87,7 +87,7 @@ public class Tree {
             return false;
         }
 
-        return c.equalCursor(((Tree)obj).cursor());
+        return c.equals(((Tree)obj).cursor());
     }
 
     @Override

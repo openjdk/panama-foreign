@@ -112,5 +112,10 @@ public class SourceLocation extends StructType {
         public int hashCode() {
             return Objects.hashCode(path) ^ line ^ column ^ offset;
         }
+
+        @Override
+        public String toString() {
+            return Objects.toString(path) + ":" + line + ":" + column + ":" + offset;
+        }
     }
 }

@@ -86,7 +86,8 @@ public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
     @Override
     public Void visitStruct(StructTree s, Void v) {
         defaultAction(s, v);
-        System.out.printf("%s layout = %s\n\n", s.name(), s.layout((ft, l) -> l));
+        System.out.printf("name = '%s', isAnonymous? = %b, layout = %s\n\n",
+            s.name(), s.isAnonymous(), s.layout((ft, l) -> l));
         List<? extends FieldTree> fields = s.fields();
         if (! fields.isEmpty()) {
             System.out.println("--> fields");
