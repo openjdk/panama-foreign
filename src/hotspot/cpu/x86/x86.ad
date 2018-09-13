@@ -23885,7 +23885,7 @@ instruct rearrange32s(vecZ dst, vecZ src, vecZ shuffle) %{
   format %{ "vpermw $dst, $shuffle\t! rearrange (32SRearrange)" %}
   ins_encode %{
     int vector_len = 2;
-    __ __ vpermw($dst$$XMMRegister, k0, $shuffle$$XMMRegister, $src$$XMMRegister, false,vector_len);
+    __ vpermw($dst$$XMMRegister, k0, $shuffle$$XMMRegister, $src$$XMMRegister, false,vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
