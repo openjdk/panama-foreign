@@ -25,18 +25,21 @@
 package jdk.internal.foreign;
 
 import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.org.objectweb.asm.AnnotationVisitor;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.foreign.Scope;
 import java.foreign.layout.Function;
-import java.foreign.memory.Callback;
 import java.foreign.memory.Pointer;
-import java.util.Optional;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -56,7 +59,7 @@ class CallbackImplGenerator extends BinderClassGenerator {
             ADR_IS_STUB = MethodHandles.lookup().findStatic(CallbackImplGenerator.class, "isNativeStub",
                     MethodType.methodType(boolean.class, long.class));
             ADR_GET_CALLBACK_OBJ = MethodHandles.lookup().findStatic(CallbackImplGenerator.class, "getCallbackObject",
-                    MethodType.methodType(Callback.class, long.class));
+                    MethodType.methodType(Object.class, long.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -68,8 +71,10 @@ class CallbackImplGenerator extends BinderClassGenerator {
 
     @Override
     protected void generateMembers(BinderClassWriter cw) {
+        AnnotationVisitor av = cw.visitAnnotation(Type.getDescriptor(SyntheticCallback.class), true);
+        av.visitEnd();
         generatePointerField(cw);
-        generateResourceGetter(cw);
+        generatePointerGetter(cw);
         super.generateMembers(cw);
     }
 
@@ -107,28 +112,25 @@ class CallbackImplGenerator extends BinderClassGenerator {
     }
 
     void generateFunctionMethod(BinderClassWriter cw, Method method) {
-        MethodType methodType = Util.methodTypeFor(method);
         Function function = Util.functionof(interfaces[0]);
         try {
             MethodHandle javaInvoker = MethodHandles.publicLookup().unreflect(method);
             MethodHandle pointerFilter = ADR_GET_CALLBACK_OBJ.asType(ADR_GET_CALLBACK_OBJ.type().changeReturnType(interfaces[0]));
-            NativeInvoker nativeInvoker = new NativeInvoker(layoutResolver.resolve(function), methodType, method.isVarArgs(), method.toString(), method.getGenericReturnType());
+            NativeInvoker nativeInvoker = new NativeInvoker(layoutResolver.resolve(function), method);
             MethodHandle callback_invoker = MethodHandles.guardWithTest(ADR_IS_STUB,
                     MethodHandles.filterArguments(javaInvoker, 0, pointerFilter),
                     nativeInvoker.getBoundMethodHandle());
-            addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), callback_invoker, mv -> getPtrAddress(cw, mv));
+            addMethodFromHandle(cw, method.getName(), nativeInvoker.type(), method.isVarArgs(), callback_invoker, mv -> getPtrAddress(cw, mv));
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private void generateResourceGetter(BinderClassWriter cw) {
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "resource", Type.getMethodDescriptor(Type.getType(Optional.class)), null, null);
+    private void generatePointerGetter(BinderClassWriter cw) {
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, POINTER_FIELD_NAME, Type.getMethodDescriptor(Type.getType(Pointer.class)), null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
-        mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Optional.class), "of",
-                MethodType.methodType(Optional.class, Object.class).toMethodDescriptorString(), false);
         mv.visitInsn(ARETURN);
         mv.visitMaxs(0, 0);
         mv.visitEnd();
@@ -156,7 +158,7 @@ class CallbackImplGenerator extends BinderClassGenerator {
         }
     }
 
-    static Callback<?> getCallbackObject(long addr) {
+    static Object getCallbackObject(long addr) {
         try {
             return NativeInvoker.getUpcallHandler(addr).getCallbackObject();
         } catch (Throwable ex) {
@@ -165,8 +167,12 @@ class CallbackImplGenerator extends BinderClassGenerator {
     }
 
     static long checkPointer(Pointer<?> ptr) throws Throwable {
-        Scope s = ((BoundedPointer<?>)ptr).scope();
+        Scope s = ptr.scope();
         s.checkAlive();
         return ptr.addr();
     }
+
+    @Target(ElementType.TYPE)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface SyntheticCallback { }
 }

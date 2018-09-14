@@ -25,19 +25,12 @@
 
 package jdk.internal.foreign.memory;
 
-import jdk.internal.foreign.LibrariesHelper;
-import jdk.internal.foreign.ScopeImpl;
-import jdk.internal.foreign.UpcallHandler;
-import jdk.internal.foreign.Util;
+import jdk.internal.foreign.*;
 
 import java.foreign.layout.Sequence;
 import java.foreign.layout.Value;
 import java.foreign.layout.Value.Kind;
-import java.foreign.memory.Array;
-import java.foreign.memory.Callback;
-import java.foreign.memory.LayoutType;
-import java.foreign.memory.Pointer;
-import java.foreign.memory.Struct;
+import java.foreign.memory.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -358,34 +351,20 @@ public final class References {
             super(MH_FUNC_GET, MH_FUNC_SET);
         }
 
-        @SuppressWarnings("unchecked")
         static Callback<?> get(Pointer<?> pointer) {
-            try {
-                long addr = (long)ofLong.getter().invokeExact(pointer);
-                Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).carrier();
-                Class<?> callbackClass = LibrariesHelper.getCallbackImplClass(carrier);
-                Pointer<?> resource = BoundedPointer.createNativeVoidPointer(((BoundedPointer<?>)pointer).scope(), addr);
-                return (Callback<?>)callbackClass.getConstructor(Pointer.class).newInstance(resource);
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
+            long addr = OfPrimitive.getLongBits(pointer);
+            Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).getFuncIntf();
+            BoundedPointer<?> rp = addr == 0 ?
+                    Pointer.nullPointer() :
+                    BoundedPointer.createNativeVoidPointer(pointer.scope(), addr);
+            return new CallbackImpl<>(rp, carrier);
         }
 
-        static void set(Pointer<?> pointer, Callback<?> funcIntfInstance) {
+        static void set(Pointer<?> pointer, Callback<?> func) {
             try {
-                final Pointer<?> ptr;
-                Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).carrier();
-                if (funcIntfInstance.resource().isPresent()) {
-                    //shortcut - direct set
-                    ptr = (Pointer<?>)funcIntfInstance.resource().get();
-                } else {
-                    UpcallHandler handler = UpcallHandler.makeFactory(carrier).buildHandler(funcIntfInstance);
-                    ((ScopeImpl)((BoundedPointer<?>)pointer).scope()).addStub(handler);
-                    ptr = handler.getNativeEntryPoint();
-                }
-                ofLong.setter().invokeExact(pointer, ptr.addr());
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
+                OfPrimitive.setLongBits(pointer, func.entryPoint().addr());
+            } catch (IllegalAccessException iae) {
+                throw new RuntimeException("Access denied", iae);
             }
         }
     }

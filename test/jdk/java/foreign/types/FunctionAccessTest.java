@@ -28,6 +28,7 @@
  * @run testng FunctionAccessTest
  */
 
+import java.foreign.memory.*;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
 import java.foreign.Library;
@@ -35,9 +36,6 @@ import java.foreign.Scope;
 import java.foreign.annotations.NativeCallback;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
-import java.foreign.memory.Callback;
-import java.foreign.memory.Resource;
-import java.foreign.memory.Struct;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -47,34 +45,43 @@ public class FunctionAccessTest {
 
     @Test
     public void testFunctionField() {
-        NativeToIntFunction funcOutsideScope = null;
+        Callback<NativeToIntFunction> funcOutsideScope = null;
         try (Scope s = Scope.newNativeScope()) {
             MyStruct m = s.allocateStruct(MyStruct.class);
-            m.setFunction(() -> 42);
-            NativeToIntFunction func = m.getFunction();
-            assertTrue(func.resource().isPresent());
-            Resource resource = func.resource().get();
+            NativeToIntFunction f = () -> 42;
+            m.setFunction(s.allocateCallback(f));
+            Callback<NativeToIntFunction> func = m.getFunction();
+            assertEquals(func.asFunction(), f);
             //do a roundtrip
             m.setFunction(func);
             System.gc();
             func = m.getFunction();
 
             //check resource is still there
-            assertTrue(func.resource().isPresent());
-            assertEquals(func.resource().get(), resource);
+            assertEquals(func.asFunction(), f);
+            assertEquals(func.asFunction().get(), 42);
             funcOutsideScope = func;
-            assertEquals(func.get(), 42);
             //check that calling get twice yields same object we started with
             m.setFunction(func);
-            assertEquals(func.resource(), m.getFunction().resource());
+            assertEquals(func.asFunction(), m.getFunction().asFunction());
         } catch (Throwable e) {
             throw new AssertionError(e);
         }
         try {
-            funcOutsideScope.get(); // should throw!
+             funcOutsideScope.asFunction(); // should throw!
+             fail("exception not thrown!");
+         } catch (IllegalStateException ex) {
+             assertTrue(ex.getMessage().contains("Scope is not alive"));
+         }
+    }
+
+    @Test
+    public void testHeapCallback() {
+        try (Scope s = Scope.newHeapScope()) {
+            Callback<NativeToIntFunction> c = s.allocateCallback(() -> 42);
             fail("exception not thrown!");
-        } catch (IllegalStateException ex) {
-            PointerTest.assertEquals(ex.getMessage(), "Scope is not alive");
+        } catch (UnsupportedOperationException ex) {
+            //ok
         }
     }
 
@@ -82,12 +89,12 @@ public class FunctionAccessTest {
             "   u64(get=getFunction)(set=setFunction):()i32" +
             "](MyStruct)")
     public interface MyStruct extends Struct<MyStruct> {
-        NativeToIntFunction getFunction();
-        void setFunction(NativeToIntFunction runnable);
+        Callback<NativeToIntFunction> getFunction();
+        void setFunction(Callback<NativeToIntFunction> runnable);
     }
 
     @NativeCallback("()i32")
-    public interface NativeToIntFunction extends Callback<NativeToIntFunction> {
+    public interface NativeToIntFunction {
         int get();
     }
 
@@ -95,19 +102,21 @@ public class FunctionAccessTest {
     public void testFunctionGlobal() {
         Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "GlobalFunc");
         globalFunc gf = Libraries.bind(globalFunc.class, lib);
-        assertEquals(gf.fp().f(8), 64);
-        gf.setFp(x -> x / 2);
-        System.gc();
-        assertEquals(gf.fp().f(8), 4);
+        try (Scope sc = Scope.newNativeScope()) {
+            assertEquals(gf.fp().asFunction().f(8), 64);
+            gf.setFp(sc.allocateCallback(x -> x / 2));
+            System.gc();
+            assertEquals(gf.fp().asFunction().f(8), 4);
+        }
     }
 
     @NativeHeader(declarations = "fp=u64(get=fp)(set=setFp):(i32)i32")
     public interface globalFunc {
-        Func fp();
-        void setFp(Func func);
+        Callback<Func> fp();
+        void setFp(Callback<Func> func);
 
         @NativeCallback("(i32)i32")
-        interface Func extends Callback<Func> {
+        interface Func {
             int f(int i);
         }
     }

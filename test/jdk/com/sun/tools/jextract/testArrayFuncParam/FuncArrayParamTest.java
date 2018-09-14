@@ -66,10 +66,10 @@ public class FuncArrayParamTest {
             assertEquals(fap.g(carr.elementPointer(), jarr.length), sum);
             assertEquals(fap.k(carr.elementPointer(), jarr.length), sum);
 
-            assertEquals(fap.map_sum(carr.elementPointer(), jarr.length, (arr, idx, val)->2*val), 2*sum);
+            assertEquals(fap.map_sum(carr.elementPointer(), jarr.length, scope.allocateCallback((arr, idx, val)->2*val)), 2*sum);
 
             FPPtrFieldStruct s = scope.allocateStruct(FPPtrFieldStruct.class);
-            s.map$set((arr, idx, val) -> -val);
+            s.map$set(scope.allocateCallback((arr, idx, val) -> -val));
             assertEquals(fap.map_sum2(carr.elementPointer(), jarr.length, s), -sum);
         }
     }

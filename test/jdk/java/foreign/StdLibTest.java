@@ -28,6 +28,7 @@
  * @run testng StdLibTest
  */
 
+import java.foreign.memory.*;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
 import java.foreign.NativeTypes;
@@ -35,10 +36,6 @@ import java.foreign.Scope;
 import java.foreign.annotations.NativeCallback;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
-import java.foreign.memory.Array;
-import java.foreign.memory.Callback;
-import java.foreign.memory.Pointer;
-import java.foreign.memory.Struct;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -196,11 +193,11 @@ public class StdLibTest {
                 
                 //call the function
                 stdLib.qsort(arr.elementPointer(), array.length, 4,
-                        (u1, u2) -> {
+                        s.allocateCallback((u1, u2) -> {
                                 int i1 = u1.get();
                                 int i2 = u2.get();
                                 return i1 - i2;
-                        });
+                        }));
                 //get result
                 return arr.toArray(int[]::new);
             }
@@ -240,13 +237,13 @@ public class StdLibTest {
             int strlen(Pointer<Byte> s2);
             Time time(Pointer<Time> arg);
             Pointer<Tm> localtime(Pointer<Time> arg);
-            void qsort(Pointer<Integer> base, int nitems, int size, QsortComparator comparator);
+            void qsort(Pointer<Integer> base, int nitems, int size, Callback<QsortComparator> comparator);
             int rand();
             int printf(Pointer<Byte> format, Object... args);
             Pointer<Void> fopen(Pointer<Byte> filename, Pointer<Byte> mode);
 
             @NativeCallback("(u64:i32u64:i32)i32")
-            interface QsortComparator extends Callback<QsortComparator> {
+            interface QsortComparator {
                 int compare(Pointer<Integer> u1, Pointer<Integer> u2);
             }
         }

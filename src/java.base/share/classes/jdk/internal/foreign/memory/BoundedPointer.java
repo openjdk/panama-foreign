@@ -154,6 +154,10 @@ public class BoundedPointer<X> implements Pointer<X> {
             src.equals(dest);
     }
 
+    public static <Z> BoundedPointer<Z> createNativePointer(LayoutType<Z> type, long offset) {
+        return new BoundedPointer<>(type, BoundedMemoryRegion.EVERYTHING, offset);
+    }
+
     public static BoundedPointer<?> createNativeVoidPointer(long offset) {
         return new BoundedPointer<>(NativeTypes.VOID, BoundedMemoryRegion.EVERYTHING, offset);
     }

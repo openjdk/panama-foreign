@@ -26,6 +26,8 @@
  * @run main/othervm DoubleUpcall
  */
 
+import java.foreign.Scope;
+import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
 import java.foreign.annotations.NativeCallback;
@@ -40,13 +42,13 @@ public class DoubleUpcall {
     public static interface upcall {
         @NativeCallback("(f64f64)f64")
         @FunctionalInterface
-        static interface cb extends Callback<cb> {
+        static interface cb {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public double fn(double d1, double d2);
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@double_upcall")
-        public abstract double double_upcall(cb cb, double d1, double d2);
+        public abstract double double_upcall(Callback<cb> cb, double d1, double d2);
     }
 
     public static class cbImpl implements upcall.cb {
@@ -65,16 +67,17 @@ public class DoubleUpcall {
 
     public void test() {
         upcall i = Libraries.bind(upcall.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
-        upcall.cb v = new cbImpl();
+        try (Scope sc = Scope.newNativeScope()) {
+            upcall.cb v = new cbImpl();
+            double d = i.double_upcall(sc.allocateCallback(v), 1.23, 1.11);
 
-        double d = i.double_upcall(v, 1.23, 1.11);
+            if (DEBUG) {
+                System.err.println("back in test()");
+                System.err.println("call returned: " + d);
+            }
 
-        if (DEBUG) {
-            System.err.println("back in test()");
-            System.err.println("call returned: " + d);
+            assertEquals(2.34, d, 0.1);
         }
-
-        assertEquals(2.34, d, 0.1);
     }
 
     private static void assertEquals(double expected, double actual, double maxDiff) {

@@ -45,13 +45,13 @@ public class CallbackSort {
     public static interface stdlib {
         @NativeCallback("(u64:vu64:v)i32")
         @FunctionalInterface
-        static interface compar extends Callback<compar> {
+        static interface compar {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public int fn(Pointer<Void> e1, Pointer<Void> e2);
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
-        public abstract void slowsort(Pointer<?> base, long nmemb, long size, compar compar);
+        public abstract void slowsort(Pointer<?> base, long nmemb, long size, Callback<compar> compar);
     }
 
     public class comparator implements stdlib.compar {
@@ -76,7 +76,9 @@ public class CallbackSort {
     private void doSort(NativeIntArray elems) {
         stdlib i = Libraries.bind(stdlib.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
         Pointer<?> p = elems.getBasePointer().cast(NativeTypes.VOID);
-        i.slowsort(p, elems.size(), elems.getElemSize(), new comparator());
+        try (Scope sc = Scope.newNativeScope()) {
+            i.slowsort(p, elems.size(), elems.getElemSize(), sc.allocateCallback(new comparator()));
+        }
     }
 
     private void printElems(NativeIntArray arr) {

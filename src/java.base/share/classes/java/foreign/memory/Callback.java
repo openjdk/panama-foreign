@@ -25,19 +25,31 @@
 
 package java.foreign.memory;
 
-import java.util.Optional;
+import java.foreign.Scope;
 
 /**
- * This interface acts as the root type for all callback functional types handled by the binder. A callback type must be annotated
- * with the {@link java.foreign.annotations.NativeCallback} annotation, which contains information about the native function type descriptor.
- * @param <T> the Java type modelling this native callback type. Must be a functional interface, see {@link FunctionalInterface}.
+ * This interface models native function pointers. This interface is typically parameterized by a type {@code T} which is
+ * annotated with the {@link java.foreign.annotations.NativeCallback} annotation, and which must be a functional
+ * interface, see {@link FunctionalInterface}.
+ * @param <T> the Java type modelling this native callback type.
  */
-public interface Callback<T extends Callback<T>> {
+public interface Callback<T> extends Resource {
+
     /**
-     * Obtain the native resource associated with this callback (if any).
-     * @return the (optional) resource.
+     * Returns the entry point at which the native function can be called.
+     * @return A pointer modelling the native function entry point.
      */
-    default Optional<Resource> resource() {
-        return Optional.empty();
+    Pointer<?> entryPoint();
+
+    /**
+     * Obtain a new instance of a functional interface which can be used by Java code to call the underlying native
+     * function.
+     * @return a functional interface instance of type {@code T}.
+     */
+    T asFunction();
+
+    @Override
+    default Scope scope() {
+        return entryPoint().scope();
     }
 }

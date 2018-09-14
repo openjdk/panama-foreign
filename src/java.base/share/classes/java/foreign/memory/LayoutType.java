@@ -194,7 +194,7 @@ public interface LayoutType<X> {
      */
     static <T extends Struct<T>> LayoutType<T> ofStruct(Class<T> carrier) throws IllegalArgumentException {
         if (!Util.isCStruct(carrier)) {
-            throw new IllegalArgumentException("Not a struct type!");
+            throw new IllegalArgumentException("Not a struct type: " + carrier);
         }
         NativeStruct nativeStruct = carrier.getAnnotation(NativeStruct.class);
         Layout type = new DescriptorParser(nativeStruct.value()).parseLayout();
@@ -209,11 +209,11 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      * @throws IllegalArgumentException if the given carrier is not annotated with the {@link NativeCallback} annotation.
      */
-    static <Z extends Callback<Z>> LayoutType<Z> ofFunction(Address layout, Class<Z> funcIntf) {
+    static <Z extends Callback<Z>> LayoutType<Callback<Z>> ofFunction(Address layout, Class<Z> funcIntf) {
         if (!Util.isCallback(funcIntf)) {
-            throw new IllegalArgumentException("Not a callback type!");
+            throw new IllegalArgumentException("Not a callback type: " + funcIntf);
         }
         Util.checkNoArrays(MethodHandles.publicLookup(), funcIntf);
-        return LayoutTypeImpl.of(funcIntf, layout, References.ofFunction);
+        return LayoutTypeImpl.ofCallback(layout, References.ofFunction, funcIntf);
     }
 }

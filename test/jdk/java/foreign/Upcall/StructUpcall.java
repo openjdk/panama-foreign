@@ -79,15 +79,15 @@ public class StructUpcall {
             void field6$set(Pointer<?> p);
         }
 
-        @NativeCallback("($(mystruct))v")
+        @NativeCallback("($(mystruct))$(mystruct)")
         @FunctionalInterface
-        static interface MyStructVisitor extends Callback<MyStructVisitor> {
+        static interface MyStructVisitor {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
-            public void fn(MyStruct s);
+            public MyStruct fn(MyStruct s);
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@struct_upcall")
-        public abstract void struct_upcall(MyStructVisitor v, MyStruct s);
+        public abstract void struct_upcall(Callback<MyStructVisitor> v, MyStruct s);
     }
 
 
@@ -96,7 +96,7 @@ public class StructUpcall {
         }
 
         @Override
-        public void fn(Index.MyStruct s) {
+        public Index.MyStruct fn(Index.MyStruct s) {
             if (DEBUG) {
                 System.err.println("visit(" + s + ")");
                 System.err.println("\ts.field1  = " + s.field1$get());
@@ -113,6 +113,8 @@ public class StructUpcall {
             assertEquals(123, s.field4$get().cast(NativeTypes.UINT8).get());
             assertEquals(124, s.field5$get().cast(NativeTypes.UINT8).get());
             assertEquals(125, s.field6$get().cast(NativeTypes.UINT8).get());
+
+            return s;
         }
     }
 
@@ -146,7 +148,7 @@ public class StructUpcall {
 
             Index.MyStructVisitor v = new MyStructVisitorImpl();
 
-            i.struct_upcall(v, s);
+            i.struct_upcall(scope.allocateCallback(v), s);
         }
 
         if (DEBUG) {

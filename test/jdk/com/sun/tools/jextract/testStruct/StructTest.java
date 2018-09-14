@@ -249,7 +249,7 @@ public class StructTest extends JextractToolRunner {
         verifyTypedefNamedAsIs(findClass(clz, "TypedefNamedAsIs"));
         verifyExpectedAnnotations(clz);
         verifyFunctionWithVoidPointer(cls);
-        verifyFunctionPointer(findClass(clz,"FunctionPointer"));
+        verifyFunctionPointer(findClass(clz,"FI2")); //Todo: is this what jextract needs to emit?
         verifyIncompleteArray(findClass(clz, "IncompleteArray"));
         verifyTypedefAnonymous(findClass(clz, "TypedefAnonymous"));
         checkMethod(cls, "voidArguments", void.class);

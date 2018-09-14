@@ -22,6 +22,7 @@
  */
 
 
+import java.foreign.Scope;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
 import java.foreign.NativeTypes;
@@ -78,7 +79,10 @@ public class Qsort {
 
         printElements(arr);
 
-        stdlib.qsort(arr.getBasePointer().cast(NativeTypes.VOID), arr.size(), arr.getElemSize(), new comparator());
+        try (Scope sc = Scope.newNativeScope()) {
+            stdlib.qsort(arr.getBasePointer().cast(NativeTypes.VOID), arr.size(), arr.getElemSize(),
+                    sc.allocateCallback(new comparator()));
+        }
 
         printElements(arr);
     }

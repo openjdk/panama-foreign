@@ -27,6 +27,7 @@ package jdk.internal.foreign.memory;
 
 import jdk.internal.foreign.abi.SystemABI;
 
+import java.foreign.memory.Callback;
 import java.lang.invoke.MethodHandle;
 import java.foreign.layout.Address;
 import java.foreign.layout.Layout;
@@ -76,6 +77,10 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
         return carrier;
     }
 
+    public Class<?> getFuncIntf() {
+        throw new IllegalStateException();
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public LayoutType<Array<X>> array(long size) {
@@ -100,5 +105,15 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
 
     public static <X> LayoutType<X> of(Class<X> carrier, Layout layout, Reference reference) {
         return new LayoutTypeImpl<>(carrier, layout, reference);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <X extends Callback<X>> LayoutType<Callback<X>> ofCallback(Address layout, Reference reference, Class<X> funcIntf) {
+        return new LayoutTypeImpl<>((Class)Callback.class, layout, reference) {
+            @Override
+            public Class<?> getFuncIntf() {
+                return funcIntf;
+            }
+        };
     }
 }
