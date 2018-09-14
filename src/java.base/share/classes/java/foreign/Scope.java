@@ -26,8 +26,10 @@ import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedArray;
 
+import java.foreign.annotations.NativeCallback;
 import java.foreign.layout.Layout;
 import java.foreign.memory.Array;
+import java.foreign.memory.Callback;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
@@ -132,6 +134,33 @@ public interface Scope extends AutoCloseable {
      * @see Struct
      */
     <T extends Struct<T>> T allocateStruct(Class<T> carrier);
+
+    /**
+     * Allocate a native function pointer backed by given Java functional interface instance.
+     * @param <T> the carrier type.
+     * @param funcIntfClass a functional interface class annotated with the {@link NativeCallback} annotation.
+     * @param funcIntfInstance an instance of a functional interface.
+     * @return a new function pointer (of type {@link T}).
+     * @throws IllegalArgumentException if the provided class is not annotated with the {@link NativeCallback} annotation.
+     */
+    <T> Callback<T> allocateCallback(Class<T> funcIntfClass, T funcIntfInstance) throws IllegalArgumentException;
+
+    /**
+     * Allocate a native function pointer backed by given Java functional interface instance. This method is equivalent to:
+     * <p>
+     *     <code>
+     *         allocateCallback(inferClass(funcIntfInstance), funcIntfInstance)
+     *     </code>
+     * </p>
+     * Where the {@code inferClass} is a best-effort attempt at extracting the functional interface from the object
+     * passed to this method.
+     *
+     * @param <T> the carrier type.
+     * @param funcIntfInstance an instance of a functional interface.
+     * @return a new function pointer (of type {@link T}).
+     * @throws IllegalArgumentException if no suitable functional interface can be inferred from the provided instance.
+     */
+    <T> Callback<T> allocateCallback(T funcIntfInstance);
 
     @Override
     void close();

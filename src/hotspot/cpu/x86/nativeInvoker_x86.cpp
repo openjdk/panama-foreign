@@ -278,7 +278,7 @@ address NativeInvoker::generate_upcall_stub(Handle& rec_handle) {
 
   MacroAssembler* _masm = new MacroAssembler(&buffer);
 
-  jobject rec = JNIHandles::make_weak_global(rec_handle);
+  jobject rec = JNIHandles::make_global(rec_handle);
 
 #if 0
   fprintf(stderr, "generate_upcall_stub(%p)\n", rec);
@@ -1217,7 +1217,7 @@ void NativeInvoker::free_upcall_stub(char *addr) {
   assert(cb != NULL, "Attempting to free non-existent stub");
   //free global JNI handle
   jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
-  JNIHandles::destroy_weak_global(*rec_ptr);
+  JNIHandles::destroy_global(*rec_ptr);
   //free code blob
   CodeCache::free(cb);
 }

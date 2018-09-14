@@ -26,6 +26,8 @@
  * @run main/othervm Upcall
  */
 
+import java.foreign.Scope;
+import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
 import java.foreign.annotations.NativeCallback;
@@ -42,13 +44,13 @@ public class Upcall {
     public static interface upcall {
         @NativeCallback("(i32)v")
         @FunctionalInterface
-        static interface visitor extends Callback<visitor> {
+        static interface visitor {
             @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
             public void fn(int i);
         }
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@do_upcall")
-        public abstract void do_upcall(visitor v, int i);
+        public abstract void do_upcall(Callback<visitor> v, int i);
     }
 
     public static class visitorImpl implements upcall.visitor {
@@ -69,14 +71,17 @@ public class Upcall {
 
     public void test() {
         upcall i = Libraries.bind(upcall.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
-        visitorImpl v = new visitorImpl();
 
-        i.do_upcall(v, MAGIC_INTEGER);
+        try (Scope sc = Scope.newNativeScope()) {
+            visitorImpl v = new visitorImpl();
 
-        assertTrue(v.called);
+            i.do_upcall(sc.allocateCallback(v), MAGIC_INTEGER);
 
-        if (DEBUG) {
-            System.err.println("back in test()\n");
+            assertTrue(v.called);
+
+            if (DEBUG) {
+                System.err.println("back in test()\n");
+            }
         }
     }
 

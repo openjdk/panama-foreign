@@ -32,10 +32,10 @@ import java.foreign.memory.Pointer;
 public interface stdlib {
     @NativeCallback("(u64:vu64:v)i32")
     @FunctionalInterface
-    static interface compar extends Callback<compar> {
+    static interface compar {
         public int fn(Pointer<Void> e1, Pointer<Void> e2);
     }
 
     @NativeLocation(file="stdlib.h", line=47, column=11, USR="c:@F@qsort")
-    public abstract void qsort(Pointer<?> base, long nmemb, long size, compar compar);
+    public abstract void qsort(Pointer<?> base, long nmemb, long size, Callback<compar> compar);
 }

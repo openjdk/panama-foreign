@@ -12,7 +12,7 @@ struct MyStruct {
   const void* field6;
 };
 
-typedef void (*struct_upcall_cb)(struct MyStruct f);
+typedef struct MyStruct (*struct_upcall_cb)(struct MyStruct f);
 typedef double (*double_upcall_cb)(double d1, double d2);
 
 void do_upcall(visitor v, int i) {

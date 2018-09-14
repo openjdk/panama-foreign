@@ -46,29 +46,15 @@ public class UpcallHandler {
 
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG"));
-    private static final LayoutType<Long> LONG_LAYOUT_TYPE = NativeTypes.UINT64;
 
-    private static final long MAX_STACK_ARG_BYTES = 64 * 1024; // FIXME: Arbitrary limitation for now...
+    private final Object receiver;
+    private final Pointer<?> entryPoint;
+    private final MethodHandle mh;
+    private final CallingSequence callingSequence;
+    private final LayoutType<?> returnLayout;
+    private final LayoutType<?>[] argLayouts;
 
-    private Callback<?> receiver;
-    private final UpcallHandlerFactory factory;
-
-    private final UpcallStub stub;
-
-    static {
-        long size = 8;
-        if (Constants.STACK_SLOT_SIZE != size) {
-            throw new Error("Invalid size: " + Constants.STACK_SLOT_SIZE);
-        }
-        if (Constants.INTEGER_REGISTER_SIZE != size) {
-            throw new Error("Invalid size: " + Constants.INTEGER_REGISTER_SIZE);
-        }
-        if ((Constants.VECTOR_REGISTER_SIZE % size) != 0) {
-            throw new Error("Invalid size: " + Constants.VECTOR_REGISTER_SIZE);
-        }
-    }
-
-    public static UpcallHandlerFactory makeFactory(Class<?> c) {
+    public UpcallHandler(Class<?> c, Object receiver) {
         if (!Util.isCallback(c)) {
             throw new IllegalArgumentException("Class is not a @FunctionalInterface: " + c.getName());
         }
@@ -81,37 +67,25 @@ public class UpcallHandler {
         try {
             MethodHandle mh = MethodHandles.publicLookup().unreflect(ficMethod);
             Util.checkNoArrays(mh.type());
-            return new UpcallHandlerFactory(mh.asSpreader(Object[].class, ftype.argumentLayouts().size()), ftype, ficMethod);
+            this.mh = mh.asSpreader(Object[].class, ftype.argumentLayouts().size());
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
-    }
 
-    public static class UpcallHandlerFactory {
-
-        final MethodHandle mh;
-        final CallingSequence callingSequence;
-        final LayoutType<?> returnLayout;
-        final LayoutType<?>[] argLayouts;
-
-        UpcallHandlerFactory(MethodHandle mh, Function ftype, Method ficMethod) throws Throwable {
-            this.mh = mh;
-            this.callingSequence = SystemABI.getInstance().arrangeCall(ftype);
-            if (ftype.returnLayout().isPresent()) {
-                returnLayout = Util.makeType(ficMethod.getGenericReturnType(), ftype.returnLayout().get());
-            } else {
-                returnLayout = null;
-            }
-            List<Layout> args = ftype.argumentLayouts();
-            argLayouts = new LayoutType<?>[args.size()];
-            for (int i = 0 ; i < args.size() ; i++) {
-                argLayouts[i] = Util.makeType(ficMethod.getGenericParameterTypes()[i], args.get(i));
-            }
+        this.callingSequence = SystemABI.getInstance().arrangeCall(ftype);
+        if (ftype.returnLayout().isPresent()) {
+            returnLayout = Util.makeType(ficMethod.getGenericReturnType(), ftype.returnLayout().get());
+        } else {
+            returnLayout = null;
         }
-
-        public UpcallHandler buildHandler(Callback<?> arg) throws Throwable {
-            return new UpcallHandler(arg, this);
+        List<Layout> args = ftype.argumentLayouts();
+        argLayouts = new LayoutType<?>[args.size()];
+        for (int i = 0 ; i < args.size() ; i++) {
+            argLayouts[i] = Util.makeType(ficMethod.getGenericParameterTypes()[i], args.get(i));
         }
+        this.receiver = receiver;
+        this.entryPoint = new BoundedPointer<>(NativeTypes.VOID,
+                    new BoundedMemoryRegion(NativeInvoker.allocateUpcallStub(this), 0), 0, 0);
     }
 
     public static void invoke(UpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
@@ -119,24 +93,24 @@ public class UpcallHandler {
             System.err.println("UpcallHandler.invoke(" + handler + ", ...)");
         }
 
-        try (Scope scope = Scope.newNativeScope()) {
-            UpcallContext context = handler.new UpcallContext(scope, integers, vectors, stack, integerReturn, vectorReturn);
-            handler.invoke(context);
-        }
-    }
-
-    private UpcallHandler(Callback<?> receiver, UpcallHandlerFactory factory) throws Throwable {
-        this.receiver = receiver;
-        this.factory = factory;
-        this.stub = new UpcallStub(this);
+        UpcallContext context = handler.new UpcallContext(integers, vectors, stack, integerReturn, vectorReturn);
+        handler.invoke(context);
     }
 
     public Pointer<?> getNativeEntryPoint() {
-        return stub.getEntryPoint();
+        return entryPoint;
     }
 
-    public Callback<?> getCallbackObject() {
+    public Object getCallbackObject() {
         return receiver;
+    }
+
+    public void free() {
+        try {
+            NativeInvoker.freeUpcallStub(entryPoint.addr());
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     class UpcallContext {
@@ -147,12 +121,12 @@ public class UpcallHandler {
         private final Pointer<Long> integerReturns;
         private final Pointer<Long> vectorReturns;
 
-        UpcallContext(Scope scope, long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
-            this.integers = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(integers, Constants.MAX_INTEGER_ARGUMENT_REGISTERS * Constants.INTEGER_REGISTER_SIZE, scope), 0, BoundedMemoryRegion.MODE_R);
-            this.vectors = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(vectors, Constants.MAX_VECTOR_ARGUMENT_REGISTERS * Constants.VECTOR_REGISTER_SIZE, scope), 0, BoundedMemoryRegion.MODE_R);
-            this.stack = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(stack, MAX_STACK_ARG_BYTES, scope), 0, BoundedMemoryRegion.MODE_R);
-            this.integerReturns = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(integerReturn, Constants.MAX_INTEGER_RETURN_REGISTERS * Constants.INTEGER_REGISTER_SIZE, scope), 0, BoundedMemoryRegion.MODE_W);
-            this.vectorReturns = new BoundedPointer<>(LONG_LAYOUT_TYPE, new BoundedMemoryRegion(vectorReturn, Constants.MAX_VECTOR_RETURN_REGISTERS * Constants.VECTOR_REGISTER_SIZE, scope), 0, BoundedMemoryRegion.MODE_W);
+        UpcallContext(long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
+            this.integers = BoundedPointer.createNativePointer(NativeTypes.UINT64, integers);
+            this.vectors = BoundedPointer.createNativePointer(NativeTypes.UINT64, vectors);
+            this.stack = BoundedPointer.createNativePointer(NativeTypes.UINT64, stack);
+            this.integerReturns = BoundedPointer.createNativePointer(NativeTypes.UINT64, integerReturn);
+            this.vectorReturns = BoundedPointer.createNativePointer(NativeTypes.UINT64, vectorReturn);
         }
 
         Pointer<Long> getPtr(ArgumentBinding binding) {
@@ -176,11 +150,11 @@ public class UpcallHandler {
 
         @SuppressWarnings("unchecked")
         Pointer<Object> inMemoryPtr() {
-            assert factory.callingSequence.returnsInMemory();
-            Pointer<Long> res = getPtr(factory.callingSequence.getReturnBindings().get(0));
+            assert callingSequence.returnsInMemory();
+            Pointer<Long> res = getPtr(callingSequence.getReturnBindings().get(0));
             long structAddr = res.get();
-            long size = Util.alignUp(factory.returnLayout.bytesSize(), 8);
-            return new BoundedPointer<Object>((LayoutType)factory.returnLayout, new BoundedMemoryRegion(structAddr, size));
+            long size = Util.alignUp(returnLayout.bytesSize(), 8);
+            return new BoundedPointer<Object>((LayoutType)returnLayout, new BoundedMemoryRegion(structAddr, size));
         }
     }
 
@@ -189,21 +163,20 @@ public class UpcallHandler {
             // FIXME: Handle varargs upcalls here
             if (DEBUG) {
                 System.err.println("=== UpcallHandler.invoke ===");
-                System.err.println(factory.callingSequence.asString());
+                System.err.println(callingSequence.asString());
             }
 
-            Object[] args = new Object[factory.argLayouts.length];
-            for (int i = 0 ; i < factory.argLayouts.length ; i++) {
-                args[i] = NativeInvoker.boxValue(factory.argLayouts[i], context::getPtr, factory.callingSequence.getArgumentBindings(i));
+            Object[] args = new Object[argLayouts.length];
+            for (int i = 0 ; i < argLayouts.length ; i++) {
+                args[i] = NativeInvoker.boxValue(argLayouts[i], context::getPtr, callingSequence.getArgumentBindings(i));
             }
 
-            Object o = factory.mh.invoke(receiver, args);
+            Object o = mh.invoke(receiver, args);
 
-            if (factory.mh.type().returnType() != void.class) {
-                if (!factory.callingSequence.returnsInMemory()) {
-                    NativeInvoker.unboxValue(o, factory.returnLayout, context::getPtr,
-                            b -> { throw new UnsupportedOperationException("Callbacks return not supported here!"); },
-                            factory.callingSequence.getReturnBindings());
+            if (mh.type().returnType() != void.class) {
+                if (!callingSequence.returnsInMemory()) {
+                    NativeInvoker.unboxValue(o, returnLayout, context::getPtr,
+                            callingSequence.getReturnBindings());
                 } else {
                     context.inMemoryPtr().set(o);
                 }

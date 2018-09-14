@@ -356,8 +356,8 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         global_cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
-                name, "Ljava/lang/Object;Ljava/foreign/memory/Callback<L" + name + ";>;",
-                "java/lang/Object", new String[] {"java/foreign/memory/Callback"});
+                name, "Ljava/lang/Object;",
+                "java/lang/Object", new String[0]);
         if (tree != null) {
             annotateNativeLocation(cw, tree);
         }

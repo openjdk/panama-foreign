@@ -31,6 +31,7 @@ import static clang.Index.CXSourceLocation;
 import static clang.Index.CXSourceRange;
 
 import java.foreign.memory.Pointer;
+import java.foreign.Scope;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
@@ -138,11 +139,13 @@ public class Cursor {
     public Stream<Cursor> children() {
         final ArrayList<Cursor> ar = new ArrayList<>();
         // FIXME: need a way to pass ar down as user data d
-        LibClang.lib.clang_visitChildren(cursor, (c, p, d) -> {
-            ar.add(new Cursor(c));
-            return Index.CXChildVisit_Continue;
-        }, Pointer.nullPointer());
-        return ar.stream();
+        try (Scope sc = Scope.newNativeScope()) {
+            LibClang.lib.clang_visitChildren(cursor, sc.allocateCallback((c, p, d) -> {
+                ar.add(new Cursor(c));
+                return Index.CXChildVisit_Continue;
+            }), Pointer.nullPointer());
+            return ar.stream();
+        }
     }
 
     public Stream<Cursor> allChildren() {

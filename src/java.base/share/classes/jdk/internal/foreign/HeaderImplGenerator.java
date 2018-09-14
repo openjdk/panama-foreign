@@ -125,12 +125,11 @@ class HeaderImplGenerator extends BinderClassGenerator {
     }
 
     void generateFunctionMethod(BinderClassWriter cw, Method method, FunctionInfo info) {
-        MethodType methodType = Util.methodTypeFor(method);
         Function function = info.descriptor;
         try {
-            NativeInvoker invoker = new NativeInvoker(layoutResolver.resolve(function), methodType, method.isVarArgs(), method.toString(), method.getGenericReturnType());
+            NativeInvoker invoker = new NativeInvoker(layoutResolver.resolve(function), method);
             long addr = lookup.lookup(info.symbolName).getAddress().addr();
-            addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), invoker.getBoundMethodHandle(),
+            addMethodFromHandle(cw, method.getName(), invoker.type(), method.isVarArgs(), invoker.getBoundMethodHandle(),
                 mv -> mv.visitLdcInsn(addr));
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);

@@ -25,23 +25,26 @@
 
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.CallbackImplGenerator.SyntheticCallback;
+import jdk.internal.foreign.memory.BoundedArray;
+import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.foreign.memory.CallbackImpl;
+import jdk.internal.misc.Unsafe;
+
 import java.foreign.Scope;
 import java.foreign.memory.Array;
+import java.foreign.memory.Callback;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 import java.util.ArrayList;
 import java.util.List;
-import jdk.internal.foreign.memory.BoundedArray;
-import jdk.internal.foreign.memory.BoundedMemoryRegion;
-import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.misc.Unsafe;
+import java.util.Objects;
 
 public abstract class ScopeImpl implements Scope {
 
     private boolean isAlive = true;
-
-    private List<UpcallHandler> stubs = new ArrayList<>();
 
     @Override
     public void checkAlive() {
@@ -95,14 +98,11 @@ public abstract class ScopeImpl implements Scope {
     @Override
     public void close() {
         isAlive = false;
-        stubs = null;
-    }
-
-    public void addStub(UpcallHandler upcallHandler) {
-        stubs.add(upcallHandler);
     }
 
     public static class NativeScope extends ScopeImpl {
+
+        private List<UpcallHandler> stubs = new ArrayList<>();
 
         // FIXME: Move this, make it dynamic and correct
         private final static long ALLOC_ALIGNMENT = 8;
@@ -195,6 +195,43 @@ public abstract class ScopeImpl implements Scope {
         }
 
         @Override
+        public <T> Callback<T> allocateCallback(T funcIntfInstance) {
+            @SuppressWarnings("unchecked")
+            Class<T> carrier = (Class<T>)Util.findUniqueCallback(funcIntfInstance.getClass());
+            if (carrier == null) {
+                throw new IllegalArgumentException("Cannot infer callback type: " + funcIntfInstance.getClass().getName());
+            }
+            return allocateCallback(carrier, funcIntfInstance);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> Callback<T> allocateCallback(Class<T> funcIntfClass, T funcIntfInstance) {
+            Objects.nonNull(funcIntfClass);
+            Objects.nonNull(funcIntfInstance);
+            if (!Util.isCallback(funcIntfClass)) {
+                throw new IllegalArgumentException("Not a callback class: " + funcIntfClass.getName());
+            }
+            try {
+                final Pointer<?> ptr;
+                if (funcIntfInstance.getClass().isAnnotationPresent(SyntheticCallback.class)) {
+                    //stub already allocated, fetch its code pointer
+                    ptr = Util.getSyntheticCallbackAddress(funcIntfInstance);
+                    if (this != ptr.scope()) {
+                        throw new IllegalArgumentException("Attempting to re-allocate callback from different scope");
+                    }
+                } else {
+                    UpcallHandler handler = new UpcallHandler(funcIntfClass, funcIntfInstance);
+                    stubs.add(handler);
+                    ptr = handler.getNativeEntryPoint();
+                }
+                return new CallbackImpl<>(ptr, funcIntfClass);
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        @Override
         public void close() {
             super.close();
             for (Long addr: used_blocks) {
@@ -202,6 +239,8 @@ public abstract class ScopeImpl implements Scope {
             }
             used_blocks.clear();
             U.freeMemory(block);
+            stubs.forEach(UpcallHandler::free);
+            stubs = null;
         }
     }
 
@@ -224,6 +263,16 @@ public abstract class ScopeImpl implements Scope {
 
             long[] arr = new long[(int)nElems];
             return new BoundedMemoryRegion(arr, Unsafe.ARRAY_LONG_BASE_OFFSET, allocSize, BoundedMemoryRegion.MODE_RW, this);
+        }
+
+        @Override
+        public <T> Callback<T> allocateCallback(T funcIntfInstance) {
+            throw new UnsupportedOperationException("Cannot allocate callback stubs on the heap");
+        }
+
+        @Override
+        public <T> Callback<T> allocateCallback(Class<T> funcIntfClass, T funcIntfInstance) {
+            throw new UnsupportedOperationException("Cannot allocate callback stubs on the heap");
         }
     }
 }

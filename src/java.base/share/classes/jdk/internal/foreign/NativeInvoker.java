@@ -22,7 +22,6 @@
  */
 package jdk.internal.foreign;
 
-import jdk.internal.foreign.UpcallHandler.UpcallHandlerFactory;
 import jdk.internal.foreign.abi.ArgumentBinding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.ShuffleRecipe;
@@ -35,12 +34,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.lang.ref.Reference;
 import java.foreign.*;
 import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
 import java.foreign.memory.*;
 import java.foreign.memory.Pointer;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -84,20 +83,21 @@ public class NativeInvoker {
     private final MethodType methodType;
     private final boolean isVarArgs;
     private final String debugMethodString;
-    private final java.lang.reflect.Type genericReturnType;
+    private final Type genericReturnType;
     private final MethodHandle targetMethodHandle;
     private final Function function;
     private final CallingSequence callingSequence;
     private final ShuffleRecipe shuffleRecipe;
     private final LayoutType<?> returnLayoutType;
     private final LayoutType<?>[] argLayoutTypes;
-    private final UpcallHandlerFactory[] upcallHandlerFactories;
 
-    NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, String debugMethodString, java.lang.reflect.Type genericReturnType) throws NoSuchMethodException, IllegalAccessException {
-        this(function, methodType, isVarArgs, INVOKE_NATIVE_MH, debugMethodString, genericReturnType);
+    NativeInvoker(Function function, Method method) {
+        this(function, Util.methodTypeFor(method), method.isVarArgs(), INVOKE_NATIVE_MH,
+                method.toString(), method.getGenericParameterTypes(), method.getGenericReturnType());
     }
 
-    private NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, MethodHandle targetMethodHandle, String debugMethodString, java.lang.reflect.Type genericReturnType) {
+    private NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, MethodHandle targetMethodHandle,
+                          String debugMethodString, Type[] genericParamTypes, Type genericReturnType) {
         this.function = function;
         this.methodType = Util.checkNoArrays(methodType);
         this.isVarArgs = isVarArgs;
@@ -113,12 +113,9 @@ public class NativeInvoker {
         }
         List<Layout> args = function.argumentLayouts();
         argLayoutTypes = new LayoutType<?>[args.size()];
-        upcallHandlerFactories = new UpcallHandlerFactory[args.size()];
         for (int i = 0 ; i < args.size() ; i++) {
-            Class<?> carrier = methodType.parameterType(i);
-            if (Util.isCallback(carrier)) {
-                upcallHandlerFactories[i] = UpcallHandler.makeFactory(carrier);
-            } else if (!Util.isCStruct(carrier)) {
+            Type carrier = genericParamTypes[i];
+            if (!Util.isCStruct(Util.erasure(carrier))) {
                 argLayoutTypes[i] = Util.makeType(carrier, args.get(i));
             }
         }
@@ -127,6 +124,10 @@ public class NativeInvoker {
     MethodHandle getBoundMethodHandle() {
         return BRIDGE_METHOD_HANDLE.bindTo(this).asCollector(Object[].class, methodType.parameterCount())
                 .asType(methodType.insertParameterTypes(0, long.class));
+    }
+
+    MethodType type() {
+        return methodType;
     }
 
     private Class<?> computeClass(Class<?> c) {
@@ -200,24 +201,10 @@ public class NativeInvoker {
                 BoundedPointer.fromLongArray(values) :
                 Pointer.nullPointer();
 
-        // we need to keep upcall handlers alive until native invocation completes, otherwise the native stub
-        // is going to attempt an upcall using an already GC'ed handler instance. We do this by saving all handlers
-        // into this local list.
-        List<UpcallHandler> upcallHandlers = new ArrayList<>();
-
         for (int i = 0 ; i < args.length ; i++) {
             Object arg = args[i];
             unboxValue(arg, argLayoutTypes[i], b -> argsPtr.offset(callingSequence.storageOffset(b)),
-                    b -> {
-                        try {
-                            //callback conversion
-                            UpcallHandler up = upcallHandlerFactories[b.getMember().getArgumentIndex()].buildHandler((Callback)arg);
-                            upcallHandlers.add(up);
-                            return up;
-                        } catch (Throwable ex) {
-                            throw new IllegalStateException(ex);
-                        }
-                    }, callingSequence.getArgumentBindings(i));
+                    callingSequence.getArgumentBindings(i));
         }
 
         final Pointer<?> retPtr;
@@ -228,7 +215,6 @@ public class NativeInvoker {
             Scope scope = Scope.newNativeScope();
             retPtr = ((ScopeImpl)scope).allocate(returnLayoutType, 8);
             unboxValue(retPtr, NativeTypes.UINT64.pointer(), b -> argsPtr.offset(callingSequence.storageOffset(b)),
-                    b -> { throw new UnsupportedOperationException("Callbacks return not supported here!"); },
                     callingSequence.getReturnBindings());
         } else if (!isVoid) {
             retPtr = BoundedPointer.fromLongArray(returnValues);
@@ -244,9 +230,6 @@ public class NativeInvoker {
         }
 
         targetMethodHandle.invokeExact(values, returnValues, shuffleRecipe.getRecipe(), addr);
-
-        //defeat JIT dead code analysis
-        Reference.reachabilityFence(upcallHandlers);
 
         if (DEBUG) {
             System.err.println("Returned from method " + debugMethodString + " with " + returnValues.length + " return values");
@@ -286,14 +269,15 @@ public class NativeInvoker {
 
         MethodType dynamicMethodType = getDynamicMethodType(methodType, unnamedArgs);
 
-        NativeInvoker delegate = new NativeInvoker(varargFunc, dynamicMethodType, false, targetMethodHandle, debugMethodString, genericReturnType);
+        NativeInvoker delegate = new NativeInvoker(varargFunc, dynamicMethodType, false, targetMethodHandle,
+                debugMethodString, dynamicMethodType.parameterArray(), genericReturnType);
         return delegate.invoke(addr, allArgs);
     }
 
     // helper routines for marshalling/unmarshalling Java values to and from registers
 
     static void unboxValue(Object o, LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> dstPtrFunc,
-                           java.util.function.Function<ArgumentBinding, UpcallHandler> handlerFactory, List<ArgumentBinding> bindings) throws Throwable {
+                           List<ArgumentBinding> bindings) throws Throwable {
         if (o instanceof Struct) {
             Struct<?> struct = (Struct<?>) o;
             Pointer<Long> src = Util.unsafeCast(struct.ptr(), NativeTypes.UINT64);
@@ -302,11 +286,6 @@ public class NativeInvoker {
                 Pointer<Long> srcPtr = src.offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
                 Util.copy(srcPtr, dst, binding.getStorage().getSize());
             }
-        } else if (o instanceof Callback) {
-            assert bindings.size() == 1;
-            UpcallHandler handler = handlerFactory.apply(bindings.get(0));
-            Pointer<?> dst = dstPtrFunc.apply(bindings.get(0));
-            dst.type().setter().invokeExact(dst, handler.getNativeEntryPoint().addr());
         } else {
             assert bindings.size() == 1;
             Pointer<?> dst = dstPtrFunc.apply(bindings.get(0));

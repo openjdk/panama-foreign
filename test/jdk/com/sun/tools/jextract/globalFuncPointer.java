@@ -35,13 +35,13 @@ import java.foreign.memory.Pointer;
     declarations="fp=u64(get=fp$get)(set=fp$set)(ptr=fp$ptr):(*)v"
 )
 public interface globalFuncPointer {
-    FI1 fp$get();
-    void fp$set(FI1 fi1);
-    Pointer<FI1> fp$ptr();
+    Callback<FI1> fp$get();
+    void fp$set(Callback<FI1> fi1);
+    Pointer<Callback<FI1>> fp$ptr();
 
     @FunctionalInterface
     @NativeCallback("(*)v")
-    public interface FI1 extends Callback<FI1> {
+    public interface FI1 {
         void fn(Object...args);
     }
 }

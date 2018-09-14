@@ -217,6 +217,7 @@ public final class HeaderFile {
                     if (cf != null) {
                         cf.addType(JType2.bind(jt, t, null), null);
                     }
+                    jt = new CallbackType(jt);
                 } else {
                     jt = new PointerType(jt);
                 }
@@ -240,6 +241,7 @@ public final class HeaderFile {
                 if (cf != null) {
                     cf.addType(JType2.bind(jt, t, null), null);
                 }
+                jt = new CallbackType(jt);
                 break;
             default:
                 throw new UnsupportedOperationException("Type kind not supported: " + t.kind());

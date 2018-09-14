@@ -22,10 +22,8 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.memory.*;
 import jdk.internal.misc.Unsafe;
-import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.foreign.memory.DescriptorParser;
-import jdk.internal.foreign.memory.Types;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -41,11 +39,18 @@ import java.foreign.memory.*;
 import java.foreign.memory.Array;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public final class Util {
+
+    public static final LayoutType<Byte> BYTE_TYPE = NativeTypes.INT8;
+    public static final LayoutType<Pointer<Byte>> BYTE_PTR_TYPE = BYTE_TYPE.pointer();
+
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
     public static final long BYTE_BUFFER_BASE;
     public static final long BUFFER_ADDRESS;
@@ -54,10 +59,6 @@ public final class Util {
 
     static {
         try {
-            Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
-            unsafeField.setAccessible(true);
-            Unsafe UNSAFE = (Unsafe) unsafeField.get(null);
-
             BYTE_BUFFER_BASE = UNSAFE.objectFieldOffset(ByteBuffer.class.getDeclaredField("hb"));
             BUFFER_ADDRESS = UNSAFE.objectFieldOffset(Buffer.class.getDeclaredField("address"));
 
@@ -131,8 +132,7 @@ public final class Util {
     }
 
     public static boolean isCallback(Class<?> c) {
-        return Callback.class.isAssignableFrom(c) &&
-                c.isAnnotationPresent(NativeCallback.class);
+        return c.isAnnotationPresent(NativeCallback.class);
     }
 
     public static Method findFunctionalInterfaceMethod(Class<?> c) {
@@ -143,6 +143,27 @@ public final class Util {
                 .findFirst();
         }
         return methodOpt.orElseThrow(IllegalStateException::new);
+    }
+
+    public static Class<?> findUniqueCallback(Class<?> cls) {
+        Set<Class<?>> candidates = new HashSet<>();
+        findUniqueCallbackInternal(cls, candidates);
+        return (candidates.size() == 1) ?
+                candidates.iterator().next() :
+                null;
+    }
+
+    private static void findUniqueCallbackInternal(Class<?> cls, Set<Class<?>> candidates) {
+        if (isCallback(cls)) {
+            candidates.add(cls);
+        }
+        Class<?> sup = cls.getSuperclass();
+        if (sup != null) {
+            findUniqueCallbackInternal(sup, candidates);
+        }
+        for (Class<?> i : cls.getInterfaces()) {
+            findUniqueCallbackInternal(i, candidates);
+        }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -195,8 +216,17 @@ public final class Util {
             }
         } else if (isCStruct(erasure(carrier))) {
             return LayoutType.ofStruct((Class) carrier);
-        } else if (isCallback(erasure(carrier))){
-            return LayoutType.ofFunction((Address)layout, (Class)erasure(carrier));
+        } else if (Callback.class.isAssignableFrom(erasure(carrier))) {
+            if (carrier instanceof ParameterizedType) {
+                ParameterizedType pt = (ParameterizedType) carrier;
+                Type arg = pt.getActualTypeArguments()[0];
+                Class<?> cb = erasure(arg);
+                if (isCallback(cb)) {
+                    return LayoutType.ofFunction((Address) layout, (Class) cb);
+                }
+            }
+            //Error: missing type info!
+            throw new IllegalStateException("Invalid callback carrier: " + carrier.getTypeName());
         } else {
             throw new IllegalStateException("Unknown carrier: " + carrier.getTypeName());
         }
@@ -238,11 +268,6 @@ public final class Util {
         }
     }
 
-    public static final LayoutType<Byte> BYTE_TYPE = NativeTypes.INT8;
-    public static final LayoutType<Pointer<Byte>> BYTE_PTR_TYPE = BYTE_TYPE.pointer();
-
-    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
-
     public static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
         BoundedPointer<?> bsrc = (BoundedPointer<?>)Objects.requireNonNull(src);
         BoundedPointer<?> bdst = (BoundedPointer<?>)Objects.requireNonNull(dst);
@@ -268,5 +293,9 @@ public final class Util {
             throw new UnsupportedOperationException("Array carriers not supported in functions");
         }
         return mt;
+    }
+
+    public static Pointer<?> getSyntheticCallbackAddress(Object o) {
+        return (Pointer<?>)UNSAFE.getObject(o, 0L);
     }
 }
