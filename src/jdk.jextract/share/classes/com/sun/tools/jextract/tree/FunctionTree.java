@@ -30,8 +30,17 @@ import jdk.internal.clang.Cursor;
 import jdk.internal.clang.Type;
 
 public class FunctionTree extends Tree {
-    public FunctionTree(Cursor c) {
-        super(c);
+    FunctionTree(Cursor c) {
+        this(c, c.spelling());
+    }
+
+    private FunctionTree(Cursor c, String name) {
+        super(c, name);
+    }
+
+    @Override
+    public FunctionTree withName(String newName) {
+        return name().equals(newName)? this : new FunctionTree(cursor(), newName);
     }
 
     @Override

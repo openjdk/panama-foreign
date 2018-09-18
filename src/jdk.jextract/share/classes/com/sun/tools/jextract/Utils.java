@@ -117,8 +117,8 @@ public class Utils {
         return sb.toString();
     }
 
-    public static String getIdentifier(Type type) {
-        return LayoutUtils.getIdentifier(type);
+    public static String getName(Type type) {
+        return LayoutUtils.getName(type);
     }
 
     public static String ClassToDescriptor(Class<?> cls) {

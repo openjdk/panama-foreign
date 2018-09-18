@@ -33,7 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import jdk.internal.clang.Cursor;
@@ -70,7 +69,7 @@ public class Parser {
             new PrintWriter(System.err, true), supportMacros);
     }
 
-    public List<HeaderTree> parse(Collection<Path> paths, Collection<String> args, Predicate<Cursor> include) {
+    public List<HeaderTree> parse(Collection<Path> paths, Collection<String> args) {
         final List<HeaderTree> headers = new ArrayList<>();
         final Index index = LibClang.createIndex();
         for (Path path : paths) {
@@ -100,7 +99,6 @@ public class Parser {
             MacroParser macroParser = new MacroParser();
             List<Tree> decls = new ArrayList<>();
             tuCursor.children().
-                filter(c -> include.test(c)).
                 peek(c -> logger.finest(
                     () -> "Cursor: " + c.spelling() + "@" + c.USR() + "?" + c.isDeclaration())).
                 forEach(c -> {
@@ -186,7 +184,7 @@ public class Parser {
         List<Path> paths = Arrays.stream(args).map(Paths::get).collect(Collectors.toList());
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);
-        List<HeaderTree> headers = p.parse(paths, clangArgs, c->true);
+        List<HeaderTree> headers = p.parse(paths, clangArgs);
         TreePrinter printer = new TreePrinter();
         for (HeaderTree ht : headers) {
             ht.accept(printer, null);

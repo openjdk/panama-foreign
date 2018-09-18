@@ -28,9 +28,18 @@ import jdk.internal.clang.Cursor;
 public class MacroTree extends Tree {
     private final Optional<Object> value;
 
-    public MacroTree(Cursor c, Optional<Object> value) {
-        super(c);
+    MacroTree(Cursor c, Optional<Object> value) {
+        this(c, value, c.spelling());
+    }
+
+    private MacroTree(Cursor c, Optional<Object> value, String name) {
+        super(c, name);
         this.value = value;
+    }
+
+    @Override
+    public MacroTree withName(String newName) {
+        return name().equals(newName)? this : new MacroTree(cursor(), value, newName);
     }
 
     public Optional<Object> value() {

@@ -22,18 +22,26 @@
  */
 package com.sun.tools.jextract.tree;
 
+import java.util.Objects;
 import jdk.internal.clang.Cursor;
+import jdk.internal.clang.Type;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.SourceRange;
-import jdk.internal.clang.Type;
 
 public class Tree {
     private final Cursor c;
-    public Tree(Cursor c) {
-        this.c = c;
+    private final String name;
+
+    Tree(Cursor c) {
+        this(c, c.spelling());
     }
 
-    final Cursor cursor() {
+    Tree(Cursor c, String name) {
+        this.c = Objects.requireNonNull(c);
+        this.name = Objects.requireNonNull(name);
+    }
+
+    public final Cursor cursor() {
         return c;
     }
 
@@ -41,12 +49,12 @@ public class Tree {
         return c.type();
     }
 
-    public final String name() {
-        return c.spelling();
+    public Tree withName(String newName) {
+        return name.equals(newName)? this : new Tree(c, newName);
     }
 
-    public final String identifier() {
-        return LayoutUtils.getIdentifier(c);
+    public final String name() {
+        return name;
     }
 
     public final SourceLocation location() {
@@ -87,12 +95,13 @@ public class Tree {
             return false;
         }
 
-        return c.equals(((Tree)obj).cursor());
+        Tree t = (Tree)obj;
+        return name.equals(t.name()) && c.equals(t.cursor());
     }
 
     @Override
     public final int hashCode() {
-        return c.hashCode();
+        return name.hashCode() ^ c.hashCode();
     }
 
     @Override

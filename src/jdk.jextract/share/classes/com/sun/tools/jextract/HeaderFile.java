@@ -149,7 +149,7 @@ public final class HeaderFile {
 
     private JType doRecord(Type t) {
         assert(t.kind() == TypeKind.Record);
-        String name = Utils.toClassName(Utils.getIdentifier(t));
+        String name = Utils.toClassName(Utils.getName(t));
         Cursor dcl = t.getDeclarationCursor();
         // Define record locally but not declared in this file, likely a built-in type.
         // __builtin_va_list is such a type.
@@ -197,7 +197,7 @@ public final class HeaderFile {
                 break;
             case Enum:
                 String name = Utils.toInternalName(pkgName, clsName,
-                        Utils.toClassName(Utils.getIdentifier(t)));
+                        Utils.toClassName(Utils.getName(t)));
                 jt = TypeAlias.of(name, JType.Int);
                 break;
             case Invalid:

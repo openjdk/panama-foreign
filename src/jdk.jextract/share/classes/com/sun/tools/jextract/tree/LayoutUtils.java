@@ -49,23 +49,27 @@ import jdk.internal.foreign.memory.Types;
 public final class LayoutUtils {
     private LayoutUtils() {}
 
-    public static String getIdentifier(Type type) {
+    public static String getName(Type type) {
         Cursor c = type.getDeclarationCursor();
         if (c.isInvalid()) {
             return type.spelling();
         }
-        return getIdentifier(c);
+        return getName(c);
     }
 
-    static String getIdentifier(Cursor cursor) {
+    public static String getName(Tree tree) {
+        String name = tree.name();
+        return name.isEmpty()? getName(tree.cursor()) : name;
+    }
+
+    private static String getName(Cursor cursor) {
         // Use cursor name instead of type name, this way we don't have struct
         // or enum prefix
         String nativeName = cursor.spelling();
         if (nativeName.isEmpty()) {
-            // This happens when a typedef an anonymous struct, i.e., typedef struct {} type;
             Type t = cursor.type();
             nativeName = t.spelling();
-            if (nativeName.contains("::")) {
+            if (nativeName.contains("::") || nativeName.contains(" ")) {
                 SourceLocation.Location loc = cursor.getSourceLocation().getFileLocation();
                 return "anon$"
                         + loc.path().getFileName().toString().replaceAll("\\.", "_")
@@ -196,7 +200,7 @@ public final class LayoutUtils {
     private static Layout getRecordReferenceLayout(Type t) {
         //symbolic reference
         return Unresolved.of()
-                .withAnnotation(Layout.NAME, getIdentifier(t.canonicalType()));
+                .withAnnotation(Layout.NAME, getName(t.canonicalType()));
     }
 
     static Layout getRecordLayout(Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {
@@ -257,7 +261,7 @@ public final class LayoutUtils {
         Layout[] fields = fieldLayouts.toArray(new Layout[0]);
         Group g = isUnion ?
                 Group.union(fields) : Group.struct(fields);
-        return g.withAnnotation(Layout.NAME, getIdentifier(cu));
+        return g.withAnnotation(Layout.NAME, getName(cu));
     }
 
     private static Layout fieldLayout(boolean isUnion, Cursor c, BiFunction<Cursor, Layout, Layout> fieldMapper) {

@@ -166,10 +166,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
      */
     private void addField(ClassVisitor cw, Tree tree, Type parentType) {
         String fieldName = tree.name();
-        if (fieldName.isEmpty()) {
-            //skip anon fields
-            return;
-        }
+        assert !fieldName.isEmpty();
         Type type = tree.type();
         JType jt = owner.globalLookup(type);
         assert (jt != null);
@@ -234,7 +231,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
 
     @Override
     public Void visitStruct(StructTree structTree, JType jt) {
-        String nativeName = structTree.identifier();
+        String nativeName = structTree.name();
         Type type = structTree.type();
         logger.fine(() -> "Create struct: " + nativeName);
 
@@ -305,7 +302,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
     }
 
     private void createAnnotationCls(Tree tree) {
-        String nativeName = tree.identifier();
+        String nativeName = tree.name();
         logger.fine(() -> "Create annotation for: " + nativeName);
 
         String intf = Utils.toClassName(nativeName);
@@ -345,7 +342,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
             intf = ((JType.InnerType) fnif.type).getName();
             nativeName = "anonymous function";
         } else {
-            nativeName = tree.identifier();
+            nativeName = tree.name();
             intf = Utils.toClassName(nativeName);
         }
         logger.fine(() -> "Create FunctionalInterface " + intf);
@@ -388,13 +385,6 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
 
     @Override
     public Void visitTypedef(TypedefTree typedefTree, JType jt) {
-        Type t = typedefTree.type();
-        if (t.canonicalType().kind() == TypeKind.Enum &&
-            t.spelling().equals(t.canonicalType().getDeclarationCursor().spelling())) {
-            logger.fine("Skip redundant typedef " + t.spelling());
-            return null;
-        }
-
         // anonymous typedef struct {} xxx will not get TypeAlias
         if (jt instanceof TypeAlias) {
             TypeAlias alias = (TypeAlias) jt;

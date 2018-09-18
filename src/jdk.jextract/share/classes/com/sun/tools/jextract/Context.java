@@ -52,8 +52,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import com.sun.tools.jextract.parser.Parser;
-import com.sun.tools.jextract.tree.Tree;
+import com.sun.tools.jextract.tree.FunctionTree;
 import com.sun.tools.jextract.tree.HeaderTree;
+import com.sun.tools.jextract.tree.Tree;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
@@ -341,35 +342,34 @@ public final class Context {
         parse(header -> new AsmCodeFactory(this, header));
     }
 
-    private boolean filterCursor(Cursor c) {
-        if (c.isDeclaration()) {
-            Type type = c.type();
-            if (type.kind() == TypeKind.FunctionProto ||
-                type.kind() == TypeKind.FunctionNoProto) {
-                String name = c.spelling();
+    private boolean symbolFilter(Tree tree) {
+         String name = tree.name();
+         if (isSymbolExcluded(name)) {
+             return false;
+         }
 
-                if (isSymbolExcluded(name)) {
-                    return false;
-                }
+         // check for function symbols in libraries & warn missing symbols
+         if (tree instanceof FunctionTree && !isSymbolFound(name)) {
+             err.println(Main.format("warn.symbol.not.found", name));
+         }
 
-                if (!isSymbolFound(name)) {
-                    err.println(Main.format("warn.symbol.not.found", name));
-                }
-            }
-        }
-        return true;
+         return true;
     }
 
     public void parse(Function<HeaderFile, AsmCodeFactory> fn) {
         initSymChecker();
         initSymFilter();
 
-        List<HeaderTree> headers = parser.parse(sources, clangArgs, this::filterCursor);
+        List<HeaderTree> headers = parser.parse(sources, clangArgs);
         processHeaders(headers, fn);
     }
 
     private void processHeaders(List<HeaderTree> headers, Function<HeaderFile, AsmCodeFactory> fn) {
-        headers.forEach(header -> {
+        headers.stream().
+                map((new TreeFilter(this::symbolFilter))::transform).
+                map((new TypedefHandler())::transform).
+                map((new EmptyNameHandler())::transform).
+                forEach(header -> {
             HeaderFile hf = headerMap.computeIfAbsent(header.path(), p -> getHeaderFile(p, null));
             hf.useLibraries(libraryNames, libraryPaths);
             hf.useCodeFactory(fn.apply(hf));
