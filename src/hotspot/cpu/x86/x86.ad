@@ -20843,6 +20843,7 @@ instruct extract8l(rRegL dst, vecZ src, vecX tmp, immI idx) %{
   match(Set dst (ExtractL src idx));
   effect(TEMP tmp);
   ins_encode %{
+    int midx = 0x7 & $idx$$constant;
     if (midx == 0) {
       __ movq($dst$$Register, $src$$XMMRegister);
     } else if (midx == 1) {
