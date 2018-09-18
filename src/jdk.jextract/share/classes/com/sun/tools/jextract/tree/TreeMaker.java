@@ -24,10 +24,13 @@ package com.sun.tools.jextract.tree;
 
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import jdk.internal.clang.Cursor;
@@ -35,7 +38,13 @@ import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
 
 public class TreeMaker {
+    private final Map<Cursor, Tree> treeCache = new HashMap<>();
+
     public TreeMaker() {}
+
+    private <T extends Tree> T checkCache(Cursor c, Class<T> clazz, Supplier<Tree> factory) {
+        return clazz.cast(treeCache.computeIfAbsent(c, cx->factory.get()));
+    }
 
     public Tree createTree(Cursor c) {
         switch (Objects.requireNonNull(c).kind()) {
@@ -54,7 +63,7 @@ public class TreeMaker {
             case VarDecl:
                 return createVar(c);
             default:
-                return new Tree(c);
+                return checkCache(c, Tree.class, ()->new Tree(c));
         }
     }
 
@@ -75,26 +84,27 @@ public class TreeMaker {
     }
 
     private EnumTree createEnumCommon(Cursor c, List<FieldTree> fields) {
-        return new EnumTree(c, fields);
+        Optional<Tree> def = Optional.ofNullable(c.isDefinition()? null : createTree(c.getDefinition()));
+        return checkCache(c, EnumTree.class, ()->new EnumTree(c, def, fields));
     }
 
     public FieldTree createField(Cursor c) {
         checkCursorAny(c, CursorKind.EnumConstantDecl, CursorKind.FieldDecl);
-        return new FieldTree(c);
+        return checkCache(c, FieldTree.class, ()->new FieldTree(c));
     }
 
     public FunctionTree createFunction(Cursor c) {
         checkCursorAny(c, CursorKind.FunctionDecl);
-        return new FunctionTree(c);
+        return checkCache(c, FunctionTree.class, ()->new FunctionTree(c));
     }
 
     public MacroTree createMacro(Cursor c, Optional<Object> value) {
         checkCursorAny(c, CursorKind.MacroDefinition);
-        return new MacroTree(c, value);
+        return checkCache(c, MacroTree.class, ()->new MacroTree(c, value));
     }
 
     public HeaderTree createHeader(Cursor c, Path path, List<Tree> decls) {
-        return new HeaderTree(c, path, decls);
+        return checkCache(c, HeaderTree.class, ()->new HeaderTree(c, path, decls));
     }
 
     public StructTree createStruct(Cursor c) {
@@ -109,17 +119,22 @@ public class TreeMaker {
     }
 
     private StructTree createStructCommon(Cursor c, List<Tree> declarations) {
-        return new StructTree(c, declarations);
+        Optional<Tree> def = Optional.ofNullable(c.isDefinition()? null : createTree(c.getDefinition()));
+        return checkCache(c, StructTree.class, ()->new StructTree(c, def, declarations));
     }
 
     public TypedefTree createTypedef(Cursor c) {
         checkCursor(c, CursorKind.TypedefDecl);
-        return new TypedefTree(c);
+        Cursor dcl = c.type().canonicalType().getDeclarationCursor();
+        Optional<Tree> def = Optional.ofNullable(dcl.isDefinition()? createTree(dcl) : null);
+        return checkCache(c, TypedefTree.class, ()->{
+            return new TypedefTree(c, def);
+        });
     }
 
-    public VarTree createVar(Cursor c) {
+    private VarTree createVar(Cursor c) {
         checkCursor(c, CursorKind.VarDecl);
-        return new VarTree(c);
+        return checkCache(c, VarTree.class, ()->new VarTree(c));
     }
 
     private void checkCursor(Cursor c, CursorKind k) {

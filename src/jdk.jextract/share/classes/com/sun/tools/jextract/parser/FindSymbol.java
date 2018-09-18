@@ -46,7 +46,7 @@ public class FindSymbol {
         final List<String> clangArgs = List.of("-I" + builtinInc);
 
         final Parser parser = new Parser(true);
-        final List<HeaderTree> headers = parser.parse(paths, clangArgs, c->true);
+        final List<HeaderTree> headers = parser.parse(paths, clangArgs);
         final Printer p = new Printer();
         final HeaderTree tu = headers.get(0);
 

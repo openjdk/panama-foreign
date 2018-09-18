@@ -24,14 +24,32 @@ package com.sun.tools.jextract.tree;
 
 import java.util.List;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
 import jdk.internal.clang.Cursor;
 
 public class EnumTree extends Tree {
+    private final Optional<Tree> definition;
     private final List<FieldTree> constants;
 
-    public EnumTree(Cursor c, List<FieldTree> constants) {
-        super(c);
-        this.constants = Collections.unmodifiableList(constants);
+    EnumTree(Cursor c, Optional<Tree> definition, List<FieldTree> consts) {
+        this(c, definition, consts, c.spelling());
+    }
+
+    private EnumTree(Cursor c, Optional<Tree> definition, List<FieldTree> consts, String name) {
+        super(c, name);
+        this.definition = c.isDefinition()? Optional.of(this) : Objects.requireNonNull(definition);
+        this.constants = Collections.unmodifiableList(consts);
+    }
+
+    @Override
+    public EnumTree withName(String newName) {
+        return name().equals(newName)? this :
+            new EnumTree(cursor(), definition, constants, newName);
+    }
+
+    public Optional<Tree> definition() {
+        return definition;
     }
 
     public List<FieldTree> constants() {

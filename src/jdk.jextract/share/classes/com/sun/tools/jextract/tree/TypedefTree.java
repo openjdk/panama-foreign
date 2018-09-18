@@ -22,11 +22,30 @@
  */
 package com.sun.tools.jextract.tree;
 
+import java.util.Optional;
+import java.util.Objects;
 import jdk.internal.clang.Cursor;
 
 public class TypedefTree extends Tree {
-    public TypedefTree(Cursor c) {
-        super(c);
+    private final Optional<Tree> typeDefinition;
+
+    TypedefTree(Cursor c, Optional<Tree> definition) {
+        this(c, definition, c.spelling());
+    }
+
+    private TypedefTree(Cursor c, Optional<Tree> definition, String name) {
+        super(c, name);
+        this.typeDefinition = Objects.requireNonNull(definition);
+    }
+
+    @Override
+    public TypedefTree withName(String newName) {
+        return name().equals(newName)? this :
+            new TypedefTree(cursor(), typeDefinition, newName);
+    }
+
+    public Optional<Tree> typeDefinition() {
+        return typeDefinition;
     }
 
     @Override

@@ -26,16 +26,38 @@ import java.foreign.layout.Layout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 
 public class StructTree extends Tree {
+    private final Optional<Tree> definition;
     private final List<Tree> declarations;
 
-    public StructTree(Cursor c, List<Tree> declarations) {
-        super(c);
-        this.declarations = Collections.unmodifiableList(declarations);
+    StructTree(Cursor c, Optional<Tree> definition, List<Tree> decls) {
+        this(c, definition, decls, c.spelling());
+    }
+
+    private StructTree(Cursor c, Optional<Tree> definition, List<Tree> decls, String name) {
+        super(c, name);
+        this.definition = c.isDefinition()? Optional.of(this) : Objects.requireNonNull(definition);
+        this.declarations = Collections.unmodifiableList(decls);
+    }
+
+    @Override
+    public StructTree withName(String newName) {
+        return name().equals(newName)? this :
+            new StructTree(cursor(), definition, declarations, newName);
+    }
+
+    public StructTree withNameAndDecls(String newName, List<Tree> newDecls) {
+        return new StructTree(cursor(), definition, newDecls, newName);
+    }
+
+    public Optional<Tree> definition() {
+        return definition;
     }
 
     public List<Tree> declarations() {
@@ -86,6 +108,7 @@ public class StructTree extends Tree {
     public boolean isUnion() {
         return cursor().kind() == CursorKind.UnionDecl;
     }
+
 
     /**
      * Is this struct/union declared as anonymous member of another struct/union?

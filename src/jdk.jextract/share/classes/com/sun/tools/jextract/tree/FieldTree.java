@@ -27,8 +27,17 @@ import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 
 public class FieldTree extends Tree {
-    public FieldTree(Cursor c) {
-        super(c);
+    FieldTree(Cursor c) {
+        this(c, c.spelling());
+    }
+
+    private FieldTree(Cursor c, String name) {
+        super(c, name);
+    }
+
+    @Override
+    public FieldTree withName(String newName) {
+        return name().equals(newName)? this : new FieldTree(cursor(), newName);
     }
 
     @Override

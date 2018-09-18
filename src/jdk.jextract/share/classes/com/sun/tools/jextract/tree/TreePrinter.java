@@ -23,21 +23,15 @@
 package com.sun.tools.jextract.tree;
 
 import java.util.List;
-import com.sun.tools.jextract.tree.EnumTree;
-import com.sun.tools.jextract.tree.FieldTree;
-import com.sun.tools.jextract.tree.FunctionTree;
-import com.sun.tools.jextract.tree.HeaderTree;
-import com.sun.tools.jextract.tree.MacroTree;
-import com.sun.tools.jextract.tree.SimpleTreeVisitor;
-import com.sun.tools.jextract.tree.StructTree;
-import com.sun.tools.jextract.tree.Tree;
-import com.sun.tools.jextract.tree.TreeMaker;
-import com.sun.tools.jextract.tree.VarTree;
 
 public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
     @Override
     public Void defaultAction(Tree t, Void v) {
         System.out.println(t.getClass().getSimpleName());
+        String name = t.name();
+        if (!name.isEmpty()) {
+            System.out.println("name: " + t.name());
+        }
         System.out.println(t);
         return null;
     }
@@ -52,6 +46,10 @@ public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
                 System.out.println(f.name() + " = " + f.enumConstant().get());
                 f.accept(this, v);
             }
+        }
+        if (!e.isDefinition() && e.definition().isPresent()) {
+            System.out.println("--> definition");
+            defaultAction(e.definition().get(), v);
         }
         return null;
     }
@@ -75,6 +73,10 @@ public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
     @Override
     public Void visitHeader(HeaderTree t, Void v) {
         System.out.println("HeaderTree @ " + t.path());
+        String name = t.name();
+        if (!name.isEmpty()) {
+            System.out.println("name: " + t.name());
+        }
         int i = 0;
         for (Tree decl : t.declarations()) {
             System.out.println("--> header declaration: " + i++);
@@ -86,7 +88,7 @@ public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
     @Override
     public Void visitStruct(StructTree s, Void v) {
         defaultAction(s, v);
-        System.out.printf("name = '%s', isAnonymous? = %b, layout = %s\n\n",
+        System.out.printf("name = '%s', isAnonumous? = %b, layout = %s\n\n",
             s.name(), s.isAnonymous(), s.layout((ft, l) -> l));
         List<? extends FieldTree> fields = s.fields();
         if (! fields.isEmpty()) {
@@ -102,6 +104,10 @@ public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
                 nt.accept(this, v);
             }
         }
+        if (!s.isDefinition() && s.definition().isPresent()) {
+            System.out.println("--> definition");
+            defaultAction(s.definition().get(), v);
+        }
         return null;
     }
 
@@ -109,6 +115,16 @@ public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
     public Void visitVar(VarTree t, Void v) {
         defaultAction(t, v);
         System.out.printf("%s layout = %s\n\n", t.name(), t.layout());
+        return null;
+    }
+
+    @Override
+    public Void visitTypedef(TypedefTree t, Void v) {
+        defaultAction(t, v);
+        if (t.typeDefinition().isPresent()) {
+            System.out.println("--> type definition");
+            defaultAction(t.typeDefinition().get(), v);
+        }
         return null;
     }
 }

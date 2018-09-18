@@ -31,10 +31,19 @@ public class HeaderTree extends Tree {
     private final Path path;
     private final List<Tree> declarations;
 
-    public HeaderTree(Cursor c, Path path, List<Tree> declarations) {
-        super(c);
+    HeaderTree(Cursor c, Path path, List<Tree> declarations) {
+        this(c, path, declarations, c.spelling());
+    }
+
+    private HeaderTree(Cursor c, Path path, List<Tree> declarations, String name) {
+        super(c, name);
         this.path = path;
         this.declarations = Collections.unmodifiableList(declarations);
+    }
+
+    @Override
+    public HeaderTree withName(String newName) {
+        return name().equals(newName)? this : new HeaderTree(cursor(), path, declarations, newName);
     }
 
     public Path path() {
