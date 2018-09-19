@@ -232,6 +232,7 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETERMINE_TOOLCHAIN_TYPE],
       XCODE_VERSION_OUTPUT=`"$XCODEBUILD" -version 2>&1 | $HEAD -n 1`
       $ECHO "$XCODE_VERSION_OUTPUT" | $GREP "Xcode " > /dev/null
       if test $? -ne 0; then
+        AC_MSG_NOTICE([xcodebuild output: $XCODE_VERSION_OUTPUT])
         AC_MSG_ERROR([Failed to determine Xcode version.])
       fi
       XCODE_MAJOR_VERSION=`$ECHO $XCODE_VERSION_OUTPUT | \
@@ -1030,6 +1031,12 @@ AC_DEFUN_ONCE([TOOLCHAIN_MISC_CHECKS],
   if test "x$TOOLCHAIN_TYPE" = xgcc; then
     # If this is a --hash-style=gnu system, use --hash-style=both, why?
     HAS_GNU_HASH=`$CC -dumpspecs 2>/dev/null | $GREP 'hash-style=gnu'`
+    # This is later checked when setting flags.
+  fi
+
+  if test "x$TOOLCHAIN_TYPE" = xgcc || test "x$TOOLCHAIN_TYPE" = xclang; then
+    # Check if linker has -z noexecstack.
+    HAS_NOEXECSTACK=`$CC -Wl,--help 2>/dev/null | $GREP 'z noexecstack'`
     # This is later checked when setting flags.
   fi
 
