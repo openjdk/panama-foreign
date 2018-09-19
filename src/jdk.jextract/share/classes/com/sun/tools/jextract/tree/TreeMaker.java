@@ -84,7 +84,12 @@ public class TreeMaker {
     }
 
     private EnumTree createEnumCommon(Cursor c, List<FieldTree> fields) {
-        Optional<Tree> def = Optional.ofNullable(c.isDefinition()? null : createTree(c.getDefinition()));
+        // If the current Cursor is not a definition, get the definition
+        // and wrap it only if that is a valid definition.
+        Optional<Tree> def = Optional.ofNullable(
+            (c.isDefinition() || c.getDefinition().isInvalid())?
+            null : createTree(c.getDefinition())
+        );
         return checkCache(c, EnumTree.class, ()->new EnumTree(c, def, fields));
     }
 
@@ -119,7 +124,12 @@ public class TreeMaker {
     }
 
     private StructTree createStructCommon(Cursor c, List<Tree> declarations) {
-        Optional<Tree> def = Optional.ofNullable(c.isDefinition()? null : createTree(c.getDefinition()));
+        // If the current Cursor is not a definition, get the definition
+        // and wrap it only if that is a valid definition.
+        Optional<Tree> def = Optional.ofNullable(
+            (c.isDefinition() || c.getDefinition().isInvalid())?
+            null : createTree(c.getDefinition())
+        );
         return checkCache(c, StructTree.class, ()->new StructTree(c, def, declarations));
     }
 
