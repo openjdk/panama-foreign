@@ -366,9 +366,9 @@ public final class Context {
 
     private void processHeaders(List<HeaderTree> headers, Function<HeaderFile, AsmCodeFactory> fn) {
         headers.stream().
-                map((new TreeFilter(this::symbolFilter))::transform).
-                map((new TypedefHandler())::transform).
-                map((new EmptyNameHandler())::transform).
+                map(new TreeFilter(this::symbolFilter)).
+                map(new TypedefHandler()).
+                map(new EmptyNameHandler()).
                 forEach(header -> {
             HeaderFile hf = headerMap.computeIfAbsent(header.path(), p -> getHeaderFile(p, null));
             hf.useLibraries(libraryNames, libraryPaths);

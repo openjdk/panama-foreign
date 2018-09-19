@@ -56,6 +56,7 @@ public class StructTree extends Tree {
         return new StructTree(cursor(), definition, newDecls, newName);
     }
 
+    // definition of this struct if available anywhere in the compilation unit
     public Optional<Tree> definition() {
         return definition;
     }

@@ -34,6 +34,7 @@ import com.sun.tools.jextract.tree.HeaderTree;
 import com.sun.tools.jextract.tree.MacroTree;
 import com.sun.tools.jextract.tree.SimpleTreeVisitor;
 import com.sun.tools.jextract.tree.Tree;
+import com.sun.tools.jextract.tree.TreePhase;
 import com.sun.tools.jextract.tree.VarTree;
 import com.sun.tools.jextract.tree.TreeMaker;
 import com.sun.tools.jextract.tree.TreePrinter;
@@ -42,7 +43,8 @@ import com.sun.tools.jextract.tree.TreePrinter;
  * This visitor filters variable, function, macro trees
  * based on a Tree Predicate initialized.
  */
-final class TreeFilter extends SimpleTreeVisitor<Tree, Void> {
+final class TreeFilter extends SimpleTreeVisitor<Tree, Void>
+        implements TreePhase {
     private final TreeMaker treeMaker = new TreeMaker();
     private final Predicate<Tree> filter;
 
@@ -54,7 +56,8 @@ final class TreeFilter extends SimpleTreeVisitor<Tree, Void> {
         return filter.test(tree)? tree : null;
     }
 
-    HeaderTree transform(HeaderTree ht) {
+    @Override
+    public HeaderTree transform(HeaderTree ht) {
         return (HeaderTree)ht.accept(this, null);
     }
 

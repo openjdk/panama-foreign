@@ -48,6 +48,7 @@ public class EnumTree extends Tree {
             new EnumTree(cursor(), definition, constants, newName);
     }
 
+    // definition of this struct if available anywhere in the compilation unit
     public Optional<Tree> definition() {
         return definition;
     }

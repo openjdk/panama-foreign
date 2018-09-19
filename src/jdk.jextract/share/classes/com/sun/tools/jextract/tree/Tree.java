@@ -69,12 +69,16 @@ public class Tree {
         return c.isDeclaration();
     }
 
-    public final boolean isDefinition() {
-        return c.isDefinition();
+    public final boolean isInvalid() {
+        return c.isInvalid();
     }
 
     public final boolean isPreprocessing() {
         return c.isPreprocessing();
+    }
+
+    public final boolean isDefinition() {
+        return c.isDefinition();
     }
 
     public final boolean isFromMain() {

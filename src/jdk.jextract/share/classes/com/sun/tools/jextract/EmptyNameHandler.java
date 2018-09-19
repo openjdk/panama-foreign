@@ -37,6 +37,7 @@ import com.sun.tools.jextract.tree.SimpleTreeVisitor;
 import com.sun.tools.jextract.tree.StructTree;
 import com.sun.tools.jextract.tree.Tree;
 import com.sun.tools.jextract.tree.TreeMaker;
+import com.sun.tools.jextract.tree.TreePhase;
 import com.sun.tools.jextract.tree.TreePrinter;
 import jdk.internal.clang.Cursor;
 
@@ -47,10 +48,12 @@ import jdk.internal.clang.Cursor;
  * 1. Names are generated & set for anonymous structs & unions.
  * 2. Anonymous (bit) FieldTree instances are removed.
  */
-final class EmptyNameHandler extends SimpleTreeVisitor<Tree, Void> {
+final class EmptyNameHandler extends SimpleTreeVisitor<Tree, Void>
+        implements TreePhase {
     private final TreeMaker treeMaker = new TreeMaker();
 
-    HeaderTree transform(HeaderTree ht) {
+    @Override
+    public HeaderTree transform(HeaderTree ht) {
         return (HeaderTree)ht.accept(this, null);
     }
 
