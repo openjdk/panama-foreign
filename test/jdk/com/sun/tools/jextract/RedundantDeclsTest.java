@@ -55,13 +55,13 @@ public class RedundantDeclsTest extends JextractToolRunner {
         assertNotNull(findStructFieldGet(point3DStruct, "j"));
         assertNotNull(findStructFieldGet(point3DStruct, "k"));
 
-        checkIntField(headerCls, "R", 0);
-        checkIntField(headerCls, "G", 1);
-        checkIntField(headerCls, "B", 2);
+        assertNotNull(findEnumConstGet(headerCls, "R"));
+        assertNotNull(findEnumConstGet(headerCls, "G"));
+        assertNotNull(findEnumConstGet(headerCls, "B"));
 
-        checkIntField(headerCls, "C", 0);
-        checkIntField(headerCls, "M", 1);
-        checkIntField(headerCls, "Y", 2);
+        assertNotNull(findEnumConstGet(headerCls, "C"));
+        assertNotNull(findEnumConstGet(headerCls, "M"));
+        assertNotNull(findEnumConstGet(headerCls, "Y"));
 
         Class<?> rgbColor = findClass(inners, "RGBColor");
         assertNotNull(rgbColor);

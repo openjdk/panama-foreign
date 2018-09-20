@@ -213,20 +213,31 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         headerDeclarations.add(String.format("%s=%s", symbol, desc));
     }
 
-    private void addConstant(ClassVisitor cw, FieldTree fieldTree) {
+    private void addConstant(ClassWriter cw, FieldTree fieldTree) {
         assert (fieldTree.isEnumConstant());
         String name = fieldTree.name();
         String desc = owner.globalLookup(fieldTree.type()).getDescriptor();
-        Object value = null;
-        switch (desc) {
-            case "J":
-                value = fieldTree.enumConstant().get();
-                break;
-            case "I":
-                value = fieldTree.enumConstant().get().intValue();
-                break;
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, name, "()" + desc, null, null);
+        mv.visitCode();
+        if (desc.length() != 1) {
+            throw new AssertionError("expected single char descriptor: " + desc);
         }
-        cw.visitField(ACC_PUBLIC | ACC_FINAL | ACC_STATIC, name, desc, null, value);
+        switch (desc.charAt(0)) {
+            case 'J':
+                long lvalue = fieldTree.enumConstant().get();
+                mv.visitLdcInsn(lvalue);
+                mv.visitInsn(LRETURN);
+                break;
+            case 'I':
+                int ivalue = fieldTree.enumConstant().get().intValue();
+                mv.visitLdcInsn(ivalue);
+                mv.visitInsn(IRETURN);
+                break;
+            default:
+                throw new AssertionError("should not reach here");
+        }
+        mv.visitMaxs(1, 1);
+        mv.visitEnd();
     }
 
     @Override
