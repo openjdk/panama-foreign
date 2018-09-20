@@ -160,25 +160,25 @@ public class StdLibTest {
                     buf = buf.offset(1);
                 }
                 buf.set((byte)'\0');
-                return Pointer.toString(stdLib.strcat(base, s.toCString(s2)));
+                return Pointer.toString(stdLib.strcat(base, s.allocateCString(s2)));
             }
         }
 
         int strcmp(String s1, String s2) {
             try (Scope s = Scope.newNativeScope()) {
-                return stdLib.strcmp(s.toCString(s1), s.toCString(s2));
+                return stdLib.strcmp(s.allocateCString(s1), s.allocateCString(s2));
             }
         }
 
         int puts(String msg) {
             try (Scope s = Scope.newNativeScope()) {
-                return stdLib.puts(s.toCString(msg));
+                return stdLib.puts(s.allocateCString(msg));
             }
         }
 
         int strlen(String msg) {
             try (Scope s = Scope.newNativeScope()) {
-                return stdLib.strlen(s.toCString(msg));
+                return stdLib.strlen(s.allocateCString(msg));
             }
         }
 
@@ -209,13 +209,13 @@ public class StdLibTest {
 
         int printf(String format, Object... args) {
             try (Scope sc = Scope.newNativeScope()) {
-                return stdLib.printf(sc.toCString(format), args);
+                return stdLib.printf(sc.allocateCString(format), args);
             }
         }
 
         Pointer<Void> fopen(String filename, String mode) {
             try (Scope s = Scope.newNativeScope()) {
-                return stdLib.fopen(s.toCString(filename), s.toCString(mode));
+                return stdLib.fopen(s.allocateCString(filename), s.allocateCString(mode));
             }
         }
 
@@ -330,7 +330,7 @@ public class StdLibTest {
 
     enum PrintfArg {
         INTEGRAL("%d", s -> 42, 2),
-        STRING("%s", s -> s.toCString("str"), 3),
+        STRING("%s", s -> s.allocateCString("str"), 3),
         CHAR("%c", s -> 'h', 1),
         FLOAT("%.2f", s -> 1.23d, 4);
 

@@ -110,7 +110,7 @@ public class UnixSystem {
 
             LayoutType<Byte> t = NativeTypes.UINT8;
             Pointer<Byte> buf = scope.allocate(t, bufSize);
-            Pointer<Byte> cfmt = scope.toCString(fmt);
+            Pointer<Byte> cfmt = scope.allocateCString(fmt);
 
             int n = i.snprintf(buf, bufSize, cfmt, args);
             if (n >= bufSize) {
@@ -130,8 +130,8 @@ public class UnixSystem {
         assertEquals("foo: 4711", lowerAndSprintf(i, "foo: %d", 4711));
         assertEquals("foo: 47 11", lowerAndSprintf(i, "foo: %d %d", 47, 11));
         try (Scope scope = Scope.newNativeScope()) {
-            assertEquals("foo: bar", lowerAndSprintf(i, "foo: %s", scope.toCString("bar")));
-            assertEquals("foo: bar baz", lowerAndSprintf(i, "foo: %s %s", scope.toCString("bar"), scope.toCString("baz")));
+            assertEquals("foo: bar", lowerAndSprintf(i, "foo: %s", scope.allocateCString("bar")));
+            assertEquals("foo: bar baz", lowerAndSprintf(i, "foo: %s %s", scope.allocateCString("bar"), scope.allocateCString("baz")));
         }
     }
 
@@ -156,7 +156,7 @@ public class UnixSystem {
 
             s = p.get();
 
-            int res = i.__xstat(1, scope.toCString(path), p);
+            int res = i.__xstat(1, scope.allocateCString(path), p);
             if (res != 0) {
                 throwErrnoException("Call to __xstat failed");
             }
@@ -174,7 +174,7 @@ public class UnixSystem {
 
             s = p.get();
 
-            int res = i.stat$INODE64(scope.toCString(path), p);
+            int res = i.stat$INODE64(scope.allocateCString(path), p);
             if (res != 0) {
                 throwErrnoException("Call to stat failed");
             }

@@ -162,34 +162,18 @@ public interface Scope extends AutoCloseable {
      */
     <T> Callback<T> allocateCallback(T funcIntfInstance);
 
+    /**
+     * Allocate and initialize a region of memory with given string. Note: this routine adds a terminator to the string
+     * meaning that if the input string contain N characters, the size of the allocated region would be N + 1.
+     * @param str the string to be allocated.
+     * @return a pointer to the newly allocated memory region.
+     */
+    default Pointer<Byte> allocateCString(String str) {
+        return allocateArray(NativeTypes.UINT8, str.concat("\0").getBytes()).elementPointer();
+    }
+
     @Override
     void close();
-
-
-    private Pointer<Byte> toCString(byte[] ar) {
-        Array<Byte> buf = allocateArray(Util.BYTE_TYPE, ar.length + 1);
-        BoundedArray.copyFrom(buf, ar, ar.length);
-        buf.set(ar.length, (byte)0);
-        return buf.elementPointer();
-    }
-
-    default Pointer<Byte> toCString(String str) {
-        return toCString(str.getBytes());
-    }
-
-    default Pointer<Pointer<Byte>> toCStrArray(String[] ar) {
-        if (ar.length == 0) {
-            return Pointer.nullPointer();
-        }
-
-        Pointer<Pointer<Byte>> ptr = allocate(Util.BYTE_PTR_TYPE, ar.length);
-        for (int i = 0; i < ar.length; i++) {
-            Pointer<Byte> s = toCString(ar[i]);
-            ptr.offset(i).set(s);
-        }
-
-        return ptr;
-    }
 
     /**
      * Create a scope backed by off-heap memory.
