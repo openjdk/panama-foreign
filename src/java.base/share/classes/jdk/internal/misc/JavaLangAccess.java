@@ -308,6 +308,12 @@ public interface JavaLangAccess {
      */
     byte[] getBytesUTF8NoRepl(String s);
 
+    /**
+     * Set the cause of Throwable
+     * @param cause set t's cause to new value
+     */
+    void setCause(Throwable t, Throwable cause);
+
     //Panama
 
     /**
