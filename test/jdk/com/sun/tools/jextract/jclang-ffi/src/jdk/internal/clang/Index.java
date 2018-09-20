@@ -23,6 +23,7 @@
 
 package jdk.internal.clang;
 
+import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.Pointer;
 import java.util.ArrayList;
@@ -47,8 +48,8 @@ public class Index {
         final clang.Index lclang = LibClang.lib;
 
         try (Scope scope = Scope.newNativeScope()) {
-            Pointer<Byte> src = scope.toCString(file);
-            Pointer<Pointer<Byte>> cargs = scope.toCStrArray(args);
+            Pointer<Byte> src = scope.allocateCString(file);
+            Pointer<Pointer<Byte>> cargs = toCStrArray(scope, args);
             Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
                     ptr, src, cargs, args.length, null, 0,
                     LibClang.lib.CXTranslationUnit_DetailedPreprocessingRecord());
@@ -60,8 +61,8 @@ public class Index {
         final clang.Index lclang = LibClang.lib;
 
         try (Scope scope = Scope.newNativeScope()) {
-            Pointer<Byte> src = scope.toCString(file);
-            Pointer<Pointer<Byte>> cargs = scope.toCStrArray(args);
+            Pointer<Byte> src = scope.allocateCString(file);
+            Pointer<Pointer<Byte>> cargs = toCStrArray(scope, args);
             Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
                     ptr, src, cargs, args.length, Pointer.nullPointer(), 0,
                     detailedPreprocessorRecord ?
@@ -87,5 +88,19 @@ public class Index {
             LibClang.lib.clang_disposeTranslationUnit(tu);
         }
         LibClang.lib.clang_disposeIndex(ptr);
+    }
+
+    private static Pointer<Pointer<Byte>> toCStrArray(Scope sc, String[] ar) {
+        if (ar.length == 0) {
+            return Pointer.nullPointer();
+        }
+
+        Pointer<Pointer<Byte>> ptr = sc.allocate(NativeTypes.UINT8.pointer(), ar.length);
+        for (int i = 0; i < ar.length; i++) {
+            Pointer<Byte> s = sc.allocateCString(ar[i]);
+            ptr.offset(i).set(s);
+        }
+
+        return ptr;
     }
 }

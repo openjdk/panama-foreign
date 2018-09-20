@@ -45,7 +45,7 @@ public class Printf {
 
         // Convert the Java string to a native one
         // Basically uses Unsafe to allocate memory and copy the bytes
-        Pointer<Byte> fmt = scope.toCString("Hello, World!\n");
+        Pointer<Byte> fmt = scope.allocateCString("Hello, World!\n");
 
         // Call printf
         i.printf(fmt);
@@ -68,7 +68,7 @@ public class Printf {
         Scope scope = Scope.newNativeScope();
 
         // Convert the Java string to a native one
-        Pointer<Byte> fmt = scope.toCString("Hello, %d!\n");
+        Pointer<Byte> fmt = scope.allocateCString("Hello, %d!\n");
 
         // Call printf
         printf.invoke(i, fmt, 4711);
@@ -90,7 +90,7 @@ public class Printf {
         // Create a scope to allocate things in
         Scope scope = Scope.newNativeScope();
 
-        Pointer<Byte> fmt = scope.toCString("Hello, %d!\n");
+        Pointer<Byte> fmt = scope.allocateCString("Hello, %d!\n");
         printf.invoke(i, fmt, 4711);
 
         // Make sure output is not stuck in buffer
@@ -108,8 +108,8 @@ public class Printf {
         // Lookup a MH for the printf function
         MethodHandle printf = Util.lookup(Util.Function.PRINTF);
 
-        Pointer<Byte> fmt = scope.toCString("Hello, %s!\n");
-        Pointer<Byte> arg = scope.toCString("World");
+        Pointer<Byte> fmt = scope.allocateCString("Hello, %s!\n");
+        Pointer<Byte> arg = scope.allocateCString("World");
 
         printf.invoke(i, fmt, arg);
 
