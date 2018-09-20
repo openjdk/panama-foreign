@@ -29,7 +29,7 @@ import java.foreign.memory.Pointer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -256,9 +256,12 @@ public class JextractToolProviderTest extends JextractToolRunner {
         }
     }
 
-    private void testEnumValue(Class<?> enumCls, Map<String, Integer> values) {
-        values.entrySet().stream().
-                forEach(e -> checkIntField(enumCls, e.getKey(), e.getValue()));
+    private void testEnumConstGetters(Class<?> enumCls, List<String> names) {
+        for (String name : names) {
+            if (findEnumConstGet(enumCls, name) == null) {
+                throw new RuntimeException(enumCls.getName() + " misses " + name);
+            }
+        }
     }
 
     @Test
@@ -270,25 +273,13 @@ public class JextractToolProviderTest extends JextractToolRunner {
             checkSuccess(null, "-o", anonenumJar.toString(), anonenumH.toString());
             Class<?> anonenumCls = loadClass("anonenum", anonenumJar);
             assertNotNull(anonenumCls);
-            checkIntField(anonenumCls, "RED", 0xff0000);
-            checkIntField(anonenumCls, "GREEN", 0x00ff00);
-            checkIntField(anonenumCls, "BLUE", 0x0000ff);
-            testEnumValue(anonenumCls, Map.of(
-                    "Java", 0,
-                    "C", 1,
-                    "CPP", 2,
-                    "Python", 3,
-                    "Ruby", 4));
-            testEnumValue(anonenumCls, Map.of(
-                    "XS", 0,
-                    "S", 1,
-                    "M", 2,
-                    "L", 3,
-                    "XL", 4,
-                    "XXL", 5));
-            testEnumValue(anonenumCls, Map.of(
-                    "ONE", 1,
-                    "TWO", 2));
+            testEnumConstGetters(anonenumCls, List.of("RED", "GREEN", "BLUE"));
+            testEnumConstGetters(anonenumCls, List.of(
+                    "Java", "C", "CPP", "Python", "Ruby"));
+            testEnumConstGetters(anonenumCls, List.of(
+                    "XS", "S", "M", "L", "XL", "XXL"));
+            testEnumConstGetters(anonenumCls, List.of(
+                    "ONE", "TWO"));
 
             Class<?> enumClz[] = anonenumCls.getClasses();
             assert(enumClz.length >= 4);
@@ -342,7 +333,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
     public void testNestedStructsUnions() {
         Path nestedJar = getOutputFilePath("nested.jar");
         deleteFile(nestedJar);
-    Path nestedH = getInputFilePath("nested.h");
+        Path nestedH = getInputFilePath("nested.h");
         try {
             checkSuccess(null, "-o", nestedJar.toString(), nestedH.toString());
             Class<?> headerCls = loadClass("nested", nestedJar);
@@ -393,9 +384,9 @@ public class JextractToolProviderTest extends JextractToolRunner {
             assertNull(findStructFieldGet(myStructCls, "Y"));
             assertNull(findStructFieldGet(myStructCls, "Z"));
             // anonymous enum constants are hoisted to containing scope
-            assertNotNull(findField(headerCls, "X"));
-            assertNotNull(findField(headerCls, "Y"));
-            assertNotNull(findField(headerCls, "Z"));
+            assertNotNull(findEnumConstGet(headerCls, "X"));
+            assertNotNull(findEnumConstGet(headerCls, "Y"));
+            assertNotNull(findEnumConstGet(headerCls, "Z"));
 
             Class<?> myUnionCls = loadClass("nested$MyUnion", nestedJar);
             assertNotNull(findStructFieldGet(myUnionCls, "a"));
@@ -417,9 +408,9 @@ public class JextractToolProviderTest extends JextractToolRunner {
             assertNull(findStructFieldGet(myUnionCls, "B"));
             assertNull(findStructFieldGet(myUnionCls, "C"));
             // anonymous enum constants are hoisted to containing scope
-            assertNotNull(findField(headerCls, "A"));
-            assertNotNull(findField(headerCls, "B"));
-            assertNotNull(findField(headerCls, "C"));
+            assertNotNull(findEnumConstGet(headerCls, "A"));
+            assertNotNull(findEnumConstGet(headerCls, "B"));
+            assertNotNull(findEnumConstGet(headerCls, "C"));
         } finally {
             deleteFile(nestedJar);
         }

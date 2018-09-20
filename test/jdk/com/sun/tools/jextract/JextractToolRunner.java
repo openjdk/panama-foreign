@@ -165,6 +165,10 @@ class JextractToolRunner {
         return findMethod(cls, name + "$get");
     }
 
+    protected static Method findEnumConstGet(Class<?> cls, String name) {
+        return findMethod(cls, name);
+    }
+
     protected static Method findFirstMethod(Class<?> cls, String name) {
         try {
             for (Method m : cls.getMethods()) {

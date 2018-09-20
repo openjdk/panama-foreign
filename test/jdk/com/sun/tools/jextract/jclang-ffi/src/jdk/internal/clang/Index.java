@@ -31,8 +31,6 @@ import java.util.function.Consumer;
 
 import clang.Index.CXTranslationUnitImpl;
 import clang.Index.CXDiagnostic;
-import static clang.Index.CXTranslationUnit_DetailedPreprocessingRecord;
-import static clang.Index.CXTranslationUnit_None;
 
 public class Index {
     // Pointer to CXIndex
@@ -53,7 +51,7 @@ public class Index {
             Pointer<Pointer<Byte>> cargs = scope.toCStrArray(args);
             Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
                     ptr, src, cargs, args.length, null, 0,
-                    CXTranslationUnit_DetailedPreprocessingRecord);
+                    LibClang.lib.CXTranslationUnit_DetailedPreprocessingRecord());
             return new TranslationUnit(tu);
         }
     }
@@ -67,8 +65,8 @@ public class Index {
             Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
                     ptr, src, cargs, args.length, Pointer.nullPointer(), 0,
                     detailedPreprocessorRecord ?
-                            CXTranslationUnit_DetailedPreprocessingRecord :
-                            CXTranslationUnit_None);
+                            LibClang.lib.CXTranslationUnit_DetailedPreprocessingRecord() :
+                            LibClang.lib.CXTranslationUnit_None());
 
             if (tu != null && !tu.isNull()) {
                 translationUnits.add(tu);

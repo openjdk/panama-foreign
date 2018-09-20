@@ -142,7 +142,7 @@ public class Cursor {
         try (Scope sc = Scope.newNativeScope()) {
             LibClang.lib.clang_visitChildren(cursor, sc.allocateCallback((c, p, d) -> {
                 ar.add(new Cursor(c));
-                return Index.CXChildVisit_Continue;
+                return LibClang.lib.CXChildVisit_Continue();
             }), Pointer.nullPointer());
             return ar.stream();
         }
