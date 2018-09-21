@@ -209,7 +209,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      * @throws IllegalArgumentException if the given carrier is not annotated with the {@link NativeCallback} annotation.
      */
-    static <Z extends Callback<Z>> LayoutType<Callback<Z>> ofFunction(Address layout, Class<Z> funcIntf) {
+    static <Z> LayoutType<Callback<Z>> ofFunction(Address layout, Class<Z> funcIntf) {
         if (!Util.isCallback(funcIntf)) {
             throw new IllegalArgumentException("Not a callback type: " + funcIntf);
         }

@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign;
 
-import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
@@ -37,7 +36,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.foreign.Scope;
 import java.foreign.layout.Function;
 import java.foreign.memory.Pointer;
 
@@ -48,14 +46,14 @@ class CallbackImplGenerator extends BinderClassGenerator {
 
     // name of pointer field
     private static final String POINTER_FIELD_NAME = "ptr";
-    private static final MethodHandle PTR_CHECKER;
+    private static final MethodHandle PTR_ADDR;
     private static final MethodHandle ADR_IS_STUB;
     private static final MethodHandle ADR_GET_CALLBACK_OBJ;
 
     static {
         try {
-            PTR_CHECKER = MethodHandles.lookup().findStatic(CallbackImplGenerator.class, "checkPointer",
-                    MethodType.methodType(long.class, Pointer.class));
+            PTR_ADDR = MethodHandles.lookup().findVirtual(Pointer.class, "addr",
+                    MethodType.methodType(long.class));
             ADR_IS_STUB = MethodHandles.lookup().findStatic(CallbackImplGenerator.class, "isNativeStub",
                     MethodType.methodType(boolean.class, long.class));
             ADR_GET_CALLBACK_OBJ = MethodHandles.lookup().findStatic(CallbackImplGenerator.class, "getCallbackObject",
@@ -138,14 +136,14 @@ class CallbackImplGenerator extends BinderClassGenerator {
 
     void getPtrAddress(BinderClassWriter cw, MethodVisitor mv) {
         //load MH
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(PTR_CHECKER));
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(PTR_ADDR));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
         //load ptr arg
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
         //call MH
         mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
-                PTR_CHECKER.type().toMethodDescriptorString(), false);
+                PTR_ADDR.type().toMethodDescriptorString(), false);
     }
 
     /* Method handle code helpers */
@@ -164,12 +162,6 @@ class CallbackImplGenerator extends BinderClassGenerator {
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
-    }
-
-    static long checkPointer(Pointer<?> ptr) throws Throwable {
-        Scope s = ptr.scope();
-        s.checkAlive();
-        return ptr.addr();
     }
 
     @Target(ElementType.TYPE)

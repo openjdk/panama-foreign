@@ -262,6 +262,7 @@ public final class References {
         }
 
         static Array<?> get(Pointer<?> pointer) {
+            ((BoundedPointer<?>)pointer).checkAlive();
             Sequence seq = (Sequence)pointer.type().layout();
             LayoutType<?> elementType = ((LayoutTypeImpl<?>)pointer.type()).elementType();
             return new BoundedArray<>((BoundedPointer<?>)Util.unsafeCast(pointer, elementType), seq.elementsSize());
@@ -269,19 +270,9 @@ public final class References {
 
         static void set(Pointer<?> pointer, Array<?> arrayValue) {
             try {
-                LayoutType<?> elementType = ((LayoutTypeImpl<?>)pointer.type()).elementType();
-                MethodHandle elemGetter = elementType.getter();
-                MethodHandle elemSetter = elementType.setter();
-                Pointer<?> toElemPointer = ((Array<?>)pointer.get()).elementPointer();
-                Pointer<?> fromElemPointer = arrayValue.elementPointer();
-                // @@@ Perform a bulk copy from the array into the pointers
-                // memory region
-                Sequence seq = ((Sequence)pointer.type().layout());
-                long size = seq.elementsSize();
-                for (int i = 0 ; i < size ; i++) {
-                    Object newVal = elemGetter.invoke(fromElemPointer.offset(i));
-                    elemSetter.invoke(toElemPointer.offset(i), newVal);
-                }
+                Array<?> target = get(pointer);
+                Util.copy(arrayValue.elementPointer(), target.elementPointer(),
+                        arrayValue.elementPointer().bytesSize());
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
@@ -312,6 +303,7 @@ public final class References {
 
         @SuppressWarnings("unchecked")
         static Struct<?> get(Pointer<?> pointer) {
+            ((BoundedPointer<?>)pointer).checkAlive();
             Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).carrier();
             Class<?> structClass = LibrariesHelper.getStructImplClass(carrier);
             try {
