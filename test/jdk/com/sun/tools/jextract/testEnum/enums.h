@@ -21,8 +21,6 @@
  * questions.
  */
 
-#include <limits.h>
-
 enum Color {
    R = 0xFF0000,
    G = 0x00FF00,
@@ -33,17 +31,17 @@ int red_green();
 int green_blue();
 int red_green_blue();
 
-enum IntRange {
-   I_MIN = INT_MIN,
-   I_MAX = INT_MAX
+enum IntEnum {
+   I_VALUE1 = 42,
+   I_VALUE2 = -5345345
 };
 
-enum LongRange {
-   L_MIN = LONG_MIN,
-   L_MAX = LONG_MAX
+enum LongEnum {
+   L_VALUE1 = -4564565645L,
+   L_VALUE2 = 45645645645L
 };
 
-int iminfunc();
-int imaxfunc();
-long lminfunc();
-long lmaxfunc();
+int i_value1_func();
+int i_value2_func();
+long l_value1_func();
+long l_value2_func();

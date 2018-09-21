@@ -60,9 +60,9 @@ public class LibEnumsTest {
         assertEquals(libEnums.G() | libEnums.B(), libEnums.green_blue());
         assertEquals(libEnums.R() | libEnums.G() | libEnums.B(), libEnums.red_green_blue());
 
-        assertEquals(libEnums.iminfunc(), libEnums.I_MIN());
-        assertEquals(libEnums.imaxfunc(), libEnums.I_MAX());
-        assertEquals(libEnums.lminfunc(), libEnums.L_MIN());
-        assertEquals(libEnums.lmaxfunc(), libEnums.L_MAX());
+        assertEquals(libEnums.i_value1_func(), libEnums.I_VALUE1());
+        assertEquals(libEnums.i_value2_func(), libEnums.I_VALUE2());
+        assertEquals(libEnums.l_value1_func(), libEnums.L_VALUE1());
+        assertEquals(libEnums.l_value2_func(), libEnums.L_VALUE2());
     }
 }

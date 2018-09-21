@@ -35,18 +35,18 @@ int red_green_blue() {
     return R | G | B;
 }
 
-int iminfunc() {
-    return I_MIN;
+int i_value1_func() {
+    return I_VALUE1;
 }
 
-int imaxfunc() {
-    return I_MAX;
+int i_value2_func() {
+    return I_VALUE2;
 }
 
-long lminfunc() {
-    return L_MIN;
+long l_value1_func() {
+    return L_VALUE1;
 }
 
-long lmaxfunc() {
-    return L_MAX;
+long l_value2_func() {
+    return L_VALUE2;
 }
