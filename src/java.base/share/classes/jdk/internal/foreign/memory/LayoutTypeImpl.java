@@ -108,7 +108,7 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
     }
 
     @SuppressWarnings("unchecked")
-    public static <X extends Callback<X>> LayoutType<Callback<X>> ofCallback(Address layout, Reference reference, Class<X> funcIntf) {
+    public static <X> LayoutType<Callback<X>> ofCallback(Address layout, Reference reference, Class<X> funcIntf) {
         return new LayoutTypeImpl<>((Class)Callback.class, layout, reference) {
             @Override
             public Class<?> getFuncIntf() {

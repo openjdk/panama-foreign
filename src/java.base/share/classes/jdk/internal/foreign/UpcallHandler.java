@@ -48,7 +48,7 @@ public class UpcallHandler {
         privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG"));
 
     private final Object receiver;
-    private final Pointer<?> entryPoint;
+    private final long entryPoint;
     private final MethodHandle mh;
     private final CallingSequence callingSequence;
     private final LayoutType<?> returnLayout;
@@ -84,8 +84,7 @@ public class UpcallHandler {
             argLayouts[i] = Util.makeType(ficMethod.getGenericParameterTypes()[i], args.get(i));
         }
         this.receiver = receiver;
-        this.entryPoint = new BoundedPointer<>(NativeTypes.VOID,
-                    new BoundedMemoryRegion(NativeInvoker.allocateUpcallStub(this), 0), 0, 0);
+        this.entryPoint = NativeInvoker.allocateUpcallStub(this);
     }
 
     public static void invoke(UpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
@@ -97,7 +96,7 @@ public class UpcallHandler {
         handler.invoke(context);
     }
 
-    public Pointer<?> getNativeEntryPoint() {
+    public long getNativeEntryPoint() {
         return entryPoint;
     }
 
@@ -107,7 +106,7 @@ public class UpcallHandler {
 
     public void free() {
         try {
-            NativeInvoker.freeUpcallStub(entryPoint.addr());
+            NativeInvoker.freeUpcallStub(entryPoint);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }

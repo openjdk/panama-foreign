@@ -223,7 +223,7 @@ public abstract class ScopeImpl implements Scope {
                 } else {
                     UpcallHandler handler = new UpcallHandler(funcIntfClass, funcIntfInstance);
                     stubs.add(handler);
-                    ptr = handler.getNativeEntryPoint();
+                    ptr = BoundedPointer.createNativeVoidPointer(this, handler.getNativeEntryPoint());
                 }
                 return new CallbackImpl<>(ptr, funcIntfClass);
             } catch (Throwable ex) {

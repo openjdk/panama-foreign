@@ -76,6 +76,7 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     private long effectiveAddress() {
+        checkAlive();
         return region.addr() + offset;
     }
 
@@ -152,6 +153,10 @@ public class BoundedPointer<X> implements Pointer<X> {
         return src.equals(NativeTypes.VOID.layout()) ||
             dest.equals(NativeTypes.VOID.layout()) ||
             src.equals(dest);
+    }
+
+    public void checkAlive() {
+        region.checkAlive();
     }
 
     public static <Z> BoundedPointer<Z> createNativePointer(LayoutType<Z> type, long offset) {
