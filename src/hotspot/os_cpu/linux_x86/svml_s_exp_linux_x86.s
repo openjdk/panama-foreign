@@ -23,7 +23,7 @@
  * questions.
  *
  */
-#include "utilities/globalDefinitions_vecApi.hpp"
+#include "globals_vectorApiSupport_linux.hpp"
 #ifdef __VECTOR_API_MATH_INTRINSICS_LINUX
 # -- Machine type EM64t
 	.file "svml_s_exp.c"
