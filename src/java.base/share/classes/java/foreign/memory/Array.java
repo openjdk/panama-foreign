@@ -25,6 +25,7 @@
 
 package java.foreign.memory;
 
+import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedArray;
 
 import java.foreign.Scope;
@@ -128,5 +129,25 @@ public interface Array<X> extends Resource {
         Z arr = arrFactory.apply((int)length());
         BoundedArray.copyTo(this, arr, size);
         return arr;
+    }
+
+    /**
+     * Copy contents of source array into destination array.
+     * @param src source array.
+     * @param dst destination array.
+     * @param <Z> the array carrier type.
+     * @throws IllegalArgumentException if the two arrays have different layouts.
+     */
+    static <Z> void assign(Array<Z> src, Array<Z> dst) {
+        if (!src.elementPointer().type().layout().equals(dst.type().layout()) ||
+                src.length() != dst.length()) {
+            throw new IllegalArgumentException("Arrays have different layouts!");
+        }
+        try {
+            Util.copy(src.elementPointer(), dst.elementPointer(),
+                            dst.elementPointer().bytesSize());
+        } catch (IllegalAccessException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 }
