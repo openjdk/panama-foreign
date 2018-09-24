@@ -270,8 +270,7 @@ public final class References {
 
         static void set(Pointer<?> pointer, Array<?> arrayValue) {
             try {
-                Array<?> target = get(pointer);
-                Util.copy(arrayValue.elementPointer(), target.elementPointer(),
+                Util.copy(arrayValue.elementPointer(), pointer,
                         arrayValue.elementPointer().bytesSize());
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);

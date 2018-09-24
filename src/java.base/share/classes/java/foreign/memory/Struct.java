@@ -22,6 +22,8 @@
  */
 package java.foreign.memory;
 
+import jdk.internal.foreign.Util;
+
 import java.foreign.Scope;
 
 /**
@@ -51,5 +53,23 @@ public interface Struct<T extends Struct<T>> extends Resource {
      */
     static <X extends Struct<X>> long sizeof(Class<X> clazz) {
         return LayoutType.ofStruct(clazz).bytesSize();
+    }
+
+    /**
+     * Copy contents of source struct into destination struct.
+     * @param src source struct.
+     * @param dst destination struct.
+     * @param <Z> the struct carrier type.
+     * @throws IllegalArgumentException if the two structs have different layouts.
+     */
+    static <Z extends Struct<Z>> void assign(Struct<Z> src, Struct<Z> dst) throws IllegalArgumentException {
+        if (!src.ptr().type().layout().equals(dst.ptr().type().layout())) {
+            throw new IllegalArgumentException("Structs have different layouts!");
+        }
+        try {
+            Util.copy(src.ptr(), dst.ptr(), src.ptr().type().layout().bitsSize() / 8);
+        } catch (IllegalAccessException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 }
