@@ -36,10 +36,11 @@ import java.foreign.Scope;
 import java.foreign.annotations.NativeCallback;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,7 +70,7 @@ public class StdLibTest {
 
     @Test(dataProvider = "strings")
     void test_puts(String s) {
-        assertTrue(stdLibHelper.puts(s) > 0);
+        assertTrue(stdLibHelper.puts(s) >= 0);
     }
 
     @Test(dataProvider = "strings")
@@ -85,8 +86,8 @@ public class StdLibTest {
             //numbers should be in the same ballpark
             assertEquals(time.seconds(), instant.getEpochSecond());
             @SuppressWarnings("unchecked")
-            StdLibHelper.Tm tm = stdLibHelper.localtime(time.ptr()).get();
-            LocalDateTime localTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+            StdLibHelper.Tm tm = stdLibHelper.gmtime(time.ptr()).get();
+            LocalDateTime localTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
             assertEquals(tm.sec(), localTime.getSecond());
             assertEquals(tm.min(), localTime.getMinute());
             assertEquals(tm.hour(), localTime.getHour());
@@ -97,7 +98,7 @@ public class StdLibTest {
             assertEquals((tm.wday() + 6) % 7, localTime.getDayOfWeek().getValue() - 1);
             //month in Java has 1-offset
             assertEquals(tm.mon(), localTime.getMonth().getValue() - 1);
-            assertEquals(tm.isdst(), ZoneId.systemDefault().getRules()
+            assertEquals(tm.isdst(), ZoneOffset.UTC.getRules()
                     .isDaylightSavings(Instant.ofEpochMilli(time.seconds() * 1000)));
         }
     }
@@ -182,8 +183,8 @@ public class StdLibTest {
             }
         }
 
-        Pointer<Tm> localtime(Pointer<Time> arg) {
-            return stdLib.localtime(arg);
+        Pointer<Tm> gmtime(Pointer<Time> arg) {
+            return stdLib.gmtime(arg);
         }
 
         int[] qsort(int[] array) {
@@ -225,7 +226,7 @@ public class StdLibTest {
                 "strcmp=(u64:u8u64:i8)i32" +
                 "strlen=(u64:u8)i32" +
                 "time=(u64:$(Time))$(Time)" +
-                "localtime=(u64:$(Time))u64:$(Tm)" +
+                "gmtime=(u64:$(Time))u64:$(Tm)" +
                 "qsort=(u64:[0i32]i32i32u64:(u64:i32u64:i32)i32)v" +
                 "rand=()i32" +
                 "printf=(u64:u8*)i32" +
@@ -236,7 +237,7 @@ public class StdLibTest {
             int strcmp(Pointer<Byte> s1, Pointer<Byte> s2);
             int strlen(Pointer<Byte> s2);
             Time time(Pointer<Time> arg);
-            Pointer<Tm> localtime(Pointer<Time> arg);
+            Pointer<Tm> gmtime(Pointer<Time> arg);
             void qsort(Pointer<Integer> base, int nitems, int size, Callback<QsortComparator> comparator);
             int rand();
             int printf(Pointer<Byte> format, Object... args);
@@ -311,12 +312,12 @@ public class StdLibTest {
 
     @DataProvider
     public static Object[][] instants() {
-        long start = Timestamp.valueOf("2017-01-01 00:00:00").getTime();
-        long end = Timestamp.valueOf("2017-12-31 00:00:00").getTime();
+        Instant start = ZonedDateTime.of(LocalDateTime.parse("2017-01-01T00:00:00"), ZoneOffset.UTC).toInstant();
+        Instant end = ZonedDateTime.of(LocalDateTime.parse("2017-12-31T00:00:00"), ZoneOffset.UTC).toInstant();
         Object[][] instants = new Object[100][];
         for (int i = 0 ; i < instants.length ; i++) {
-            long instant = start + (long)(Math.random() * (end - start));
-            instants[i] = new Object[] { Instant.ofEpochSecond(instant)};
+            Instant instant = start.plusSeconds((long)(Math.random() * (end.getEpochSecond() - start.getEpochSecond())));
+            instants[i] = new Object[] { instant };
         }
         return instants;
     }
