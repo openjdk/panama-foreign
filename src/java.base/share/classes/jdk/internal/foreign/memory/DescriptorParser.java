@@ -165,13 +165,13 @@ public class DescriptorParser {
     }
 
     Endianness lastEndianness() {
-        char tag = scanner.lastValueTag;
+        char tag = scanner.lastChar();
         return Character.isUpperCase(tag) ?
                 Endianness.BIG_ENDIAN: Endianness.LITTLE_ENDIAN;
     }
 
     Value.Kind lastKind() {
-        char tag = scanner.lastValueTag;
+        char tag = scanner.lastChar();
         switch (tag) {
             case 'u': case 'U': return Value.Kind.INTEGRAL_UNSIGNED;
             case 'i': case 'I': return Value.Kind.INTEGRAL_SIGNED;
@@ -342,6 +342,59 @@ public class DescriptorParser {
     }
 
     /**
+     * declarations = +( declaration )
+     * declaration = name '=' (function / layout)
+     */
+    Map<String, Object> parseDeclarations() {
+        Map<String, Object> decls = new LinkedHashMap<>();
+        while (token != Token.END) {
+            String name = parseDeclName();
+            nextToken(Token.EQ);
+            Object desc = token == Token.LPAREN ?
+                    parseFunction() : parseLayout();
+            decls.put(name, desc);
+        }
+        return decls;
+    }
+
+    String parseDeclName() {
+        StringBuilder buf = new StringBuilder();
+        loop: while (true) {
+            switch (token) {
+                case EQ:
+                    if (buf.length() == 0) {
+                        throw scanner.error("Expected declaration name before '='");
+                    }
+                    break loop;
+                case NUMERIC:
+                    if (buf.length() == 0) {
+                        throw scanner.error("Invalid numeric start in declaration name");
+                    }
+                    buf.append(scanner.lastNumber());
+                    break;
+                case END:
+                    throw scanner.error("Expected '='");
+                default: {
+                    char lastChar = scanner.lastChar();
+                    if (buf.length() == 0 ?
+                            !Character.isJavaIdentifierStart(lastChar) :
+                            !Character.isJavaIdentifierPart(lastChar)) {
+                        throw scanner.error("Illegal char in declaration name");
+                    }
+                    buf.append(lastChar);
+                    break;
+                }
+            }
+            boolean pendingSeparator = scanner.foundSeparator();
+            nextToken();
+            if (pendingSeparator && token != Token.EQ) {
+                throw scanner.error("Unexpected separator in declaration name");
+            }
+        }
+        return buf.toString();
+    }
+
+    /**
      * The scanner is responsible for converting the descriptor string into a sequence of tokens which are then
      * processed accordingly by the parser. In addition to special type tags (e.g. 'f', 'U', 'i', etc,), the scanner
      * also handles numbers, name annotations and separators (the latter are simply stripped from the resulting token sequence).
@@ -367,10 +420,11 @@ public class DescriptorParser {
         }
 
         private int cp;
+        private boolean sep;
         private final char[] buf;
         private StringBuilder tempBuf;
         private char ch = 0;
-        private char lastValueTag = 0;
+        private char lastChar = 0;
 
         DescriptorScanner(String desc) {
             buf = desc.toCharArray();
@@ -379,6 +433,7 @@ public class DescriptorParser {
         }
 
         Token next() {
+            lastChar = ch;
             if (ch == 0) {
                 return Token.END;
             }
@@ -402,7 +457,6 @@ public class DescriptorParser {
                         case 'u': case 'U':
                         case 'f': case 'i':
                         case 'F': case 'I':
-                            lastValueTag = ch;
                             res = Token.VALUE;
                             break outer;
                         case 'x':
@@ -451,10 +505,22 @@ public class DescriptorParser {
                 switch (ch) {
                     case ' ': case '\t': case '\n': case '\r':
                         nextChar();
+                        sep = true;
+                        break;
+                    default:
+                        sep = false;
                 }
             } else {
                 ch = 0;
             }
+        }
+
+        boolean foundSeparator() {
+            return sep;
+        }
+
+        char lastChar() {
+            return lastChar;
         }
 
         String lastString() {
@@ -509,24 +575,8 @@ public class DescriptorParser {
         }
     }
 
-    /**
-     * declarations = *( declaration )
-     * declaration = name '=' (function / layout)
-     */
     public static Map<String, Object> parseHeaderDeclarations(String decls) {
-        Map<String, Object> declarations = new LinkedHashMap<>();
-        while (true) {
-            int split = decls.indexOf('=');
-            if (split == -1) break;
-            String name = decls.substring(0, split);
-            DescriptorParser parser = new DescriptorParser(decls.substring(split + 1));
-            Object decl = parser.token == Token.LPAREN ?
-                    parser.parseFunction() :
-                    parser.parseLayout();
-            declarations.put(name, decl);
-            decls = decls.substring(split + parser.scanner.cp - 1);
-        }
-        return declarations;
+        return new DescriptorParser(decls).parseDeclarations();
     }
 
     public static Layout parseLayout(String def) {

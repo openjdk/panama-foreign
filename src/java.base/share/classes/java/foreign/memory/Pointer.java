@@ -39,12 +39,11 @@ public interface Pointer<X> extends Resource {
 
     /**
      * Obtains the {@code NULL} pointer.
-     * @param <Z> the null pointer type.
+     * @param <Z> the carrier type of the pointer.
      * @return the {@code NULL} pointer.
      */
-    @SuppressWarnings("unchecked")
-    static <Z extends Pointer<?>> Z nullPointer() {
-        return (Z)new BoundedPointer<>(NativeTypes.VOID, BoundedMemoryRegion.NOTHING, 0, 0);
+    static <Z> Pointer<Z> nullPointer() {
+        return BoundedPointer.nullPointer();
     }
 
     /**

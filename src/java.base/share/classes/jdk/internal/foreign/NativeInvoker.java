@@ -94,9 +94,10 @@ public class NativeInvoker {
     NativeInvoker(Function function, Method method) {
         this(function, Util.methodTypeFor(method), method.isVarArgs(), INVOKE_NATIVE_MH,
                 method.toString(), method.getGenericParameterTypes(), method.getGenericReturnType());
+        Util.checkCompatible(method, function);
     }
 
-    private NativeInvoker(Function function, MethodType methodType, Boolean isVarArgs, MethodHandle targetMethodHandle,
+    private NativeInvoker(Function function, MethodType methodType, boolean isVarArgs, MethodHandle targetMethodHandle,
                           String debugMethodString, Type[] genericParamTypes, Type genericReturnType) {
         this.function = function;
         this.methodType = Util.checkNoArrays(methodType);
