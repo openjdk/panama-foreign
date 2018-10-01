@@ -1315,7 +1315,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     For long values the low 6 bits of s are used.
  */
 
-#if[intOrLong]
     /**
      * Logically left shifts this vector by the broadcast of an input scalar.
      * <p>
@@ -1344,6 +1343,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return uOp(m, (i, a) -> ($type$) (a << s));
     }
 
+#if[intOrLong]
     /**
      * Logically left shifts this vector by an input vector.
      * <p>
@@ -1371,6 +1371,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
         return bOp(v, m, (i, a, b) -> ($type$) (a << b));
     }
+#end[intOrLong]
 
     // logical, or unsigned, shift right
 
@@ -1403,6 +1404,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return uOp(m, (i, a) -> ($type$) (a >>> s));
     }
 
+#if[intOrLong]
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
      * input vector.
@@ -1431,6 +1433,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
         return bOp(v, m, (i, a, b) -> ($type$) (a >>> b));
     }
+#end[intOrLong]
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -1462,6 +1465,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return uOp(m, (i, a) -> ($type$) (a >> s));
     }
 
+#if[intOrLong]
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
      * input vector.
@@ -2046,6 +2050,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
          */
         public abstract $abstractvectortype$<S> fromArray($type$[] a, int i, Mask<$Boxtype$, S> m);
 
+#if[intOrLongOrFP]
         /**
          * Loads a vector from an array using indexes obtained from an index
          * map.
@@ -2095,6 +2100,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         public $abstractvectortype$<S> fromArray($type$[] a, int i, Mask<$Boxtype$, S> m, int[] indexMap, int j) {
             return op(m, n -> a[i + indexMap[j + n]]);
         }
+#end[intOrLongOrFP]
 
         @Override
         public abstract $abstractvectortype$<S> fromByteArray(byte[] a, int ix);

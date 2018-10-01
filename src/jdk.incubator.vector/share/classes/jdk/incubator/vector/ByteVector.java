@@ -550,6 +550,97 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     For long values the low 6 bits of s are used.
  */
 
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @return the result of logically left shifting left this vector by the
+     * broadcast of an input scalar
+     */
+    public abstract ByteVector<S> shiftL(int s);
+
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public ByteVector<S> shiftL(int s, Mask<Byte, S> m) {
+        return uOp(m, (i, a) -> (byte) (a << s));
+    }
+
+
+    // logical, or unsigned, shift right
+
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public abstract ByteVector<S> shiftR(int s);
+
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public ByteVector<S> shiftR(int s, Mask<Byte, S> m) {
+        return uOp(m, (i, a) -> (byte) (a >>> s));
+    }
+
+
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public abstract ByteVector<S> aShiftR(int s);
+
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public ByteVector<S> aShiftR(int s, Mask<Byte, S> m) {
+        return uOp(m, (i, a) -> (byte) (a >> s));
+    }
+
 
     @Override
     public abstract void intoByteArray(byte[] a, int ix);
@@ -1012,55 +1103,6 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
          */
         public abstract ByteVector<S> fromArray(byte[] a, int i, Mask<Byte, S> m);
 
-        /**
-         * Loads a vector from an array using indexes obtained from an index
-         * map.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index, the
-         * array element at index {@code i + indexMap[j + N]} is placed into the
-         * resulting vector at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array, may be negative if relative
-         * indexes in the index map compensate to produce a value within the
-         * array bounds
-         * @param indexMap the index map
-         * @param j the offset into the index map
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code j < 0}, or
-         * {@code j > indexMap.length - this.length()},
-         * or for any vector lane index {@code N} the result of
-         * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
-         */
-        public ByteVector<S> fromArray(byte[] a, int i, int[] indexMap, int j) {
-            return op(n -> a[i + indexMap[j + n]]);
-        }
-
-        /**
-         * Loads a vector from an array using indexes obtained from an index
-         * map and using a mask.
-         * <p>
-         * For each vector lane, where {@code N} is the vector lane index,
-         * if the mask lane at index {@code N} is set then the array element at
-         * index {@code i + indexMap[j + N]} is placed into the resulting vector
-         * at lane index {@code N}.
-         *
-         * @param a the array
-         * @param i the offset into the array, may be negative if relative
-         * indexes in the index map compensate to produce a value within the
-         * array bounds
-         * @param indexMap the index map
-         * @param j the offset into the index map
-         * @return the vector loaded from an array
-         * @throws IndexOutOfBoundsException if {@code j < 0}, or
-         * {@code j > indexMap.length - this.length()},
-         * or for any vector lane index {@code N} where the mask at lane
-         * {@code N} is set the result of {@code i + indexMap[j + N]} is
-         * {@code < 0} or {@code >= a.length}
-         */
-        public ByteVector<S> fromArray(byte[] a, int i, Mask<Byte, S> m, int[] indexMap, int j) {
-            return op(m, n -> a[i + indexMap[j + n]]);
-        }
 
         @Override
         public abstract ByteVector<S> fromByteArray(byte[] a, int ix);
