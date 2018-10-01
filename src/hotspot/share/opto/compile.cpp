@@ -2822,8 +2822,7 @@ Node* Compile::expand_vbox_alloc_node(VectorBoxAllocateNode* vbox_alloc,
                                                 false);
   Node* vec_field = kit.basic_plus_adr(vec_obj, field->offset_in_bytes());
   const TypePtr* vec_adr_type = vec_field->bottom_type()->is_ptr();
-  Node* field_store = gvn.transform(kit.access_store_at(kit.control(),
-                                                            vec_obj,
+  Node* field_store = gvn.transform(kit.access_store_at(vec_obj,
                                                             vec_field,
                                                             vec_adr_type,
                                                             arr,
