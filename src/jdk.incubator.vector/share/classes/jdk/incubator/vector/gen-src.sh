@@ -38,27 +38,27 @@ do
       fptype=float
       Fptype=Float
       Boxfptype=Float
-      args="$args -KintOrLong -KintOrFP -KintOrFloat"
+      args="$args -KintOrLong -KintOrFP -KintOrFloat -KintOrLongOrFP"
       ;;
     long)
       fptype=double
       Fptype=Double
       Boxfptype=Double
-      args="$args -KintOrLong"
+      args="$args -KintOrLong -KintOrLongOrFP"
       ;;
     float)
       kind=FP
       bitstype=int
       Bitstype=Int
       Boxbitstype=Integer
-      args="$args -KintOrFP -KintOrFloat"
+      args="$args -KintOrFP -KintOrFloat  -KintOrLongOrFP"
       ;;
     double)
       kind=FP
       bitstype=long
       Bitstype=Long
       Boxbitstype=Long
-      args="$args -KintOrFP"
+      args="$args -KintOrFP -KintOrLongOrFP"
       ;;
   esac
 
