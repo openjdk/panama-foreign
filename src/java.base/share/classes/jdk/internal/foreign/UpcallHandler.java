@@ -64,6 +64,8 @@ public class UpcallHandler {
         resolver.scanMethod(ficMethod);
         Function ftype = resolver.resolve(Util.functionof(c));
 
+        Util.checkCompatible(ficMethod, ftype);
+
         try {
             MethodHandle mh = MethodHandles.publicLookup().unreflect(ficMethod);
             Util.checkNoArrays(mh.type());

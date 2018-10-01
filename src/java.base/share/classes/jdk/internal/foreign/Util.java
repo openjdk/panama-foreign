@@ -131,6 +131,30 @@ public final class Util {
         return MethodType.methodType(method.getReturnType(), method.getParameterTypes());
     }
 
+    static boolean isCompatible(Method method, Function function) {
+        // same return kind (void or non-void)
+        boolean isNonVoidMethod = method.getReturnType() != void.class;
+        if (isNonVoidMethod != function.returnLayout().isPresent())  {
+            return false;
+        }
+
+        //same vararg-ness
+        if(method.isVarArgs() != function.isVariadic()) {
+            return false;
+        }
+
+        //same arity (take Java varargs array into account)
+        int expectedArity = function.argumentLayouts().size() + (function.isVariadic() ? 1 : 0);
+        return method.getParameterCount() == expectedArity;
+    }
+
+    static void checkCompatible(Method method, Function function) {
+        if (!isCompatible(method, function)) {
+            throw new IllegalArgumentException(
+                "Java method signature and native layout not compatible: " + method + " : " + function);
+        }
+    }
+
     public static boolean isCallback(Class<?> c) {
         return c.isAnnotationPresent(NativeCallback.class);
     }
