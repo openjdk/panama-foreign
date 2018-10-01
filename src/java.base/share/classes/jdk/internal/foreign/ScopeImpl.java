@@ -66,7 +66,7 @@ public abstract class ScopeImpl implements Scope {
         if (size > Integer.MAX_VALUE) {
             throw new UnsupportedOperationException("allocate size to large");
         } else if (size == 0) {
-            return Pointer.nullPointer();
+            return BoundedPointer.nullPointer();
         }
 
         return new BoundedPointer<>(type, allocateRegion(size));

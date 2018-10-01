@@ -40,9 +40,17 @@ import java.util.stream.StreamSupport;
 
 public class BoundedPointer<X> implements Pointer<X> {
 
+    private static final BoundedPointer<?> theNullPointer = new BoundedPointer<>(
+        LayoutTypeImpl.nullType, BoundedMemoryRegion.NOTHING, 0, 0);
+
     public static boolean isNull(long addr) {
         // FIMXE: Include the 64k?
         return addr == 0;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <Z> BoundedPointer<Z> nullPointer() {
+        return (BoundedPointer<Z>) theNullPointer;
     }
 
     public final BoundedMemoryRegion region;

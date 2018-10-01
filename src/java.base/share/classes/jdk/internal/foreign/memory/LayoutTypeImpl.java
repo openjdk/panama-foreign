@@ -32,19 +32,22 @@ import java.lang.invoke.MethodHandle;
 import java.foreign.layout.Address;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Sequence;
+import java.foreign.layout.Value;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 
 public class LayoutTypeImpl<X> implements LayoutType<X> {
 
-    private final Class<X> carrier;
+    static final LayoutTypeImpl<?> nullType = new LayoutTypeImpl<>(Void.class, Value.ofUnsignedInt(0), References.ofNull);
+
+    private final Class<?> carrier;
     private final Reference reference;
     private final Layout layout;
 
     private static long PTR_SIZE = SystemABI.getInstance().layoutFor(SystemABI.CType.Pointer).bitsSize();
 
-    LayoutTypeImpl(Class<X> carrier, Layout layout, Reference reference) {
+    LayoutTypeImpl(Class<?> carrier, Layout layout, Reference reference) {
         this.carrier = carrier;
         this.reference = reference;
         this.layout = layout;

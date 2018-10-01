@@ -27,6 +27,7 @@ package jdk.internal.foreign.memory;
 
 import jdk.internal.foreign.*;
 
+import java.foreign.NativeTypes;
 import java.foreign.layout.Sequence;
 import java.foreign.layout.Value;
 import java.foreign.layout.Value.Kind;
@@ -34,6 +35,7 @@ import java.foreign.memory.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.function.Supplier;
 
 /**
  * Helper class for references. Defines several reference subclasses, specialized in well-known Java carrier
@@ -223,7 +225,7 @@ public final class References {
         static Pointer<?> get(Pointer<?> pointer) {
             long addr = OfPrimitive.getLongBits(pointer);
             LayoutType<?> pointeeType = ((LayoutTypeImpl<?>)pointer.type()).pointeeType();
-            BoundedPointer<?> rp = addr == 0 ?
+            Pointer<?> rp = addr == 0 ?
                     Pointer.nullPointer() :
                     new BoundedPointer<>(pointeeType, new BoundedMemoryRegion(null, addr, Long.MAX_VALUE), 0);
             return rp;
@@ -345,7 +347,7 @@ public final class References {
         static Callback<?> get(Pointer<?> pointer) {
             long addr = OfPrimitive.getLongBits(pointer);
             Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).getFuncIntf();
-            BoundedPointer<?> rp = addr == 0 ?
+            Pointer<?> rp = addr == 0 ?
                     Pointer.nullPointer() :
                     BoundedPointer.createNativeVoidPointer(pointer.scope(), addr);
             return new CallbackImpl<>(rp, carrier);
@@ -357,6 +359,28 @@ public final class References {
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException("Access denied", iae);
             }
+        }
+    }
+
+    /**
+     * Reference that always throws (useful to model null/void pointers).
+     */
+    public static class OfGrumpy implements Reference {
+
+        Supplier<RuntimeException> exceptionFactory;
+
+        OfGrumpy(Supplier<RuntimeException> exceptionFactory) {
+            this.exceptionFactory = exceptionFactory;
+        }
+
+        @Override
+        public MethodHandle getter() {
+            throw exceptionFactory.get();
+        }
+
+        @Override
+        public MethodHandle setter() {
+            throw exceptionFactory.get();
         }
     }
 
@@ -406,17 +430,9 @@ public final class References {
 
     public static OfStruct ofStruct = new OfStruct();
 
-    public static Reference ofVoid = new Reference() {
-        @Override
-        public MethodHandle getter() {
-            throw new UnsupportedOperationException();
-        }
+    public static Reference ofVoid = new OfGrumpy(() -> new UnsupportedOperationException("Cannot dereference void"));
 
-        @Override
-        public MethodHandle setter() {
-            throw new UnsupportedOperationException();
-        }
-    };
+    public static Reference ofNull = new OfGrumpy(() -> new NullPointerException("Cannot dereference null"));
 
     public static OfFunction ofFunction = new OfFunction();
 }
