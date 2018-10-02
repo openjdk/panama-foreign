@@ -148,7 +148,7 @@ public final class Util {
         return method.getParameterCount() == expectedArity;
     }
 
-    static void checkCompatible(Method method, Function function) {
+    public static void checkCompatible(Method method, Function function) {
         if (!isCompatible(method, function)) {
             throw new IllegalArgumentException(
                 "Java method signature and native layout not compatible: " + method + " : " + function);
@@ -256,7 +256,7 @@ public final class Util {
         }
     }
 
-    static Class<?> erasure(Type type) {
+    public static Class<?> erasure(Type type) {
         if (type instanceof ParameterizedType) {
             return (Class<?>)((ParameterizedType)type).getRawType();
         } else if (type instanceof GenericArrayType) {

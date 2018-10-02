@@ -24,7 +24,10 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.invokers.NativeInvoker;
+import jdk.internal.foreign.invokers.UpcallHandler;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
+import jdk.internal.org.objectweb.asm.FieldVisitor;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
 
@@ -36,6 +39,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.foreign.Scope;
 import java.foreign.layout.Function;
 import java.foreign.memory.Pointer;
 
@@ -46,18 +50,17 @@ class CallbackImplGenerator extends BinderClassGenerator {
 
     // name of pointer field
     private static final String POINTER_FIELD_NAME = "ptr";
+    private static final String MH_FIELD_NAME = "mh";
     private static final MethodHandle PTR_ADDR;
-    private static final MethodHandle ADR_IS_STUB;
-    private static final MethodHandle ADR_GET_CALLBACK_OBJ;
+    private static final MethodHandle INVOKER_FACTORY;
+    private static final String STABLE_SIG = "Ljdk/internal/vm/annotation/Stable;";
 
     static {
         try {
             PTR_ADDR = MethodHandles.lookup().findVirtual(Pointer.class, "addr",
-                    MethodType.methodType(long.class));
-            ADR_IS_STUB = MethodHandles.lookup().findStatic(CallbackImplGenerator.class, "isNativeStub",
-                    MethodType.methodType(boolean.class, long.class));
-            ADR_GET_CALLBACK_OBJ = MethodHandles.lookup().findStatic(CallbackImplGenerator.class, "getCallbackObject",
-                    MethodType.methodType(Object.class, long.class));
+                           MethodType.methodType(long.class));
+            INVOKER_FACTORY = MethodHandles.lookup().findStatic(CallbackImplGenerator.class, "makeInvoker",
+                    MethodType.methodType(MethodHandle.class, Pointer.class, Function.class, MethodType.class, Method.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -72,12 +75,19 @@ class CallbackImplGenerator extends BinderClassGenerator {
         AnnotationVisitor av = cw.visitAnnotation(Type.getDescriptor(SyntheticCallback.class), true);
         av.visitEnd();
         generatePointerField(cw);
+        generateMethodHandleField(cw);
         generatePointerGetter(cw);
         super.generateMembers(cw);
     }
 
     private void generatePointerField(BinderClassWriter cw) {
         cw.visitField(ACC_PRIVATE | ACC_FINAL, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class), null, null);
+    }
+
+    private void generateMethodHandleField(BinderClassWriter cw) {
+        FieldVisitor fv = cw.visitField(ACC_PRIVATE | ACC_FINAL, MH_FIELD_NAME, Type.getDescriptor(MethodHandle.class), null, null);
+        fv.visitAnnotation(STABLE_SIG, true);
+        fv.visitEnd();
     }
 
     @Override
@@ -98,6 +108,23 @@ class CallbackImplGenerator extends BinderClassGenerator {
         mv.visitVarInsn(ALOAD, 1);
         mv.visitFieldInsn(PUTFIELD, implClassName, POINTER_FIELD_NAME, Type.getDescriptor(Pointer.class));
 
+        mv.visitVarInsn(ALOAD, 0);
+
+        Method method = Util.findFunctionalInterfaceMethod(interfaces[0]);
+        MethodType methodType = Util.methodTypeFor(method);
+        Function function = Util.functionof(interfaces[0]);
+
+        MethodHandle factory = MethodHandles.insertArguments(INVOKER_FACTORY, 1, function, methodType, method);
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(factory));
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+
+        mv.visitVarInsn(ALOAD, 1);
+
+        mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
+                factory.type().toMethodDescriptorString(), false);
+
+        mv.visitFieldInsn(PUTFIELD, implClassName, MH_FIELD_NAME, Type.getDescriptor(MethodHandle.class));
+
         mv.visitInsn(RETURN);
 
         mv.visitMaxs(0, 0);
@@ -106,22 +133,8 @@ class CallbackImplGenerator extends BinderClassGenerator {
 
     @Override
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
-        generateFunctionMethod(cw, method);
-    }
-
-    void generateFunctionMethod(BinderClassWriter cw, Method method) {
-        Function function = Util.functionof(interfaces[0]);
-        try {
-            MethodHandle javaInvoker = MethodHandles.publicLookup().unreflect(method);
-            MethodHandle pointerFilter = ADR_GET_CALLBACK_OBJ.asType(ADR_GET_CALLBACK_OBJ.type().changeReturnType(interfaces[0]));
-            NativeInvoker nativeInvoker = new NativeInvoker(layoutResolver.resolve(function), method);
-            MethodHandle callback_invoker = MethodHandles.guardWithTest(ADR_IS_STUB,
-                    MethodHandles.filterArguments(javaInvoker, 0, pointerFilter),
-                    nativeInvoker.getBoundMethodHandle());
-            addMethodFromHandle(cw, method.getName(), nativeInvoker.type(), method.isVarArgs(), callback_invoker, mv -> getPtrAddress(cw, mv));
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException(e);
-        }
+        MethodType methodType = Util.methodTypeFor(method);
+        addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), mv -> loadReceiver(cw, mv));
     }
 
     private void generatePointerGetter(BinderClassWriter cw) {
@@ -134,7 +147,9 @@ class CallbackImplGenerator extends BinderClassGenerator {
         mv.visitEnd();
     }
 
-    void getPtrAddress(BinderClassWriter cw, MethodVisitor mv) {
+    void loadReceiver(BinderClassWriter cw, MethodVisitor mv) {
+        //1. check that pointer is still alive
+
         //load MH
         mv.visitLdcInsn(cw.makeConstantPoolPatch(PTR_ADDR));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
@@ -144,13 +159,18 @@ class CallbackImplGenerator extends BinderClassGenerator {
         //call MH
         mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
                 PTR_ADDR.type().toMethodDescriptorString(), false);
+        mv.visitInsn(POP2);
+
+        //2. load invoker mh
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, implClassName, MH_FIELD_NAME, Type.getDescriptor(MethodHandle.class));
     }
 
     /* Method handle code helpers */
 
     static boolean isNativeStub(long addr) {
         try {
-            return NativeInvoker.getUpcallHandler(addr) != null;
+            return UpcallHandler.getUpcallHandler(addr) != null;
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -158,9 +178,24 @@ class CallbackImplGenerator extends BinderClassGenerator {
 
     static Object getCallbackObject(long addr) {
         try {
-            return NativeInvoker.getUpcallHandler(addr).getCallbackObject();
+            return UpcallHandler.getUpcallHandler(addr).getCallbackObject();
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
+        }
+    }
+
+    static void checkPointer(Pointer<?> ptr) throws Throwable {
+        Scope s = ptr.scope();
+        s.checkAlive();
+    }
+
+    static MethodHandle makeInvoker(Pointer<?> ptr, Function function, MethodType mt, Method meth) throws Throwable {
+        long addr = ptr.addr();
+        if (isNativeStub(addr)) {
+            MethodHandle mh = MethodHandles.publicLookup().unreflect(meth);
+            return mh.bindTo(getCallbackObject(addr));
+        } else {
+            return NativeInvoker.of(ptr.addr(), function, mt, meth).getBoundMethodHandle();
         }
     }
 

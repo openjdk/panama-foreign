@@ -22,6 +22,7 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.invokers.NativeInvoker;
 import jdk.internal.foreign.memory.BoundedMemoryRegion;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
@@ -125,12 +126,12 @@ class HeaderImplGenerator extends BinderClassGenerator {
     }
 
     void generateFunctionMethod(BinderClassWriter cw, Method method, FunctionInfo info) {
+        MethodType methodType = Util.methodTypeFor(method);
         Function function = info.descriptor;
         try {
-            NativeInvoker invoker = new NativeInvoker(layoutResolver.resolve(function), method);
             long addr = lookup.lookup(info.symbolName).getAddress().addr();
-            addMethodFromHandle(cw, method.getName(), invoker.type(), method.isVarArgs(), invoker.getBoundMethodHandle(),
-                mv -> mv.visitLdcInsn(addr));
+            NativeInvoker nativeInvoker = NativeInvoker.of(addr, layoutResolver.resolve(function), methodType, method);
+            addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), nativeInvoker.getBoundMethodHandle());
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
@@ -174,6 +175,6 @@ class HeaderImplGenerator extends BinderClassGenerator {
                 throw new InternalError("Unexpected access method type: " + kind);
         }
 
-        addMethodFromHandle(cw, methodName, kind.getMethodType(c), false, target, mv -> {});
+        addMethodFromHandle(cw, methodName, kind.getMethodType(c), false, target);
     }
 }
