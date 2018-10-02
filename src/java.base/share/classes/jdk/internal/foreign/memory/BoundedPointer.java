@@ -183,8 +183,8 @@ public class BoundedPointer<X> implements Pointer<X> {
         return new BoundedPointer<>(NativeTypes.VOID, new BoundedMemoryRegion(offset, Long.MAX_VALUE, mode, scope));
     }
 
-    public static BoundedPointer<Long> fromLongArray(long[] values) {
-        return new BoundedPointer<>(NativeTypes.UINT64,
+    public static <Z> BoundedPointer<Z> fromLongArray(LayoutType<Z> type, long[] values) {
+        return new BoundedPointer<>(type,
                         new BoundedMemoryRegion(values, Util.LONG_ARRAY_BASE, values.length * Util.LONG_ARRAY_SCALE), 0);
     }
 

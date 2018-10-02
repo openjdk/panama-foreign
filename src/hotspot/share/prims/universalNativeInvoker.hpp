@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,11 +19,10 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef SHARE_VM_PRIMS_NATIVEINVOKER_HPP
-#define SHARE_VM_PRIMS_NATIVEINVOKER_HPP
+#ifndef SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP
+#define SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP
 
 #include "classfile/javaClasses.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -31,6 +30,7 @@
 #include "runtime/frame.inline.hpp"
 #include "runtime/globals.hpp"
 #include "utilities/macros.hpp"
+#include CPU_HEADER(foreign_globals)
 
 #ifdef ZERO
 # include "entry_zero.hpp"
@@ -40,24 +40,21 @@
 class MacroAssembler;
 class Label;
 
-class NativeInvoker: AllStatic {
+class UniversalNativeInvoker: AllStatic {
 
 private:
    // Native invoker code
   static BufferBlob* _invoke_native_blob;
 
 public:
-  static address generate_upcall_stub(Handle& rec);
-  static void free_upcall_stub(char *addr);
   static void invoke_native(arrayHandle recipe, arrayHandle args, arrayHandle rets, address code, JavaThread* thread);
   // Generate invoke native stub
   static void generate_invoke_native(MacroAssembler* masm);
   static address invoke_native_address() {
       return _invoke_native_blob->code_begin();
   }
-  static jobject get_upcall_handler(char *addr);
 
   static void generate_adapter();
 };
 
-#endif // SHARE_VM_PRIMS_NATIVEINVOKER_HPP
+#endif // SHARE_VM_PRIMS_UNIVERSALNATIVEINVOKER_HPP

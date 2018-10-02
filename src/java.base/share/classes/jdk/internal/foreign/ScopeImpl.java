@@ -26,6 +26,7 @@
 package jdk.internal.foreign;
 
 import jdk.internal.foreign.CallbackImplGenerator.SyntheticCallback;
+import jdk.internal.foreign.invokers.UpcallHandler;
 import jdk.internal.foreign.memory.BoundedArray;
 import jdk.internal.foreign.memory.BoundedMemoryRegion;
 import jdk.internal.foreign.memory.BoundedPointer;
@@ -221,7 +222,7 @@ public abstract class ScopeImpl implements Scope {
                         throw new IllegalArgumentException("Attempting to re-allocate callback from different scope");
                     }
                 } else {
-                    UpcallHandler handler = new UpcallHandler(funcIntfClass, funcIntfInstance);
+                    UpcallHandler handler = UpcallHandler.of(funcIntfClass, funcIntfInstance);
                     stubs.add(handler);
                     ptr = BoundedPointer.createNativeVoidPointer(this, handler.getNativeEntryPoint());
                 }

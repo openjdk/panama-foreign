@@ -1,8 +1,8 @@
 package jdk.internal.foreign.memory;
 
 import jdk.internal.foreign.LibrariesHelper;
-import jdk.internal.foreign.NativeInvoker;
-import jdk.internal.foreign.UpcallHandler;
+import jdk.internal.foreign.invokers.NativeInvoker;
+import jdk.internal.foreign.invokers.UpcallHandler;
 
 import java.foreign.memory.Callback;
 import java.foreign.memory.Pointer;
@@ -28,7 +28,7 @@ public class CallbackImpl<X> implements Callback<X> {
         try {
             entryPoint().scope().checkAlive();
             long addr = entryPoint().addr();
-            UpcallHandler handler = NativeInvoker.getUpcallHandler(addr);
+            UpcallHandler handler = UpcallHandler.getUpcallHandler(addr);
             if (handler != null) {
                 //shortcut - this comes from Java code!
                 return (X)handler.getCallbackObject();

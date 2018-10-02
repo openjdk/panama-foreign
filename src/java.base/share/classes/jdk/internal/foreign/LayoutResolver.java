@@ -119,7 +119,7 @@ public final class LayoutResolver {
         });
     }
 
-    void scanMethod(Method m) {
+    public void scanMethod(Method m) {
         Stream.of(m.getGenericParameterTypes()).forEach(this::scanType);
         scanType(m.getGenericReturnType());
     }

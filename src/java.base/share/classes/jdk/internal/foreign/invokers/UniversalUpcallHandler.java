@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,98 +20,72 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign;
 
+package jdk.internal.foreign.invokers;
+
+import jdk.internal.foreign.Util;
 import jdk.internal.foreign.abi.ArgumentBinding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.Storage;
-import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.abi.sysv.x64.Constants;
-import jdk.internal.foreign.memory.*;
+import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.vm.annotation.Stable;
 
+import java.foreign.NativeTypes;
+import java.foreign.layout.Function;
+import java.foreign.layout.Layout;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
-import java.foreign.NativeTypes;
-import java.foreign.Scope;
-import java.foreign.layout.Function;
-import java.foreign.layout.Layout;
-import java.foreign.memory.*;
-import java.foreign.memory.Pointer;
 import java.util.List;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
-public class UpcallHandler {
+/**
+ * This class implements upcall invocation from native code through a so called 'universal adapter'. A universal upcall adapter
+ * takes an array of storage pointers, which describes the state of the CPU at the time of the upcall. This can be used
+ * by the Java code to fetch the upcall arguments and to store the results to the desired location, as per system ABI.
+ */
+public class UniversalUpcallHandler extends UpcallHandler {
 
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG"));
 
-    private final Object receiver;
-    private final long entryPoint;
+    @Stable
     private final MethodHandle mh;
-    private final CallingSequence callingSequence;
+
     private final LayoutType<?> returnLayout;
     private final LayoutType<?>[] argLayouts;
 
-    public UpcallHandler(Class<?> c, Object receiver) {
-        if (!Util.isCallback(c)) {
-            throw new IllegalArgumentException("Class is not a @FunctionalInterface: " + c.getName());
-        }
-
-        Method ficMethod = Util.findFunctionalInterfaceMethod(c);
-        LayoutResolver resolver = LayoutResolver.get(c);
-        resolver.scanMethod(ficMethod);
-        Function ftype = resolver.resolve(Util.functionof(c));
-
-        Util.checkCompatible(ficMethod, ftype);
+    public UniversalUpcallHandler(CallingSequence callingSequence, Method fiMethod, Function function, Object receiver) {
+        super(callingSequence, fiMethod, function, receiver, UniversalUpcallHandler::allocateUpcallStub);
 
         try {
-            MethodHandle mh = MethodHandles.publicLookup().unreflect(ficMethod);
+            MethodHandle mh = MethodHandles.publicLookup().unreflect(fiMethod);
             Util.checkNoArrays(mh.type());
-            this.mh = mh.asSpreader(Object[].class, ftype.argumentLayouts().size());
+            this.mh = mh.asSpreader(Object[].class, function.argumentLayouts().size());
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
 
-        this.callingSequence = SystemABI.getInstance().arrangeCall(ftype);
-        if (ftype.returnLayout().isPresent()) {
-            returnLayout = Util.makeType(ficMethod.getGenericReturnType(), ftype.returnLayout().get());
+        if (function.returnLayout().isPresent()) {
+            returnLayout = Util.makeType(fiMethod.getGenericReturnType(), function.returnLayout().get());
         } else {
             returnLayout = null;
         }
-        List<Layout> args = ftype.argumentLayouts();
+        List<Layout> args = function.argumentLayouts();
         argLayouts = new LayoutType<?>[args.size()];
         for (int i = 0 ; i < args.size() ; i++) {
-            argLayouts[i] = Util.makeType(ficMethod.getGenericParameterTypes()[i], args.get(i));
+            argLayouts[i] = Util.makeType(fiMethod.getGenericParameterTypes()[i], args.get(i));
         }
-        this.receiver = receiver;
-        this.entryPoint = NativeInvoker.allocateUpcallStub(this);
     }
 
-    public static void invoke(UpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
-        if (DEBUG) {
-            System.err.println("UpcallHandler.invoke(" + handler + ", ...)");
-        }
-
+    public static void invoke(UniversalUpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
         UpcallContext context = handler.new UpcallContext(integers, vectors, stack, integerReturn, vectorReturn);
         handler.invoke(context);
-    }
-
-    public long getNativeEntryPoint() {
-        return entryPoint;
-    }
-
-    public Object getCallbackObject() {
-        return receiver;
-    }
-
-    public void free() {
-        try {
-            NativeInvoker.freeUpcallStub(entryPoint);
-        } catch (Throwable ex) {
-            throw new IllegalStateException(ex);
-        }
     }
 
     class UpcallContext {
@@ -169,14 +143,14 @@ public class UpcallHandler {
 
             Object[] args = new Object[argLayouts.length];
             for (int i = 0 ; i < argLayouts.length ; i++) {
-                args[i] = NativeInvoker.boxValue(argLayouts[i], context::getPtr, callingSequence.getArgumentBindings(i));
+                args[i] = UniversalNativeInvoker.boxValue(argLayouts[i], context::getPtr, callingSequence.getArgumentBindings(i));
             }
 
             Object o = mh.invoke(receiver, args);
 
             if (mh.type().returnType() != void.class) {
                 if (!callingSequence.returnsInMemory()) {
-                    NativeInvoker.unboxValue(o, returnLayout, context::getPtr,
+                    UniversalNativeInvoker.unboxValue(o, returnLayout, context::getPtr,
                             callingSequence.getReturnBindings());
                 } else {
                     context.inMemoryPtr().set(o);
@@ -185,5 +159,12 @@ public class UpcallHandler {
         } catch (Throwable t) {
             throw new IllegalStateException(t);
         }
+    }
+
+    static native long allocateUpcallStub(UpcallHandler handler);
+
+    private static native void registerNatives();
+    static {
+        registerNatives();
     }
 }

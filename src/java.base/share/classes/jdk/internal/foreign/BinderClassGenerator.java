@@ -159,8 +159,14 @@ abstract class BinderClassGenerator {
 
     // code generation helpers
 
-    void addMethodFromHandle(BinderClassWriter cw, String methodName, MethodType methodType, boolean isVarArgs, MethodHandle targetMethodHandle,
-                                     Consumer<MethodVisitor> preArgs) {
+    void addMethodFromHandle(BinderClassWriter cw, String methodName, MethodType methodType, boolean isVarArgs, MethodHandle targetMethodHandle) {
+        addMethodFromHandle(cw, methodName, methodType, isVarArgs, mv -> {
+                mv.visitLdcInsn(cw.makeConstantPoolPatch(targetMethodHandle));
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
+        });
+    }
+
+    void addMethodFromHandle(BinderClassWriter cw, String methodName, MethodType methodType, boolean isVarArgs, Consumer<MethodVisitor> receiverBuilder) {
         String descriptor = methodType.toMethodDescriptorString();
 
         int flags = ACC_PUBLIC;
@@ -172,11 +178,7 @@ abstract class BinderClassGenerator {
 
         mv.visitCode();
 
-        // push the method handle
-        mv.visitLdcInsn(cw.makeConstantPoolPatch(targetMethodHandle));
-        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
-
-        preArgs.accept(mv);
+        receiverBuilder.accept(mv);
 
         //copy arguments
         for (int i = 0, curSlot = 1; i < methodType.parameterCount(); i++) {
@@ -187,7 +189,7 @@ abstract class BinderClassGenerator {
 
         //call MH
         mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(MethodHandle.class), "invokeExact",
-                targetMethodHandle.type().toMethodDescriptorString(), false);
+                methodType.toMethodDescriptorString(), false);
 
         mv.visitInsn(returnInsn(methodType.returnType()));
 
