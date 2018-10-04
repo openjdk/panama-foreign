@@ -41,7 +41,6 @@ import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
-import jdk.internal.foreign.memory.Types;
 
 /**
  * General Layout utility functions
@@ -121,6 +120,39 @@ public final class LayoutUtils {
             return Function.ofVoid(t.isVariadic(), args);
         } else {
             return Function.of(getLayout(t.resultType()), t.isVariadic(), args);
+        }
+    }
+
+    static class Types {
+        public final static Layout BYTE = Value.ofSignedInt(8);
+        public final static Layout SHORT = Value.ofSignedInt(16);
+        public final static Layout INT = Value.ofSignedInt(32);
+        public final static Layout LONG = Value.ofSignedInt(64);
+        public final static Layout LONG_LONG = Value.ofSignedInt(64);
+        public final static Layout FLOAT = Value.ofFloatingPoint(32);
+        public final static Layout DOUBLE = Value.ofFloatingPoint(64);
+        public final static Layout LONG_DOUBLE = Value.ofFloatingPoint(128);
+        public final static Layout CHAR = Value.ofSignedInt(8);
+        public final static Layout BOOLEAN = Value.ofUnsignedInt(8);
+        public final static Layout POINTER = Address.ofVoid(64);
+        public final static Layout INT8 = Value.ofSignedInt(8);
+        public final static Layout INT16 = Value.ofSignedInt(16);
+        public final static Layout INT32 = Value.ofSignedInt(32);
+        public final static Layout INT64 = Value.ofSignedInt(64);
+        public final static Layout INT128 = Value.ofSignedInt(128);
+        public final static Layout VOID = Value.ofUnsignedInt(0);
+
+        public static class UNSIGNED {
+            public final static Layout BYTE = Value.ofUnsignedInt(8);
+            public final static Layout SHORT = Value.ofUnsignedInt(16);
+            public final static Layout INT = Value.ofUnsignedInt(32);
+            public final static Layout LONG = Value.ofUnsignedInt(64);
+            public final static Layout LONG_LONG = Value.ofUnsignedInt(64);
+            public final static Layout INT8 = Value.ofUnsignedInt(8);
+            public final static Layout INT16 = Value.ofUnsignedInt(16);
+            public final static Layout INT32 = Value.ofUnsignedInt(32);
+            public final static Layout INT64 = Value.ofUnsignedInt(64);
+            public final static Layout INT128 = Value.ofUnsignedInt(128);
         }
     }
 

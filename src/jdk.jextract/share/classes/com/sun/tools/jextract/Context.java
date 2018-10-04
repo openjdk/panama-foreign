@@ -23,7 +23,6 @@
 package com.sun.tools.jextract;
 
 import jdk.internal.clang.*;
-import jdk.internal.foreign.LibrariesHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -32,15 +31,19 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.foreign.Library;
+import java.foreign.Libraries;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -141,9 +144,40 @@ public final class Context {
         excludeSymbols.add(Pattern.compile(pattern));
     }
 
+    // return the absolute path of the library of given name by searching
+    // in the given array of paths.
+    private static Optional<Path> findLibraryPath(Path[] paths, String libName) {
+         return Arrays.stream(paths).
+              map(p -> p.resolve(System.mapLibraryName(libName))).
+              filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
+    }
+
+    /*
+     * Load the specified shared libraries from the specified paths.
+     *
+     * @param lookup Lookup object of the caller.
+     * @param pathStrs array of paths to load the shared libraries from.
+     * @param names array of shared library names.
+     */
+    // used by jextract tool to load libraries for symbol checks.
+    public static Library[] loadLibraries(Lookup lookup, String[] pathStrs, String[] names) {
+        if (pathStrs == null || pathStrs.length == 0) {
+            return Arrays.stream(names).map(
+                name -> Libraries.loadLibrary(lookup, name)).toArray(Library[]::new);
+        } else {
+            Path[] paths = Arrays.stream(pathStrs).map(Paths::get).toArray(Path[]::new);
+            return Arrays.stream(names).map(libName -> {
+                Optional<Path> absPath = findLibraryPath(paths, libName);
+                return absPath.isPresent() ?
+                    Libraries.load(lookup, absPath.get().toString()) :
+                    Libraries.loadLibrary(lookup, libName);
+            }).toArray(Library[]::new);
+        }
+    }
+
     private void initSymChecker() {
         if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
-            Library[] libs = LibrariesHelper.loadLibraries(MethodHandles.lookup(),
+            Library[] libs = loadLibraries(MethodHandles.lookup(),
                 linkCheckPaths.toArray(new String[0]),
                 libraryNames.toArray(new String[0]));
 

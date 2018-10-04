@@ -38,7 +38,6 @@ import java.util.stream.Stream;
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
-import jdk.internal.foreign.Util;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
@@ -533,7 +532,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
             return null; // added already
         }
         logger.fine(() -> "Adding macro " + name);
-        Class<?> macroType = (Class<?>) Util.unboxIfNeeded(value.getClass());
+        Class<?> macroType = Utils.unboxIfNeeded(value.getClass());
 
         String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(macroType));
         MethodVisitor mv = global_cw.visitMethod(ACC_PUBLIC, name, sig, sig, null);

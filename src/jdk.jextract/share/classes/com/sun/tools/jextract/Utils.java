@@ -208,4 +208,28 @@ public class Utils {
     public static Function getFunction(Type type) {
         return LayoutUtils.getFunction(type);
     }
+
+    public static Class<?> unboxIfNeeded(Class<?> clazz) {
+        if (clazz == Boolean.class) {
+            return boolean.class;
+        } else if (clazz == Void.class) {
+            return void.class;
+        } else if (clazz == Byte.class) {
+            return byte.class;
+        } else if (clazz == Character.class) {
+            return char.class;
+        } else if (clazz == Short.class) {
+            return short.class;
+        } else if (clazz == Integer.class) {
+            return int.class;
+        } else if (clazz == Long.class) {
+            return long.class;
+        } else if (clazz == Float.class) {
+            return float.class;
+        } else if (clazz == Double.class) {
+            return double.class;
+        } else {
+            return clazz;
+        }
+    }
 }

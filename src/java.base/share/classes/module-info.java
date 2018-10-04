@@ -152,10 +152,6 @@ module java.base {
         jdk.jlink;
     exports jdk.internal.logger to
         java.logging;
-    exports jdk.internal.foreign to
-        jdk.jextract;
-    exports jdk.internal.foreign.memory to
-        jdk.jextract;
     exports jdk.internal.org.objectweb.asm to
         jdk.jartool,
         jdk.jfr,
