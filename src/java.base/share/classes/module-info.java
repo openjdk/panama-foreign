@@ -237,7 +237,6 @@ module java.base {
         jdk.jconsole,
         java.net.http;
     exports sun.net.www to
-        java.desktop,
         java.net.http,
         jdk.jartool;
     exports sun.net.www.protocol.http to
