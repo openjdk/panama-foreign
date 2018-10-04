@@ -1307,7 +1307,6 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
      */
     public abstract $abstractvectortype$<S> not(Mask<$Boxtype$, S> m);
 
-#if[intOrLong]
 /*
 @@@ Check the shift operations against the JLS definition and vector
     instructions.
@@ -1344,6 +1343,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return uOp(m, (i, a) -> ($type$) (a << s));
     }
 
+#if[intOrLong]
     /**
      * Logically left shifts this vector by an input vector.
      * <p>
@@ -1371,6 +1371,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public $abstractvectortype$<S> shiftL(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
         return bOp(v, m, (i, a, b) -> ($type$) (a << b));
     }
+#end[intOrLong]
 
     // logical, or unsigned, shift right
 
@@ -1403,6 +1404,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return uOp(m, (i, a) -> ($type$) (a >>> s));
     }
 
+#if[intOrLong]
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
      * input vector.
@@ -1431,6 +1433,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
     public $abstractvectortype$<S> shiftR(Vector<$Boxtype$,S> v, Mask<$Boxtype$, S> m) {
         return bOp(v, m, (i, a, b) -> ($type$) (a >>> b));
     }
+#end[intOrLong]
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -1462,6 +1465,7 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
         return uOp(m, (i, a) -> ($type$) (a >> s));
     }
 
+#if[intOrLong]
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
      * input vector.

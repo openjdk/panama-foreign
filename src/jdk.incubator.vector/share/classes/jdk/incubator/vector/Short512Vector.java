@@ -444,6 +444,32 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         return blend(xor(v), m);
     }
 
+   public Short512Vector shiftL(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] << s);
+       }
+       return new Short512Vector(res);
+   }
+
+   public Short512Vector shiftR(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] >>> s);
+       }
+       return new Short512Vector(res);
+   }
+
+   public Short512Vector aShiftR(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] >> s);
+       }
+       return new Short512Vector(res);
+   }
     // Ternary operations
 
 

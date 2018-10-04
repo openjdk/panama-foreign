@@ -443,6 +443,32 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         return blend(xor(v), m);
     }
 
+   public Byte128Vector shiftL(int s) {
+       byte[] vec = getElements();
+       byte[] res = new byte[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (byte)(vec[i] << s);
+       }
+       return new Byte128Vector(res);
+   }
+
+   public Byte128Vector shiftR(int s) {
+       byte[] vec = getElements();
+       byte[] res = new byte[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (byte)(vec[i] >>> s);
+       }
+       return new Byte128Vector(res);
+   }
+
+   public Byte128Vector aShiftR(int s) {
+       byte[] vec = getElements();
+       byte[] res = new byte[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (byte)(vec[i] >> s);
+       }
+       return new Byte128Vector(res);
+   }
     // Ternary operations
 
 

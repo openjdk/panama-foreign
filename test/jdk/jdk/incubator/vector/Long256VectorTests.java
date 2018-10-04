@@ -754,6 +754,9 @@ public class Long256VectorTests extends AbstractVectorTest {
     }
 
 
+    static long aShiftR_unary(long a, long b) {
+        return (long)((a >> b));
+    }
 
     @Test(dataProvider = "longBinaryOpProvider")
     static void aShiftRLong256VectorTestsShift(IntFunction<long[]> fa, IntFunction<long[]> fb) {
@@ -768,7 +771,7 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertShiftArraysEquals(a, b, r, Long256VectorTests::aShiftR);
+        assertShiftArraysEquals(a, b, r, Long256VectorTests::aShiftR_unary);
     }
 
 
@@ -789,10 +792,13 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertShiftArraysEquals(a, b, r, mask, Long256VectorTests::aShiftR);
+        assertShiftArraysEquals(a, b, r, mask, Long256VectorTests::aShiftR_unary);
     }
 
 
+    static long shiftR_unary(long a, long b) {
+        return (long)((a >>> b));
+    }
 
     @Test(dataProvider = "longBinaryOpProvider")
     static void shiftRLong256VectorTestsShift(IntFunction<long[]> fa, IntFunction<long[]> fb) {
@@ -807,7 +813,7 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertShiftArraysEquals(a, b, r, Long256VectorTests::shiftR);
+        assertShiftArraysEquals(a, b, r, Long256VectorTests::shiftR_unary);
     }
 
 
@@ -828,10 +834,13 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertShiftArraysEquals(a, b, r, mask, Long256VectorTests::shiftR);
+        assertShiftArraysEquals(a, b, r, mask, Long256VectorTests::shiftR_unary);
     }
 
 
+    static long shiftL_unary(long a, long b) {
+        return (long)((a << b));
+    }
 
     @Test(dataProvider = "longBinaryOpProvider")
     static void shiftLLong256VectorTestsShift(IntFunction<long[]> fa, IntFunction<long[]> fb) {
@@ -846,7 +855,7 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertShiftArraysEquals(a, b, r, Long256VectorTests::shiftL);
+        assertShiftArraysEquals(a, b, r, Long256VectorTests::shiftL_unary);
     }
 
 
@@ -867,7 +876,7 @@ public class Long256VectorTests extends AbstractVectorTest {
             }
         }
 
-        assertShiftArraysEquals(a, b, r, mask, Long256VectorTests::shiftL);
+        assertShiftArraysEquals(a, b, r, mask, Long256VectorTests::shiftL_unary);
     }
 
     static long max(long a, long b) {

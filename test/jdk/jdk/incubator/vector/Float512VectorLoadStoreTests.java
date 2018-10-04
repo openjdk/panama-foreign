@@ -219,65 +219,6 @@ public class Float512VectorLoadStoreTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask);
     }
 
-    @Test(dataProvider = "floatIndexMapProvider")
-    static void loadStoreIndexMapArray(IntFunction<float[]> fa,
-                                       IntFunction<int[]> fim) {
-        float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
-        int[] im = fim.apply(a.length);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Shapes.S512Bit> av = SPECIES.fromArray(a, 0, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-
-// @@@ Stores are a little harder to test as it is not a linear
-// transformation of the index, input array and index map
-// Elements may be stored in the result array more than once at the same index
-/*
-        r = new float[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-*/
-    }
-
-    @Test(dataProvider = "floatIndexMapMaskProvider")
-    static void loadStoreIndexMapMaskArray(IntFunction<float[]> fa,
-                                           IntFunction<int[]> fim,
-                                           IntFunction<boolean[]> fm) {
-        float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
-        int[] im = fim.apply(a.length);
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Shapes.S512Bit> av = SPECIES.fromArray(a, 0, vmask, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-
-/*
-        r = new float[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, vmask, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-*/
-    }
 
     @Test(dataProvider = "floatByteBufferProvider")
     static void loadStoreByteBuffer(IntFunction<float[]> fa,

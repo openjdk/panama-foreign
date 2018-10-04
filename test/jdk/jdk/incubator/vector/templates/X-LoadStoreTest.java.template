@@ -221,6 +221,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         assertArraysEquals(a, r, mask);
     }
 
+#if[intOrLongOrFP]
     @Test(dataProvider = "$type$IndexMapProvider")
     static void loadStoreIndexMapArray(IntFunction<$type$[]> fa,
                                        IntFunction<int[]> fim) {
@@ -280,6 +281,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         assertArraysEquals(a, r, im, mask);
 */
     }
+#end[intOrLongOrFP]
 
     @Test(dataProvider = "$type$ByteBufferProvider")
     static void loadStoreByteBuffer(IntFunction<$type$[]> fa,

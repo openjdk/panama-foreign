@@ -718,6 +718,34 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     }
 #end[BITWISE]
 
+#if[byteOrShort]
+   public $vectortype$ shiftL(int s) {
+       $type$[] vec = getElements();
+       $type$[] res = new $type$[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = ($type$)(vec[i] << s);
+       }
+       return new $vectortype$(res);
+   }
+
+   public $vectortype$ shiftR(int s) {
+       $type$[] vec = getElements();
+       $type$[] res = new $type$[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = ($type$)(vec[i] >>> s);
+       }
+       return new $vectortype$(res);
+   }
+
+   public $vectortype$ aShiftR(int s) {
+       $type$[] vec = getElements();
+       $type$[] res = new $type$[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = ($type$)(vec[i] >> s);
+       }
+       return new $vectortype$(res);
+   }
+#end[byteOrShort]
 #if[intOrLong]
     @Override
     @ForceInline

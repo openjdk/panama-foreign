@@ -628,10 +628,130 @@ public class Short64VectorTests extends AbstractVectorTest {
 
 
 
+    static short aShiftR_unary(short a, short b) {
+        return (short)((a >> b));
+    }
+
+    @Test(dataProvider = "shortBinaryOpProvider")
+    static void aShiftRShort64VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
+        short[] a = fa.apply(SPECIES.length()); 
+        short[] b = fb.apply(SPECIES.length()); 
+        short[] r = new short[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.aShiftR((int)b[i]).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, Short64VectorTests::aShiftR_unary);
+    }
 
 
 
+    @Test(dataProvider = "shortBinaryOpMaskProvider")
+    static void aShiftRShort64VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
 
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.aShiftR((int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, mask, Short64VectorTests::aShiftR_unary);
+    }
+
+
+    static short shiftR_unary(short a, short b) {
+        return (short)((a >>> b));
+    }
+
+    @Test(dataProvider = "shortBinaryOpProvider")
+    static void shiftRShort64VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
+        short[] a = fa.apply(SPECIES.length()); 
+        short[] b = fb.apply(SPECIES.length()); 
+        short[] r = new short[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.shiftR((int)b[i]).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, Short64VectorTests::shiftR_unary);
+    }
+
+
+
+    @Test(dataProvider = "shortBinaryOpMaskProvider")
+    static void shiftRShort64VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.shiftR((int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, mask, Short64VectorTests::shiftR_unary);
+    }
+
+
+    static short shiftL_unary(short a, short b) {
+        return (short)((a << b));
+    }
+
+    @Test(dataProvider = "shortBinaryOpProvider")
+    static void shiftLShort64VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
+        short[] a = fa.apply(SPECIES.length()); 
+        short[] b = fb.apply(SPECIES.length()); 
+        short[] r = new short[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.shiftL((int)b[i]).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, Short64VectorTests::shiftL_unary);
+    }
+
+
+
+    @Test(dataProvider = "shortBinaryOpMaskProvider")
+    static void shiftLShort64VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                av.shiftL((int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, mask, Short64VectorTests::shiftL_unary);
+    }
 
     static short max(short a, short b) {
         return (short)((a > b) ? a : b);

@@ -444,6 +444,32 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         return blend(xor(v), m);
     }
 
+   public Short128Vector shiftL(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] << s);
+       }
+       return new Short128Vector(res);
+   }
+
+   public Short128Vector shiftR(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] >>> s);
+       }
+       return new Short128Vector(res);
+   }
+
+   public Short128Vector aShiftR(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] >> s);
+       }
+       return new Short128Vector(res);
+   }
     // Ternary operations
 
 

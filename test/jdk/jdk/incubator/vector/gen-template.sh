@@ -226,9 +226,9 @@ gen_binary_alu_op "xor" "a ^ b" $unit_output $perf_output "BITWISE"
 gen_binary_alu_op "shiftR" "(a >>> b)" $unit_output $perf_output "intOrLong"
 gen_binary_alu_op "shiftL" "(a << b)" $unit_output $perf_output "intOrLong"
 gen_binary_alu_op "aShiftR" "(a >> b)" $unit_output $perf_output "intOrLong"
-gen_shift_cst_op "aShiftR" "(a >> b)" $unit_output $perf_output "intOrLong"
-gen_shift_cst_op "shiftR" "(a >> b)" $unit_output $perf_output "intOrLong"
-gen_shift_cst_op "shiftL" "(a << b)" $unit_output $perf_output "intOrLong"
+gen_shift_cst_op "aShiftR" "(a >> b)" $unit_output $perf_output "BITWISE"
+gen_shift_cst_op "shiftR" "(a >>> b)" $unit_output $perf_output "BITWISE"
+gen_shift_cst_op "shiftL" "(a << b)" $unit_output $perf_output "BITWISE"
 
 # Masked reductions.
 gen_binary_op "max" "(a > b) ? a : b" $unit_output $perf_output

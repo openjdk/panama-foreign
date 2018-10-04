@@ -219,65 +219,6 @@ public class Double128VectorLoadStoreTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask);
     }
 
-    @Test(dataProvider = "doubleIndexMapProvider")
-    static void loadStoreIndexMapArray(IntFunction<double[]> fa,
-                                       IntFunction<int[]> fim) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
-        int[] im = fim.apply(a.length);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, 0, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-
-// @@@ Stores are a little harder to test as it is not a linear
-// transformation of the index, input array and index map
-// Elements may be stored in the result array more than once at the same index
-/*
-        r = new double[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-*/
-    }
-
-    @Test(dataProvider = "doubleIndexMapMaskProvider")
-    static void loadStoreIndexMapMaskArray(IntFunction<double[]> fa,
-                                           IntFunction<int[]> fim,
-                                           IntFunction<boolean[]> fm) {
-        double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
-        int[] im = fim.apply(a.length);
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, 0, vmask, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-
-/*
-        r = new double[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, vmask, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-*/
-    }
 
     @Test(dataProvider = "doubleByteBufferProvider")
     static void loadStoreByteBuffer(IntFunction<double[]> fa,
