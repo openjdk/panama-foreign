@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.sun.tools.jextract.parser.Parser;
@@ -42,6 +43,7 @@ import com.sun.tools.jextract.tree.TreePhase;
 import com.sun.tools.jextract.tree.TreePrinter;
 import com.sun.tools.jextract.tree.TypedefTree;
 import jdk.internal.clang.Cursor;
+import jdk.internal.clang.SourceLocation;
 
 /**
  * This visitor handles certain typedef declarations.
@@ -63,8 +65,20 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
     // saved in the following Map.
     private final Map<Cursor, Tree> replacements = new HashMap<>();
 
+    private Path headerPath;
+
+    private static boolean isFromPath(Tree tree, Path path) {
+        SourceLocation loc = tree.location();
+        return loc != null? Objects.equals(path, loc.getFileLocation().path()) : false;
+    }
+
+    private boolean isFromThisHeader(Tree tree) {
+        return isFromPath(tree, headerPath);
+    }
+
     @Override
     public HeaderTree transform(HeaderTree ht) {
+        this.headerPath = ht.path();
         // Process all header declarations are collect potential
         // declarations that will go into transformed HeaderTree
         // into the this.decls field.
@@ -108,9 +122,14 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
          */
 
         // include this only if this is a definition or a declaration
-        // for which no definition is found elsewhere.
-        if (e.isDefinition() || !e.definition().isPresent()) {
+        // for which no definition is found elsewhere in this header.
+        if (e.isDefinition()) {
             decls.add(e);
+        } else {
+            Optional<Tree> def = e.definition();
+            if (!def.isPresent() || !isFromThisHeader(def.get())) {
+                decls.add(e);
+            }
         }
         return null;
     }
@@ -139,9 +158,14 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
          */
 
         // include this only if this is a definition or a declaration
-        // for which no definition is found elsewhere.
-        if (s.isDefinition() || !s.definition().isPresent()) {
+        // for which no definition is found elsewhere in this header.
+        if (s.isDefinition()) {
             decls.add(s);
+        } else {
+            Optional<Tree> def = s.definition();
+            if (!def.isPresent() || !isFromThisHeader(def.get())) {
+                decls.add(s);
+            }
         }
         return null;
     }
