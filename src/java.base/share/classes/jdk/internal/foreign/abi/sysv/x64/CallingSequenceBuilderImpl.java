@@ -93,6 +93,8 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         public ArrayList<ArgumentClass> getClasses() {
             return classes;
         }
+
+        static ArgumentInfo EMPTY = new ArgumentInfo(new ArrayList<>(), 0, 0);
     }
 
     private ArrayList<ArgumentClass> classifyValueType(Value type, boolean named) {
@@ -297,7 +299,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
     private ArgumentInfo examineArgument(Layout type, boolean named) {
         ArrayList<ArgumentClass> classes = classifyType(type, named);
         if (classes.isEmpty()) {
-            return null;
+            return ArgumentInfo.EMPTY;
         }
 
         int nIntegerRegs = 0;

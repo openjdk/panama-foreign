@@ -122,7 +122,7 @@ class UniversalNativeInvoker extends NativeInvoker {
 
         for (int i = 0 ; i < args.length ; i++) {
             Object arg = args[i];
-            unboxValue(arg, argLayoutTypes[i], b -> argsPtr.offset(callingSequence.storageOffset(b)),
+            unboxValue(arg, argLayoutTypes[i], b -> argsPtr.offset(callingSequence.argumentStorageOffset(b)),
                     callingSequence.getArgumentBindings(i));
         }
 
@@ -133,9 +133,9 @@ class UniversalNativeInvoker extends NativeInvoker {
             // Leak the allocated structs for now until the life cycle has been figured out
             Scope scope = Scope.newNativeScope();
             retPtr = ((ScopeImpl)scope).allocate(returnLayoutType, 8);
-            unboxValue(retPtr, NativeTypes.UINT64.pointer(), b -> argsPtr.offset(callingSequence.storageOffset(b)),
+            unboxValue(retPtr, NativeTypes.UINT64.pointer(), b -> argsPtr.offset(callingSequence.argumentStorageOffset(b)),
                     callingSequence.getReturnBindings());
-        } else if (!isVoid) {
+        } else if (!isVoid && returnValues.length != 0) {
             retPtr = BoundedPointer.fromLongArray(NativeTypes.UINT64, returnValues);
         } else {
             retPtr = Pointer.nullPointer();
@@ -161,7 +161,7 @@ class UniversalNativeInvoker extends NativeInvoker {
         if (isVoid) {
             return null;
         } else if (!callingSequence.returnsInMemory()) {
-            return boxValue(returnLayoutType, b -> retPtr.offset(b.getOffset() / 8), callingSequence.getReturnBindings());
+            return boxValue(returnLayoutType, b -> retPtr.offset(callingSequence.returnStorageOffset(b)), callingSequence.getReturnBindings());
         } else {
             return retPtr.get();
         }
@@ -173,11 +173,13 @@ class UniversalNativeInvoker extends NativeInvoker {
                            List<ArgumentBinding> bindings) throws Throwable {
         if (o instanceof Struct) {
             Struct<?> struct = (Struct<?>) o;
-            Pointer<Long> src = Util.unsafeCast(struct.ptr(), NativeTypes.UINT64);
-            for (ArgumentBinding binding : bindings) {
-                Pointer<?> dst = dstPtrFunc.apply(binding);
-                Pointer<Long> srcPtr = src.offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
-                Util.copy(srcPtr, dst, binding.getStorage().getSize());
+            if (struct.ptr().bytesSize() != 0) {
+                Pointer<Long> src = Util.unsafeCast(struct.ptr(), NativeTypes.UINT64);
+                for (ArgumentBinding binding : bindings) {
+                    Pointer<?> dst = dstPtrFunc.apply(binding);
+                    Pointer<Long> srcPtr = src.offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
+                    Util.copy(srcPtr, dst, binding.getStorage().getSize());
+                }
             }
         } else {
             assert bindings.size() == 1;
@@ -186,6 +188,7 @@ class UniversalNativeInvoker extends NativeInvoker {
         }
     }
 
+    @SuppressWarnings("unchecked")
     static Object boxValue(LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> srcPtrFunc,
                            List<ArgumentBinding> bindings) throws IllegalAccessException {
         Class<?> carrier = ((LayoutTypeImpl<?>)type).carrier();
@@ -194,6 +197,11 @@ class UniversalNativeInvoker extends NativeInvoker {
              * Leak memory for now
              */
             Scope scope = Scope.newNativeScope();
+
+            if (type.bytesSize() == 0) {
+                //empty struct!
+                return scope.allocateStruct((Class)carrier);
+            }
 
             @SuppressWarnings({"rawtypes", "unchecked"})
             Pointer<?> rtmp = ((ScopeImpl)scope).allocate(type, 8);

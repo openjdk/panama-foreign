@@ -24,13 +24,13 @@ package jdk.internal.foreign.abi;
 
 public enum StorageClass {
 
-    //Note: The order of the argument register classes is subtly relevant, as that is the order in which the
-    //binding words will be laid out in the long array by the universal invoker.
+    //Note: The order of the argument/return register classes is subtly relevant, as that is the order in which the
+    //binding words will be laid out in the input/output long arrays by the universal invoker.
     STACK_ARGUMENT_SLOT(true, false),
     VECTOR_ARGUMENT_REGISTER(true, false),
     INTEGER_ARGUMENT_REGISTER(true, false),
-    INTEGER_RETURN_REGISTER(false, true),
-    VECTOR_RETURN_REGISTER(false, true);
+    VECTOR_RETURN_REGISTER(false, true),
+    INTEGER_RETURN_REGISTER(false, true);
 
     final boolean isArgumentClass;
     final boolean isReturnClass;
