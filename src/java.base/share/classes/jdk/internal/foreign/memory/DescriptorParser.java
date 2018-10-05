@@ -31,6 +31,7 @@ import java.foreign.layout.*;
 import java.foreign.layout.Value.Endianness;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Parse a layout string into a descriptor type {@see Type}.
@@ -201,7 +202,7 @@ public class DescriptorParser {
 
     /**
      * annotations = +( annotation )
-     * annotation = '{' string [ '=' string ] '}'
+     * annotation = '{' ident [ '=' string ] '}'
      */
     @SuppressWarnings("unchecked")
     private <D extends Layout> D annotatedOpt(D l) {
@@ -219,48 +220,42 @@ public class DescriptorParser {
     }
 
     private void parseAnnotation(Map<String, String> annos) {
+        nextToken(Token.LPAREN);
+        String name = parseIdent(t -> t == Token.EQ || t == Token.RPAREN, "'=' or ')'");
+        if (token == Token.EQ) {
+            annos.put(name, parseAnnotationValue());
+        } else {
+            annos.put(Layout.NAME, name);
+        }
+        nextToken(Token.RPAREN);
+    }
+
+    private String parseAnnotationValue() {
         int depth = 0;
-        StringBuilder[] nameValue = new StringBuilder[] { new StringBuilder(), new StringBuilder() };
-        int nameValueIdx = 0;
+        StringBuilder value = new StringBuilder();
         char lastChar;
         while (true) {
             lastChar = scanner.ch;
             nextToken();
             switch (token) {
                 case LPAREN:
-                    nameValue[nameValueIdx].append(lastChar);
+                    value.append(lastChar);
                     depth++;
                     break;
                 case RPAREN:
                     if (depth-- == 0) {
-                        if (nameValueIdx == 0) {
-                            annos.put(Layout.NAME, nameValue[0].toString());
-                        } else {
-                            annos.put(nameValue[0].toString(), nameValue[1].toString());
-                        }
-                        nextToken();
-                        return;
+                        return value.toString();
                     } else {
-                        nameValue[nameValueIdx].append(lastChar);
-                    }
-                    break;
-                case EQ:
-                    if (depth == 0) {
-                        nameValueIdx++;
-                        if (nameValueIdx > 1) {
-                            throw scanner.error("Expected ')'");
-                        }
-                    } else {
-                        nameValue[nameValueIdx].append(lastChar);
+                        value.append(lastChar);
                     }
                     break;
                 case NUMERIC:
-                    nameValue[nameValueIdx].append(scanner.lastString());
+                    value.append(scanner.lastString());
                     break;
                 case END:
                     throw scanner.error("Expected ')'");
                 default:
-                    nameValue[nameValueIdx].append(lastChar);
+                    value.append(lastChar);
                     break;
             }
         }
@@ -343,12 +338,12 @@ public class DescriptorParser {
 
     /**
      * declarations = +( declaration )
-     * declaration = name '=' (function / layout)
+     * declaration = ident '=' (function / layout)
      */
     Map<String, Object> parseDeclarations() {
         Map<String, Object> decls = new LinkedHashMap<>();
         while (token != Token.END) {
-            String name = parseDeclName();
+            String name = parseIdent(t -> t == Token.EQ, "'='");
             nextToken(Token.EQ);
             Object desc = token == Token.LPAREN ?
                     parseFunction() : parseLayout();
@@ -357,37 +352,39 @@ public class DescriptorParser {
         return decls;
     }
 
-    String parseDeclName() {
+    String parseIdent(Predicate<Token> terminator, String expected) {
         StringBuilder buf = new StringBuilder();
         loop: while (true) {
             switch (token) {
-                case EQ:
-                    if (buf.length() == 0) {
-                        throw scanner.error("Expected declaration name before '='");
-                    }
-                    break loop;
                 case NUMERIC:
                     if (buf.length() == 0) {
-                        throw scanner.error("Invalid numeric start in declaration name");
+                        throw scanner.error("Invalid numeric start in ident");
                     }
                     buf.append(scanner.lastNumber());
                     break;
                 case END:
-                    throw scanner.error("Expected '='");
+                    throw scanner.error("Expected " + expected);
                 default: {
-                    char lastChar = scanner.lastChar();
-                    if (buf.length() == 0 ?
-                            !Character.isJavaIdentifierStart(lastChar) :
-                            !Character.isJavaIdentifierPart(lastChar)) {
-                        throw scanner.error("Illegal char in declaration name");
+                    if (terminator.test(token)) {
+                        if (buf.length() == 0) {
+                            throw scanner.error("Expected ident before " + expected);
+                        }
+                        break loop;
+                    } else {
+                        char lastChar = scanner.lastChar();
+                        if (buf.length() == 0 ?
+                                !Character.isJavaIdentifierStart(lastChar) :
+                                !Character.isJavaIdentifierPart(lastChar)) {
+                            throw scanner.error("Illegal char in ident");
+                        }
+                        buf.append(lastChar);
+                        break;
                     }
-                    buf.append(lastChar);
-                    break;
                 }
             }
             boolean pendingSeparator = scanner.foundSeparator();
             nextToken();
-            if (pendingSeparator && token != Token.EQ) {
+            if (pendingSeparator && !terminator.test(token)) {
                 throw scanner.error("Unexpected separator in declaration name");
             }
         }
