@@ -3025,11 +3025,7 @@ instruct onspinwait() %{
 
   format %{
     $$template
-    if (os::is_MP()) {
-      $$emit$$"pause\t! membar_onspinwait"
-    } else {
-      $$emit$$"MEMBAR-onspinwait ! (empty encoding)"
-    }
+    $$emit$$"pause\t! membar_onspinwait"
   %}
   ins_encode %{
     __ pause();
@@ -13128,8 +13124,8 @@ instruct vmul64B_reg_avx(vecZ dst, vecZ src1, vecZ src2, vecZ tmp1, vecZ tmp2, v
            "vpmullw $tmp2,$tmp2,$tmp3\n\t"
            "vmovdqu $tmp3, [0x00ff00ff0x00ff00ff]\n\t"
            "vpbroadcastd $tmp3, $tmp3\n\t"
-           "evpandd $tmp1,$tmp1,$tmp3\n\t"
-           "evpandd $tmp2,$tmp2,$tmp3\n\t"
+           "vpand $tmp1,$tmp1,$tmp3\n\t"
+           "vpand $tmp2,$tmp2,$tmp3\n\t"
            "vpackuswb $tmp1,$tmp2,$tmp1\n\t"
            "vextracti64x4_high  $tmp3,$tmp1\n\t"
            "vpermq $tmp3, $tmp3, 0x8D\n\t"
@@ -13143,7 +13139,6 @@ instruct vmul64B_reg_avx(vecZ dst, vecZ src1, vecZ src2, vecZ tmp1, vecZ tmp2, v
            "vinserti64x4 $dst,$dst,$tmp2,0x01\t! mul packed64B" %}
   ins_encode %{
     int vector_len = 2;
-    KRegister ktmp = k1;
     __ vextracti64x4_high($tmp1$$XMMRegister, $src1$$XMMRegister);
     __ vextracti64x4_high($tmp3$$XMMRegister, $src2$$XMMRegister);
     __ vpmovsxbw($tmp1$$XMMRegister, $tmp1$$XMMRegister, vector_len);
@@ -13154,8 +13149,8 @@ instruct vmul64B_reg_avx(vecZ dst, vecZ src1, vecZ src2, vecZ tmp1, vecZ tmp2, v
     __ vpmullw($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
     __ vmovdqu($tmp3$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()));
     __ vpbroadcastd($tmp3$$XMMRegister, $tmp3$$XMMRegister, vector_len);
-    __ evpandd($tmp1$$XMMRegister, ktmp, $tmp1$$XMMRegister, $tmp3$$XMMRegister, false, vector_len);
-    __ evpandd($tmp2$$XMMRegister, ktmp, $tmp2$$XMMRegister, $tmp3$$XMMRegister, false, vector_len);
+    __ vpand($tmp1$$XMMRegister, $tmp1$$XMMRegister, $tmp3$$XMMRegister, vector_len);
+    __ vpand($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp3$$XMMRegister, vector_len);
     __ vpackuswb($tmp1$$XMMRegister, $tmp2$$XMMRegister, $tmp1$$XMMRegister, vector_len);
     __ vextracti64x4_high($tmp3$$XMMRegister, $tmp1$$XMMRegister);
     __ vpermq($tmp3$$XMMRegister, $tmp3$$XMMRegister, 0x8D, 1);
@@ -17943,7 +17938,7 @@ instruct vcvt8Ito8F_reg(vecY dst, vecY src) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vcvt16Ito16F_reg(vecY dst, vecY src) %{
+instruct vcvt16Ito16F_reg(vecZ dst, vecZ src) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorCastI2X src));
   format %{ "vcvtdq2ps   $dst,$src\t! convert 16I to 16F vector" %}
@@ -18227,10 +18222,10 @@ instruct vcvt4Fto4D_reg(vecY dst, vecX src) %{
 instruct vcvt8Fto8D_reg(vecZ dst, vecY src) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
   match(Set dst (VectorCastF2X src));
-  format %{ "evcvtps2pd   $dst,$src\t! convert 8F to 8D vector" %}
+  format %{ "vcvtps2pd   $dst,$src\t! convert 8F to 8D vector" %}
   ins_encode %{
     int vector_len = 2;
-    __ evcvtps2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtps2pd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -18260,10 +18255,10 @@ instruct vcvt4Dto4F_reg(vecX dst, vecY src) %{
 instruct vcvt8Dto8F_reg(vecY dst, vecZ src) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
   match(Set dst (VectorCastD2X src));
-  format %{ "evcvtpd2ps   $dst,$src\t! convert 8D to 8F vector" %}
+  format %{ "vcvtpd2ps   $dst,$src\t! convert 8D to 8F vector" %}
   ins_encode %{
     int vector_len = 2;
-    __ evcvtpd2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vcvtpd2ps($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -21593,11 +21588,11 @@ instruct vabs32B_reg(vecY dst, vecY src) %{
 instruct vabs64B_reg(vecZ dst, vecZ src) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 64 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
   match(Set dst (AbsV  src));
-  format %{ "evpabsb $dst,$src\t# $dst = |$src| abs packed64B" %}
+  format %{ "vpabsb $dst,$src\t# $dst = |$src| abs packed64B" %}
   ins_cost(150);
   ins_encode %{
     int vector_len = 2;
-    __ evpabsb($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vpabsb($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -21639,11 +21634,11 @@ instruct vabs16S_reg(vecY dst, vecY src) %{
 instruct vabs32S_reg(vecZ dst, vecZ src) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 32 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
   match(Set dst (AbsV  src));
-  format %{ "evpabsw $dst,$src\t# $dst = |$src| abs packed32S" %}
+  format %{ "vpabsw $dst,$src\t# $dst = |$src| abs packed32S" %}
   ins_cost(150);
   ins_encode %{
     int vector_len = 2;
-    __ evpabsw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vpabsw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -21685,11 +21680,11 @@ instruct vabs8I_reg(vecY dst, vecY src) %{
 instruct vabs16I_reg(vecZ dst, vecZ src) %{
   predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (AbsV  src));
-  format %{ "evpabsd $dst,$src\t# $dst = |$src| abs packed16I" %}
+  format %{ "vpabsd $dst,$src\t# $dst = |$src| abs packed16I" %}
   ins_cost(150);
   ins_encode %{
     int vector_len = 2;
-    __ evpabsd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vpabsd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22452,7 +22447,7 @@ instruct storemask4l(vecS dst, vecY src, rRegL scratch) %{
     // vpermd and load are 256-bit, but all others are 128-bit instructions.
     int vector_len = 0;
     __ vmovdqu($dst$$XMMRegister, ExternalAddress(vector_long_perm_mask()), $scratch$$Register);
-    __ vpermd($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister);
+    __ vpermd($dst$$XMMRegister, $dst$$XMMRegister, $src$$XMMRegister, 1);
     __ vpabsd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
     __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
     __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
@@ -22711,7 +22706,7 @@ instruct loadshuffle8l(vecZ dst, vecD src, vecZ tmp, vecZ tmp2, rRegI scratch) %
     __ vpmovsxdq($tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
     __ vpsllq($tmp$$XMMRegister, $tmp2$$XMMRegister, 0x20, vector_len);
     __ vpaddd($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ evmovdqul($tmp$$XMMRegister, k1, ExternalAddress(vector_long_shufflemask()), false, vector_len, $scratch$$Register);
+    __ evmovdqul($tmp$$XMMRegister, k0, ExternalAddress(vector_long_shufflemask()), false, vector_len, $scratch$$Register);
     __ vpaddd($tmp2$$XMMRegister, $tmp2$$XMMRegister, $tmp$$XMMRegister, vector_len);
     __ evmovdqul($dst$$XMMRegister, $tmp2$$XMMRegister, vector_len);
   %}
@@ -22801,7 +22796,7 @@ instruct rearrange16s(vecY dst, vecY src, vecY shuffle) %{
   format %{ "vpermw $dst, $shuffle\t! rearrange (16SRearrange)" %}
   ins_encode %{
     int vector_len = 1;
-    __ vpermw($dst$$XMMRegister, k0, $shuffle$$XMMRegister, $src$$XMMRegister, false,vector_len);
+    __ vpermw($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22814,7 +22809,7 @@ instruct rearrange32s(vecZ dst, vecZ src, vecZ shuffle) %{
   format %{ "vpermw $dst, $shuffle\t! rearrange (32SRearrange)" %}
   ins_encode %{
     int vector_len = 2;
-    __ vpermw($dst$$XMMRegister, k0, $shuffle$$XMMRegister, $src$$XMMRegister, false,vector_len);
+    __ vpermw($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22841,7 +22836,7 @@ instruct rearrange8i(vecY dst, vecY src, vecY shuffle) %{
   format %{ "vpermd $dst, $src, $shuffle\t! rearrange (8IRearrange)" %}
   ins_encode %{
     int vector_len = 1;
-    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister);
+    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22855,7 +22850,7 @@ instruct rearrange16i(vecZ dst, vecZ src, vecZ shuffle) %{
   format %{ "vpermd $dst, $src, $shuffle\t! rearrange (16IRearrange)" %}
   ins_encode %{
     int vector_len = 2;
-    __ evpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22869,7 +22864,7 @@ instruct rearrange4l(vecY dst, vecY src, vecY shuffle) %{
   format %{ "vpermd $dst, $src, $shuffle\t! rearrange (4LRearrange)" %}
   ins_encode %{
     int vector_len = 1;
-    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister);
+    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22883,7 +22878,7 @@ instruct rearrange8l(vecZ dst, vecZ src, vecZ shuffle) %{
   format %{ "vpermd $dst, $src, $shuffle\t! rearrange (8LRearrange)" %}
   ins_encode %{
     int vector_len = 2;
-    __ evpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ vpermd($dst$$XMMRegister, $shuffle$$XMMRegister, $src$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
 %}
