@@ -383,6 +383,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
+    public Byte128Vector min(Vector<Byte,Shapes.S128Bit> v, Mask<Byte, Shapes.S128Bit> m) {
+        return blend(min(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Byte128Vector max(Vector<Byte,Shapes.S128Bit> o) {
         Objects.requireNonNull(o);
         Byte128Vector v = (Byte128Vector)o;
@@ -391,6 +397,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (byte) ((a > b) ? a : b)));
         }
+
+    @Override
+    @ForceInline
+    public Byte128Vector max(Vector<Byte,Shapes.S128Bit> v, Mask<Byte, Shapes.S128Bit> m) {
+        return blend(max(v), m);
+    }
 
     @Override
     @ForceInline
@@ -625,7 +637,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public final void intoArray(byte[] a, int ax, Mask<Byte, Shapes.S128Bit> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         Byte128Vector oldVal = SPECIES.fromArray(a, ax);
         Byte128Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -634,7 +645,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public void intoByteArray(byte[] a, int ix) {
-        // @@@ Endianess
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Byte128Vector.class, byte.class, LENGTH,
@@ -651,7 +661,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public final void intoByteArray(byte[] a, int ix, Mask<Byte, Shapes.S128Bit> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         Byte128Vector oldVal = SPECIES.fromByteArray(a, ix);
         Byte128Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -660,7 +669,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        // @@@ Endianess
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -682,7 +690,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Byte, Shapes.S128Bit> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         Byte128Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
         Byte128Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -700,9 +707,8 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;
 
-        // @@@ Use equal op
         Byte128Vector that = (Byte128Vector) o;
-        return Arrays.equals(this.getElements(), that.getElements());
+        return this.equal(that).allTrue();
     }
 
     @Override
@@ -936,7 +942,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         static final Byte128Mask TRUE_MASK = new Byte128Mask(true);
         static final Byte128Mask FALSE_MASK = new Byte128Mask(false);
 
-        // FIXME: was temporarily put here to simplify rematerialization support in the JVM
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Byte128Mask(boolean[] bits) {
@@ -1258,14 +1263,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         @Override
         @ForceInline
         public Byte128Vector fromArray(byte[] a, int ax, Mask<Byte, Shapes.S128Bit> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromArray(a, ax), m);
         }
 
         @Override
         @ForceInline
         public Byte128Vector fromByteArray(byte[] a, int ix) {
-            // @@@ Endianess
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
             return VectorIntrinsics.load(Byte128Vector.class, byte.class, LENGTH,
@@ -1281,14 +1284,12 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         @Override
         @ForceInline
         public Byte128Vector fromByteArray(byte[] a, int ix, Mask<Byte, Shapes.S128Bit> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteArray(a, ix), m);
         }
 
         @Override
         @ForceInline
         public Byte128Vector fromByteBuffer(ByteBuffer bb, int ix) {
-            // @@@ Endianess
             if (bb.order() != ByteOrder.nativeOrder()) {
                 throw new IllegalArgumentException();
             }
@@ -1306,7 +1307,6 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
         @Override
         @ForceInline
         public Byte128Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte, Shapes.S128Bit> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 

@@ -209,6 +209,9 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     @Override
     public abstract FloatVector<S> min(Vector<Float,S> v);
 
+    @Override
+    public abstract FloatVector<S> min(Vector<Float,S> v, Mask<Float, S> m);
+
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
      * <p>
@@ -222,6 +225,9 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
     @Override
     public abstract FloatVector<S> max(Vector<Float,S> v);
+
+    @Override
+    public abstract FloatVector<S> max(Vector<Float,S> v, Mask<Float, S> m);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -420,14 +426,6 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      */
     public abstract FloatVector<S> div(float s, Mask<Float, S> m);
 
-// @@@ Many methods are refer to Math or StrictMath functions that only accept
-//     double values, what should be the behaviour for lane elements of float
-//     vectors? down and then upcast? Or will some numeric algorithms differ?
-//     The answers might also depend if strict definitions are required
-//     to ensure portability.
-//     Leveraging the existing defintions in Math/StrictMath is very convenient
-//     but its unclear if it is t
-
     /**
      * Calculates the square root of this vector.
      * <p>
@@ -443,7 +441,7 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * controlled by a mask.
      * <p>
      * This is a vector unary operation where the {@link Math#sqrt} operation
-     * ({@code -}) is applied to lane elements.
+     * is applied to lane elements.
      *
      * @param m the mask controlling lane selection
      * @return the square root of this vector
@@ -455,8 +453,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the trigonometric tangent of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#tan} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#tan} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#tan}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#tan}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the tangent of this vector
      */
@@ -468,8 +471,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the trigonometric tangent of this vector, selecting lane
      * elements controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#tan} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#tan}
      *
      * @param m the mask controlling lane selection
      * @return the tangent of this vector
@@ -481,8 +484,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the hyperbolic tangent of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#tanh} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#tanh} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#tanh}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#tanh}
+     * specifications. The computed result will be within 2.5 ulps of the
+     * exact result.
      *
      * @return the hyperbolic tangent of this vector
      */
@@ -494,8 +502,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the hyperbolic tangent of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#tanh} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#tanh}
      *
      * @param m the mask controlling lane selection
      * @return the hyperbolic tangent of this vector
@@ -507,8 +515,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the trigonometric sine of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#sin} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#sin} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#sin}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#sin}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the sine of this vector
      */
@@ -520,8 +533,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the trigonometric sine of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#sin} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#sin}
      *
      * @param m the mask controlling lane selection
      * @return the sine of this vector
@@ -533,8 +546,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the hyperbolic sine of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#sinh} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#sinh} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as  {@link Math#sinh}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#sinh}
+     * specifications. The computed result will be within 2.5 ulps of the
+     * exact result.
      *
      * @return the hyperbolic sine of this vector
      */
@@ -546,8 +564,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the hyperbolic sine of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#sinh} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#sinh}
      *
      * @param m the mask controlling lane selection
      * @return the hyperbolic sine of this vector
@@ -559,8 +577,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the trigonometric cosine of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#cos} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#cos} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#cos}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#cos}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the cosine of this vector
      */
@@ -572,8 +595,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the trigonometric cosine of this vector, selecting lane
      * elements controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#cos} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#cos}
      *
      * @param m the mask controlling lane selection
      * @return the cosine of this vector
@@ -585,8 +608,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the hyperbolic cosine of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#cosh} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#cosh} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#cosh}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#cosh}
+     * specifications. The computed result will be within 2.5 ulps of the
+     * exact result.
      *
      * @return the hyperbolic cosine of this vector
      */
@@ -598,8 +626,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the hyperbolic cosine of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#cosh} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#cosh}
      *
      * @param m the mask controlling lane selection
      * @return the hyperbolic cosine of this vector
@@ -611,8 +639,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the arc sine of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#asin} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#asin} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#asin}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#asin}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the arc sine of this vector
      */
@@ -624,8 +657,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the arc sine of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#asin} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#asin}
      *
      * @param m the mask controlling lane selection
      * @return the arc sine of this vector
@@ -637,8 +670,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the arc cosine of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#acos} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#acos} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#acos}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#acos}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the arc cosine of this vector
      */
@@ -650,8 +688,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the arc cosine of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#acos} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#acos}
      *
      * @param m the mask controlling lane selection
      * @return the arc cosine of this vector
@@ -663,8 +701,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the arc tangent of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#atan} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#atan} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#atan}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#atan}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the arc tangent of this vector
      */
@@ -676,8 +719,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the arc tangent of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#atan} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#atan}
      *
      * @param m the mask controlling lane selection
      * @return the arc tangent of this vector
@@ -689,8 +732,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the arc tangent of this vector divided by an input vector.
      * <p>
-     * This is a vector binary operation where the {@link Math#atan2} operation
-     * is applied to lane elements.
+     * This is a vector binary operation with same semantic definition as
+     * {@link Math#atan2} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#atan2}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#atan2}
+     * specifications. The computed result will be within 2 ulps of the
+     * exact result.
      *
      * @param v the input vector
      * @return the arc tangent of this vector divided by the input vector
@@ -703,8 +751,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the arc tangent of this vector divided by the broadcast of an
      * an input scalar.
      * <p>
-     * This is a vector binary operation where the {@link Math#atan2} operation
-     * is applied to lane elements.
+     * This is a vector binary operation with same semantic definition as
+     * {@link Math#atan2} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#atan2}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#atan2}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @param s the input scalar
      * @return the arc tangent of this vector over the input vector
@@ -715,8 +768,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the arc tangent of this vector divided by an input vector,
      * selecting lane elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the {@link Math#atan2} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#atan2}
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -730,8 +783,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the arc tangent of this vector divided by the broadcast of an
      * an input scalar, selecting lane elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the {@link Math#atan2} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#atan2}
      *
      * @param s the input scalar
      * @param m the mask controlling lane selection
@@ -742,8 +795,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the cube root of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#cbrt} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#cbrt} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#cbrt}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#cbrt}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the cube root of this vector
      */
@@ -755,8 +813,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the cube root of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#cbrt} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#cbrt}
      *
      * @param m the mask controlling lane selection
      * @return the cube root of this vector
@@ -768,8 +826,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the natural logarithm of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#log} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#log} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#log}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#log}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the natural logarithm of this vector
      */
@@ -781,8 +844,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the natural logarithm of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#log} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#log}
      *
      * @param m the mask controlling lane selection
      * @return the natural logarithm of this vector
@@ -794,8 +857,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates the base 10 logarithm of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#log10} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#log10} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#log10}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#log10}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the base 10 logarithm of this vector
      */
@@ -807,8 +875,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the base 10 logarithm of this vector, selecting lane elements
      * controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#log10} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#log10}
      *
      * @param m the mask controlling lane selection
      * @return the base 10 logarithm of this vector
@@ -821,8 +889,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the natural logarithm of the sum of this vector and the
      * broadcast of {@code 1}.
      * <p>
-     * This is a vector unary operation where the {@link Math#log1p} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#log1p} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as  {@link Math#log1p}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#log1p}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the natural logarithm of the sum of this vector and the broadcast
      * of {@code 1}
@@ -835,8 +908,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the natural logarithm of the sum of this vector and the
      * broadcast of {@code 1}, selecting lane elements controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#log1p} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#log1p}
      *
      * @param m the mask controlling lane selection
      * @return the natural logarithm of the sum of this vector and the broadcast
@@ -849,8 +922,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
     /**
      * Calculates this vector raised to the power of an input vector.
      * <p>
-     * This is a vector binary operation where the {@link Math#pow} operation
-     * is applied to lane elements.
+     * This is a vector binary operation with same semantic definition as
+     * {@link Math#pow} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#pow}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#pow}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @param v the input vector
      * @return this vector raised to the power of an input vector
@@ -863,8 +941,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates this vector raised to the power of the broadcast of an input
      * scalar.
      * <p>
-     * This is a vector binary operation where the {@link Math#pow} operation
-     * is applied to lane elements.
+     * This is a vector binary operation with same semantic definition as
+     * {@link Math#pow} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#pow}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#pow}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @param s the input scalar
      * @return this vector raised to the power of the broadcast of an input
@@ -876,8 +959,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates this vector raised to the power of an input vector, selecting
      * lane elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the {@link Math#pow} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#pow}
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -891,8 +974,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates this vector raised to the power of the broadcast of an input
      * scalar, selecting lane elements controlled by a mask.
      * <p>
-     * This is a vector binary operation where the {@link Math#pow} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#pow}
      *
      * @param s the input scalar
      * @param m the mask controlling lane selection
@@ -905,8 +988,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the broadcast of Euler's number {@code e} raised to the power
      * of this vector.
      * <p>
-     * This is a vector unary operation where the {@link Math#exp} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#exp} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#exp}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#exp}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the broadcast of Euler's number {@code e} raised to the power of
      * this vector
@@ -919,8 +1007,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      * Calculates the broadcast of Euler's number {@code e} raised to the power
      * of this vector, selecting lane elements controlled by a mask.
      * <p>
-     * This is a vector unary operation where the {@link Math#exp} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#exp}
      *
      * @param m the mask controlling lane selection
      * @return the broadcast of Euler's number {@code e} raised to the power of
@@ -939,8 +1027,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *   this.exp().sub(this.species().broadcast(1))
      * }</pre>
      * <p>
-     * This is a vector unary operation where the {@link Math#expm1} operation
-     * is applied to lane elements.
+     * This is a vector unary operation with same semantic definition as
+     * {@link Math#expm1} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#expm1}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#expm1}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @return the broadcast of Euler's number {@code e} raised to the power of
      * this vector minus the broadcast of {@code -1}
@@ -959,8 +1052,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *   this.exp(m).sub(this.species().broadcast(1), m)
      * }</pre>
      * <p>
-     * This is a vector unary operation where the {@link Math#expm1} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#expm1}
      *
      * @param m the mask controlling lane selection
      * @return the broadcast of Euler's number {@code e} raised to the power of
@@ -1049,8 +1142,6 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      */
     public abstract FloatVector<S> fma(float s1, float s2, Mask<Float,S> m);
 
-// Computes the square root of the sum of the squares of x and y
-
     /**
      * Calculates square root of the sum of the squares of this vector and an
      * input vector.
@@ -1060,8 +1151,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *   this.mul(this).add(v.mul(v)).sqrt()
      * }</pre>
      * <p>
-     * This is a vector binary operation where the {@link Math#hypot} operation
-     * is applied to lane elements.
+     * This is a vector binary operation with same semantic definition as
+     * {@link Math#hypot} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#hypot}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#hypot}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @param v the input vector
      * @return square root of the sum of the squares of this vector and an input
@@ -1080,8 +1176,13 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *   this.mul(this).add(this.species().broadcast(v * v)).sqrt()
      * }</pre>
      * <p>
-     * This is a vector binary operation where the {@link Math#hypot} operation
-     * is applied to lane elements.
+     * This is a vector binary operation with same semantic definition as
+     * {@link Math#hypot} operation applied to lane elements.
+     * The implementation is not required to return same
+     * results as {@link Math#hypot}, but adheres to rounding, monotonicity,
+     * and special case semantics as defined in the {@link Math#hypot}
+     * specifications. The computed result will be within 1 ulp of the
+     * exact result.
      *
      * @param s the input scalar
      * @return square root of the sum of the squares of this vector and the
@@ -1098,8 +1199,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *   this.mul(this, m).add(v.mul(v), m).sqrt(m)
      * }</pre>
      * <p>
-     * This is a vector binary operation where the {@link Math#hypot} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#hypot}
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -1120,8 +1221,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      *   this.mul(this, m).add(this.species().broadcast(v * v), m).sqrt(m)
      * }</pre>
      * <p>
-     * This is a vector binary operation where the {@link Math#hypot} operation
-     * is applied to lane elements.
+     * Semantics for rounding, monotonicity, and special cases are
+     * described in {@link FloatVector#hypot}
      *
      * @param s the input scalar
      * @param m the mask controlling lane selection
@@ -1145,14 +1246,6 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
 
 
     // Type specific horizontal reductions
-
-// @@@ For floating point vectors order matters for reproducibility
-//     with equivalent sequential reduction. Some order needs to be specified
-//     by default. If that default is sequential encounter order then there
-//     could be a "go faster" option that is unspecified, essentially giving
-//     implementation flexibility at the expense of reproducibility and/or
-//     accuracy.
-// @@@ Mask versions?
 
     /**
      * Adds all lane elements of this vector.
@@ -1322,7 +1415,6 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
      */
     @ForceInline
     public final float[] toArray() {
-        // @@@ could allocate without zeroing, see Unsafe.allocateUninitializedArray
         float[] a = new float[species().length()];
         intoArray(a, 0);
         return a;
@@ -1460,7 +1552,9 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
         /**
          * Returns a vector where each lane element is set to a randomly
          * generated primitive value.
-         * @@@ what are the properties of the random number generator?
+         *
+         * The semantics are equivalent to calling
+         * {@link ThreadLocalRandom#nextFloat }
          *
          * @return a vector where each lane elements is set to a randomly
          * generated primitive value
@@ -1478,12 +1572,10 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
          * the primitive value at index {@code N} is placed into the resulting
          * vector at lane index {@code N}.
          *
-         * @@@ What should happen if es.length < this.length() ? use the default
-         * value or throw IndexOutOfBoundsException
-         *
          * @param es the given primitive values
          * @return a vector where each lane element is set to a given primitive
          * value
+         * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
          */
         public abstract FloatVector<S> scalars(float... es);
 
