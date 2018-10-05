@@ -444,6 +444,32 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
         return blend(xor(v), m);
     }
 
+   public Short256Vector shiftL(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] << s);
+       }
+       return new Short256Vector(res);
+   }
+
+   public Short256Vector shiftR(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] >>> s);
+       }
+       return new Short256Vector(res);
+   }
+
+   public Short256Vector aShiftR(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] >> s);
+       }
+       return new Short256Vector(res);
+   }
     // Ternary operations
 
 

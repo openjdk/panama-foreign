@@ -628,10 +628,130 @@ public class Byte512VectorTests extends AbstractVectorTest {
 
 
 
+    static byte aShiftR_unary(byte a, byte b) {
+        return (byte)((a >> b));
+    }
+
+    @Test(dataProvider = "byteBinaryOpProvider")
+    static void aShiftRByte512VectorTestsShift(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.aShiftR((int)b[i]).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, Byte512VectorTests::aShiftR_unary);
+    }
 
 
 
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
+    static void aShiftRByte512VectorTestsShift(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] b = fb.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
 
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.aShiftR((int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, mask, Byte512VectorTests::aShiftR_unary);
+    }
+
+
+    static byte shiftR_unary(byte a, byte b) {
+        return (byte)((a >>> b));
+    }
+
+    @Test(dataProvider = "byteBinaryOpProvider")
+    static void shiftRByte512VectorTestsShift(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.shiftR((int)b[i]).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, Byte512VectorTests::shiftR_unary);
+    }
+
+
+
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
+    static void shiftRByte512VectorTestsShift(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] b = fb.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.shiftR((int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, mask, Byte512VectorTests::shiftR_unary);
+    }
+
+
+    static byte shiftL_unary(byte a, byte b) {
+        return (byte)((a << b));
+    }
+
+    @Test(dataProvider = "byteBinaryOpProvider")
+    static void shiftLByte512VectorTestsShift(IntFunction<byte[]> fa, IntFunction<byte[]> fb) {
+        byte[] a = fa.apply(SPECIES.length()); 
+        byte[] b = fb.apply(SPECIES.length()); 
+        byte[] r = new byte[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.shiftL((int)b[i]).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, Byte512VectorTests::shiftL_unary);
+    }
+
+
+
+    @Test(dataProvider = "byteBinaryOpMaskProvider")
+    static void shiftLByte512VectorTestsShift(IntFunction<byte[]> fa, IntFunction<byte[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] b = fb.apply(SPECIES.length());
+        byte[] r = new byte[a.length];
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Byte, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
+                av.shiftL((int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, mask, Byte512VectorTests::shiftL_unary);
+    }
 
     static byte max(byte a, byte b) {
         return (byte)((a > b) ? a : b);

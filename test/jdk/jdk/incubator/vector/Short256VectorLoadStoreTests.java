@@ -219,65 +219,6 @@ public class Short256VectorLoadStoreTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask);
     }
 
-    @Test(dataProvider = "shortIndexMapProvider")
-    static void loadStoreIndexMapArray(IntFunction<short[]> fa,
-                                       IntFunction<int[]> fim) {
-        short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
-        int[] im = fim.apply(a.length);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S256Bit> av = SPECIES.fromArray(a, 0, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-
-// @@@ Stores are a little harder to test as it is not a linear
-// transformation of the index, input array and index map
-// Elements may be stored in the result array more than once at the same index
-/*
-        r = new short[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-*/
-    }
-
-    @Test(dataProvider = "shortIndexMapMaskProvider")
-    static void loadStoreIndexMapMaskArray(IntFunction<short[]> fa,
-                                           IntFunction<int[]> fim,
-                                           IntFunction<boolean[]> fm) {
-        short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
-        int[] im = fim.apply(a.length);
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S256Bit> av = SPECIES.fromArray(a, 0, vmask, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-
-/*
-        r = new short[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, vmask, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-*/
-    }
 
     @Test(dataProvider = "shortByteBufferProvider")
     static void loadStoreByteBuffer(IntFunction<short[]> fa,

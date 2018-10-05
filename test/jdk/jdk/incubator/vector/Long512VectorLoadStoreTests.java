@@ -219,65 +219,6 @@ public class Long512VectorLoadStoreTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask);
     }
 
-    @Test(dataProvider = "longIndexMapProvider")
-    static void loadStoreIndexMapArray(IntFunction<long[]> fa,
-                                       IntFunction<int[]> fim) {
-        long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
-        int[] im = fim.apply(a.length);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, 0, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-
-// @@@ Stores are a little harder to test as it is not a linear
-// transformation of the index, input array and index map
-// Elements may be stored in the result array more than once at the same index
-/*
-        r = new long[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-*/
-    }
-
-    @Test(dataProvider = "longIndexMapMaskProvider")
-    static void loadStoreIndexMapMaskArray(IntFunction<long[]> fa,
-                                           IntFunction<int[]> fim,
-                                           IntFunction<boolean[]> fm) {
-        long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
-        int[] im = fim.apply(a.length);
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Shapes.S512Bit> vmask = SPECIES.maskFromValues(mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, 0, vmask, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-
-/*
-        r = new long[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Shapes.S512Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, vmask, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-*/
-    }
 
     @Test(dataProvider = "longByteBufferProvider")
     static void loadStoreByteBuffer(IntFunction<long[]> fa,

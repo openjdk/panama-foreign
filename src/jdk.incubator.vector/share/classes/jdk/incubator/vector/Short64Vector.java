@@ -444,6 +444,32 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
         return blend(xor(v), m);
     }
 
+   public Short64Vector shiftL(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] << s);
+       }
+       return new Short64Vector(res);
+   }
+
+   public Short64Vector shiftR(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] >>> s);
+       }
+       return new Short64Vector(res);
+   }
+
+   public Short64Vector aShiftR(int s) {
+       short[] vec = getElements();
+       short[] res = new short[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (short)(vec[i] >> s);
+       }
+       return new Short64Vector(res);
+   }
     // Ternary operations
 
 

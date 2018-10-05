@@ -218,65 +218,6 @@ public class Byte256VectorLoadStoreTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask);
     }
 
-    @Test(dataProvider = "byteIndexMapProvider")
-    static void loadStoreIndexMapArray(IntFunction<byte[]> fa,
-                                       IntFunction<int[]> fim) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
-        int[] im = fim.apply(a.length);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Shapes.S256Bit> av = SPECIES.fromArray(a, 0, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-
-// @@@ Stores are a little harder to test as it is not a linear
-// transformation of the index, input array and index map
-// Elements may be stored in the result array more than once at the same index
-/*
-        r = new byte[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im);
-*/
-    }
-
-    @Test(dataProvider = "byteIndexMapMaskProvider")
-    static void loadStoreIndexMapMaskArray(IntFunction<byte[]> fa,
-                                           IntFunction<int[]> fim,
-                                           IntFunction<boolean[]> fm) {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] r = new byte[a.length];
-        int[] im = fim.apply(a.length);
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Shapes.S256Bit> vmask = SPECIES.maskFromValues(mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Shapes.S256Bit> av = SPECIES.fromArray(a, 0, vmask, im, i);
-                av.intoArray(r, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-
-/*
-        r = new byte[a.length];
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-                av.intoArray(r, 0, vmask, im, i);
-            }
-        }
-        assertArraysEquals(a, r, im, mask);
-*/
-    }
 
     @Test(dataProvider = "byteByteBufferProvider")
     static void loadStoreByteBuffer(IntFunction<byte[]> fa,

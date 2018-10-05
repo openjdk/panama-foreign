@@ -28,9 +28,11 @@ do
   case $type in
     byte)
       Wideboxtype=Integer
+      args="$args -KbyteOrShort"
       ;;
     short)
       Wideboxtype=Integer
+      args="$args -KbyteOrShort"
       ;;
     int)
       Boxtype=Integer

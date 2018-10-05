@@ -542,6 +542,105 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      */
     public abstract ByteVector<S> not(Mask<Byte, S> m);
 
+/*
+@@@ Check the shift operations against the JLS definition and vector
+    instructions.
+
+    For int values the low 5 bits of s are used.
+    For long values the low 6 bits of s are used.
+ */
+
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @return the result of logically left shifting left this vector by the
+     * broadcast of an input scalar
+     */
+    public abstract ByteVector<S> shiftL(int s);
+
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public ByteVector<S> shiftL(int s, Mask<Byte, S> m) {
+        return uOp(m, (i, a) -> (byte) (a << s));
+    }
+
+
+    // logical, or unsigned, shift right
+
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public abstract ByteVector<S> shiftR(int s);
+
+    /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public ByteVector<S> shiftR(int s, Mask<Byte, S> m) {
+        return uOp(m, (i, a) -> (byte) (a >>> s));
+    }
+
+
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public abstract ByteVector<S> aShiftR(int s);
+
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+    public ByteVector<S> aShiftR(int s, Mask<Byte, S> m) {
+        return uOp(m, (i, a) -> (byte) (a >> s));
+    }
+
 
     @Override
     public abstract void intoByteArray(byte[] a, int ix);

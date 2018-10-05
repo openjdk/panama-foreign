@@ -443,6 +443,32 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         return blend(xor(v), m);
     }
 
+   public Byte64Vector shiftL(int s) {
+       byte[] vec = getElements();
+       byte[] res = new byte[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (byte)(vec[i] << s);
+       }
+       return new Byte64Vector(res);
+   }
+
+   public Byte64Vector shiftR(int s) {
+       byte[] vec = getElements();
+       byte[] res = new byte[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (byte)(vec[i] >>> s);
+       }
+       return new Byte64Vector(res);
+   }
+
+   public Byte64Vector aShiftR(int s) {
+       byte[] vec = getElements();
+       byte[] res = new byte[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (byte)(vec[i] >> s);
+       }
+       return new Byte64Vector(res);
+   }
     // Ternary operations
 
 

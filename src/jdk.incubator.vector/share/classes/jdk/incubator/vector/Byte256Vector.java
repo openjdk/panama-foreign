@@ -443,6 +443,32 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         return blend(xor(v), m);
     }
 
+   public Byte256Vector shiftL(int s) {
+       byte[] vec = getElements();
+       byte[] res = new byte[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (byte)(vec[i] << s);
+       }
+       return new Byte256Vector(res);
+   }
+
+   public Byte256Vector shiftR(int s) {
+       byte[] vec = getElements();
+       byte[] res = new byte[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (byte)(vec[i] >>> s);
+       }
+       return new Byte256Vector(res);
+   }
+
+   public Byte256Vector aShiftR(int s) {
+       byte[] vec = getElements();
+       byte[] res = new byte[length()];
+       for (int i = 0; i < length(); i++){
+           res[i] = (byte)(vec[i] >> s);
+       }
+       return new Byte256Vector(res);
+   }
     // Ternary operations
 
 
