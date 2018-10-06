@@ -204,7 +204,6 @@ import java.util.function.*;
         V load(C container, int index);
     }
 
-    // @@@ Support endianness, pass in as argument to intrinsic
     @HotSpotIntrinsicCandidate
     static
     <C, V extends Vector<?,?>>
@@ -220,7 +219,6 @@ import java.util.function.*;
         void store(C container, int index, V v);
     }
 
-    // @@@ Support endianness, pass in as argument to intrinsic
     @HotSpotIntrinsicCandidate
     static
     <C, V extends Vector<?,?>>

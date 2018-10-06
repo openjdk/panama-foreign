@@ -209,6 +209,9 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     @Override
     public abstract IntVector<S> min(Vector<Integer,S> v);
 
+    @Override
+    public abstract IntVector<S> min(Vector<Integer,S> v, Mask<Integer, S> m);
+
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
      * <p>
@@ -222,6 +225,9 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
 
     @Override
     public abstract IntVector<S> max(Vector<Integer,S> v);
+
+    @Override
+    public abstract IntVector<S> max(Vector<Integer,S> v, Mask<Integer, S> m);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -543,14 +549,6 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      */
     public abstract IntVector<S> not(Mask<Integer, S> m);
 
-/*
-@@@ Check the shift operations against the JLS definition and vector
-    instructions.
-
-    For int values the low 5 bits of s are used.
-    For long values the low 6 bits of s are used.
- */
-
     /**
      * Logically left shifts this vector by the broadcast of an input scalar.
      * <p>
@@ -583,7 +581,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * Logically left shifts this vector by an input vector.
      * <p>
      * This is a vector binary operation where the primitive logical left shift
-     * operation ({@code <<}) is applied to lane elements.
+     * operation ({@code <<}) is applied to lane elements. 
      *
      * @param v the input vector
      * @return the result of logically left shifting this vector by the input
@@ -596,7 +594,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * elements controlled by a mask.
      * <p>
      * This is a vector binary operation where the primitive logical left shift
-     * operation ({@code <<}) is applied to lane elements.
+     * operation ({@code <<}) is applied to lane elements. 
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -816,14 +814,6 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
 
 
     // Type specific horizontal reductions
-
-// @@@ For floating point vectors order matters for reproducibility
-//     with equivalent sequential reduction. Some order needs to be specified
-//     by default. If that default is sequential encounter order then there
-//     could be a "go faster" option that is unspecified, essentially giving
-//     implementation flexibility at the expense of reproducibility and/or
-//     accuracy.
-// @@@ Mask versions?
 
     /**
      * Adds all lane elements of this vector.
@@ -1064,7 +1054,6 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      */
     @ForceInline
     public final int[] toArray() {
-        // @@@ could allocate without zeroing, see Unsafe.allocateUninitializedArray
         int[] a = new int[species().length()];
         intoArray(a, 0);
         return a;
@@ -1202,7 +1191,9 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         /**
          * Returns a vector where each lane element is set to a randomly
          * generated primitive value.
-         * @@@ what are the properties of the random number generator?
+         *
+         * The semantics are equivalent to calling
+         * {@link (int)ThreadLocalRandom#nextInt() }
          *
          * @return a vector where each lane elements is set to a randomly
          * generated primitive value
@@ -1220,12 +1211,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * the primitive value at index {@code N} is placed into the resulting
          * vector at lane index {@code N}.
          *
-         * @@@ What should happen if es.length < this.length() ? use the default
-         * value or throw IndexOutOfBoundsException
-         *
          * @param es the given primitive values
          * @return a vector where each lane element is set to a given primitive
          * value
+         * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
          */
         public abstract IntVector<S> scalars(int... es);
 

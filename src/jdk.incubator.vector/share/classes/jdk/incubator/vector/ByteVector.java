@@ -208,6 +208,9 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
     @Override
     public abstract ByteVector<S> min(Vector<Byte,S> v);
 
+    @Override
+    public abstract ByteVector<S> min(Vector<Byte,S> v, Mask<Byte, S> m);
+
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
      * <p>
@@ -221,6 +224,9 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
     @Override
     public abstract ByteVector<S> max(Vector<Byte,S> v);
+
+    @Override
+    public abstract ByteVector<S> max(Vector<Byte,S> v, Mask<Byte, S> m);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -542,14 +548,6 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      */
     public abstract ByteVector<S> not(Mask<Byte, S> m);
 
-/*
-@@@ Check the shift operations against the JLS definition and vector
-    instructions.
-
-    For int values the low 5 bits of s are used.
-    For long values the low 6 bits of s are used.
- */
-
     /**
      * Logically left shifts this vector by the broadcast of an input scalar.
      * <p>
@@ -656,14 +654,6 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
 
     // Type specific horizontal reductions
-
-// @@@ For floating point vectors order matters for reproducibility
-//     with equivalent sequential reduction. Some order needs to be specified
-//     by default. If that default is sequential encounter order then there
-//     could be a "go faster" option that is unspecified, essentially giving
-//     implementation flexibility at the expense of reproducibility and/or
-//     accuracy.
-// @@@ Mask versions?
 
     /**
      * Adds all lane elements of this vector.
@@ -904,7 +894,6 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      */
     @ForceInline
     public final byte[] toArray() {
-        // @@@ could allocate without zeroing, see Unsafe.allocateUninitializedArray
         byte[] a = new byte[species().length()];
         intoArray(a, 0);
         return a;
@@ -1042,7 +1031,9 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
         /**
          * Returns a vector where each lane element is set to a randomly
          * generated primitive value.
-         * @@@ what are the properties of the random number generator?
+         *
+         * The semantics are equivalent to calling
+         * {@link (byte)ThreadLocalRandom#nextInt() }
          *
          * @return a vector where each lane elements is set to a randomly
          * generated primitive value
@@ -1060,12 +1051,10 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
          * the primitive value at index {@code N} is placed into the resulting
          * vector at lane index {@code N}.
          *
-         * @@@ What should happen if es.length < this.length() ? use the default
-         * value or throw IndexOutOfBoundsException
-         *
          * @param es the given primitive values
          * @return a vector where each lane element is set to a given primitive
          * value
+         * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
          */
         public abstract ByteVector<S> scalars(byte... es);
 

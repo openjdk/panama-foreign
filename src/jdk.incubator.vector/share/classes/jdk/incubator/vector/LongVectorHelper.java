@@ -139,42 +139,6 @@ public final class LongVectorHelper {
     LongVector<S> subtractExtract(LongVector<S> va, LongVector<S> vb, Vector.Mask<Long,S> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.subtractExact(a, b));
     }
-    /*
-    // @@@ Shape specific
-    // long,int-> long : S, S / 2 -> S
-    // Long512Vector, Int256Vector -> Long512Vector
-
-    public static <S extends Vector.Shape>
-    LongVector<S> multiplyExact(LongVector<S> va, LongVector<S> vb) {
-        throw new UnsupportedOperationException("multiplyExact not supported on Float");
-    }
-
-    public static <S extends Vector.Shape>
-    LongVector<S> multiplyExact(LongVector<S> va, LongVector<S> vb, Vector.Mask<Long, S> m) {
-        throw new UnsupportedOperationException("multiplyExact not supported on Float");
-    }
-
-    // @@@ Shape specific
-    // long->int
-    // Long512Vector -> Int256Vector
-
-    public
-    Vector<Integer, Shapes.S128Bit> toIntExact() {
-        throw new UnsupportedOperationException("toIntExact not implemented.");
-    }
-
-    // Top 64 of 128 bits
-
-    public static <S extends Vector.Shape>
-    LongVector<S> multiplyHigh(LongVector<S> va, LongVector<S> vb) {
-        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
-    }
-
-    public static <S extends Vector.Shape>
-    LongVector<S> multiplyHigh(LongVector<S> va, LongVector<S> vb, Vector.Mask<Long, S> m) {
-        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
-    }
-    */
 
 
 }

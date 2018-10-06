@@ -143,60 +143,6 @@ public final class $abstractvectortype$Helper {
         return va.bOp(vb, m, (i, a, b) -> Math.subtractExact(a, b));
     }
 #end[intOrLong]
-#if[int]
-    // @@@ Shape specific
-    // Int256Vector -> Long512Vector
-    /*
-
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> multiplyFull($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
-        throw new UnsupportedOperationException("multiplyFull not supported on Float");
-    }
-
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> multiplyFull($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$, S> m) {
-        throw new UnsupportedOperationException("multiplyFull not supported on Float");
-    }
-    */
-#end[int]
-#if[long]
-    /*
-    // @@@ Shape specific
-    // long,int-> long : S, S / 2 -> S
-    // Long512Vector, Int256Vector -> Long512Vector
-
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> multiplyExact($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
-        throw new UnsupportedOperationException("multiplyExact not supported on Float");
-    }
-
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> multiplyExact($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$, S> m) {
-        throw new UnsupportedOperationException("multiplyExact not supported on Float");
-    }
-
-    // @@@ Shape specific
-    // long->int
-    // Long512Vector -> Int256Vector
-
-    public
-    Vector<Integer, Shapes.S128Bit> toIntExact() {
-        throw new UnsupportedOperationException("toIntExact not implemented.");
-    }
-
-    // Top 64 of 128 bits
-
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> multiplyHigh($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
-        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
-    }
-
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> multiplyHigh($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$, S> m) {
-        throw new UnsupportedOperationException("multiplyHigh not supported on Float");
-    }
-    */
-#end[long]
 
 #if[FP]
     public static <S extends Vector.Shape>

@@ -139,20 +139,6 @@ public final class IntVectorHelper {
     IntVector<S> subtractExtract(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer,S> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.subtractExact(a, b));
     }
-    // @@@ Shape specific
-    // Int256Vector -> Long512Vector
-    /*
-
-    public static <S extends Vector.Shape>
-    IntVector<S> multiplyFull(IntVector<S> va, IntVector<S> vb) {
-        throw new UnsupportedOperationException("multiplyFull not supported on Float");
-    }
-
-    public static <S extends Vector.Shape>
-    IntVector<S> multiplyFull(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer, S> m) {
-        throw new UnsupportedOperationException("multiplyFull not supported on Float");
-    }
-    */
 
 
 }

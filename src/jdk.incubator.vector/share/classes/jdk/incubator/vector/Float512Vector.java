@@ -591,6 +591,12 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
+    public Float512Vector min(Vector<Float,Shapes.S512Bit> v, Mask<Float, Shapes.S512Bit> m) {
+        return blend(min(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Float512Vector max(Vector<Float,Shapes.S512Bit> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
@@ -599,6 +605,12 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (float) ((a > b) ? a : b)));
         }
+
+    @Override
+    @ForceInline
+    public Float512Vector max(Vector<Float,Shapes.S512Bit> v, Mask<Float, Shapes.S512Bit> m) {
+        return blend(max(v), m);
+    }
 
 
     // Ternary operations
@@ -744,7 +756,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     @ForceInline
     public final void intoArray(float[] a, int ax, Mask<Float, Shapes.S512Bit> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         Float512Vector oldVal = SPECIES.fromArray(a, ax);
         Float512Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -753,7 +764,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     @ForceInline
     public void intoByteArray(byte[] a, int ix) {
-        // @@@ Endianess
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Float512Vector.class, float.class, LENGTH,
@@ -770,7 +780,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     @ForceInline
     public final void intoByteArray(byte[] a, int ix, Mask<Float, Shapes.S512Bit> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         Float512Vector oldVal = SPECIES.fromByteArray(a, ix);
         Float512Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -779,7 +788,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        // @@@ Endianess
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -801,7 +809,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Float, Shapes.S512Bit> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         Float512Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
         Float512Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -819,9 +826,8 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;
 
-        // @@@ Use equal op
         Float512Vector that = (Float512Vector) o;
-        return Arrays.equals(this.getElements(), that.getElements());
+        return this.equal(that).allTrue();
     }
 
     @Override
@@ -1064,7 +1070,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         static final Float512Mask TRUE_MASK = new Float512Mask(true);
         static final Float512Mask FALSE_MASK = new Float512Mask(false);
 
-        // FIXME: was temporarily put here to simplify rematerialization support in the JVM
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Float512Mask(boolean[] bits) {
@@ -1386,14 +1391,12 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         @ForceInline
         public Float512Vector fromArray(float[] a, int ax, Mask<Float, Shapes.S512Bit> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromArray(a, ax), m);
         }
 
         @Override
         @ForceInline
         public Float512Vector fromByteArray(byte[] a, int ix) {
-            // @@@ Endianess
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
             return VectorIntrinsics.load(Float512Vector.class, float.class, LENGTH,
@@ -1409,14 +1412,12 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         @ForceInline
         public Float512Vector fromByteArray(byte[] a, int ix, Mask<Float, Shapes.S512Bit> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteArray(a, ix), m);
         }
 
         @Override
         @ForceInline
         public Float512Vector fromByteBuffer(ByteBuffer bb, int ix) {
-            // @@@ Endianess
             if (bb.order() != ByteOrder.nativeOrder()) {
                 throw new IllegalArgumentException();
             }
@@ -1434,7 +1435,6 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         @ForceInline
         public Float512Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Float, Shapes.S512Bit> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 

@@ -591,6 +591,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
+    public Float256Vector min(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
+        return blend(min(v), m);
+    }
+
+    @Override
+    @ForceInline
     public Float256Vector max(Vector<Float,Shapes.S256Bit> o) {
         Objects.requireNonNull(o);
         Float256Vector v = (Float256Vector)o;
@@ -599,6 +605,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> (float) ((a > b) ? a : b)));
         }
+
+    @Override
+    @ForceInline
+    public Float256Vector max(Vector<Float,Shapes.S256Bit> v, Mask<Float, Shapes.S256Bit> m) {
+        return blend(max(v), m);
+    }
 
 
     // Ternary operations
@@ -744,7 +756,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     @Override
     @ForceInline
     public final void intoArray(float[] a, int ax, Mask<Float, Shapes.S256Bit> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         Float256Vector oldVal = SPECIES.fromArray(a, ax);
         Float256Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -753,7 +764,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     @Override
     @ForceInline
     public void intoByteArray(byte[] a, int ix) {
-        // @@@ Endianess
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Float256Vector.class, float.class, LENGTH,
@@ -770,7 +780,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     @Override
     @ForceInline
     public final void intoByteArray(byte[] a, int ix, Mask<Float, Shapes.S256Bit> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         Float256Vector oldVal = SPECIES.fromByteArray(a, ix);
         Float256Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -779,7 +788,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        // @@@ Endianess
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -801,7 +809,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Float, Shapes.S256Bit> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         Float256Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
         Float256Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -819,9 +826,8 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;
 
-        // @@@ Use equal op
         Float256Vector that = (Float256Vector) o;
-        return Arrays.equals(this.getElements(), that.getElements());
+        return this.equal(that).allTrue();
     }
 
     @Override
@@ -1064,7 +1070,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         static final Float256Mask TRUE_MASK = new Float256Mask(true);
         static final Float256Mask FALSE_MASK = new Float256Mask(false);
 
-        // FIXME: was temporarily put here to simplify rematerialization support in the JVM
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public Float256Mask(boolean[] bits) {
@@ -1386,14 +1391,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         @Override
         @ForceInline
         public Float256Vector fromArray(float[] a, int ax, Mask<Float, Shapes.S256Bit> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromArray(a, ax), m);
         }
 
         @Override
         @ForceInline
         public Float256Vector fromByteArray(byte[] a, int ix) {
-            // @@@ Endianess
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
             return VectorIntrinsics.load(Float256Vector.class, float.class, LENGTH,
@@ -1409,14 +1412,12 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         @Override
         @ForceInline
         public Float256Vector fromByteArray(byte[] a, int ix, Mask<Float, Shapes.S256Bit> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteArray(a, ix), m);
         }
 
         @Override
         @ForceInline
         public Float256Vector fromByteBuffer(ByteBuffer bb, int ix) {
-            // @@@ Endianess
             if (bb.order() != ByteOrder.nativeOrder()) {
                 throw new IllegalArgumentException();
             }
@@ -1434,7 +1435,6 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
         @Override
         @ForceInline
         public Float256Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Float, Shapes.S256Bit> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 

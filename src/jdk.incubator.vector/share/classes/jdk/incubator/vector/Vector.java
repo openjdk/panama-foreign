@@ -262,8 +262,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
      */
     public abstract Species<E, S> species();
 
-    // @@@
-
     /**
      * Returns the primitive element type of this vector.
      *
@@ -428,7 +426,19 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the minimum of this vector and the input vector
      */
     public abstract Vector<E, S> min(Vector<E, S> v);
-    // TODO mask variant?
+    
+    /**
+     * Returns the minimum of this vector and an input vector,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the minimum of this vector and the input vector
+     */
+    public abstract Vector<E, S> min(Vector<E, S> v, Mask<E, S> m);
 
     /**
      * Returns the maximum of this vector and an input vector.
@@ -440,7 +450,19 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the maximum of this vector and the input vector
      */
     public abstract Vector<E, S> max(Vector<E, S> v);
-    // TODO mask variant?
+
+    /**
+     * Returns the maximum of this vector and an input vector,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the operation
+     * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
+     *
+     * @param v the input vector
+     * @param m the mask controlling lane selection
+     * @return the maximum of this vector and the input vector
+     */
+    public abstract Vector<E, S> max(Vector<E, S> v, Mask<E, S> m);
 
     // Comparisons
 
@@ -1032,12 +1054,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * if the given {@code boolean} value at index {@code N} is {@code true}
          * then the mask lane at index {@code N} is set, otherwise it is unset.
          *
-         * @@@ What should happen if bits.length < this.length() ? use the
-         * default value or throw IndexOutOfBoundsException
-         *
          * @param bits the given {@code boolean} values
          * @return a mask where each lane is set or unset according to a given
          * {@code boolean} value
+         * @throws IndexOutOfBoundsException if {@code bits.length < this.length()}
          */
         public abstract Mask<E, S> maskFromValues(boolean... bits);
 
@@ -1306,20 +1326,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * species length differ
          */
         public abstract <F, T extends Shape> Shuffle<E, S> cast(Shuffle<F, T> s);
-
-        // Species/species transformations
-
-        // Returns a species for a given element type and the length of this
-        // species.
-        // The length of the returned species will be equal to the length of
-        // this species.
-        //
-        // Throws IAE if no shape exists for the element type and this species length,
-//        public <F> Species<F, ?> toSpeciesWithSameNumberOfLanes(Class<F> c) {
-//            // @@@ TODO implement and find better name
-//            throw new UnsupportedOperationException();
-//        }
-
     }
 
     /**
@@ -1337,7 +1343,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
          */
         public abstract int bitSize();
 
-        // @@@ remove this method
         public int length(Species<?, ?> s) { return bitSize() / s.elementSize(); }
     }
 
@@ -1510,9 +1515,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
          */
         public abstract int trueCount();
 
-        // TODO: LZ count/numberOfLeadingZeros
-        // TODO: xor, shiftl, shiftr
-
         /**
          * Logically ands this mask with an input mask.
          * <p>
@@ -1564,8 +1566,17 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @return true if the lane at index {@code i} is set, otherwise false
          */
-        // @@@ Rename to isSet
         public abstract boolean getElement(int i);
+        
+        /**
+         * Tests if the lane at index {@code i} is set
+         * @param i the lane index
+         * @return true if the lane at index {@code i} is set, otherwise false
+         * @see getElement
+         */
+        public boolean isSet(int i) {
+            return getElement(i);
+        }
     }
 
     /**
@@ -1664,8 +1675,6 @@ public abstract class Vector<E, S extends Vector.Shape> {
          */
         public abstract void intoArray(int[] a, int i);
 
-        // @@@ rotate/shift/EL/ER
-
         /**
          * Converts this shuffle into a vector, creating a vector from shuffle
          * lane elements (int values) cast to the vector element type.
@@ -1732,33 +1741,45 @@ public abstract class Vector<E, S extends Vector.Shape> {
         return species(c, s);
     }
 
-    // @@@ public static method on Species?
-    private static int bitSizeForVectorLength(Class<?> c, int elementSize) {
+    /**
+     * Find bit size based on element type and number of elements.
+     * 
+     * @param c the element type
+     * @param numElem number of lanes in the vector
+     * @return size in bits for vector
+     */
+    public static int bitSizeForVectorLength(Class<?> c, int numElem) {
         if (c == float.class) {
-            return Float.SIZE * elementSize;
+            return Float.SIZE * numElem;
         }
         else if (c == double.class) {
-            return Double.SIZE * elementSize;
+            return Double.SIZE * numElem;
         }
         else if (c == byte.class) {
-            return Byte.SIZE * elementSize;
+            return Byte.SIZE * numElem;
         }
         else if (c == short.class) {
-            return Short.SIZE * elementSize;
+            return Short.SIZE * numElem;
         }
         else if (c == int.class) {
-            return Integer.SIZE * elementSize;
+            return Integer.SIZE * numElem;
         }
         else if (c == long.class) {
-            return Long.SIZE * elementSize;
+            return Long.SIZE * numElem;
         }
         else {
             throw new IllegalArgumentException("Bad vector type: " + c.getName());
         }
     }
 
-    // @@@ public static method on Shape?
-    private static Shape shapeForVectorBitSize(int bitSize) {
+    /**
+     * Finds appropriate shape depending on bitsize.
+     * 
+     * @param bitSize the size in bits
+     * @return the shape corresponding to bitsize
+     * @see bitSize
+     */
+    public static Shape shapeForVectorBitSize(int bitSize) {
         switch (bitSize) {
             case 64:
                 return Shapes.S_64_BIT;

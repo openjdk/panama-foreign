@@ -656,6 +656,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
     @Override
     @ForceInline
+    public $vectortype$ min(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(min(v), m);
+    }
+
+    @Override
+    @ForceInline
     public $vectortype$ max(Vector<$Boxtype$,Shapes.$shape$> o) {
         Objects.requireNonNull(o);
         $vectortype$ v = ($vectortype$)o;
@@ -664,6 +670,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this, v,
             (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$) ((a > b) ? a : b)));
         }
+
+    @Override
+    @ForceInline
+    public $vectortype$ max(Vector<$Boxtype$,Shapes.$shape$> v, Mask<$Boxtype$, Shapes.$shape$> m) {
+        return blend(max(v), m);
+    }
 
 #if[BITWISE]
     @Override
@@ -1049,7 +1061,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     @ForceInline
     public final void intoArray($type$[] a, int ax, Mask<$Boxtype$, Shapes.$shape$> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         $vectortype$ oldVal = SPECIES.fromArray(a, ax);
         $vectortype$ newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -1058,7 +1069,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     @ForceInline
     public void intoByteArray(byte[] a, int ix) {
-        // @@@ Endianess
         Objects.requireNonNull(a);
         ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
         VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
@@ -1075,7 +1085,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     @ForceInline
     public final void intoByteArray(byte[] a, int ix, Mask<$Boxtype$, Shapes.$shape$> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         $vectortype$ oldVal = SPECIES.fromByteArray(a, ix);
         $vectortype$ newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -1084,7 +1093,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix) {
-        // @@@ Endianess
         if (bb.order() != ByteOrder.nativeOrder()) {
             throw new IllegalArgumentException();
         }
@@ -1106,7 +1114,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
     @Override
     @ForceInline
     public void intoByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, Shapes.$shape$> m) {
-        // @@@ This can result in out of bounds errors for unset mask lanes
         $vectortype$ oldVal = SPECIES.fromByteBuffer(bb, ix);
         $vectortype$ newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -1124,9 +1131,8 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;
 
-        // @@@ Use equal op
         $vectortype$ that = ($vectortype$) o;
-        return Arrays.equals(this.getElements(), that.getElements());
+        return this.equal(that).allTrue();
     }
 
     @Override
@@ -1412,7 +1418,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         static final $masktype$ TRUE_MASK = new $masktype$(true);
         static final $masktype$ FALSE_MASK = new $masktype$(false);
 
-        // FIXME: was temporarily put here to simplify rematerialization support in the JVM
         private final boolean[] bits; // Don't access directly, use getBits() instead.
 
         public $masktype$(boolean[] bits) {
@@ -1754,14 +1759,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @Override
         @ForceInline
         public $vectortype$ fromArray($type$[] a, int ax, Mask<$Boxtype$, Shapes.$shape$> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromArray(a, ax), m);
         }
 
         @Override
         @ForceInline
         public $vectortype$ fromByteArray(byte[] a, int ix) {
-            // @@@ Endianess
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, bitSize() / Byte.SIZE);
             return VectorIntrinsics.load($vectortype$.class, $type$.class, LENGTH,
@@ -1777,14 +1780,12 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @Override
         @ForceInline
         public $vectortype$ fromByteArray(byte[] a, int ix, Mask<$Boxtype$, Shapes.$shape$> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteArray(a, ix), m);
         }
 
         @Override
         @ForceInline
         public $vectortype$ fromByteBuffer(ByteBuffer bb, int ix) {
-            // @@@ Endianess
             if (bb.order() != ByteOrder.nativeOrder()) {
                 throw new IllegalArgumentException();
             }
@@ -1802,7 +1803,6 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @Override
         @ForceInline
         public $vectortype$ fromByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$, Shapes.$shape$> m) {
-            // @@@ This can result in out of bounds errors for unset mask lanes
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
