@@ -32,7 +32,8 @@ public class CallingSequence {
     private final boolean returnsInMemory;
     private final List<ArgumentBinding>[] argBindings;
     private final List<ArgumentBinding> retBindings = new ArrayList<>();
-    private final int[] offsets = new int[Constants.ARGUMENT_STORAGE_CLASSES.length];
+    private final int[] argsOffsets = new int[Constants.ARGUMENT_STORAGE_CLASSES.length];
+    private final int[] retOffsets = new int[StorageClass.values().length];
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public CallingSequence(int argSize, ArrayList<ArgumentBinding>[] bindings, boolean returnsInMemory) {
@@ -55,8 +56,8 @@ public class CallingSequence {
             for (ArgumentBinding binding : getBindings(storageClass)) {
                 if (storageClass.isArgumentClass()) {
                     //update offsets
-                    for (int i = storageClass.ordinal() + 1 ; i < offsets.length ; i++) {
-                        offsets[i]++;
+                    for (int i = storageClass.ordinal() + 1 ; i < argsOffsets.length ; i++) {
+                        argsOffsets[i]++;
                     }
                     //classify arguments
                     if (storageClass == StorageClass.INTEGER_ARGUMENT_REGISTER &&
@@ -72,6 +73,10 @@ public class CallingSequence {
                     }
                 } else {
                     if (!returnsInMemory()) {
+                        //update offsets
+                        for (int i = storageClass.ordinal() + 1 ; i < retOffsets.length ; i++) {
+                            retOffsets[i]++;
+                        }
                         //classify returns
                         retBindings.add(binding);
                     }
@@ -81,15 +86,20 @@ public class CallingSequence {
     }
 
     public List<ArgumentBinding> getArgumentBindings(int i) {
-        return argBindings[i];
+        return argBindings[i] == null ? List.of() : argBindings[i];
     }
 
     public List<ArgumentBinding> getReturnBindings() {
-        return retBindings;
+        return retBindings == null ? List.of() : retBindings;
     }
 
-    public long storageOffset(ArgumentBinding b) {
-        return offsets[b.getStorage().getStorageClass().ordinal()] +
+    public long argumentStorageOffset(ArgumentBinding b) {
+        return argsOffsets[b.getStorage().getStorageClass().ordinal()] +
+                 b.getStorage().getStorageIndex();
+    }
+
+    public long returnStorageOffset(ArgumentBinding b) {
+        return retOffsets[b.getStorage().getStorageClass().ordinal()] +
                  b.getStorage().getStorageIndex();
     }
 

@@ -40,10 +40,14 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.IntFunction;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * This class implements the shuffling logic that is required to adapt a method handle modelling a Java method into the
@@ -85,7 +89,7 @@ class DirectSignatureShuffler {
 
     private final ShuffleDirection direction;
     private final MethodType javaMethodType;
-    private MethodType nativeMethodType = MethodType.methodType(void.class);
+    private MethodType erasedMethodType = MethodType.methodType(void.class);
     private List<UnaryOperator<MethodHandle>> adapters = new ArrayList<>();
     private List<Integer> longPerms = new ArrayList<>();
     private List<Integer> doublePerms = new ArrayList<>();
@@ -112,16 +116,24 @@ class DirectSignatureShuffler {
     }
 
     MethodHandle adapt(MethodHandle mh) {
+        if (direction == ShuffleDirection.JAVA_TO_NATIVE) {
+            mh = MethodHandles.permuteArguments(mh, erasedMethodType, forwardPermutations());
+        }
+
         for (UnaryOperator<MethodHandle> adapter : adapters) {
             mh = adapter.apply(mh);
         }
-        return MethodHandles.permuteArguments(mh,
-                (direction == ShuffleDirection.JAVA_TO_NATIVE) ? javaMethodType : nativeMethodType,
-                permutations().stream().mapToInt(x -> x).toArray());
+
+        if (direction == ShuffleDirection.NATIVE_TO_JAVA) {
+            mh = MethodHandles.permuteArguments(mh, nativeMethodType(), reversePermutations());
+        }
+        return mh;
     }
 
     MethodType nativeMethodType() {
-        return nativeMethodType;
+        MethodType mt = MethodType.methodType(erasedMethodType.returnType());
+        mt = mt.appendParameterTypes(Collections.nCopies(longPerms.size(), long.class));
+        return mt.appendParameterTypes(Collections.nCopies(doublePerms.size(), double.class));
     }
     
     MethodType javaMethodType() {
@@ -198,9 +210,9 @@ class DirectSignatureShuffler {
 
     private void updateNativeMethodType(int sigPos, Class<?> carrier) {
         if (sigPos == -1) {
-            nativeMethodType = nativeMethodType.changeReturnType(carrier);
+            erasedMethodType = erasedMethodType.changeReturnType(carrier);
         } else {
-            nativeMethodType = nativeMethodType.appendParameterTypes(carrier);
+            erasedMethodType = erasedMethodType.appendParameterTypes(carrier);
             if (carrier == long.class) {
                 longPerms.add(sigPos);
             } else {
@@ -209,11 +221,26 @@ class DirectSignatureShuffler {
         }
     }
 
-    private List<Integer> permutations() {
-        List<Integer> perms = new ArrayList<>();
-        perms.addAll(longPerms);
-        perms.addAll(doublePerms);
-        return perms;
+    private int[] forwardPermutations() {
+        return Stream.concat(longPerms.stream(), doublePerms.stream())
+                .mapToInt(x -> x)
+                .toArray();
+    }
+
+    private int[] reversePermutations() {
+        int[] forward = forwardPermutations();
+        int[] reverse = new int[forward.length];
+        for (int i = 0 ; i < forward.length ; i++) {
+            reverse[i] = lookup(forward, i);
+        }
+        return reverse;
+    }
+
+    private int lookup(int[] arr, int v) {
+        for (int i = 0 ; i < arr.length ; i++) {
+            if (arr[i] == v) return i;
+        }
+        throw new IllegalStateException();
     }
 
     private String desc(Class<?> clazz) {
@@ -373,11 +400,30 @@ class DirectSignatureShuffler {
         for (int i = 0 ; i < function.argumentLayouts().size() ; i++) {
             List<ArgumentBinding> argumentBindings = callingSequence.getArgumentBindings(i);
             if (argumentBindings.size() != 1 ||
-                    argumentBindings.get(0).getStorage().getStorageClass() == StorageClass.STACK_ARGUMENT_SLOT) {
+                    !isDirectBinding(argumentBindings.get(0))) {
                 return false;
             }
         }
-        return !callingSequence.returnsInMemory() &&
-                callingSequence.getReturnBindings().size() <= 1;
+        if (!function.returnLayout().isPresent()) {
+            return true;
+        } else {
+            List<ArgumentBinding> returnBindings = callingSequence.getReturnBindings();
+            return !callingSequence.returnsInMemory() &&
+                    returnBindings.size() == 1 && isDirectBinding(returnBindings.get(0));
+        }
+    }
+
+    private static boolean isDirectBinding(ArgumentBinding binding) {
+        switch (binding.getStorage().getStorageClass()) {
+            case STACK_ARGUMENT_SLOT:
+                //arguments passed in memory not supported
+                return false;
+            case VECTOR_ARGUMENT_REGISTER:
+            case VECTOR_RETURN_REGISTER:
+                //avoid passing around floats as doubles as that leads to trouble
+                return (binding.getMember().getType().bitsSize() / 8) == binding.getStorage().getSize();
+            default:
+                return true;
+        }
     }
 }
