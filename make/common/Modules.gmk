@@ -78,10 +78,8 @@ BOOT_MODULES += \
 UPGRADEABLE_MODULES += \
     java.compiler \
     jdk.aot \
-    jdk.internal.clang \
     jdk.internal.vm.compiler \
     jdk.internal.vm.compiler.management \
-    jdk.jextract \
     #
 
 
