@@ -113,8 +113,9 @@ public class TestJextractFFI {
                 "-J-Djextract.debug=true",
                 "-J-Dlibclang.debug=true",
                 "-J-Djava.library.path=" + clang_lib_path.toString(),
-                "-J--module-path", "-J" + CLANG_JAR,
-                "-J--upgrade-module-path", "-J" + JCLANG_PATH,
+                "-J-Xbootclasspath/a:" + CLANG_JAR,
+                "-J--add-reads", "-Jjdk.internal.clang=ALL-UNNAMED",
+                "-J--patch-module", "-Jjdk.internal.clang=" + JCLANG_PATH,
                 clang_header_path
                         .resolve("clang-c").resolve("Index.h").toString());
         File err = launch(command);
