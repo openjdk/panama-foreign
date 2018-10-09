@@ -27,7 +27,7 @@ include LibCommon.gmk
 
 ################################################################################
 
-ifeq ($(ENABLE_LIBCLANG), yes)
+ifeq ($(ENABLE_LIBCLANG), true)
 
   LIBJCLANG_SRC := \
       $(TOPDIR)/src/jdk.internal.clang/share/native/libjclang

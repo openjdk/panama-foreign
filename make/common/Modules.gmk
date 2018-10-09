@@ -235,7 +235,7 @@ endif
 ################################################################################
 # Filter out panama specific modules if libclang is disabled
 
-ifeq ($(ENABLE_LIBCLANG), no)
+ifeq ($(ENABLE_LIBCLANG), false)
   MODULES_FILTER += jdk.internal.clang
   MODULES_FILTER += jdk.jextract
 endif
