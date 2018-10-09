@@ -514,7 +514,7 @@ define SetupRunJtregTestBody
     $1_JTREG_BASIC_OPTIONS += -e:_NT_SYMBOL_PATH
   endif
 
-  ifeq ($(ENABLE_LIBCLANG), yes)
+  ifeq ($(ENABLE_LIBCLANG), true)
     $1_JTREG_BASIC_OPTIONS += \
         -Dclang.include.path=$(CLANG_INCLUDE_PATH) \
         -Dclang.lib.path=$(CLANG_LIB_PATH)

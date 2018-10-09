@@ -29,37 +29,44 @@
 AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
 [
   AC_ARG_WITH([libclang], [AS_HELP_STRING([--with-libclang=<path to llvm>],
-        [Specify path of llvm installation contains libclang. Pre-built llvm
-         binary can be downloaded from http://llvm.org/releases/download.html])],
-    [],
-    [with_libclang=yes]
-  )
+      [Specify path of llvm installation containing libclang. Pre-built llvm
+      binary can be downloaded from http://llvm.org/releases/download.html])])
+  AC_ARG_WITH([libclang-lib], [AS_HELP_STRING([--with-libclang-lib=<path>],
+      [Specify where to find libclang binary, so/dylib/dll ])])
+  AC_ARG_WITH([libclang-include], [AS_HELP_STRING([--with-libclang-include=<path>],
+      [Specify where to find libclang header files, clang-c/Index.h ])])
+  AC_ARG_WITH([libclang-include-aux], [AS_HELP_STRING([--with-libclang-include-aux=<path>],
+      [Specify where to find libclang auxiliary header files, lib/clang/<clang-version>/include/stddef.h ])])
 
   if test "x$with_libclang" = "xno"; then
-    ENABLE_LIBCLANG="no"
+    AC_MSG_CHECKING([if libclang should be enabled])
+    AC_MSG_RESULT([no, forced])
+    ENABLE_LIBCLANG="false"
   else
-    ENABLE_LIBCLANG="yes"
-    AC_ARG_WITH([libclang-include], [AS_HELP_STRING([--with-libclang-include=<path>],
-        [Specify where to find libclang header files, clang-c/Index.h ])],
-      [CLANG_INCLUDE_PATH="$withval"],
-      [CLANG_INLCUDE_PATH=""]
-    )
-    AC_ARG_WITH([libclang-include-aux], [AS_HELP_STRING([--with-libclang-include-aux=<path>],
-        [Specify where to find libclang auxiliary header files, lib/clang/<clang-version>/include/stddef.h ])],
-      [CLANG_INCLUDE_AUX_PATH="$withval"],
-      [CLANG_INLCUDE_AUX_PATH=""]
-    )
-    AC_ARG_WITH([libclang-lib], [AS_HELP_STRING([--with-libclang-lib=<path>],
-        [Specify where to find libclang binary, so/dylib/dll ])],
-      [CLANG_LIB_PATH="$withval"],
-      [CLANG_LIB_PATH=""]
-    )
+    if test "x$with_libclang" != "x"; then
+      AC_MSG_CHECKING([if libclang should be enabled])
+      AC_MSG_RESULT([yes, forced])
+      ENABLE_LIBCLANG_FORCED="true"
+    else
+      ENABLE_LIBCLANG_FORCED="false"
+    fi
+    ENABLE_LIBCLANG="true"
 
-    if test "x$with_libclang" != "xyes"; then
+    if test "x$with_libclang" != "x" -a "x$with_libclang" != "xyes"; then
+      CLANG_LIB_PATH="$with_libclang/lib"
       CLANG_INCLUDE_PATH="$with_libclang/include"
       VER=`ls $with_libclang/lib/clang/`
       CLANG_INCLUDE_AUX_PATH="$with_libclang/lib/clang/$VER/include"
-      CLANG_LIB_PATH="$with_libclang/lib"
+    fi
+
+    if test "x$with_libclang_lib" != "x"; then
+      CLANG_LIB_PATH="$with_libclang_lib"
+    fi
+    if test "x$with_libclang_include" != "x"; then
+      CLANG_INCLUDE_PATH="$with_libclang_include"
+    fi
+    if test "x$with_libclang_include_aux" != "x"; then
+      CLANG_INCLUDE_AUX_PATH="$with_libclang_include_aux"
     fi
 
     if test "x$CLANG_INCLUDE_PATH" != "x"; then
@@ -80,15 +87,23 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
     CPPFLAGS="$LIBCLANG_CPPFLAGS"
     LDFLAGS="$LIBCLANG_LDFLAGS"
     LIBS=""
-    AC_CHECK_HEADER("clang-c/Index.h", [], [ENABLE_LIBCLANG="no"])
-    if test "x$ENABLE_LIBCLANG" = "xyes"; then
-      AC_CHECK_LIB(clang, clang_getClangVersion, [], [ENABLE_LIBCLANG="no"])
+    AC_CHECK_HEADER("clang-c/Index.h", [], [ENABLE_LIBCLANG="false"])
+    if test "x$ENABLE_LIBCLANG" = "xtrue"; then
+      AC_CHECK_LIB(clang, clang_getClangVersion, [], [ENABLE_LIBCLANG="false"])
     fi
 
-    if test "x$ENABLE_LIBCLANG" = "xno"; then
-      AC_MSG_NOTICE([Cannot locate libclang! You can download pre-built llvm
-        binary from http://llvm.org/releases/download.html, then specify the
-        location using --with-libclang])
+    if test "x$ENABLE_LIBCLANG" = "xfalse"; then
+      if test "x$ENABLE_LIBCLANG_FORCED" = "xtrue"; then
+        AC_MSG_ERROR([Cannot locate libclang or headers at the specified locations:
+            $CLANG_LIB_PATH
+            $CLANG_INCLUDE_PATH])
+      else
+        AC_MSG_CHECKING([if libclang should be enabled])
+        AC_MSG_RESULT([no, not found])
+        AC_MSG_NOTICE([Cannot locate libclang! You can download pre-built llvm
+            binary from http://llvm.org/releases/download.html, then specify the
+            location using --with-libclang])
+      fi
     fi
 
     LIBCLANG_LIBS="$LIBS"
@@ -98,7 +113,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
     CPPFLAGS="$OLD_CPPFLAGS"
   fi
 
-  if test "x$ENABLE_LIBCLANG" = "xno"; then
+  if test "x$ENABLE_LIBCLANG" = "xfalse"; then
     CLANG_INCLUDE_PATH=""
     CLANG_INCLUDE_AUX_PATH=""
     CLANG_LIB_PATH=""

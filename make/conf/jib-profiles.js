@@ -379,7 +379,9 @@ var getJibProfilesProfiles = function (input, common, data) {
         "linux-x64": {
             target_os: "linux",
             target_cpu: "x64",
-            dependencies: ["devkit", "graphviz", "pandoc", "graalunit_lib"],
+            dependencies: [
+                "devkit", "graphviz", "pandoc", "graalunit_lib", "libclang"
+            ],
             configure_args: concat(common.configure_args_64bit,
                 "--enable-full-docs", "--with-zlib=system"),
             default_make_targets: ["docs-bundles"],
@@ -397,7 +399,9 @@ var getJibProfilesProfiles = function (input, common, data) {
         "macosx-x64": {
             target_os: "macosx",
             target_cpu: "x64",
-            dependencies: ["devkit", "graalunit_lib"],
+            dependencies: [
+                "devkit", "graalunit_lib", "libclang"
+            ],
             configure_args: concat(common.configure_args_64bit, "--with-zlib=system",
                 "--with-macosx-version-max=10.9.0"),
         },
@@ -884,6 +888,13 @@ var getJibProfilesDependencies = function (input, common) {
             organization: common.organization,
             ext: "tar.gz",
             revision: "1.0118+1.0"
+        },
+
+        libclang: {
+            organization: common.organization,
+            module: "libclang-" + input.build_platform,
+            ext: "tar.gz",
+            revision: "7.0.0+1.0"
         },
 
         jtreg: {
