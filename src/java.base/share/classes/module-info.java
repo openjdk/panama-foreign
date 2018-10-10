@@ -163,8 +163,7 @@ module java.base {
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm.util to
         jdk.jfr,
-        jdk.scripting.nashorn,
-        jdk.jextract;
+        jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.commons to
         jdk.jfr,
         jdk.scripting.nashorn;
