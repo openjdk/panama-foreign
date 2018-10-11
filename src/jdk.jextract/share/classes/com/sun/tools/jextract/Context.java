@@ -177,28 +177,32 @@ public final class Context {
 
     private void initSymChecker() {
         if (!libraryNames.isEmpty() && !linkCheckPaths.isEmpty()) {
-            Library[] libs = loadLibraries(MethodHandles.lookup(),
-                linkCheckPaths.toArray(new String[0]),
-                libraryNames.toArray(new String[0]));
-
-            // check if the given symbol is found in any of the libraries or not.
-            // If not found, warn the user for the missing symbol.
-            symChecker = name -> {
-                if (Main.DEBUG) {
-                    err.println("Searching symbol: " + name);
-                }
-                return (Arrays.stream(libs).filter(lib -> {
-                        try {
-                            lib.lookup(name);
-                            if (Main.DEBUG) {
-                                err.println("Found symbol: " + name);
+            try {
+                Library[] libs = loadLibraries(MethodHandles.lookup(),
+                    linkCheckPaths.toArray(new String[0]),
+                    libraryNames.toArray(new String[0]));
+                // check if the given symbol is found in any of the libraries or not.
+                // If not found, warn the user for the missing symbol.
+                symChecker = name -> {
+                    if (Main.DEBUG) {
+                        err.println("Searching symbol: " + name);
+                    }
+                    return (Arrays.stream(libs).filter(lib -> {
+                            try {
+                                lib.lookup(name);
+                                if (Main.DEBUG) {
+                                    err.println("Found symbol: " + name);
+                                }
+                                return true;
+                            } catch (NoSuchMethodException nsme) {
+                                return false;
                             }
-                            return true;
-                        } catch (NoSuchMethodException nsme) {
-                            return false;
-                        }
-                    }).findFirst().isPresent());
-            };
+                        }).findFirst().isPresent());
+                };
+            } catch (UnsatisfiedLinkError ex) {
+                err.println(Main.format("warn.lib.not.found"));
+                symChecker = null;
+            }
         } else {
             symChecker = null;
         }
@@ -328,7 +332,9 @@ public final class Context {
         }
 
         final Context.Entity e = whatis(header);
-        return new HeaderFile(this, header, e.pkg, e.entity, main);
+        HeaderFile headerFile = new HeaderFile(this, header, e.pkg, e.entity, main);
+        headerFile.useLibraries(libraryNames, libraryPaths);
+        return headerFile;
     }
 
     void processTree(Tree tree, HeaderFile main, Function<HeaderFile, AsmCodeFactory> fn) {
@@ -357,10 +363,9 @@ public final class Context {
                 if (header == null) {
                     final HeaderFile hf = header = getHeaderFile(p, main);
                     logger.config(() -> "First encounter of header file " + hf.path + ", assigned to package " + hf.pkgName);
-                    // Only generate code for header files sepcified or in the same package
-                    // System headers are excluded, they need to be explicitly specified in jextract cmdline
+                    // Only generate code for header files specified or in the same package
                     if (sources.contains(p) ||
-                        (!loc.isInSystemHeader()) && (header.pkgName.equals(main.pkgName))) {
+                        (header.pkgName.equals(main.pkgName))) {
                         logger.config("Code gen for header " + p + " enabled in package " + header.pkgName);
                         header.useCodeFactory(fn.apply(header));
                     }
@@ -385,6 +390,8 @@ public final class Context {
          // check for function symbols in libraries & warn missing symbols
          if (tree instanceof FunctionTree && !isSymbolFound(name)) {
              err.println(Main.format("warn.symbol.not.found", name));
+             //auto-exclude symbols not found
+             return false;
          }
 
          return true;
@@ -405,7 +412,6 @@ public final class Context {
                 map(new EmptyNameHandler()).
                 forEach(header -> {
             HeaderFile hf = headerMap.computeIfAbsent(header.path(), p -> getHeaderFile(p, null));
-            hf.useLibraries(libraryNames, libraryPaths);
             hf.useCodeFactory(fn.apply(hf));
             logger.info(() -> "Processing header file " + header.path());
 

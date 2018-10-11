@@ -196,6 +196,53 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
+    public void test_option_conflicting_rpaths() {
+        Path helloJar = getOutputFilePath("hello.jar");
+        deleteFile(helloJar);
+        Path helloH = getInputFilePath("hello.h");
+        Path rpathDir = getInputFilePath("libs");
+        String warning = "WARNING: -infer-rpath used in conjunction with explicit -rpath paths";
+        try {
+            checkSuccess(warning, "-rpath", rpathDir.toString(),
+                    "-infer-rpath",
+                    "-o", helloJar.toString(), helloH.toString());
+        } finally {
+            deleteFile(helloJar);
+        }
+    }
+
+    @Test
+    public void test_option_rpath_no_libs() {
+        Path helloJar = getOutputFilePath("hello.jar");
+        deleteFile(helloJar);
+        Path helloH = getInputFilePath("hello.h");
+        String warning = "WARNING: -infer-rpath option specified without any -L option";
+        try {
+            checkSuccess(warning,
+                    "-infer-rpath",
+                    "-o", helloJar.toString(), helloH.toString());
+        } finally {
+            deleteFile(helloJar);
+        }
+    }
+
+    @Test
+    public void test_option_l_no_crash_missing_lib() {
+        Path helloJar = getOutputFilePath("hello.jar");
+        deleteFile(helloJar);
+        Path helloH = getInputFilePath("hello.h");
+        String warning = "WARNING: Some library names could not be resolved";
+        try {
+            checkSuccess(warning,
+                    "-L", "nonExistent",
+                    "-l", "nonExistent",
+                    "-o", helloJar.toString(), helloH.toString());
+        } finally {
+            deleteFile(helloJar);
+        }
+    }
+
+    @Test
     public void test_option_l() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);

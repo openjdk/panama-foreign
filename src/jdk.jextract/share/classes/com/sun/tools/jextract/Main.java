@@ -136,6 +136,7 @@ public final class Main {
         parser.accepts("log", format("help.log")).withRequiredArg();
         parser.accepts("exclude-symbols", format("help.exclude_symbols")).withRequiredArg();
         parser.accepts("rpath", format("help.rpath")).withRequiredArg();
+        parser.accepts("infer-rpath", format("help.infer.rpath"));
         parser.nonOptions(format("help.non.option"));
 
         OptionSet options = null;
@@ -173,24 +174,24 @@ public final class Main {
         }
 
         if (options.has("l")) {
-            try {
-                options.valuesOf("l").forEach(p -> {
-                    String lib = (String)p;
-                    if (lib.indexOf(File.separatorChar) != -1) {
-                        throw new IllegalArgumentException(format("l.name.should.not.be.path", lib));
-                    }
-                    ctx.addLibraryName(lib);
-                });
-            } catch (IllegalArgumentException iae) {
-                ctx.err.println(iae.getMessage());
-                if (Main.DEBUG) {
-                    iae.printStackTrace(ctx.err);
+            for (Object arg : options.valuesOf("l")) {
+                String lib = (String)arg;
+                if (lib.indexOf(File.separatorChar) != -1) {
+                    ctx.err.println(format("l.name.should.not.be.path", lib));
+                    return 1;
                 }
-                return 1;
+                ctx.addLibraryName(lib);
             }
         }
 
+        boolean infer_rpath = options.has("infer-rpath");
         if (options.has("rpath")) {
+            if (infer_rpath) {
+                //conflicting rpaths options
+                ctx.err.println(format("warn.rpath.auto.conflict"));
+                infer_rpath = false;
+            }
+
             // "rpath" with no "l" option!
             if (options.has("l")) {
                 options.valuesOf("rpath").forEach(p -> ctx.addLibraryPath((String) p));
@@ -208,12 +209,18 @@ public final class Main {
         }
 
         if (options.has("L")) {
+            List<?> libpaths = options.valuesOf("L");
             // "L" with no "l" option!
             if (options.has("l")) {
-                options.valuesOf("L").forEach(p -> ctx.addLinkCheckPath((String) p));
+                libpaths.forEach(p -> ctx.addLinkCheckPath((String) p));
+                if (infer_rpath) {
+                    libpaths.forEach(p -> ctx.addLibraryPath((String) p));
+                }
             } else {
                 ctx.err.println(format("warn.L.without.l"));
             }
+        } else if (infer_rpath) {
+            ctx.err.println(format("warn.rpath.auto.without.L"));
         }
 
         targetPackage = options.has("t") ? (String) options.valueOf("t") : "";
