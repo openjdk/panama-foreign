@@ -172,6 +172,12 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
+    public void test_no_input_files() {
+        String err = "No input files";
+        checkFailure(err, "-L", "foo");
+    }
+
+    @Test
     public void test_option_L_without_l() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);

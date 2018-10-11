@@ -156,6 +156,11 @@ public final class Main {
              return args.length == 0? 1 : 0;
         }
 
+        if (options.nonOptionArguments().isEmpty()) {
+            ctx.err.println(format("err.no.input.files"));
+            return 2;
+        }
+
         if (options.has("log")) {
             setupLogging(Level.parse((String) options.valueOf("log")));
         } else {
@@ -276,7 +281,7 @@ public final class Main {
         } else if (hasOutput) {
             return 0;
         } else {
-            outputName =  options.nonOptionArguments().get(0) + ".jar";
+            outputName =  Paths.get((String)options.nonOptionArguments().get(0)).getFileName() + ".jar";
         }
 
         try {
