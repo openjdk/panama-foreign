@@ -29,8 +29,8 @@
 #ifndef SHARE_VM_UTILITIES_GLOBALDEFINITIONS_VECAPI_HPP
 #define SHARE_VM_UTILITIES_GLOBALDEFINITIONS_VECAPI_HPP
 
-// VS2015 required to build .s files for math intrinsics
-#if defined(_WIN64) && (defined(_MSC_VER) && (_MSC_VER >= 1900))
+// VS2017 required to build .s files for math intrinsics
+#if defined(_WIN64) && (defined(_MSC_VER) && (_MSC_VER >= 1910))
 #define __VECTOR_API_MATH_INTRINSICS_COMMON
 #define __VECTOR_API_MATH_INTRINSICS_WINDOWS
 #endif
