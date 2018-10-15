@@ -1041,6 +1041,8 @@ class java_lang_invoke_NativeEntryPoint: AllStatic {
   static void compute_offsets();
 
  public:
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
+
   // Accessors
   static address         addr(oop entry);
   static void        set_addr(oop entry, address addr);
@@ -1050,8 +1052,6 @@ class java_lang_invoke_NativeEntryPoint: AllStatic {
   static oop             type(oop entry);
   static typeArrayOop reg_masks(oop entry);
   static oop        generator(oop entry);
-
-  static void serialize_offsets(SerializeClosure* soc) { /* TODO: CDS */ }
 
   // Testers
   static bool is_subclass(Klass* klass) {
