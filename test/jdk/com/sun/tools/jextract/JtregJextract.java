@@ -24,6 +24,9 @@
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.spi.ToolProvider;
 
 public class JtregJextract {
@@ -48,13 +51,14 @@ public class JtregJextract {
     }
 
     protected String[] processArgs(String... args) {
+        Pattern sysPropPattern = Pattern.compile("'?\\$\\((.*)\\)'?");
         ArrayList<String> jextrOpts = new ArrayList<>();
 
         jextrOpts.clear();
         jextrOpts.add("-I");
         jextrOpts.add(inputDir.toAbsolutePath().toString());
         jextrOpts.add("-d");
-        jextrOpts.add( outputDir.toAbsolutePath().toString());
+        jextrOpts.add(outputDir.toAbsolutePath().toString());
 
         int i = 0;
         while (i < args.length) {
@@ -69,7 +73,14 @@ public class JtregJextract {
                 continue;
             }
 
-            jextrOpts.add(opt);
+            // Pattern $(system.property.name) is replaced with the
+            // value of the System property of that name.
+            Matcher m = sysPropPattern.matcher(opt);
+            if (m.matches()) {
+                jextrOpts.add(System.getProperty(m.group(1)));
+            } else {
+                jextrOpts.add(opt);
+            }
         }
 
         while (i < args.length) {
