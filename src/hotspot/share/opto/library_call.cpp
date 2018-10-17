@@ -7845,6 +7845,11 @@ Node* LibraryCallKit::gen_call_to_svml(int vector_api_op_id, BasicType bt, int n
   const char* name = NULL;
   address addr = NULL;
 
+  int bits = num_elem * BitsPerByte * type2aelembytes(bt);
+  if (bits == 512 && !VM_Version::supports_avx512vlbwdq()) {
+    return NULL;
+  }
+
   // Get address for svml method.
   get_svml_address(vector_api_op_id, vt->length_in_bytes() * BitsPerByte, bt, &name, &addr);
 
