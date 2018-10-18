@@ -70,9 +70,10 @@ import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
 
 /**
  * Scan a header file and generate classes for entities defined in that header
- * file.
+ * file. Tree visitor visit methods return true/false depending on whether a
+ * particular Tree is processed or skipped.
  */
-final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
+class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     private static final String ANNOTATION_PKG_PREFIX = "Ljava/foreign/annotations/";
     private static final String NATIVE_CALLBACK = ANNOTATION_PKG_PREFIX + "NativeCallback;";
     private static final String NATIVE_HEADER = ANNOTATION_PKG_PREFIX + "NativeHeader;";
@@ -85,37 +86,37 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
     private final Set<String> global_methods = new HashSet<>();
     private final Set<String> global_fields = new HashSet<>();
     private final Set<String> global_macros = new HashSet<>();
-    private final String internal_name;
-    private final HeaderFile owner;
-    private final Map<String, byte[]> types;
-    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private final List<String> headerDeclarations = new ArrayList<>();
     private transient boolean built = false;
+    protected final String headerClassName;
+    protected final HeaderFile headerFile;
+    protected final Map<String, byte[]> types;
+    protected final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     AsmCodeFactory(Context ctx, HeaderFile header) {
         this.ctx = ctx;
         logger.info(() -> "Instantiate AsmCodeFactory for " + header.path);
-        this.owner = header;
-        this.internal_name = Utils.toInternalName(owner.pkgName, owner.clsName);
+        this.headerFile = header;
+        this.headerClassName = Utils.toInternalName(headerFile.pkgName, headerFile.clsName);
         this.global_cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         this.types = new HashMap<>();
         global_cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
-                internal_name,
+                headerClassName,
                 null, "java/lang/Object", null);
     }
 
     private void generateNativeHeader() {
         AnnotationVisitor av = global_cw.visitAnnotation(NATIVE_HEADER, true);
-        av.visit("path", owner.path.toAbsolutePath().toString());
-        if (owner.libraries != null && !owner.libraries.isEmpty()) {
+        av.visit("path", headerFile.path.toAbsolutePath().toString());
+        if (headerFile.libraries != null && !headerFile.libraries.isEmpty()) {
             AnnotationVisitor libNames = av.visitArray("libraries");
-            for (String name : owner.libraries) {
+            for (String name : headerFile.libraries) {
                 libNames.visit(null, name);
             }
             libNames.visitEnd();
-            if (owner.libraryPaths != null && !owner.libraryPaths.isEmpty()) {
+            if (headerFile.libraryPaths != null && !headerFile.libraryPaths.isEmpty()) {
                 AnnotationVisitor libPaths = av.visitArray("libraryPaths");
-                for (String path : owner.libraryPaths) {
+                for (String path : headerFile.libraryPaths) {
                     libPaths.visit(null, path);
                 }
                 libPaths.visitEnd();
@@ -126,7 +127,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
     }
 
     private void handleException(Exception ex) {
-        ctx.err.println(Main.format("cannot.write.class.file", owner.pkgName + "." + owner.clsName, ex));
+        ctx.err.println(Main.format("cannot.write.class.file", headerFile.pkgName + "." + headerFile.clsName, ex));
         if (Main.DEBUG) {
             ex.printStackTrace(ctx.err);
         }
@@ -163,16 +164,16 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
      * @param tree The Tree
      * @param parentType The struct type
      */
-    private void addField(ClassVisitor cw, Tree tree, Type parentType) {
+    private boolean addField(ClassVisitor cw, Tree tree, Type parentType) {
         String fieldName = tree.name();
         assert !fieldName.isEmpty();
         Type type = tree.type();
-        JType jt = owner.globalLookup(type);
+        JType jt = headerFile.globalLookup(type);
         assert (jt != null);
         if (cw == global_cw) {
             String uniqueName = fieldName + "." + jt.getDescriptor();
             if (! global_fields.add(uniqueName)) {
-                return; // added already
+                return false; // added already
             }
         }
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$get",
@@ -189,23 +190,30 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         av.visitEnd();
 
         mv.visitEnd();
-        cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
+        mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
                 "(" + JType.getPointerVoidAsWildcard(jt) + ")V", null);
+        mv.visitEnd();
         if (tree instanceof VarTree || !isBitField(tree)) {
             JType ptrType = new PointerType(jt);
-            cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
+            mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
                     "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(), null);
+            mv.visitEnd();
         }
+
+        return true;
     }
 
     @Override
-    public Void visitVar(VarTree varTree, JType jt) {
-        addField(global_cw, varTree, null);
-        Layout layout = varTree.layout();
-        String descStr = decorateAsAccessor(varTree, layout).toString();
-        addHeaderDecl(varTree.name(), descStr);
-        return null;
+    public Boolean visitVar(VarTree varTree, JType jt) {
+        if (addField(global_cw, varTree, null)) {
+            Layout layout = varTree.layout();
+            String descStr = decorateAsAccessor(varTree, layout).toString();
+            addHeaderDecl(varTree.name(), descStr);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void addHeaderDecl(String symbol, String desc) {
@@ -215,7 +223,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
     private void addConstant(ClassWriter cw, FieldTree fieldTree) {
         assert (fieldTree.isEnumConstant());
         String name = fieldTree.name();
-        String desc = owner.globalLookup(fieldTree.type()).getDescriptor();
+        String desc = headerFile.globalLookup(fieldTree.type()).getDescriptor();
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, name, "()" + desc, null, null);
         mv.visitCode();
         if (desc.length() != 1) {
@@ -240,19 +248,19 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
     }
 
     @Override
-    public Void visitStruct(StructTree structTree, JType jt) {
+    public Boolean visitStruct(StructTree structTree, JType jt) {
         String nativeName = structTree.name();
         Type type = structTree.type();
         logger.fine(() -> "Create struct: " + nativeName);
 
         String intf = Utils.toClassName(nativeName);
-        String name = internal_name + "$" + intf;
+        String name = headerClassName + "$" + intf;
 
         logger.fine(() -> "Define class " + name + " for native type " + nativeName);
         /* FIXME: Member interface is implicit static, also ASM.CheckClassAdapter is not
          * taking static as a valid flag, so comment this out during development.
          */
-        global_cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
+        global_cw.visitInnerClass(name, headerClassName, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V1_8, ACC_PUBLIC /*| ACC_STATIC*/ | ACC_INTERFACE | ACC_ABSTRACT,
                 name, "Ljava/lang/Object;Ljava/foreign/memory/Struct<L" + name + ";>;",
@@ -263,17 +271,17 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         Layout structLayout = structTree.layout(this::decorateAsAccessor);
         av.visit("value", structLayout.toString());
         av.visitEnd();
-        cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
+        cw.visitInnerClass(name, headerClassName, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
 
         // fields
         structTree.fields().forEach(fieldTree -> addField(cw, fieldTree, type));
         // Write class
         try {
-            writeClassFile(cw, owner.clsName + "$" + intf);
+            writeClassFile(cw, headerFile.clsName + "$" + intf);
         } catch (IOException ex) {
             handleException(ex);
         }
-        return null;
+        return true;
     }
 
     Layout addGetterSetterName(Layout layout, String accessorName) {
@@ -297,18 +305,18 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
     }
 
     @Override
-    public Void visitEnum(EnumTree enumTree, JType jt) {
+    public Boolean visitEnum(EnumTree enumTree, JType jt) {
         // define enum constants in global_cw
         enumTree.constants().forEach(constant -> addConstant(global_cw, constant));
 
         if (enumTree.name().isEmpty()) {
             // We are done with anonymous enum
-            return null;
+            return true;
         }
 
         // generate annotation class for named enum
         createAnnotationCls(enumTree);
-        return null;
+        return true;
     }
 
     private void createAnnotationCls(Tree tree) {
@@ -316,10 +324,10 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         logger.fine(() -> "Create annotation for: " + nativeName);
 
         String intf = Utils.toClassName(nativeName);
-        String name = internal_name + "$" + intf;
+        String name = headerClassName + "$" + intf;
 
         logger.fine(() -> "Define class " + name + " for native type " + nativeName);
-        global_cw.visitInnerClass(name, internal_name, intf,
+        global_cw.visitInnerClass(name, headerClassName, intf,
                 ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE | ACC_ANNOTATION);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         String[] superAnno = { "java/lang/annotation/Annotation" };
@@ -333,11 +341,11 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         av = cw.visitAnnotation("Ljava/lang/annotation/Retention;", true);
         av.visitEnum("value", "Ljava/lang/annotation/RetentionPolicy;", "RUNTIME");
         av.visitEnd();
-        cw.visitInnerClass(name, internal_name, intf,
+        cw.visitInnerClass(name, headerClassName, intf,
                 ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE | ACC_ANNOTATION);
         // Write class
         try {
-            writeClassFile(cw, owner.clsName + "$" + intf);
+            writeClassFile(cw, headerFile.clsName + "$" + intf);
         } catch (IOException ex) {
             handleException(ex);
         }
@@ -357,10 +365,10 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         }
         logger.fine(() -> "Create FunctionalInterface " + intf);
 
-        final String name = internal_name + "$" + intf;
+        final String name = headerClassName + "$" + intf;
 
         logger.fine(() -> "Define class " + name + " for native type " + nativeName + nDesc);
-        global_cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
+        global_cw.visitInnerClass(name, headerClassName, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
                 name, "Ljava/lang/Object;",
@@ -374,7 +382,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         av = cw.visitAnnotation(NATIVE_CALLBACK, true);
         av.visit("value", nDesc);
         av.visitEnd();
-        cw.visitInnerClass(name, internal_name, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
+        cw.visitInnerClass(name, headerClassName, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
 
         // add the method
 
@@ -387,14 +395,14 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         mv.visitEnd();
         // Write class
         try {
-            writeClassFile(cw, owner.clsName + "$" + intf);
+            writeClassFile(cw, headerFile.clsName + "$" + intf);
         } catch (IOException ex) {
             handleException(ex);
         }
     }
 
     @Override
-    public Void visitTypedef(TypedefTree typedefTree, JType jt) {
+    public Boolean visitTypedef(TypedefTree typedefTree, JType jt) {
         // anonymous typedef struct {} xxx will not get TypeAlias
         if (jt instanceof TypeAlias) {
             TypeAlias alias = (TypeAlias) jt;
@@ -408,23 +416,23 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
                 // Otherwise, type alias is a same named stuct
             }
         }
-        return null;
+        return true;
     }
 
     @Override
-    public Void visitTree(Tree tree, JType jt) {
+    public Boolean visitTree(Tree tree, JType jt) {
         logger.warning(() -> "Unsupported declaration tree:");
         logger.warning(() -> tree.toString());
-        return null;
+        return true;
     }
 
     @Override
-    public Void visitFunction(FunctionTree funcTree, JType jt) {
+    public Boolean visitFunction(FunctionTree funcTree, JType jt) {
         assert (jt instanceof JType.Function);
         JType.Function fn = (JType.Function)jt;
         String uniqueName = funcTree.name() + "." + fn.getDescriptor();
         if (! global_methods.add(uniqueName)) {
-            return null; // added already
+            return false; // added already
         }
         logger.fine(() -> "Add method: " + fn.getSignature());
         int flags = ACC_PUBLIC | ACC_ABSTRACT;
@@ -480,7 +488,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
             }
         }
         mv.visitEnd();
-        return null;
+        return true;
     }
 
     protected AsmCodeFactory addType(JType jt, Tree tree) {
@@ -521,15 +529,15 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
     }
 
     @Override
-    public Void visitMacro(MacroTree macroTree, JType jt) {
+    public Boolean visitMacro(MacroTree macroTree, JType jt) {
         if (!macroTree.isConstant()) {
             logger.fine(() -> "Skipping unrecognized object-like macro " + macroTree.name());
-            return null;
+            return false;
         }
         String name = macroTree.name();
         Object value = macroTree.value().get();
         if (! global_macros.add(name)) {
-            return null; // added already
+            return false; // added already
         }
         logger.fine(() -> "Adding macro " + name);
         Class<?> macroType = Utils.unboxIfNeeded(value.getClass());
@@ -566,7 +574,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         }
         mv.visitMaxs(0, 0);
         mv.visitEnd();
-        return null;
+        return true;
     }
 
     protected synchronized void produce() {
@@ -576,7 +584,7 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         built = true;
         generateNativeHeader();
         try {
-            writeClassFile(global_cw, owner.clsName);
+            writeClassFile(global_cw, headerFile.clsName);
         } catch (IOException ex) {
             handleException(ex);
         }
@@ -587,13 +595,13 @@ final class AsmCodeFactory extends SimpleTreeVisitor<Void, JType> {
         if (!built) produce();
         HashMap<String, byte[]> rv = new HashMap<>();
         // Not copying byte[] for efficiency, perhaps not a safe idea though
-        if (owner.pkgName.isEmpty()) {
+        if (headerFile.pkgName.isEmpty()) {
             types.forEach((clsName, bytecodes) -> {
                 rv.put(clsName, bytecodes);
             });
         } else {
             types.forEach((clsName, bytecodes) -> {
-                rv.put(owner.pkgName + "." + clsName, bytecodes);
+                rv.put(headerFile.pkgName + "." + clsName, bytecodes);
             });
         }
         return Collections.unmodifiableMap(rv);

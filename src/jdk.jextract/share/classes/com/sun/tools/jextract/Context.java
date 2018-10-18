@@ -85,6 +85,8 @@ public final class Context {
     private final List<String> linkCheckPaths;
     // Symbol patterns to be excluded
     private final List<Pattern> excludeSymbols;
+    // generate static forwarder class or not?
+    private boolean genStaticForwarder;
 
     final PrintWriter out;
     final PrintWriter err;
@@ -142,6 +144,10 @@ public final class Context {
 
     void addExcludeSymbols(String pattern) {
         excludeSymbols.add(Pattern.compile(pattern));
+    }
+
+    void setGenStaticForwarder(boolean flag) {
+        this.genStaticForwarder = flag;
     }
 
     // return the absolute path of the library of given name by searching
@@ -378,7 +384,8 @@ public final class Context {
     }
 
     public void parse() {
-        parse(header -> new AsmCodeFactory(this, header));
+        parse(header -> genStaticForwarder?
+            new AsmCodeFactoryExt(this, header) : new AsmCodeFactory(this, header));
     }
 
     private boolean symbolFilter(Tree tree) {

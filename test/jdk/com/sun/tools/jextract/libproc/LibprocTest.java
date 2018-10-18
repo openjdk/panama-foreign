@@ -31,7 +31,9 @@ import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandles;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-import test.jextract.lp.*;
+import static test.jextract.lp.libproc_h.*;
+import static test.jextract.lp.proc_info_h.*;
+import test.jextract.lp.proc_info;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -45,14 +47,6 @@ import static org.testng.Assert.assertTrue;
  */
 public class LibprocTest {
     private static final int NAME_BUF_MAX = 256;
-
-    private libproc lp;
-
-    @BeforeTest
-    public void init() {
-        lp = Libraries.bind(MethodHandles.lookup(), libproc.class);
-    }
-
     @Test
     public void processListTest() {
         long curProcPid = ProcessHandle.current().pid();
@@ -61,11 +55,11 @@ public class LibprocTest {
         // Scope for native allocations
         try (Scope s = Scope.newNativeScope()) {
             // get the number of processes
-            int numPids = lp.proc_listallpids(Pointer.nullPointer(), 0);
+            int numPids = proc_listallpids(Pointer.nullPointer(), 0);
             // allocate an array
             Array<Integer> pids = s.allocateArray(NativeTypes.INT32, numPids);
             // list all the pids into the native array
-            lp.proc_listallpids(pids.elementPointer(), numPids);
+            proc_listallpids(pids.elementPointer(), numPids);
             // convert native array to java array
             int[] jpids = pids.toArray(num -> new int[num]);
             // buffer for process name
@@ -73,7 +67,7 @@ public class LibprocTest {
             for (int i = 0; i < jpids.length; i++) {
                 int pid = jpids[i];
                 // get the process name
-                lp.proc_name(pid, nameBuf, NAME_BUF_MAX);
+                proc_name(pid, nameBuf, NAME_BUF_MAX);
                 String procName = Pointer.toString(nameBuf);
                 // print pid and process name
                 System.out.printf("%d %s\n", pid, procName);
@@ -89,11 +83,10 @@ public class LibprocTest {
     @Test
     public void processInfoTest() {
         long curProcPid = ProcessHandle.current().pid();
-        proc_info pi = Libraries.bind(MethodHandles.lookup(), proc_info.class);
         try (Scope s = Scope.newNativeScope()) {
             proc_info.proc_taskinfo ti = s.allocateStruct(proc_info.proc_taskinfo.class);
             int taskInfoSize = (int)Struct.sizeof(proc_info.proc_taskinfo.class);
-            int resultSize = lp.proc_pidinfo((int)curProcPid, pi.PROC_PIDTASKINFO(), 0, ti.ptr(), taskInfoSize);
+            int resultSize = proc_pidinfo((int)curProcPid, PROC_PIDTASKINFO, 0, ti.ptr(), taskInfoSize);
             assertEquals(resultSize, taskInfoSize);
             System.out.println("total virtual memory size = " + ti.pti_virtual_size$get());
             System.out.println("resident memory size = " + ti.pti_resident_size$get());
