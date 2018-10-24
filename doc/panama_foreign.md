@@ -53,6 +53,16 @@ public class PythonMain {
 
 ```
 
+### Running the Java code that calls Python interpreter
+
+```sh
+
+javac -cp pythor.jar PythonMain.java
+
+java -cp python.jar:. PythonMain
+
+```
+
 ## Using libproc library to list processes from Java (Mac OS)
 
 ### jextract a jar file for libproc.h
@@ -97,6 +107,16 @@ public class LibprocMain {
 
 ```
 
+### Running the Java code that uses libproc
+
+```sh
+
+javac -cp libproc.jar LibprocMain.java
+
+java -cp libproc.jar:. LibprocMain
+
+```
+
 ## Using readline library from Java code (Mac OS)
 
 ### jextract a jar file for readline.h
@@ -135,5 +155,57 @@ public class Readline {
         }
     }
 }
+
+```
+
+### Running the java code that uses readline
+
+```
+
+javac -cp readline.jar Readline.java
+
+java -cp readline.jar:. Readline
+
+```
+
+## Using unistd.h from Java code (Linux)
+
+### jextract a jar file for unistd.h
+
+```sh
+
+jextract /usr/include/unistd.h -t org.unix -o unistd.jar
+
+```
+
+### Java code that calls getpid
+
+```java
+
+import java.foreign.*;
+import java.lang.invoke.*;
+import org.unix.unistd;
+
+
+public class Getpid {
+    public static void main(String[] args) {
+        // bind unistd interface
+        var u = Libraries.bind(MethodHandles.lookup(), unistd.class);
+        // call getpid from the unistd.h
+        System.out.println(u.getpid());
+        // check process id from Java API!
+        System.out.println(ProcessHandle.current().pid());
+    }
+}
+
+```
+
+### Running the Java code that uses getpid
+
+```sh
+
+javac -cp unistd.jar Getpid.java
+
+java -cp unistd.jar:. Getpid
 
 ```
