@@ -55,7 +55,7 @@ import java.foreign.memory.*;
 import static org.unix.libproc_h.*;
 
 public class LibprocMain {
-    private static int NAME_BUF_MAX = 256;
+    private static final int NAME_BUF_MAX = 256;
 
     public static void main(String[] args) {
         // Scope for native allocations
@@ -78,6 +78,40 @@ public class LibprocMain {
                 // print pid and process name
                 System.out.printf(&quot;%d %s\n&quot;, pid, procName);
             }
+        }
+    }
+}
+
+</code></pre>
+<h2>Using readline library from Java code (Mac OS)</h2>
+<h3>jextract a jar file for readline.h</h3>
+<pre><code class="language-sh">
+jextract -l readline -rpath /usr/local/opt/readline/lib/ \  
+    -t org.unix \  
+    /usr/include/readline/readline.h /usr/include/_stdio.h \  
+    --exclude-symbol readline_echoing_p -o readline.jar 
+
+</code></pre>
+<h3>Java code that uses readline</h3>
+<pre><code class="language-java">
+import java.foreign.*;
+import java.foreign.memory.*;
+import static org.unix.readline_h.*;
+
+public class Readline {
+    public static void main(String[] args) {
+        // Scope for native allocations
+        try (Scope s = Scope.newNativeScope()) {
+            // allocate C memory initialized with Java string content
+            var pstr = s.allocateCString(&quot;name? &quot;);
+
+            // call &quot;readline&quot; API
+            var p = readline(pstr);
+
+            // print char* as is
+            System.out.println(p);
+            // convert char* ptr from readline as Java String &amp; print it
+            System.out.println(Pointer.toString(p));
         }
     }
 }
