@@ -45,6 +45,13 @@ public class PythonMain {
 }
 
 </code></pre>
+<h3>Running the Java code that calls Python interpreter</h3>
+<pre><code class="language-sh">
+javac -cp pythor.jar PythonMain.java
+
+java -cp python.jar:. PythonMain
+
+</code></pre>
 <h2>Using libproc library to list processes from Java (Mac OS)</h2>
 <h3>jextract a jar file for libproc.h</h3>
 <p>jextract -t org.unix -lproc -rpath /usr/lib -o libproc.jar /usr/include/libproc.h</p>
@@ -83,6 +90,13 @@ public class LibprocMain {
 }
 
 </code></pre>
+<h3>Running the Java code that uses libproc</h3>
+<pre><code class="language-sh">
+javac -cp libproc.jar LibprocMain.java
+
+java -cp libproc.jar:. LibprocMain
+
+</code></pre>
 <h2>Using readline library from Java code (Mac OS)</h2>
 <h3>jextract a jar file for readline.h</h3>
 <pre><code class="language-sh">
@@ -115,5 +129,44 @@ public class Readline {
         }
     }
 }
+
+</code></pre>
+<h3>Running the java code that uses readline</h3>
+<pre><code>
+javac -cp readline.jar Readline.java
+
+java -cp readline.jar:. Readline
+
+</code></pre>
+<h2>Using unistd.h from Java code (Linux)</h2>
+<h3>jextract a jar file for unistd.h</h3>
+<pre><code class="language-sh">
+jextract /usr/include/unistd.h -t org.unix -o unistd.jar
+
+</code></pre>
+<h3>Java code that calls getpid</h3>
+<pre><code class="language-java">
+import java.foreign.*;
+import java.lang.invoke.*;
+import org.unix.unistd;
+
+
+public class Getpid {
+    public static void main(String[] args) {
+        // bind unistd interface
+        var u = Libraries.bind(MethodHandles.lookup(), unistd.class);
+        // call getpid from the unistd.h
+        System.out.println(u.getpid());
+        // check process id from Java API!
+        System.out.println(ProcessHandle.current().pid());
+    }
+}
+
+</code></pre>
+<h3>Running the Java code that uses getpid</h3>
+<pre><code class="language-sh">
+javac -cp unistd.jar Getpid.java
+
+java -cp unistd.jar:. Getpid
 
 </code></pre>
