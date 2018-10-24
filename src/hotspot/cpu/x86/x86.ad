@@ -1525,6 +1525,10 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
           if ((vlen == 32) && (VM_Version::supports_avx512bw() == false))
             ret_value = false;
           break;
+        case Op_CallLeafVector:
+          if (size_in_bits == 512 && !VM_Version::supports_avx512vlbwdq())
+            ret_value = false;
+          break;
         case Op_CMoveVF:
           if (vlen != 8)
             ret_value  = false;
