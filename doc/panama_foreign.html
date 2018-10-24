@@ -1,0 +1,85 @@
+<h1>Using Panama &quot;foreign&quot; JDK</h1>
+<p>There are two ways to get a panama foreign branch JDK.</p>
+<ol>
+<li>Locally build &quot;foreign&quot; branch of panama repo <a href="http://hg.openjdk.java.net/panama/dev/">http://hg.openjdk.java.net/panama/dev/</a></li>
+<li>Download pre-built panama &quot;foreign&quot; early access binaries from <a href="http://jdk.java.net/panama/">http://jdk.java.net/panama/</a></li>
+</ol>
+<p>Using foreign function call in Java involves the following three steps:</p>
+<ol>
+<li>Use <strong>jextract</strong> tool to generate java interface for your C header file(s)</li>
+<li>Use <strong>java.foreign</strong> API to create (&quot;bind&quot;) implementation for C header interfaces</li>
+<li>Invoke C functions via the jextracted Java interface</li>
+</ol>
+<h2>Embedding Python interpreter in your Java program (Mac OS)</h2>
+<h3>jextract a Jar file for Python.h</h3>
+<pre><code class="language-sh">
+jextract -l python2.7 \  
+  -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \  
+  --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \  
+  -t org.python \  
+  /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \  
+  -o python.jar
+
+</code></pre>
+<h3>Java program that uses extracted Python interface</h3>
+<pre><code class="language-java">
+// import java.foreign packages
+import java.foreign.Libraries;
+import java.foreign.Scope;
+import java.foreign.memory.Pointer;
+
+// import jextracted python 'header' classes
+import static org.python.Python_h.*;
+import static org.python.pythonrun_h.*;
+
+public class PythonMain {
+    public static void main(String[] args) {
+        Py_Initialize();
+        try (Scope s = Scope.newNativeScope()) {
+            PyRun_SimpleStringFlags(s.allocateCString(
+                &quot;print(sum([33, 55, 66])); print('Hello from Python!')\n&quot;),
+                Pointer.nullPointer());
+        }
+        Py_Finalize();
+    }
+}
+
+</code></pre>
+<h2>Using libproc library to list processes from Java (Mac OS)</h2>
+<h3>jextract a jar file for libproc.h</h3>
+<p>jextract -t org.unix -lproc -rpath /usr/lib -o libproc.jar /usr/include/libproc.h</p>
+<h3>Java program that uses libproc to list processes</h3>
+<pre><code class="language-java">
+import java.foreign.*;
+import java.foreign.memory.*;
+import static org.unix.libproc_h.*;
+
+public class LibprocMain {
+    private static int NAME_BUF_MAX = 256;
+
+    public static void main(String[] args) {
+        // Scope for native allocations
+        try (Scope s = Scope.newNativeScope()) {
+            // get the number of processes
+            int numPids = proc_listallpids(Pointer.nullPointer(), 0);
+            // allocate an array
+            Array&lt;Integer&gt; pids = s.allocateArray(NativeTypes.INT32, numPids);
+            // list all the pids into the native array
+            proc_listallpids(pids.elementPointer(), numPids);
+            // convert native array to java array
+            int[] jpids = pids.toArray(num -&gt; new int[num]);
+            // buffer for process name
+            Pointer&lt;Byte&gt; nameBuf = s.allocate(NativeTypes.INT8, NAME_BUF_MAX);
+            for (int i = 0; i &lt; jpids.length; i++) {
+                int pid = jpids[i];
+                // get the process name
+                proc_name(pid, nameBuf, NAME_BUF_MAX);
+                String procName = Pointer.toString(nameBuf);
+                // print pid and process name
+                System.out.printf(&quot;%d %s\n&quot;, pid, procName);
+            }
+        }
+    }
+}
+
+</code></pre>
