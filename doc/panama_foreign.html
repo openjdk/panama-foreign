@@ -1,273 +1,337 @@
-<h1>Using Panama &quot;foreign&quot; JDK</h1>
+<h1 id="using-panama-foreign-jdk">Using Panama &quot;foreign&quot; JDK</h1>
 <p>There are two ways to get a panama foreign branch JDK.</p>
-<ol>
-<li>Locally build &quot;foreign&quot; branch of panama repo <a href="http://hg.openjdk.java.net/panama/dev/">http://hg.openjdk.java.net/panama/dev/</a></li>
-<li>Download pre-built panama &quot;foreign&quot; early access binaries from <a href="http://jdk.java.net/panama/">http://jdk.java.net/panama/</a></li>
+<ol style="list-style-type: decimal">
+<li>Locally build &quot;foreign&quot; branch of panama repo <a href="http://hg.openjdk.java.net/panama/dev/" class="uri">http://hg.openjdk.java.net/panama/dev/</a></li>
+<li>Download pre-built panama &quot;foreign&quot; early access binaries from <a href="http://jdk.java.net/panama/" class="uri">http://jdk.java.net/panama/</a></li>
 </ol>
 <p>Using foreign function call in Java involves the following three steps:</p>
-<ol>
+<ol style="list-style-type: decimal">
 <li>Use <strong>jextract</strong> tool to generate java interface for your C header file(s)</li>
 <li>Use <strong>java.foreign</strong> API to create (&quot;bind&quot;) implementation for C header interfaces</li>
 <li>Invoke C functions via the jextracted Java interface</li>
 </ol>
-<h2>Embedding Python interpreter in your Java program (Mac OS)</h2>
-<h3>jextract a Jar file for Python.h</h3>
-<pre><code class="language-sh">
+<h2 id="embedding-python-interpreter-in-your-java-program-mac-os">Embedding Python interpreter in your Java program (Mac OS)</h2>
+<h3 id="jextract-a-jar-file-for-python.h">jextract a Jar file for Python.h</h3>
+<pre class="sh"><code>
 jextract -l python2.7 \  
   -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \  
   --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \  
   -t org.python \  
   /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \  
   -o python.jar
-
 </code></pre>
-<h3>Java program that uses extracted Python interface</h3>
-<pre><code class="language-java">
-// import java.foreign packages
-import java.foreign.Libraries;
-import java.foreign.Scope;
-import java.foreign.memory.Pointer;
+<h3 id="java-program-that-uses-extracted-python-interface">Java program that uses extracted Python interface</h3>
+<div class="sourceCode"><pre class="sourceCode java"><code class="sourceCode java">
+<span class="co">// import java.foreign packages</span>
+<span class="kw">import java.foreign.Libraries;</span>
+<span class="kw">import java.foreign.Scope;</span>
+<span class="kw">import java.foreign.memory.Pointer;</span>
 
-// import jextracted python 'header' classes
-import static org.python.Python_h.*;
-import static org.python.pythonrun_h.*;
+<span class="co">// import jextracted python &#39;header&#39; classes</span>
+<span class="kw">import static org.python.Python_h.*;</span>
+<span class="kw">import static org.python.pythonrun_h.*;</span>
 
-public class PythonMain {
-    public static void main(String[] args) {
-        Py_Initialize();
-        try (Scope s = Scope.newNativeScope()) {
-            PyRun_SimpleStringFlags(s.allocateCString(
-                &quot;print(sum([33, 55, 66])); print('Hello from Python!')\n&quot;),
-                Pointer.nullPointer());
+<span class="kw">public</span> <span class="kw">class</span> PythonMain {
+    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(String[] args) {
+        <span class="fu">Py_Initialize</span>();
+        <span class="kw">try</span> (Scope s = Scope.<span class="fu">newNativeScope</span>()) {
+            <span class="fu">PyRun_SimpleStringFlags</span>(s.<span class="fu">allocateCString</span>(
+                <span class="st">&quot;print(sum([33, 55, 66])); print(&#39;Hello from Python!&#39;)</span><span class="ch">\n</span><span class="st">&quot;</span>),
+                Pointer.<span class="fu">nullPointer</span>());
         }
-        Py_Finalize();
+        <span class="fu">Py_Finalize</span>();
     }
-}
-
-</code></pre>
-<h3>Running the Java code that calls Python interpreter</h3>
-<pre><code class="language-sh">
+}</code></pre></div>
+<h3 id="running-the-java-code-that-calls-python-interpreter">Running the Java code that calls Python interpreter</h3>
+<pre class="sh"><code>
 javac -cp pythor.jar PythonMain.java
 
 java -cp python.jar:. PythonMain
-
 </code></pre>
-<h2>Using OpenBLAS library (Mac OS)</h2>
-<p><a href="https://github.com/xianyi/OpenBLAS/wiki">https://github.com/xianyi/OpenBLAS/wiki</a></p>
+<h2 id="using-blas-library">Using BLAS library</h2>
+<p>BLAS is a popular library that allows fast matrix and vector computation: <a href="http://www.netlib.org/blas/" class="uri">http://www.netlib.org/blas/</a>.</p>
+<h3 id="installing-openblas-mac-os">Installing OpenBLAS (Mac OS)</h3>
+<p>On Mac, blas is available as part of the OpenBLAS library: <a href="https://github.com/xianyi/OpenBLAS/wiki" class="uri">https://github.com/xianyi/OpenBLAS/wiki</a></p>
 <p>OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version.</p>
-<h3>Installing OpenBLAS</h3>
-<p>On Mac, you can install openblas using HomeBrew</p>
-<pre><code class="language-sh">
+<p>You can install openblas using HomeBrew</p>
+<pre class="sh"><code>
 brew install openblas
-
 </code></pre>
 <p>It installs include and lib directories under /usr/local/opt/openblas</p>
-<h3>jextracting cblas.h</h3>
-<p>The following command can be used to extract cblas.h</p>
-<pre><code class="language-sh">
+<h3 id="installing-openblas-ubuntu-16.04">Installing OpenBLAS (Ubuntu 16.04)</h3>
+<p>On Ubuntu, blas is distributed as part of the atlas library: <a href="http://math-atlas.sourceforge.net/" class="uri">http://math-atlas.sourceforge.net/</a>.</p>
+<p>You can install atlas using apt</p>
+<pre class="sh"><code>
+sudo apt-get install libatlas-base-dev
+</code></pre>
+<p>This command will install include files under <code>/usr/include/atlas</code> and corresponding libraries under <code>/usr/lib/atlas-dev</code>.</p>
+<h3 id="jextracting-cblas.h-macos">jextracting cblas.h (MacOS)</h3>
+<p>The following command can be used to extract cblas.h on MacOs</p>
+<pre class="sh"><code>
 jextract -C &quot;-D FORCE_OPENBLAS_COMPLEX_STRUCT&quot; \  
   -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \  
   -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \  
   -o cblas.jar
-
 </code></pre>
-<p>The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not
-yet handle C99 _Complex types. The rest of the options are standard ones.</p>
-<h3>Java sample code that uses cblas library</h3>
-<pre><code class="language-java">
-import blas.cblas;
+<p>The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not yet handle C99 _Complex types. The rest of the options are standard ones.</p>
+<h3 id="jextracting-cblas.h-ubuntu-16.04">jextracting cblas.h (Ubuntu 16.04)</h3>
+<p>The following command can be used to extract cblas.h on Ubuntu</p>
+<pre class="sh"><code>
+jextract -L /usr/lib/atlas-base -I /usr/include/atlas/ \
+   -l cblas -t blas -infer-rpath \
+   /usr/include/atlas/cblas.h -o cblas.jar
+</code></pre>
+<h3 id="java-sample-code-that-uses-cblas-library">Java sample code that uses cblas library</h3>
+<div class="sourceCode"><pre class="sourceCode java"><code class="sourceCode java">
+<span class="kw">import blas.cblas;</span>
 
-import static blas.cblas_h.*;
+<span class="kw">import static blas.cblas_h.*;</span>
 
-import java.foreign.NativeTypes;
-import java.foreign.Scope;
-import java.foreign.memory.Array;
+<span class="kw">import java.foreign.NativeTypes;</span>
+<span class="kw">import java.foreign.Scope;</span>
+<span class="kw">import java.foreign.memory.Array;</span>
 
-public class TestBlas {
-   public static void main(String[] args) {
-       @cblas.CBLAS_ORDER int Layout;
-       @cblas.CBLAS_TRANSPOSE int transa;
+<span class="kw">public</span> <span class="kw">class</span> TestBlas {
+   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(String[] args) {
+       <span class="fu">@cblas</span>.<span class="fu">CBLAS_ORDER</span> <span class="dt">int</span> Layout;
+       <span class="fu">@cblas</span>.<span class="fu">CBLAS_TRANSPOSE</span> <span class="dt">int</span> transa;
 
-       double alpha, beta;
-       int m, n, lda, incx, incy, i;
+       <span class="dt">double</span> alpha, beta;
+       <span class="dt">int</span> m, n, lda, incx, incy, i;
 
        Layout = CblasColMajor;
        transa = CblasNoTrans;
 
-       m = 4; /* Size of Column ( the number of rows ) */
-       n = 4; /* Size of Row ( the number of columns ) */
-       lda = 4; /* Leading dimension of 5 * 4 matrix is 5 */
-       incx = 1;
-       incy = 1;
-       alpha = 1;
-       beta = 0;
+       m = <span class="dv">4</span>; <span class="co">/* Size of Column ( the number of rows ) */</span>
+       n = <span class="dv">4</span>; <span class="co">/* Size of Row ( the number of columns ) */</span>
+       lda = <span class="dv">4</span>; <span class="co">/* Leading dimension of 5 * 4 matrix is 5 */</span>
+       incx = <span class="dv">1</span>;
+       incy = <span class="dv">1</span>;
+       alpha = <span class="dv">1</span>;
+       beta = <span class="dv">0</span>;
 
-       try (Scope sc = Scope.newNativeScope()){
-           Array&lt;Double&gt; a = sc.allocateArray(NativeTypes.DOUBLE, m * n);
-           Array&lt;Double&gt; x = sc.allocateArray(NativeTypes.DOUBLE, n);
-           Array&lt;Double&gt; y = sc.allocateArray(NativeTypes.DOUBLE, n);
-           /* The elements of the first column */
-           a.set(0, 1.0);
-           a.set(1, 2.0);
-           a.set(2, 3.0);
-           a.set(3, 4.0);
-           /* The elements of the second column */
-           a.set(m, 1.0);
-           a.set(m + 1, 1.0);
-           a.set(m + 2, 1.0);
-           a.set(m + 3, 1.0);
-           /* The elements of the third column */
-           a.set(m * 2, 3.0);
-           a.set(m * 2 + 1, 4.0);
-           a.set(m * 2 + 2, 5.0);
-           a.set(m * 2 + 3, 6.0);
-           /* The elements of the fourth column */
-           a.set(m * 3, 5.0);
-           a.set(m * 3 + 1, 6.0);
-           a.set(m * 3 + 2, 7.0);
-           a.set(m * 3 + 3, 8.0);
-           /* The elemetns of x and y */
-           x.set(0, 1.0);
-           x.set(1, 2.0);
-           x.set(2, 1.0);
-           x.set(3, 1.0);
-           y.set(0, 0.0);
-           y.set(1, 0.0);
-           y.set(2, 0.0);
-           y.set(3, 0.0);
+       <span class="kw">try</span> (Scope sc = Scope.<span class="fu">newNativeScope</span>()){
+           Array&lt;Double&gt; a = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, m * n);
+           Array&lt;Double&gt; x = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, n);
+           Array&lt;Double&gt; y = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, n);
+           <span class="co">/* The elements of the first column */</span>
+           a.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">1.0</span>);
+           a.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">2.0</span>);
+           a.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">3.0</span>);
+           a.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">4.0</span>);
+           <span class="co">/* The elements of the second column */</span>
+           a.<span class="fu">set</span>(m, <span class="fl">1.0</span>);
+           a.<span class="fu">set</span>(m + <span class="dv">1</span>, <span class="fl">1.0</span>);
+           a.<span class="fu">set</span>(m + <span class="dv">2</span>, <span class="fl">1.0</span>);
+           a.<span class="fu">set</span>(m + <span class="dv">3</span>, <span class="fl">1.0</span>);
+           <span class="co">/* The elements of the third column */</span>
+           a.<span class="fu">set</span>(m * <span class="dv">2</span>, <span class="fl">3.0</span>);
+           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">1</span>, <span class="fl">4.0</span>);
+           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">2</span>, <span class="fl">5.0</span>);
+           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">3</span>, <span class="fl">6.0</span>);
+           <span class="co">/* The elements of the fourth column */</span>
+           a.<span class="fu">set</span>(m * <span class="dv">3</span>, <span class="fl">5.0</span>);
+           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">1</span>, <span class="fl">6.0</span>);
+           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">2</span>, <span class="fl">7.0</span>);
+           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">3</span>, <span class="fl">8.0</span>);
+           <span class="co">/* The elemetns of x and y */</span>
+           x.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">1.0</span>);
+           x.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">2.0</span>);
+           x.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">1.0</span>);
+           x.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">1.0</span>);
+           y.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">0.0</span>);
+           y.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">0.0</span>);
+           y.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">0.0</span>);
+           y.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">0.0</span>);
 
-           cblas_dgemv(Layout, transa, m, n, alpha, a.elementPointer(), lda, x.elementPointer(), incx, beta,
-                   y.elementPointer(), incy);
-           /* Print y */
-           for (i = 0; i &lt; n; i++)
-               System.out.print(String.format(&quot; y%d = %f\n&quot;, i, y.get(i)));
+           <span class="fu">cblas_dgemv</span>(Layout, transa, m, n, alpha, a.<span class="fu">elementPointer</span>(), lda, x.<span class="fu">elementPointer</span>(), incx, beta,
+                   y.<span class="fu">elementPointer</span>(), incy);
+           <span class="co">/* Print y */</span>
+           <span class="kw">for</span> (i = <span class="dv">0</span>; i &lt; n; i++)
+               System.<span class="fu">out</span>.<span class="fu">print</span>(String<span class="fu">.format</span>(<span class="st">&quot; y</span><span class="ch">%d</span><span class="st"> = </span><span class="ch">%f\n</span><span class="st">&quot;</span>, i, y.<span class="fu">get</span>(i)));
        }
    }
-}
-
-</code></pre>
-<h3>Compiling and running the above cblas samples</h3>
-<pre><code class="language-sh">
+}</code></pre></div>
+<h3 id="compiling-and-running-the-above-cblas-samples">Compiling and running the above cblas samples</h3>
+<pre class="sh"><code>
 javac -cp cblas.jar TestBlas.java
 
 java -cp cblas.jar:. TestBlas
-
 </code></pre>
-<h2>Using libproc library to list processes from Java (Mac OS)</h2>
-<h3>jextract a jar file for libproc.h</h3>
+<h2 id="using-lapack-library-ubuntu">Using LAPACK library (Ubuntu)</h2>
+<p>On Ubuntu, the same steps used to install the blas (via atlas) library also install headers and libraries for the LAPACK library, a linear algebra computation library built on top of blas.</p>
+<h3 id="jextracting-clapack.h-ubuntu-16.04">jextracting clapack.h (Ubuntu 16.04)</h3>
+<p>The following command can be used to extract the LAPACK header:</p>
+<pre class="sh"><code>
+jextract -L /usr/lib/atlas-base/atlas -I /usr/include/atlas/ \
+   -l lapack -t lapack -infer-rpath /usr/include/atlas/clapack.h -o clapack.jar
+</code></pre>
+<h3 id="java-sample-code-that-uses-lapack-library">Java sample code that uses LAPACK library</h3>
+<div class="sourceCode"><pre class="sourceCode java"><code class="sourceCode java"><span class="kw">import java.foreign.NativeTypes;</span>
+<span class="kw">import java.foreign.Scope;</span>
+<span class="kw">import java.foreign.memory.Array;</span>
+
+<span class="kw">import static lapack.clapack_h.*;</span>
+<span class="kw">import static lapack.cblas_h.*;</span>
+
+<span class="kw">public</span> <span class="kw">class</span> TestLapack {
+    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(String[] args) {
+
+        <span class="co">/* Locals */</span>
+        <span class="kw">try</span> (Scope sc = Scope.<span class="fu">newNativeScope</span>()) {
+            Array&lt;Double&gt; A = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, <span class="kw">new</span> <span class="dt">double</span>[]{
+                    <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">3</span>
+            });
+            Array&lt;Double&gt; b = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, <span class="kw">new</span> <span class="dt">double</span>[]{
+                    -<span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">14</span>, <span class="dv">16</span>, <span class="dv">18</span>, -<span class="dv">3</span>, <span class="dv">14</span>, <span class="dv">12</span>, <span class="dv">16</span>, <span class="dv">16</span>
+            });
+            <span class="dt">int</span> info, m, n, lda, ldb, nrhs;
+
+            <span class="co">/* Initialization */</span>
+            m = <span class="dv">5</span>;
+            n = <span class="dv">3</span>;
+            nrhs = <span class="dv">2</span>;
+            lda = <span class="dv">5</span>;
+            ldb = <span class="dv">5</span>;
+
+            <span class="co">/* Print Entry Matrix */</span>
+            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Entry Matrix A&quot;</span>, m, n, A, lda );
+            <span class="co">/* Print Right Rand Side */</span>
+            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Right Hand Side b&quot;</span>, n, nrhs, b, ldb );
+            System.<span class="fu">out</span>.<span class="fu">println</span>();
+
+            <span class="co">/* Executable statements */</span>
+            <span class="co">//            printf( &quot;LAPACKE_dgels (col-major, high-level) Example Program Results\n&quot; );</span>
+            <span class="co">/* Solve least squares problem*/</span>
+            info = <span class="fu">clapack_dgels</span>(CblasColMajor, CblasNoTrans, m, n, nrhs, A.<span class="fu">elementPointer</span>(), lda, b.<span class="fu">elementPointer</span>(), ldb);
+
+            <span class="co">/* Print Solution */</span>
+            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Solution&quot;</span>, n, nrhs, b, ldb );
+            System.<span class="fu">out</span>.<span class="fu">println</span>();
+            System.<span class="fu">exit</span>(info);
+        }
+    }
+
+    <span class="dt">static</span> <span class="dt">void</span> <span class="fu">print_matrix_colmajor</span>(String msg, <span class="dt">int</span> m, <span class="dt">int</span> n, Array&lt;Double&gt; mat, <span class="dt">int</span> ldm) {
+        <span class="dt">int</span> i, j;
+        System.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="ch">\n</span><span class="st"> </span><span class="ch">%s\n</span><span class="st">&quot;</span>, msg);
+
+        <span class="kw">for</span>( i = <span class="dv">0</span>; i &lt; m; i++ ) {
+            <span class="kw">for</span>( j = <span class="dv">0</span>; j &lt; n; j++ ) System.<span class="fu">out.printf</span>(<span class="st">&quot; </span><span class="ch">%6.2f</span><span class="st">&quot;</span>, mat.<span class="fu">get</span>(i+j*ldm));
+            System.<span class="fu">out.printf</span>( <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span> );
+        }
+    }
+}</code></pre></div>
+<h3 id="compiling-and-running-the-above-lapack-sample">Compiling and running the above LAPACK sample</h3>
+<pre class="sh"><code>
+javac -cp clapack.jar TestLapack.java
+
+java -cp clapack.jar:. TestLapack
+</code></pre>
+<h2 id="using-libproc-library-to-list-processes-from-java-mac-os">Using libproc library to list processes from Java (Mac OS)</h2>
+<h3 id="jextract-a-jar-file-for-libproc.h">jextract a jar file for libproc.h</h3>
 <p>jextract -t org.unix -lproc -rpath /usr/lib -o libproc.jar /usr/include/libproc.h</p>
-<h3>Java program that uses libproc to list processes</h3>
-<pre><code class="language-java">
-import java.foreign.*;
-import java.foreign.memory.*;
-import static org.unix.libproc_h.*;
+<h3 id="java-program-that-uses-libproc-to-list-processes">Java program that uses libproc to list processes</h3>
+<div class="sourceCode"><pre class="sourceCode java"><code class="sourceCode java">
+<span class="kw">import java.foreign.*;</span>
+<span class="kw">import java.foreign.memory.*;</span>
+<span class="kw">import static org.unix.libproc_h.*;</span>
 
-public class LibprocMain {
-    private static final int NAME_BUF_MAX = 256;
+<span class="kw">public</span> <span class="kw">class</span> LibprocMain {
+    <span class="kw">private</span> <span class="dt">static</span> <span class="dt">final</span> <span class="dt">int</span> NAME_BUF_MAX = <span class="dv">256</span>;
 
-    public static void main(String[] args) {
-        // Scope for native allocations
-        try (Scope s = Scope.newNativeScope()) {
-            // get the number of processes
-            int numPids = proc_listallpids(Pointer.nullPointer(), 0);
-            // allocate an array
-            Array&lt;Integer&gt; pids = s.allocateArray(NativeTypes.INT32, numPids);
-            // list all the pids into the native array
-            proc_listallpids(pids.elementPointer(), numPids);
-            // convert native array to java array
-            int[] jpids = pids.toArray(num -&gt; new int[num]);
-            // buffer for process name
-            Pointer&lt;Byte&gt; nameBuf = s.allocate(NativeTypes.INT8, NAME_BUF_MAX);
-            for (int i = 0; i &lt; jpids.length; i++) {
-                int pid = jpids[i];
-                // get the process name
-                proc_name(pid, nameBuf, NAME_BUF_MAX);
-                String procName = Pointer.toString(nameBuf);
-                // print pid and process name
-                System.out.printf(&quot;%d %s\n&quot;, pid, procName);
+    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(String[] args) {
+        <span class="co">// Scope for native allocations</span>
+        <span class="kw">try</span> (Scope s = Scope.<span class="fu">newNativeScope</span>()) {
+            <span class="co">// get the number of processes</span>
+            <span class="dt">int</span> numPids = <span class="fu">proc_listallpids</span>(Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>);
+            <span class="co">// allocate an array</span>
+            Array&lt;Integer&gt; pids = s.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">INT32</span>, numPids);
+            <span class="co">// list all the pids into the native array</span>
+            <span class="fu">proc_listallpids</span>(pids.<span class="fu">elementPointer</span>(), numPids);
+            <span class="co">// convert native array to java array</span>
+            <span class="dt">int</span>[] jpids = pids.<span class="fu">toArray</span>(num -&gt; <span class="kw">new</span> <span class="dt">int</span>[num]);
+            <span class="co">// buffer for process name</span>
+            Pointer&lt;Byte&gt; nameBuf = s.<span class="fu">allocate</span>(NativeTypes.<span class="fu">INT8</span>, NAME_BUF_MAX);
+            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; jpids.<span class="fu">length</span>; i++) {
+                <span class="dt">int</span> pid = jpids[i];
+                <span class="co">// get the process name</span>
+                <span class="fu">proc_name</span>(pid, nameBuf, NAME_BUF_MAX);
+                String procName = Pointer.<span class="fu">toString</span>(nameBuf);
+                <span class="co">// print pid and process name</span>
+                System.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="ch">%d</span><span class="st"> </span><span class="ch">%s\n</span><span class="st">&quot;</span>, pid, procName);
             }
         }
     }
-}
-
-</code></pre>
-<h3>Running the Java code that uses libproc</h3>
-<pre><code class="language-sh">
+}</code></pre></div>
+<h3 id="running-the-java-code-that-uses-libproc">Running the Java code that uses libproc</h3>
+<pre class="sh"><code>
 javac -cp libproc.jar LibprocMain.java
 
 java -cp libproc.jar:. LibprocMain
-
 </code></pre>
-<h2>Using readline library from Java code (Mac OS)</h2>
-<h3>jextract a jar file for readline.h</h3>
-<pre><code class="language-sh">
+<h2 id="using-readline-library-from-java-code-mac-os">Using readline library from Java code (Mac OS)</h2>
+<h3 id="jextract-a-jar-file-for-readline.h">jextract a jar file for readline.h</h3>
+<pre class="sh"><code>
 jextract -l readline -rpath /usr/local/opt/readline/lib/ \  
     -t org.unix \  
     /usr/include/readline/readline.h /usr/include/_stdio.h \  
-    --exclude-symbol readline_echoing_p -o readline.jar 
-
+    --exclude-symbol readline_echoing_p -o readline.jar
 </code></pre>
-<h3>Java code that uses readline</h3>
-<pre><code class="language-java">
-import java.foreign.*;
-import java.foreign.memory.*;
-import static org.unix.readline_h.*;
+<h3 id="java-code-that-uses-readline">Java code that uses readline</h3>
+<div class="sourceCode"><pre class="sourceCode java"><code class="sourceCode java">
+<span class="kw">import java.foreign.*;</span>
+<span class="kw">import java.foreign.memory.*;</span>
+<span class="kw">import static org.unix.readline_h.*;</span>
 
-public class Readline {
-    public static void main(String[] args) {
-        // Scope for native allocations
-        try (Scope s = Scope.newNativeScope()) {
-            // allocate C memory initialized with Java string content
-            var pstr = s.allocateCString(&quot;name? &quot;);
+<span class="kw">public</span> <span class="kw">class</span> Readline {
+    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(String[] args) {
+        <span class="co">// Scope for native allocations</span>
+        <span class="kw">try</span> (Scope s = Scope.<span class="fu">newNativeScope</span>()) {
+            <span class="co">// allocate C memory initialized with Java string content</span>
+            var pstr = s.<span class="fu">allocateCString</span>(<span class="st">&quot;name? &quot;</span>);
 
-            // call &quot;readline&quot; API
-            var p = readline(pstr);
+            <span class="co">// call &quot;readline&quot; API</span>
+            var p = <span class="fu">readline</span>(pstr);
 
-            // print char* as is
-            System.out.println(p);
-            // convert char* ptr from readline as Java String &amp; print it
-            System.out.println(Pointer.toString(p));
+            <span class="co">// print char* as is</span>
+            System.<span class="fu">out</span>.<span class="fu">println</span>(p);
+            <span class="co">// convert char* ptr from readline as Java String &amp; print it</span>
+            System.<span class="fu">out</span>.<span class="fu">println</span>(Pointer.<span class="fu">toString</span>(p));
         }
     }
-}
-
-</code></pre>
-<h3>Running the java code that uses readline</h3>
+}</code></pre></div>
+<h3 id="running-the-java-code-that-uses-readline">Running the java code that uses readline</h3>
 <pre><code>
 javac -cp readline.jar Readline.java
 
 java -cp readline.jar:. Readline
-
 </code></pre>
-<h2>Using unistd.h from Java code (Linux)</h2>
-<h3>jextract a jar file for unistd.h</h3>
-<pre><code class="language-sh">
+<h2 id="using-unistd.h-from-java-code-linux">Using unistd.h from Java code (Linux)</h2>
+<h3 id="jextract-a-jar-file-for-unistd.h">jextract a jar file for unistd.h</h3>
+<pre class="sh"><code>
 jextract /usr/include/unistd.h -t org.unix -o unistd.jar
-
 </code></pre>
-<h3>Java code that calls getpid</h3>
-<pre><code class="language-java">
-import java.foreign.*;
-import java.lang.invoke.*;
-import org.unix.unistd;
+<h3 id="java-code-that-calls-getpid">Java code that calls getpid</h3>
+<div class="sourceCode"><pre class="sourceCode java"><code class="sourceCode java">
+<span class="kw">import java.foreign.*;</span>
+<span class="kw">import java.lang.invoke.*;</span>
+<span class="kw">import org.unix.unistd;</span>
 
 
-public class Getpid {
-    public static void main(String[] args) {
-        // bind unistd interface
-        var u = Libraries.bind(MethodHandles.lookup(), unistd.class);
-        // call getpid from the unistd.h
-        System.out.println(u.getpid());
-        // check process id from Java API!
-        System.out.println(ProcessHandle.current().pid());
+<span class="kw">public</span> <span class="kw">class</span> Getpid {
+    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(String[] args) {
+        <span class="co">// bind unistd interface</span>
+        var u = Libraries.<span class="fu">bind</span>(MethodHandles.<span class="fu">lookup</span>(), unistd.<span class="fu">class</span>);
+        <span class="co">// call getpid from the unistd.h</span>
+        System.<span class="fu">out</span>.<span class="fu">println</span>(u.<span class="fu">getpid</span>());
+        <span class="co">// check process id from Java API!</span>
+        System.<span class="fu">out</span>.<span class="fu">println</span>(ProcessHandle.<span class="fu">current</span>().<span class="fu">pid</span>());
     }
-}
-
-</code></pre>
-<h3>Running the Java code that uses getpid</h3>
-<pre><code class="language-sh">
+}</code></pre></div>
+<h3 id="running-the-java-code-that-uses-getpid">Running the Java code that uses getpid</h3>
+<pre class="sh"><code>
 javac -cp unistd.jar Getpid.java
 
 java -cp unistd.jar:. Getpid
-
 </code></pre>

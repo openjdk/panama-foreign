@@ -13,7 +13,7 @@ Using foreign function call in Java involves the following three steps:
 
 ## Embedding Python interpreter in your Java program (Mac OS)
 
-### jextract a Jar file for Python.h 
+### jextract a Jar file for Python.h
 
 ```sh
 
@@ -63,15 +63,17 @@ java -cp python.jar:. PythonMain
 
 ```
 
-## Using OpenBLAS library (Mac OS)
+## Using BLAS library
 
-[https://github.com/xianyi/OpenBLAS/wiki](https://github.com/xianyi/OpenBLAS/wiki)
+BLAS is a popular library that allows fast matrix and vector computation: [http://www.netlib.org/blas/](http://www.netlib.org/blas/).
+
+### Installing OpenBLAS (Mac OS)
+
+On Mac, blas is available as part of the OpenBLAS library: [https://github.com/xianyi/OpenBLAS/wiki](https://github.com/xianyi/OpenBLAS/wiki)
 
 OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version.
 
-### Installing OpenBLAS
-
-On Mac, you can install openblas using HomeBrew
+You can install openblas using HomeBrew
 
 ```sh
 
@@ -81,9 +83,24 @@ brew install openblas
 
 It installs include and lib directories under /usr/local/opt/openblas
 
-### jextracting cblas.h
+### Installing OpenBLAS (Ubuntu 16.04)
 
-The following command can be used to extract cblas.h
+On Ubuntu, blas is distributed as part of the atlas library: [http://math-atlas.sourceforge.net/](http://math-atlas.sourceforge.net/).
+
+You can install atlas using apt
+
+```sh
+
+sudo apt-get install libatlas-base-dev
+
+```
+
+This command will install include files under `/usr/include/atlas` and corresponding libraries under `/usr/lib/atlas-dev`.
+
+
+### jextracting cblas.h (MacOS)
+
+The following command can be used to extract cblas.h on MacOs
 
 ```sh
 
@@ -97,8 +114,19 @@ jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
 The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not
 yet handle C99 _Complex types. The rest of the options are standard ones.
 
-### Java sample code that uses cblas library
+### jextracting cblas.h (Ubuntu 16.04)
 
+The following command can be used to extract cblas.h on Ubuntu
+
+```sh
+
+jextract -L /usr/lib/atlas-base -I /usr/include/atlas/ \
+   -l cblas -t blas -infer-rpath \
+   /usr/include/atlas/cblas.h -o cblas.jar
+
+```
+
+### Java sample code that uses cblas library
 
 ```java
 
@@ -184,6 +212,91 @@ java -cp cblas.jar:. TestBlas
 
 ```
 
+## Using LAPACK library (Ubuntu)
+
+On Ubuntu, the same steps used to install the blas (via atlas) library also install headers and libraries for the LAPACK library, a linear algebra computation library built on top of blas.
+
+### jextracting clapack.h (Ubuntu 16.04)
+
+The following command can be used to extract the LAPACK header:
+
+```sh
+
+jextract -L /usr/lib/atlas-base/atlas -I /usr/include/atlas/ \
+   -l lapack -t lapack -infer-rpath /usr/include/atlas/clapack.h -o clapack.jar
+
+```
+
+### Java sample code that uses LAPACK library
+
+```java
+import java.foreign.NativeTypes;
+import java.foreign.Scope;
+import java.foreign.memory.Array;
+
+import static lapack.clapack_h.*;
+import static lapack.cblas_h.*;
+
+public class TestLapack {
+    public static void main(String[] args) {
+
+        /* Locals */
+        try (Scope sc = Scope.newNativeScope()) {
+            Array<Double> A = sc.allocateArray(NativeTypes.DOUBLE, new double[]{
+                    1, 2, 3, 4, 5, 1, 3, 5, 2, 4, 1, 4, 2, 5, 3
+            });
+            Array<Double> b = sc.allocateArray(NativeTypes.DOUBLE, new double[]{
+                    -10, 12, 14, 16, 18, -3, 14, 12, 16, 16
+            });
+            int info, m, n, lda, ldb, nrhs;
+
+            /* Initialization */
+            m = 5;
+            n = 3;
+            nrhs = 2;
+            lda = 5;
+            ldb = 5;
+
+            /* Print Entry Matrix */
+            print_matrix_colmajor("Entry Matrix A", m, n, A, lda );
+            /* Print Right Rand Side */
+            print_matrix_colmajor("Right Hand Side b", n, nrhs, b, ldb );
+            System.out.println();
+
+            /* Executable statements */
+            //            printf( "LAPACKE_dgels (col-major, high-level) Example Program Results\n" );
+            /* Solve least squares problem*/
+            info = clapack_dgels(CblasColMajor, CblasNoTrans, m, n, nrhs, A.elementPointer(), lda, b.elementPointer(), ldb);
+
+            /* Print Solution */
+            print_matrix_colmajor("Solution", n, nrhs, b, ldb );
+            System.out.println();
+            System.exit(info);
+        }
+    }
+
+    static void print_matrix_colmajor(String msg, int m, int n, Array<Double> mat, int ldm) {
+        int i, j;
+        System.out.printf("\n %s\n", msg);
+
+        for( i = 0; i < m; i++ ) {
+            for( j = 0; j < n; j++ ) System.out.printf(" %6.2f", mat.get(i+j*ldm));
+            System.out.printf( "\n" );
+        }
+    }
+}
+```
+
+### Compiling and running the above LAPACK sample
+
+```sh
+
+javac -cp clapack.jar TestLapack.java
+
+java -cp clapack.jar:. TestLapack
+
+```
+
 ## Using libproc library to list processes from Java (Mac OS)
 
 ### jextract a jar file for libproc.h
@@ -247,7 +360,7 @@ java -cp libproc.jar:. LibprocMain
 jextract -l readline -rpath /usr/local/opt/readline/lib/ \  
     -t org.unix \  
     /usr/include/readline/readline.h /usr/include/_stdio.h \  
-    --exclude-symbol readline_echoing_p -o readline.jar 
+    --exclude-symbol readline_echoing_p -o readline.jar
 
 ```
 
