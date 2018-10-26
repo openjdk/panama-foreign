@@ -63,6 +63,127 @@ java -cp python.jar:. PythonMain
 
 ```
 
+## Using OpenBLAS library (Mac OS)
+
+[https://github.com/xianyi/OpenBLAS/wiki](https://github.com/xianyi/OpenBLAS/wiki)
+
+OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version.
+
+### Installing OpenBLAS
+
+On Mac, you can install openblas using HomeBrew
+
+```sh
+
+brew install openblas
+
+```
+
+It installs include and lib directories under /usr/local/opt/openblas
+
+### jextracting cblas.h
+
+The following command can be used to extract cblas.h
+
+```sh
+
+jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \  
+  -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \  
+  -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \  
+  -o cblas.jar
+
+```
+
+The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not
+yet handle C99 _Complex types. The rest of the options are standard ones.
+
+### Java sample code that uses cblas library
+
+
+```java
+
+import blas.cblas;
+
+import static blas.cblas_h.*;
+
+import java.foreign.NativeTypes;
+import java.foreign.Scope;
+import java.foreign.memory.Array;
+
+public class TestBlas {
+   public static void main(String[] args) {
+       @cblas.CBLAS_ORDER int Layout;
+       @cblas.CBLAS_TRANSPOSE int transa;
+
+       double alpha, beta;
+       int m, n, lda, incx, incy, i;
+
+       Layout = CblasColMajor;
+       transa = CblasNoTrans;
+
+       m = 4; /* Size of Column ( the number of rows ) */
+       n = 4; /* Size of Row ( the number of columns ) */
+       lda = 4; /* Leading dimension of 5 * 4 matrix is 5 */
+       incx = 1;
+       incy = 1;
+       alpha = 1;
+       beta = 0;
+
+       try (Scope sc = Scope.newNativeScope()){
+           Array<Double> a = sc.allocateArray(NativeTypes.DOUBLE, m * n);
+           Array<Double> x = sc.allocateArray(NativeTypes.DOUBLE, n);
+           Array<Double> y = sc.allocateArray(NativeTypes.DOUBLE, n);
+           /* The elements of the first column */
+           a.set(0, 1.0);
+           a.set(1, 2.0);
+           a.set(2, 3.0);
+           a.set(3, 4.0);
+           /* The elements of the second column */
+           a.set(m, 1.0);
+           a.set(m + 1, 1.0);
+           a.set(m + 2, 1.0);
+           a.set(m + 3, 1.0);
+           /* The elements of the third column */
+           a.set(m * 2, 3.0);
+           a.set(m * 2 + 1, 4.0);
+           a.set(m * 2 + 2, 5.0);
+           a.set(m * 2 + 3, 6.0);
+           /* The elements of the fourth column */
+           a.set(m * 3, 5.0);
+           a.set(m * 3 + 1, 6.0);
+           a.set(m * 3 + 2, 7.0);
+           a.set(m * 3 + 3, 8.0);
+           /* The elemetns of x and y */
+           x.set(0, 1.0);
+           x.set(1, 2.0);
+           x.set(2, 1.0);
+           x.set(3, 1.0);
+           y.set(0, 0.0);
+           y.set(1, 0.0);
+           y.set(2, 0.0);
+           y.set(3, 0.0);
+
+           cblas_dgemv(Layout, transa, m, n, alpha, a.elementPointer(), lda, x.elementPointer(), incx, beta,
+                   y.elementPointer(), incy);
+           /* Print y */
+           for (i = 0; i < n; i++)
+               System.out.print(String.format(" y%d = %f\n", i, y.get(i)));
+       }
+   }
+}
+
+```
+
+### Compiling and running the above cblas samples
+
+```sh
+
+javac -cp cblas.jar TestBlas.java
+
+java -cp cblas.jar:. TestBlas
+
+```
+
 ## Using libproc library to list processes from Java (Mac OS)
 
 ### jextract a jar file for libproc.h
