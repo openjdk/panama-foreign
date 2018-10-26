@@ -73,7 +73,13 @@ class x86 {
   static address _vector_long_shuffle_mask;
   static address _vector_long_size_mask;
 
+  static address _method_entry_barrier;
+
  public:
+
+  static address method_entry_barrier() {
+    return _method_entry_barrier;
+  }
 
   static address get_previous_fp_entry() {
     return _get_previous_fp_entry;
