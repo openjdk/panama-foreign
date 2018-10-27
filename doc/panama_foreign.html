@@ -73,7 +73,7 @@ jextract -C &quot;-D FORCE_OPENBLAS_COMPLEX_STRUCT&quot; \
   -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \  
   -o cblas.jar
 </code></pre>
-<p>The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not yet handle C99 _Complex types. The rest of the options are standard ones.</p>
+<p>The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not yet handle C99 <code>_Complex</code> types. The rest of the options are standard ones.</p>
 <h3 id="jextracting-cblas.h-ubuntu-16.04">jextracting cblas.h (Ubuntu 16.04)</h3>
 <p>The following command can be used to extract cblas.h on Ubuntu</p>
 <pre class="sh"><code>
@@ -334,4 +334,94 @@ jextract /usr/include/unistd.h -t org.unix -o unistd.jar
 javac -cp unistd.jar Getpid.java
 
 java -cp unistd.jar:. Getpid
+</code></pre>
+<h2 id="using-opengl-graphic-library-ubuntu-16.04">Using OpenGL graphic library (Ubuntu 16.04)</h2>
+<p>OpenGL is a popular portable graphic library: <a href="https://www.opengl.org/" class="uri">https://www.opengl.org/</a></p>
+<h3 id="installing-opengl-ubuntu-16.04">Installing OpenGL (Ubuntu 16.04)</h3>
+<p>Installing relevant OpenGL headers and libraries can be a bit tricky, as it depends on what graphic card is installed on the target platform. The following instruction assume that the standard version of OpenGL is used (e.g. mesa), rather than a proprietary one (Nvidia or AMD), although the changes to get these working are rather small.</p>
+<p>OpenGL is always coupled with a bunch of other libraries, namely GLU and glut. You can install all those libraries using <code>apt</code>, as follows:</p>
+<pre class="sh"><code>
+sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+</code></pre>
+<p>If the installation was successful, OpenGL headers can be found under <code>/usr/include/GL</code>, while libraries can be found in the folder <code>/usr/lib/x86_64-linux-gnu/</code>.</p>
+<h3 id="jextracting-opengl-ubuntu-16.04">jextracting OpenGL (Ubuntu 16.04)</h3>
+<p>To extract the opengl libraries the following command suffices:</p>
+<pre class="sh"><code>
+jextract -L /usr/lib/x86_64-linux-gnu  -l glut -l GLU -l GL --infer-rpath -t opengl -o opengl.jar /usr/include/GL/glut.h
+</code></pre>
+<p>Since glut depends on the other libraries (GLU and GL), it is not necessary to give additional headers to jextract.</p>
+<h3 id="java-sample-code-that-uses-the-opengl-library">Java sample code that uses the OpenGL library</h3>
+<div class="sourceCode"><pre class="sourceCode java"><code class="sourceCode java"><span class="kw">import java.foreign.Libraries;</span>
+<span class="kw">import java.foreign.NativeTypes;</span>
+<span class="kw">import java.foreign.Scope;</span>
+<span class="kw">import java.foreign.memory.Array;</span>
+<span class="kw">import java.foreign.memory.Pointer;</span>
+<span class="kw">import java.lang.invoke.MethodHandles;</span>
+
+<span class="kw">import opengl.*;</span>
+
+<span class="kw">import javax.imageio.ImageIO;</span>
+
+<span class="kw">public</span> <span class="kw">class</span> Teapot {
+    <span class="dt">static</span> gl gl = Libraries.<span class="fu">bind</span>(MethodHandles.<span class="fu">lookup</span>(), gl.<span class="fu">class</span>);
+    <span class="dt">static</span> freeglut_std glut = Libraries.<span class="fu">bind</span>(MethodHandles.<span class="fu">lookup</span>(), freeglut_std.<span class="fu">class</span>);
+
+    <span class="dt">float</span> rot = <span class="dv">0</span>;
+
+    <span class="fu">Teapot</span>(Scope sc) {
+        <span class="co">// Misc Parameters</span>
+        Array&lt;Float&gt; pos = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">FLOAT</span>, <span class="kw">new</span> <span class="dt">float</span>[] {<span class="fl">0.</span>0f, <span class="fl">15.</span>0f, -<span class="fl">15.</span>0f, <span class="dv">0</span>});
+        Array&lt;Float&gt; spec = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">FLOAT</span>, <span class="kw">new</span> <span class="dt">float</span>[] {<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>});
+        Array&lt;Float&gt; shini = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">FLOAT</span>, <span class="kw">new</span> <span class="dt">float</span>[] {<span class="dv">113</span>});
+
+        <span class="co">// Reset Background</span>
+        gl.<span class="fu">glClearColor</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>);
+
+        <span class="co">// Setup Lighting</span>
+        gl.<span class="fu">glShadeModel</span>(gl.<span class="fu">GL_SMOOTH</span>());
+        gl.<span class="fu">glLightfv</span>(gl.<span class="fu">GL_LIGHT0</span>(), gl.<span class="fu">GL_POSITION</span>(), pos.<span class="fu">elementPointer</span>());
+        gl.<span class="fu">glLightfv</span>(gl.<span class="fu">GL_LIGHT0</span>(), gl.<span class="fu">GL_AMBIENT</span>(), spec.<span class="fu">elementPointer</span>());
+        gl.<span class="fu">glLightfv</span>(gl.<span class="fu">GL_LIGHT0</span>(), gl.<span class="fu">GL_DIFFUSE</span>(), spec.<span class="fu">elementPointer</span>());
+        gl.<span class="fu">glLightfv</span>(gl.<span class="fu">GL_LIGHT0</span>(), gl.<span class="fu">GL_SPECULAR</span>(), spec.<span class="fu">elementPointer</span>());
+        gl.<span class="fu">glMaterialfv</span>(gl.<span class="fu">GL_FRONT</span>(), gl.<span class="fu">GL_SHININESS</span>(), shini.<span class="fu">elementPointer</span>());
+        gl.<span class="fu">glEnable</span>(gl.<span class="fu">GL_LIGHTING</span>());
+        gl.<span class="fu">glEnable</span>(gl.<span class="fu">GL_LIGHT0</span>());
+        gl.<span class="fu">glEnable</span>(gl.<span class="fu">GL_DEPTH_TEST</span>());
+    }
+
+    <span class="dt">void</span> <span class="fu">display</span>() {
+        gl.<span class="fu">glClear</span>(gl.<span class="fu">GL_COLOR_BUFFER_BIT</span>() | gl.<span class="fu">GL_DEPTH_BUFFER_BIT</span>());
+        gl.<span class="fu">glPushMatrix</span>();
+        gl.<span class="fu">glRotatef</span>(-<span class="dv">20</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>);
+        gl.<span class="fu">glRotatef</span>(rot, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>);
+        glut.<span class="fu">glutSolidTeapot</span>(<span class="fl">0.5</span>);
+        gl.<span class="fu">glPopMatrix</span>();
+        glut.<span class="fu">glutSwapBuffers</span>();
+    }
+
+    <span class="dt">void</span> <span class="fu">onIdle</span>() {
+        rot += <span class="fl">0.1</span>;
+        glut.<span class="fu">glutPostRedisplay</span>();
+    }
+
+    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(String[] args) {
+        <span class="kw">try</span> (Scope sc = Scope.<span class="fu">newNativeScope</span>()) {
+            Pointer&lt;Integer&gt; argc = sc.<span class="fu">allocate</span>(NativeTypes.<span class="fu">INT32</span>);
+            argc.<span class="fu">set</span>(<span class="dv">0</span>);
+            glut.<span class="fu">glutInit</span>(argc, Pointer.<span class="fu">nullPointer</span>());
+            glut.<span class="fu">glutInitDisplayMode</span>(glut.<span class="fu">GLUT_DOUBLE</span>() | glut.<span class="fu">GLUT_RGBA</span>() | glut.<span class="fu">GLUT_DEPTH</span>());
+            glut.<span class="fu">glutInitWindowSize</span>(<span class="dv">900</span>, <span class="dv">900</span>);
+            glut.<span class="fu">glutCreateWindow</span>(sc.<span class="fu">allocateCString</span>(<span class="st">&quot;Hello Panama!&quot;</span>));
+            Teapot teapot = <span class="kw">new</span> <span class="fu">Teapot</span>(sc);
+            glut.<span class="fu">glutDisplayFunc</span>(sc.<span class="fu">allocateCallback</span>(teapot::display));
+            glut.<span class="fu">glutIdleFunc</span>(sc.<span class="fu">allocateCallback</span>(teapot::onIdle));
+            glut.<span class="fu">glutMainLoop</span>();
+        }
+    }
+}</code></pre></div>
+<h3 id="running-the-java-code-that-uses-opengl">Running the Java code that uses OpenGL</h3>
+<pre class="sh"><code>
+javac -cp opengl.jar Teapot.java
+
+java -cp opengl.jar:. Teapot
 </code></pre>

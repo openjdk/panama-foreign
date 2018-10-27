@@ -112,7 +112,7 @@ jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
 ```
 
 The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not
-yet handle C99 _Complex types. The rest of the options are standard ones.
+yet handle C99 `_Complex` types. The rest of the options are standard ones.
 
 ### jextracting cblas.h (Ubuntu 16.04)
 
@@ -441,5 +441,117 @@ public class Getpid {
 javac -cp unistd.jar Getpid.java
 
 java -cp unistd.jar:. Getpid
+
+```
+
+## Using OpenGL graphic library (Ubuntu 16.04)
+
+OpenGL is a popular portable graphic library: [https://www.opengl.org/](https://www.opengl.org/)
+
+### Installing OpenGL (Ubuntu 16.04)
+
+Installing relevant OpenGL headers and libraries can be a bit tricky, as it depends on what graphic card is installed on the target platform. The following instruction assume that the standard version of OpenGL is used (e.g. mesa), rather than a proprietary one (Nvidia or AMD), although the changes to get these working are rather small.
+
+OpenGL is always coupled with a bunch of other libraries, namely GLU and glut. You can install all those libraries using `apt`, as follows:
+
+```sh
+
+sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev
+
+```
+
+If the installation was successful, OpenGL headers can be found under `/usr/include/GL`, while libraries can be found in the folder `/usr/lib/x86_64-linux-gnu/`.
+
+### jextracting OpenGL (Ubuntu 16.04)
+
+To extract the opengl libraries the following command suffices:
+
+```sh
+
+jextract -L /usr/lib/x86_64-linux-gnu  -l glut -l GLU -l GL --infer-rpath -t opengl -o opengl.jar /usr/include/GL/glut.h
+
+```
+
+Since glut depends on the other libraries (GLU and GL), it is not necessary to give additional headers to jextract.
+
+### Java sample code that uses the OpenGL library
+
+```java
+import java.foreign.Libraries;
+import java.foreign.NativeTypes;
+import java.foreign.Scope;
+import java.foreign.memory.Array;
+import java.foreign.memory.Pointer;
+import java.lang.invoke.MethodHandles;
+
+import opengl.*;
+
+import javax.imageio.ImageIO;
+
+public class Teapot {
+    static gl gl = Libraries.bind(MethodHandles.lookup(), gl.class);
+    static freeglut_std glut = Libraries.bind(MethodHandles.lookup(), freeglut_std.class);
+
+    float rot = 0;
+
+    Teapot(Scope sc) {
+        // Misc Parameters
+        Array<Float> pos = sc.allocateArray(NativeTypes.FLOAT, new float[] {0.0f, 15.0f, -15.0f, 0});
+        Array<Float> spec = sc.allocateArray(NativeTypes.FLOAT, new float[] {1, 1, 1, 0});
+        Array<Float> shini = sc.allocateArray(NativeTypes.FLOAT, new float[] {113});
+
+        // Reset Background
+        gl.glClearColor(0, 0, 0, 0);
+
+        // Setup Lighting
+        gl.glShadeModel(gl.GL_SMOOTH());
+        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_POSITION(), pos.elementPointer());
+        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_AMBIENT(), spec.elementPointer());
+        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_DIFFUSE(), spec.elementPointer());
+        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_SPECULAR(), spec.elementPointer());
+        gl.glMaterialfv(gl.GL_FRONT(), gl.GL_SHININESS(), shini.elementPointer());
+        gl.glEnable(gl.GL_LIGHTING());
+        gl.glEnable(gl.GL_LIGHT0());
+        gl.glEnable(gl.GL_DEPTH_TEST());
+    }
+
+    void display() {
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT() | gl.GL_DEPTH_BUFFER_BIT());
+        gl.glPushMatrix();
+        gl.glRotatef(-20, 1, 1, 0);
+        gl.glRotatef(rot, 0, 1, 0);
+        glut.glutSolidTeapot(0.5);
+        gl.glPopMatrix();
+        glut.glutSwapBuffers();
+    }
+
+	void onIdle() {
+        rot += 0.1;
+        glut.glutPostRedisplay();
+    }
+
+    public static void main(String[] args) {
+        try (Scope sc = Scope.newNativeScope()) {
+            Pointer<Integer> argc = sc.allocate(NativeTypes.INT32);
+            argc.set(0);
+            glut.glutInit(argc, Pointer.nullPointer());
+            glut.glutInitDisplayMode(glut.GLUT_DOUBLE() | glut.GLUT_RGBA() | glut.GLUT_DEPTH());
+            glut.glutInitWindowSize(900, 900);
+            glut.glutCreateWindow(sc.allocateCString("Hello Panama!"));
+            Teapot teapot = new Teapot(sc);
+            glut.glutDisplayFunc(sc.allocateCallback(teapot::display));
+            glut.glutIdleFunc(sc.allocateCallback(teapot::onIdle));
+            glut.glutMainLoop();
+        }
+    }
+}
+```
+### Running the Java code that uses OpenGL
+
+```sh
+
+javac -cp opengl.jar Teapot.java
+
+java -cp opengl.jar:. Teapot
 
 ```
