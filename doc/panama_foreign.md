@@ -17,11 +17,11 @@ Using foreign function call in Java involves the following three steps:
 
 ```sh
 
-jextract -l python2.7 \  
-  -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \  
-  --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \  
-  -t org.python \  
-  /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \  
+jextract -l python2.7 \
+  -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \
+  --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
+  -t org.python \
+  /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \
   -o python.jar
 
 ```
@@ -104,9 +104,9 @@ The following command can be used to extract cblas.h on MacOs
 
 ```sh
 
-jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \  
-  -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \  
-  -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \  
+jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
+  -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \
+  -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \
   -o cblas.jar
 
 ```
@@ -357,9 +357,9 @@ java -cp libproc.jar:. LibprocMain
 
 ```sh
 
-jextract -l readline -rpath /usr/local/opt/readline/lib/ \  
-    -t org.unix \  
-    /usr/include/readline/readline.h /usr/include/_stdio.h \  
+jextract -l readline -rpath /usr/local/opt/readline/lib/ \
+    -t org.unix \
+    /usr/include/readline/readline.h /usr/include/_stdio.h \
     --exclude-symbol readline_echoing_p -o readline.jar
 
 ```
@@ -443,6 +443,7 @@ javac -cp unistd.jar Getpid.java
 java -cp unistd.jar:. Getpid
 
 ```
+
 
 ## Using OpenGL graphic library (Ubuntu 16.04)
 
@@ -553,5 +554,198 @@ public class Teapot {
 javac -cp opengl.jar Teapot.java
 
 java -cp opengl.jar:. Teapot
+
+```
+
+
+## Using TensorFlow C API
+
+Quoted from [https://www.tensorflow.org/install/lang_c](https://www.tensorflow.org/install/lang_c)
+
+"TensorFlow provides a C API that can be used to build bindings for other
+languages. The API is defined in c_api.h and designed for simplicity and
+uniformity rather than convenience."
+
+
+### Installing libtensorflow
+
+You can follow the setup procedure as described in the above page.
+
+Alternatively, on Mac, you can install libtensorflow using HomeBrew
+
+```sh
+
+brew install libtensorflow
+
+```
+
+Tensorflow ship the libtensorflow with an .so extension, this doesn't work
+well for java on MacOS as java expect .dylib extension. To work around this,
+create a symbolic link.
+
+```sh
+
+sudo ln -s /usr/local/lib/libtensorflow.so /usr/local/lib/libtensorflow.dylib
+
+```
+
+### jextracting libtensorflow c_api.h
+
+The following command can be used to extract c_api.h.
+
+```sh
+
+jextract -C -x -C c++  \
+        -L /usr/local/lib -l tensorflow -infer-rpath \
+        -o tf.jar -t org.tensorflow.panama \
+        /usr/local/include/tensorflow/c/c_api.h
+
+```
+
+The caveat to extract tensorflow C API is that it declare function prototype
+without argument in C++ style, for example, TF_Version(), which is considered
+incomplete C function prototype instead of C style as in TF_Version(void). An
+incomplete function prototype will become vararg funciton. To avoid that, we
+need to pass clang '-x c++' options to jextract with '-C -x -C c++'
+
+
+### Java sample code that uses tensorflow library
+
+```java
+
+import java.foreign.NativeTypes;
+import java.foreign.Scope;
+import java.foreign.memory.Array;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
+import org.tensorflow.panama.c_api.TF_DataType;
+import org.tensorflow.panama.c_api.TF_Graph;
+import org.tensorflow.panama.c_api.TF_Operation;
+import org.tensorflow.panama.c_api.TF_OperationDescription;
+import org.tensorflow.panama.c_api.TF_Output;
+import org.tensorflow.panama.c_api.TF_Session;
+import org.tensorflow.panama.c_api.TF_SessionOptions;
+import org.tensorflow.panama.c_api.TF_Status;
+import org.tensorflow.panama.c_api.TF_Tensor;
+
+import static org.tensorflow.panama.c_api_h.*;
+
+public class TensorFlowExample {
+    static Pointer<TF_Operation> PlaceHolder(Pointer<TF_Graph> graph, Pointer<TF_Status> status,
+                                      @TF_DataType int dtype, String name) {
+        try (var s = Scope.newNativeScope()) {
+            Pointer<TF_OperationDescription> desc = TF_NewOperation(graph,
+                    s.allocateCString("Placeholder"), s.allocateCString(name));
+            TF_SetAttrType(desc, s.allocateCString("dtype"), TF_FLOAT);
+            return TF_FinishOperation(desc, status);
+        }
+    }
+
+    static Pointer<TF_Operation> ConstValue(Pointer<TF_Graph> graph, Pointer<TF_Status> status,
+                                Pointer<TF_Tensor> tensor, String name) {
+        try (var s = Scope.newNativeScope()) {
+            Pointer<TF_OperationDescription> desc = TF_NewOperation(graph,
+                    s.allocateCString("Const"), s.allocateCString(name));
+            TF_SetAttrTensor(desc, s.allocateCString("value"), tensor, status);
+            TF_SetAttrType(desc, s.allocateCString("dtype"), TF_TensorType(tensor));
+            return TF_FinishOperation(desc, status);
+        }
+    }
+
+    static Pointer<TF_Operation> Add(Pointer<TF_Graph> graph, Pointer<TF_Status> status,
+                              Pointer<TF_Operation> one, Pointer<TF_Operation> two,
+                              String name) {
+        try (var s = Scope.newNativeScope()) {
+            Pointer<TF_OperationDescription> desc = TF_NewOperation(graph,
+                    s.allocateCString("AddN"), s.allocateCString(name));
+            Array<TF_Output> add_inputs = s.allocateArray(
+                    LayoutType.ofStruct(TF_Output.class),2);
+            add_inputs.get(0).oper$set(one);
+            add_inputs.get(0).index$set(0);
+            add_inputs.get(1).oper$set(two);
+            add_inputs.get(1).index$set(0);
+            TF_AddInputList(desc, add_inputs.elementPointer(), 2);
+            return TF_FinishOperation(desc, status);
+        }
+    }
+
+    public static void main(String... args) {
+        System.out.println("TensorFlow C library version: " + Pointer.toString(TF_Version()));
+
+        Pointer<TF_Graph> graph = TF_NewGraph();
+        Pointer<TF_SessionOptions> options = TF_NewSessionOptions();
+        Pointer<TF_Status> status = TF_NewStatus();
+        Pointer<TF_Session> session = TF_NewSession(graph, options, status);
+
+        float in_val_one = 4.0f;
+        float const_two = 2.0f;
+
+        Pointer<TF_Tensor> tensor_in = TF_AllocateTensor(TF_FLOAT, Pointer.nullPointer(), 0, Float.BYTES);
+        TF_TensorData(tensor_in).cast(NativeTypes.FLOAT).set(in_val_one);
+        Pointer<TF_Tensor> tensor_const_two = TF_AllocateTensor(TF_FLOAT, Pointer.nullPointer(), 0, Float.BYTES);
+        TF_TensorData(tensor_const_two).cast(NativeTypes.FLOAT).set(const_two);
+
+        // Operations
+        Pointer<TF_Operation> feed = PlaceHolder(graph, status, TF_FLOAT, "feed");
+        Pointer<TF_Operation> two = ConstValue(graph, status, tensor_const_two, "const");
+        Pointer<TF_Operation> add = Add(graph, status, feed, two, "add");
+
+
+        try (var s = Scope.newNativeScope()) {
+            var ltPtrTensor = LayoutType.ofStruct(TF_Tensor.class).pointer();
+
+            // Session Inputs
+            TF_Output input_operations = s.allocateStruct(TF_Output.class);
+            input_operations.oper$set(feed);
+            input_operations.index$set(0);
+            Pointer<Pointer<TF_Tensor>> input_tensors = s.allocate(ltPtrTensor);
+            input_tensors.set(tensor_in);
+
+            // Session Outputs
+            TF_Output output_operations = s.allocateStruct(TF_Output.class);
+            output_operations.oper$set(add);
+            output_operations.index$set(0);
+            Pointer<Pointer<TF_Tensor>> output_tensors = s.allocate(ltPtrTensor);
+            TF_SessionRun(session, Pointer.nullPointer(),
+                // Inputs
+                input_operations.ptr(), input_tensors, 1,
+                // Outputs
+                output_operations.ptr(), output_tensors, 1,
+                // Target operations
+                Pointer.nullPointer(), 0, Pointer.nullPointer(),
+                status);
+
+            System.out.println(String.format("Session Run Status: %d - %s",
+                    TF_GetCode(status), Pointer.toString(TF_Message(status))));
+            Pointer<TF_Tensor> tensor_out = output_tensors.get();
+            System.out.println("Output Tensor Type: " + TF_TensorType(tensor_out));
+            float outval = TF_TensorData(tensor_out).cast(NativeTypes.FLOAT).get();
+            System.out.println("Output Tensor Value: " + outval);
+
+            TF_CloseSession(session, status);
+            TF_DeleteSession(session, status);
+
+            TF_DeleteSessionOptions(options);
+
+            TF_DeleteGraph(graph);
+
+            TF_DeleteTensor(tensor_in);
+            TF_DeleteTensor(tensor_out);
+            TF_DeleteTensor(tensor_const_two);
+
+            TF_DeleteStatus(status);
+        }
+    }
+}
+
+```
+
+### Compiling and running the above TensorFlow sample
+
+```sh
+
+javac -cp tf.jar TensorFlowExample.java
+
+java -cp tf.jar:. TensorFlowExample
 
 ```

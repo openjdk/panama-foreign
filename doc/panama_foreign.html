@@ -122,6 +122,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><a href="#java-sample-code-that-uses-the-opengl-library">Java sample code that uses the OpenGL library</a></li>
 <li><a href="#running-the-java-code-that-uses-opengl">Running the Java code that uses OpenGL</a></li>
 </ul></li>
+<li><a href="#using-tensorflow-c-api">Using TensorFlow C API</a><ul>
+<li><a href="#installing-libtensorflow">Installing libtensorflow</a></li>
+<li><a href="#jextracting-libtensorflow-c_api.h">jextracting libtensorflow c_api.h</a></li>
+<li><a href="#java-sample-code-that-uses-tensorflow-library">Java sample code that uses tensorflow library</a></li>
+<li><a href="#compiling-and-running-the-above-tensorflow-sample">Compiling and running the above TensorFlow sample</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -140,12 +146,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2 id="embedding-python-interpreter-in-your-java-program-mac-os">Embedding Python interpreter in your Java program (Mac OS)</h2>
 <h3 id="jextract-a-jar-file-for-python.h">jextract a Jar file for Python.h</h3>
 <div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ex">jextract</span> -l python2.7 <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">  <span class="ex">-rpath</span> /System/Library/Frameworks/Python.framework/Versions/2.7/lib <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">  <span class="ex">--exclude-symbols</span> .*_FromFormatV<span class="dt">\|</span>_.*<span class="dt">\|</span>PyOS_vsnprintf<span class="dt">\|</span>.*_VaParse.*<span class="dt">\|</span>.*_VaBuild.*<span class="dt">\|</span>PyBuffer_SizeFromFormat<span class="dt">\|</span>vasprintf<span class="dt">\|</span>vfprintf<span class="dt">\|</span>vprintf<span class="dt">\|</span>vsprintf <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">  <span class="ex">-t</span> org.python <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">  <span class="ex">/usr/include/stdio.h</span> /usr/include/stdlib.h /usr/include/python2.7/Python.h <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">  <span class="ex">-o</span> python.jar</a></code></pre></div>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ex">jextract</span> -l python2.7 \</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">  -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">  --exclude-symbols .*_FromFormatV<span class="dt">\|</span>_.*<span class="dt">\|</span>PyOS_vsnprintf<span class="dt">\|</span>.*_VaParse.*<span class="dt">\|</span>.*_VaBuild.*<span class="dt">\|</span>PyBuffer_SizeFromFormat<span class="dt">\|</span>vasprintf<span class="dt">\|</span>vfprintf<span class="dt">\|</span>vprintf<span class="dt">\|</span>vsprintf \</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">  -t org.python \</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  -o python.jar</a></code></pre></div>
 <h3 id="java-program-that-uses-extracted-python-interface">Java program that uses extracted Python interface</h3>
 <div class="sourceCode" id="cb2"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb2-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb2-2" data-line-number="2"><span class="co">// import java.foreign packages</span></a>
@@ -191,10 +197,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 id="jextracting-cblas.h-macos">jextracting cblas.h (MacOS)</h3>
 <p>The following command can be used to extract cblas.h on MacOs</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb6-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="ex">jextract</span> -C <span class="st">&quot;-D FORCE_OPENBLAS_COMPLEX_STRUCT&quot;</span> <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb6-3" data-line-number="3">  <span class="ex">-L</span> /usr/local/opt/openblas/lib -I /usr/local/opt/openblas <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb6-4" data-line-number="4">  <span class="ex">-l</span> openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb6-5" data-line-number="5">  <span class="ex">-o</span> cblas.jar</a></code></pre></div>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="ex">jextract</span> -C <span class="st">&quot;-D FORCE_OPENBLAS_COMPLEX_STRUCT&quot;</span> \</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">  -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">  -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">  -o cblas.jar</a></code></pre></div>
 <p>The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not yet handle C99 <code>_Complex</code> types. The rest of the options are standard ones.</p>
 <h3 id="jextracting-cblas.h-ubuntu-16.04">jextracting cblas.h (Ubuntu 16.04)</h3>
 <p>The following command can be used to extract cblas.h on Ubuntu</p>
@@ -390,10 +396,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2 id="using-readline-library-from-java-code-mac-os">Using readline library from Java code (Mac OS)</h2>
 <h3 id="jextract-a-jar-file-for-readline.h">jextract a jar file for readline.h</h3>
 <div class="sourceCode" id="cb15"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb15-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="ex">jextract</span> -l readline -rpath /usr/local/opt/readline/lib/ <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb15-3" data-line-number="3">    <span class="ex">-t</span> org.unix <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb15-4" data-line-number="4">    <span class="ex">/usr/include/readline/readline.h</span> /usr/include/_stdio.h <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb15-5" data-line-number="5">    <span class="ex">--exclude-symbol</span> readline_echoing_p -o readline.jar</a></code></pre></div>
+<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="ex">jextract</span> -l readline -rpath /usr/local/opt/readline/lib/ \</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">    -t org.unix \</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">    /usr/include/readline/readline.h /usr/include/_stdio.h \</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5">    --exclude-symbol readline_echoing_p -o readline.jar</a></code></pre></div>
 <h3 id="java-code-that-uses-readline">Java code that uses readline</h3>
 <div class="sourceCode" id="cb16"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb16-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb16-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
@@ -536,5 +542,155 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb24-2" data-line-number="2"><span class="ex">javac</span> -cp opengl.jar Teapot.java</a>
 <a class="sourceLine" id="cb24-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb24-4" data-line-number="4"><span class="ex">java</span> -cp opengl.jar:. Teapot</a></code></pre></div>
+<h2 id="using-tensorflow-c-api">Using TensorFlow C API</h2>
+<p>Quoted from <a href="https://www.tensorflow.org/install/lang_c">https://www.tensorflow.org/install/lang_c</a></p>
+<p>“TensorFlow provides a C API that can be used to build bindings for other languages. The API is defined in c_api.h and designed for simplicity and uniformity rather than convenience.”</p>
+<h3 id="installing-libtensorflow">Installing libtensorflow</h3>
+<p>You can follow the setup procedure as described in the above page.</p>
+<p>Alternatively, on Mac, you can install libtensorflow using HomeBrew</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb25-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb25-2" data-line-number="2"><span class="ex">brew</span> install libtensorflow</a></code></pre></div>
+<p>Tensorflow ship the libtensorflow with an .so extension, this doesn’t work well for java on MacOS as java expect .dylib extension. To work around this, create a symbolic link.</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb26-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb26-2" data-line-number="2"><span class="fu">sudo</span> ln -s /usr/local/lib/libtensorflow.so /usr/local/lib/libtensorflow.dylib</a></code></pre></div>
+<h3 id="jextracting-libtensorflow-c_api.h">jextracting libtensorflow c_api.h</h3>
+<p>The following command can be used to extract c_api.h.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb27-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb27-2" data-line-number="2"><span class="ex">jextract</span> -C -x -C c++  \</a>
+<a class="sourceLine" id="cb27-3" data-line-number="3">        -L /usr/local/lib -l tensorflow -infer-rpath \</a>
+<a class="sourceLine" id="cb27-4" data-line-number="4">        -o tf.jar -t org.tensorflow.panama \</a>
+<a class="sourceLine" id="cb27-5" data-line-number="5">        /usr/local/include/tensorflow/c/c_api.h</a></code></pre></div>
+<p>The caveat to extract tensorflow C API is that it declare function prototype without argument in C++ style, for example, TF_Version(), which is considered incomplete C function prototype instead of C style as in TF_Version(void). An incomplete function prototype will become vararg funciton. To avoid that, we need to pass clang ‘-x c++’ options to jextract with ‘-C -x -C c++’</p>
+<h3 id="java-sample-code-that-uses-tensorflow-library">Java sample code that uses tensorflow library</h3>
+<div class="sourceCode" id="cb28"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb28-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb28-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
+<a class="sourceLine" id="cb28-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
+<a class="sourceLine" id="cb28-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
+<a class="sourceLine" id="cb28-5" data-line-number="5"><span class="kw">import</span><span class="im"> java.foreign.memory.LayoutType;</span></a>
+<a class="sourceLine" id="cb28-6" data-line-number="6"><span class="kw">import</span><span class="im"> java.foreign.memory.Pointer;</span></a>
+<a class="sourceLine" id="cb28-7" data-line-number="7"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_DataType;</span></a>
+<a class="sourceLine" id="cb28-8" data-line-number="8"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Graph;</span></a>
+<a class="sourceLine" id="cb28-9" data-line-number="9"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Operation;</span></a>
+<a class="sourceLine" id="cb28-10" data-line-number="10"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_OperationDescription;</span></a>
+<a class="sourceLine" id="cb28-11" data-line-number="11"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Output;</span></a>
+<a class="sourceLine" id="cb28-12" data-line-number="12"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Session;</span></a>
+<a class="sourceLine" id="cb28-13" data-line-number="13"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_SessionOptions;</span></a>
+<a class="sourceLine" id="cb28-14" data-line-number="14"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Status;</span></a>
+<a class="sourceLine" id="cb28-15" data-line-number="15"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Tensor;</span></a>
+<a class="sourceLine" id="cb28-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb28-17" data-line-number="17"><span class="kw">import static</span><span class="im"> org.tensorflow.panama.c_api_h.*;</span></a>
+<a class="sourceLine" id="cb28-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb28-19" data-line-number="19"><span class="kw">public</span> <span class="kw">class</span> TensorFlowExample {</a>
+<a class="sourceLine" id="cb28-20" data-line-number="20">    <span class="dt">static</span> Pointer&lt;TF_Operation&gt; <span class="fu">PlaceHolder</span>(Pointer&lt;TF_Graph&gt; graph, Pointer&lt;TF_Status&gt; status,</a>
+<a class="sourceLine" id="cb28-21" data-line-number="21">                                      <span class="at">@TF_DataType</span> <span class="dt">int</span> dtype, <span class="bu">String</span> name) {</a>
+<a class="sourceLine" id="cb28-22" data-line-number="22">        <span class="kw">try</span> (var s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb28-23" data-line-number="23">            Pointer&lt;TF_OperationDescription&gt; desc = <span class="fu">TF_NewOperation</span>(graph,</a>
+<a class="sourceLine" id="cb28-24" data-line-number="24">                    s.<span class="fu">allocateCString</span>(<span class="st">&quot;Placeholder&quot;</span>), s.<span class="fu">allocateCString</span>(name));</a>
+<a class="sourceLine" id="cb28-25" data-line-number="25">            <span class="fu">TF_SetAttrType</span>(desc, s.<span class="fu">allocateCString</span>(<span class="st">&quot;dtype&quot;</span>), TF_FLOAT);</a>
+<a class="sourceLine" id="cb28-26" data-line-number="26">            <span class="kw">return</span> <span class="fu">TF_FinishOperation</span>(desc, status);</a>
+<a class="sourceLine" id="cb28-27" data-line-number="27">        }</a>
+<a class="sourceLine" id="cb28-28" data-line-number="28">    }</a>
+<a class="sourceLine" id="cb28-29" data-line-number="29"></a>
+<a class="sourceLine" id="cb28-30" data-line-number="30">    <span class="dt">static</span> Pointer&lt;TF_Operation&gt; <span class="fu">ConstValue</span>(Pointer&lt;TF_Graph&gt; graph, Pointer&lt;TF_Status&gt; status,</a>
+<a class="sourceLine" id="cb28-31" data-line-number="31">                                Pointer&lt;TF_Tensor&gt; tensor, <span class="bu">String</span> name) {</a>
+<a class="sourceLine" id="cb28-32" data-line-number="32">        <span class="kw">try</span> (var s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb28-33" data-line-number="33">            Pointer&lt;TF_OperationDescription&gt; desc = <span class="fu">TF_NewOperation</span>(graph,</a>
+<a class="sourceLine" id="cb28-34" data-line-number="34">                    s.<span class="fu">allocateCString</span>(<span class="st">&quot;Const&quot;</span>), s.<span class="fu">allocateCString</span>(name));</a>
+<a class="sourceLine" id="cb28-35" data-line-number="35">            <span class="fu">TF_SetAttrTensor</span>(desc, s.<span class="fu">allocateCString</span>(<span class="st">&quot;value&quot;</span>), tensor, status);</a>
+<a class="sourceLine" id="cb28-36" data-line-number="36">            <span class="fu">TF_SetAttrType</span>(desc, s.<span class="fu">allocateCString</span>(<span class="st">&quot;dtype&quot;</span>), <span class="fu">TF_TensorType</span>(tensor));</a>
+<a class="sourceLine" id="cb28-37" data-line-number="37">            <span class="kw">return</span> <span class="fu">TF_FinishOperation</span>(desc, status);</a>
+<a class="sourceLine" id="cb28-38" data-line-number="38">        }</a>
+<a class="sourceLine" id="cb28-39" data-line-number="39">    }</a>
+<a class="sourceLine" id="cb28-40" data-line-number="40"></a>
+<a class="sourceLine" id="cb28-41" data-line-number="41">    <span class="dt">static</span> Pointer&lt;TF_Operation&gt; <span class="fu">Add</span>(Pointer&lt;TF_Graph&gt; graph, Pointer&lt;TF_Status&gt; status,</a>
+<a class="sourceLine" id="cb28-42" data-line-number="42">                              Pointer&lt;TF_Operation&gt; one, Pointer&lt;TF_Operation&gt; two,</a>
+<a class="sourceLine" id="cb28-43" data-line-number="43">                              <span class="bu">String</span> name) {</a>
+<a class="sourceLine" id="cb28-44" data-line-number="44">        <span class="kw">try</span> (var s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb28-45" data-line-number="45">            Pointer&lt;TF_OperationDescription&gt; desc = <span class="fu">TF_NewOperation</span>(graph,</a>
+<a class="sourceLine" id="cb28-46" data-line-number="46">                    s.<span class="fu">allocateCString</span>(<span class="st">&quot;AddN&quot;</span>), s.<span class="fu">allocateCString</span>(name));</a>
+<a class="sourceLine" id="cb28-47" data-line-number="47">            <span class="bu">Array</span>&lt;TF_Output&gt; add_inputs = s.<span class="fu">allocateArray</span>(</a>
+<a class="sourceLine" id="cb28-48" data-line-number="48">                    LayoutType.<span class="fu">ofStruct</span>(TF_Output.<span class="fu">class</span>),<span class="dv">2</span>);</a>
+<a class="sourceLine" id="cb28-49" data-line-number="49">            add_inputs.<span class="fu">get</span>(<span class="dv">0</span>).<span class="fu">oper</span>$<span class="fu">set</span>(one);</a>
+<a class="sourceLine" id="cb28-50" data-line-number="50">            add_inputs.<span class="fu">get</span>(<span class="dv">0</span>).<span class="fu">index</span>$<span class="fu">set</span>(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb28-51" data-line-number="51">            add_inputs.<span class="fu">get</span>(<span class="dv">1</span>).<span class="fu">oper</span>$<span class="fu">set</span>(two);</a>
+<a class="sourceLine" id="cb28-52" data-line-number="52">            add_inputs.<span class="fu">get</span>(<span class="dv">1</span>).<span class="fu">index</span>$<span class="fu">set</span>(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb28-53" data-line-number="53">            <span class="fu">TF_AddInputList</span>(desc, add_inputs.<span class="fu">elementPointer</span>(), <span class="dv">2</span>);</a>
+<a class="sourceLine" id="cb28-54" data-line-number="54">            <span class="kw">return</span> <span class="fu">TF_FinishOperation</span>(desc, status);</a>
+<a class="sourceLine" id="cb28-55" data-line-number="55">        }</a>
+<a class="sourceLine" id="cb28-56" data-line-number="56">    }</a>
+<a class="sourceLine" id="cb28-57" data-line-number="57"></a>
+<a class="sourceLine" id="cb28-58" data-line-number="58">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span><span class="kw">... </span>args) {</a>
+<a class="sourceLine" id="cb28-59" data-line-number="59">        <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;TensorFlow C library version: &quot;</span> + Pointer.<span class="fu">toString</span>(<span class="fu">TF_Version</span>()));</a>
+<a class="sourceLine" id="cb28-60" data-line-number="60"></a>
+<a class="sourceLine" id="cb28-61" data-line-number="61">        Pointer&lt;TF_Graph&gt; graph = <span class="fu">TF_NewGraph</span>();</a>
+<a class="sourceLine" id="cb28-62" data-line-number="62">        Pointer&lt;TF_SessionOptions&gt; options = <span class="fu">TF_NewSessionOptions</span>();</a>
+<a class="sourceLine" id="cb28-63" data-line-number="63">        Pointer&lt;TF_Status&gt; status = <span class="fu">TF_NewStatus</span>();</a>
+<a class="sourceLine" id="cb28-64" data-line-number="64">        Pointer&lt;TF_Session&gt; session = <span class="fu">TF_NewSession</span>(graph, options, status);</a>
+<a class="sourceLine" id="cb28-65" data-line-number="65"></a>
+<a class="sourceLine" id="cb28-66" data-line-number="66">        <span class="dt">float</span> in_val_one = <span class="fl">4.0f</span>;</a>
+<a class="sourceLine" id="cb28-67" data-line-number="67">        <span class="dt">float</span> const_two = <span class="fl">2.0f</span>;</a>
+<a class="sourceLine" id="cb28-68" data-line-number="68"></a>
+<a class="sourceLine" id="cb28-69" data-line-number="69">        Pointer&lt;TF_Tensor&gt; tensor_in = <span class="fu">TF_AllocateTensor</span>(TF_FLOAT, Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>, <span class="bu">Float</span>.<span class="fu">BYTES</span>);</a>
+<a class="sourceLine" id="cb28-70" data-line-number="70">        <span class="fu">TF_TensorData</span>(tensor_in).<span class="fu">cast</span>(NativeTypes.<span class="fu">FLOAT</span>).<span class="fu">set</span>(in_val_one);</a>
+<a class="sourceLine" id="cb28-71" data-line-number="71">        Pointer&lt;TF_Tensor&gt; tensor_const_two = <span class="fu">TF_AllocateTensor</span>(TF_FLOAT, Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>, <span class="bu">Float</span>.<span class="fu">BYTES</span>);</a>
+<a class="sourceLine" id="cb28-72" data-line-number="72">        <span class="fu">TF_TensorData</span>(tensor_const_two).<span class="fu">cast</span>(NativeTypes.<span class="fu">FLOAT</span>).<span class="fu">set</span>(const_two);</a>
+<a class="sourceLine" id="cb28-73" data-line-number="73"></a>
+<a class="sourceLine" id="cb28-74" data-line-number="74">        <span class="co">// Operations</span></a>
+<a class="sourceLine" id="cb28-75" data-line-number="75">        Pointer&lt;TF_Operation&gt; feed = <span class="fu">PlaceHolder</span>(graph, status, TF_FLOAT, <span class="st">&quot;feed&quot;</span>);</a>
+<a class="sourceLine" id="cb28-76" data-line-number="76">        Pointer&lt;TF_Operation&gt; two = <span class="fu">ConstValue</span>(graph, status, tensor_const_two, <span class="st">&quot;const&quot;</span>);</a>
+<a class="sourceLine" id="cb28-77" data-line-number="77">        Pointer&lt;TF_Operation&gt; add = <span class="fu">Add</span>(graph, status, feed, two, <span class="st">&quot;add&quot;</span>);</a>
+<a class="sourceLine" id="cb28-78" data-line-number="78"></a>
+<a class="sourceLine" id="cb28-79" data-line-number="79"></a>
+<a class="sourceLine" id="cb28-80" data-line-number="80">        <span class="kw">try</span> (var s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb28-81" data-line-number="81">            var ltPtrTensor = LayoutType.<span class="fu">ofStruct</span>(TF_Tensor.<span class="fu">class</span>).<span class="fu">pointer</span>();</a>
+<a class="sourceLine" id="cb28-82" data-line-number="82"></a>
+<a class="sourceLine" id="cb28-83" data-line-number="83">            <span class="co">// Session Inputs</span></a>
+<a class="sourceLine" id="cb28-84" data-line-number="84">            TF_Output input_operations = s.<span class="fu">allocateStruct</span>(TF_Output.<span class="fu">class</span>);</a>
+<a class="sourceLine" id="cb28-85" data-line-number="85">            input_operations.<span class="fu">oper</span>$<span class="fu">set</span>(feed);</a>
+<a class="sourceLine" id="cb28-86" data-line-number="86">            input_operations.<span class="fu">index</span>$<span class="fu">set</span>(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb28-87" data-line-number="87">            Pointer&lt;Pointer&lt;TF_Tensor&gt;&gt; input_tensors = s.<span class="fu">allocate</span>(ltPtrTensor);</a>
+<a class="sourceLine" id="cb28-88" data-line-number="88">            input_tensors.<span class="fu">set</span>(tensor_in);</a>
+<a class="sourceLine" id="cb28-89" data-line-number="89"></a>
+<a class="sourceLine" id="cb28-90" data-line-number="90">            <span class="co">// Session Outputs</span></a>
+<a class="sourceLine" id="cb28-91" data-line-number="91">            TF_Output output_operations = s.<span class="fu">allocateStruct</span>(TF_Output.<span class="fu">class</span>);</a>
+<a class="sourceLine" id="cb28-92" data-line-number="92">            output_operations.<span class="fu">oper</span>$<span class="fu">set</span>(add);</a>
+<a class="sourceLine" id="cb28-93" data-line-number="93">            output_operations.<span class="fu">index</span>$<span class="fu">set</span>(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb28-94" data-line-number="94">            Pointer&lt;Pointer&lt;TF_Tensor&gt;&gt; output_tensors = s.<span class="fu">allocate</span>(ltPtrTensor);</a>
+<a class="sourceLine" id="cb28-95" data-line-number="95">            <span class="fu">TF_SessionRun</span>(session, Pointer.<span class="fu">nullPointer</span>(),</a>
+<a class="sourceLine" id="cb28-96" data-line-number="96">                <span class="co">// Inputs</span></a>
+<a class="sourceLine" id="cb28-97" data-line-number="97">                input_operations.<span class="fu">ptr</span>(), input_tensors, <span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb28-98" data-line-number="98">                <span class="co">// Outputs</span></a>
+<a class="sourceLine" id="cb28-99" data-line-number="99">                output_operations.<span class="fu">ptr</span>(), output_tensors, <span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb28-100" data-line-number="100">                <span class="co">// Target operations</span></a>
+<a class="sourceLine" id="cb28-101" data-line-number="101">                Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>, Pointer.<span class="fu">nullPointer</span>(),</a>
+<a class="sourceLine" id="cb28-102" data-line-number="102">                status);</a>
+<a class="sourceLine" id="cb28-103" data-line-number="103"></a>
+<a class="sourceLine" id="cb28-104" data-line-number="104">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="bu">String</span><span class="fu">.format</span>(<span class="st">&quot;Session Run Status: </span><span class="sc">%d</span><span class="st"> - </span><span class="sc">%s</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb28-105" data-line-number="105">                    <span class="fu">TF_GetCode</span>(status), Pointer.<span class="fu">toString</span>(<span class="fu">TF_Message</span>(status))));</a>
+<a class="sourceLine" id="cb28-106" data-line-number="106">            Pointer&lt;TF_Tensor&gt; tensor_out = output_tensors.<span class="fu">get</span>();</a>
+<a class="sourceLine" id="cb28-107" data-line-number="107">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Output Tensor Type: &quot;</span> + <span class="fu">TF_TensorType</span>(tensor_out));</a>
+<a class="sourceLine" id="cb28-108" data-line-number="108">            <span class="dt">float</span> outval = <span class="fu">TF_TensorData</span>(tensor_out).<span class="fu">cast</span>(NativeTypes.<span class="fu">FLOAT</span>).<span class="fu">get</span>();</a>
+<a class="sourceLine" id="cb28-109" data-line-number="109">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Output Tensor Value: &quot;</span> + outval);</a>
+<a class="sourceLine" id="cb28-110" data-line-number="110"></a>
+<a class="sourceLine" id="cb28-111" data-line-number="111">            <span class="fu">TF_CloseSession</span>(session, status);</a>
+<a class="sourceLine" id="cb28-112" data-line-number="112">            <span class="fu">TF_DeleteSession</span>(session, status);</a>
+<a class="sourceLine" id="cb28-113" data-line-number="113"></a>
+<a class="sourceLine" id="cb28-114" data-line-number="114">            <span class="fu">TF_DeleteSessionOptions</span>(options);</a>
+<a class="sourceLine" id="cb28-115" data-line-number="115"></a>
+<a class="sourceLine" id="cb28-116" data-line-number="116">            <span class="fu">TF_DeleteGraph</span>(graph);</a>
+<a class="sourceLine" id="cb28-117" data-line-number="117"></a>
+<a class="sourceLine" id="cb28-118" data-line-number="118">            <span class="fu">TF_DeleteTensor</span>(tensor_in);</a>
+<a class="sourceLine" id="cb28-119" data-line-number="119">            <span class="fu">TF_DeleteTensor</span>(tensor_out);</a>
+<a class="sourceLine" id="cb28-120" data-line-number="120">            <span class="fu">TF_DeleteTensor</span>(tensor_const_two);</a>
+<a class="sourceLine" id="cb28-121" data-line-number="121"></a>
+<a class="sourceLine" id="cb28-122" data-line-number="122">            <span class="fu">TF_DeleteStatus</span>(status);</a>
+<a class="sourceLine" id="cb28-123" data-line-number="123">        }</a>
+<a class="sourceLine" id="cb28-124" data-line-number="124">    }</a>
+<a class="sourceLine" id="cb28-125" data-line-number="125">}</a></code></pre></div>
+<h3 id="compiling-and-running-the-above-tensorflow-sample">Compiling and running the above TensorFlow sample</h3>
+<div class="sourceCode" id="cb29"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb29-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb29-2" data-line-number="2"><span class="ex">javac</span> -cp tf.jar TensorFlowExample.java</a>
+<a class="sourceLine" id="cb29-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb29-4" data-line-number="4"><span class="ex">java</span> -cp tf.jar:. TensorFlowExample</a></code></pre></div>
 </body>
 </html>
