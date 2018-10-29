@@ -1,3 +1,5 @@
+% Using Panama "foreign" JDK
+
 # Using Panama "foreign" JDK
 
 There are two ways to get a panama foreign branch JDK.
@@ -558,7 +560,7 @@ java -cp opengl.jar:. Teapot
 ```
 
 
-## Using TensorFlow C API
+## Using TensorFlow C API (Mac OS)
 
 Quoted from [https://www.tensorflow.org/install/lang_c](https://www.tensorflow.org/install/lang_c)
 

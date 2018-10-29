@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>panama_foreign</title>
+  <title>Using Panama “foreign” JDK</title>
   <style type="text/css">
       code{white-space: pre-wrap;}
       span.smallcaps{font-variant: small-caps;}
@@ -80,6 +80,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <![endif]-->
 </head>
 <body>
+<header>
+<h1 class="title">Using Panama “foreign” JDK</h1>
+</header>
 <nav id="TOC">
 <ul>
 <li><a href="#using-panama-foreign-jdk">Using Panama “foreign” JDK</a><ul>
@@ -122,7 +125,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><a href="#java-sample-code-that-uses-the-opengl-library">Java sample code that uses the OpenGL library</a></li>
 <li><a href="#running-the-java-code-that-uses-opengl">Running the Java code that uses OpenGL</a></li>
 </ul></li>
-<li><a href="#using-tensorflow-c-api">Using TensorFlow C API</a><ul>
+<li><a href="#using-tensorflow-c-api-mac-os">Using TensorFlow C API (Mac OS)</a><ul>
 <li><a href="#installing-libtensorflow">Installing libtensorflow</a></li>
 <li><a href="#jextracting-libtensorflow-c_api.h">jextracting libtensorflow c_api.h</a></li>
 <li><a href="#java-sample-code-that-uses-tensorflow-library">Java sample code that uses tensorflow library</a></li>
@@ -134,8 +137,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h1 id="using-panama-foreign-jdk">Using Panama “foreign” JDK</h1>
 <p>There are two ways to get a panama foreign branch JDK.</p>
 <ol type="1">
-<li>Locally build “foreign” branch of panama repo <a href="http://hg.openjdk.java.net/panama/dev/">http://hg.openjdk.java.net/panama/dev/</a></li>
-<li>Download pre-built panama “foreign” early access binaries from <a href="http://jdk.java.net/panama/">http://jdk.java.net/panama/</a></li>
+<li>Locally build “foreign” branch of panama repo <a href="http://hg.openjdk.java.net/panama/dev/" class="uri">http://hg.openjdk.java.net/panama/dev/</a></li>
+<li>Download pre-built panama “foreign” early access binaries from <a href="http://jdk.java.net/panama/" class="uri">http://jdk.java.net/panama/</a></li>
 </ol>
 <p>Using foreign function call in Java involves the following three steps:</p>
 <ol type="1">
@@ -180,16 +183,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb3-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb3-4" data-line-number="4"><span class="ex">java</span> -cp python.jar:. PythonMain</a></code></pre></div>
 <h2 id="using-blas-library">Using BLAS library</h2>
-<p>BLAS is a popular library that allows fast matrix and vector computation: <a href="http://www.netlib.org/blas/">http://www.netlib.org/blas/</a>.</p>
+<p>BLAS is a popular library that allows fast matrix and vector computation: <a href="http://www.netlib.org/blas/" class="uri">http://www.netlib.org/blas/</a>.</p>
 <h3 id="installing-openblas-mac-os">Installing OpenBLAS (Mac OS)</h3>
-<p>On Mac, blas is available as part of the OpenBLAS library: <a href="https://github.com/xianyi/OpenBLAS/wiki">https://github.com/xianyi/OpenBLAS/wiki</a></p>
+<p>On Mac, blas is available as part of the OpenBLAS library: <a href="https://github.com/xianyi/OpenBLAS/wiki" class="uri">https://github.com/xianyi/OpenBLAS/wiki</a></p>
 <p>OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version.</p>
 <p>You can install openblas using HomeBrew</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb4-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb4-2" data-line-number="2"><span class="ex">brew</span> install openblas</a></code></pre></div>
 <p>It installs include and lib directories under /usr/local/opt/openblas</p>
 <h3 id="installing-openblas-ubuntu-16.04">Installing OpenBLAS (Ubuntu 16.04)</h3>
-<p>On Ubuntu, blas is distributed as part of the atlas library: <a href="http://math-atlas.sourceforge.net/">http://math-atlas.sourceforge.net/</a>.</p>
+<p>On Ubuntu, blas is distributed as part of the atlas library: <a href="http://math-atlas.sourceforge.net/" class="uri">http://math-atlas.sourceforge.net/</a>.</p>
 <p>You can install atlas using apt</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb5-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb5-2" data-line-number="2"><span class="fu">sudo</span> apt-get install libatlas-base-dev</a></code></pre></div>
@@ -456,7 +459,7 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb20-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb20-4" data-line-number="4"><span class="ex">java</span> -cp unistd.jar:. Getpid</a></code></pre></div>
 <h2 id="using-opengl-graphic-library-ubuntu-16.04">Using OpenGL graphic library (Ubuntu 16.04)</h2>
-<p>OpenGL is a popular portable graphic library: <a href="https://www.opengl.org/">https://www.opengl.org/</a></p>
+<p>OpenGL is a popular portable graphic library: <a href="https://www.opengl.org/" class="uri">https://www.opengl.org/</a></p>
 <h3 id="installing-opengl-ubuntu-16.04">Installing OpenGL (Ubuntu 16.04)</h3>
 <p>Installing relevant OpenGL headers and libraries can be a bit tricky, as it depends on what graphic card is installed on the target platform. The following instruction assume that the standard version of OpenGL is used (e.g. mesa), rather than a proprietary one (Nvidia or AMD), although the changes to get these working are rather small.</p>
 <p>OpenGL is always coupled with a bunch of other libraries, namely GLU and glut. You can install all those libraries using <code>apt</code>, as follows:</p>
@@ -542,8 +545,8 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb24-2" data-line-number="2"><span class="ex">javac</span> -cp opengl.jar Teapot.java</a>
 <a class="sourceLine" id="cb24-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb24-4" data-line-number="4"><span class="ex">java</span> -cp opengl.jar:. Teapot</a></code></pre></div>
-<h2 id="using-tensorflow-c-api">Using TensorFlow C API</h2>
-<p>Quoted from <a href="https://www.tensorflow.org/install/lang_c">https://www.tensorflow.org/install/lang_c</a></p>
+<h2 id="using-tensorflow-c-api-mac-os">Using TensorFlow C API (Mac OS)</h2>
+<p>Quoted from <a href="https://www.tensorflow.org/install/lang_c" class="uri">https://www.tensorflow.org/install/lang_c</a></p>
 <p>“TensorFlow provides a C API that can be used to build bindings for other languages. The API is defined in c_api.h and designed for simplicity and uniformity rather than convenience.”</p>
 <h3 id="installing-libtensorflow">Installing libtensorflow</h3>
 <p>You can follow the setup procedure as described in the above page.</p>
