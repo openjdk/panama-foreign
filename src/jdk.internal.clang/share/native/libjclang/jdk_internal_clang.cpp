@@ -242,11 +242,11 @@ JNIEXPORT jobjectArray JNICALL Java_jdk_internal_clang_Index_tokenize
   // This filtering stuff is to ork-around a bug in libclang which
   // includes tokens outside of the range (off-by-one)
   // see: https://llvm.org/bugs/show_bug.cgi?id=9069
-  CXToken* filteredTokens = (CXToken*)alloca(nTokens * sizeof(CXToken));
+  CXToken* filteredTokens = (CXToken*) calloc(nTokens, sizeof(CXToken));
   unsigned nFilteredTokens = 0;
   jobjectArray jtokens = NULL;
 
-  for (unsigned i = 0; i < nTokens; i++) {
+  for (i = 0; i < nTokens; i++) {
     CXToken token = tokens[i];
     CXSourceLocation tokenLocation = clang_getTokenLocation(tu, token);
     if (!locationInRange(env, tokenLocation, *ptr)) {
@@ -261,7 +261,7 @@ JNIEXPORT jobjectArray JNICALL Java_jdk_internal_clang_Index_tokenize
 
   jtokens = env->NewObjectArray(nFilteredTokens, clsjavaLangString, NULL);
 
-  for (unsigned i = 0; i < nFilteredTokens; i++) {
+  for (i = 0; i < nFilteredTokens; i++) {
     CXString tokenString = clang_getTokenSpelling(tu, filteredTokens[i]);
     jstring str = env->NewStringUTF(clang_getCString(tokenString));
     env->SetObjectArrayElement(jtokens, i, str);
@@ -269,6 +269,7 @@ JNIEXPORT jobjectArray JNICALL Java_jdk_internal_clang_Index_tokenize
   }
 
  out:
+  free(filteredTokens);
   clang_disposeTokens(tu, tokens, nTokens);
 
   return jtokens;

@@ -32,11 +32,13 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
       [Specify path of llvm installation containing libclang. Pre-built llvm
       binary can be downloaded from http://llvm.org/releases/download.html])])
   AC_ARG_WITH([libclang-lib], [AS_HELP_STRING([--with-libclang-lib=<path>],
-      [Specify where to find libclang binary, so/dylib/dll ])])
+      [Specify where to find libclang binary, so/dylib/lib ])])
   AC_ARG_WITH([libclang-include], [AS_HELP_STRING([--with-libclang-include=<path>],
       [Specify where to find libclang header files, clang-c/Index.h ])])
   AC_ARG_WITH([libclang-include-aux], [AS_HELP_STRING([--with-libclang-include-aux=<path>],
       [Specify where to find libclang auxiliary header files, lib/clang/<clang-version>/include/stddef.h ])])
+  AC_ARG_WITH([libclang-bin], [AS_HELP_STRING([--with-libclang-bin=<path>],
+      [Specify where to find clang binary, libclang.dll ])])
 
   if test "x$with_libclang" = "xno"; then
     AC_MSG_CHECKING([if libclang should be enabled])
@@ -54,6 +56,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
 
     if test "x$with_libclang" != "x" -a "x$with_libclang" != "xyes"; then
       CLANG_LIB_PATH="$with_libclang/lib"
+      CLANG_BIN_PATH="$with_libclang/bin"
       CLANG_INCLUDE_PATH="$with_libclang/include"
       VER=`ls $with_libclang/lib/clang/`
       CLANG_INCLUDE_AUX_PATH="$with_libclang/lib/clang/$VER/include"
@@ -65,17 +68,39 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
     if test "x$with_libclang_include" != "x"; then
       CLANG_INCLUDE_PATH="$with_libclang_include"
     fi
+    if test "x$with_libclang_bin" != "x"; then
+      CLANG_BIN_PATH="$with_libclang_bin"
+    fi
     if test "x$with_libclang_include_aux" != "x"; then
       CLANG_INCLUDE_AUX_PATH="$with_libclang_include_aux"
     fi
+
+
+    dnl Only for Windows platform now, as we don't need bin yet for other platform
+    if test "x$OPENJDK_TARGET_OS" = xwindows; then
+        BASIC_FIXUP_PATH(CLANG_BIN_PATH)
+    else
+        CLANG_BIN_PATH=""
+    fi
+
+    BASIC_FIXUP_PATH(CLANG_INCLUDE_PATH)
+    BASIC_FIXUP_PATH(CLANG_LIB_PATH)
+    BASIC_FIXUP_PATH(CLANG_INCLUDE_AUX_PATH)
 
     if test "x$CLANG_INCLUDE_PATH" != "x"; then
         LIBCLANG_CPPFLAGS="-I$CLANG_INCLUDE_PATH"
     else
         LIBCLANG_CPPFLAGS=""
     fi
+
     if test "x$CLANG_LIB_PATH" != "x"; then
+      if test "x$TOOLCHAIN_TYPE" = "xmicrosoft"; then
+        LIBCLANG_LDFLAGS="/LIBPATH:$CLANG_LIB_PATH"
+        LIBCLANG_LIBS="$CLANG_LIB_PATH/libclang.lib"
+      else
         LIBCLANG_LDFLAGS="-L$CLANG_LIB_PATH"
+        LIBCLANG_LIBS="-lclang"
+      fi
     else
         LIBCLANG_LDFLAGS=""
     fi
@@ -87,10 +112,24 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
     CPPFLAGS="$LIBCLANG_CPPFLAGS"
     LDFLAGS="$LIBCLANG_LDFLAGS"
     LIBS=""
+
+    OLD_CXX=$CXX
+    OLD_CXXCPP=$CXXCPP
+    CXX="$FIXPATH $CXX"
+    CXXCPP="$FIXPATH $CXXCPP"
+
     AC_CHECK_HEADER("clang-c/Index.h", [], [ENABLE_LIBCLANG="false"])
     if test "x$ENABLE_LIBCLANG" = "xtrue"; then
-      AC_CHECK_LIB(clang, clang_getClangVersion, [], [ENABLE_LIBCLANG="false"])
+      if test "x$TOOLCHAIN_TYPE" = "xmicrosoft"; then
+        # Just trust the lib is there
+        LIBS=$LIBCLANG_LIBS
+      else
+        AC_CHECK_LIB(clang, clang_getClangVersion, [], [ENABLE_LIBCLANG="false"])
+      fi
     fi
+
+    CXX=$OLD_CXX
+    CXXCPP=$OLD_CXXCPP
 
     if test "x$ENABLE_LIBCLANG" = "xfalse"; then
       if test "x$ENABLE_LIBCLANG_FORCED" = "xtrue"; then
@@ -120,12 +159,20 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBCLANG],
     LIBCLANG_CPPFLAGS=""
     LIBCLANG_LDFLAGS=""
     LIBCLANG_LIBS=""
+  else
+    if test "x$OPENJDK_TARGET_OS" = xwindows; then
+      CLANG_LIBNAME=[$CLANG_BIN_PATH]["/libclang"][$SHARED_LIBRARY_SUFFIX]
+    else
+      CLANG_LIBNAME=[$CLANG_LIB_PATH/$LIBRARY_PREFIX]["clang"][$SHARED_LIBRARY_SUFFIX]
+    fi
+    BASIC_REMOVE_SYMBOLIC_LINKS(CLANG_LIBNAME)
   fi
 
   AC_SUBST(ENABLE_LIBCLANG)
   AC_SUBST(CLANG_INCLUDE_PATH)
   AC_SUBST(CLANG_INCLUDE_AUX_PATH)
   AC_SUBST(CLANG_LIB_PATH)
+  AC_SUBST(CLANG_LIBNAME)
   AC_SUBST(LIBCLANG_CPPFLAGS)
   AC_SUBST(LIBCLANG_LDFLAGS)
   AC_SUBST(LIBCLANG_LIBS)

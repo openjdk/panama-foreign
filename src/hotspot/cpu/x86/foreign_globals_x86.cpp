@@ -21,6 +21,7 @@
  * questions.
  */
 
+#include "precompiled.hpp"
 #include "asm/macroAssembler.hpp"
 #include CPU_HEADER(foreign_globals)
 
