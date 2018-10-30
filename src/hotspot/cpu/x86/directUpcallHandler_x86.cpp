@@ -78,9 +78,9 @@ static void specialized_upcall_init(int nlongs, int ndoubles, int rettag) {
     ::fprintf(stderr, "mdesc: %s\n", desc.as_string());
   #endif
 
-  Symbol* cname_sym = SymbolTable::lookup(cname.as_string(), cname.size(), THREAD);
-  Symbol* mname_sym = SymbolTable::lookup(mname.as_string(), mname.size(), THREAD);
-  Symbol* mdesc_sym = SymbolTable::lookup(desc.as_string(), desc.size(), THREAD);
+  Symbol* cname_sym = SymbolTable::lookup(cname.as_string(), (int) cname.size(), THREAD);
+  Symbol* mname_sym = SymbolTable::lookup(mname.as_string(), (int) mname.size(), THREAD);
+  Symbol* mdesc_sym = SymbolTable::lookup(desc.as_string(), (int) desc.size(), THREAD);
 
   #if 0
     ::fprintf(stderr, "cname_sym: %p\n", cname_sym);
@@ -205,9 +205,13 @@ address DirectUpcallHandler::generate_specialized_upcall_stub(Handle& rec_handle
               ((ndoubles & ARG_MASK) << ARG_SHIFT);
 
   // Call upcall helper
-#ifdef _LP64
+#ifdef _LP64 
+#ifdef _WIN64
+  // FIXME: Windows only allow 4 argument registers
+#else
   __ movptr(c_rarg4, mask);
   __ movptr(c_rarg5, rec_adr);
+#endif // _WIN64
 #else
   //non LP64 cannot get to this stub
 #endif

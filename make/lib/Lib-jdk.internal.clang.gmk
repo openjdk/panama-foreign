@@ -41,7 +41,7 @@ ifeq ($(ENABLE_LIBCLANG), true)
       CFLAGS := $(CFLAGS_JDKLIB) \
           $(LIBCLANG_CPPFLAGS), \
       LDFLAGS := $(LDFLAGS_JDKLIB) $(LIBCLANG_LDFLAGS), \
-      LIBS := -ljsig $(LIBCLANG_LIBS), \
+      LIBS := $(LIBCLANG_LIBS), \
       VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
       RC_FLAGS := $(RC_FLAGS) \
           -D "JDK_FNAME=jclang.dll" \
@@ -52,10 +52,16 @@ ifeq ($(ENABLE_LIBCLANG), true)
 
   TARGETS += $(BUILD_LIBJCLANG)
 
+  ifeq ($(OPENJDK_BUILD_OS), windows)
+      LINK_MACRO := install-file
+  else
+      LINK_MACRO := link-file-absolute
+  endif
+
   $(eval $(call SetupCopyFiles, COPY_CLANG_LIB, \
-      FILES := $(wildcard $(CLANG_LIB_PATH)/$(LIBRARY_PREFIX)clang$(SHARED_LIBRARY_SUFFIX)*), \
+      FILES := $(CLANG_LIBNAME), \
       DEST := $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE), \
-      LINK_MACRO := link-file-relative \
+      MACRO := $(LINK_MACRO), \
   ))
 
   TARGETS += $(COPY_CLANG_LIB)
