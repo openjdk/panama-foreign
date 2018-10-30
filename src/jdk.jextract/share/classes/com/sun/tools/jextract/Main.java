@@ -137,6 +137,8 @@ public final class Main {
         parser.accepts("exclude-symbols", format("help.exclude_symbols")).withRequiredArg();
         parser.accepts("rpath", format("help.rpath")).withRequiredArg();
         parser.accepts("infer-rpath", format("help.infer.rpath"));
+        parser.accepts("static-forwarder", format("help.static.forwarder")).
+            withRequiredArg().ofType(boolean.class);
         parser.nonOptions(format("help.non.option"));
 
         OptionSet options = null;
@@ -204,6 +206,13 @@ public final class Main {
                 ctx.err.println(format("warn.rpath.without.l"));
             }
         }
+
+        // generate static forwarder class if user specified -l option
+        boolean staticForwarder = true;
+        if (options.has("static-forwarder")) {
+            staticForwarder = (boolean)options.valueOf("static-forwarder");
+        }
+        ctx.setGenStaticForwarder(staticForwarder && options.has("l"));
 
         if (options.has("exclude-symbols")) {
             try {

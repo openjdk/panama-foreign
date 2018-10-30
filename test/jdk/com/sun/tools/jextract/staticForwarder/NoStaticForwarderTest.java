@@ -21,53 +21,28 @@
  * questions.
  */
 
-struct tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-};
+import org.testng.annotations.Test;
+import static org.testng.Assert.assertTrue;
 
-struct big_tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-   int five;
-};
+/*
+ * @test
+ * @library ..
+ * @run driver JtregJextract -t test.jextract.utils -lUtils --static-forwarder=false -- utils.h
+ * @run testng NoStaticForwarderTest
+ */
+public class NoStaticForwarderTest {
+    @Test
+    public void test() {
+        assertTrue(loadClass("test.jextract.utils.utils") != null);
+        assertTrue(loadClass("test.jextract.utils.utils_h") == null);
+    }
 
-struct tuple T = { 1, 2, 3, 4 };
-struct big_tuple BIG_T = { 1, 2, 3, 4, 5 };
-
-struct tuple make() {
-    return T;
-}
-
-struct tuple id(struct tuple t) {
-    return t;
-}
-
-struct tuple zero(struct tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    return t;
-}
-
-struct big_tuple big_make() {
-    return BIG_T;
-}
-
-struct big_tuple big_id(struct big_tuple t) {
-    return t;
-}
-
-struct big_tuple big_zero(struct big_tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    t.five = 0;
-    return t;
+    private Class<?> loadClass(String name) {
+        try {
+            return Class.forName(name);
+        } catch (ClassNotFoundException cnfe) {
+            System.err.println(cnfe);
+            return null;
+        }
+    }
 }

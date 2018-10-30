@@ -41,16 +41,20 @@ public class StructByValueTest {
     @NativeHeader(declarations =
             "make=()$(tuple)" +
             "id=($(tuple))$(tuple)" +
+            "zero=($(tuple))$(tuple)" +
             "big_make=()$(big_tuple)" +
-            "big_id=($(big_tuple))$(big_tuple)"
+            "big_id=($(big_tuple))$(big_tuple)" +
+            "big_zero=($(big_tuple))$(big_tuple)"
     )
     interface structbyvalue {
 
         tuple make();
         tuple id(tuple t);
+        tuple zero(tuple t);
 
         big_tuple big_make();
         big_tuple big_id(big_tuple t);
+        big_tuple big_zero(big_tuple t);
 
         @NativeStruct("[i32(get=one) i32(get=two) i32(get=three) i32(get=four)](tuple)")
         interface tuple extends Struct<tuple> {
@@ -79,6 +83,8 @@ public class StructByValueTest {
         structbyvalue.tuple t = lib.make();
         checkTuple(t, 1, 2, 3, 4);
         checkTuple(lib.id(t), 1, 2, 3, 4);
+        checkTuple(lib.zero(t), 0, 0, 0, 0);
+        checkTuple(t, 1, 2, 3, 4);
     }
 
     @Test
@@ -86,6 +92,8 @@ public class StructByValueTest {
         structbyvalue.big_tuple bt = lib.big_make();
         checkBigTuple(bt, 1, 2, 3, 4, 5);
         checkBigTuple(lib.big_id(bt), 1, 2, 3, 4, 5);
+        checkBigTuple(lib.big_zero(bt), 0, 0, 0, 0, 0);
+        checkBigTuple(bt, 1, 2, 3, 4, 5);
     }
 
     static void checkTuple(structbyvalue.tuple t, int one, int two, int three, int four) {

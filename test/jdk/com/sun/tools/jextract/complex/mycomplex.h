@@ -21,53 +21,34 @@
  * questions.
  */
 
-struct tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-};
+/*
+ * Subset of declarations found in /usr/include/complex.h
+ *
+ * Two reasons why we don't just jextract /usr/include/complex.h
+ *
+ *  1. binder does not yet support long double and so we can't support
+ *     long double _Complex type yet.
+ *  2. linux /usr/include/complex.h includes & expands macros from
+ *     <bits/cmathcalls.h> and so jextracting that files brings no
+ *     declaration!
+ */
 
-struct big_tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-   int five;
-};
+#include <complex.h>
 
-struct tuple T = { 1, 2, 3, 4 };
-struct big_tuple BIG_T = { 1, 2, 3, 4, 5 };
+extern float complex cexpf(float complex);
+extern double complex cexp(double complex);
 
-struct tuple make() {
-    return T;
-}
+extern float cabsf(float complex);
+extern double cabs(double complex);
 
-struct tuple id(struct tuple t) {
-    return t;
-}
+extern float cargf(float complex);
+extern double carg(double complex);
 
-struct tuple zero(struct tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    return t;
-}
+extern float cimagf(float complex);
+extern double cimag(double complex);
 
-struct big_tuple big_make() {
-    return BIG_T;
-}
+extern float complex conjf(float complex);
+extern double complex conj(double complex);
 
-struct big_tuple big_id(struct big_tuple t) {
-    return t;
-}
-
-struct big_tuple big_zero(struct big_tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    t.five = 0;
-    return t;
-}
+extern float crealf(float complex);
+extern double creal(double complex);

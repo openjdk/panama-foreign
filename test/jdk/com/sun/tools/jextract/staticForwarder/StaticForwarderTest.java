@@ -21,53 +21,28 @@
  * questions.
  */
 
-struct tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-};
+import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static test.jextract.utils.utils_h.*;
 
-struct big_tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-   int five;
-};
-
-struct tuple T = { 1, 2, 3, 4 };
-struct big_tuple BIG_T = { 1, 2, 3, 4, 5 };
-
-struct tuple make() {
-    return T;
-}
-
-struct tuple id(struct tuple t) {
-    return t;
-}
-
-struct tuple zero(struct tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    return t;
-}
-
-struct big_tuple big_make() {
-    return BIG_T;
-}
-
-struct big_tuple big_id(struct big_tuple t) {
-    return t;
-}
-
-struct big_tuple big_zero(struct big_tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    t.five = 0;
-    return t;
+/*
+ * @test
+ * @library ..
+ * @run driver JtregJextract -t test.jextract.utils -lUtils -- utils.h
+ * @run testng StaticForwarderTest
+ */
+public class StaticForwarderTest {
+    @Test
+    public void test() {
+        assertEquals(square(6), 36);
+        assertEquals(R, 10);
+        assertEquals(G, R + 1);
+        assertEquals(B, G + 1);
+        assertEquals(abc$get(), 53);
+        assertEquals(square(abc$get()), 53*53);
+        abc$set(25);
+        assertEquals(abc$get(), 25);
+        assertEquals(THE_ANSWER, 42);
+        assertEquals(square(THE_ANSWER), 42*42);
+    }
 }

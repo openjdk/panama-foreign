@@ -21,53 +21,18 @@
  * questions.
  */
 
-struct tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-};
+package java.foreign.memory;
 
-struct big_tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-   int five;
-};
+import java.foreign.annotations.NativeStruct;
 
-struct tuple T = { 1, 2, 3, 4 };
-struct big_tuple BIG_T = { 1, 2, 3, 4, 5 };
-
-struct tuple make() {
-    return T;
-}
-
-struct tuple id(struct tuple t) {
-    return t;
-}
-
-struct tuple zero(struct tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    return t;
-}
-
-struct big_tuple big_make() {
-    return BIG_T;
-}
-
-struct big_tuple big_id(struct big_tuple t) {
-    return t;
-}
-
-struct big_tuple big_zero(struct big_tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    t.five = 0;
-    return t;
+@NativeStruct(
+   value="[f32(get=real$get)(set=real$set)(ptr=real$ptr)f32(get=imag$get)(set=imag$set)(ptr=imag$ptr)](FloatComplex)"
+)
+public interface FloatComplex extends Struct<FloatComplex> {
+    float real$get();
+    void real$set(float value);
+    Pointer<Float> real$ptr();
+    float imag$get();
+    void imag$set(float value);
+    Pointer<Float> imag$ptr();
 }

@@ -21,53 +21,10 @@
  * questions.
  */
 
-struct tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-};
+#include "utils.h"
 
-struct big_tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-   int five;
-};
+int abc = 53;
 
-struct tuple T = { 1, 2, 3, 4 };
-struct big_tuple BIG_T = { 1, 2, 3, 4, 5 };
-
-struct tuple make() {
-    return T;
-}
-
-struct tuple id(struct tuple t) {
-    return t;
-}
-
-struct tuple zero(struct tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    return t;
-}
-
-struct big_tuple big_make() {
-    return BIG_T;
-}
-
-struct big_tuple big_id(struct big_tuple t) {
-    return t;
-}
-
-struct big_tuple big_zero(struct big_tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    t.five = 0;
-    return t;
+int square(int val) {
+    return val*val;
 }

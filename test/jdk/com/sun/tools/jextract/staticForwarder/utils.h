@@ -21,53 +21,14 @@
  * questions.
  */
 
-struct tuple {
-   int one;
-   int two;
-   int three;
-   int four;
+#define THE_ANSWER 42
+
+int abc;
+
+enum Color {
+   R = 10,
+   G,
+   B
 };
 
-struct big_tuple {
-   int one;
-   int two;
-   int three;
-   int four;
-   int five;
-};
-
-struct tuple T = { 1, 2, 3, 4 };
-struct big_tuple BIG_T = { 1, 2, 3, 4, 5 };
-
-struct tuple make() {
-    return T;
-}
-
-struct tuple id(struct tuple t) {
-    return t;
-}
-
-struct tuple zero(struct tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    return t;
-}
-
-struct big_tuple big_make() {
-    return BIG_T;
-}
-
-struct big_tuple big_id(struct big_tuple t) {
-    return t;
-}
-
-struct big_tuple big_zero(struct big_tuple t) {
-    t.one = 0;
-    t.two = 0;
-    t.three = 0;
-    t.four = 0;
-    t.five = 0;
-    return t;
-}
+int square(int val);
