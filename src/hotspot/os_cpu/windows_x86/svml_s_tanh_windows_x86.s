@@ -25,7 +25,6 @@
 
 INCLUDE globals_vectorApiSupport_windows.hpp
 IFNB __VECTOR_API_MATH_INTRINSICS_WINDOWS
-
 	OPTION DOTNAME
 
 _TEXT	SEGMENT      'CODE'
@@ -51,59 +50,59 @@ L1::
         sub       rsp, 312
         lea       rdx, QWORD PTR [__ImageBase]
         vmovups   XMMWORD PTR [192+rsp], xmm15
-        vpxor     xmm3, xmm3, xmm3
+        vmovdqa   xmm15, xmm0
         vmovups   XMMWORD PTR [208+rsp], xmm14
+        vpxor     xmm3, xmm3, xmm3
         vmovups   XMMWORD PTR [224+rsp], xmm13
         vmovups   XMMWORD PTR [240+rsp], xmm12
         vmovups   XMMWORD PTR [256+rsp], xmm11
         vmovups   XMMWORD PTR [272+rsp], xmm10
         mov       QWORD PTR [288+rsp], r13
         lea       r13, QWORD PTR [111+rsp]
-        vmovups   xmm15, XMMWORD PTR [rcx]
-        and       r13, -64
         vpand     xmm4, xmm15, XMMWORD PTR [__svml_stanh_ha_data_internal+3200]
-        vpsubd    xmm1, xmm4, XMMWORD PTR [__svml_stanh_ha_data_internal+3328]
-        vmovups   xmm12, XMMWORD PTR [__svml_stanh_ha_data_internal+3392]
-        vpcmpgtd  xmm0, xmm1, xmm3
-        vpand     xmm2, xmm1, xmm0
-        vpcmpgtd  xmm11, xmm1, xmm12
-        vblendvps xmm10, xmm2, xmm12, xmm11
+        and       r13, -64
+        vpsubd    xmm2, xmm4, XMMWORD PTR [__svml_stanh_ha_data_internal+3328]
+        vmovups   xmm11, XMMWORD PTR [__svml_stanh_ha_data_internal+3392]
+        vpcmpgtd  xmm1, xmm2, xmm3
         vpcmpgtd  xmm5, xmm4, XMMWORD PTR [__svml_stanh_ha_data_internal+3264]
+        vpand     xmm12, xmm2, xmm1
+        vpcmpgtd  xmm10, xmm2, xmm11
         vmovmskps r8d, xmm5
-        vpsrld    xmm5, xmm10, 15
-        vmovd     ecx, xmm5
         vandps    xmm13, xmm15, XMMWORD PTR [__svml_stanh_ha_data_internal+3136]
+        vblendvps xmm5, xmm12, xmm11, xmm10
         vandps    xmm14, xmm15, XMMWORD PTR [__svml_stanh_ha_data_internal+3072]
-        vpextrd   eax, xmm5, 1
+        vpsrld    xmm4, xmm5, 15
         test      r8d, r8d
+        vmovd     ecx, xmm4
+        vcvtps2pd ymm13, xmm13
+        vpextrd   eax, xmm4, 1
         movsxd    rcx, ecx
         movsxd    rax, eax
-        vpextrd   r9d, xmm5, 2
-        vpextrd   r10d, xmm5, 3
+        vpextrd   r9d, xmm4, 2
+        vpextrd   r10d, xmm4, 3
         movsxd    r9, r9d
         movsxd    r10, r10d
-        vmovupd   xmm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+rcx]
-        vmovupd   xmm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+rax]
-        vmovupd   xmm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+rcx]
-        vmovupd   xmm10, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+rax]
-        vcvtps2pd ymm13, xmm13
+        vmovupd   xmm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+rcx]
+        vmovupd   xmm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+rax]
+        vmovupd   xmm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+rax]
+        vmovupd   xmm10, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+rcx]
         mov       QWORD PTR [296+rsp], r13
-        vinsertf128 ymm0, ymm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+r9], 1
-        vinsertf128 ymm1, ymm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+r10], 1
-        vmovupd   xmm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+rcx]
-        vunpcklpd ymm12, ymm0, ymm1
-        vunpckhpd ymm11, ymm0, ymm1
-        vmovupd   xmm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+rax]
-        vinsertf128 ymm1, ymm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+r9], 1
-        vinsertf128 ymm5, ymm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+r9], 1
-        vmovupd   xmm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+rax]
-        vinsertf128 ymm3, ymm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+r10], 1
+        vinsertf128 ymm1, ymm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+r9], 1
+        vinsertf128 ymm2, ymm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+r10], 1
+        vunpcklpd ymm12, ymm1, ymm2
+        vunpckhpd ymm11, ymm1, ymm2
+        vmovupd   xmm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+rcx]
+        vmovupd   xmm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+rax]
+        vinsertf128 ymm4, ymm10, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+r9], 1
+        vinsertf128 ymm3, ymm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+r10], 1
+        vunpcklpd ymm10, ymm4, ymm3
+        vunpckhpd ymm5, ymm4, ymm3
+        vinsertf128 ymm2, ymm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+r9], 1
+        vinsertf128 ymm3, ymm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+r10], 1
+        vunpcklpd ymm4, ymm2, ymm3
+        vunpckhpd ymm3, ymm2, ymm3
         vmovupd   xmm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+rcx]
-        vinsertf128 ymm4, ymm10, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+r10], 1
-        vunpcklpd ymm10, ymm5, ymm4
-        vunpckhpd ymm5, ymm5, ymm4
-        vunpcklpd ymm4, ymm1, ymm3
-        vunpckhpd ymm3, ymm1, ymm3
+        vmovupd   xmm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+rax]
         vinsertf128 ymm1, ymm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+r9], 1
         vinsertf128 ymm2, ymm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+r10], 1
         vunpcklpd ymm0, ymm1, ymm2
@@ -182,12 +181,12 @@ _TEXT	ENDS
 
 	ALIGN 004H
 _unwind___svml_tanhf4_ha_l9_B1_B3:
-	DD	1070081
-	DD	2413652
-	DD	1157196
-	DD	1095747
-	DD	1034298
-	DD	972849
+	DD	1071105
+	DD	2413656
+	DD	1157200
+	DD	1095751
+	DD	1034302
+	DD	972853
 	DD	911400
 	DD	849947
 	DD	2556171
@@ -248,99 +247,99 @@ L20::
 
         sub       rsp, 312
         lea       rdx, QWORD PTR [__ImageBase]
-        vmovups   XMMWORD PTR [192+rsp], xmm13
+        vmovups   XMMWORD PTR [256+rsp], xmm14
         vpxor     xmm4, xmm4, xmm4
+        vmovups   XMMWORD PTR [192+rsp], xmm13
         vmovups   XMMWORD PTR [208+rsp], xmm12
         vmovups   XMMWORD PTR [224+rsp], xmm11
         vmovups   XMMWORD PTR [240+rsp], xmm10
-        vmovups   XMMWORD PTR [256+rsp], xmm9
-        vmovups   XMMWORD PTR [272+rsp], xmm8
+        vmovups   XMMWORD PTR [272+rsp], xmm9
         mov       QWORD PTR [288+rsp], r13
         lea       r13, QWORD PTR [111+rsp]
-        vmovups   xmm1, XMMWORD PTR [rcx]
+        vpand     xmm3, xmm0, XMMWORD PTR [__svml_stanh_ha_data_internal+3200]
         and       r13, -64
-        vpand     xmm3, xmm1, XMMWORD PTR [__svml_stanh_ha_data_internal+3200]
         vpcmpgtd  xmm2, xmm3, XMMWORD PTR [__svml_stanh_ha_data_internal+3264]
         vmovmskps r8d, xmm2
         vpsubd    xmm2, xmm3, XMMWORD PTR [__svml_stanh_ha_data_internal+3328]
-        vmovups   xmm8, XMMWORD PTR [__svml_stanh_ha_data_internal+3392]
+        vmovups   xmm9, XMMWORD PTR [__svml_stanh_ha_data_internal+3392]
         vpcmpgtd  xmm5, xmm2, xmm4
         vpand     xmm3, xmm2, xmm5
-        vpcmpgtd  xmm4, xmm2, xmm8
-        vblendvps xmm5, xmm3, xmm8, xmm4
-        vandps    xmm10, xmm1, XMMWORD PTR [__svml_stanh_ha_data_internal+3136]
-        vpsrld    xmm9, xmm5, 15
-        vmovd     ecx, xmm9
-        vandps    xmm0, xmm1, XMMWORD PTR [__svml_stanh_ha_data_internal+3072]
-        vcvtps2pd ymm10, xmm10
-        vpextrd   eax, xmm9, 1
+        vpcmpgtd  xmm4, xmm2, xmm9
+        vblendvps xmm5, xmm3, xmm9, xmm4
+        vandps    xmm11, xmm0, XMMWORD PTR [__svml_stanh_ha_data_internal+3136]
+        vpsrld    xmm10, xmm5, 15
+        vmovd     ecx, xmm10
+        vandps    xmm1, xmm0, XMMWORD PTR [__svml_stanh_ha_data_internal+3072]
+        vcvtps2pd ymm11, xmm11
+        vpextrd   eax, xmm10, 1
         movsxd    rcx, ecx
         movsxd    rax, eax
-        vpextrd   r9d, xmm9, 2
-        vpextrd   r10d, xmm9, 3
+        vpextrd   r9d, xmm10, 2
+        vpextrd   r10d, xmm10, 3
         movsxd    r9, r9d
         movsxd    r10, r10d
-        vmovupd   xmm11, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+rcx]
-        vmovupd   xmm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+rax]
+        vmovupd   xmm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+rcx]
+        vmovupd   xmm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+rax]
         vmovupd   xmm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+rax]
         vmovupd   xmm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+rcx]
         mov       QWORD PTR [296+rsp], r13
-        vinsertf128 ymm13, ymm11, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+r9], 1
-        vinsertf128 ymm3, ymm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+r10], 1
-        vmovupd   xmm11, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+rcx]
-        vmovupd   xmm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+rax]
-        vunpcklpd ymm2, ymm13, ymm3
-        vunpckhpd ymm3, ymm13, ymm3
-        vinsertf128 ymm8, ymm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+r9], 1
-        vinsertf128 ymm9, ymm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+r10], 1
-        vunpcklpd ymm4, ymm8, ymm9
-        vunpckhpd ymm5, ymm8, ymm9
-        vinsertf128 ymm13, ymm11, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+r9], 1
-        vinsertf128 ymm9, ymm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+r10], 1
-        vunpcklpd ymm8, ymm13, ymm9
-        vunpckhpd ymm9, ymm13, ymm9
-        vmovupd   xmm11, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+rcx]
-        vmovupd   xmm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+rax]
-        vinsertf128 ymm12, ymm11, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+r9], 1
-        vinsertf128 ymm13, ymm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+r10], 1
-        vunpcklpd ymm11, ymm12, ymm13
-        vunpckhpd ymm12, ymm12, ymm13
-        vmulpd    ymm12, ymm10, ymm12
-        vaddpd    ymm11, ymm12, ymm11
-        vmulpd    ymm13, ymm10, ymm11
-        vaddpd    ymm9, ymm13, ymm9
-        vmulpd    ymm9, ymm10, ymm9
-        vaddpd    ymm8, ymm9, ymm8
-        vmulpd    ymm8, ymm10, ymm8
-        vaddpd    ymm5, ymm8, ymm5
-        vmulpd    ymm5, ymm10, ymm5
+        vinsertf128 ymm14, ymm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+r9], 1
+        vinsertf128 ymm3, ymm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+rdx+r10], 1
+        vmovupd   xmm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+rcx]
+        vmovupd   xmm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+rax]
+        vunpcklpd ymm2, ymm14, ymm3
+        vunpckhpd ymm3, ymm14, ymm3
+        vinsertf128 ymm9, ymm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+r9], 1
+        vinsertf128 ymm10, ymm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+rdx+r10], 1
+        vunpcklpd ymm4, ymm9, ymm10
+        vunpckhpd ymm5, ymm9, ymm10
+        vinsertf128 ymm14, ymm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+r9], 1
+        vinsertf128 ymm10, ymm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+rdx+r10], 1
+        vunpcklpd ymm9, ymm14, ymm10
+        vunpckhpd ymm10, ymm14, ymm10
+        vmovupd   xmm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+rcx]
+        vmovupd   xmm14, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+rax]
+        vinsertf128 ymm13, ymm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+r9], 1
+        vinsertf128 ymm14, ymm14, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+rdx+r10], 1
+        vunpcklpd ymm12, ymm13, ymm14
+        vunpckhpd ymm13, ymm13, ymm14
+        vmulpd    ymm13, ymm11, ymm13
+        vaddpd    ymm12, ymm13, ymm12
+        vmulpd    ymm14, ymm11, ymm12
+        vaddpd    ymm10, ymm14, ymm10
+        vmulpd    ymm10, ymm11, ymm10
+        vaddpd    ymm9, ymm10, ymm9
+        vmulpd    ymm9, ymm11, ymm9
+        vaddpd    ymm5, ymm9, ymm5
+        vmulpd    ymm5, ymm11, ymm5
         vaddpd    ymm4, ymm5, ymm4
-        vmulpd    ymm4, ymm10, ymm4
+        vmulpd    ymm4, ymm11, ymm4
         vaddpd    ymm3, ymm4, ymm3
-        vmulpd    ymm10, ymm10, ymm3
-        vaddpd    ymm2, ymm10, ymm2
+        vmulpd    ymm11, ymm11, ymm3
+        vaddpd    ymm2, ymm11, ymm2
         vcvtpd2ps xmm3, ymm2
-        vorps     xmm0, xmm3, xmm0
+        vorps     xmm1, xmm3, xmm1
         test      r8d, r8d
         jne       _B2_3
 
 _B2_2::
 
+        vmovaps   xmm0, xmm1
+        mov       r13, QWORD PTR [288+rsp]
         vzeroupper
-        vmovups   xmm8, XMMWORD PTR [272+rsp]
-        vmovups   xmm9, XMMWORD PTR [256+rsp]
+        vmovups   xmm9, XMMWORD PTR [272+rsp]
         vmovups   xmm10, XMMWORD PTR [240+rsp]
         vmovups   xmm11, XMMWORD PTR [224+rsp]
         vmovups   xmm12, XMMWORD PTR [208+rsp]
         vmovups   xmm13, XMMWORD PTR [192+rsp]
-        mov       r13, QWORD PTR [288+rsp]
+        vmovups   xmm14, XMMWORD PTR [256+rsp]
         add       rsp, 312
         ret
 
 _B2_3::
 
-        vmovups   XMMWORD PTR [r13], xmm1
-        vmovups   XMMWORD PTR [64+r13], xmm0
+        vmovups   XMMWORD PTR [r13], xmm0
+        vmovups   XMMWORD PTR [64+r13], xmm1
 
 _B2_6::
 
@@ -365,7 +364,7 @@ _B2_9::
 
         mov       rbx, QWORD PTR [40+rsp]
         mov       rsi, QWORD PTR [32+rsp]
-        vmovups   xmm0, XMMWORD PTR [64+r13]
+        vmovups   xmm1, XMMWORD PTR [64+r13]
         jmp       _B2_2
 
 _B2_10::
@@ -389,12 +388,12 @@ _TEXT	ENDS
 _unwind___svml_tanhf4_ha_e9_B1_B3:
 	DD	1070081
 	DD	2413652
-	DD	1149004
-	DD	1087555
-	DD	1026106
-	DD	964657
-	DD	903208
-	DD	841755
+	DD	1153100
+	DD	1026115
+	DD	964666
+	DD	903217
+	DD	841768
+	DD	1107995
 	DD	2556171
 
 .xdata	ENDS
@@ -439,9 +438,9 @@ _TEXT	ENDS
 _TEXT	SEGMENT      'CODE'
 
        ALIGN     16
-	PUBLIC __svml_tanhf8_ha_l9
+	PUBLIC __svml_tanhf16_ha_z0
 
-__svml_tanhf8_ha_l9	PROC
+__svml_tanhf16_ha_z0	PROC
 
 _B3_1::
 
@@ -451,100 +450,368 @@ _B3_1::
         DB        250
 L39::
 
+        sub       rsp, 1336
+        mov       QWORD PTR [1320+rsp], r13
+        lea       r13, QWORD PTR [1183+rsp]
+        vmovups   zmm24, ZMMWORD PTR [__svml_stanh_ha_data_internal]
+        and       r13, -64
+        vmovups   zmm25, ZMMWORD PTR [__svml_stanh_ha_data_internal+896]
+        vmovups   zmm30, ZMMWORD PTR [__svml_stanh_ha_data_internal+1024]
+        vmovups   zmm26, ZMMWORD PTR [__svml_stanh_ha_data_internal+768]
+        vmovups   zmm27, ZMMWORD PTR [__svml_stanh_ha_data_internal+640]
+        vmovups   zmm28, ZMMWORD PTR [__svml_stanh_ha_data_internal+512]
+        vmovups   zmm31, ZMMWORD PTR [__svml_stanh_ha_data_internal+256]
+        vandps    zmm23, zmm0, ZMMWORD PTR [__svml_stanh_ha_data_internal+3136]
+        vpternlogd zmm1, zmm1, zmm1, 255
+        mov       QWORD PTR [1328+rsp], r13
+        vpandd    zmm2, zmm0, ZMMWORD PTR [__svml_stanh_ha_data_internal+1152]
+        vpsubd    zmm3, zmm2, ZMMWORD PTR [__svml_stanh_ha_data_internal+1216]
+        vpcmpd    k1, zmm2, ZMMWORD PTR [__svml_stanh_ha_data_internal+3264], 2
+        vpxord    zmm4, zmm4, zmm4
+        vpmaxsd   zmm5, zmm3, zmm4
+        vpminsd   zmm22, zmm5, ZMMWORD PTR [__svml_stanh_ha_data_internal+1280]
+        vpsrld    zmm29, zmm22, 21
+        vmovups   zmm3, ZMMWORD PTR [__svml_stanh_ha_data_internal+128]
+        vpermt2ps zmm24, zmm29, ZMMWORD PTR [__svml_stanh_ha_data_internal+64]
+        vpermt2ps zmm25, zmm29, ZMMWORD PTR [__svml_stanh_ha_data_internal+960]
+        vpermt2ps zmm30, zmm29, ZMMWORD PTR [__svml_stanh_ha_data_internal+1088]
+        vpermt2ps zmm26, zmm29, ZMMWORD PTR [__svml_stanh_ha_data_internal+832]
+        vpermt2ps zmm27, zmm29, ZMMWORD PTR [__svml_stanh_ha_data_internal+704]
+        vpermt2ps zmm28, zmm29, ZMMWORD PTR [__svml_stanh_ha_data_internal+576]
+        vpermt2ps zmm31, zmm29, ZMMWORD PTR [__svml_stanh_ha_data_internal+320]
+        vpermt2ps zmm3, zmm29, ZMMWORD PTR [__svml_stanh_ha_data_internal+192]
+        vpandnd   zmm1{k1}, zmm2, zmm2
+        vsubps    zmm2, zmm23, zmm24 {rn-sae}
+        vptestmd  k0, zmm1, zmm1
+        vmovups   zmm1, ZMMWORD PTR [__svml_stanh_ha_data_internal+384]
+        vfmadd213ps zmm30, zmm2, zmm25 {rn-sae}
+        kmovw     r8d, k0
+        vfmadd213ps zmm30, zmm2, zmm26 {rn-sae}
+        vpermt2ps zmm1, zmm29, ZMMWORD PTR [__svml_stanh_ha_data_internal+448]
+        vfmadd213ps zmm30, zmm2, zmm27 {rn-sae}
+        vfmadd213ps zmm30, zmm2, zmm28 {rn-sae}
+        vmulps    zmm25, zmm30, zmm2 {rn-sae}
+        vfmadd213ps zmm25, zmm2, zmm31 {rn-sae}
+        vfmadd213ps zmm2, zmm1, zmm25 {rn-sae}
+        vaddps    zmm1, zmm2, zmm3 {rn-sae}
+        vpternlogd zmm1, zmm0, ZMMWORD PTR [__svml_stanh_ha_data_internal+3072], 248
+        test      r8d, r8d
+        jne       _B3_3
+
+_B3_2::
+
+        vmovaps   zmm0, zmm1
+        mov       r13, QWORD PTR [1320+rsp]
+        add       rsp, 1336
+        ret
+
+_B3_3::
+
+        vstmxcsr  DWORD PTR [1312+rsp]
+
+_B3_4::
+
+        movzx     edx, WORD PTR [1312+rsp]
+        mov       eax, edx
+        or        eax, 8064
+        cmp       edx, eax
+        je        _B3_6
+
+_B3_5::
+
+        mov       DWORD PTR [1312+rsp], eax
+        vldmxcsr  DWORD PTR [1312+rsp]
+
+_B3_6::
+
+        vmovups   ZMMWORD PTR [r13], zmm0
+        vmovups   ZMMWORD PTR [64+r13], zmm1
+        test      r8d, r8d
+        jne       _B3_11
+
+_B3_7::
+
+        cmp       edx, eax
+        je        _B3_2
+
+_B3_8::
+
+        vstmxcsr  DWORD PTR [1312+rsp]
+        mov       eax, DWORD PTR [1312+rsp]
+
+_B3_9::
+
+        and       eax, -8065
+        or        eax, edx
+        mov       DWORD PTR [1312+rsp], eax
+        vldmxcsr  DWORD PTR [1312+rsp]
+        jmp       _B3_2
+
+_B3_11::
+
+        xor       ecx, ecx
+        kmovw     WORD PTR [1080+rsp], k4
+        kmovw     WORD PTR [1072+rsp], k5
+        kmovw     WORD PTR [1064+rsp], k6
+        kmovw     WORD PTR [1056+rsp], k7
+        vmovups   ZMMWORD PTR [992+rsp], zmm6
+        vmovups   ZMMWORD PTR [928+rsp], zmm7
+        vmovups   ZMMWORD PTR [864+rsp], zmm8
+        vmovups   ZMMWORD PTR [800+rsp], zmm9
+        vmovups   ZMMWORD PTR [736+rsp], zmm10
+        vmovups   ZMMWORD PTR [672+rsp], zmm11
+        vmovups   ZMMWORD PTR [608+rsp], zmm12
+        vmovups   ZMMWORD PTR [544+rsp], zmm13
+        vmovups   ZMMWORD PTR [480+rsp], zmm14
+        vmovups   ZMMWORD PTR [416+rsp], zmm15
+        vmovups   ZMMWORD PTR [352+rsp], zmm16
+        vmovups   ZMMWORD PTR [288+rsp], zmm17
+        vmovups   ZMMWORD PTR [224+rsp], zmm18
+        vmovups   ZMMWORD PTR [160+rsp], zmm19
+        vmovups   ZMMWORD PTR [96+rsp], zmm20
+        vmovups   ZMMWORD PTR [32+rsp], zmm21
+        mov       QWORD PTR [1104+rsp], rbx
+        mov       ebx, ecx
+        mov       QWORD PTR [1096+rsp], rsi
+        mov       esi, edx
+        mov       QWORD PTR [1088+rsp], rdi
+        mov       edi, r8d
+        mov       QWORD PTR [1112+rsp], rbp
+        mov       ebp, eax
+
+_B3_12::
+
+        bt        edi, ebx
+        jc        _B3_15
+
+_B3_13::
+
+        inc       ebx
+        cmp       ebx, 16
+        jl        _B3_12
+
+_B3_14::
+
+        kmovw     k4, WORD PTR [1080+rsp]
+        mov       eax, ebp
+        kmovw     k5, WORD PTR [1072+rsp]
+        kmovw     k6, WORD PTR [1064+rsp]
+        kmovw     k7, WORD PTR [1056+rsp]
+        vmovups   zmm6, ZMMWORD PTR [992+rsp]
+        vmovups   zmm7, ZMMWORD PTR [928+rsp]
+        vmovups   zmm8, ZMMWORD PTR [864+rsp]
+        vmovups   zmm9, ZMMWORD PTR [800+rsp]
+        vmovups   zmm10, ZMMWORD PTR [736+rsp]
+        vmovups   zmm11, ZMMWORD PTR [672+rsp]
+        vmovups   zmm12, ZMMWORD PTR [608+rsp]
+        vmovups   zmm13, ZMMWORD PTR [544+rsp]
+        vmovups   zmm14, ZMMWORD PTR [480+rsp]
+        vmovups   zmm15, ZMMWORD PTR [416+rsp]
+        vmovups   zmm16, ZMMWORD PTR [352+rsp]
+        vmovups   zmm17, ZMMWORD PTR [288+rsp]
+        vmovups   zmm18, ZMMWORD PTR [224+rsp]
+        vmovups   zmm19, ZMMWORD PTR [160+rsp]
+        vmovups   zmm20, ZMMWORD PTR [96+rsp]
+        vmovups   zmm21, ZMMWORD PTR [32+rsp]
+        vmovups   zmm1, ZMMWORD PTR [64+r13]
+        mov       rbx, QWORD PTR [1104+rsp]
+        mov       edx, esi
+        mov       rsi, QWORD PTR [1096+rsp]
+        mov       rdi, QWORD PTR [1088+rsp]
+        mov       rbp, QWORD PTR [1112+rsp]
+        jmp       _B3_7
+
+_B3_15::
+
+        vzeroupper
+        lea       rcx, QWORD PTR [r13+rbx*4]
+        lea       rdx, QWORD PTR [64+r13+rbx*4]
+
+        call      __svml_stanh_ha_cout_rare_internal
+        jmp       _B3_13
+        ALIGN     16
+
+_B3_16::
+
+__svml_tanhf16_ha_z0 ENDP
+
+_TEXT	ENDS
+.xdata	SEGMENT  DWORD   READ  ''
+
+	ALIGN 004H
+_unwind___svml_tanhf16_ha_z0_B1_B9:
+	DD	267009
+	DD	10867731
+	DD	10944779
+
+.xdata	ENDS
+.pdata	SEGMENT  DWORD   READ  ''
+
+	ALIGN 004H
+
+	DD	imagerel _B3_1
+	DD	imagerel _B3_11
+	DD	imagerel _unwind___svml_tanhf16_ha_z0_B1_B9
+
+.pdata	ENDS
+.xdata	SEGMENT  DWORD   READ  ''
+
+	ALIGN 004H
+_unwind___svml_tanhf16_ha_z0_B11_B15:
+	DD	3472641
+	DD	9131261
+	DD	8942834
+	DD	9004264
+	DD	9057502
+	DD	153814
+	DD	411851
+	DD	669888
+	DD	927925
+	DD	1185962
+	DD	1443999
+	DD	1767572
+	DD	2025609
+	DD	2283646
+	DD	2541683
+	DD	2799720
+	DD	3057757
+	DD	3315794
+	DD	3573831
+	DD	3831868
+	DD	4089905
+	DD	8682278
+	DD	8743709
+	DD	8805140
+	DD	8866571
+	DD	10867712
+	DD	10944768
+
+.xdata	ENDS
+.pdata	SEGMENT  DWORD   READ  ''
+
+	ALIGN 004H
+
+	DD	imagerel _B3_11
+	DD	imagerel _B3_16
+	DD	imagerel _unwind___svml_tanhf16_ha_z0_B11_B15
+
+.pdata	ENDS
+_DATA	SEGMENT      'DATA'
+_DATA	ENDS
+
+_TEXT	SEGMENT      'CODE'
+
+TXTST3:
+
+_TEXT	ENDS
+_TEXT	SEGMENT      'CODE'
+
+       ALIGN     16
+	PUBLIC __svml_tanhf8_ha_l9
+
+__svml_tanhf8_ha_l9	PROC
+
+_B4_1::
+
+        DB        243
+        DB        15
+        DB        30
+        DB        250
+L90::
+
         push      rbx
         push      rsi
         push      rdi
-        sub       rsp, 400
+        sub       rsp, 560
         lea       r9, QWORD PTR [__ImageBase]
-        vmovups   XMMWORD PTR [224+rsp], xmm15
-        vmovups   XMMWORD PTR [240+rsp], xmm14
-        vmovups   XMMWORD PTR [256+rsp], xmm13
-        vmovups   XMMWORD PTR [272+rsp], xmm12
-        vmovups   XMMWORD PTR [288+rsp], xmm11
-        vmovups   XMMWORD PTR [304+rsp], xmm10
-        vmovups   XMMWORD PTR [320+rsp], xmm9
-        vmovups   XMMWORD PTR [336+rsp], xmm8
-        vmovups   XMMWORD PTR [352+rsp], xmm7
-        vmovups   XMMWORD PTR [368+rsp], xmm6
-        mov       QWORD PTR [384+rsp], r13
+        vmovups   YMMWORD PTR [224+rsp], ymm15
+        vmovups   YMMWORD PTR [256+rsp], ymm14
+        vmovups   YMMWORD PTR [288+rsp], ymm13
+        vmovups   YMMWORD PTR [320+rsp], ymm12
+        vmovups   YMMWORD PTR [352+rsp], ymm11
+        vmovups   YMMWORD PTR [384+rsp], ymm10
+        vmovups   YMMWORD PTR [416+rsp], ymm9
+        vmovups   YMMWORD PTR [448+rsp], ymm8
+        vmovups   YMMWORD PTR [480+rsp], ymm7
+        vmovups   YMMWORD PTR [512+rsp], ymm6
+        vpxor     ymm10, ymm10, ymm10
+        mov       QWORD PTR [544+rsp], r13
         lea       r13, QWORD PTR [95+rsp]
-        vmovups   ymm3, YMMWORD PTR [rcx]
         and       r13, -64
-        vmovups   ymm7, YMMWORD PTR [__svml_stanh_ha_data_internal+3392]
-        vpxor     ymm11, ymm11, ymm11
-        vpand     ymm10, ymm3, YMMWORD PTR [__svml_stanh_ha_data_internal+3200]
-        vmovups   YMMWORD PTR [32+r13], ymm3
-        vpsubd    ymm6, ymm10, YMMWORD PTR [__svml_stanh_ha_data_internal+3328]
-        vpcmpgtd  ymm8, ymm6, ymm11
-        vpand     ymm9, ymm6, ymm8
-        vpcmpgtd  ymm2, ymm6, ymm7
-        vblendvps ymm4, ymm9, ymm7, ymm2
-        vandps    ymm5, ymm3, YMMWORD PTR [__svml_stanh_ha_data_internal+3072]
+        vmovups   YMMWORD PTR [32+r13], ymm0
+        vmovups   ymm9, YMMWORD PTR [__svml_stanh_ha_data_internal+3392]
+        vandps    ymm12, ymm0, YMMWORD PTR [__svml_stanh_ha_data_internal+3136]
+        vandps    ymm5, ymm0, YMMWORD PTR [__svml_stanh_ha_data_internal+3072]
+        vpand     ymm0, ymm0, YMMWORD PTR [__svml_stanh_ha_data_internal+3200]
         vmovups   YMMWORD PTR [r13], ymm5
-        vpsrld    ymm5, ymm4, 15
-        vandps    ymm12, ymm3, YMMWORD PTR [__svml_stanh_ha_data_internal+3136]
-        vpcmpgtd  ymm0, ymm10, YMMWORD PTR [__svml_stanh_ha_data_internal+3264]
-        vmovmskps ebx, ymm0
-        mov       QWORD PTR [392+rsp], r13
+        vpsubd    ymm8, ymm0, YMMWORD PTR [__svml_stanh_ha_data_internal+3328]
+        vpcmpgtd  ymm11, ymm8, ymm10
+        vpand     ymm6, ymm8, ymm11
+        vpcmpgtd  ymm7, ymm8, ymm9
+        vblendvps ymm2, ymm6, ymm9, ymm7
+        vpsrld    ymm4, ymm2, 15
+        vpcmpgtd  ymm3, ymm0, YMMWORD PTR [__svml_stanh_ha_data_internal+3264]
+        vmovmskps ebx, ymm3
+        mov       QWORD PTR [552+rsp], r13
         test      ebx, ebx
-        vextracti128 xmm3, ymm5, 1
-        vmovd     r10d, xmm5
-        vmovd     ecx, xmm3
-        vpextrd   r8d, xmm5, 1
-        vpextrd   edx, xmm3, 1
+        vextracti128 xmm5, ymm4, 1
+        vmovd     r10d, xmm4
+        vmovd     ecx, xmm5
+        vpextrd   r8d, xmm4, 1
         movsxd    r10, r10d
         movsxd    r8, r8d
-        vpextrd   edi, xmm5, 2
-        vpextrd   esi, xmm5, 3
-        movsxd    rcx, ecx
-        movsxd    rdx, edx
-        vpextrd   eax, xmm3, 2
-        vpextrd   r11d, xmm3, 3
+        vpextrd   edi, xmm4, 2
+        vpextrd   esi, xmm4, 3
+        vpextrd   edx, xmm5, 1
         movsxd    rdi, edi
         movsxd    rsi, esi
+        movsxd    rcx, ecx
+        movsxd    rdx, edx
+        vpextrd   eax, xmm5, 2
+        vpextrd   r11d, xmm5, 3
         movsxd    rax, eax
         movsxd    r11, r11d
-        vmovupd   xmm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+r10]
-        vmovupd   xmm14, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+r8]
-        vmovupd   xmm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rcx]
-        vmovupd   xmm15, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rdx]
-        vmovupd   xmm7, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+r10]
-        vmovupd   xmm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+r8]
-        vmovupd   xmm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rcx]
-        vmovupd   xmm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rdx]
-        vinsertf128 ymm10, ymm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rdi], 1
-        vinsertf128 ymm11, ymm14, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rsi], 1
-        vunpcklpd ymm0, ymm10, ymm11
-        vmovupd   YMMWORD PTR [64+r13], ymm0
-        vmovupd   xmm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+r10]
-        vunpckhpd ymm10, ymm10, ymm11
-        vinsertf128 ymm6, ymm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rax], 1
-        vinsertf128 ymm9, ymm15, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+r11], 1
-        vunpcklpd ymm8, ymm6, ymm9
-        vmovupd   YMMWORD PTR [96+r13], ymm8
-        vmovupd   xmm15, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rcx]
-        vunpckhpd ymm11, ymm6, ymm9
-        vinsertf128 ymm3, ymm7, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rdi], 1
-        vinsertf128 ymm13, ymm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rsi], 1
-        vunpcklpd ymm8, ymm3, ymm13
-        vunpckhpd ymm6, ymm3, ymm13
-        vmovupd   xmm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rcx]
-        vinsertf128 ymm14, ymm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rax], 1
-        vinsertf128 ymm1, ymm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+r11], 1
-        vmovupd   xmm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+r8]
+        vmovupd   xmm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+r10]
+        vmovupd   xmm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+r8]
+        vmovupd   xmm14, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rcx]
+        vmovupd   xmm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rdx]
+        vmovupd   xmm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rdx]
+        vmovupd   xmm9, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+r10]
+        vmovupd   xmm7, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+r8]
+        vmovupd   xmm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rcx]
+        vinsertf128 ymm0, ymm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rdi], 1
+        vinsertf128 ymm10, ymm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rsi], 1
+        vunpcklpd ymm15, ymm0, ymm10
+        vmovupd   YMMWORD PTR [64+r13], ymm15
+        vmovupd   xmm15, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+r8]
+        vunpckhpd ymm10, ymm0, ymm10
+        vmovupd   xmm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rcx]
+        vinsertf128 ymm8, ymm14, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rax], 1
+        vinsertf128 ymm6, ymm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+r11], 1
+        vmovupd   xmm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+r10]
+        vunpcklpd ymm11, ymm8, ymm6
+        vmovupd   YMMWORD PTR [96+r13], ymm11
+        vunpckhpd ymm11, ymm8, ymm6
+        vinsertf128 ymm14, ymm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+r11], 1
         vmovupd   xmm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rdx]
-        vunpcklpd ymm9, ymm14, ymm1
-        vunpckhpd ymm7, ymm14, ymm1
-        vinsertf128 ymm2, ymm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rdi], 1
-        vinsertf128 ymm13, ymm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rsi], 1
-        vinsertf128 ymm14, ymm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rax], 1
-        vinsertf128 ymm1, ymm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+r11], 1
+        vinsertf128 ymm5, ymm9, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rdi], 1
+        vinsertf128 ymm3, ymm7, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rsi], 1
+        vinsertf128 ymm13, ymm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rax], 1
+        vunpcklpd ymm8, ymm5, ymm3
+        vunpckhpd ymm6, ymm5, ymm3
+        vunpcklpd ymm9, ymm13, ymm14
+        vunpckhpd ymm7, ymm13, ymm14
+        vinsertf128 ymm2, ymm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rdi], 1
+        vinsertf128 ymm5, ymm15, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rsi], 1
+        vinsertf128 ymm3, ymm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rax], 1
+        vinsertf128 ymm13, ymm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+r11], 1
         vmovupd   xmm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+r8]
-        vunpcklpd ymm4, ymm2, ymm13
-        vunpckhpd ymm2, ymm2, ymm13
-        vunpcklpd ymm5, ymm14, ymm1
-        vunpckhpd ymm3, ymm14, ymm1
+        vunpcklpd ymm4, ymm2, ymm5
+        vunpckhpd ymm2, ymm2, ymm5
+        vunpcklpd ymm5, ymm3, ymm13
+        vunpckhpd ymm3, ymm3, ymm13
         vmovupd   xmm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+r10]
+        vmovupd   xmm15, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rcx]
         vmovupd   xmm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rdx]
         vinsertf128 ymm14, ymm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rsi], 1
         vinsertf128 ymm13, ymm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rdi], 1
@@ -575,64 +842,64 @@ L39::
         vcvtpd2ps xmm0, ymm0
         vinsertf128 ymm2, ymm1, xmm0, 1
         vorps     ymm0, ymm2, YMMWORD PTR [r13]
-        jne       _B3_3
+        jne       _B4_3
 
-_B3_2::
+_B4_2::
 
-        vmovups   xmm6, XMMWORD PTR [368+rsp]
-        vmovups   xmm7, XMMWORD PTR [352+rsp]
-        vmovups   xmm8, XMMWORD PTR [336+rsp]
-        vmovups   xmm9, XMMWORD PTR [320+rsp]
-        vmovups   xmm10, XMMWORD PTR [304+rsp]
-        vmovups   xmm11, XMMWORD PTR [288+rsp]
-        vmovups   xmm12, XMMWORD PTR [272+rsp]
-        vmovups   xmm13, XMMWORD PTR [256+rsp]
-        vmovups   xmm14, XMMWORD PTR [240+rsp]
-        vmovups   xmm15, XMMWORD PTR [224+rsp]
-        mov       r13, QWORD PTR [384+rsp]
-        add       rsp, 400
+        vmovups   ymm6, YMMWORD PTR [512+rsp]
+        vmovups   ymm7, YMMWORD PTR [480+rsp]
+        vmovups   ymm8, YMMWORD PTR [448+rsp]
+        vmovups   ymm9, YMMWORD PTR [416+rsp]
+        vmovups   ymm10, YMMWORD PTR [384+rsp]
+        vmovups   ymm11, YMMWORD PTR [352+rsp]
+        vmovups   ymm12, YMMWORD PTR [320+rsp]
+        vmovups   ymm13, YMMWORD PTR [288+rsp]
+        vmovups   ymm14, YMMWORD PTR [256+rsp]
+        vmovups   ymm15, YMMWORD PTR [224+rsp]
+        mov       r13, QWORD PTR [544+rsp]
+        add       rsp, 560
         pop       rdi
         pop       rsi
         pop       rbx
         ret
 
-_B3_3::
+_B4_3::
 
         vmovups   ymm1, YMMWORD PTR [32+r13]
         vmovups   YMMWORD PTR [64+r13], ymm0
         vmovups   YMMWORD PTR [r13], ymm1
 
-_B3_6::
+_B4_6::
 
         xor       esi, esi
 
-_B3_7::
+_B4_7::
 
         bt        ebx, esi
-        jc        _B3_10
+        jc        _B4_10
 
-_B3_8::
+_B4_8::
 
         inc       esi
         cmp       esi, 8
-        jl        _B3_7
+        jl        _B4_7
 
-_B3_9::
+_B4_9::
 
         vmovups   ymm0, YMMWORD PTR [64+r13]
-        jmp       _B3_2
+        jmp       _B4_2
 
-_B3_10::
+_B4_10::
 
         vzeroupper
         lea       rcx, QWORD PTR [r13+rsi*4]
         lea       rdx, QWORD PTR [64+r13+rsi*4]
 
         call      __svml_stanh_ha_cout_rare_internal
-        jmp       _B3_8
+        jmp       _B4_8
         ALIGN     16
 
-_B3_11::
+_B4_11::
 
 __svml_tanhf8_ha_l9 ENDP
 
@@ -641,19 +908,19 @@ _TEXT	ENDS
 
 	ALIGN 004H
 _unwind___svml_tanhf8_ha_l9_B1_B10:
-	DD	1799937
-	DD	3200119
-	DD	1534063
-	DD	1472614
-	DD	1411165
-	DD	1349716
-	DD	1288267
-	DD	1226818
-	DD	1165369
-	DD	1103920
-	DD	1042471
+	DD	1801217
+	DD	4510844
+	DD	2123887
+	DD	1996902
+	DD	1869917
+	DD	1742932
+	DD	1615947
+	DD	1488962
+	DD	1361977
+	DD	1234992
+	DD	1108007
 	DD	981022
-	DD	3277070
+	DD	4587790
 	DD	1611034631
 	DD	12293
 
@@ -662,8 +929,8 @@ _unwind___svml_tanhf8_ha_l9_B1_B10:
 
 	ALIGN 004H
 
-	DD	imagerel _B3_1
-	DD	imagerel _B3_11
+	DD	imagerel _B4_1
+	DD	imagerel _B4_11
 	DD	imagerel _unwind___svml_tanhf8_ha_l9_B1_B10
 
 .pdata	ENDS
@@ -672,7 +939,7 @@ _DATA	ENDS
 
 _TEXT	SEGMENT      'CODE'
 
-TXTST3:
+TXTST4:
 
 _TEXT	ENDS
 _TEXT	SEGMENT      'CODE'
@@ -682,47 +949,46 @@ _TEXT	SEGMENT      'CODE'
 
 __svml_tanhf8_ha_e9	PROC
 
-_B4_1::
+_B5_1::
 
         DB        243
         DB        15
         DB        30
         DB        250
-L70::
+L121::
 
         push      rbx
         push      rsi
-        push      rbp
-        sub       rsp, 400
+        push      rdi
+        sub       rsp, 560
         lea       r9, QWORD PTR [__ImageBase]
-        vmovups   XMMWORD PTR [224+rsp], xmm15
-        vmovups   XMMWORD PTR [288+rsp], xmm14
-        vmovups   XMMWORD PTR [368+rsp], xmm13
-        vmovups   XMMWORD PTR [240+rsp], xmm12
-        vmovups   XMMWORD PTR [256+rsp], xmm11
+        vmovups   YMMWORD PTR [224+rsp], ymm15
+        vmovups   YMMWORD PTR [384+rsp], ymm14
+        vmovups   YMMWORD PTR [512+rsp], ymm13
+        vmovups   YMMWORD PTR [256+rsp], ymm12
+        vmovups   YMMWORD PTR [288+rsp], ymm11
         vpxor     xmm12, xmm12, xmm12
-        vmovups   XMMWORD PTR [272+rsp], xmm10
-        vmovups   XMMWORD PTR [304+rsp], xmm9
-        vmovups   XMMWORD PTR [320+rsp], xmm8
-        vmovups   XMMWORD PTR [336+rsp], xmm7
-        vmovups   XMMWORD PTR [352+rsp], xmm6
-        mov       QWORD PTR [384+rsp], r13
+        vmovups   YMMWORD PTR [320+rsp], ymm10
+        vmovups   YMMWORD PTR [352+rsp], ymm9
+        vmovups   YMMWORD PTR [416+rsp], ymm8
+        vmovups   YMMWORD PTR [448+rsp], ymm7
+        vmovups   YMMWORD PTR [480+rsp], ymm6
+        mov       QWORD PTR [544+rsp], r13
         lea       r13, QWORD PTR [95+rsp]
-        vmovups   ymm4, YMMWORD PTR [rcx]
         and       r13, -64
-        vmovups   xmm0, XMMWORD PTR [__svml_stanh_ha_data_internal+3200]
+        vmovups   YMMWORD PTR [32+r13], ymm0
+        vmovups   xmm3, XMMWORD PTR [__svml_stanh_ha_data_internal+3200]
         vmovups   xmm14, XMMWORD PTR [__svml_stanh_ha_data_internal+3264]
         vmovups   xmm11, XMMWORD PTR [__svml_stanh_ha_data_internal+3328]
         vmovups   xmm10, XMMWORD PTR [__svml_stanh_ha_data_internal+3392]
-        vmovups   YMMWORD PTR [32+r13], ymm4
-        vandps    ymm15, ymm4, YMMWORD PTR [__svml_stanh_ha_data_internal+3136]
-        vandps    ymm5, ymm4, YMMWORD PTR [__svml_stanh_ha_data_internal+3072]
+        vandps    ymm15, ymm0, YMMWORD PTR [__svml_stanh_ha_data_internal+3136]
+        vandps    ymm5, ymm0, YMMWORD PTR [__svml_stanh_ha_data_internal+3072]
         vmovups   YMMWORD PTR [r13], ymm5
-        mov       QWORD PTR [392+rsp], r13
-        vpand     xmm5, xmm4, xmm0
-        vextractf128 xmm3, ymm4, 1
+        mov       QWORD PTR [552+rsp], r13
+        vpand     xmm5, xmm0, xmm3
+        vextractf128 xmm4, ymm0, 1
         vpcmpgtd  xmm9, xmm5, xmm14
-        vpand     xmm4, xmm3, xmm0
+        vpand     xmm4, xmm4, xmm3
         vpsubd    xmm3, xmm5, xmm11
         vpcmpgtd  xmm8, xmm4, xmm14
         vpsubd    xmm13, xmm4, xmm11
@@ -747,12 +1013,12 @@ L70::
         movsxd    r8, r8d
         movsxd    rcx, ecx
         movsxd    rdx, edx
-        vpextrd   esi, xmm14, 2
-        vpextrd   ebp, xmm14, 3
+        vpextrd   edi, xmm14, 2
+        vpextrd   esi, xmm14, 3
         vpextrd   eax, xmm7, 2
         vpextrd   r11d, xmm7, 3
+        movsxd    rdi, edi
         movsxd    rsi, esi
-        movsxd    rbp, ebp
         movsxd    rax, eax
         movsxd    r11, r11d
         vmovupd   xmm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+r10]
@@ -761,8 +1027,8 @@ L70::
         vmovupd   xmm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rdx]
         vmovupd   xmm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+r10]
         vmovupd   xmm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+r8]
-        vinsertf128 ymm9, ymm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rsi], 1
-        vinsertf128 ymm8, ymm11, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rbp], 1
+        vinsertf128 ymm9, ymm12, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rdi], 1
+        vinsertf128 ymm8, ymm11, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rsi], 1
         vinsertf128 ymm3, ymm6, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+rax], 1
         vinsertf128 ymm1, ymm5, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1344+r9+r11], 1
         vunpcklpd ymm10, ymm9, ymm8
@@ -775,16 +1041,16 @@ L70::
         vunpckhpd ymm12, ymm3, ymm1
         vmovupd   xmm8, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rdx]
         vmovupd   xmm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+r8]
-        vinsertf128 ymm0, ymm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rsi], 1
-        vinsertf128 ymm14, ymm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rbp], 1
+        vinsertf128 ymm0, ymm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rdi], 1
+        vinsertf128 ymm14, ymm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rsi], 1
         vunpcklpd ymm9, ymm0, ymm14
         vunpckhpd ymm7, ymm0, ymm14
         vmovupd   xmm13, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rcx]
         vmovupd   xmm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rdx]
         vinsertf128 ymm6, ymm10, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+rax], 1
         vinsertf128 ymm5, ymm8, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1360+r9+r11], 1
-        vinsertf128 ymm1, ymm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rsi], 1
-        vinsertf128 ymm2, ymm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rbp], 1
+        vinsertf128 ymm1, ymm4, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rdi], 1
+        vinsertf128 ymm2, ymm3, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+rsi], 1
         vunpcklpd ymm10, ymm6, ymm5
         vunpckhpd ymm8, ymm6, ymm5
         vunpcklpd ymm5, ymm1, ymm2
@@ -795,10 +1061,10 @@ L70::
         vinsertf128 ymm4, ymm0, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1376+r9+r11], 1
         vunpcklpd ymm6, ymm14, ymm4
         vunpckhpd ymm4, ymm14, ymm4
-        vinsertf128 ymm13, ymm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rsi], 1
-        vinsertf128 ymm14, ymm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rbp], 1
-        vunpcklpd ymm1, ymm13, ymm14
-        vunpckhpd ymm0, ymm13, ymm14
+        vinsertf128 ymm14, ymm1, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rdi], 1
+        vinsertf128 ymm13, ymm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rsi], 1
+        vunpcklpd ymm1, ymm14, ymm13
+        vunpckhpd ymm0, ymm14, ymm13
         vmovupd   xmm14, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rcx]
         vmovupd   xmm2, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rdx]
         vinsertf128 ymm14, ymm14, XMMWORD PTR [imagerel(__svml_stanh_ha_data_internal)+1392+r9+rax], 1
@@ -841,66 +1107,66 @@ L70::
         vinsertf128 ymm14, ymm8, xmm13, 1
         vorps     ymm0, ymm14, YMMWORD PTR [r13]
         test      bl, bl
-        jne       _B4_3
+        jne       _B5_3
 
-_B4_2::
+_B5_2::
 
-        vmovups   xmm6, XMMWORD PTR [352+rsp]
-        vmovups   xmm7, XMMWORD PTR [336+rsp]
-        vmovups   xmm8, XMMWORD PTR [320+rsp]
-        vmovups   xmm9, XMMWORD PTR [304+rsp]
-        vmovups   xmm10, XMMWORD PTR [272+rsp]
-        vmovups   xmm11, XMMWORD PTR [256+rsp]
-        vmovups   xmm12, XMMWORD PTR [240+rsp]
-        vmovups   xmm13, XMMWORD PTR [368+rsp]
-        vmovups   xmm14, XMMWORD PTR [288+rsp]
-        vmovups   xmm15, XMMWORD PTR [224+rsp]
-        mov       r13, QWORD PTR [384+rsp]
-        add       rsp, 400
-        pop       rbp
+        vmovups   ymm6, YMMWORD PTR [480+rsp]
+        vmovups   ymm7, YMMWORD PTR [448+rsp]
+        vmovups   ymm8, YMMWORD PTR [416+rsp]
+        vmovups   ymm9, YMMWORD PTR [352+rsp]
+        vmovups   ymm10, YMMWORD PTR [320+rsp]
+        vmovups   ymm11, YMMWORD PTR [288+rsp]
+        vmovups   ymm12, YMMWORD PTR [256+rsp]
+        vmovups   ymm13, YMMWORD PTR [512+rsp]
+        vmovups   ymm14, YMMWORD PTR [384+rsp]
+        vmovups   ymm15, YMMWORD PTR [224+rsp]
+        mov       r13, QWORD PTR [544+rsp]
+        add       rsp, 560
+        pop       rdi
         pop       rsi
         pop       rbx
         ret
 
-_B4_3::
+_B5_3::
 
         vmovups   ymm1, YMMWORD PTR [32+r13]
         vmovups   YMMWORD PTR [64+r13], ymm0
         vmovups   YMMWORD PTR [r13], ymm1
         test      ebx, ebx
-        je        _B4_2
+        je        _B5_2
 
-_B4_6::
+_B5_6::
 
-        xor       ebp, ebp
+        xor       esi, esi
 
-_B4_7::
+_B5_7::
 
-        bt        ebx, ebp
-        jc        _B4_10
+        bt        ebx, esi
+        jc        _B5_10
 
-_B4_8::
+_B5_8::
 
-        inc       ebp
-        cmp       ebp, 8
-        jl        _B4_7
+        inc       esi
+        cmp       esi, 8
+        jl        _B5_7
 
-_B4_9::
+_B5_9::
 
         vmovups   ymm0, YMMWORD PTR [64+r13]
-        jmp       _B4_2
+        jmp       _B5_2
 
-_B4_10::
+_B5_10::
 
         vzeroupper
-        lea       rcx, QWORD PTR [r13+rbp*4]
-        lea       rdx, QWORD PTR [64+r13+rbp*4]
+        lea       rcx, QWORD PTR [r13+rsi*4]
+        lea       rdx, QWORD PTR [64+r13+rsi*4]
 
         call      __svml_stanh_ha_cout_rare_internal
-        jmp       _B4_8
+        jmp       _B5_8
         ALIGN     16
 
-_B4_11::
+_B5_11::
 
 __svml_tanhf8_ha_e9 ENDP
 
@@ -910,19 +1176,19 @@ _TEXT	ENDS
 	ALIGN 004H
 _unwind___svml_tanhf8_ha_e9_B1_B10:
 	DD	1801217
-	DD	3200124
-	DD	1468532
-	DD	1407083
-	DD	1345634
-	DD	1284185
-	DD	1157200
-	DD	1095746
-	DD	1034297
-	DD	1562672
-	DD	1239079
+	DD	4510844
+	DD	1992820
+	DD	1865835
+	DD	1738850
+	DD	1480793
+	DD	1353808
+	DD	1226818
+	DD	1099833
+	DD	2152496
+	DD	1632295
 	DD	981022
-	DD	3277070
-	DD	1611026439
+	DD	4587790
+	DD	1611034631
 	DD	12293
 
 .xdata	ENDS
@@ -930,8 +1196,8 @@ _unwind___svml_tanhf8_ha_e9_B1_B10:
 
 	ALIGN 004H
 
-	DD	imagerel _B4_1
-	DD	imagerel _B4_11
+	DD	imagerel _B5_1
+	DD	imagerel _B5_11
 	DD	imagerel _unwind___svml_tanhf8_ha_e9_B1_B10
 
 .pdata	ENDS
@@ -940,7 +1206,7 @@ _DATA	ENDS
 
 _TEXT	SEGMENT      'CODE'
 
-TXTST4:
+TXTST5:
 
 _TEXT	ENDS
 _TEXT	SEGMENT      'CODE'
@@ -950,32 +1216,32 @@ _TEXT	SEGMENT      'CODE'
 
 __svml_tanhf4_ha_ex	PROC
 
-_B5_1::
+_B6_1::
 
         DB        243
         DB        15
         DB        30
         DB        250
-L101::
+L152::
 
         sub       rsp, 424
+        movaps    xmm4, xmm0
+        movups    XMMWORD PTR [256+rsp], xmm15
         lea       rdx, QWORD PTR [__ImageBase]
-        movups    XMMWORD PTR [240+rsp], xmm15
+        movups    XMMWORD PTR [272+rsp], xmm14
         pxor      xmm1, xmm1
-        movups    XMMWORD PTR [256+rsp], xmm14
-        movups    XMMWORD PTR [272+rsp], xmm13
-        movups    XMMWORD PTR [288+rsp], xmm12
-        movups    XMMWORD PTR [304+rsp], xmm11
-        movups    XMMWORD PTR [320+rsp], xmm10
-        movups    XMMWORD PTR [336+rsp], xmm9
-        movups    XMMWORD PTR [208+rsp], xmm8
-        movups    XMMWORD PTR [224+rsp], xmm7
-        movups    XMMWORD PTR [192+rsp], xmm6
+        movups    XMMWORD PTR [288+rsp], xmm13
+        movups    XMMWORD PTR [304+rsp], xmm12
+        movups    XMMWORD PTR [320+rsp], xmm11
+        movups    XMMWORD PTR [336+rsp], xmm10
+        movups    XMMWORD PTR [192+rsp], xmm9
+        movups    XMMWORD PTR [240+rsp], xmm8
+        movups    XMMWORD PTR [208+rsp], xmm7
+        movups    XMMWORD PTR [224+rsp], xmm6
         mov       QWORD PTR [400+rsp], r13
         lea       r13, QWORD PTR [111+rsp]
-        movups    xmm4, XMMWORD PTR [rcx]
-        and       r13, -64
         movdqu    xmm11, XMMWORD PTR [__svml_stanh_ha_data_internal+3200]
+        and       r13, -64
         pand      xmm11, xmm4
         movdqa    xmm5, xmm11
         psubd     xmm11, XMMWORD PTR [__svml_stanh_ha_data_internal+3328]
@@ -1088,32 +1354,32 @@ L101::
         mov       QWORD PTR [408+rsp], r13
         orps      xmm2, XMMWORD PTR [352+rsp]
         test      r8d, r8d
-        jne       _B5_3
+        jne       _B6_3
 
-_B5_2::
+_B6_2::
 
-        movups    xmm6, XMMWORD PTR [192+rsp]
+        movups    xmm6, XMMWORD PTR [224+rsp]
         movaps    xmm0, xmm2
-        movups    xmm7, XMMWORD PTR [224+rsp]
-        movups    xmm8, XMMWORD PTR [208+rsp]
-        movups    xmm9, XMMWORD PTR [336+rsp]
-        movups    xmm10, XMMWORD PTR [320+rsp]
-        movups    xmm11, XMMWORD PTR [304+rsp]
-        movups    xmm12, XMMWORD PTR [288+rsp]
-        movups    xmm13, XMMWORD PTR [272+rsp]
-        movups    xmm14, XMMWORD PTR [256+rsp]
-        movups    xmm15, XMMWORD PTR [240+rsp]
+        movups    xmm7, XMMWORD PTR [208+rsp]
+        movups    xmm8, XMMWORD PTR [240+rsp]
+        movups    xmm9, XMMWORD PTR [192+rsp]
+        movups    xmm10, XMMWORD PTR [336+rsp]
+        movups    xmm11, XMMWORD PTR [320+rsp]
+        movups    xmm12, XMMWORD PTR [304+rsp]
+        movups    xmm13, XMMWORD PTR [288+rsp]
+        movups    xmm14, XMMWORD PTR [272+rsp]
+        movups    xmm15, XMMWORD PTR [256+rsp]
         mov       r13, QWORD PTR [400+rsp]
         add       rsp, 424
         ret
 
-_B5_3::
+_B6_3::
 
         movups    xmm1, XMMWORD PTR [32+rsp]
         movups    XMMWORD PTR [r13], xmm1
         movups    XMMWORD PTR [64+r13], xmm2
 
-_B5_6::
+_B6_6::
 
         xor       ecx, ecx
         mov       QWORD PTR [40+rsp], rbx
@@ -1121,37 +1387,37 @@ _B5_6::
         mov       QWORD PTR [32+rsp], rsi
         mov       esi, r8d
 
-_B5_7::
+_B6_7::
 
         mov       ecx, ebx
         mov       eax, 1
         shl       eax, cl
         test      esi, eax
-        jne       _B5_10
+        jne       _B6_10
 
-_B5_8::
+_B6_8::
 
         inc       ebx
         cmp       ebx, 4
-        jl        _B5_7
+        jl        _B6_7
 
-_B5_9::
+_B6_9::
 
         mov       rbx, QWORD PTR [40+rsp]
         mov       rsi, QWORD PTR [32+rsp]
         movups    xmm2, XMMWORD PTR [64+r13]
-        jmp       _B5_2
+        jmp       _B6_2
 
-_B5_10::
+_B6_10::
 
         lea       rcx, QWORD PTR [r13+rbx*4]
         lea       rdx, QWORD PTR [64+r13+rbx*4]
 
         call      __svml_stanh_ha_cout_rare_internal
-        jmp       _B5_8
+        jmp       _B6_8
         ALIGN     16
 
-_B5_11::
+_B6_11::
 
 __svml_tanhf4_ha_ex ENDP
 
@@ -1160,18 +1426,18 @@ _TEXT	ENDS
 
 	ALIGN 004H
 _unwind___svml_tanhf4_ha_ex_B1_B3:
-	DD	1603073
-	DD	3331190
-	DD	813166
-	DD	948326
-	DD	886878
-	DD	1415253
-	DD	1353804
-	DD	1292355
-	DD	1230906
-	DD	1169457
-	DD	1108008
-	DD	1046555
+	DD	1603841
+	DD	3331193
+	DD	944241
+	DD	882793
+	DD	1017953
+	DD	825432
+	DD	1419343
+	DD	1357894
+	DD	1296445
+	DD	1234996
+	DD	1173543
+	DD	1112087
 	DD	3473675
 
 .xdata	ENDS
@@ -1179,8 +1445,8 @@ _unwind___svml_tanhf4_ha_ex_B1_B3:
 
 	ALIGN 004H
 
-	DD	imagerel _B5_1
-	DD	imagerel _B5_6
+	DD	imagerel _B6_1
+	DD	imagerel _B6_6
 	DD	imagerel _unwind___svml_tanhf4_ha_ex_B1_B3
 
 .pdata	ENDS
@@ -1191,8 +1457,8 @@ _unwind___svml_tanhf4_ha_ex_B6_B10:
 	DD	265761
 	DD	287758
 	DD	340999
-	DD	imagerel _B5_1
-	DD	imagerel _B5_6
+	DD	imagerel _B6_1
+	DD	imagerel _B6_6
 	DD	imagerel _unwind___svml_tanhf4_ha_ex_B1_B3
 
 .xdata	ENDS
@@ -1200,8 +1466,8 @@ _unwind___svml_tanhf4_ha_ex_B6_B10:
 
 	ALIGN 004H
 
-	DD	imagerel _B5_6
-	DD	imagerel _B5_11
+	DD	imagerel _B6_6
+	DD	imagerel _B6_11
 	DD	imagerel _unwind___svml_tanhf4_ha_ex_B6_B10
 
 .pdata	ENDS
@@ -1210,7 +1476,7 @@ _DATA	ENDS
 
 _TEXT	SEGMENT      'CODE'
 
-TXTST5:
+TXTST6:
 
 _TEXT	ENDS
 _TEXT	SEGMENT      'CODE'
@@ -1220,13 +1486,13 @@ _TEXT	SEGMENT      'CODE'
 
 __svml_stanh_ha_cout_rare_internal	PROC
 
-_B6_1::
+_B7_1::
 
         DB        243
         DB        15
         DB        30
         DB        250
-L136::
+L187::
 
         lea       r8, QWORD PTR [__ImageBase]
         mov       al, BYTE PTR [3+rcx]
@@ -1237,31 +1503,31 @@ L136::
         and       r10d, 32640
         mov       eax, DWORD PTR [imagerel(_imlsTanhHATab)+r8+r9*4]
         cmp       r10d, 32640
-        je        _B6_4
+        je        _B7_4
 
-_B6_2::
+_B7_2::
 
         mov       DWORD PTR [rdx], eax
 
-_B6_3::
+_B7_3::
 
         xor       eax, eax
         ret
 
-_B6_4::
+_B7_4::
 
         test      DWORD PTR [rcx], 8388607
-        je        _B6_2
+        je        _B7_2
 
-_B6_5::
+_B7_5::
 
         movss     xmm0, DWORD PTR [rcx]
         addss     xmm0, xmm0
         movss     DWORD PTR [rdx], xmm0
-        jmp       _B6_3
+        jmp       _B7_3
         ALIGN     16
 
-_B6_6::
+_B7_6::
 
 __svml_stanh_ha_cout_rare_internal ENDP
 
@@ -2143,5 +2409,5 @@ _DATA	SEGMENT      'DATA'
 _DATA	ENDS
 EXTRN	__ImageBase:PROC
 EXTRN	_fltused:BYTE
-	ENDIF
+ENDIF
 	END
