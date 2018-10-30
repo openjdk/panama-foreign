@@ -22,6 +22,9 @@
  */
 package com.sun.tools.jextract;
 
+import java.foreign.memory.DoubleComplex;
+import java.foreign.memory.FloatComplex;
+import java.foreign.memory.LongDoubleComplex;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -242,6 +245,18 @@ public final class HeaderFile {
                     cf.addType(JType2.bind(jt, t, null), null);
                 }
                 jt = new CallbackType(jt);
+                break;
+            case Complex:
+                TypeKind ek = t.getElementType().kind();
+                if (ek == TypeKind.Float) {
+                    jt = JType2.bind(JType.of(FloatComplex.class), t, t.getDeclarationCursor());
+                } else if (ek == TypeKind.Double) {
+                    jt = JType2.bind(JType.of(DoubleComplex.class), t, t.getDeclarationCursor());
+                } else if (ek == TypeKind.LongDouble) {
+                    jt = JType2.bind(JType.of(LongDoubleComplex.class), t, t.getDeclarationCursor());
+                } else {
+                    throw new UnsupportedOperationException("_Complex kind " + ek + " not supported");
+                }
                 break;
             default:
                 throw new UnsupportedOperationException("Type kind not supported: " + t.kind());

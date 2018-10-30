@@ -31,6 +31,10 @@ import java.foreign.layout.Padding;
 import java.foreign.layout.Sequence;
 import java.foreign.layout.Unresolved;
 import java.foreign.layout.Value;
+import java.foreign.memory.DoubleComplex;
+import java.foreign.memory.FloatComplex;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.LongDoubleComplex;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -207,6 +211,18 @@ public final class LayoutUtils {
             case Pointer:
             case BlockPointer:
                 return parsePointerInternal(t.getPointeeType());
+            case Complex:
+                TypeKind ek = t.getElementType().kind();
+                if (ek == TypeKind.Float) {
+                    return LayoutType.ofStruct(FloatComplex.class).layout();
+                } else if (ek == TypeKind.Double) {
+                    return LayoutType.ofStruct(DoubleComplex.class).layout();
+                } else if (ek == TypeKind.LongDouble) {
+                    return LayoutType.ofStruct(LongDoubleComplex.class).layout();
+                } else {
+                    throw new IllegalArgumentException(
+                        "Unsupported _Complex kind: " + ek);
+                }
             default:
                 throw new IllegalArgumentException(
                         "Unsupported type kind: " + t.kind());
