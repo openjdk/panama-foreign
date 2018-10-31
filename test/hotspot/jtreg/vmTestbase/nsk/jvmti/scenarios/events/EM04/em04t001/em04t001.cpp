@@ -111,9 +111,7 @@ cbDynamicCodeGenerated2(jvmtiEnv *jvmti_env, const char *name,
 
 static int
 enableEvent(jvmtiEventMode enable, jvmtiEvent event) {
-    if (!NSK_JVMTI_VERIFY(
-            NSK_CPP_STUB4(SetEventNotificationMode, jvmti, enable,
-                                            event, NULL))) {
+    if (!NSK_JVMTI_VERIFY(jvmti->SetEventNotificationMode(enable, event, NULL))) {
         nsk_jvmti_setFailStatus();
         return NSK_FALSE;
     }
@@ -129,10 +127,7 @@ int setCallBacks(int stage) {
     eventCallbacks.DynamicCodeGenerated = (stage == 1) ?
                             cbDynamicCodeGenerated1 : cbDynamicCodeGenerated2;
 
-    if (!NSK_JVMTI_VERIFY(
-            NSK_CPP_STUB3(SetEventCallbacks, jvmti,
-                                &eventCallbacks,
-                                sizeof(eventCallbacks))))
+    if (!NSK_JVMTI_VERIFY(jvmti->SetEventCallbacks(&eventCallbacks, sizeof(eventCallbacks))))
         return NSK_FALSE;
 
     return NSK_TRUE;
@@ -153,9 +148,7 @@ agentProc(jvmtiEnv* jvmti, JNIEnv* agentJNI, void* arg) {
         return;
     }
 
-    if (!NSK_JVMTI_VERIFY(
-            NSK_CPP_STUB2(GenerateEvents, jvmti,
-                                JVMTI_EVENT_DYNAMIC_CODE_GENERATED)))
+    if (!NSK_JVMTI_VERIFY(jvmti->GenerateEvents(JVMTI_EVENT_DYNAMIC_CODE_GENERATED)))
         nsk_jvmti_setFailStatus();
 
     {
@@ -206,10 +199,12 @@ jint Agent_Initialize(JavaVM *jvm, char *options, void *reserved) {
 
     timeout = nsk_jvmti_getWaitTime() * 60 * 1000;
 
-    if (!NSK_VERIFY((jvmti = nsk_jvmti_createJVMTIEnv(jvm, reserved)) != NULL))
+    jvmti = nsk_jvmti_createJVMTIEnv(jvm, reserved);
+    if (!NSK_VERIFY(jvmti != NULL))
         return JNI_ERR;
 
-    if (!NSK_VERIFY((plist = (const void *)nsk_list_create()) != NULL))
+    plist = (const void *)nsk_list_create();
+    if (!NSK_VERIFY(plist != NULL))
         return JNI_ERR;
 
     NSK_DISPLAY1("plist = 0x%p\n", plist);
