@@ -413,6 +413,11 @@ void VM_Version::get_processor_features() {
   if (FLAG_IS_DEFAULT(UseMontgomerySquareIntrinsic)) {
     UseMontgomerySquareIntrinsic = true;
   }
+  if (FLAG_IS_DEFAULT(MaxVectorSize)) {
+    if (UseSVE) {
+      MaxVectorSize = 256;
+    }
+  }
 
   if (FLAG_IS_DEFAULT(OptoScheduling)) {
     OptoScheduling = true;
