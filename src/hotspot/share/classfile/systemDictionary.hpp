@@ -165,8 +165,8 @@ class OopStorage;
   do_klass(LambdaForm_klass,                            java_lang_invoke_LambdaForm                           ) \
   do_klass(MethodType_klass,                            java_lang_invoke_MethodType                           ) \
   do_klass(BootstrapMethodError_klass,                  java_lang_BootstrapMethodError                        ) \
-  do_klass(NativeEntryPoint_klass,                      java_lang_invoke_NativeEntryPoint,         Pre                 ) \
-  do_klass(MachineCodeSnippet_klass,                    java_lang_invoke_MachineCodeSnippet,       Pre                 ) \
+  do_klass(NativeEntryPoint_klass,                      java_lang_invoke_NativeEntryPoint                     ) \
+  do_klass(MachineCodeSnippet_klass,                    java_lang_invoke_MachineCodeSnippet                   ) \
   do_klass(CallSite_klass,                              java_lang_invoke_CallSite                             ) \
   do_klass(Context_klass,                               java_lang_invoke_MethodHandleNatives_CallSiteContext  ) \
   do_klass(ConstantCallSite_klass,                      java_lang_invoke_ConstantCallSite                     ) \
@@ -212,9 +212,9 @@ class OopStorage;
   do_klass(Short_klass,                                 java_lang_Short                                       ) \
   do_klass(Integer_klass,                               java_lang_Integer                                     ) \
   do_klass(Long_klass,                                  java_lang_Long                                        ) \
-  do_klass(Long2_klass,                                 java_lang_Long2,                           Pre                 ) \
-  do_klass(Long4_klass,                                 java_lang_Long4,                           Pre                 ) \
-  do_klass(Long8_klass,                                 java_lang_Long8,                           Pre                 ) \
+  do_klass(Long2_klass,                                 java_lang_Long2                                       ) \
+  do_klass(Long4_klass,                                 java_lang_Long4                                       ) \
+  do_klass(Long8_klass,                                 java_lang_Long8                                       ) \
                                                                                                                 \
   /* JVMCI classes. These are loaded on-demand. */                                                              \
   JVMCI_WK_KLASSES_DO(do_klass)                                                                                 \
