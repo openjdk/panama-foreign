@@ -67,7 +67,7 @@
 #include "oops/oop.inline.hpp"
 #include "oops/symbol.hpp"
 #include "oops/typeArrayKlass.hpp"
-#include "prims/jvmtiEnvBase.hpp"
+#include "prims/jvmtiExport.hpp"
 #include "prims/resolvedMethodTable.hpp"
 #include "prims/methodHandles.hpp"
 #include "runtime/arguments.hpp"
@@ -1189,20 +1189,15 @@ InstanceKlass* SystemDictionary::find_shared_class(Symbol* class_name) {
 }
 
 
-// Load a class from the shared spaces (found through the shared system
-// dictionary).  Force the superclass and all interfaces to be loaded.
-// Update the class definition to include sibling classes and no
-// subclasses (yet).  [Classes in the shared space are not part of the
-// object hierarchy until loaded.]
-
-InstanceKlass* SystemDictionary::load_shared_class(
-                 Symbol* class_name, Handle class_loader, TRAPS) {
+// Load a class for boot loader from the shared spaces (found through
+// the shared system dictionary). Force the super class and all interfaces
+// to be loaded.
+InstanceKlass* SystemDictionary::load_shared_boot_class(Symbol* class_name,
+                                                        TRAPS) {
   InstanceKlass* ik = find_shared_class(class_name);
-  // Make sure we only return the boot class for the NULL classloader.
-  if (ik != NULL &&
-      ik->is_shared_boot_class() && class_loader.is_null()) {
-    Handle protection_domain;
-    return load_shared_class(ik, class_loader, protection_domain, THREAD);
+  // Make sure we only return the boot class.
+  if (ik != NULL && ik->is_shared_boot_class()) {
+    return load_shared_class(ik, Handle(), Handle(), THREAD);
   }
   return NULL;
 }
@@ -1489,13 +1484,12 @@ InstanceKlass* SystemDictionary::load_instance_class(Symbol* class_name, Handle 
            !search_only_bootloader_append,
            "Attempt to load a class outside of boot loader's module path");
 
-    // Search the shared system dictionary for classes preloaded into the
-    // shared spaces.
+    // Search for classes in the CDS archive.
     InstanceKlass* k = NULL;
     {
 #if INCLUDE_CDS
       PerfTraceTime vmtimer(ClassLoader::perf_shared_classload_time());
-      k = load_shared_class(class_name, class_loader, THREAD);
+      k = load_shared_boot_class(class_name, THREAD);
 #endif
     }
 
@@ -1958,46 +1952,48 @@ void SystemDictionary::initialize(TRAPS) {
   // Allocate private object used as system class loader lock
   _system_loader_lock_obj = oopFactory::new_intArray(0, CHECK);
   // Initialize basic classes
-  resolve_preloaded_classes(CHECK);
+  resolve_well_known_classes(CHECK);
 }
 
 // Compact table of directions on the initialization of klasses:
 static const short wk_init_info[] = {
-  #define WK_KLASS_INIT_INFO(name, symbol, option) \
-    ( ((int)vmSymbols::VM_SYMBOL_ENUM_NAME(symbol) \
-          << SystemDictionary::CEIL_LG_OPTION_LIMIT) \
-      | (int)SystemDictionary::option ),
+  #define WK_KLASS_INIT_INFO(name, symbol) \
+    ((short)vmSymbols::VM_SYMBOL_ENUM_NAME(symbol)),
+
   WK_KLASSES_DO(WK_KLASS_INIT_INFO)
   #undef WK_KLASS_INIT_INFO
   0
 };
 
-bool SystemDictionary::resolve_wk_klass(WKID id, int init_opt, TRAPS) {
+#ifdef ASSERT
+bool SystemDictionary::is_well_known_klass(Symbol* class_name) {
+  int sid;
+  for (int i = 0; (sid = wk_init_info[i]) != 0; i++) {
+    Symbol* symbol = vmSymbols::symbol_at((vmSymbols::SID)sid);
+    if (class_name == symbol) {
+      return true;
+    }
+  }
+  return false;
+}
+#endif
+
+bool SystemDictionary::resolve_wk_klass(WKID id, TRAPS) {
   assert(id >= (int)FIRST_WKID && id < (int)WKID_LIMIT, "oob");
-  int  info = wk_init_info[id - FIRST_WKID];
-  int  sid  = (info >> CEIL_LG_OPTION_LIMIT);
+  int sid = wk_init_info[id - FIRST_WKID];
   Symbol* symbol = vmSymbols::symbol_at((vmSymbols::SID)sid);
   InstanceKlass** klassp = &_well_known_klasses[id];
 
-  bool must_load;
+
 #if INCLUDE_JVMCI
-  if (EnableJVMCI) {
-    // If JVMCI is enabled we require its classes to be found.
-    must_load = (init_opt < SystemDictionary::Opt) || (init_opt == SystemDictionary::Jvmci);
-  } else
-#endif
-  {
-    must_load = (init_opt < SystemDictionary::Opt);
+  if (id >= FIRST_JVMCI_WKID) {
+    assert(EnableJVMCI, "resolve JVMCI classes only when EnableJVMCI is true");
   }
+#endif
 
   if ((*klassp) == NULL) {
-    Klass* k;
-    if (must_load) {
-      k = resolve_or_fail(symbol, true, CHECK_0); // load required class
-    } else {
-      k = resolve_or_null(symbol,       CHECK_0); // load optional klass
-    }
-    (*klassp) = (k == NULL) ? NULL : InstanceKlass::cast(k);
+    Klass* k = resolve_or_fail(symbol, true, CHECK_0);
+    (*klassp) = InstanceKlass::cast(k);
   }
   return ((*klassp) != NULL);
 }
@@ -2006,19 +2002,15 @@ void SystemDictionary::resolve_wk_klasses_until(WKID limit_id, WKID &start_id, T
   assert((int)start_id <= (int)limit_id, "IDs are out of order!");
   for (int id = (int)start_id; id < (int)limit_id; id++) {
     assert(id >= (int)FIRST_WKID && id < (int)WKID_LIMIT, "oob");
-    int info = wk_init_info[id - FIRST_WKID];
-    int sid  = (info >> CEIL_LG_OPTION_LIMIT);
-    int opt  = (info & right_n_bits(CEIL_LG_OPTION_LIMIT));
-
-    resolve_wk_klass((WKID)id, opt, CHECK);
+    resolve_wk_klass((WKID)id, CHECK);
   }
 
   // move the starting value forward to the limit:
   start_id = limit_id;
 }
 
-void SystemDictionary::resolve_preloaded_classes(TRAPS) {
-  assert(WK_KLASS(Object_klass) == NULL, "preloaded classes should only be initialized once");
+void SystemDictionary::resolve_well_known_classes(TRAPS) {
+  assert(WK_KLASS(Object_klass) == NULL, "well-known classes should only be initialized once");
 
   // Create the ModuleEntry for java.base.  This call needs to be done here,
   // after vmSymbols::initialize() is called but before any classes are pre-loaded.
@@ -2086,7 +2078,8 @@ void SystemDictionary::resolve_preloaded_classes(TRAPS) {
   WKID jsr292_group_end   = WK_KLASS_ENUM_NAME(VolatileCallSite_klass);
   resolve_wk_klasses_until(jsr292_group_start, scan, CHECK);
   resolve_wk_klasses_through(jsr292_group_end, scan, CHECK);
-  resolve_wk_klasses_until(NOT_JVMCI(WKID_LIMIT) JVMCI_ONLY(FIRST_JVMCI_WKID), scan, CHECK);
+  WKID last = NOT_JVMCI(WKID_LIMIT) JVMCI_ONLY(FIRST_JVMCI_WKID);
+  resolve_wk_klasses_until(last, scan, CHECK);
 
   _box_klasses[T_BOOLEAN] = WK_KLASS(Boolean_klass);
   _box_klasses[T_CHAR]    = WK_KLASS(Character_klass);
@@ -2103,6 +2096,17 @@ void SystemDictionary::resolve_preloaded_classes(TRAPS) {
     Method* method = InstanceKlass::cast(ClassLoader_klass())->find_method(vmSymbols::checkPackageAccess_name(), vmSymbols::class_protectiondomain_signature());
     _has_checkPackageAccess = (method != NULL);
   }
+
+#ifdef ASSERT
+  if (UseSharedSpaces) {
+    assert(JvmtiExport::is_early_phase(),
+           "All well known classes must be resolved in JVMTI early phase");
+    for (int i = FIRST_WKID; i < last; i++) {
+      InstanceKlass* k = _well_known_klasses[i];
+      assert(k->is_shared(), "must not be replaced by JVMTI class file load hook");
+    }
+  }
+#endif
 }
 
 // Tells if a given klass is a box (wrapper class, such as java.lang.Integer).
