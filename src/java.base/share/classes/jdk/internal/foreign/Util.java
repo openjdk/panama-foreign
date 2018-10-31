@@ -74,7 +74,7 @@ public final class Util {
     }
 
     public static Object getBufferBase(ByteBuffer bb) {
-        return UNSAFE.getObject(bb, BYTE_BUFFER_BASE);
+        return UNSAFE.getReference(bb, BYTE_BUFFER_BASE);
     }
 
     public static long getBufferAddress(ByteBuffer bb) {
@@ -320,6 +320,6 @@ public final class Util {
     }
 
     public static Pointer<?> getSyntheticCallbackAddress(Object o) {
-        return (Pointer<?>)UNSAFE.getObject(o, 0L);
+        return (Pointer<?>)UNSAFE.getReference(o, 0L);
     }
 }
