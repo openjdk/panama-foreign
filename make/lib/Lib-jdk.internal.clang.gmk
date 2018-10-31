@@ -59,7 +59,7 @@ ifeq ($(ENABLE_LIBCLANG), true)
   endif
 
   $(eval $(call SetupCopyFiles, COPY_CLANG_LIB, \
-      FILES := $(CLANG_LIBNAME), \
+      FILES := $(wildcard $(CLANG_LIB_PATH)/$(LIBRARY_PREFIX)clang$(SHARED_LIBRARY_SUFFIX)*), \
       DEST := $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE), \
       MACRO := $(LINK_MACRO), \
   ))
