@@ -678,7 +678,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
         }
         ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Short512Vector.class, short.class, LENGTH,
-                               U.getObject(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
+                               U.getReference(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
                                this,
                                bb, ix,
                                (c, idx, v) -> {
@@ -1296,7 +1296,7 @@ final class Short512Vector extends ShortVector<Shapes.S512Bit> {
             }
             ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
             return VectorIntrinsics.load(Short512Vector.class, short.class, LENGTH,
-                                         U.getObject(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
+                                         U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
                                          bb, ix,
                                          (c, idx) -> {
                                              ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());

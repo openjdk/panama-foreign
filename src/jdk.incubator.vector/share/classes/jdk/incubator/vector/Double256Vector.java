@@ -364,7 +364,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.exp((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector log1p() {
@@ -373,7 +373,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.log1p((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector log() {
@@ -382,7 +382,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.log((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector log10() {
@@ -391,7 +391,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.log10((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector expm1() {
@@ -400,7 +400,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.expm1((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector cbrt() {
@@ -409,7 +409,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.cbrt((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector sin() {
@@ -418,7 +418,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.sin((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector cos() {
@@ -427,7 +427,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.cos((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector tan() {
@@ -436,7 +436,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.tan((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector asin() {
@@ -445,7 +445,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.asin((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector acos() {
@@ -454,7 +454,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.acos((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector atan() {
@@ -463,7 +463,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.atan((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector sinh() {
@@ -472,7 +472,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.sinh((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector cosh() {
@@ -481,7 +481,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.cosh((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector tanh() {
@@ -490,7 +490,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this,
             v1 -> ((Double256Vector)v1).uOp((i, a) -> (double) Math.tanh((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector pow(Vector<Double,Shapes.S256Bit> o) {
@@ -501,7 +501,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> ((Double256Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.pow(a,b))));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector hypot(Vector<Double,Shapes.S256Bit> o) {
@@ -512,7 +512,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> ((Double256Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.hypot(a,b))));
     }
-    
+
     @Override
     @ForceInline
     public Double256Vector atan2(Vector<Double,Shapes.S256Bit> o) {
@@ -523,7 +523,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             this, v,
             (v1, v2) -> ((Double256Vector)v1).bOp(v2, (i, a, b) -> (double)(Math.atan2(a,b))));
     }
-    
+
 
     // Binary operations
 
@@ -796,7 +796,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
         }
         ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Double256Vector.class, double.class, LENGTH,
-                               U.getObject(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
+                               U.getReference(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
                                this,
                                bb, ix,
                                (c, idx, v) -> {
@@ -1423,7 +1423,7 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             }
             ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
             return VectorIntrinsics.load(Double256Vector.class, double.class, LENGTH,
-                                         U.getObject(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
+                                         U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
                                          bb, ix,
                                          (c, idx) -> {
                                              ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());

@@ -412,7 +412,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.exp((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ log1p() {
@@ -421,7 +421,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.log1p((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ log() {
@@ -430,7 +430,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.log((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ log10() {
@@ -439,7 +439,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.log10((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ expm1() {
@@ -448,7 +448,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.expm1((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ cbrt() {
@@ -457,7 +457,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.cbrt((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ sin() {
@@ -466,7 +466,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.sin((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ cos() {
@@ -475,7 +475,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.cos((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ tan() {
@@ -484,7 +484,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.tan((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ asin() {
@@ -493,7 +493,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.asin((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ acos() {
@@ -502,7 +502,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.acos((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ atan() {
@@ -511,7 +511,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.atan((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ sinh() {
@@ -520,7 +520,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.sinh((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ cosh() {
@@ -529,7 +529,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.cosh((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ tanh() {
@@ -538,7 +538,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this,
             v1 -> (($vectortype$)v1).uOp((i, a) -> ($type$) Math.tanh((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ pow(Vector<$Boxtype$,Shapes.$shape$> o) {
@@ -549,7 +549,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this, v,
             (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(Math.pow(a,b))));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ hypot(Vector<$Boxtype$,Shapes.$shape$> o) {
@@ -560,7 +560,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this, v,
             (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(Math.hypot(a,b))));
     }
-    
+
     @Override
     @ForceInline
     public $vectortype$ atan2(Vector<$Boxtype$,Shapes.$shape$> o) {
@@ -571,7 +571,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             this, v,
             (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$)(Math.atan2(a,b))));
     }
-    
+
 #end[FP]
 
 #if[BITWISE]
@@ -1101,7 +1101,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         }
         ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
         VectorIntrinsics.store($vectortype$.class, $type$.class, LENGTH,
-                               U.getObject(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
+                               U.getReference(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
                                this,
                                bb, ix,
                                (c, idx, v) -> {
@@ -1791,7 +1791,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             }
             ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
             return VectorIntrinsics.load($vectortype$.class, $type$.class, LENGTH,
-                                         U.getObject(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
+                                         U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
                                          bb, ix,
                                          (c, idx) -> {
                                              ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
