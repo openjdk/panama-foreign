@@ -137,6 +137,8 @@ module java.base {
     exports jdk.internal to // for @HotSpotIntrinsicCandidate
             jdk.jfr,
             jdk.incubator.vector;
+    exports jdk.internal.event to
+        jdk.jfr;
     exports jdk.internal.jimage to
         jdk.jlink;
     exports jdk.internal.jimage.decompressor to

@@ -253,7 +253,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
     break;
 
   /* CompareAndSet, Object: */
-  case vmIntrinsics::_compareAndSetObject:
+  case vmIntrinsics::_compareAndSetReference:
 #ifdef _LP64
     if ( UseCompressedOops && !Matcher::match_rule_supported(Op_CompareAndSwapN)) return false;
     if (!UseCompressedOops && !Matcher::match_rule_supported(Op_CompareAndSwapP)) return false;
@@ -261,10 +261,10 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
     if (!Matcher::match_rule_supported(Op_CompareAndSwapP)) return false;
 #endif
     break;
-  case vmIntrinsics::_weakCompareAndSetObjectPlain:
-  case vmIntrinsics::_weakCompareAndSetObjectAcquire:
-  case vmIntrinsics::_weakCompareAndSetObjectRelease:
-  case vmIntrinsics::_weakCompareAndSetObject:
+  case vmIntrinsics::_weakCompareAndSetReferencePlain:
+  case vmIntrinsics::_weakCompareAndSetReferenceAcquire:
+  case vmIntrinsics::_weakCompareAndSetReferenceRelease:
+  case vmIntrinsics::_weakCompareAndSetReference:
 #ifdef _LP64
     if ( UseCompressedOops && !Matcher::match_rule_supported(Op_WeakCompareAndSwapN)) return false;
     if (!UseCompressedOops && !Matcher::match_rule_supported(Op_WeakCompareAndSwapP)) return false;
@@ -317,9 +317,9 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
     break;
 
   /* CompareAndExchange, Object: */
-  case vmIntrinsics::_compareAndExchangeObject:
-  case vmIntrinsics::_compareAndExchangeObjectAcquire:
-  case vmIntrinsics::_compareAndExchangeObjectRelease:
+  case vmIntrinsics::_compareAndExchangeReference:
+  case vmIntrinsics::_compareAndExchangeReferenceAcquire:
+  case vmIntrinsics::_compareAndExchangeReferenceRelease:
 #ifdef _LP64
     if ( UseCompressedOops && !Matcher::match_rule_supported(Op_CompareAndExchangeN)) return false;
     if (!UseCompressedOops && !Matcher::match_rule_supported(Op_CompareAndExchangeP)) return false;
@@ -381,7 +381,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_getAndSetLong:
     if (!Matcher::match_rule_supported(Op_GetAndSetL)) return false;
     break;
-  case vmIntrinsics::_getAndSetObject:
+  case vmIntrinsics::_getAndSetReference:
 #ifdef _LP64
     if (!UseCompressedOops && !Matcher::match_rule_supported(Op_GetAndSetP)) return false;
     if (UseCompressedOops && !Matcher::match_rule_supported(Op_GetAndSetN)) return false;
@@ -460,7 +460,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_getCharsStringU:
   case vmIntrinsics::_getCharStringU:
   case vmIntrinsics::_putCharStringU:
-  case vmIntrinsics::_getObject:
+  case vmIntrinsics::_getReference:
   case vmIntrinsics::_getBoolean:
   case vmIntrinsics::_getByte:
   case vmIntrinsics::_getShort:
@@ -469,7 +469,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_getLong:
   case vmIntrinsics::_getFloat:
   case vmIntrinsics::_getDouble:
-  case vmIntrinsics::_putObject:
+  case vmIntrinsics::_putReference:
   case vmIntrinsics::_putBoolean:
   case vmIntrinsics::_putByte:
   case vmIntrinsics::_putShort:
@@ -478,7 +478,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_putLong:
   case vmIntrinsics::_putFloat:
   case vmIntrinsics::_putDouble:
-  case vmIntrinsics::_getObjectVolatile:
+  case vmIntrinsics::_getReferenceVolatile:
   case vmIntrinsics::_getBooleanVolatile:
   case vmIntrinsics::_getByteVolatile:
   case vmIntrinsics::_getShortVolatile:
@@ -487,7 +487,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_getLongVolatile:
   case vmIntrinsics::_getFloatVolatile:
   case vmIntrinsics::_getDoubleVolatile:
-  case vmIntrinsics::_putObjectVolatile:
+  case vmIntrinsics::_putReferenceVolatile:
   case vmIntrinsics::_putBooleanVolatile:
   case vmIntrinsics::_putByteVolatile:
   case vmIntrinsics::_putShortVolatile:
@@ -496,7 +496,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_putLongVolatile:
   case vmIntrinsics::_putFloatVolatile:
   case vmIntrinsics::_putDoubleVolatile:
-  case vmIntrinsics::_getObjectAcquire:
+  case vmIntrinsics::_getReferenceAcquire:
   case vmIntrinsics::_getBooleanAcquire:
   case vmIntrinsics::_getByteAcquire:
   case vmIntrinsics::_getShortAcquire:
@@ -505,7 +505,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_getLongAcquire:
   case vmIntrinsics::_getFloatAcquire:
   case vmIntrinsics::_getDoubleAcquire:
-  case vmIntrinsics::_putObjectRelease:
+  case vmIntrinsics::_putReferenceRelease:
   case vmIntrinsics::_putBooleanRelease:
   case vmIntrinsics::_putByteRelease:
   case vmIntrinsics::_putShortRelease:
@@ -514,7 +514,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_putLongRelease:
   case vmIntrinsics::_putFloatRelease:
   case vmIntrinsics::_putDoubleRelease:
-  case vmIntrinsics::_getObjectOpaque:
+  case vmIntrinsics::_getReferenceOpaque:
   case vmIntrinsics::_getBooleanOpaque:
   case vmIntrinsics::_getByteOpaque:
   case vmIntrinsics::_getShortOpaque:
@@ -523,7 +523,7 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   case vmIntrinsics::_getLongOpaque:
   case vmIntrinsics::_getFloatOpaque:
   case vmIntrinsics::_getDoubleOpaque:
-  case vmIntrinsics::_putObjectOpaque:
+  case vmIntrinsics::_putReferenceOpaque:
   case vmIntrinsics::_putBooleanOpaque:
   case vmIntrinsics::_putByteOpaque:
   case vmIntrinsics::_putShortOpaque:
@@ -609,7 +609,9 @@ bool C2Compiler::is_intrinsic_supported(const methodHandle& method, bool is_virt
   return true;
 }
 
-int C2Compiler::initial_code_buffer_size() {
-  assert(SegmentedCodeCache, "Should be only used with a segmented code cache");
-  return Compile::MAX_inst_size + Compile::MAX_locs_size + initial_const_capacity;
+int C2Compiler::initial_code_buffer_size(int const_size) {
+  // See Compile::init_scratch_buffer_blob
+  int locs_size = sizeof(relocInfo) * Compile::MAX_locs_size;
+  int slop = 2 * CodeSection::end_slop(); // space between sections
+  return Compile::MAX_inst_size + Compile::MAX_stubs_size + const_size + slop + locs_size;
 }
