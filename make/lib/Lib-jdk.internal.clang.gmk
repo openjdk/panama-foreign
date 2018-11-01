@@ -29,25 +29,14 @@ include LibCommon.gmk
 
 ifeq ($(ENABLE_LIBCLANG), true)
 
-  LIBJCLANG_SRC := \
-      $(TOPDIR)/src/jdk.internal.clang/share/native/libjclang
-
-  $(eval $(call SetupNativeCompilation,BUILD_LIBJCLANG, \
+  $(eval $(call SetupJdkLibrary, BUILD_LIBJCLANG, \
       NAME := jclang, \
-      OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(LIBJCLANG_SRC), \
-      LANG := C++, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
           $(LIBCLANG_CPPFLAGS), \
-      LDFLAGS := $(LDFLAGS_JDKLIB) $(LIBCLANG_LDFLAGS), \
+      LDFLAGS := $(LDFLAGS_JDKLIB) $(LIBCLANG_LDFLAGS) \
+          $(call SET_SHARED_LIBRARY_ORIGIN), \
       LIBS := $(LIBCLANG_LIBS), \
-      VERSIONINFO_RESOURCE := $(GLOBAL_VERSION_INFO_RESOURCE), \
-      RC_FLAGS := $(RC_FLAGS) \
-          -D "JDK_FNAME=jclang.dll" \
-          -D "JDK_INTERNAL_NAME=jclang" \
-          -D "JDK_FTYPE=0x2L", \
-      OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjclang, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
 
   TARGETS += $(BUILD_LIBJCLANG)
