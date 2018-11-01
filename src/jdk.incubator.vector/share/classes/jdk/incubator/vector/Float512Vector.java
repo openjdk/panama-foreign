@@ -364,7 +364,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.exp((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector log1p() {
@@ -373,7 +373,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.log1p((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector log() {
@@ -382,7 +382,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.log((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector log10() {
@@ -391,7 +391,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.log10((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector expm1() {
@@ -400,7 +400,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.expm1((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector cbrt() {
@@ -409,7 +409,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.cbrt((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector sin() {
@@ -418,7 +418,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.sin((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector cos() {
@@ -427,7 +427,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.cos((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector tan() {
@@ -436,7 +436,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.tan((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector asin() {
@@ -445,7 +445,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.asin((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector acos() {
@@ -454,7 +454,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.acos((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector atan() {
@@ -463,7 +463,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.atan((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector sinh() {
@@ -472,7 +472,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.sinh((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector cosh() {
@@ -481,7 +481,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.cosh((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector tanh() {
@@ -490,7 +490,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this,
             v1 -> ((Float512Vector)v1).uOp((i, a) -> (float) Math.tanh((double) a)));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector pow(Vector<Float,Shapes.S512Bit> o) {
@@ -501,7 +501,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float)(Math.pow(a,b))));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector hypot(Vector<Float,Shapes.S512Bit> o) {
@@ -512,7 +512,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float)(Math.hypot(a,b))));
     }
-    
+
     @Override
     @ForceInline
     public Float512Vector atan2(Vector<Float,Shapes.S512Bit> o) {
@@ -523,7 +523,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             this, v,
             (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float)(Math.atan2(a,b))));
     }
-    
+
 
     // Binary operations
 
@@ -796,7 +796,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         }
         ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
         VectorIntrinsics.store(Float512Vector.class, float.class, LENGTH,
-                               U.getObject(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
+                               U.getReference(bb, BYTE_BUFFER_HB), ix + U.getLong(bb, BUFFER_ADDRESS),
                                this,
                                bb, ix,
                                (c, idx, v) -> {
@@ -1423,7 +1423,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             }
             ix = VectorIntrinsics.checkIndex(ix, bb.limit(), bitSize() / Byte.SIZE);
             return VectorIntrinsics.load(Float512Vector.class, float.class, LENGTH,
-                                         U.getObject(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
+                                         U.getReference(bb, BYTE_BUFFER_HB), U.getLong(bb, BUFFER_ADDRESS) + ix,
                                          bb, ix,
                                          (c, idx) -> {
                                              ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
