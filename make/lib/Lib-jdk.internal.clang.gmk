@@ -31,7 +31,6 @@ ifeq ($(ENABLE_LIBCLANG), true)
 
   $(eval $(call SetupJdkLibrary, BUILD_LIBJCLANG, \
       NAME := jclang, \
-      LANG := C++, \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) \
           $(LIBCLANG_CPPFLAGS), \
