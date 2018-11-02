@@ -29,7 +29,7 @@ include CopyCommon.gmk
 
 $(eval $(call SetupCopyFiles, COPY_JEXTRACT_HEADERS, \
     DEST := $(CONF_DST_DIR)/jextract, \
-    FILES := $(wildcard $(CLANG_INCLUDE_AUX_PATH)/*std*.h), \
+    FILES := $(wildcard $(CLANG_INCLUDE_AUX_PATH)/*.h), \
 ))
 
 TARGETS := $(COPY_JEXTRACT_HEADERS)

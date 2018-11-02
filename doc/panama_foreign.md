@@ -65,6 +65,25 @@ java -cp python.jar:. PythonMain
 
 ```
 
+## Embedding Python interpreter in your Java program (Ubuntu 16.04)
+
+### jextract a Jar file for Python.h
+
+```sh
+
+jextract -l python2.7 \
+  -rpath /usr/lib/python2.7/config-x86_64-linux-gnu \
+  --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
+  -t org.python \
+  /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \
+  -o python.jar
+
+```
+
+### Compiling and Running Python Java example
+
+Follow the instructions from the Mac OS section
+
 ## Using BLAS library
 
 BLAS is a popular library that allows fast matrix and vector computation: [http://www.netlib.org/blas/](http://www.netlib.org/blas/).
