@@ -26,7 +26,7 @@
 #include "ci/ciClassList.hpp"
 #include "ci/ciMethodType.hpp"
 #include "ci/ciNativeEntryPoint.hpp"
-#include "ci/ciUtilities.hpp"
+#include "ci/ciUtilities.inline.hpp"
 #include "classfile/javaClasses.hpp"
 #include "oops/oop.inline.hpp"
 
