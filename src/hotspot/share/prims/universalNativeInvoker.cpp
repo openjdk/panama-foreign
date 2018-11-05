@@ -22,9 +22,12 @@
  */
 
 #include "precompiled.hpp"
+#include "code/codeBlob.hpp"
 #include "prims/universalNativeInvoker.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
+#include "runtime/stubCodeGenerator.hpp"
+#include "prims/methodHandles.hpp"
 
 BufferBlob* UniversalNativeInvoker::_invoke_native_blob = NULL;
 
