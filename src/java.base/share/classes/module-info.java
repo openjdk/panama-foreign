@@ -143,8 +143,6 @@ module java.base {
             jdk.incubator.vector;
     exports jdk.internal.event to
         jdk.jfr;
-    exports jdk.internal.event to
-        jdk.jfr;
     exports jdk.internal.jimage to
         jdk.jlink;
     exports jdk.internal.jimage.decompressor to
