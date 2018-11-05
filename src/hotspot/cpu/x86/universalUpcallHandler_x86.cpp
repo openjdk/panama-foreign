@@ -58,7 +58,7 @@ static void upcall_init(void) {
 
   const char* cname = "jdk/internal/foreign/invokers/UniversalUpcallHandler";
   const char* mname = "invoke";
-  const char* mdesc = "(Ljdk/internal/foreign/invokers/UniversalUpcallHandler;JJJJJ)V";
+  const char* mdesc = "(Ljdk/internal/foreign/invokers/UniversalUpcallHandler;JJJJJJ)V";
   Symbol* cname_sym = SymbolTable::lookup(cname, (int)strlen(cname), THREAD);
   Symbol* mname_sym = SymbolTable::lookup(mname, (int)strlen(mname), THREAD);
   Symbol* mdesc_sym = SymbolTable::lookup(mdesc, (int)strlen(mdesc), THREAD);
@@ -151,6 +151,14 @@ struct upcall_context {
       } reg;
       VectorRegister regs[VECTOR_RETURN_REGISTERS_NOOF];
     } vector;
+
+    union {
+      struct {
+        long double st0;
+        long double st1;
+      } reg;
+      long double regs[X87_RETURN_REGISTERS_NOOF];
+    } x87;
   } returns;
 };
 
@@ -218,6 +226,7 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
   args.push_long((jlong)context->args.rsp);
   args.push_long((jlong)&context->returns.integer.regs);
   args.push_long((jlong)&context->returns.vector.regs);
+  args.push_long((jlong)&context->returns.x87.regs);
 
   JavaCalls::call_static(&result, upcall_info.upcall_method.klass, upcall_info.upcall_method.name, upcall_info.upcall_method.sig, &args, thread);
 
@@ -225,6 +234,8 @@ static void upcall_helper(jobject rec, struct upcall_context* context) {
   fprintf(stderr, "returns.integer.regs: %p\n", context->returns.integer.regs);
   fprintf(stderr, "returns.integer.reg.rax: 0x%lx\n", context->returns.integer.reg.rax);
   fprintf(stderr, "returns.integer.reg.rdx: 0x%lx\n", context->returns.integer.reg.rdx);
+  fprintf(stderr, "returns.x87.st0: %Lf\n", context->returns.x87.reg.st0);
+  fprintf(stderr, "returns.x87.st1: %Lf\n", context->returns.x87.reg.st1);
 #endif
 }
 
@@ -328,6 +339,11 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
     } else {
       __ movdqu(reg, Address(rsp, offs));
     }
+  }
+
+  for (size_t i = X87_RETURN_REGISTERS_NOOF; i > 0 ; i--) {
+      ssize_t offs = offsetof(struct upcall_context, returns.x87.regs) + (i - 1) * (sizeof(long double));
+      __ fld_x (Address(rsp, (int)offs));
   }
 
 

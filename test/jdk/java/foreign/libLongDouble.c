@@ -21,19 +21,26 @@
  * questions.
  */
 
-package java.foreign.memory;
+long double id(long double arg) {
+   return arg;
+}
 
-import java.foreign.annotations.NativeStruct;
-import java.math.BigDecimal;
+long double plus(long double arg1, long double arg2) {
+   return arg1 + arg2;
+}
 
-@NativeStruct(
-   value="[f128(get=real$get)(set=real$set)(ptr=real$ptr)f128(get=imag$get)(set=imag$set)(ptr=imag$ptr)](LongDoubleComplex)"
-)
-public interface LongDoubleComplex extends Struct<LongDoubleComplex> {
-    double real$get();
-    void real$set(double value);
-    Pointer<Double> real$ptr();
-    double imag$get();
-    void imag$set(double value);
-    Pointer<Double> imag$ptr();
+long double minus(long double arg1, long double arg2) {
+   return arg1 - arg2;
+}
+
+long double mul(long double arg1, long double arg2) {
+   return arg1 * arg2;
+}
+
+long double div(long double arg1, long double arg2) {
+   return arg1 / arg2;
+}
+
+long double f(long double arg, long double (*cb)(long double)) {
+   return cb(arg);
 }

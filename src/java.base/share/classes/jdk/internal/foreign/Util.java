@@ -22,9 +22,11 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.ScopeImpl.NativeScope;
 import jdk.internal.foreign.memory.*;
 import jdk.internal.misc.Unsafe;
 
+import java.foreign.Scope;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
@@ -43,6 +45,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
 public final class Util {
@@ -321,5 +324,25 @@ public final class Util {
 
     public static Pointer<?> getSyntheticCallbackAddress(Object o) {
         return (Pointer<?>)UNSAFE.getReference(o, 0L);
+    }
+
+    public static <Z> Z withOffHeapAddress(Pointer<?> p, LongFunction<Z> longFunction) {
+        try {
+            BoundedPointer<?> bp = (BoundedPointer<?>)p;
+            if (bp.scope() instanceof NativeScope) {
+                //address
+                return longFunction.apply(p.addr());
+            } else {
+                try (Scope sc = Scope.newNativeScope()) {
+                    Pointer<?> offheapPtr = sc.allocate(p.type());
+                    Pointer.copy(p, offheapPtr, p.type().bytesSize());
+                    Z z = longFunction.apply(offheapPtr.addr());
+                    Pointer.copy(offheapPtr, p, p.type().bytesSize());
+                    return z;
+                }
+            }
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 }

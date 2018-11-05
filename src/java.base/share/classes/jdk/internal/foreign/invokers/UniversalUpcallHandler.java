@@ -83,8 +83,8 @@ public class UniversalUpcallHandler extends UpcallHandler {
         }
     }
 
-    public static void invoke(UniversalUpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
-        UpcallContext context = handler.new UpcallContext(integers, vectors, stack, integerReturn, vectorReturn);
+    public static void invoke(UniversalUpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn, long x87Return) {
+        UpcallContext context = handler.new UpcallContext(integers, vectors, stack, integerReturn, vectorReturn, x87Return);
         handler.invoke(context);
     }
 
@@ -95,13 +95,15 @@ public class UniversalUpcallHandler extends UpcallHandler {
         private final Pointer<Long> stack;
         private final Pointer<Long> integerReturns;
         private final Pointer<Long> vectorReturns;
+        private final Pointer<Long> x87Returns;
 
-        UpcallContext(long integers, long vectors, long stack, long integerReturn, long vectorReturn) {
+        UpcallContext(long integers, long vectors, long stack, long integerReturn, long vectorReturn, long x87Returns) {
             this.integers = BoundedPointer.createNativePointer(NativeTypes.UINT64, integers);
             this.vectors = BoundedPointer.createNativePointer(NativeTypes.UINT64, vectors);
             this.stack = BoundedPointer.createNativePointer(NativeTypes.UINT64, stack);
             this.integerReturns = BoundedPointer.createNativePointer(NativeTypes.UINT64, integerReturn);
             this.vectorReturns = BoundedPointer.createNativePointer(NativeTypes.UINT64, vectorReturn);
+            this.x87Returns = BoundedPointer.createNativePointer(NativeTypes.UINT64, x87Returns);
         }
 
         Pointer<Long> getPtr(ArgumentBinding binding) {
@@ -113,11 +115,12 @@ public class UniversalUpcallHandler extends UpcallHandler {
                 return vectors.offset(storage.getStorageIndex() * Constants.VECTOR_REGISTER_SIZE / 8);
             case STACK_ARGUMENT_SLOT:
                 return stack.offset(storage.getStorageIndex());
-
             case INTEGER_RETURN_REGISTER:
                 return integerReturns.offset(storage.getStorageIndex());
             case VECTOR_RETURN_REGISTER:
                 return vectorReturns.offset(storage.getStorageIndex() * Constants.VECTOR_REGISTER_SIZE / 8);
+            case X87_RETURN_REGISTER:
+                return x87Returns.offset(storage.getStorageIndex() * Constants.X87_REGISTER_SIZE / 8);
             default:
                 throw new Error("Unhandled storage: " + storage);
             }

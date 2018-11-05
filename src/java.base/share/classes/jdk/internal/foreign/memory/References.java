@@ -181,11 +181,20 @@ public final class References {
          * @return the double value.
          */
         public double get(Pointer<?> pointer) {
+            long size = pointer.bytesSize();
             try {
-                return (double)getter().invokeExact(pointer);
+                if (size == 8) {
+                    //fastpath
+                    return (double)getter().invokeExact(pointer);
+                } else if (size == 16) {
+                    //extended precision, use JNI
+                    return longDoubleToDouble(pointer.addr());
+                }
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
+            //cannot get here
+            throw new UnsupportedOperationException("Unsupported layout size: " + size);
         }
 
         /**
@@ -193,11 +202,60 @@ public final class References {
          * @param value the double value.
          */
         public void set(Pointer<?> pointer, double value) {
+            long size = pointer.bytesSize();
             try {
-                setter().invokeExact(pointer, value);
+                if (size == 8) {
+                    //fastpath
+                    setter().invokeExact(pointer, value);
+                    return;
+                } else if (size == 16) {
+                    //extended precision, use JNI
+                    doubleToLongDouble(pointer.addr(), value);
+                    return;
+                }
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
+            //cannot get here
+            throw new UnsupportedOperationException("Unsupported layout size: " + size);
+        }
+    }
+
+        /**
+     * A reference for the Java reference type {@code BigDecimal}.
+     */
+    public static class OfLongDouble extends AbstractReference {
+
+        static final MethodHandle MH_PTR_GET;
+        static final MethodHandle MH_PTR_SET;
+
+        static {
+            try {
+                MH_PTR_GET = MethodHandles.lookup().findStatic(OfLongDouble.class, "get", MethodType.methodType(double.class, Pointer.class));
+                MH_PTR_SET = MethodHandles.lookup().findStatic(OfLongDouble.class, "set", MethodType.methodType(void.class, Pointer.class, double.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        OfLongDouble() {
+            super(MH_PTR_GET, MH_PTR_SET);
+        }
+
+        /**
+         * Read the contents of this {@code long double} as a double value.
+         * @return the double value.
+         */
+        static double get(Pointer<?> pointer) {
+            return Util.withOffHeapAddress(pointer, References::longDoubleToDouble);
+        }
+
+        /**
+         * Store a given {@code long double} value in this reference.
+         * @param value the double value.
+         */
+        static void set(Pointer<?> pointer, double value) {
+            Util.withOffHeapAddress(pointer, addr -> { doubleToLongDouble(addr, value); return null; });
         }
     }
 
@@ -424,6 +482,11 @@ public final class References {
      */
     public static OfDouble ofDouble = new OfDouble();
 
+    /**
+     * Reference for the {@code long double} primitive type.
+     */
+    public static OfLongDouble ofLongDouble = new OfLongDouble();
+
     public static OfPointer ofPointer = new OfPointer();
 
     public static OfArray ofArray = new OfArray();
@@ -435,4 +498,12 @@ public final class References {
     public static Reference ofNull = new OfGrumpy(() -> new NullPointerException("Cannot dereference null"));
 
     public static OfFunction ofFunction = new OfFunction();
+
+    public native static double longDoubleToDouble(long ptr);
+    public native static void doubleToLongDouble(long ptr, double val);
+
+    private static native void registerNatives();
+    static {
+        registerNatives();
+    }
 }

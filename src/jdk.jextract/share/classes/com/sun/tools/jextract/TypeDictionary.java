@@ -23,7 +23,6 @@
 
 package com.sun.tools.jextract;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
@@ -97,11 +96,10 @@ final class TypeDictionary {
             case Bool:
                 return JType.Bool;
             case Double:
+            case LongDouble:
                 return JType.Double;
             case Float:
                 return JType.Float;
-            case LongDouble:
-                return JType.of(BigDecimal.class);
         }
         return null;
     }

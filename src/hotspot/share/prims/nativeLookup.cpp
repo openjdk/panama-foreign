@@ -111,6 +111,7 @@ char* NativeLookup::long_jni_name(const methodHandle& method) {
 
 extern "C" {
   void JNICALL JVM_RegisterMethodHandleMethods(JNIEnv *env, jclass unsafecls);
+  void JNICALL JVM_RegisterReferencesMethods(JNIEnv *env, jclass unsafecls);
   void JNICALL JVM_RegisterUniversalNativeInvokerMethods(JNIEnv *env, jclass unsafecls);
   void JNICALL JVM_RegisterDirectNativeInvokerMethods(JNIEnv *env, jclass unsafecls);
   void JNICALL JVM_RegisterUpcallHandlerMethods(JNIEnv *env, jclass unsafecls);
@@ -130,6 +131,7 @@ extern "C" {
 static JNINativeMethod lookup_special_native_methods[] = {
   { CC"Java_jdk_internal_misc_Unsafe_registerNatives",             NULL, FN_PTR(JVM_RegisterJDKInternalMiscUnsafeMethods) },
   { CC"Java_java_lang_invoke_MethodHandleNatives_registerNatives", NULL, FN_PTR(JVM_RegisterMethodHandleMethods) },
+  { CC"Java_jdk_internal_foreign_memory_References_registerNatives",      NULL, FN_PTR(JVM_RegisterReferencesMethods) },
   { CC"Java_jdk_internal_foreign_invokers_UniversalNativeInvoker_registerNatives",      NULL, FN_PTR(JVM_RegisterUniversalNativeInvokerMethods) },
   { CC"Java_jdk_internal_foreign_invokers_DirectNativeInvoker_registerNatives",      NULL, FN_PTR(JVM_RegisterDirectNativeInvokerMethods) },
   { CC"Java_jdk_internal_foreign_invokers_UpcallHandler_registerNatives",      NULL, FN_PTR(JVM_RegisterUpcallHandlerMethods) },

@@ -34,6 +34,7 @@
 #define VECTOR_ARGUMENT_REGISTERS_NOOF (const size_t)Argument::n_float_register_parameters_c
 #define INTEGER_RETURN_REGISTERS_NOOF 2
 #define VECTOR_RETURN_REGISTERS_NOOF 2
+#define X87_RETURN_REGISTERS_NOOF 2
 
 extern Register integer_return_registers[];
 extern Register integer_argument_registers[];

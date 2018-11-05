@@ -23,5 +23,5 @@
 package jdk.internal.foreign.abi;
 
 enum ShuffleRecipeClass {
-    BUFFER, STACK, VECTOR, INTEGER
+    BUFFER, STACK, VECTOR, INTEGER, X87
 }

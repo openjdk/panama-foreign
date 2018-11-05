@@ -50,16 +50,17 @@ enum ShuffleRecipeStorageClass {
   CLASS_STACK,
   CLASS_VECTOR,
   CLASS_INTEGER,
-  CLASS_LAST = CLASS_INTEGER,
+  CLASS_X87,
+  CLASS_LAST = CLASS_X87,
   CLASS_NOOF
 };
 
 static ShuffleRecipeStorageClass index2storage_class[CLASS_NOOF + 1] = {
-  CLASS_BUF, CLASS_STACK, CLASS_VECTOR, CLASS_INTEGER, CLASS_NOOF
+  CLASS_BUF, CLASS_STACK, CLASS_VECTOR, CLASS_INTEGER, CLASS_X87, CLASS_NOOF
 };
 
 static const char* index2storage_class_name[CLASS_NOOF] = {
-  "CLASS_BUF", "CLASS_STACK", "CLASS_VECTOR", "CLASS_INTEGER"
+  "CLASS_BUF", "CLASS_STACK", "CLASS_VECTOR", "CLASS_INTEGER", "CLASS_X87"
 };
 
 static ShuffleRecipeStorageClass next_storage_class(ShuffleRecipeStorageClass c) {
@@ -75,6 +76,9 @@ static size_t class2maxwidth(ShuffleRecipeStorageClass c) {
   case CLASS_STACK:
   case CLASS_INTEGER:
     return 1;
+
+  case CLASS_X87:
+    return 2;
 
   case CLASS_VECTOR:
     if (UseAVX >= 3) {
@@ -279,6 +283,7 @@ struct ShuffleDowncallContext {
   struct {
     uint64_t integer[INTEGER_RETURN_REGISTERS_NOOF];
     VectorRegister vector[VECTOR_RETURN_REGISTERS_NOOF];
+    long double x87[X87_RETURN_REGISTERS_NOOF];
   } returns;
 };
 
@@ -453,6 +458,12 @@ private:
       assert(_index_in_class < INTEGER_RETURN_REGISTERS_NOOF, "out of bounds");
       memcpy(*dst_addrp, &_context.returns.integer[_index_in_class], sizeof(uint64_t));
       break;
+
+    case CLASS_X87: {
+      assert(_index_in_class < X87_RETURN_REGISTERS_NOOF, "out of bounds");
+      memcpy(*dst_addrp, &_context.returns.x87[_index_in_class], _npulls * sizeof(uint64_t));
+      break;
+    }
 
     default:
       assert(false, "Invalid class");
@@ -822,6 +833,11 @@ void UniversalNativeInvoker::generate_invoke_native(MacroAssembler* _masm) {
     } else {
       __ movdqu(Address(ctxt_reg, (int)offs), reg);
     }
+  }
+
+  for (size_t i = 0; i < X87_RETURN_REGISTERS_NOOF; i++) {
+    size_t offs = offsetof(struct ShuffleDowncallContext, returns.x87) + i * (sizeof(long double));
+    __ fstp_x(Address(ctxt_reg, (int)offs)); //pop ST(0)
   }
 #else
   __ hlt();

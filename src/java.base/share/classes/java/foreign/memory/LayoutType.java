@@ -31,7 +31,6 @@ import jdk.internal.foreign.memory.LayoutTypeImpl;
 import jdk.internal.foreign.memory.References;
 
 import java.foreign.layout.Address;
-import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
 import java.foreign.annotations.NativeCallback;
 import java.foreign.annotations.NativeStruct;
@@ -173,7 +172,8 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Double> ofDouble(Layout layout) {
-        return LayoutTypeImpl.of(double.class, layout, References.ofDouble);
+        return LayoutTypeImpl.of(double.class, layout,
+                layout.bitsSize() == 64 ? References.ofDouble : References.ofLongDouble);
     }
 
     /**
