@@ -95,12 +95,12 @@ public class CallingSequence {
 
     public long argumentStorageOffset(ArgumentBinding b) {
         return argsOffsets[b.getStorage().getStorageClass().ordinal()] +
-                 b.getStorage().getStorageIndex();
+                 b.getStorage().getStorageIndex() * b.getStorage().getSize() / 8;
     }
 
     public long returnStorageOffset(ArgumentBinding b) {
         return retOffsets[b.getStorage().getStorageClass().ordinal()] +
-                 b.getStorage().getStorageIndex();
+                 b.getStorage().getStorageIndex() * b.getStorage().getSize() / 8;
     }
 
     public String asString() {

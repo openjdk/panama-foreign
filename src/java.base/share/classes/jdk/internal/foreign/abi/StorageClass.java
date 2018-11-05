@@ -30,7 +30,8 @@ public enum StorageClass {
     VECTOR_ARGUMENT_REGISTER(true, false),
     INTEGER_ARGUMENT_REGISTER(true, false),
     VECTOR_RETURN_REGISTER(false, true),
-    INTEGER_RETURN_REGISTER(false, true);
+    INTEGER_RETURN_REGISTER(false, true),
+    X87_RETURN_REGISTER(false, true);
 
     final boolean isArgumentClass;
     final boolean isReturnClass;

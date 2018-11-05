@@ -29,6 +29,7 @@ import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.ShuffleRecipe;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.LayoutTypeImpl;
+import jdk.internal.misc.Unsafe;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -182,9 +183,9 @@ class UniversalNativeInvoker extends NativeInvoker {
                 }
             }
         } else {
-            assert bindings.size() == 1;
-            Pointer<?> dst = dstPtrFunc.apply(bindings.get(0));
-            Util.unsafeCast(dst, type).type().setter().invoke(dst, o);
+            assert bindings.size() <= 2;
+            Pointer<?> dst = Util.unsafeCast(dstPtrFunc.apply(bindings.get(0)), type);
+            dst.type().setter().invoke(dst, o);
         }
     }
 
@@ -213,7 +214,7 @@ class UniversalNativeInvoker extends NativeInvoker {
 
             return rtmp.get();
         } else {
-            assert bindings.size() == 1;
+            assert bindings.size() <= 2;
             return Util.unsafeCast(srcPtrFunc.apply(bindings.get(0)), type).get();
         }
     }

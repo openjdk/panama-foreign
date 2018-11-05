@@ -61,6 +61,10 @@ public class ShuffleRecipe {
             builder.getReturnsCollector().addPulls(ShuffleRecipeClass.VECTOR, binding.getStorage().getSize() / 8);
         });
 
+        callingSequence.getBindings(StorageClass.X87_RETURN_REGISTER).stream().forEach(binding -> {
+            builder.getReturnsCollector().addPulls(ShuffleRecipeClass.X87, binding.getStorage().getSize() / 8);
+        });
+
         return builder.build();
     }
 

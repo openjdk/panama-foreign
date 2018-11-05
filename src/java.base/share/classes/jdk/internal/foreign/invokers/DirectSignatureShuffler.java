@@ -415,6 +415,7 @@ class DirectSignatureShuffler {
 
     private static boolean isDirectBinding(ArgumentBinding binding) {
         switch (binding.getStorage().getStorageClass()) {
+            case X87_RETURN_REGISTER:
             case STACK_ARGUMENT_SLOT:
                 //arguments passed in memory not supported
                 return false;

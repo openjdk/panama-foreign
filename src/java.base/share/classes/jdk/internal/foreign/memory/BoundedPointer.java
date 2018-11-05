@@ -198,7 +198,7 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     public String dump(int nbytes) {
-        return region.dump(nbytes);
+        return region.dump(offset, nbytes);
     }
 
     static class PointerIterator<X> implements Iterator<BoundedPointer<X>> {

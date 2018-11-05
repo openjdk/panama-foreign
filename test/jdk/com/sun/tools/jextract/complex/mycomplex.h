@@ -37,18 +37,24 @@
 
 extern float complex cexpf(float complex);
 extern double complex cexp(double complex);
+extern long double complex cexpl(long double complex);
 
 extern float cabsf(float complex);
 extern double cabs(double complex);
+extern long double cabsl(long double complex);
 
 extern float cargf(float complex);
 extern double carg(double complex);
+extern long double cargl(long double complex);
 
 extern float cimagf(float complex);
 extern double cimag(double complex);
+extern long double cimagl(long double complex);
 
 extern float complex conjf(float complex);
 extern double complex conj(double complex);
+extern long double complex conjl(long double complex);
 
 extern float crealf(float complex);
 extern double creal(double complex);
+extern long double creall(long double complex);

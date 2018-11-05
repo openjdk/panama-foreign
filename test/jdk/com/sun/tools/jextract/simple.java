@@ -3,7 +3,6 @@ package com.acme;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeLocation;
 import java.foreign.annotations.NativeStruct;
-import java.math.BigDecimal;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 
@@ -79,9 +78,9 @@ public interface simple {
         public Pointer<Double> d$ptr();
 
         @NativeLocation(file="simple.h", line=16, column=17, USR="")
-        public BigDecimal ld$get();
-        public void ld$set(BigDecimal arg);
-        public Pointer<BigDecimal> ld$ptr();
+        public double ld$get();
+        public void ld$set(double arg);
+        public Pointer<Double> ld$ptr();
     }
 
     @NativeLocation(file="simple.h", line=17, column=3, USR="")

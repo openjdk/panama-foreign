@@ -26,6 +26,7 @@
 package java.foreign;
 
 import jdk.internal.foreign.abi.SystemABI;
+import jdk.internal.foreign.abi.SystemABI.CType;
 
 import java.foreign.layout.Value;
 import java.foreign.memory.LayoutType;
@@ -92,6 +93,12 @@ public final class NativeTypes {
      */
     public static LayoutType<Double> DOUBLE = LayoutType.ofDouble(
             ABI.layoutFor(SystemABI.CType.Double));
+
+    /**
+     * The {@code long double} type.
+     */
+    public static LayoutType<Double> LONG_DOUBLE = LayoutType.ofDouble(
+            ABI.layoutFor(CType.LongDouble));
 
     /**
      * The {@code int} type.

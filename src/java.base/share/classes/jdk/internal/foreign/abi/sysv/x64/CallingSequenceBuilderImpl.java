@@ -49,20 +49,31 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
     // Although AMD64 0.99.6 states 4 eightbytes
     private static final int MAX_AGGREGATE_REGS_SIZE = 8;
 
+    private static final ArrayList<ArgumentClass> COMPLEX_X87_CLASSES;
+
+    static {
+        COMPLEX_X87_CLASSES = new ArrayList<>();
+        COMPLEX_X87_CLASSES.add(ArgumentClass.X87);
+        COMPLEX_X87_CLASSES.add(ArgumentClass.X87UP);
+        COMPLEX_X87_CLASSES.add(ArgumentClass.X87);
+        COMPLEX_X87_CLASSES.add(ArgumentClass.X87UP);
+    }
+
     public CallingSequenceBuilderImpl(Argument returned, ArrayList<Argument> arguments) {
         super(returned, arguments);
     }
 
     static class ArgumentInfo {
         private final ArrayList<ArgumentClass> classes;
-        private final int nIntegerRegs, nVectorRegs;
+        private final int nIntegerRegs, nVectorRegs, nX87Regs;
         private final boolean inMemory;
 
-        public ArgumentInfo(ArrayList<ArgumentClass> classes, int nIntegerRegs, int nVectorRegs) {
+        public ArgumentInfo(ArrayList<ArgumentClass> classes, int nIntegerRegs, int nVectorRegs, int nX87Regs) {
             this.classes = classes;
 
             this.nIntegerRegs = nIntegerRegs;
             this.nVectorRegs = nVectorRegs;
+            this.nX87Regs = nX87Regs;
 
             this.inMemory = false;
         }
@@ -76,6 +87,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
             this.inMemory = true;
             this.nIntegerRegs = 0;
             this.nVectorRegs = 0;
+            this.nX87Regs = 0;
         }
 
         public int getIntegerRegs() {
@@ -86,6 +98,10 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
             return nVectorRegs;
         }
 
+        public int getX87Regs() {
+            return nX87Regs;
+        }
+
         public boolean inMemory() {
             return inMemory;
         }
@@ -94,7 +110,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
             return classes;
         }
 
-        static ArgumentInfo EMPTY = new ArgumentInfo(new ArrayList<>(), 0, 0);
+        static ArgumentInfo EMPTY = new ArgumentInfo(new ArrayList<>(), 0, 0, 0);
     }
 
     private ArrayList<ArgumentClass> classifyValueType(Value type, boolean named) {
@@ -281,7 +297,9 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         } else if (type instanceof Sequence) {
             return classifyArrayType((Sequence) type, named);
         } else if (type instanceof Group) {
-            return classifyStructType((Group) type, named);
+            return type.name().isPresent() && type.name().get().equals("LongDoubleComplex") ?
+                    COMPLEX_X87_CLASSES :
+                    classifyStructType((Group) type, named);
         } else {
             throw new IllegalArgumentException("Unhandled type " + type);
         }
@@ -296,7 +314,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         return classes;
     }
 
-    private ArgumentInfo examineArgument(Layout type, boolean named) {
+    private ArgumentInfo examineArgument(boolean forArguments, Layout type, boolean named) {
         ArrayList<ArgumentClass> classes = classifyType(type, named);
         if (classes.isEmpty()) {
             return ArgumentInfo.EMPTY;
@@ -304,6 +322,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
 
         int nIntegerRegs = 0;
         int nVectorRegs = 0;
+        int nX87Regs = 0;
 
         for (ArgumentClass c : classes) {
             switch (c) {
@@ -315,14 +334,19 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                 break;
             case X87:
             case X87UP:
-                return new ArgumentInfo(classes.size());
+                if (forArguments) {
+                    return new ArgumentInfo(classes.size());
+                } else {
+                    nX87Regs++;
+                    break;
+                }
             default:
                 break;
             }
         }
 
-        if (nIntegerRegs != 0 || nVectorRegs != 0) {
-            return new ArgumentInfo(classes, nIntegerRegs, nVectorRegs);
+        if (nIntegerRegs != 0 || nVectorRegs != 0 || nX87Regs != 0) {
+            return new ArgumentInfo(classes, nIntegerRegs, nVectorRegs, nX87Regs);
         } else {
             return new ArgumentInfo(classes.size());
         }
@@ -334,6 +358,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
 
         private int nIntegerRegs = 0;
         private int nVectorRegs = 0;
+        private int nX87Regs = 0;
         private long stackOffset = 0;
 
         StorageCalculator(ArrayList<ArgumentBinding>[] bindings, boolean forArguments) {
@@ -387,7 +412,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                         }
                         break;
 
-                    case SSE:
+                    case SSE: {
                         int width = 8;
 
                         for (int j = i + 1; j < info.getClasses().size(); j++) {
@@ -407,8 +432,30 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                             System.out.println("Argument " + arg.getName() + " will be passed in register " + StorageNames.getStorageName(storage));
                         }
                         break;
+                    }
 
                     case SSEUP:
+                        break;
+
+                    case X87: {
+                        int width = 8;
+
+                        if (i < info.getClasses().size() && info.getClasses().get(i + 1) == ArgumentClass.X87UP) {
+                            width += 8;
+                        }
+
+                        assert !forArguments;
+
+                        storage = new Storage(StorageClass.X87_RETURN_REGISTER, nX87Regs++, width);
+                        bindings[storage.getStorageClass().ordinal()].add(new ArgumentBinding(storage, arg, i * 8));
+
+                        if (DEBUG) {
+                            System.out.println("Argument " + arg.getName() + " will be passed in register " + StorageNames.getStorageName(storage));
+                        }
+                        break;
+                    }
+
+                    case X87UP:
                         break;
 
                     default:
@@ -420,7 +467,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
     }
 
     private void addBindings(ArrayList<Argument> members, StorageCalculator calculator) {
-        members.stream().forEach(arg -> calculator.addBindings(arg, examineArgument(arg.getType(), arg.isNamed())));
+        members.stream().forEach(arg -> calculator.addBindings(arg, examineArgument(calculator.forArguments, arg.getType(), arg.isNamed())));
     }
 
     @Override
@@ -432,7 +479,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         if (returned != null) {
             Layout returnType = returned.getType();
 
-            returnsInMemory = examineArgument(returnType, returned.isNamed()).inMemory();
+            returnsInMemory = examineArgument(false, returnType, returned.isNamed()).inMemory();
 
             // In some cases the return is passed in as first implicit pointer argument, and a corresponding pointer type is returned
             if (returnsInMemory) {

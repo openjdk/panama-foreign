@@ -27,6 +27,7 @@ import jdk.internal.foreign.abi.Storage;
 public class StorageNames {
     private static final String[] INTEGER_ARGUMENT_REGISTER_NAMES = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
     private static final String[] INTEGER_RETURN_REGISTERS_NAMES = { "rax", "rdx" };
+    private static final String[] X87_RETURN_REGISTERS_NAMES = { "st0", "st1" };
 
     private static String getVectorRegisterName(long index, long size) {
         switch ((int)size) {
@@ -64,6 +65,12 @@ public class StorageNames {
                 throw new IllegalArgumentException("Illegal storage: " + storage);
             }
             return getVectorRegisterName(storage.getStorageIndex(), storage.getSize());
+
+        case X87_RETURN_REGISTER:
+            if (storage.getStorageIndex() > Constants.MAX_X87_RETURN_REGISTERS) {
+                throw new IllegalArgumentException("Illegal storage: " + storage);
+            }
+            return X87_RETURN_REGISTERS_NAMES[(int) storage.getStorageIndex()];
 
         case STACK_ARGUMENT_SLOT: return "[sp + " + Long.toHexString(8 * storage.getStorageIndex()) + "]";
         }
