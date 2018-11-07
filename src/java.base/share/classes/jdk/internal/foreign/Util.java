@@ -76,6 +76,18 @@ public final class Util {
     private Util() {
     }
 
+    public static long addUnsignedExact(long a, long b) {
+        long result = a + b;
+        if(Long.compareUnsigned(result, a) < 0) {
+            throw new ArithmeticException(
+                "Unsigned overflow: "
+                    + Long.toUnsignedString(a) + " + "
+                    + Long.toUnsignedString(b));
+        }
+
+        return result;
+    }
+
     public static Object getBufferBase(ByteBuffer bb) {
         return UNSAFE.getReference(bb, BYTE_BUFFER_BASE);
     }

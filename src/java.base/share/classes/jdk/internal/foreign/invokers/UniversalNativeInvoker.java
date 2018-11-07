@@ -174,7 +174,7 @@ class UniversalNativeInvoker extends NativeInvoker {
                            List<ArgumentBinding> bindings) throws Throwable {
         if (o instanceof Struct) {
             Struct<?> struct = (Struct<?>) o;
-            if (struct.ptr().bytesSize() != 0) {
+            if (struct.ptr().type().bytesSize() != 0) {
                 Pointer<Long> src = Util.unsafeCast(struct.ptr(), NativeTypes.UINT64);
                 for (ArgumentBinding binding : bindings) {
                     Pointer<?> dst = dstPtrFunc.apply(binding);
