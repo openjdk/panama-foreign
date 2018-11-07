@@ -318,6 +318,94 @@ java -cp clapack.jar:. TestLapack
 
 ```
 
+## Using LAPACK library (Mac OS)
+
+On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
+
+### jextracting lapacke.h
+
+The following command can be used to extract the LAPACK header. These are too many symbols in lapacke.h
+and so jextract throws too many constant pool entries (IllegalArgumentException). To workaround, we
+exclude all symbols except the ones used in the Java sample code below.
+
+```sh
+
+jextract --exclude-symbols ^\(?!LAPACKE_dgels\|LAPACK_COL_MAJOR\).*$ \  
+  -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \  
+  -l lapacke -t lapack -infer-rpath /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
+
+```
+### Java sample code that uses LAPACK library
+
+```java
+
+import java.foreign.NativeTypes;
+import java.foreign.Scope;
+import java.foreign.memory.Array;
+
+import static lapack.lapacke_h.*;
+
+public class TestLapack {
+    public static void main(String[] args) {
+
+        /* Locals */
+        try (Scope sc = Scope.newNativeScope()) {
+            Array<Double> A = sc.allocateArray(NativeTypes.DOUBLE, new double[]{
+                    1, 2, 3, 4, 5, 1, 3, 5, 2, 4, 1, 4, 2, 5, 3
+            });
+            Array<Double> b = sc.allocateArray(NativeTypes.DOUBLE, new double[]{
+                    -10, 12, 14, 16, 18, -3, 14, 12, 16, 16
+            });
+            int info, m, n, lda, ldb, nrhs;
+
+            /* Initialization */
+            m = 5;
+            n = 3;
+            nrhs = 2;
+            lda = 5;
+            ldb = 5;
+
+            /* Print Entry Matrix */
+            print_matrix_colmajor("Entry Matrix A", m, n, A, lda );
+            /* Print Right Rand Side */
+            print_matrix_colmajor("Right Hand Side b", n, nrhs, b, ldb );
+            System.out.println();
+
+            /* Executable statements */
+            //            printf( "LAPACKE_dgels (col-major, high-level) Example Program Results\n" );
+            /* Solve least squares problem*/
+            info = LAPACKE_dgels(LAPACK_COL_MAJOR, (byte)'N', m, n, nrhs, A.elementPointer(), lda, b.elementPointer(), ldb);
+
+            /* Print Solution */
+            print_matrix_colmajor("Solution", n, nrhs, b, ldb );
+            System.out.println();
+            System.exit(info);
+        }
+    }
+
+    static void print_matrix_colmajor(String msg, int m, int n, Array<Double> mat, int ldm) {
+        int i, j;
+        System.out.printf("\n %s\n", msg);
+
+        for( i = 0; i < m; i++ ) {
+            for( j = 0; j < n; j++ ) System.out.printf(" %6.2f", mat.get(i+j*ldm));
+            System.out.printf( "\n" );
+        }
+    }
+}
+
+```
+
+### Compiling and running the above LAPACK sample
+
+```sh
+
+javac -cp clapack.jar TestLapack.java
+
+java -cp clapack.jar:. TestLapack
+
+```
+
 ## Using libproc library to list processes from Java (Mac OS)
 
 ### jextract a jar file for libproc.h
