@@ -75,3 +75,16 @@ void* get_stringsAsVoidPtr(int* pcount) {
 struct opaque* get_stringsAsOpaquePtr(int *pcount) {
     return (struct opaque*) get_strings2(pcount);
 }
+
+void * get_negative() {
+    return (void*) -1;
+}
+
+int * get_overflow_pointer() {
+    // automatic region length will be 1, not large enough for an int
+    return (int *) -1;
+}
+
+char * get_1_byte_pointer() {
+    return (char *) -1;
+}

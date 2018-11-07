@@ -132,7 +132,7 @@ public class UniversalUpcallHandler extends UpcallHandler {
             Pointer<Long> res = getPtr(callingSequence.getReturnBindings().get(0));
             long structAddr = res.get();
             long size = Util.alignUp(returnLayout.bytesSize(), 8);
-            return new BoundedPointer<Object>((LayoutType)returnLayout, new BoundedMemoryRegion(structAddr, size));
+            return new BoundedPointer<Object>((LayoutType)returnLayout, BoundedMemoryRegion.of(structAddr, size));
         }
     }
 

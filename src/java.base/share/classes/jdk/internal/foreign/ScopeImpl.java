@@ -92,7 +92,7 @@ public abstract class ScopeImpl implements Scope {
         LayoutType<T> type = LayoutType.ofStruct(clazz);
         // FIXME: is this alignment needed?
         long size = Util.alignUp(type.bytesSize(), 8);
-        BoundedPointer<T> p = new BoundedPointer<>(type, allocateRegion(size), 0);
+        BoundedPointer<T> p = new BoundedPointer<>(type, allocateRegion(size));
         return p.get();
     }
 
@@ -138,7 +138,7 @@ public abstract class ScopeImpl implements Scope {
                 return BoundedMemoryRegion.NOTHING;
             }
 
-            return new BoundedMemoryRegion(allocate(size), size, this);
+            return BoundedMemoryRegion.of(allocate(size), size, this);
         }
 
         private void rollbackAllocation() {
@@ -263,7 +263,7 @@ public abstract class ScopeImpl implements Scope {
             }
 
             long[] arr = new long[(int)nElems];
-            return new BoundedMemoryRegion(arr, Unsafe.ARRAY_LONG_BASE_OFFSET, allocSize, BoundedMemoryRegion.MODE_RW, this);
+            return BoundedMemoryRegion.of(arr, Unsafe.ARRAY_LONG_BASE_OFFSET, allocSize, BoundedMemoryRegion.MODE_RW, this);
         }
 
         @Override

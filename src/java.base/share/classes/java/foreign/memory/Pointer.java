@@ -167,27 +167,7 @@ public interface Pointer<X> extends Resource {
      * @return a pointer
      */
     static Pointer<Byte> fromByteBuffer(ByteBuffer bb) {
-        // For a direct ByteBuffer base == null and address is absolute
-        Object base = Util.getBufferBase(bb);
-        long address = Util.getBufferAddress(bb);
-        int pos = bb.position();
-        int limit = bb.limit();
-        BoundedMemoryRegion mr = new BoundedMemoryRegion(base, address + pos, limit - pos, bb.isReadOnly() ? 1 : 3) {
-            // Keep a reference to the buffer so it is kept alive while the
-            // region is alive
-            final Object ref = bb;
-
-            // @@@ For heap ByteBuffer the addr() will throw an exception
-            //     need to adapt a pointer and memory region be more cognizant
-            //     of the double addressing mode
-            //     the direct address for a heap buffer needs to behave
-            //     differently see JNI GetPrimitiveArrayCritical for clues on
-            //     behaviour.
-
-            // @@@ Same trick can be performed to create a pointer to a
-            //     primitive array
-        };
-        return new BoundedPointer<>(NativeTypes.UINT8, mr);
+        return new BoundedPointer<>(NativeTypes.UINT8, BoundedMemoryRegion.ofByteBuffer(bb));
     }
 
     static ByteBuffer asDirectByteBuffer(Pointer<?> buf, int bytes) throws IllegalAccessException {

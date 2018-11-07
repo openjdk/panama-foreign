@@ -100,7 +100,7 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     @Override
     public long bytesSize() {
-        return region.length - offset;
+        return region.length() - offset;
     }
 
     @Override
@@ -111,7 +111,7 @@ public class BoundedPointer<X> implements Pointer<X> {
     @Override
     public Stream<Pointer<X>> elements() {
         return StreamSupport.stream(Spliterators.spliterator(new PointerIterator<>(this),
-                region.length / (type.layout().bitsSize() / 8),
+                region.length() / (type.layout().bitsSize() / 8),
                 Spliterator.NONNULL | Spliterator.DISTINCT | Spliterator.ORDERED), false);
     }
 
@@ -172,20 +172,20 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(long offset) {
-        return new BoundedPointer<>(NativeTypes.VOID, BoundedMemoryRegion.EVERYTHING, offset);
+        return createNativePointer(NativeTypes.VOID, offset);
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset) {
-        return new BoundedPointer<>(NativeTypes.VOID, new BoundedMemoryRegion(offset, Long.MAX_VALUE, BoundedMemoryRegion.MODE_R, scope));
+        return createNativeVoidPointer(scope, offset, BoundedMemoryRegion.MODE_R);
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset, int mode) {
-        return new BoundedPointer<>(NativeTypes.VOID, new BoundedMemoryRegion(offset, Long.MAX_VALUE, mode, scope));
+        return new BoundedPointer<>(NativeTypes.VOID, BoundedMemoryRegion.ofEverything(mode, scope), offset);
     }
 
     public static <Z> BoundedPointer<Z> fromLongArray(LayoutType<Z> type, long[] values) {
         return new BoundedPointer<>(type,
-                        new BoundedMemoryRegion(values, Util.LONG_ARRAY_BASE, values.length * Util.LONG_ARRAY_SCALE), 0);
+                        BoundedMemoryRegion.of(values, Util.LONG_ARRAY_BASE, values.length * Util.LONG_ARRAY_SCALE));
     }
 
     public Scope scope() {

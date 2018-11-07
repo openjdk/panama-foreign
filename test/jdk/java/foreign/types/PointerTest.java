@@ -24,6 +24,8 @@
 /*
  * @test
  * @modules java.base/jdk.internal.misc
+ * 
+ * @run testng PointerTest
  */
 
 import java.lang.invoke.MethodHandles;
@@ -41,6 +43,11 @@ import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 import java.util.Objects;
 
+import org.testng.annotations.*;
+
+import static org.testng.Assert.*;
+
+@Test
 public class PointerTest {
     private static final boolean DEBUG = Boolean.getBoolean("PointerTest.DEBUG");
 
@@ -64,9 +71,11 @@ public class PointerTest {
             "get_structs=(u64:u64:u64:$(mystruct)u64:i32)v" +
             "get_structs2=(u64:i32)u64:u64:$(mystruct)" +
             "get_stringsAsVoidPtr=(u64:i32)u64:v" +
-            "get_stringsAsOpaquePtr=(u64:i32)u64:i8"
+            "get_stringsAsOpaquePtr=(u64:i32)u64:i8" +
+            "get_negative=()u64:u8" +
+            "get_overflow_pointer=()u64:i32" + 
+            "get_1_byte_pointer=()u64:i8"
     )
-
     static interface pointers {
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings")
         void get_strings(Pointer<Pointer<Pointer<Byte>>> p, Pointer<Integer> pcount);
@@ -85,6 +94,12 @@ public class PointerTest {
 
         @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs2")
         Pointer<Pointer<MyStruct>> get_structs2(Pointer<Integer> pcount);
+
+        Pointer<?> get_negative();
+
+        Pointer<Integer> get_overflow_pointer();
+
+        Pointer<Byte> get_1_byte_pointer();
 
         Void notExist(Pointer<Integer> pcount);
 
@@ -115,7 +130,7 @@ public class PointerTest {
         debug("values: " + values);
         debug("nvalues: " + pi.get());
 
-        assertEquals(VERIFICATION_STRINGS.length, pi.get());
+        assertEquals(VERIFICATION_STRINGS.length, (int) pi.get());
 
         for (int i = 0; i < pi.get(); i++) {
             Pointer<Byte> cstr = values.offset(i).get();
@@ -127,7 +142,7 @@ public class PointerTest {
         }
     }
 
-
+    @Test
     void testStrings() {
         try (Scope scope = Scope.newNativeScope()) {
             LayoutType<Integer> iType = NativeTypes.INT32;
@@ -144,6 +159,7 @@ public class PointerTest {
         }
     }
 
+    @Test
     void testStrings2() {
         try (Scope scope = Scope.newNativeScope()) {
             LayoutType<Integer> iType = NativeTypes.UINT32;
@@ -156,6 +172,7 @@ public class PointerTest {
         }
     }
 
+    @Test
     void testStringsAsVoidPtr() {
         try (Scope scope = Scope.newNativeScope()) {
             LayoutType<Integer> iType = NativeTypes.UINT32;
@@ -165,6 +182,7 @@ public class PointerTest {
         }
     }
 
+    @Test
     void testStringsAsOpaquePtr() {
         try (Scope scope = Scope.newNativeScope()) {
             LayoutType<Integer> iType = NativeTypes.UINT32;
@@ -177,7 +195,7 @@ public class PointerTest {
         debug("structs: " + structs);
         debug("nstructs: " + pi.get());
 
-        assertEquals(VERIFICATION_STRINGS.length, pi.get());
+        assertEquals(VERIFICATION_STRINGS.length, (int) pi.get());
 
         int counter = 1;
 
@@ -197,6 +215,7 @@ public class PointerTest {
         }
     }
 
+    @Test
     void testStructs() {
         try (Scope scope = Scope.newNativeScope()) {
             LayoutType<Integer> iType = NativeTypes.INT32;
@@ -213,6 +232,7 @@ public class PointerTest {
         }
     }
 
+    @Test
     void testStructs2() {
         try (Scope scope = Scope.newNativeScope()) {
             LayoutType<Integer> iType = NativeTypes.INT32;
@@ -225,6 +245,7 @@ public class PointerTest {
         }
     }
 
+    @Test
     void testNullPointer() {
         try (Scope scope = Scope.newNativeScope()) {
             LayoutType<Integer> iType = NativeTypes.UINT32;
@@ -237,7 +258,6 @@ public class PointerTest {
                 throw new IllegalStateException("null should not be allowed to pass as Pointer object and should not cause crash");
             } catch (NullPointerException npe) {
                 // expected
-                npe.printStackTrace(System.out);
             }
 
             values = ptrs.get_strings2(pi);
@@ -249,49 +269,33 @@ public class PointerTest {
         }
     }
 
+    @Test(expectedExceptions = AbstractMethodError.class)
     void testNotExistWontCrash() {
-        try {
-            ptrs.notExist(Pointer.nullPointer());
-            throw new IllegalStateException("Should get an NoSuchMethodError");
-        } catch (AbstractMethodError ex) {
-            // Expected
-            ex.printStackTrace();
-        }
+        ptrs.notExist(Pointer.nullPointer());
     }
 
+    @Test(expectedExceptions = RuntimeException.class)
     public void testMemoryRegionRange() {
-        try {
-            ByteBuffer bb = ByteBuffer.allocate(4);
-            Pointer<Byte> ptr = Pointer.fromByteBuffer(bb);
-            ptr.cast(NativeTypes.VOID).cast(NativeTypes.UINT64);
-            throw new AssertionError("should have thrown exception");
-        } catch (RuntimeException re) {
-            // expected
-            System.err.println("Got exception as expected");
-            re.printStackTrace();
-        }
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        Pointer<Byte> ptr = Pointer.fromByteBuffer(bb);
+        ptr.cast(NativeTypes.VOID).cast(NativeTypes.UINT64);
     }
 
-    public void test() {
-        testStrings();
-        testStrings2();
-        testStringsAsVoidPtr();
-        testStringsAsOpaquePtr();
-        testStructs();
-        testStructs2();
-        testNullPointer();
-        testNotExistWontCrash();
-        testMemoryRegionRange();
+    @Test
+    public void testNegative() throws IllegalAccessException {
+        Pointer<?> ptr = ptrs.get_negative();
+        assertEquals(-1L, ptr.addr());
     }
 
-    static void assertEquals(Object expected, Object actual) {
-        if (!expected.equals(actual)) {
-            throw new RuntimeException("expected: " + expected + " does not match actual: " + actual);
-        }
+    @Test(expectedExceptions = RuntimeException.class)
+    public void testAutomaticLengthRegionNotBigEnough() {
+        ptrs.get_overflow_pointer(); // testing returned pointer init
     }
 
-    public static void main(String[] args) {
-        PointerTest pt = new PointerTest();
-        pt.test();
+    @Test
+    public void test1ByteRegionAtMaxHeapOffset() throws IllegalAccessException {
+        Pointer<?> ptr = ptrs.get_1_byte_pointer(); // should not throw
+        assertEquals(-1L, ptr.addr());
     }
+
 }

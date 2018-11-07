@@ -27,53 +27,28 @@ import jdk.internal.misc.Unsafe;
 import java.foreign.Scope;
 import java.util.Objects;
 import java.security.AccessControlException;
+import java.nio.ByteBuffer;
+import jdk.internal.foreign.Util;
 
 public class BoundedMemoryRegion {
 
     public static final int MODE_R  = (1 << 0);
     public static final int MODE_W  = (1 << 1);
     public static final int MODE_RW = MODE_R | MODE_W;
-
-    public static final BoundedMemoryRegion EVERYTHING = new BoundedMemoryRegion(0, Long.MAX_VALUE); // FIXME: Not actually MAX_VALUE
-    public static final BoundedMemoryRegion NOTHING = new BoundedMemoryRegion(0, 0);
+    
+    public static final BoundedMemoryRegion EVERYTHING = BoundedMemoryRegion.ofEverything(MODE_RW, null);
+    public static final BoundedMemoryRegion NOTHING = BoundedMemoryRegion.of(0, 0);
 
     private static final Unsafe U = Unsafe.getUnsafe();
 
     private final Scope scope;
     private final Object base;
     private final long min;
-    final long length;
+    private final long length;
 
     private final int mode;
 
-    public BoundedMemoryRegion(long min, long length) {
-        this(min, length, MODE_RW);
-    }
-
-    public BoundedMemoryRegion(long min, long length, int mode) {
-        this(min, length, mode, null);
-    }
-
-    public BoundedMemoryRegion(long min, long length, Scope scope) {
-        this(null, min, length, MODE_RW, scope);
-    }
-
-    public BoundedMemoryRegion(long min, long length, int mode, Scope scope) {
-        this(null, min, length, mode, scope);
-    }
-
-    public BoundedMemoryRegion(Object base, long min, long length) {
-        this(base, min, length, MODE_RW, null);
-    }
-
-    public BoundedMemoryRegion(Object base, long min, long length, int mode) {
-        this(base, min, length, mode, null);
-    }
-
-    public BoundedMemoryRegion(Object base, long min, long length, int mode, Scope scope) {
-        if (min < 0 || length < 0) {
-            throw new IllegalArgumentException();
-        }
+    private BoundedMemoryRegion(Object base, long min, long length, int mode, Scope scope) {
         this.base = base;
         this.min = min;
         this.length = length;
@@ -81,8 +56,93 @@ public class BoundedMemoryRegion {
         this.scope = scope;
     }
 
+    // # Length = everything
+    public static BoundedMemoryRegion ofEverything(Scope scope) {
+        return ofEverything(MODE_RW, null);
+    }
+
+    public static BoundedMemoryRegion ofEverything(int mode, Scope scope) {
+        return new Everything(mode, scope);
+    }
+
+    // # Length unknown:
+    public static BoundedMemoryRegion of(long min) {
+        return BoundedMemoryRegion.of(min, MODE_RW, null);
+    }
+
+    public static BoundedMemoryRegion of(long min, int mode, Scope scope) {
+        // min + length may not overflow to positive, and length must be positive
+        long maxLength = min < 0 && min != Long.MIN_VALUE ? -min : Long.MAX_VALUE; 
+        return BoundedMemoryRegion.ofInternal(null, min, maxLength, mode, scope);
+    }
+
+    // # Length known:
+    public static BoundedMemoryRegion of(long min, long length) {
+        return BoundedMemoryRegion.of(min, length, null);
+    }
+
+    public static BoundedMemoryRegion of(long min, long length, Scope scope) {
+        return BoundedMemoryRegion.of(null, min, length, MODE_RW, scope);
+    }
+
+    public static BoundedMemoryRegion of(Object base, long min, long length) {
+        return BoundedMemoryRegion.of(base, min, length, MODE_RW, null);
+    }
+
+    public static BoundedMemoryRegion ofByteBuffer(ByteBuffer bb) {
+        // For a direct ByteBuffer base == null and address is absolute
+        Object base = Util.getBufferBase(bb);
+        long address = Util.getBufferAddress(bb);
+        int pos = bb.position();
+        int limit = bb.limit();
+        return new BoundedMemoryRegion(base, address + pos, limit - pos, bb.isReadOnly() ? MODE_R : MODE_RW, null) {
+            // Keep a reference to the buffer so it is kept alive while the
+            // region is alive
+            final Object ref = bb;
+
+            // @@@ For heap ByteBuffer the addr() will throw an exception
+            //     need to adapt a pointer and memory region be more cognizant
+            //     of the double addressing mode
+            //     the direct address for a heap buffer needs to behave
+            //     differently see JNI GetPrimitiveArrayCritical for clues on
+            //     behaviour.
+
+            // @@@ Same trick can be performed to create a pointer to a
+            //     primitive array
+
+            @Override
+            BoundedMemoryRegion limit(long newLength) {
+                throw new UnsupportedOperationException(); // bb ref would be lost otherwise
+            }
+        };
+    }    
+
+    public static BoundedMemoryRegion of(Object base, long min, long length, int mode, Scope scope) {
+        checkOverflow(min, length);
+        return ofInternal(base, min, length, mode, scope);
+    }
+
+    private static BoundedMemoryRegion ofInternal(Object base, long min, long length, int mode, Scope scope) {
+        if(length < 0) {
+            throw new IllegalArgumentException("length must be positive");
+        }
+        if(base != null && min < 0) {
+            throw new IllegalArgumentException("min must be positive if base is used");
+        }
+        return new BoundedMemoryRegion(base, min, length, mode, scope);
+    }
+
+    private static void checkOverflow(long min, long length) {
+        // we never access at `length`
+        Util.addUnsignedExact(min, length == 0 ? 0 : length - 1);
+    }
+
     public boolean isAccessibleFor(int mode) {
         return (this.mode & mode) == mode;
+    }
+
+    public long length() {
+        return length;
     }
 
     public long addr() throws UnsupportedOperationException {
@@ -126,6 +186,18 @@ public class BoundedMemoryRegion {
         }
     }
 
+    private void checkRead(long offset, long length) {
+        checkAlive();
+        checkAccess(MODE_R);
+        checkRange(offset, length);
+    }
+
+    private void checkWrite(long offset, long length) {
+        checkAlive();
+        checkAccess(MODE_W);
+        checkRange(offset, length);
+    }
+
     BoundedMemoryRegion limit(long newLength) {
         if (newLength > length || newLength < 0) {
             throw new IllegalArgumentException();
@@ -134,46 +206,36 @@ public class BoundedMemoryRegion {
     }
 
     public void copyTo(long srcOffset, BoundedMemoryRegion dst, long dstOffset, long length) {
-        checkRange(srcOffset, length);
-        checkAccess(MODE_R);
-        checkAlive();
         Objects.requireNonNull(dst);
-        dst.checkRange(dstOffset, length);
-        dst.checkAccess(MODE_W);
-        dst.checkAlive();
+
+        checkRead(srcOffset, length);
+        dst.checkWrite(dstOffset, length);
 
         U.copyMemory(this.base, this.min + srcOffset, dst.base, dst.min + dstOffset, length);
     }
 
     public long getBits(long offset, long size, boolean isSigned) {
-        checkAccess(MODE_R);
-        checkRange(offset, size);
-        checkAlive();
-
-        if (size < 0 || size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Invalid size: " + size);
-        }
+        checkRead(offset, size);      
 
         long bits;
-
         switch ((int)size) {
-        case 1:
-            bits = U.getByte(base, this.min + offset);
-            return isSigned ? bits : Byte.toUnsignedLong((byte)bits);
-
-        case 2:
-            bits = U.getShort(base, this.min + offset);
-            return isSigned ? bits : Short.toUnsignedLong((short)bits);
-
-        case 4:
-            bits = U.getInt(base, this.min + offset);
-            return isSigned ? bits : Integer.toUnsignedLong((int)bits);
-
-        case 8:
-            return U.getLong(base, this.min + offset);
-
-        default:
-            throw new IllegalArgumentException("Invalid size: " + size);
+            case 1:
+                bits = U.getByte(base, this.min + offset);
+                return isSigned ? bits : Byte.toUnsignedLong((byte)bits);
+    
+            case 2:
+                bits = U.getShort(base, this.min + offset);
+                return isSigned ? bits : Short.toUnsignedLong((short)bits);
+    
+            case 4:
+                bits = U.getInt(base, this.min + offset);
+                return isSigned ? bits : Integer.toUnsignedLong((int)bits);
+    
+            case 8:
+                return U.getLong(base, this.min + offset);
+    
+            default:
+                throw new IllegalArgumentException("Invalid size: " + size);
         }
     }
 
@@ -182,33 +244,27 @@ public class BoundedMemoryRegion {
     }
 
     public void putBits(long offset, long size, long value) {
-        checkAccess(MODE_R);
-        checkRange(offset, size);
-        checkAlive();
-
-        if (size < 0 || size > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Invalid size: " + size);
-        }
+        checkWrite(offset, size);       
 
         switch ((int)size) {
-        case 1:
-            U.putByte(base, this.min + offset, (byte)value);
-            break;
-
-        case 2:
-            U.putShort(base, this.min + offset, (short)value);
-            break;
-
-        case 4:
-            U.putInt(base, this.min + offset, (int)value);
-            break;
-
-        case 8:
-            U.putLong(base, this.min + offset, value);
-            break;
-
-        default:
-            throw new IllegalArgumentException("Invalid size: " + size);
+            case 1:
+                U.putByte(base, this.min + offset, (byte)value);
+                break;
+    
+            case 2:
+                U.putShort(base, this.min + offset, (short)value);
+                break;
+    
+            case 4:
+                U.putInt(base, this.min + offset, (int)value);
+                break;
+    
+            case 8:
+                U.putLong(base, this.min + offset, value);
+                break;
+    
+            default:
+                throw new IllegalArgumentException("Invalid size: " + size);
         }
     }
 
@@ -248,8 +304,7 @@ public class BoundedMemoryRegion {
         if (base != null) {
             throw new UnsupportedOperationException();
         }
-        checkRange(offset, U.addressSize());
-        checkAlive();
+        checkRead(offset, U.addressSize());      
         return U.getAddress(this.min + offset);
     }
 
@@ -257,8 +312,7 @@ public class BoundedMemoryRegion {
         if (base != null) {
             throw new UnsupportedOperationException();
         }
-        checkRange(offset, U.addressSize());
-        checkAlive();
+        checkWrite(offset, U.addressSize());           
         U.putAddress(this.min + offset, value);
     }
 
@@ -276,5 +330,26 @@ public class BoundedMemoryRegion {
             buf.append(" ");
         }
         return buf.toString();
+    }
+
+    private static class Everything extends BoundedMemoryRegion {
+
+        public Everything(int mode, Scope scope) {
+            super(null, 0, Long.MAX_VALUE, mode, scope);
+        }
+
+        @Override
+        public void checkBounds(long offset) {} // any offset is in bounds
+    
+        @Override
+        void checkRange(long offset, long length) {
+            checkOverflow(offset, length);
+        }
+
+        @Override
+        public long length() {
+            throw new UnsupportedOperationException(); // can not represent as 'long'
+        }
+
     }
 }

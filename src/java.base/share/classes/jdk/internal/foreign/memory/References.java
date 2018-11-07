@@ -285,7 +285,7 @@ public final class References {
             LayoutType<?> pointeeType = ((LayoutTypeImpl<?>)pointer.type()).pointeeType();
             Pointer<?> rp = addr == 0 ?
                     Pointer.nullPointer() :
-                    new BoundedPointer<>(pointeeType, new BoundedMemoryRegion(null, addr, Long.MAX_VALUE), 0);
+                    BoundedPointer.createNativePointer(pointeeType, addr);
             return rp;
         }
 
