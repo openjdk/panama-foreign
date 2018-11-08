@@ -16652,6 +16652,300 @@ instruct vxor16B(vecX dst, vecX src1, vecX src2)
   ins_pipe(vlogical128);
 %}
 
+// ------------------------------ Max ---------------------------------------
+
+instruct vmax8B(vecD dst, vecD src1, vecD src2)
+%{
+  predicate(n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "maxv  $dst,$src1,$src2\t# vector (8B)" %}
+  ins_encode %{
+    __ maxv(as_FloatRegister($dst$$reg), __ T8B,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop64);
+%}
+
+instruct vmax16B(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "maxv  $dst,$src1,$src2\t# vector (16B)" %}
+  ins_encode %{
+    __ maxv(as_FloatRegister($dst$$reg), __ T16B,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop128);
+%}
+
+instruct vmax4S(vecD dst, vecD src1, vecD src2)
+%{
+  predicate(n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "maxv  $dst,$src1,$src2\t# vector (4H)" %}
+  ins_encode %{
+    __ maxv(as_FloatRegister($dst$$reg), __ T4H,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop64);
+%}
+
+instruct vmax8S(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "maxv  $dst,$src1,$src2\t# vector (8H)" %}
+  ins_encode %{
+    __ maxv(as_FloatRegister($dst$$reg), __ T8H,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop128);
+%}
+
+instruct vmax2I(vecD dst, vecD src1, vecD src2)
+%{
+  predicate(n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "maxv  $dst,$src1,$src2\t# vector (2S)" %}
+  ins_encode %{
+    __ maxv(as_FloatRegister($dst$$reg), __ T2S,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop64);
+%}
+
+instruct vmax4I(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "maxv  $dst,$src1,$src2\t# vector (4S)" %}
+  ins_encode %{
+    __ maxv(as_FloatRegister($dst$$reg), __ T4S,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop128);
+%}
+
+instruct vmax2L(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP dst);
+  format %{ "cmgt  $dst,$src1,$src2\t# vector (2D)"
+            "bsl  $dst,$src1,$src2\t# vector (16B)" %}
+  ins_encode %{
+    __ cmgt(as_FloatRegister($dst$$reg), __ T2D,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+    __ bsl(as_FloatRegister($dst$$reg), __ T16B,
+           as_FloatRegister($src1$$reg),
+           as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop128);
+%}
+
+instruct vmax2F(vecD dst, vecD src1, vecD src2)
+%{
+  predicate(n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "fmax  $dst,$src1,$src2\t# vector (2F)" %}
+  ins_encode %{
+    __ fmax(as_FloatRegister($dst$$reg), __ T2S,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop_fp64);
+%}
+
+instruct vmax4F(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "fmax  $dst,$src1,$src2\t# vector (4S)" %}
+  ins_encode %{
+    __ fmax(as_FloatRegister($dst$$reg), __ T4S,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop_fp128);
+%}
+
+instruct vmax2D(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MaxV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "fmax  $dst,$src1,$src2\t# vector (2D)" %}
+  ins_encode %{
+    __ fmax(as_FloatRegister($dst$$reg), __ T2D,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop_fp128);
+%}
+
+// ------------------------------ Min ---------------------------------------
+
+instruct vmin8B(vecD dst, vecD src1, vecD src2)
+%{
+  predicate(n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "minv  $dst,$src1,$src2\t# vector (8B)" %}
+  ins_encode %{
+    __ minv(as_FloatRegister($dst$$reg), __ T8B,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop64);
+%}
+
+instruct vmin16B(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 16 && n->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "minv  $dst,$src1,$src2\t# vector (16B)" %}
+  ins_encode %{
+    __ minv(as_FloatRegister($dst$$reg), __ T16B,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop128);
+%}
+
+instruct vmin4S(vecD dst, vecD src1, vecD src2)
+%{
+  predicate(n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "minv  $dst,$src1,$src2\t# vector (4H)" %}
+  ins_encode %{
+    __ minv(as_FloatRegister($dst$$reg), __ T4H,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop64);
+%}
+
+instruct vmin8S(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 8 && n->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "minv  $dst,$src1,$src2\t# vector (8H)" %}
+  ins_encode %{
+    __ minv(as_FloatRegister($dst$$reg), __ T8H,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop128);
+%}
+
+instruct vmin2I(vecD dst, vecD src1, vecD src2)
+%{
+  predicate(n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "minv  $dst,$src1,$src2\t# vector (2S)" %}
+  ins_encode %{
+    __ minv(as_FloatRegister($dst$$reg), __ T2S,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop64);
+%}
+
+instruct vmin4I(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "minv  $dst,$src1,$src2\t# vector (4S)" %}
+  ins_encode %{
+    __ minv(as_FloatRegister($dst$$reg), __ T4S,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop128);
+%}
+
+instruct vmin2L(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP dst);
+  format %{ "cmgt  $dst,$src1,$src2\t# vector (2D)"
+            "bsl  $dst,$src2,$src1\t# vector (16B)" %}
+  ins_encode %{
+    __ cmgt(as_FloatRegister($dst$$reg), __ T2D,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+    __ bsl(as_FloatRegister($dst$$reg), __ T16B,
+           as_FloatRegister($src2$$reg),
+           as_FloatRegister($src1$$reg));
+  %}
+  ins_pipe(vdop128);
+%}
+
+instruct vmin2F(vecD dst, vecD src1, vecD src2)
+%{
+  predicate(n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "fmin  $dst,$src1,$src2\t# vector (2F)" %}
+  ins_encode %{
+    __ fmin(as_FloatRegister($dst$$reg), __ T2S,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop_fp64);
+%}
+
+instruct vmin4F(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 4 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "fmin  $dst,$src1,$src2\t# vector (4S)" %}
+  ins_encode %{
+    __ fmin(as_FloatRegister($dst$$reg), __ T4S,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop_fp128);
+%}
+
+instruct vmin2D(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MinV src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "fmin  $dst,$src1,$src2\t# vector (2D)" %}
+  ins_encode %{
+    __ fmin(as_FloatRegister($dst$$reg), __ T2D,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vdop_fp128);
+%}
+
 // ------------------------------ Shift ---------------------------------------
 
 instruct vshiftcntL(vecX dst, iRegIorL2I cnt) %{

@@ -2235,6 +2235,9 @@ public:
   INSN(mlsv, 1, 0b100101);
   INSN(sshl, 0, 0b010001);
   INSN(ushl, 1, 0b010001);
+  INSN(maxv, 0, 0b011001);
+  INSN(minv, 0, 0b011011);
+  INSN(cmgt, 0, 0b001101);
 
 #undef INSN
 
@@ -2297,6 +2300,8 @@ public:
   INSN(fsub, 0, 1, 0b110101);
   INSN(fmla, 0, 0, 0b110011);
   INSN(fmls, 0, 1, 0b110011);
+  INSN(fmax, 0, 0, 0b111101);
+  INSN(fmin, 0, 1, 0b111101);
 
 #undef INSN
 
