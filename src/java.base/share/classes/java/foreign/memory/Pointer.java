@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedMemoryRegion;
 import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.SharedSecrets;
 
 /**
  * This interface models a native pointer.

@@ -22,8 +22,8 @@
  */
 package jdk.internal.foreign;
 
-import jdk.internal.misc.JavaLangAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.org.objectweb.asm.Type;
 
 import java.foreign.Scope;

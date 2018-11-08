@@ -32,17 +32,15 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.math.BigInteger;
 import java.foreign.Library;
-import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
-import jdk.internal.misc.JavaLangAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 
