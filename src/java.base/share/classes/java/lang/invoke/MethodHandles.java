@@ -25,8 +25,8 @@
 
 package java.lang.invoke;
 
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
-import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.reflect.CallerSensitive;

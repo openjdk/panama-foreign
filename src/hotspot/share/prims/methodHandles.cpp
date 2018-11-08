@@ -1099,7 +1099,7 @@ static bool safe_to_expunge() {
 void MethodHandles::add_dependent_nmethod(oop call_site, nmethod* nm) {
   assert_locked_or_safepoint(CodeCache_lock);
 
-  oop context = java_lang_invoke_CallSite::context(call_site);
+  oop context = java_lang_invoke_CallSite::context_no_keepalive(call_site);
   DependencyContext deps = java_lang_invoke_MethodHandleNatives_CallSiteContext::vmdependencies(context);
   // Try to purge stale entries on updates.
   // Since GC doesn't clean dependency contexts rooted at CallSiteContext objects,
@@ -1112,7 +1112,7 @@ void MethodHandles::add_dependent_nmethod(oop call_site, nmethod* nm) {
 void MethodHandles::remove_dependent_nmethod(oop call_site, nmethod* nm) {
   assert_locked_or_safepoint(CodeCache_lock);
 
-  oop context = java_lang_invoke_CallSite::context(call_site);
+  oop context = java_lang_invoke_CallSite::context_no_keepalive(call_site);
   DependencyContext deps = java_lang_invoke_MethodHandleNatives_CallSiteContext::vmdependencies(context);
   deps.remove_dependent_nmethod(nm, /*expunge_stale_entries=*/safe_to_expunge());
 }
@@ -1126,7 +1126,7 @@ void MethodHandles::flush_dependent_nmethods(Handle call_site, Handle target) {
     NoSafepointVerifier nsv;
     MutexLockerEx mu2(CodeCache_lock, Mutex::_no_safepoint_check_flag);
 
-    oop context = java_lang_invoke_CallSite::context(call_site());
+    oop context = java_lang_invoke_CallSite::context_no_keepalive(call_site());
     DependencyContext deps = java_lang_invoke_MethodHandleNatives_CallSiteContext::vmdependencies(context);
     marked = deps.mark_dependent_nmethods(changes);
   }
