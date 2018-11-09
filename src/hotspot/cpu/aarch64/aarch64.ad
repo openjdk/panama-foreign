@@ -15183,6 +15183,63 @@ instruct tlsLoadP(thread_RegP dst)
 
 // ====================VECTOR INSTRUCTIONS=====================================
 
+instruct reinterpretD(vecD dst) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 &&
+            n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+  match(Set dst (VectorReinterpret dst));
+  ins_cost(0);
+  format %{ " # reinterpret $dst" %}
+  ins_encode %{
+    // empty
+  %}
+  ins_pipe(pipe_class_empty);
+%}
+
+instruct reinterpretD2X(vecX dst, vecD src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 &&
+            n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 8);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(INSN_COST);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    if (as_FloatRegister($dst$$reg) != as_FloatRegister($src$$reg)) {
+      __ orr(as_FloatRegister($dst$$reg), __ T8B,
+             as_FloatRegister($src$$reg),
+             as_FloatRegister($src$$reg));
+    }
+  %}
+  ins_pipe(vlogical64);
+%}
+
+instruct reinterpretX2D(vecD dst, vecX src) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 8 &&
+            n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
+  match(Set dst (VectorReinterpret src));
+  ins_cost(INSN_COST);
+  format %{ " # reinterpret $dst,$src" %}
+  ins_encode %{
+    // If register is the same, then move is not needed.
+    if (as_FloatRegister($dst$$reg) != as_FloatRegister($src$$reg)) {
+      __ orr(as_FloatRegister($dst$$reg), __ T8B,
+             as_FloatRegister($src$$reg),
+             as_FloatRegister($src$$reg));
+    }
+  %}
+  ins_pipe(vlogical64);
+%}
+
+instruct reinterpretX(vecX dst) %{
+  predicate(n->bottom_type()->is_vect()->length_in_bytes() == 16 &&
+            n->in(1)->bottom_type()->is_vect()->length_in_bytes() == 16);
+  match(Set dst (VectorReinterpret dst));
+  ins_cost(0);
+  format %{ " # reinterpret $dst" %}
+  ins_encode %{
+    // empty
+  %}
+  ins_pipe(pipe_class_empty);
+%}
+
 // Load vector (32 bits)
 instruct loadV4(vecD dst, vmem4 mem)
 %{
