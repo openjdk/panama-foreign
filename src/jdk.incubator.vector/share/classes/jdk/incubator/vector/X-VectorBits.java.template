@@ -1816,6 +1816,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             return VectorIntrinsics.cast(
                 o.getClass(),
                 o.elementType(), LENGTH,
+                $vectortype$.class,
                 $type$.class, LENGTH,
                 o, this,
                 (s, v) -> s.castDefault(v)
@@ -1893,6 +1894,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Byte$bits$Vector.class,
                     byte.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1902,6 +1904,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Short$bits$Vector.class,
                     short.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1911,6 +1914,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Int$bits$Vector.class,
                     int.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1920,6 +1924,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Long$bits$Vector.class,
                     long.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1929,6 +1934,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Float$bits$Vector.class,
                     float.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1938,6 +1944,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Double$bits$Vector.class,
                     double.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1957,6 +1964,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     $Type$64Vector.class,
                     $type$.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1966,6 +1974,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     $Type$128Vector.class,
                     $type$.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1975,6 +1984,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     $Type$256Vector.class,
                     $type$.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1984,6 +1994,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     $Type$512Vector.class,
                     $type$.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)

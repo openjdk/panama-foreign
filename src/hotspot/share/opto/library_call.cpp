@@ -6501,60 +6501,6 @@ enum VectorApiObjectType {
   VECAPI_SHUFFLE,
 };
 
-static ciKlass* get_exact_klass_for_vector_box(ciKlass* ctx, BasicType bt, int num_elem, VectorApiObjectType obj_type) {
-  // FIXME: use VM symbol table instead
-  ResourceMark rm;
-  stringStream ss;
-  ss.print_raw("jdk/incubator/vector/");
-  switch (bt) {
-    case T_BYTE: ss.print_raw("Byte"); break;
-    case T_SHORT: ss.print_raw("Short"); break;
-    case T_INT: ss.print_raw("Int"); break;
-    case T_LONG: ss.print_raw("Long"); break;
-    case T_FLOAT: ss.print_raw("Float"); break;
-    case T_DOUBLE: ss.print_raw("Double"); break;
-    default: fatal("unknown element type: %d", bt);
-  }
-  int bits = num_elem * BitsPerByte * type2aelembytes(bt);
-  switch (bits) {
-    case  64: // fall through
-    case 128: // fall through
-    case 256: // fall through
-    case 512: ss.print("%d", bits); break;
-    default: fatal("unknown vector size: %d", bits);
-  }
-  ss.print_raw("Vector");
-  if (obj_type != VECAPI_VECTOR) {
-    ss.print_raw("$");
-    switch (bt) {
-      case T_BYTE: ss.print_raw("Byte"); break;
-      case T_SHORT: ss.print_raw("Short"); break;
-      case T_INT: ss.print_raw("Int"); break;
-      case T_LONG: ss.print_raw("Long"); break;
-      case T_FLOAT: ss.print_raw("Float"); break;
-      case T_DOUBLE: ss.print_raw("Double"); break;
-      default: fatal("unknown element type: %d", bt);
-    }
-    switch (bits) {
-      case  64: // fall through
-      case 128: // fall through
-      case 256: // fall through
-      case 512: ss.print("%d", bits); break;
-      default: fatal("unknown vector size: %d", bits);
-    }
-    switch (obj_type) {
-      case VECAPI_MASK: ss.print_raw("Mask"); break;
-      case VECAPI_SPECIES: ss.print_raw("Species"); break;
-      case VECAPI_SHUFFLE: ss.print_raw("Shuffle"); break;
-      default: fatal("unknown vector object type");
-    }
-  }
-
-  ciSymbol* vector_klass_name = ciSymbol::make(ss.as_string());
-  ciKlass* vector_klass = ctx->find_klass(vector_klass_name);
-  return vector_klass;
-}
-
 enum VectorMaskUseType {
   VecMaskUseLoad,
   VecMaskUseStore,
@@ -7910,16 +7856,18 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
   const TypeInstPtr* elem_klass_from   = gvn().type(argument(1))->is_instptr();
   const TypeInt*     vlen_from         = gvn().type(argument(2))->is_int();
 
-  const TypeInstPtr* elem_klass_to     = gvn().type(argument(3))->is_instptr();
-  const TypeInt*     vlen_to           = gvn().type(argument(4))->is_int();
+  const TypeInstPtr* vector_klass_to   = gvn().type(argument(3))->is_instptr();
+  const TypeInstPtr* elem_klass_to     = gvn().type(argument(4))->is_instptr();
+  const TypeInt*     vlen_to           = gvn().type(argument(5))->is_int();
 
   if (vector_klass_from->const_oop() == NULL || elem_klass_from->const_oop() == NULL || !vlen_from->is_con() ||
-      elem_klass_to->const_oop() == NULL || !vlen_to->is_con()) {
+      vector_klass_to->const_oop() == NULL || elem_klass_to->const_oop() == NULL || !vlen_to->is_con()) {
     return false; // not enough info for intrinsification
   }
 
   ciKlass* vbox_klass_from = vector_klass_from->const_oop()->as_instance()->java_lang_Class_klass();
-  if (!vbox_klass_from->is_vectorapi_vector()) {
+  ciKlass* vbox_klass_to = vector_klass_to->const_oop()->as_instance()->java_lang_Class_klass();
+  if (!vbox_klass_from->is_vectorapi_vector() || !vbox_klass_to->is_vectorapi_vector()) {
     return false; // only vector & mask are supported
   }
   bool is_mask = vbox_klass_from->is_vectormask();
@@ -7966,7 +7914,7 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
 
   const TypeInstPtr* vbox_type_from = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass_from);
 
-  Node* opd1 = unbox_vector(argument(5), vbox_type_from, elem_bt_from, num_elem_from);
+  Node* opd1 = unbox_vector(argument(6), vbox_type_from, elem_bt_from, num_elem_from);
   if (opd1 == NULL) {
     return false;
   }
@@ -8027,8 +7975,6 @@ bool LibraryCallKit::inline_vector_cast_reinterpret(bool is_cast) {
     op = _gvn.transform(new VectorReinterpretNode(op, src_type, dst_type));
   }
 
-  ciKlass* vbox_klass_to = get_exact_klass_for_vector_box(vbox_klass_from, elem_type_to->basic_type(),
-                                                          num_elem_to, is_mask ? VECAPI_MASK : VECAPI_VECTOR);
   const TypeInstPtr* vbox_type_to = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass_to);
   Node* vbox = box_vector(op, vbox_type_to, elem_bt_to, num_elem_to);
   set_vector_result(vbox);

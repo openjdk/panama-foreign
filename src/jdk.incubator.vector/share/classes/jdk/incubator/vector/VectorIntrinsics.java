@@ -322,6 +322,7 @@ import java.util.function.*;
     <S, VIN, V>
     V reinterpret(Class<?> fromVectorClass,
                   Class<?> fromElementType, int fromVLen,
+                  Class<?> toVectorClass,
                   Class<?> toElementType, int toVLen,
                   VIN v, S s,
                   VectorReinterpretOp<S, VIN, V> defaultImpl) {
@@ -339,6 +340,7 @@ import java.util.function.*;
     <S, VIN, V>
     V cast(Class<?> fromVectorClass,
            Class<?> fromElementType, int fromVLen,
+           Class<?> toVectorClass,
            Class<?> toElementType, int toVLen,
            VIN v, S s,
            VectorCastOp<S, VIN, V> defaultImpl) {

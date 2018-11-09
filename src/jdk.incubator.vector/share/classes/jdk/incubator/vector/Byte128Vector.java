@@ -1320,6 +1320,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             return VectorIntrinsics.cast(
                 o.getClass(),
                 o.elementType(), LENGTH,
+                Byte128Vector.class,
                 byte.class, LENGTH,
                 o, this,
                 (s, v) -> s.castDefault(v)
@@ -1397,6 +1398,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte128Vector.class,
                     byte.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)
@@ -1406,6 +1408,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short128Vector.class,
                     short.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)
@@ -1415,6 +1418,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Int128Vector.class,
                     int.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)
@@ -1424,6 +1428,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Long128Vector.class,
                     long.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)
@@ -1433,6 +1438,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float128Vector.class,
                     float.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)
@@ -1442,6 +1448,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Double128Vector.class,
                     double.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)
@@ -1461,6 +1468,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte64Vector.class,
                     byte.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)
@@ -1470,6 +1478,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte128Vector.class,
                     byte.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)
@@ -1479,6 +1488,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte256Vector.class,
                     byte.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)
@@ -1488,6 +1498,7 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte512Vector.class,
                     byte.class, so.length(),
+                    Byte128Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte128Vector) s.reshape(v)

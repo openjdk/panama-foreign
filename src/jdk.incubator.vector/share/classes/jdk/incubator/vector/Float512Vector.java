@@ -1448,6 +1448,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
             return VectorIntrinsics.cast(
                 o.getClass(),
                 o.elementType(), LENGTH,
+                Float512Vector.class,
                 float.class, LENGTH,
                 o, this,
                 (s, v) -> s.castDefault(v)
@@ -1525,6 +1526,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte512Vector.class,
                     byte.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)
@@ -1534,6 +1536,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short512Vector.class,
                     short.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)
@@ -1543,6 +1546,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Int512Vector.class,
                     int.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)
@@ -1552,6 +1556,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Long512Vector.class,
                     long.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)
@@ -1561,6 +1566,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float512Vector.class,
                     float.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)
@@ -1570,6 +1576,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Double512Vector.class,
                     double.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)
@@ -1589,6 +1596,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float64Vector.class,
                     float.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)
@@ -1598,6 +1606,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float128Vector.class,
                     float.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)
@@ -1607,6 +1616,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float256Vector.class,
                     float.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)
@@ -1616,6 +1626,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float512Vector.class,
                     float.class, so.length(),
+                    Float512Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float512Vector) s.reshape(v)

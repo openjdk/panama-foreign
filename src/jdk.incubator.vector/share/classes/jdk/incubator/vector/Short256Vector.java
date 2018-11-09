@@ -1321,6 +1321,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
             return VectorIntrinsics.cast(
                 o.getClass(),
                 o.elementType(), LENGTH,
+                Short256Vector.class,
                 short.class, LENGTH,
                 o, this,
                 (s, v) -> s.castDefault(v)
@@ -1398,6 +1399,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte256Vector.class,
                     byte.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
@@ -1407,6 +1409,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short256Vector.class,
                     short.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
@@ -1416,6 +1419,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Int256Vector.class,
                     int.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
@@ -1425,6 +1429,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Long256Vector.class,
                     long.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
@@ -1434,6 +1439,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float256Vector.class,
                     float.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
@@ -1443,6 +1449,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Double256Vector.class,
                     double.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
@@ -1462,6 +1469,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short64Vector.class,
                     short.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
@@ -1471,6 +1479,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short128Vector.class,
                     short.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
@@ -1480,6 +1489,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short256Vector.class,
                     short.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
@@ -1489,6 +1499,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short512Vector.class,
                     short.class, so.length(),
+                    Short256Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
