@@ -1159,6 +1159,8 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
             return (ShortSpecies<S>) Short256Vector.SPECIES;
         } else if (s == Shapes.S_512_BIT) {
             return (ShortSpecies<S>) Short512Vector.SPECIES;
+        } else if (s == Shapes.S_Max_BIT) {
+            return (ShortSpecies<S>) ShortMaxVector.SPECIES;
         } else {
             throw new IllegalArgumentException("Bad shape: " + s);
         }

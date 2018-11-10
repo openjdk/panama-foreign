@@ -581,7 +581,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * Logically left shifts this vector by an input vector.
      * <p>
      * This is a vector binary operation where the primitive logical left shift
-     * operation ({@code <<}) is applied to lane elements. 
+     * operation ({@code <<}) is applied to lane elements.
      *
      * @param v the input vector
      * @return the result of logically left shifting this vector by the input
@@ -594,7 +594,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * elements controlled by a mask.
      * <p>
      * This is a vector binary operation where the primitive logical left shift
-     * operation ({@code <<}) is applied to lane elements. 
+     * operation ({@code <<}) is applied to lane elements.
      *
      * @param v the input vector
      * @param m the mask controlling lane selection
@@ -1367,6 +1367,8 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
             return (IntSpecies<S>) Int256Vector.SPECIES;
         } else if (s == Shapes.S_512_BIT) {
             return (IntSpecies<S>) Int512Vector.SPECIES;
+        } else if (s == Shapes.S_Max_BIT) {
+            return (IntSpecies<S>) IntMaxVector.SPECIES;
         } else {
             throw new IllegalArgumentException("Bad shape: " + s);
         }

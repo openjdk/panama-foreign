@@ -1591,7 +1591,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Double64Vector resize(Vector<Double, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Double64Vector)) {
                 Double64Vector so = (Double64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Double64Vector.class,
@@ -1601,7 +1601,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
                     so, this,
                     (s, v) -> (Double64Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Double128Vector)) {
                 Double128Vector so = (Double128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Double128Vector.class,
@@ -1611,7 +1611,7 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
                     so, this,
                     (s, v) -> (Double64Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Double256Vector)) {
                 Double256Vector so = (Double256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Double256Vector.class,
@@ -1621,10 +1621,21 @@ final class Double64Vector extends DoubleVector<Shapes.S64Bit> {
                     so, this,
                     (s, v) -> (Double64Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Double512Vector)) {
                 Double512Vector so = (Double512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Double512Vector.class,
+                    double.class, so.length(),
+                    Double64Vector.class,
+                    double.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Double64Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof DoubleMaxVector)) {
+                DoubleMaxVector so = (DoubleMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    DoubleMaxVector.class,
                     double.class, so.length(),
                     Double64Vector.class,
                     double.class, LENGTH,

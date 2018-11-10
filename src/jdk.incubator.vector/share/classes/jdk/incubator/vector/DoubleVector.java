@@ -1728,6 +1728,8 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
             return (DoubleSpecies<S>) Double256Vector.SPECIES;
         } else if (s == Shapes.S_512_BIT) {
             return (DoubleSpecies<S>) Double512Vector.SPECIES;
+        } else if (s == Shapes.S_Max_BIT) {
+            return (DoubleSpecies<S>) DoubleMaxVector.SPECIES;
         } else {
             throw new IllegalArgumentException("Bad shape: " + s);
         }

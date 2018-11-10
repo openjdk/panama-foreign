@@ -1508,7 +1508,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Int256Vector resize(Vector<Integer, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Int64Vector)) {
                 Int64Vector so = (Int64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Int64Vector.class,
@@ -1518,7 +1518,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
                     so, this,
                     (s, v) -> (Int256Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Int128Vector)) {
                 Int128Vector so = (Int128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Int128Vector.class,
@@ -1528,7 +1528,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
                     so, this,
                     (s, v) -> (Int256Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Int256Vector)) {
                 Int256Vector so = (Int256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Int256Vector.class,
@@ -1538,10 +1538,21 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
                     so, this,
                     (s, v) -> (Int256Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Int512Vector)) {
                 Int512Vector so = (Int512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Int512Vector.class,
+                    int.class, so.length(),
+                    Int256Vector.class,
+                    int.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Int256Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof IntMaxVector)) {
+                IntMaxVector so = (IntMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    IntMaxVector.class,
                     int.class, so.length(),
                     Int256Vector.class,
                     int.class, LENGTH,

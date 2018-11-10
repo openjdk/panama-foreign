@@ -1591,7 +1591,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Float128Vector resize(Vector<Float, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Float64Vector)) {
                 Float64Vector so = (Float64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Float64Vector.class,
@@ -1601,7 +1601,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
                     so, this,
                     (s, v) -> (Float128Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Float128Vector)) {
                 Float128Vector so = (Float128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Float128Vector.class,
@@ -1611,7 +1611,7 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
                     so, this,
                     (s, v) -> (Float128Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Float256Vector)) {
                 Float256Vector so = (Float256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Float256Vector.class,
@@ -1621,10 +1621,21 @@ final class Float128Vector extends FloatVector<Shapes.S128Bit> {
                     so, this,
                     (s, v) -> (Float128Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Float512Vector)) {
                 Float512Vector so = (Float512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Float512Vector.class,
+                    float.class, so.length(),
+                    Float128Vector.class,
+                    float.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Float128Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof FloatMaxVector)) {
+                FloatMaxVector so = (FloatMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    FloatMaxVector.class,
                     float.class, so.length(),
                     Float128Vector.class,
                     float.class, LENGTH,

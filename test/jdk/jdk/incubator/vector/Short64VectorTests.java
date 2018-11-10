@@ -47,7 +47,7 @@ import java.util.stream.Stream;
 @Test
 public class Short64VectorTests extends AbstractVectorTest {
 
-    static final ShortVector.ShortSpecies<Shapes.S64Bit> SPECIES =
+    static final ShortVector.ShortSpecies<Vector.Shape> SPECIES =
                 ShortVector.species(Shapes.S_64_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
@@ -79,50 +79,52 @@ public class Short64VectorTests extends AbstractVectorTest {
     }
 
     interface FReductionOp {
-      short apply(short[] a, int idx);
+        short apply(short[] a, int idx);
     }
 
     static void assertReductionArraysEquals(short[] a, short[] b, FReductionOp f) {
-      int i = 0;
-      try {
-        for (; i < a.length; i += SPECIES.length()) {
-          Assert.assertEquals(b[i], f.apply(a, i));
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(b[i], f.apply(a, i));
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
         }
-      } catch (AssertionError e) {
-        Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
-      }
     }
- 
+
     interface FBoolReductionOp {
-      boolean apply(boolean[] a, int idx);
+        boolean apply(boolean[] a, int idx);
     }
 
     static void assertReductionBoolArraysEquals(boolean[] a, boolean[] b, FBoolReductionOp f) {
-      int i = 0;
-      try {
-        for (; i < a.length; i += SPECIES.length()) {
-          Assert.assertEquals(f.apply(a, i), b[i]);
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(f.apply(a, i), b[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
         }
-      } catch (AssertionError e) {
-        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
-      }
     }
 
     static void assertInsertArraysEquals(short[] a, short[] b, short element, int index) {
-      int i = 0;
-      try {
-         for (; i < a.length; i += 1) {
-            if(i%SPECIES.length() == index)
-              Assert.assertEquals(b[i], element);
-            else
-              Assert.assertEquals(b[i], a[i]);
+        int i = 0;
+        try {
+            for (; i < a.length; i += 1) {
+                if(i%SPECIES.length() == index) {
+                    Assert.assertEquals(b[i], element);
+                } else {
+                    Assert.assertEquals(b[i], a[i]);
+                }
+            }
+        } catch (AssertionError e) {
+            if (i%SPECIES.length() == index) {
+                Assert.assertEquals(b[i], element, "at index #" + i);
+            } else {
+                Assert.assertEquals(b[i], a[i], "at index #" + i);
+            }
         }
-      } catch (AssertionError e) {
-        if(i%SPECIES.length() == index)
-              Assert.assertEquals(b[i], element, "at index #" + i);
-            else
-              Assert.assertEquals(b[i], a[i], "at index #" + i);
-      }
     }
 
     static void assertRearrangeArraysEquals(short[] a, short[] r, int[] order, int vector_len) {
@@ -213,7 +215,7 @@ public class Short64VectorTests extends AbstractVectorTest {
     interface FBinArrayOp {
         short apply(short[] a, int b);
     }
-    
+
     static void assertArraysEquals(short[] a, short[] r, FBinArrayOp f) {
         int i = 0;
         try {
@@ -348,7 +350,7 @@ public class Short64VectorTests extends AbstractVectorTest {
         }
         return a;
     }
-    
+
     static short cornerCaseValue(int i) {
         switch(i % 5) {
             case 0:
@@ -364,7 +366,7 @@ public class Short64VectorTests extends AbstractVectorTest {
         }
     }
    static short get(short[] a, int i) {
-     return (short) a[i]; 
+       return (short) a[i];
    }
 
     static short add(short a, short b) {
@@ -373,14 +375,14 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void addShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.add(bv).intoArray(r, i);
             }
         }
@@ -395,12 +397,12 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
@@ -413,14 +415,14 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void subShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.sub(bv).intoArray(r, i);
             }
         }
@@ -435,12 +437,12 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
@@ -455,14 +457,14 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void mulShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.mul(bv).intoArray(r, i);
             }
         }
@@ -477,12 +479,12 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
@@ -496,14 +498,14 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void andShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.and(bv).intoArray(r, i);
             }
         }
@@ -520,12 +522,12 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.and(bv, vmask).intoArray(r, i);
             }
         }
@@ -540,14 +542,14 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void orShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.or(bv).intoArray(r, i);
             }
         }
@@ -564,12 +566,12 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.or(bv, vmask).intoArray(r, i);
             }
         }
@@ -584,14 +586,14 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void xorShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.xor(bv).intoArray(r, i);
             }
         }
@@ -608,12 +610,12 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.xor(bv, vmask).intoArray(r, i);
             }
         }
@@ -634,13 +636,13 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void aShiftRShort64VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.aShiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -657,11 +659,11 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.aShiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -676,13 +678,13 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void shiftRShort64VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.shiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -699,11 +701,11 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.shiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -718,13 +720,13 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void shiftLShort64VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.shiftL((int)b[i]).intoArray(r, i);
             }
         }
@@ -741,11 +743,11 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.shiftL((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -759,14 +761,14 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void maxShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.max(bv).intoArray(r, i);
             }
         }
@@ -779,14 +781,14 @@ public class Short64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "shortBinaryOpProvider")
     static void minShort64VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] b = fb.apply(SPECIES.length()); 
-        short[] r = new short[a.length];       
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = new short[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.min(bv).intoArray(r, i);
             }
         }
@@ -811,7 +813,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.andAll();
             }
         }
@@ -837,7 +839,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.orAll();
             }
         }
@@ -863,7 +865,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.xorAll();
             }
         }
@@ -886,7 +888,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.addAll();
             }
         }
@@ -908,7 +910,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.subAll();
             }
         }
@@ -930,7 +932,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.mulAll();
             }
         }
@@ -940,7 +942,7 @@ public class Short64VectorTests extends AbstractVectorTest {
     static short minAll(short[] a, int idx) {
         short res = Short.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res < a[i])?res:a[i];
+            res = (res < a[i])?res:a[i];
         }
 
         return res;
@@ -952,7 +954,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.minAll();
             }
         }
@@ -974,7 +976,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.maxAll();
             }
         }
@@ -999,7 +1001,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromArray(mask, i);
+              Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromArray(mask, i);
               r[i] = vmask.anyTrue();
             }
         }
@@ -1025,7 +1027,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromArray(mask, i);
+              Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromArray(mask, i);
               r[i] = vmask.allTrue();
             }
         }
@@ -1041,7 +1043,7 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               av.with(0, (short)4).intoArray(r, i);
             }
         }
@@ -1056,9 +1058,9 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Shapes.S64Bit> mv = av.lessThan(bv);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short, Vector.Shape> mv = av.lessThan(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1076,9 +1078,9 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Shapes.S64Bit> mv = av.greaterThan(bv);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short, Vector.Shape> mv = av.greaterThan(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1096,9 +1098,9 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Shapes.S64Bit> mv = av.equal(bv);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short, Vector.Shape> mv = av.equal(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1116,9 +1118,9 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Shapes.S64Bit> mv = av.notEqual(bv);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short, Vector.Shape> mv = av.notEqual(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1136,9 +1138,9 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Shapes.S64Bit> mv = av.lessThanEq(bv);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short, Vector.Shape> mv = av.lessThanEq(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1156,9 +1158,9 @@ public class Short64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Shapes.S64Bit> mv = av.greaterThanEq(bv);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short, Vector.Shape> mv = av.greaterThanEq(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1180,12 +1182,12 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] b = fb.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                ShortVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
@@ -1201,7 +1203,7 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] r = new short[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
             }
         }
@@ -1216,10 +1218,10 @@ public class Short64VectorTests extends AbstractVectorTest {
     static void getShort64VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
-        
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 int num_lanes = SPECIES.length();
                 // Manually unroll because full unroll happens after intrinsification.
                 // Unroll is needed because get intrinsic requires for index to be a known constant.
@@ -1399,7 +1401,7 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] r = new short[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.neg().intoArray(r, i);
             }
         }
@@ -1413,11 +1415,11 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.neg(vmask).intoArray(r, i);
             }
         }
@@ -1439,7 +1441,7 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] r = new short[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.abs().intoArray(r, i);
             }
         }
@@ -1453,11 +1455,11 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.abs(vmask).intoArray(r, i);
             }
         }
@@ -1482,7 +1484,7 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] r = new short[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.not().intoArray(r, i);
             }
         }
@@ -1498,11 +1500,11 @@ public class Short64VectorTests extends AbstractVectorTest {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.not(vmask).intoArray(r, i);
             }
         }

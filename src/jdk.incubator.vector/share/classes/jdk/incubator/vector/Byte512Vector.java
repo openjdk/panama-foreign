@@ -1463,7 +1463,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Byte512Vector resize(Vector<Byte, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Byte64Vector)) {
                 Byte64Vector so = (Byte64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Byte64Vector.class,
@@ -1473,7 +1473,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
                     so, this,
                     (s, v) -> (Byte512Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Byte128Vector)) {
                 Byte128Vector so = (Byte128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Byte128Vector.class,
@@ -1483,7 +1483,7 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
                     so, this,
                     (s, v) -> (Byte512Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Byte256Vector)) {
                 Byte256Vector so = (Byte256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Byte256Vector.class,
@@ -1493,10 +1493,21 @@ final class Byte512Vector extends ByteVector<Shapes.S512Bit> {
                     so, this,
                     (s, v) -> (Byte512Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Byte512Vector)) {
                 Byte512Vector so = (Byte512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Byte512Vector.class,
+                    byte.class, so.length(),
+                    Byte512Vector.class,
+                    byte.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Byte512Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof ByteMaxVector)) {
+                ByteMaxVector so = (ByteMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    ByteMaxVector.class,
                     byte.class, so.length(),
                     Byte512Vector.class,
                     byte.class, LENGTH,

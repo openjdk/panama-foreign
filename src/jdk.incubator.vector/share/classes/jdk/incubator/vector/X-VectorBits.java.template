@@ -1959,7 +1959,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> $vectortype$ resize(Vector<$Boxtype$, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof $Type$64Vector)) {
                 $Type$64Vector so = ($Type$64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     $Type$64Vector.class,
@@ -1969,7 +1969,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof $Type$128Vector)) {
                 $Type$128Vector so = ($Type$128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     $Type$128Vector.class,
@@ -1979,7 +1979,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof $Type$256Vector)) {
                 $Type$256Vector so = ($Type$256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     $Type$256Vector.class,
@@ -1989,10 +1989,21 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof $Type$512Vector)) {
                 $Type$512Vector so = ($Type$512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     $Type$512Vector.class,
+                    $type$.class, so.length(),
+                    $vectortype$.class,
+                    $type$.class, LENGTH,
+                    so, this,
+                    (s, v) -> ($vectortype$) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof $Type$MaxVector)) {
+                $Type$MaxVector so = ($Type$MaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    $Type$MaxVector.class,
                     $type$.class, so.length(),
                     $vectortype$.class,
                     $type$.class, LENGTH,

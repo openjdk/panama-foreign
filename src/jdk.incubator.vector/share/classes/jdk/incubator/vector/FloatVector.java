@@ -1728,6 +1728,8 @@ public abstract class FloatVector<S extends Vector.Shape> extends Vector<Float,S
             return (FloatSpecies<S>) Float256Vector.SPECIES;
         } else if (s == Shapes.S_512_BIT) {
             return (FloatSpecies<S>) Float512Vector.SPECIES;
+        } else if (s == Shapes.S_Max_BIT) {
+            return (FloatSpecies<S>) FloatMaxVector.SPECIES;
         } else {
             throw new IllegalArgumentException("Bad shape: " + s);
         }

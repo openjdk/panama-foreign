@@ -4,6 +4,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntFunction;
@@ -12,13 +14,16 @@ import java.util.function.IntFunction;
  * @test
  * @modules jdk.incubator.vector
  * @modules java.base/jdk.internal.vm.annotation
- * @run testng VectorReshapeTests
+ * @run testng/othervm --add-opens jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED
+ *      VectorReshapeTests
  */
- 
+
 @Test
 public class VectorReshapeTests {
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
     static final int NUM_ITER = 200 * INVOC_COUNT;
+
+    static final Vector.Shape S_Max_BIT = getMaxBit();
 
     static final IntVector.IntSpecies<Shapes.S64Bit> ispec64 = IntVector.species(Shapes.S_64_BIT);
     static final FloatVector.FloatSpecies<Shapes.S64Bit> fspec64 = FloatVector.species(Shapes.S_64_BIT);
@@ -47,6 +52,25 @@ public class VectorReshapeTests {
     static final DoubleVector.DoubleSpecies<Shapes.S512Bit> dspec512 = DoubleVector.species(Shapes.S_512_BIT);
     static final ByteVector.ByteSpecies<Shapes.S512Bit> bspec512 = ByteVector.species(Shapes.S_512_BIT);
     static final ShortVector.ShortSpecies<Shapes.S512Bit> sspec512 = ShortVector.species(Shapes.S_512_BIT);
+
+    static final IntVector.IntSpecies<Vector.Shape> ispecMax = IntVector.species(S_Max_BIT);
+    static final FloatVector.FloatSpecies<Vector.Shape> fspecMax = FloatVector.species(S_Max_BIT);
+    static final LongVector.LongSpecies<Vector.Shape> lspecMax = LongVector.species(S_Max_BIT);
+    static final DoubleVector.DoubleSpecies<Vector.Shape> dspecMax = DoubleVector.species(S_Max_BIT);
+    static final ByteVector.ByteSpecies<Vector.Shape> bspecMax = ByteVector.species(S_Max_BIT);
+    static final ShortVector.ShortSpecies<Vector.Shape> sspecMax = ShortVector.species(S_Max_BIT);
+
+    static Vector.Shape getMaxBit() {
+        try {
+            Class<?> shapesClazz = Class.forName("jdk.incubator.vector.Shapes");
+            Class<?> clazz = Class.forName("jdk.incubator.vector.Shapes$SMaxBit");
+            VarHandle privateHandle = MethodHandles.privateLookupIn(Shapes.class, MethodHandles.lookup())
+                .findStaticVarHandle(Shapes.class, "S_Max_BIT", clazz);
+            return (Vector.Shape)(privateHandle.get());
+        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
+            throw new Error(e);
+        }
+    }
 
     static <T> IntFunction<T> withToString(String s, IntFunction<T> f) {
         return new IntFunction<T>() {
@@ -179,7 +203,7 @@ public class VectorReshapeTests {
                 map(f -> new Object[]{f}).
                 toArray(Object[][]::new);
     }
-    
+
     static final List<IntFunction<boolean[]>> BOOL_GENERATORS = List.of(
         withToString("boolean(i%3)", (int s) -> {
             return fill_bool(s, i -> i % 3 == 0);
@@ -205,7 +229,7 @@ public class VectorReshapeTests {
                 map(f -> new Object[]{f}).
                 toArray(Object[][]::new);
     }
-    
+
     static final List<IntFunction<int[]>> INT_GENERATORS = List.of(
             withToString("int(i)", (int s) -> {
                 return fill_int(s, i -> (int)i);
@@ -277,31 +301,43 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
         byte[] bout512 = new byte[bin512.length];
+        byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
             testVectorResize(bspec64, bspec64, bin64, bout64);
             testVectorResize(bspec64, bspec128, bin64, bout128);
             testVectorResize(bspec64, bspec256, bin64, bout256);
             testVectorResize(bspec64, bspec512, bin64, bout512);
+            testVectorResize(bspec64, bspecMax, bin64, boutMax);
 
             testVectorResize(bspec128, bspec64, bin128, bout64);
             testVectorResize(bspec128, bspec128, bin128, bout128);
             testVectorResize(bspec128, bspec256, bin128, bout256);
             testVectorResize(bspec128, bspec512, bin128, bout512);
+            testVectorResize(bspec128, bspecMax, bin128, boutMax);
 
             testVectorResize(bspec256, bspec64, bin256, bout64);
             testVectorResize(bspec256, bspec128, bin256, bout128);
             testVectorResize(bspec256, bspec256, bin256, bout256);
             testVectorResize(bspec256, bspec512, bin256, bout512);
+            testVectorResize(bspec256, bspecMax, bin256, boutMax);
 
             testVectorResize(bspec512, bspec64, bin512, bout64);
             testVectorResize(bspec512, bspec128, bin512, bout128);
             testVectorResize(bspec512, bspec256, bin512, bout256);
             testVectorResize(bspec512, bspec512, bin512, bout512);
+            testVectorResize(bspec512, bspecMax, bin512, boutMax);
+
+            testVectorResize(bspecMax, bspec64, binMax, bout64);
+            testVectorResize(bspecMax, bspec128, binMax, bout128);
+            testVectorResize(bspecMax, bspec256, binMax, bout256);
+            testVectorResize(bspecMax, bspec512, binMax, bout512);
+            testVectorResize(bspecMax, bspecMax, binMax, boutMax);
         }
     }
 
@@ -311,31 +347,43 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
         byte[] bout512 = new byte[bin512.length];
+        byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
             testVectorResize(sspec64, sspec64, bin64, bout64);
             testVectorResize(sspec64, sspec128, bin64, bout128);
             testVectorResize(sspec64, sspec256, bin64, bout256);
             testVectorResize(sspec64, sspec512, bin64, bout512);
+            testVectorResize(sspec64, sspecMax, bin64, boutMax);
 
             testVectorResize(sspec128, sspec64, bin128, bout64);
             testVectorResize(sspec128, sspec128, bin128, bout128);
             testVectorResize(sspec128, sspec256, bin128, bout256);
             testVectorResize(sspec128, sspec512, bin128, bout512);
+            testVectorResize(sspec128, sspecMax, bin128, boutMax);
 
             testVectorResize(sspec256, sspec64, bin256, bout64);
             testVectorResize(sspec256, sspec128, bin256, bout128);
             testVectorResize(sspec256, sspec256, bin256, bout256);
             testVectorResize(sspec256, sspec512, bin256, bout512);
+            testVectorResize(sspec256, sspecMax, bin256, boutMax);
 
             testVectorResize(sspec512, sspec64, bin512, bout64);
             testVectorResize(sspec512, sspec128, bin512, bout128);
             testVectorResize(sspec512, sspec256, bin512, bout256);
             testVectorResize(sspec512, sspec512, bin512, bout512);
+            testVectorResize(sspec512, sspecMax, bin512, boutMax);
+
+            testVectorResize(sspecMax, sspec64, binMax, bout64);
+            testVectorResize(sspecMax, sspec128, binMax, bout128);
+            testVectorResize(sspecMax, sspec256, binMax, bout256);
+            testVectorResize(sspecMax, sspec512, binMax, bout512);
+            testVectorResize(sspecMax, sspecMax, binMax, boutMax);
         }
     }
 
@@ -345,31 +393,43 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
         byte[] bout512 = new byte[bin512.length];
+        byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
             testVectorResize(ispec64, ispec64, bin64, bout64);
             testVectorResize(ispec64, ispec128, bin64, bout128);
             testVectorResize(ispec64, ispec256, bin64, bout256);
             testVectorResize(ispec64, ispec512, bin64, bout512);
+            testVectorResize(ispec64, ispecMax, bin64, boutMax);
 
             testVectorResize(ispec128, ispec64, bin128, bout64);
             testVectorResize(ispec128, ispec128, bin128, bout128);
             testVectorResize(ispec128, ispec256, bin128, bout256);
             testVectorResize(ispec128, ispec512, bin128, bout512);
+            testVectorResize(ispec128, ispecMax, bin128, boutMax);
 
             testVectorResize(ispec256, ispec64, bin256, bout64);
             testVectorResize(ispec256, ispec128, bin256, bout128);
             testVectorResize(ispec256, ispec256, bin256, bout256);
             testVectorResize(ispec256, ispec512, bin256, bout512);
+            testVectorResize(ispec256, ispecMax, bin256, boutMax);
 
             testVectorResize(ispec512, ispec64, bin512, bout64);
             testVectorResize(ispec512, ispec128, bin512, bout128);
             testVectorResize(ispec512, ispec256, bin512, bout256);
             testVectorResize(ispec512, ispec512, bin512, bout512);
+            testVectorResize(ispec512, ispecMax, bin512, boutMax);
+
+            testVectorResize(ispecMax, ispec64, binMax, bout64);
+            testVectorResize(ispecMax, ispec128, binMax, bout128);
+            testVectorResize(ispecMax, ispec256, binMax, bout256);
+            testVectorResize(ispecMax, ispec512, binMax, bout512);
+            testVectorResize(ispecMax, ispecMax, binMax, boutMax);
         }
     }
 
@@ -379,31 +439,43 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
         byte[] bout512 = new byte[bin512.length];
+        byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
             testVectorResize(lspec64, lspec64, bin64, bout64);
             testVectorResize(lspec64, lspec128, bin64, bout128);
             testVectorResize(lspec64, lspec256, bin64, bout256);
             testVectorResize(lspec64, lspec512, bin64, bout512);
+            testVectorResize(lspec64, lspecMax, bin64, boutMax);
 
             testVectorResize(lspec128, lspec64, bin128, bout64);
             testVectorResize(lspec128, lspec128, bin128, bout128);
             testVectorResize(lspec128, lspec256, bin128, bout256);
             testVectorResize(lspec128, lspec512, bin128, bout512);
+            testVectorResize(lspec128, lspecMax, bin128, boutMax);
 
             testVectorResize(lspec256, lspec64, bin256, bout64);
             testVectorResize(lspec256, lspec128, bin256, bout128);
             testVectorResize(lspec256, lspec256, bin256, bout256);
             testVectorResize(lspec256, lspec512, bin256, bout512);
+            testVectorResize(lspec256, lspecMax, bin256, boutMax);
 
             testVectorResize(lspec512, lspec64, bin512, bout64);
             testVectorResize(lspec512, lspec128, bin512, bout128);
             testVectorResize(lspec512, lspec256, bin512, bout256);
             testVectorResize(lspec512, lspec512, bin512, bout512);
+            testVectorResize(lspec512, lspecMax, bin512, boutMax);
+
+            testVectorResize(lspecMax, lspec64, binMax, bout64);
+            testVectorResize(lspecMax, lspec128, binMax, bout128);
+            testVectorResize(lspecMax, lspec256, binMax, bout256);
+            testVectorResize(lspecMax, lspec512, binMax, bout512);
+            testVectorResize(lspecMax, lspecMax, binMax, boutMax);
         }
     }
 
@@ -413,31 +485,43 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
         byte[] bout512 = new byte[bin512.length];
+        byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
             testVectorResize(fspec64, fspec64, bin64, bout64);
             testVectorResize(fspec64, fspec128, bin64, bout128);
             testVectorResize(fspec64, fspec256, bin64, bout256);
             testVectorResize(fspec64, fspec512, bin64, bout512);
+            testVectorResize(fspec64, fspecMax, bin64, boutMax);
 
             testVectorResize(fspec128, fspec64, bin128, bout64);
             testVectorResize(fspec128, fspec128, bin128, bout128);
             testVectorResize(fspec128, fspec256, bin128, bout256);
             testVectorResize(fspec128, fspec512, bin128, bout512);
+            testVectorResize(fspec128, fspecMax, bin128, boutMax);
 
             testVectorResize(fspec256, fspec64, bin256, bout64);
             testVectorResize(fspec256, fspec128, bin256, bout128);
             testVectorResize(fspec256, fspec256, bin256, bout256);
             testVectorResize(fspec256, fspec512, bin256, bout512);
+            testVectorResize(fspec256, fspecMax, bin256, boutMax);
 
             testVectorResize(fspec512, fspec64, bin512, bout64);
             testVectorResize(fspec512, fspec128, bin512, bout128);
             testVectorResize(fspec512, fspec256, bin512, bout256);
             testVectorResize(fspec512, fspec512, bin512, bout512);
+            testVectorResize(fspec512, fspecMax, bin512, boutMax);
+
+            testVectorResize(fspecMax, fspec64, binMax, bout64);
+            testVectorResize(fspecMax, fspec128, binMax, bout128);
+            testVectorResize(fspecMax, fspec256, binMax, bout256);
+            testVectorResize(fspecMax, fspec512, binMax, bout512);
+            testVectorResize(fspecMax, fspecMax, binMax, boutMax);
         }
     }
 
@@ -447,31 +531,43 @@ public class VectorReshapeTests {
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
         byte[] bin512 = fa.apply(512/Byte.SIZE);
+        byte[] binMax = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
         byte[] bout64 = new byte[bin64.length];
         byte[] bout128 = new byte[bin128.length];
         byte[] bout256 = new byte[bin256.length];
         byte[] bout512 = new byte[bin512.length];
+        byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
             testVectorResize(dspec64, dspec64, bin64, bout64);
             testVectorResize(dspec64, dspec128, bin64, bout128);
             testVectorResize(dspec64, dspec256, bin64, bout256);
             testVectorResize(dspec64, dspec512, bin64, bout512);
+            testVectorResize(dspec64, dspecMax, bin64, boutMax);
 
             testVectorResize(dspec128, dspec64, bin128, bout64);
             testVectorResize(dspec128, dspec128, bin128, bout128);
             testVectorResize(dspec128, dspec256, bin128, bout256);
             testVectorResize(dspec128, dspec512, bin128, bout512);
+            testVectorResize(dspec128, dspecMax, bin128, boutMax);
 
             testVectorResize(dspec256, dspec64, bin256, bout64);
             testVectorResize(dspec256, dspec128, bin256, bout128);
             testVectorResize(dspec256, dspec256, bin256, bout256);
             testVectorResize(dspec256, dspec512, bin256, bout512);
+            testVectorResize(dspec256, dspecMax, bin256, boutMax);
 
             testVectorResize(dspec512, dspec64, bin512, bout64);
             testVectorResize(dspec512, dspec128, bin512, bout128);
             testVectorResize(dspec512, dspec256, bin512, bout256);
             testVectorResize(dspec512, dspec512, bin512, bout512);
+            testVectorResize(dspec512, dspecMax, bin512, boutMax);
+
+            testVectorResize(dspecMax, dspec64, binMax, bout64);
+            testVectorResize(dspecMax, dspec128, binMax, bout128);
+            testVectorResize(dspecMax, dspec256, binMax, bout256);
+            testVectorResize(dspecMax, dspec512, binMax, bout512);
+            testVectorResize(dspecMax, dspecMax, binMax, boutMax);
         }
     }
 
@@ -680,6 +776,55 @@ public class VectorReshapeTests {
             testVectorRebracket(dspec512, lspec512, barr, bout);
             testVectorRebracket(dspec512, fspec512, barr, bout);
             testVectorRebracket(dspec512, dspec512, barr, bout);
+        }
+    }
+
+    @Test(dataProvider = "byteUnaryOpProvider")
+    static void testRebracketMax(IntFunction<byte[]> fa) {
+        byte[] barr = fa.apply(S_Max_BIT.bitSize()/Byte.SIZE);
+        byte[] bout = new byte[barr.length];
+        for (int i = 0; i < NUM_ITER; i++) {
+            testVectorRebracket(bspecMax, bspecMax, barr, bout);
+            testVectorRebracket(bspecMax, sspecMax, barr, bout);
+            testVectorRebracket(bspecMax, ispecMax, barr, bout);
+            testVectorRebracket(bspecMax, lspecMax, barr, bout);
+            testVectorRebracket(bspecMax, fspecMax, barr, bout);
+            testVectorRebracket(bspecMax, dspecMax, barr, bout);
+
+            testVectorRebracket(sspecMax, bspecMax, barr, bout);
+            testVectorRebracket(sspecMax, sspecMax, barr, bout);
+            testVectorRebracket(sspecMax, ispecMax, barr, bout);
+            testVectorRebracket(sspecMax, lspecMax, barr, bout);
+            testVectorRebracket(sspecMax, fspecMax, barr, bout);
+            testVectorRebracket(sspecMax, dspecMax, barr, bout);
+
+            testVectorRebracket(ispecMax, bspecMax, barr, bout);
+            testVectorRebracket(ispecMax, sspecMax, barr, bout);
+            testVectorRebracket(ispecMax, ispecMax, barr, bout);
+            testVectorRebracket(ispecMax, lspecMax, barr, bout);
+            testVectorRebracket(ispecMax, fspecMax, barr, bout);
+            testVectorRebracket(ispecMax, dspecMax, barr, bout);
+
+            testVectorRebracket(lspecMax, bspecMax, barr, bout);
+            testVectorRebracket(lspecMax, sspecMax, barr, bout);
+            testVectorRebracket(lspecMax, ispecMax, barr, bout);
+            testVectorRebracket(lspecMax, lspecMax, barr, bout);
+            testVectorRebracket(lspecMax, fspecMax, barr, bout);
+            testVectorRebracket(lspecMax, dspecMax, barr, bout);
+
+            testVectorRebracket(fspecMax, bspecMax, barr, bout);
+            testVectorRebracket(fspecMax, sspecMax, barr, bout);
+            testVectorRebracket(fspecMax, ispecMax, barr, bout);
+            testVectorRebracket(fspecMax, lspecMax, barr, bout);
+            testVectorRebracket(fspecMax, fspecMax, barr, bout);
+            testVectorRebracket(fspecMax, dspecMax, barr, bout);
+
+            testVectorRebracket(dspecMax, bspecMax, barr, bout);
+            testVectorRebracket(dspecMax, sspecMax, barr, bout);
+            testVectorRebracket(dspecMax, ispecMax, barr, bout);
+            testVectorRebracket(dspecMax, lspecMax, barr, bout);
+            testVectorRebracket(dspecMax, fspecMax, barr, bout);
+            testVectorRebracket(dspecMax, dspecMax, barr, bout);
         }
     }
 
@@ -2098,7 +2243,7 @@ public class VectorReshapeTests {
         short[] sin128 = new short[sspec128.length()];
         short[] sin256 = new short[sspec256.length()];
         short[] sin512 = new short[sspec512.length()];
-        
+
         for (int i = 0; i < INVOC_COUNT; i++) {
             testVectorCastShortToByteFail(sspec64, bspec64, sin64);
             testVectorCastShortToByteFail(sspec64, bspec128, sin64);
@@ -2882,6 +3027,840 @@ public class VectorReshapeTests {
             testVectorCastDoubleToDoubleFail(dspec512, dspec64, din512);
             testVectorCastDoubleToDoubleFail(dspec512, dspec128, din512);
             testVectorCastDoubleToDoubleFail(dspec512, dspec256, din512);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastByteMaxToByte(ByteVector.ByteSpecies<Vector.Shape> a, ByteVector.ByteSpecies<T> b,
+                                          byte[] input, byte[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+            testVectorCastByteToByte(a, b, input, output);
+        } else {
+            testVectorCastByteToByteFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastByteMaxToShort(ByteVector.ByteSpecies<Vector.Shape> a, ShortVector.ShortSpecies<T> b,
+                                           byte[] input, short[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+            testVectorCastByteToShort(a, b, input, output);
+        } else {
+            testVectorCastByteToShortFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastByteMaxToInt(ByteVector.ByteSpecies<Vector.Shape> a, IntVector.IntSpecies<T> b,
+                                         byte[] input, int[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+            testVectorCastByteToInt(a, b, input, output);
+        } else {
+            testVectorCastByteToIntFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastByteMaxToLong(ByteVector.ByteSpecies<Vector.Shape> a, LongVector.LongSpecies<T> b,
+                                          byte[] input, long[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+            testVectorCastByteToLong(a, b, input, output);
+        } else {
+            testVectorCastByteToLongFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastByteMaxToFloat(ByteVector.ByteSpecies<Vector.Shape> a, FloatVector.FloatSpecies<T> b,
+                                           byte[] input, float[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+            testVectorCastByteToFloat(a, b, input, output);
+        } else {
+            testVectorCastByteToFloatFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastByteMaxToDouble(ByteVector.ByteSpecies<Vector.Shape> a, DoubleVector.DoubleSpecies<T> b,
+                                            byte[] input, double[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Byte.SIZE) {
+            testVectorCastByteToDouble(a, b, input, output);
+        } else {
+            testVectorCastByteToDoubleFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastShortMaxToByte(ShortVector.ShortSpecies<Vector.Shape> a, ByteVector.ByteSpecies<T> b,
+                                           short[] input, byte[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+            testVectorCastShortToByte(a, b, input, output);
+        } else {
+            testVectorCastShortToByteFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastShortMaxToShort(ShortVector.ShortSpecies<Vector.Shape> a, ShortVector.ShortSpecies<T> b,
+                                            short[] input, short[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+            testVectorCastShortToShort(a, b, input, output);
+        } else {
+            testVectorCastShortToShortFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastShortMaxToInt(ShortVector.ShortSpecies<Vector.Shape> a, IntVector.IntSpecies<T> b,
+                                          short[] input, int[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+            testVectorCastShortToInt(a, b, input, output);
+        } else {
+            testVectorCastShortToIntFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastShortMaxToLong(ShortVector.ShortSpecies<Vector.Shape> a, LongVector.LongSpecies<T> b,
+                                           short[] input, long[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+            testVectorCastShortToLong(a, b, input, output);
+        } else {
+            testVectorCastShortToLongFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastShortMaxToFloat(ShortVector.ShortSpecies<Vector.Shape> a, FloatVector.FloatSpecies<T> b,
+                                            short[] input, float[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+            testVectorCastShortToFloat(a, b, input, output);
+        } else {
+            testVectorCastShortToFloatFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastShortMaxToDouble(ShortVector.ShortSpecies<Vector.Shape> a, DoubleVector.DoubleSpecies<T> b,
+                                             short[] input, double[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Short.SIZE) {
+            testVectorCastShortToDouble(a, b, input, output);
+        } else {
+            testVectorCastShortToDoubleFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastIntMaxToByte(IntVector.IntSpecies<Vector.Shape> a, ByteVector.ByteSpecies<T> b,
+                                         int[] input, byte[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+            testVectorCastIntToByte(a, b, input, output);
+        } else {
+            testVectorCastIntToByteFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastIntMaxToShort(IntVector.IntSpecies<Vector.Shape> a, ShortVector.ShortSpecies<T> b,
+                                          int[] input, short[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+            testVectorCastIntToShort(a, b, input, output);
+        } else {
+            testVectorCastIntToShortFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastIntMaxToInt(IntVector.IntSpecies<Vector.Shape> a, IntVector.IntSpecies<T> b,
+                                        int[] input, int[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+            testVectorCastIntToInt(a, b, input, output);
+        } else {
+            testVectorCastIntToIntFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastIntMaxToLong(IntVector.IntSpecies<Vector.Shape> a, LongVector.LongSpecies<T> b,
+                                         int[] input, long[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+            testVectorCastIntToLong(a, b, input, output);
+        } else {
+            testVectorCastIntToLongFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastIntMaxToFloat(IntVector.IntSpecies<Vector.Shape> a, FloatVector.FloatSpecies<T> b,
+                                          int[] input, float[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+            testVectorCastIntToFloat(a, b, input, output);
+        } else {
+            testVectorCastIntToFloatFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastIntMaxToDouble(IntVector.IntSpecies<Vector.Shape> a, DoubleVector.DoubleSpecies<T> b,
+                                           int[] input, double[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Integer.SIZE) {
+            testVectorCastIntToDouble(a, b, input, output);
+        } else {
+            testVectorCastIntToDoubleFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastLongMaxToByte(LongVector.LongSpecies<Vector.Shape> a, ByteVector.ByteSpecies<T> b,
+                                          long[] input, byte[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+            testVectorCastLongToByte(a, b, input, output);
+        } else {
+            testVectorCastLongToByteFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastLongMaxToShort(LongVector.LongSpecies<Vector.Shape> a, ShortVector.ShortSpecies<T> b,
+                                           long[] input, short[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+            testVectorCastLongToShort(a, b, input, output);
+        } else {
+            testVectorCastLongToShortFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastLongMaxToInt(LongVector.LongSpecies<Vector.Shape> a, IntVector.IntSpecies<T> b,
+                                         long[] input, int[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+            testVectorCastLongToInt(a, b, input, output);
+        } else {
+            testVectorCastLongToIntFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastLongMaxToLong(LongVector.LongSpecies<Vector.Shape> a, LongVector.LongSpecies<T> b,
+                                          long[] input, long[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+            testVectorCastLongToLong(a, b, input, output);
+        } else {
+            testVectorCastLongToLongFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastLongMaxToFloat(LongVector.LongSpecies<Vector.Shape> a, FloatVector.FloatSpecies<T> b,
+                                           long[] input, float[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+            testVectorCastLongToFloat(a, b, input, output);
+        } else {
+            testVectorCastLongToFloatFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastLongMaxToDouble(LongVector.LongSpecies<Vector.Shape> a, DoubleVector.DoubleSpecies<T> b,
+                                            long[] input, double[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Long.SIZE) {
+            testVectorCastLongToDouble(a, b, input, output);
+        } else {
+            testVectorCastLongToDoubleFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastFloatMaxToByte(FloatVector.FloatSpecies<Vector.Shape> a, ByteVector.ByteSpecies<T> b,
+                                           float[] input, byte[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+            testVectorCastFloatToByte(a, b, input, output);
+        } else {
+            testVectorCastFloatToByteFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastFloatMaxToShort(FloatVector.FloatSpecies<Vector.Shape> a, ShortVector.ShortSpecies<T> b,
+                                            float[] input, short[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+            testVectorCastFloatToShort(a, b, input, output);
+        } else {
+            testVectorCastFloatToShortFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastFloatMaxToInt(FloatVector.FloatSpecies<Vector.Shape> a, IntVector.IntSpecies<T> b,
+                                          float[] input, int[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+            testVectorCastFloatToInt(a, b, input, output);
+        } else {
+            testVectorCastFloatToIntFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastFloatMaxToLong(FloatVector.FloatSpecies<Vector.Shape> a, LongVector.LongSpecies<T> b,
+                                           float[] input, long[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+            testVectorCastFloatToLong(a, b, input, output);
+        } else {
+            testVectorCastFloatToLongFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastFloatMaxToFloat(FloatVector.FloatSpecies<Vector.Shape> a, FloatVector.FloatSpecies<T> b,
+                                            float[] input, float[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+            testVectorCastFloatToFloat(a, b, input, output);
+        } else {
+            testVectorCastFloatToFloatFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastFloatMaxToDouble(FloatVector.FloatSpecies<Vector.Shape> a, DoubleVector.DoubleSpecies<T> b,
+                                             float[] input, double[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Float.SIZE) {
+            testVectorCastFloatToDouble(a, b, input, output);
+        } else {
+            testVectorCastFloatToDoubleFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastDoubleMaxToByte(DoubleVector.DoubleSpecies<Vector.Shape> a, ByteVector.ByteSpecies<T> b,
+                                            double[] input, byte[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+            testVectorCastDoubleToByte(a, b, input, output);
+        } else {
+            testVectorCastDoubleToByteFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastDoubleMaxToShort(DoubleVector.DoubleSpecies<Vector.Shape> a, ShortVector.ShortSpecies<T> b,
+                                             double[] input, short[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+            testVectorCastDoubleToShort(a, b, input, output);
+        } else {
+            testVectorCastDoubleToShortFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastDoubleMaxToInt(DoubleVector.DoubleSpecies<Vector.Shape> a, IntVector.IntSpecies<T> b,
+                                           double[] input, int[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+            testVectorCastDoubleToInt(a, b, input, output);
+        } else {
+            testVectorCastDoubleToIntFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastDoubleMaxToLong(DoubleVector.DoubleSpecies<Vector.Shape> a, LongVector.LongSpecies<T> b,
+                                            double[] input, long[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+            testVectorCastDoubleToLong(a, b, input, output);
+        } else {
+            testVectorCastDoubleToLongFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastDoubleMaxToFloat(DoubleVector.DoubleSpecies<Vector.Shape> a, FloatVector.FloatSpecies<T> b,
+                                             double[] input, float[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+            testVectorCastDoubleToFloat(a, b, input, output);
+        } else {
+            testVectorCastDoubleToFloatFail(a, b, input);
+        }
+    }
+
+    static <T extends Vector.Shape>
+    void testVectorCastDoubleMaxToDouble(DoubleVector.DoubleSpecies<Vector.Shape> a, DoubleVector.DoubleSpecies<T> b,
+                                              double[] input, double[] output) {
+        if (S_Max_BIT.bitSize() == b.length() * Double.SIZE) {
+            testVectorCastDoubleToDouble(a, b, input, output);
+        } else {
+            testVectorCastDoubleToDoubleFail(a, b, input);
+        }
+    }
+
+    @Test(dataProvider = "byteUnaryOpProvider")
+    static void testCastFromByteMax(IntFunction<byte[]> fa) {
+        byte[] binMax = fa.apply(bspecMax.length());
+
+        byte[] bout64 = new byte[bspec64.length()];
+        byte[] bout128 = new byte[bspec128.length()];
+        byte[] bout256 = new byte[bspec256.length()];
+        byte[] bout512 = new byte[bspec512.length()];
+        byte[] boutMax = new byte[bspecMax.length()];
+
+        short[] sout64 = new short[sspec64.length()];
+        short[] sout128 = new short[sspec128.length()];
+        short[] sout256 = new short[sspec256.length()];
+        short[] sout512 = new short[sspec512.length()];
+        short[] soutMax = new short[sspecMax.length()];
+
+        int[] iout64 = new int[ispec64.length()];
+        int[] iout128 = new int[ispec128.length()];
+        int[] iout256 = new int[ispec256.length()];
+        int[] iout512 = new int[ispec512.length()];
+        int[] ioutMax = new int[ispecMax.length()];
+
+        long[] lout64 = new long[lspec64.length()];
+        long[] lout128 = new long[lspec128.length()];
+        long[] lout256 = new long[lspec256.length()];
+        long[] lout512 = new long[lspec512.length()];
+        long[] loutMax = new long[lspecMax.length()];
+
+        float[] fout64 = new float[fspec64.length()];
+        float[] fout128 = new float[fspec128.length()];
+        float[] fout256 = new float[fspec256.length()];
+        float[] fout512 = new float[fspec512.length()];
+        float[] foutMax = new float[fspecMax.length()];
+
+        double[] dout64 = new double[dspec64.length()];
+        double[] dout128 = new double[dspec128.length()];
+        double[] dout256 = new double[dspec256.length()];
+        double[] dout512 = new double[dspec512.length()];
+        double[] doutMax = new double[dspecMax.length()];
+
+        for (int i = 0; i < NUM_ITER; i++) {
+            testVectorCastByteMaxToByte(bspecMax, bspec64, binMax, bout64);
+            testVectorCastByteMaxToByte(bspecMax, bspec128, binMax, bout128);
+            testVectorCastByteMaxToByte(bspecMax, bspec256, binMax, bout256);
+            testVectorCastByteMaxToByte(bspecMax, bspec512, binMax, bout512);
+            testVectorCastByteMaxToByte(bspecMax, bspecMax, binMax, boutMax);
+
+            testVectorCastByteMaxToShort(bspecMax, sspec64, binMax, sout64);
+            testVectorCastByteMaxToShort(bspecMax, sspec128, binMax, sout128);
+            testVectorCastByteMaxToShort(bspecMax, sspec256, binMax, sout256);
+            testVectorCastByteMaxToShort(bspecMax, sspec512, binMax, sout512);
+            testVectorCastByteMaxToShort(bspecMax, sspecMax, binMax, soutMax);
+
+            testVectorCastByteMaxToInt(bspecMax, ispec64, binMax, iout64);
+            testVectorCastByteMaxToInt(bspecMax, ispec128, binMax, iout128);
+            testVectorCastByteMaxToInt(bspecMax, ispec256, binMax, iout256);
+            testVectorCastByteMaxToInt(bspecMax, ispec512, binMax, iout512);
+            testVectorCastByteMaxToInt(bspecMax, ispecMax, binMax, ioutMax);
+
+            testVectorCastByteMaxToLong(bspecMax, lspec64, binMax, lout64);
+            testVectorCastByteMaxToLong(bspecMax, lspec128, binMax, lout128);
+            testVectorCastByteMaxToLong(bspecMax, lspec256, binMax, lout256);
+            testVectorCastByteMaxToLong(bspecMax, lspec512, binMax, lout512);
+            testVectorCastByteMaxToLong(bspecMax, lspecMax, binMax, loutMax);
+
+            testVectorCastByteMaxToFloat(bspecMax, fspec64, binMax, fout64);
+            testVectorCastByteMaxToFloat(bspecMax, fspec128, binMax, fout128);
+            testVectorCastByteMaxToFloat(bspecMax, fspec256, binMax, fout256);
+            testVectorCastByteMaxToFloat(bspecMax, fspec512, binMax, fout512);
+            testVectorCastByteMaxToFloat(bspecMax, fspecMax, binMax, foutMax);
+
+            testVectorCastByteMaxToDouble(bspecMax, dspec64, binMax, dout64);
+            testVectorCastByteMaxToDouble(bspecMax, dspec128, binMax, dout128);
+            testVectorCastByteMaxToDouble(bspecMax, dspec256, binMax, dout256);
+            testVectorCastByteMaxToDouble(bspecMax, dspec512, binMax, dout512);
+            testVectorCastByteMaxToDouble(bspecMax, dspecMax, binMax, doutMax);
+        }
+    }
+
+    @Test(dataProvider = "shortUnaryOpProvider")
+    static void testCastFromShortMax(IntFunction<short[]> fa) {
+        short[] sinMax = fa.apply(sspecMax.length());
+
+        byte[] bout64 = new byte[bspec64.length()];
+        byte[] bout128 = new byte[bspec128.length()];
+        byte[] bout256 = new byte[bspec256.length()];
+        byte[] bout512 = new byte[bspec512.length()];
+        byte[] boutMax = new byte[bspecMax.length()];
+
+        short[] sout64 = new short[sspec64.length()];
+        short[] sout128 = new short[sspec128.length()];
+        short[] sout256 = new short[sspec256.length()];
+        short[] sout512 = new short[sspec512.length()];
+        short[] soutMax = new short[sspecMax.length()];
+
+        int[] iout64 = new int[ispec64.length()];
+        int[] iout128 = new int[ispec128.length()];
+        int[] iout256 = new int[ispec256.length()];
+        int[] iout512 = new int[ispec512.length()];
+        int[] ioutMax = new int[ispecMax.length()];
+
+        long[] lout64 = new long[lspec64.length()];
+        long[] lout128 = new long[lspec128.length()];
+        long[] lout256 = new long[lspec256.length()];
+        long[] lout512 = new long[lspec512.length()];
+        long[] loutMax = new long[lspecMax.length()];
+
+        float[] fout64 = new float[fspec64.length()];
+        float[] fout128 = new float[fspec128.length()];
+        float[] fout256 = new float[fspec256.length()];
+        float[] fout512 = new float[fspec512.length()];
+        float[] foutMax = new float[fspecMax.length()];
+
+        double[] dout64 = new double[dspec64.length()];
+        double[] dout128 = new double[dspec128.length()];
+        double[] dout256 = new double[dspec256.length()];
+        double[] dout512 = new double[dspec512.length()];
+        double[] doutMax = new double[dspecMax.length()];
+
+        for (int i = 0; i < NUM_ITER; i++) {
+            testVectorCastShortMaxToByte(sspecMax, bspec64, sinMax, bout64);
+            testVectorCastShortMaxToByte(sspecMax, bspec128, sinMax, bout128);
+            testVectorCastShortMaxToByte(sspecMax, bspec256, sinMax, bout256);
+            testVectorCastShortMaxToByte(sspecMax, bspec512, sinMax, bout512);
+            testVectorCastShortMaxToByte(sspecMax, bspecMax, sinMax, boutMax);
+
+            testVectorCastShortMaxToShort(sspecMax, sspec64, sinMax, sout64);
+            testVectorCastShortMaxToShort(sspecMax, sspec128, sinMax, sout128);
+            testVectorCastShortMaxToShort(sspecMax, sspec256, sinMax, sout256);
+            testVectorCastShortMaxToShort(sspecMax, sspec512, sinMax, sout512);
+            testVectorCastShortMaxToShort(sspecMax, sspecMax, sinMax, soutMax);
+
+            testVectorCastShortMaxToInt(sspecMax, ispec64, sinMax, iout64);
+            testVectorCastShortMaxToInt(sspecMax, ispec128, sinMax, iout128);
+            testVectorCastShortMaxToInt(sspecMax, ispec256, sinMax, iout256);
+            testVectorCastShortMaxToInt(sspecMax, ispec512, sinMax, iout512);
+            testVectorCastShortMaxToInt(sspecMax, ispecMax, sinMax, ioutMax);
+
+            testVectorCastShortMaxToLong(sspecMax, lspec64, sinMax, lout64);
+            testVectorCastShortMaxToLong(sspecMax, lspec128, sinMax, lout128);
+            testVectorCastShortMaxToLong(sspecMax, lspec256, sinMax, lout256);
+            testVectorCastShortMaxToLong(sspecMax, lspec512, sinMax, lout512);
+            testVectorCastShortMaxToLong(sspecMax, lspecMax, sinMax, loutMax);
+
+            testVectorCastShortMaxToFloat(sspecMax, fspec64, sinMax, fout64);
+            testVectorCastShortMaxToFloat(sspecMax, fspec128, sinMax, fout128);
+            testVectorCastShortMaxToFloat(sspecMax, fspec256, sinMax, fout256);
+            testVectorCastShortMaxToFloat(sspecMax, fspec512, sinMax, fout512);
+            testVectorCastShortMaxToFloat(sspecMax, fspecMax, sinMax, foutMax);
+
+            testVectorCastShortMaxToDouble(sspecMax, dspec64, sinMax, dout64);
+            testVectorCastShortMaxToDouble(sspecMax, dspec128, sinMax, dout128);
+            testVectorCastShortMaxToDouble(sspecMax, dspec256, sinMax, dout256);
+            testVectorCastShortMaxToDouble(sspecMax, dspec512, sinMax, dout512);
+            testVectorCastShortMaxToDouble(sspecMax, dspecMax, sinMax, doutMax);
+        }
+    }
+
+    @Test(dataProvider = "intUnaryOpProvider")
+    static void testCastFromIntMax(IntFunction<int[]> fa) {
+        int[] iinMax = fa.apply(ispecMax.length());
+
+        byte[] bout64 = new byte[bspec64.length()];
+        byte[] bout128 = new byte[bspec128.length()];
+        byte[] bout256 = new byte[bspec256.length()];
+        byte[] bout512 = new byte[bspec512.length()];
+        byte[] boutMax = new byte[bspecMax.length()];
+
+        short[] sout64 = new short[sspec64.length()];
+        short[] sout128 = new short[sspec128.length()];
+        short[] sout256 = new short[sspec256.length()];
+        short[] sout512 = new short[sspec512.length()];
+        short[] soutMax = new short[sspecMax.length()];
+
+        int[] iout64 = new int[ispec64.length()];
+        int[] iout128 = new int[ispec128.length()];
+        int[] iout256 = new int[ispec256.length()];
+        int[] iout512 = new int[ispec512.length()];
+        int[] ioutMax = new int[ispecMax.length()];
+
+        long[] lout64 = new long[lspec64.length()];
+        long[] lout128 = new long[lspec128.length()];
+        long[] lout256 = new long[lspec256.length()];
+        long[] lout512 = new long[lspec512.length()];
+        long[] loutMax = new long[lspecMax.length()];
+
+        float[] fout64 = new float[fspec64.length()];
+        float[] fout128 = new float[fspec128.length()];
+        float[] fout256 = new float[fspec256.length()];
+        float[] fout512 = new float[fspec512.length()];
+        float[] foutMax = new float[fspecMax.length()];
+
+        double[] dout64 = new double[dspec64.length()];
+        double[] dout128 = new double[dspec128.length()];
+        double[] dout256 = new double[dspec256.length()];
+        double[] dout512 = new double[dspec512.length()];
+        double[] doutMax = new double[dspecMax.length()];
+
+        for (int i = 0; i < NUM_ITER; i++) {
+            testVectorCastIntMaxToByte(ispecMax, bspec64, iinMax, bout64);
+            testVectorCastIntMaxToByte(ispecMax, bspec128, iinMax, bout128);
+            testVectorCastIntMaxToByte(ispecMax, bspec256, iinMax, bout256);
+            testVectorCastIntMaxToByte(ispecMax, bspec512, iinMax, bout512);
+            testVectorCastIntMaxToByte(ispecMax, bspecMax, iinMax, boutMax);
+
+            testVectorCastIntMaxToShort(ispecMax, sspec64, iinMax, sout64);
+            testVectorCastIntMaxToShort(ispecMax, sspec128, iinMax, sout128);
+            testVectorCastIntMaxToShort(ispecMax, sspec256, iinMax, sout256);
+            testVectorCastIntMaxToShort(ispecMax, sspec512, iinMax, sout512);
+            testVectorCastIntMaxToShort(ispecMax, sspecMax, iinMax, soutMax);
+
+            testVectorCastIntMaxToInt(ispecMax, ispec64, iinMax, iout64);
+            testVectorCastIntMaxToInt(ispecMax, ispec128, iinMax, iout128);
+            testVectorCastIntMaxToInt(ispecMax, ispec256, iinMax, iout256);
+            testVectorCastIntMaxToInt(ispecMax, ispec512, iinMax, iout512);
+            testVectorCastIntMaxToInt(ispecMax, ispecMax, iinMax, ioutMax);
+
+            testVectorCastIntMaxToLong(ispecMax, lspec64, iinMax, lout64);
+            testVectorCastIntMaxToLong(ispecMax, lspec128, iinMax, lout128);
+            testVectorCastIntMaxToLong(ispecMax, lspec256, iinMax, lout256);
+            testVectorCastIntMaxToLong(ispecMax, lspec512, iinMax, lout512);
+            testVectorCastIntMaxToLong(ispecMax, lspecMax, iinMax, loutMax);
+
+            testVectorCastIntMaxToFloat(ispecMax, fspec64, iinMax, fout64);
+            testVectorCastIntMaxToFloat(ispecMax, fspec128, iinMax, fout128);
+            testVectorCastIntMaxToFloat(ispecMax, fspec256, iinMax, fout256);
+            testVectorCastIntMaxToFloat(ispecMax, fspec512, iinMax, fout512);
+            testVectorCastIntMaxToFloat(ispecMax, fspecMax, iinMax, foutMax);
+
+            testVectorCastIntMaxToDouble(ispecMax, dspec64, iinMax, dout64);
+            testVectorCastIntMaxToDouble(ispecMax, dspec128, iinMax, dout128);
+            testVectorCastIntMaxToDouble(ispecMax, dspec256, iinMax, dout256);
+            testVectorCastIntMaxToDouble(ispecMax, dspec512, iinMax, dout512);
+            testVectorCastIntMaxToDouble(ispecMax, dspecMax, iinMax, doutMax);
+        }
+    }
+
+    @Test(dataProvider = "longUnaryOpProvider")
+    static void testCastFromLongMax(IntFunction<long[]> fa) {
+        long[] linMax = fa.apply(lspecMax.length());
+
+        byte[] bout64 = new byte[bspec64.length()];
+        byte[] bout128 = new byte[bspec128.length()];
+        byte[] bout256 = new byte[bspec256.length()];
+        byte[] bout512 = new byte[bspec512.length()];
+        byte[] boutMax = new byte[bspecMax.length()];
+
+        short[] sout64 = new short[sspec64.length()];
+        short[] sout128 = new short[sspec128.length()];
+        short[] sout256 = new short[sspec256.length()];
+        short[] sout512 = new short[sspec512.length()];
+        short[] soutMax = new short[sspecMax.length()];
+
+        int[] iout64 = new int[ispec64.length()];
+        int[] iout128 = new int[ispec128.length()];
+        int[] iout256 = new int[ispec256.length()];
+        int[] iout512 = new int[ispec512.length()];
+        int[] ioutMax = new int[ispecMax.length()];
+
+        long[] lout64 = new long[lspec64.length()];
+        long[] lout128 = new long[lspec128.length()];
+        long[] lout256 = new long[lspec256.length()];
+        long[] lout512 = new long[lspec512.length()];
+        long[] loutMax = new long[lspecMax.length()];
+
+        float[] fout64 = new float[fspec64.length()];
+        float[] fout128 = new float[fspec128.length()];
+        float[] fout256 = new float[fspec256.length()];
+        float[] fout512 = new float[fspec512.length()];
+        float[] foutMax = new float[fspecMax.length()];
+
+        double[] dout64 = new double[dspec64.length()];
+        double[] dout128 = new double[dspec128.length()];
+        double[] dout256 = new double[dspec256.length()];
+        double[] dout512 = new double[dspec512.length()];
+        double[] doutMax = new double[dspecMax.length()];
+
+        for (int i = 0; i < NUM_ITER; i++) {
+            testVectorCastLongMaxToByte(lspecMax, bspec64, linMax, bout64);
+            testVectorCastLongMaxToByte(lspecMax, bspec128, linMax, bout128);
+            testVectorCastLongMaxToByte(lspecMax, bspec256, linMax, bout256);
+            testVectorCastLongMaxToByte(lspecMax, bspec512, linMax, bout512);
+            testVectorCastLongMaxToByte(lspecMax, bspecMax, linMax, boutMax);
+
+            testVectorCastLongMaxToShort(lspecMax, sspec64, linMax, sout64);
+            testVectorCastLongMaxToShort(lspecMax, sspec128, linMax, sout128);
+            testVectorCastLongMaxToShort(lspecMax, sspec256, linMax, sout256);
+            testVectorCastLongMaxToShort(lspecMax, sspec512, linMax, sout512);
+            testVectorCastLongMaxToShort(lspecMax, sspecMax, linMax, soutMax);
+
+            testVectorCastLongMaxToInt(lspecMax, ispec64, linMax, iout64);
+            testVectorCastLongMaxToInt(lspecMax, ispec128, linMax, iout128);
+            testVectorCastLongMaxToInt(lspecMax, ispec256, linMax, iout256);
+            testVectorCastLongMaxToInt(lspecMax, ispec512, linMax, iout512);
+            testVectorCastLongMaxToInt(lspecMax, ispecMax, linMax, ioutMax);
+
+            testVectorCastLongMaxToLong(lspecMax, lspec64, linMax, lout64);
+            testVectorCastLongMaxToLong(lspecMax, lspec128, linMax, lout128);
+            testVectorCastLongMaxToLong(lspecMax, lspec256, linMax, lout256);
+            testVectorCastLongMaxToLong(lspecMax, lspec512, linMax, lout512);
+            testVectorCastLongMaxToLong(lspecMax, lspecMax, linMax, loutMax);
+
+            testVectorCastLongMaxToFloat(lspecMax, fspec64, linMax, fout64);
+            testVectorCastLongMaxToFloat(lspecMax, fspec128, linMax, fout128);
+            testVectorCastLongMaxToFloat(lspecMax, fspec256, linMax, fout256);
+            testVectorCastLongMaxToFloat(lspecMax, fspec512, linMax, fout512);
+            testVectorCastLongMaxToFloat(lspecMax, fspecMax, linMax, foutMax);
+
+            testVectorCastLongMaxToDouble(lspecMax, dspec64, linMax, dout64);
+            testVectorCastLongMaxToDouble(lspecMax, dspec128, linMax, dout128);
+            testVectorCastLongMaxToDouble(lspecMax, dspec256, linMax, dout256);
+            testVectorCastLongMaxToDouble(lspecMax, dspec512, linMax, dout512);
+            testVectorCastLongMaxToDouble(lspecMax, dspecMax, linMax, doutMax);
+        }
+    }
+
+    @Test(dataProvider = "floatUnaryOpProvider")
+    static void testCastFromFloatMax(IntFunction<float[]> fa) {
+        float[] finMax = fa.apply(fspecMax.length());
+
+        byte[] bout64 = new byte[bspec64.length()];
+        byte[] bout128 = new byte[bspec128.length()];
+        byte[] bout256 = new byte[bspec256.length()];
+        byte[] bout512 = new byte[bspec512.length()];
+        byte[] boutMax = new byte[bspecMax.length()];
+
+        short[] sout64 = new short[sspec64.length()];
+        short[] sout128 = new short[sspec128.length()];
+        short[] sout256 = new short[sspec256.length()];
+        short[] sout512 = new short[sspec512.length()];
+        short[] soutMax = new short[sspecMax.length()];
+
+        int[] iout64 = new int[ispec64.length()];
+        int[] iout128 = new int[ispec128.length()];
+        int[] iout256 = new int[ispec256.length()];
+        int[] iout512 = new int[ispec512.length()];
+        int[] ioutMax = new int[ispecMax.length()];
+
+        long[] lout64 = new long[lspec64.length()];
+        long[] lout128 = new long[lspec128.length()];
+        long[] lout256 = new long[lspec256.length()];
+        long[] lout512 = new long[lspec512.length()];
+        long[] loutMax = new long[lspecMax.length()];
+
+        float[] fout64 = new float[fspec64.length()];
+        float[] fout128 = new float[fspec128.length()];
+        float[] fout256 = new float[fspec256.length()];
+        float[] fout512 = new float[fspec512.length()];
+        float[] foutMax = new float[fspecMax.length()];
+
+        double[] dout64 = new double[dspec64.length()];
+        double[] dout128 = new double[dspec128.length()];
+        double[] dout256 = new double[dspec256.length()];
+        double[] dout512 = new double[dspec512.length()];
+        double[] doutMax = new double[dspecMax.length()];
+
+        for (int i = 0; i < NUM_ITER; i++) {
+            testVectorCastFloatMaxToByte(fspecMax, bspec64, finMax, bout64);
+            testVectorCastFloatMaxToByte(fspecMax, bspec128, finMax, bout128);
+            testVectorCastFloatMaxToByte(fspecMax, bspec256, finMax, bout256);
+            testVectorCastFloatMaxToByte(fspecMax, bspec512, finMax, bout512);
+            testVectorCastFloatMaxToByte(fspecMax, bspecMax, finMax, boutMax);
+
+            testVectorCastFloatMaxToShort(fspecMax, sspec64, finMax, sout64);
+            testVectorCastFloatMaxToShort(fspecMax, sspec128, finMax, sout128);
+            testVectorCastFloatMaxToShort(fspecMax, sspec256, finMax, sout256);
+            testVectorCastFloatMaxToShort(fspecMax, sspec512, finMax, sout512);
+            testVectorCastFloatMaxToShort(fspecMax, sspecMax, finMax, soutMax);
+
+            testVectorCastFloatMaxToInt(fspecMax, ispec64, finMax, iout64);
+            testVectorCastFloatMaxToInt(fspecMax, ispec128, finMax, iout128);
+            testVectorCastFloatMaxToInt(fspecMax, ispec256, finMax, iout256);
+            testVectorCastFloatMaxToInt(fspecMax, ispec512, finMax, iout512);
+            testVectorCastFloatMaxToInt(fspecMax, ispecMax, finMax, ioutMax);
+
+            testVectorCastFloatMaxToLong(fspecMax, lspec64, finMax, lout64);
+            testVectorCastFloatMaxToLong(fspecMax, lspec128, finMax, lout128);
+            testVectorCastFloatMaxToLong(fspecMax, lspec256, finMax, lout256);
+            testVectorCastFloatMaxToLong(fspecMax, lspec512, finMax, lout512);
+            testVectorCastFloatMaxToLong(fspecMax, lspecMax, finMax, loutMax);
+
+            testVectorCastFloatMaxToFloat(fspecMax, fspec64, finMax, fout64);
+            testVectorCastFloatMaxToFloat(fspecMax, fspec128, finMax, fout128);
+            testVectorCastFloatMaxToFloat(fspecMax, fspec256, finMax, fout256);
+            testVectorCastFloatMaxToFloat(fspecMax, fspec512, finMax, fout512);
+            testVectorCastFloatMaxToFloat(fspecMax, fspecMax, finMax, foutMax);
+
+            testVectorCastFloatMaxToDouble(fspecMax, dspec64, finMax, dout64);
+            testVectorCastFloatMaxToDouble(fspecMax, dspec128, finMax, dout128);
+            testVectorCastFloatMaxToDouble(fspecMax, dspec256, finMax, dout256);
+            testVectorCastFloatMaxToDouble(fspecMax, dspec512, finMax, dout512);
+            testVectorCastFloatMaxToDouble(fspecMax, dspecMax, finMax, doutMax);
+        }
+    }
+
+    @Test(dataProvider = "doubleUnaryOpProvider")
+    static void testCastFromDoubleMax(IntFunction<double[]> fa) {
+        double[] dinMax = fa.apply(dspecMax.length());
+
+        byte[] bout64 = new byte[bspec64.length()];
+        byte[] bout128 = new byte[bspec128.length()];
+        byte[] bout256 = new byte[bspec256.length()];
+        byte[] bout512 = new byte[bspec512.length()];
+        byte[] boutMax = new byte[bspecMax.length()];
+
+        short[] sout64 = new short[sspec64.length()];
+        short[] sout128 = new short[sspec128.length()];
+        short[] sout256 = new short[sspec256.length()];
+        short[] sout512 = new short[sspec512.length()];
+        short[] soutMax = new short[sspecMax.length()];
+
+        int[] iout64 = new int[ispec64.length()];
+        int[] iout128 = new int[ispec128.length()];
+        int[] iout256 = new int[ispec256.length()];
+        int[] iout512 = new int[ispec512.length()];
+        int[] ioutMax = new int[ispecMax.length()];
+
+        long[] lout64 = new long[lspec64.length()];
+        long[] lout128 = new long[lspec128.length()];
+        long[] lout256 = new long[lspec256.length()];
+        long[] lout512 = new long[lspec512.length()];
+        long[] loutMax = new long[lspecMax.length()];
+
+        float[] fout64 = new float[fspec64.length()];
+        float[] fout128 = new float[fspec128.length()];
+        float[] fout256 = new float[fspec256.length()];
+        float[] fout512 = new float[fspec512.length()];
+        float[] foutMax = new float[fspecMax.length()];
+
+        double[] dout64 = new double[dspec64.length()];
+        double[] dout128 = new double[dspec128.length()];
+        double[] dout256 = new double[dspec256.length()];
+        double[] dout512 = new double[dspec512.length()];
+        double[] doutMax = new double[dspecMax.length()];
+
+        for (int i = 0; i < NUM_ITER; i++) {
+            testVectorCastDoubleMaxToByte(dspecMax, bspec64, dinMax, bout64);
+            testVectorCastDoubleMaxToByte(dspecMax, bspec128, dinMax, bout128);
+            testVectorCastDoubleMaxToByte(dspecMax, bspec256, dinMax, bout256);
+            testVectorCastDoubleMaxToByte(dspecMax, bspec512, dinMax, bout512);
+            testVectorCastDoubleMaxToByte(dspecMax, bspecMax, dinMax, boutMax);
+
+            testVectorCastDoubleMaxToShort(dspecMax, sspec64, dinMax, sout64);
+            testVectorCastDoubleMaxToShort(dspecMax, sspec128, dinMax, sout128);
+            testVectorCastDoubleMaxToShort(dspecMax, sspec256, dinMax, sout256);
+            testVectorCastDoubleMaxToShort(dspecMax, sspec512, dinMax, sout512);
+            testVectorCastDoubleMaxToShort(dspecMax, sspecMax, dinMax, soutMax);
+
+            testVectorCastDoubleMaxToInt(dspecMax, ispec64, dinMax, iout64);
+            testVectorCastDoubleMaxToInt(dspecMax, ispec128, dinMax, iout128);
+            testVectorCastDoubleMaxToInt(dspecMax, ispec256, dinMax, iout256);
+            testVectorCastDoubleMaxToInt(dspecMax, ispec512, dinMax, iout512);
+            testVectorCastDoubleMaxToInt(dspecMax, ispecMax, dinMax, ioutMax);
+
+            testVectorCastDoubleMaxToLong(dspecMax, lspec64, dinMax, lout64);
+            testVectorCastDoubleMaxToLong(dspecMax, lspec128, dinMax, lout128);
+            testVectorCastDoubleMaxToLong(dspecMax, lspec256, dinMax, lout256);
+            testVectorCastDoubleMaxToLong(dspecMax, lspec512, dinMax, lout512);
+            testVectorCastDoubleMaxToLong(dspecMax, lspecMax, dinMax, loutMax);
+
+            testVectorCastDoubleMaxToFloat(dspecMax, fspec64, dinMax, fout64);
+            testVectorCastDoubleMaxToFloat(dspecMax, fspec128, dinMax, fout128);
+            testVectorCastDoubleMaxToFloat(dspecMax, fspec256, dinMax, fout256);
+            testVectorCastDoubleMaxToFloat(dspecMax, fspec512, dinMax, fout512);
+            testVectorCastDoubleMaxToFloat(dspecMax, fspecMax, dinMax, foutMax);
+
+            testVectorCastDoubleMaxToDouble(dspecMax, dspec64, dinMax, dout64);
+            testVectorCastDoubleMaxToDouble(dspecMax, dspec128, dinMax, dout128);
+            testVectorCastDoubleMaxToDouble(dspecMax, dspec256, dinMax, dout256);
+            testVectorCastDoubleMaxToDouble(dspecMax, dspec512, dinMax, dout512);
+            testVectorCastDoubleMaxToDouble(dspecMax, dspecMax, dinMax, doutMax);
         }
     }
 }

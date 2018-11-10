@@ -47,7 +47,7 @@ import java.util.stream.Stream;
 @Test
 public class Int64VectorTests extends AbstractVectorTest {
 
-    static final IntVector.IntSpecies<Shapes.S64Bit> SPECIES =
+    static final IntVector.IntSpecies<Vector.Shape> SPECIES =
                 IntVector.species(Shapes.S_64_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
@@ -79,50 +79,52 @@ public class Int64VectorTests extends AbstractVectorTest {
     }
 
     interface FReductionOp {
-      int apply(int[] a, int idx);
+        int apply(int[] a, int idx);
     }
 
     static void assertReductionArraysEquals(int[] a, int[] b, FReductionOp f) {
-      int i = 0;
-      try {
-        for (; i < a.length; i += SPECIES.length()) {
-          Assert.assertEquals(b[i], f.apply(a, i));
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(b[i], f.apply(a, i));
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
         }
-      } catch (AssertionError e) {
-        Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
-      }
     }
- 
+
     interface FBoolReductionOp {
-      boolean apply(boolean[] a, int idx);
+        boolean apply(boolean[] a, int idx);
     }
 
     static void assertReductionBoolArraysEquals(boolean[] a, boolean[] b, FBoolReductionOp f) {
-      int i = 0;
-      try {
-        for (; i < a.length; i += SPECIES.length()) {
-          Assert.assertEquals(f.apply(a, i), b[i]);
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(f.apply(a, i), b[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
         }
-      } catch (AssertionError e) {
-        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
-      }
     }
 
     static void assertInsertArraysEquals(int[] a, int[] b, int element, int index) {
-      int i = 0;
-      try {
-         for (; i < a.length; i += 1) {
-            if(i%SPECIES.length() == index)
-              Assert.assertEquals(b[i], element);
-            else
-              Assert.assertEquals(b[i], a[i]);
+        int i = 0;
+        try {
+            for (; i < a.length; i += 1) {
+                if(i%SPECIES.length() == index) {
+                    Assert.assertEquals(b[i], element);
+                } else {
+                    Assert.assertEquals(b[i], a[i]);
+                }
+            }
+        } catch (AssertionError e) {
+            if (i%SPECIES.length() == index) {
+                Assert.assertEquals(b[i], element, "at index #" + i);
+            } else {
+                Assert.assertEquals(b[i], a[i], "at index #" + i);
+            }
         }
-      } catch (AssertionError e) {
-        if(i%SPECIES.length() == index)
-              Assert.assertEquals(b[i], element, "at index #" + i);
-            else
-              Assert.assertEquals(b[i], a[i], "at index #" + i);
-      }
     }
 
     static void assertRearrangeArraysEquals(int[] a, int[] r, int[] order, int vector_len) {
@@ -213,7 +215,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     interface FBinArrayOp {
         int apply(int[] a, int b);
     }
-    
+
     static void assertArraysEquals(int[] a, int[] r, FBinArrayOp f) {
         int i = 0;
         try {
@@ -348,7 +350,7 @@ public class Int64VectorTests extends AbstractVectorTest {
         }
         return a;
     }
-    
+
     static int cornerCaseValue(int i) {
         switch(i % 5) {
             case 0:
@@ -364,7 +366,7 @@ public class Int64VectorTests extends AbstractVectorTest {
         }
     }
    static int get(int[] a, int i) {
-     return (int) a[i]; 
+       return (int) a[i];
    }
 
     static int add(int a, int b) {
@@ -373,14 +375,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void addInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.add(bv).intoArray(r, i);
             }
         }
@@ -395,12 +397,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
@@ -413,14 +415,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void subInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.sub(bv).intoArray(r, i);
             }
         }
@@ -435,12 +437,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
@@ -455,14 +457,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void mulInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.mul(bv).intoArray(r, i);
             }
         }
@@ -477,12 +479,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
@@ -496,14 +498,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void andInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.and(bv).intoArray(r, i);
             }
         }
@@ -520,12 +522,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.and(bv, vmask).intoArray(r, i);
             }
         }
@@ -540,14 +542,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void orInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.or(bv).intoArray(r, i);
             }
         }
@@ -564,12 +566,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.or(bv, vmask).intoArray(r, i);
             }
         }
@@ -584,14 +586,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void xorInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.xor(bv).intoArray(r, i);
             }
         }
@@ -608,12 +610,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.xor(bv, vmask).intoArray(r, i);
             }
         }
@@ -628,14 +630,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void shiftRInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.shiftR(bv).intoArray(r, i);
             }
         }
@@ -652,12 +654,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.shiftR(bv, vmask).intoArray(r, i);
             }
         }
@@ -672,14 +674,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void shiftLInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.shiftL(bv).intoArray(r, i);
             }
         }
@@ -696,12 +698,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.shiftL(bv, vmask).intoArray(r, i);
             }
         }
@@ -716,14 +718,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void aShiftRInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.aShiftR(bv).intoArray(r, i);
             }
         }
@@ -740,12 +742,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.aShiftR(bv, vmask).intoArray(r, i);
             }
         }
@@ -760,13 +762,13 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void aShiftRInt64VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.aShiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -783,11 +785,11 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.aShiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -802,13 +804,13 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void shiftRInt64VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.shiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -825,11 +827,11 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.shiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -844,13 +846,13 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void shiftLInt64VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.shiftL((int)b[i]).intoArray(r, i);
             }
         }
@@ -867,11 +869,11 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.shiftL((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -885,14 +887,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void maxInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.max(bv).intoArray(r, i);
             }
         }
@@ -905,14 +907,14 @@ public class Int64VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "intBinaryOpProvider")
     static void minInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] b = fb.apply(SPECIES.length()); 
-        int[] r = new int[a.length];       
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fb.apply(SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.min(bv).intoArray(r, i);
             }
         }
@@ -937,7 +939,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.andAll();
             }
         }
@@ -963,7 +965,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.orAll();
             }
         }
@@ -989,7 +991,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.xorAll();
             }
         }
@@ -1012,7 +1014,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.addAll();
             }
         }
@@ -1034,7 +1036,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.subAll();
             }
         }
@@ -1056,7 +1058,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.mulAll();
             }
         }
@@ -1066,7 +1068,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static int minAll(int[] a, int idx) {
         int res = Integer.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res < a[i])?res:a[i];
+            res = (res < a[i])?res:a[i];
         }
 
         return res;
@@ -1078,7 +1080,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.minAll();
             }
         }
@@ -1100,7 +1102,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.maxAll();
             }
         }
@@ -1125,7 +1127,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromArray(mask, i);
+              Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromArray(mask, i);
               r[i] = vmask.anyTrue();
             }
         }
@@ -1151,7 +1153,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromArray(mask, i);
+              Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromArray(mask, i);
               r[i] = vmask.allTrue();
             }
         }
@@ -1167,7 +1169,7 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+              IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               av.with(0, (int)4).intoArray(r, i);
             }
         }
@@ -1182,9 +1184,9 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Shapes.S64Bit> mv = av.lessThan(bv);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Vector.Shape> mv = av.lessThan(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1202,9 +1204,9 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Shapes.S64Bit> mv = av.greaterThan(bv);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Vector.Shape> mv = av.greaterThan(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1222,9 +1224,9 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Shapes.S64Bit> mv = av.equal(bv);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Vector.Shape> mv = av.equal(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1242,9 +1244,9 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Shapes.S64Bit> mv = av.notEqual(bv);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Vector.Shape> mv = av.notEqual(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1262,9 +1264,9 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Shapes.S64Bit> mv = av.lessThanEq(bv);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Vector.Shape> mv = av.lessThanEq(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1282,9 +1284,9 @@ public class Int64VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Shapes.S64Bit> mv = av.greaterThanEq(bv);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer, Vector.Shape> mv = av.greaterThanEq(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -1306,12 +1308,12 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] b = fb.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
-                IntVector<Shapes.S64Bit> bv = SPECIES.fromArray(b, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
@@ -1327,7 +1329,7 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] r = new int[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
             }
         }
@@ -1342,10 +1344,10 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void getInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
-        
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 int num_lanes = SPECIES.length();
                 // Manually unroll because full unroll happens after intrinsification.
                 // Unroll is needed because get intrinsic requires for index to be a known constant.
@@ -1525,7 +1527,7 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] r = new int[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.neg().intoArray(r, i);
             }
         }
@@ -1539,11 +1541,11 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.neg(vmask).intoArray(r, i);
             }
         }
@@ -1565,7 +1567,7 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] r = new int[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.abs().intoArray(r, i);
             }
         }
@@ -1579,11 +1581,11 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.abs(vmask).intoArray(r, i);
             }
         }
@@ -1608,7 +1610,7 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] r = new int[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.not().intoArray(r, i);
             }
         }
@@ -1624,11 +1626,11 @@ public class Int64VectorTests extends AbstractVectorTest {
         int[] a = fa.apply(SPECIES.length());
         int[] r = new int[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Integer, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.not(vmask).intoArray(r, i);
             }
         }

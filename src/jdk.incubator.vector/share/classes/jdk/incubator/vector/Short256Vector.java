@@ -1464,7 +1464,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Short256Vector resize(Vector<Short, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Short64Vector)) {
                 Short64Vector so = (Short64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Short64Vector.class,
@@ -1474,7 +1474,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Short128Vector)) {
                 Short128Vector so = (Short128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Short128Vector.class,
@@ -1484,7 +1484,7 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Short256Vector)) {
                 Short256Vector so = (Short256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Short256Vector.class,
@@ -1494,10 +1494,21 @@ final class Short256Vector extends ShortVector<Shapes.S256Bit> {
                     so, this,
                     (s, v) -> (Short256Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Short512Vector)) {
                 Short512Vector so = (Short512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Short512Vector.class,
+                    short.class, so.length(),
+                    Short256Vector.class,
+                    short.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Short256Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof ShortMaxVector)) {
+                ShortMaxVector so = (ShortMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    ShortMaxVector.class,
                     short.class, so.length(),
                     Short256Vector.class,
                     short.class, LENGTH,

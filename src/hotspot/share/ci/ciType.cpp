@@ -29,6 +29,9 @@
 #include "classfile/systemDictionary.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
+#ifdef COMPILER2
+#include "opto/matcher.hpp"
+#endif
 
 ciType* ciType::_basic_types[T_CONFLICT+1];
 
@@ -190,8 +193,23 @@ static bool is_float512shuffle(BasicType bt, vmSymbols::SID sid) {
 static bool is_float512(BasicType bt, vmSymbols::SID sid) {
   return is_float512vector(bt, sid) || is_float512species(bt, sid) || is_float512mask(bt, sid);
 }
+static bool is_float_max_vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_FloatMaxVector);
+}
+static bool is_float_max_species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_FloatMaxVector_FloatMaxSpecies);
+}
+static bool is_float_max_mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_FloatMaxVector_FloatMaxMask);
+}
+static bool is_float_max_shuffle(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_FloatMaxVector_FloatMaxShuffle);
+}
+static bool is_float_max(BasicType bt, vmSymbols::SID sid) {
+  return is_float_max_vector(bt, sid) || is_float_max_species(bt, sid) || is_float_max_mask(bt, sid);
+}
 static bool is_float_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
-  return is_float64(bt, sid) || is_float128(bt, sid) || is_float256(bt, sid) || is_float512(bt, sid);
+  return is_float64(bt, sid) || is_float128(bt, sid) || is_float256(bt, sid) || is_float512(bt, sid) || is_float_max(bt, sid);
 }
 static bool is_double64vector(BasicType bt, vmSymbols::SID sid) {
   return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Double64Vector);
@@ -253,8 +271,23 @@ static bool is_double512shuffle(BasicType bt, vmSymbols::SID sid) {
 static bool is_double512(BasicType bt, vmSymbols::SID sid) {
   return is_double512vector(bt, sid) || is_double512species(bt, sid) || is_double512mask(bt, sid);
 }
+static bool is_double_max_vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_DoubleMaxVector);
+}
+static bool is_double_max_species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_DoubleMaxVector_DoubleMaxSpecies);
+}
+static bool is_double_max_mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_DoubleMaxVector_DoubleMaxMask);
+}
+static bool is_double_max_shuffle(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_DoubleMaxVector_DoubleMaxShuffle);
+}
+static bool is_double_max(BasicType bt, vmSymbols::SID sid) {
+  return is_double_max_vector(bt, sid) || is_double_max_species(bt, sid) || is_double_max_mask(bt, sid);
+}
 static bool is_double_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
-  return is_double64(bt, sid) || is_double128(bt, sid) || is_double256(bt, sid) || is_double512(bt, sid);
+  return is_double64(bt, sid) || is_double128(bt, sid) || is_double256(bt, sid) || is_double512(bt, sid) || is_double_max(bt, sid);
 }
 static bool is_int64vector(BasicType bt, vmSymbols::SID sid) {
   return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Int64Vector);
@@ -316,8 +349,23 @@ static bool is_int512shuffle(BasicType bt, vmSymbols::SID sid) {
 static bool is_int512(BasicType bt, vmSymbols::SID sid) {
   return is_int512vector(bt, sid) || is_int512species(bt, sid) || is_int512mask(bt, sid);
 }
+static bool is_int_max_vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_IntMaxVector);
+}
+static bool is_int_max_species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_IntMaxVector_IntMaxSpecies);
+}
+static bool is_int_max_mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_IntMaxVector_IntMaxMask);
+}
+static bool is_int_max_shuffle(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_IntMaxVector_IntMaxShuffle);
+}
+static bool is_int_max(BasicType bt, vmSymbols::SID sid) {
+  return is_int_max_vector(bt, sid) || is_int_max_species(bt, sid) || is_int_max_mask(bt, sid);
+}
 static bool is_int_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
-  return is_int64(bt, sid) || is_int128(bt, sid) || is_int256(bt, sid) || is_int512(bt, sid);
+  return is_int64(bt, sid) || is_int128(bt, sid) || is_int256(bt, sid) || is_int512(bt, sid) || is_int_max(bt, sid);
 }
 static bool is_long64vector(BasicType bt, vmSymbols::SID sid) {
   return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Long64Vector);
@@ -379,8 +427,23 @@ static bool is_long512shuffle(BasicType bt, vmSymbols::SID sid) {
 static bool is_long512(BasicType bt, vmSymbols::SID sid) {
   return is_long512vector(bt, sid) || is_long512species(bt, sid) || is_long512mask(bt, sid);
 }
+static bool is_long_max_vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_LongMaxVector);
+}
+static bool is_long_max_species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_LongMaxVector_LongMaxSpecies);
+}
+static bool is_long_max_mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_LongMaxVector_LongMaxMask);
+}
+static bool is_long_max_shuffle(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_LongMaxVector_LongMaxShuffle);
+}
+static bool is_long_max(BasicType bt, vmSymbols::SID sid) {
+  return is_long_max_vector(bt, sid) || is_long_max_species(bt, sid) || is_long_max_mask(bt, sid);
+}
 static bool is_long_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
-  return is_long64(bt, sid) || is_long128(bt, sid) || is_long256(bt, sid) || is_long512(bt, sid);
+  return is_long64(bt, sid) || is_long128(bt, sid) || is_long256(bt, sid) || is_long512(bt, sid) || is_long_max(bt, sid);
 }
 static bool is_byte64vector(BasicType bt, vmSymbols::SID sid) {
   return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Byte64Vector);
@@ -442,8 +505,23 @@ static bool is_byte512shuffle(BasicType bt, vmSymbols::SID sid) {
 static bool is_byte512(BasicType bt, vmSymbols::SID sid) {
   return is_byte512vector(bt, sid) || is_byte512species(bt, sid) || is_byte512mask(bt, sid);
 }
+static bool is_byte_max_vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_ByteMaxVector);
+}
+static bool is_byte_max_species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_ByteMaxVector_ByteMaxSpecies);
+}
+static bool is_byte_max_mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_ByteMaxVector_ByteMaxMask);
+}
+static bool is_byte_max_shuffle(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_ByteMaxVector_ByteMaxShuffle);
+}
+static bool is_byte_max(BasicType bt, vmSymbols::SID sid) {
+  return is_byte_max_vector(bt, sid) || is_byte_max_species(bt, sid) || is_byte_max_mask(bt, sid);
+}
 static bool is_byte_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
-  return is_byte64(bt, sid) || is_byte128(bt, sid) || is_byte256(bt, sid) || is_byte512(bt, sid);
+  return is_byte64(bt, sid) || is_byte128(bt, sid) || is_byte256(bt, sid) || is_byte512(bt, sid) || is_byte_max(bt, sid);
 }
 static bool is_short64vector(BasicType bt, vmSymbols::SID sid) {
   return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_Short64Vector);
@@ -505,30 +583,45 @@ static bool is_short512shuffle(BasicType bt, vmSymbols::SID sid) {
 static bool is_short512(BasicType bt, vmSymbols::SID sid) {
   return is_short512vector(bt, sid) || is_short512species(bt, sid) || is_short512mask(bt, sid);
 }
+static bool is_short_max_vector(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_ShortMaxVector);
+}
+static bool is_short_max_species(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_ShortMaxVector_ShortMaxSpecies);
+}
+static bool is_short_max_mask(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_ShortMaxVector_ShortMaxMask);
+}
+static bool is_short_max_shuffle(BasicType bt, vmSymbols::SID sid) {
+  return bt == T_OBJECT && sid == vmSymbols::VM_SYMBOL_ENUM_NAME(jdk_incubator_vector_ShortMaxVector_ShortMaxShuffle);
+}
+static bool is_short_max(BasicType bt, vmSymbols::SID sid) {
+  return is_short_max_vector(bt, sid) || is_short_max_species(bt, sid) || is_short_max_mask(bt, sid);
+}
 static bool is_short_vec_or_mask(BasicType bt, vmSymbols::SID sid) {
-  return is_short64(bt, sid) || is_short128(bt, sid) || is_short256(bt, sid) || is_short512(bt, sid);
+  return is_short64(bt, sid) || is_short128(bt, sid) || is_short256(bt, sid) || is_short512(bt, sid) || is_short_max(bt, sid);
 }
 
 #define __ basic_type(), as_klass()->name()->sid()
 
 bool ciType::is_vectormask() {
   return basic_type() == T_OBJECT &&
-      (is_float64mask(__) || is_float128mask(__) || is_float256mask(__) || is_float512mask(__) ||
-       is_double64mask(__) || is_double128mask(__) || is_double256mask(__) || is_double512mask(__) ||
-       is_int64mask(__) || is_int128mask(__) || is_int256mask(__) || is_int512mask(__) ||
-       is_long64mask(__) || is_long128mask(__) || is_long256mask(__) || is_long512mask(__) ||
-       is_byte64mask(__) || is_byte128mask(__) || is_byte256mask(__) || is_byte512mask(__) ||
-       is_short64mask(__) || is_short128mask(__) || is_short256mask(__) || is_short512mask(__));
+      (is_float64mask(__) || is_float128mask(__) || is_float256mask(__) || is_float512mask(__) || is_float_max_mask(__) ||
+       is_double64mask(__) || is_double128mask(__) || is_double256mask(__) || is_double512mask(__) || is_double_max_mask(__) ||
+       is_int64mask(__) || is_int128mask(__) || is_int256mask(__) || is_int512mask(__) || is_int_max_mask(__) ||
+       is_long64mask(__) || is_long128mask(__) || is_long256mask(__) || is_long512mask(__) || is_long_max_mask(__) ||
+       is_byte64mask(__) || is_byte128mask(__) || is_byte256mask(__) || is_byte512mask(__) || is_byte_max_mask(__) ||
+       is_short64mask(__) || is_short128mask(__) || is_short256mask(__) || is_short512mask(__) ||  is_short_max_mask(__));
 }
 
 bool ciType::is_vectorshuffle() {
   return basic_type() == T_OBJECT &&
-      (is_float64shuffle(__) || is_float128shuffle(__) || is_float256shuffle(__) || is_float512shuffle(__) ||
-       is_double64shuffle(__) || is_double128shuffle(__) || is_double256shuffle(__) || is_double512shuffle(__) ||
-       is_int64shuffle(__) || is_int128shuffle(__) || is_int256shuffle(__) || is_int512shuffle(__) ||
-       is_long64shuffle(__) || is_long128shuffle(__) || is_long256shuffle(__) || is_long512shuffle(__) ||
-       is_byte64shuffle(__) || is_byte128shuffle(__) || is_byte256shuffle(__) || is_byte512shuffle(__) ||
-       is_short64shuffle(__) || is_short128shuffle(__) || is_short256shuffle(__) || is_short512shuffle(__));
+      (is_float64shuffle(__) || is_float128shuffle(__) || is_float256shuffle(__) || is_float512shuffle(__) || is_float_max_shuffle(__) ||
+       is_double64shuffle(__) || is_double128shuffle(__) || is_double256shuffle(__) || is_double512shuffle(__) || is_double_max_shuffle(__) ||
+       is_int64shuffle(__) || is_int128shuffle(__) || is_int256shuffle(__) || is_int512shuffle(__) || is_int_max_shuffle(__) ||
+       is_long64shuffle(__) || is_long128shuffle(__) || is_long256shuffle(__) || is_long512shuffle(__) || is_long_max_shuffle(__) ||
+       is_byte64shuffle(__) || is_byte128shuffle(__) || is_byte256shuffle(__) || is_byte512shuffle(__) || is_byte_max_shuffle(__) ||
+       is_short64shuffle(__) || is_short128shuffle(__) || is_short256shuffle(__) || is_short512shuffle(__) || is_short_max_shuffle(__));
 }
 
 bool ciType::is_vectorapi_vector() {
@@ -548,6 +641,14 @@ int ciType::vectorapi_vector_size() {
   if ( is_byte128(__) || is_short256(__) || is_int512(__) || is_float512(__) ) return 16;
   if ( is_byte256(__) || is_short512(__) ) return 32;
   if ( is_byte512(__) ) return 64;
+#ifdef COMPILER2
+  if ( is_double_max(__)) return Matcher::max_vector_size(T_DOUBLE);
+  if ( is_long_max(__)) return Matcher::max_vector_size(T_LONG);
+  if ( is_float_max(__)) return Matcher::max_vector_size(T_FLOAT);
+  if ( is_int_max(__)) return Matcher::max_vector_size(T_INT);
+  if ( is_short_max(__)) return Matcher::max_vector_size(T_SHORT);
+  if ( is_byte_max(__)) return Matcher::max_vector_size(T_BYTE);
+#endif
   return -1;
 }
 

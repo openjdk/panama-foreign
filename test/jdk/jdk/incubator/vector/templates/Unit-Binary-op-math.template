@@ -8,7 +8,7 @@
 
     @Test(dataProvider = "$type$BinaryOpProvider")
     static void [[TEST]]$vectorteststype$(IntFunction<$type$[]> fa, IntFunction<$type$[]> fb) {
-[[KERNEL]] 
-				assertArraysEqualsWithinOneUlp(a, b, r, $vectorteststype$::[[TEST]], $vectorteststype$::strict[[TEST]]);
+[[KERNEL]]
+        assertArraysEqualsWithinOneUlp(a, b, r, $vectorteststype$::[[TEST]], $vectorteststype$::strict[[TEST]]);
     }
 

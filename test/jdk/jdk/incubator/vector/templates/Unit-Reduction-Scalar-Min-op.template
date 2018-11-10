@@ -1,7 +1,7 @@
     static $type$ [[TEST]]($type$[] a, int idx) {
         $type$ res = $Wideboxtype$.[[TEST_INIT]];
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res < a[i])?res:a[i];
+            res = (res < a[i])?res:a[i];
         }
 
         return res;

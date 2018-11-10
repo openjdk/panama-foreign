@@ -41,7 +41,7 @@ public class AbstractVectorTest {
 
     static boolean[] fill_boolean(int s , ToBoolF f) {
         return fill_boolean(new boolean[s], f);
-    }    
+    }
 
     static boolean[] fill_boolean(boolean[] a, ToBoolF f) {
         for (int i = 0; i < a.length; i++) {
@@ -161,7 +161,7 @@ public class AbstractVectorTest {
             }),
             withToString("mask[false]", boolean[]::new)
     );
-    
+
     static final List<BiFunction<Integer,Integer,int[]>> INT_SHUFFLE_GENERATORS = List.of(
             withToStringBi("shuffle[random]", (Integer l, Integer m) -> {
                 return RAND.ints(l.intValue(), 0, m.intValue()).toArray();

@@ -73,12 +73,13 @@ fi
 LogRun false "Running tests $(date)\n"
 LogRun true "Running the following tests:\n"
 LogRun true "${TESTS}\n"
-LogRun false "${JAVA} -cp \"${VECTORTESTS_HOME_CP}${SEPARATOR}${TESTNG_RUN_JAR}${SEPARATOR}${JCOMMANDER_JAR}\" ${JAVA_FLAGS} --add-modules jdk.incubator.vector org.testng.TestNG -testclass $TESTS"
+LogRun false "${JAVA} -cp \"${VECTORTESTS_HOME_CP}${SEPARATOR}${TESTNG_RUN_JAR}${SEPARATOR}${JCOMMANDER_JAR}\" ${JAVA_FLAGS} --add-modules jdk.incubator.vector --add-opens jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED org.testng.TestNG -testclass $TESTS"
 
 # Actual TestNG run.
 time ${JAVA} -cp "${VECTORTESTS_HOME_CP}${SEPARATOR}${TESTNG_RUN_JAR}${SEPARATOR}${JCOMMANDER_JAR}" \
   ${JAVA_FLAGS} \
   --add-modules jdk.incubator.vector \
+  --add-opens jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED \
   -Djdk.incubator.vector.test.loop-iterations=${TEST_ITER_COUNT} \
   org.testng.TestNG -testclass $TESTS
 LogRun true "Tests run complete. Please look at test-output/index.html to visualize the results.\n"

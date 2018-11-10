@@ -426,7 +426,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the minimum of this vector and the input vector
      */
     public abstract Vector<E, S> min(Vector<E, S> v);
-    
+
     /**
      * Returns the minimum of this vector and an input vector,
      * selecting lane elements controlled by a mask.
@@ -1567,7 +1567,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @return true if the lane at index {@code i} is set, otherwise false
          */
         public abstract boolean getElement(int i);
-        
+
         /**
          * Tests if the lane at index {@code i} is set
          * @param i the lane index
@@ -1743,7 +1743,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
 
     /**
      * Find bit size based on element type and number of elements.
-     * 
+     *
      * @param c the element type
      * @param numElem number of lanes in the vector
      * @return size in bits for vector
@@ -1774,7 +1774,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
 
     /**
      * Finds appropriate shape depending on bitsize.
-     * 
+     *
      * @param bitSize the size in bits
      * @return the shape corresponding to bitsize
      * @see bitSize
@@ -1790,7 +1790,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
             case 512:
                 return Shapes.S_512_BIT;
             default:
-                throw new IllegalArgumentException("Bad vector bit size: " + bitSize);
+                if ((bitSize > 0) && (bitSize <= 2048) && (bitSize % 128 == 0)) {
+                    return Shapes.S_Max_BIT;
+                } else {
+                    throw new IllegalArgumentException("Bad vector bit size: " + bitSize);
+                }
         }
     }
 

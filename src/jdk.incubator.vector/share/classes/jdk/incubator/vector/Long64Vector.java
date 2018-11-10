@@ -1508,7 +1508,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Long64Vector resize(Vector<Long, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Long64Vector)) {
                 Long64Vector so = (Long64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Long64Vector.class,
@@ -1518,7 +1518,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
                     so, this,
                     (s, v) -> (Long64Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Long128Vector)) {
                 Long128Vector so = (Long128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Long128Vector.class,
@@ -1528,7 +1528,7 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
                     so, this,
                     (s, v) -> (Long64Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Long256Vector)) {
                 Long256Vector so = (Long256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Long256Vector.class,
@@ -1538,10 +1538,21 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
                     so, this,
                     (s, v) -> (Long64Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Long512Vector)) {
                 Long512Vector so = (Long512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Long512Vector.class,
+                    long.class, so.length(),
+                    Long64Vector.class,
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long64Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof LongMaxVector)) {
+                LongMaxVector so = (LongMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    LongMaxVector.class,
                     long.class, so.length(),
                     Long64Vector.class,
                     long.class, LENGTH,
