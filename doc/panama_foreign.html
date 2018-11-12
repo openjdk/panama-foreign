@@ -378,11 +378,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2 id="using-lapack-library-mac-os">Using LAPACK library (Mac OS)</h2>
 <p>On Mac OS, lapack is installed under /usr/local/opt/lapack directory.</p>
 <h3 id="jextracting-lapacke.h">jextracting lapacke.h</h3>
-<p>The following command can be used to extract the LAPACK header. These are too many symbols in lapacke.h and so jextract throws too many constant pool entries (IllegalArgumentException). To workaround, we exclude all symbols except the ones used in the Java sample code below.</p>
+<p>The following command can be used to extract the LAPACK header. These are too many symbols in lapacke.h and so jextract throws too many constant pool entries (IllegalArgumentException). To workaround, we include only the symbols used in the Java sample code below.</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb14-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb14-2" data-line-number="2"><span class="ex">jextract</span> --exclude-symbols ^<span class="dt">\(</span>?!LAPACKE_dgels<span class="dt">\|</span>LAPACK_COL_MAJOR<span class="dt">\)</span>.*$ <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb14-3" data-line-number="3">  <span class="ex">-L</span> /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ <span class="dt">\ </span> </a>
-<a class="sourceLine" id="cb14-4" data-line-number="4">  <span class="ex">-l</span> lapacke -t lapack -infer-rpath /usr/local/opt/lapack/include/lapacke.h -o clapack.jar</a></code></pre></div>
+<a class="sourceLine" id="cb14-2" data-line-number="2"><span class="ex">jextract</span> --include-symbols LAPACKE_dgels<span class="dt">\|</span>LAPACK_COL_MAJOR \</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">  -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \</a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">  -l lapacke -t lapack -infer-rpath /usr/local/opt/lapack/include/lapacke.h -o clapack.jar</a></code></pre></div>
 <h3 id="java-sample-code-that-uses-lapack-library-1">Java sample code that uses LAPACK library</h3>
 <div class="sourceCode" id="cb15"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb15-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb15-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>

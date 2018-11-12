@@ -133,6 +133,7 @@ public final class Main {
         parser.acceptsAll(List.of("m", "package-map"), format("help.m")).withRequiredArg();
         parser.acceptsAll(List.of("?", "h", "help"), format("help.h")).forHelp();
         parser.accepts("C", format("help.C")).withRequiredArg();
+        parser.accepts("include-symbols", format("help.include_symbols")).withRequiredArg();
         parser.accepts("log", format("help.log")).withRequiredArg();
         parser.accepts("exclude-symbols", format("help.exclude_symbols")).withRequiredArg();
         parser.accepts("rpath", format("help.rpath")).withRequiredArg();
@@ -213,6 +214,14 @@ public final class Main {
             staticForwarder = (boolean)options.valueOf("static-forwarder");
         }
         ctx.setGenStaticForwarder(staticForwarder && options.has("l"));
+
+        if (options.has("include-symbols")) {
+            try {
+                options.valuesOf("include-symbols").forEach(sym -> ctx.addIncludeSymbols((String) sym));
+            } catch (PatternSyntaxException pse) {
+                ctx.err.println(format("include.symbols.pattern.error", pse.getMessage()));
+            }
+        }
 
         if (options.has("exclude-symbols")) {
             try {

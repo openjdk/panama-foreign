@@ -83,6 +83,8 @@ public final class Context {
     private final List<String> libraryPaths;
     // The list of library paths for link checks
     private final List<String> linkCheckPaths;
+    // Symbol patterns to be included
+    private final List<Pattern> includeSymbols;
     // Symbol patterns to be excluded
     private final List<Pattern> excludeSymbols;
     // generate static forwarder class or not?
@@ -92,7 +94,8 @@ public final class Context {
     final PrintWriter err;
 
     private Predicate<String> symChecker;
-    private Predicate<String> symFilter;
+    private Predicate<String> includeSymFilter;
+    private Predicate<String> excludeSymFilter;
 
     private final Parser parser;
 
@@ -108,6 +111,7 @@ public final class Context {
         this.libraryNames = new ArrayList<>();
         this.libraryPaths = new ArrayList<>();
         this.linkCheckPaths = new ArrayList<>();
+        this.includeSymbols = new ArrayList<>();
         this.excludeSymbols = new ArrayList<>();
         this.parser = new Parser(out, err, Main.INCLUDE_MACROS);
         this.out = out;
@@ -140,6 +144,10 @@ public final class Context {
 
     void addLinkCheckPath(String path) {
         linkCheckPaths.add(path);
+    }
+
+    void addIncludeSymbols(String pattern) {
+        includeSymbols.add(Pattern.compile(pattern));
     }
 
     void addExcludeSymbols(String pattern) {
@@ -218,20 +226,34 @@ public final class Context {
         return symChecker == null? true : symChecker.test(name);
     }
 
-    private void initSymFilter() {
-        if (!excludeSymbols.isEmpty()) {
-            Pattern[] pats = excludeSymbols.toArray(new Pattern[0]);
-            symFilter = name -> {
+    private void initSymFilters() {
+        if (!includeSymbols.isEmpty()) {
+            Pattern[] pats = includeSymbols.toArray(new Pattern[0]);
+            includeSymFilter = name -> {
                 return Arrays.stream(pats).filter(pat -> pat.matcher(name).matches()).
                     findFirst().isPresent();
             };
         } else {
-            symFilter = null;
+            includeSymFilter = null;
+        }
+
+        if (!excludeSymbols.isEmpty()) {
+            Pattern[] pats = excludeSymbols.toArray(new Pattern[0]);
+            excludeSymFilter = name -> {
+                return Arrays.stream(pats).filter(pat -> pat.matcher(name).matches()).
+                    findFirst().isPresent();
+            };
+        } else {
+            excludeSymFilter = null;
         }
     }
 
+    private boolean isSymbolIncluded(String name) {
+        return includeSymFilter == null? true : includeSymFilter.test(name);
+    }
+
     private boolean isSymbolExcluded(String name) {
-        return symFilter == null? false : symFilter.test(name);
+        return excludeSymFilter == null? false : excludeSymFilter.test(name);
     }
 
     /**
@@ -390,7 +412,7 @@ public final class Context {
 
     private boolean symbolFilter(Tree tree) {
          String name = tree.name();
-         if (isSymbolExcluded(name)) {
+         if (!isSymbolIncluded(name) || isSymbolExcluded(name)) {
              return false;
          }
 
@@ -406,7 +428,7 @@ public final class Context {
 
     public void parse(Function<HeaderFile, AsmCodeFactory> fn) {
         initSymChecker();
-        initSymFilter();
+        initSymFilters();
 
         List<HeaderTree> headers = parser.parse(sources, clangArgs);
         processHeaders(headers, fn);

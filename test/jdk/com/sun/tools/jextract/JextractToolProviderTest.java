@@ -363,20 +363,104 @@ public class JextractToolProviderTest extends JextractToolRunner {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
+            assertNotNull(findMethod(cls, "func2", Object[].class));
+            assertNotNull(findMethod(cls, "func3", Object[].class));
             // check a method for "void junk()"
             assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            assertNotNull(findMethod(cls, "junk3", Object[].class));
         } finally {
             deleteFile(helloJar);
         }
 
         // try with --exclude-symbols" this time.
-        checkSuccess(null, "--exclude-symbols", "junk", "-o", helloJar.toString(), helloH.toString());
+        checkSuccess(null, "--exclude-symbols", "junk.*", "-o", helloJar.toString(), helloH.toString());
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
+            assertNotNull(findMethod(cls, "func2", Object[].class));
+            assertNotNull(findMethod(cls, "func3", Object[].class));
             // check a method for "void junk()"
             assertNull(findMethod(cls, "junk", Object[].class));
+            assertNull(findMethod(cls, "junk2", Object[].class));
+            assertNull(findMethod(cls, "junk3", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+    }
+
+    @Test
+    public void testIncludeSymbols() {
+        Path helloJar = getOutputFilePath("hello.jar");
+        deleteFile(helloJar);
+        Path helloH = getInputFilePath("hello.h");
+        checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass("hello", helloJar);
+            // check a method for "void func()"
+            assertNotNull(findMethod(cls, "func", Object[].class));
+            assertNotNull(findMethod(cls, "func2", Object[].class));
+            assertNotNull(findMethod(cls, "func3", Object[].class));
+            // check a method for "void junk()"
+            assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            assertNotNull(findMethod(cls, "junk3", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+
+        // try with --include-symbols" this time.
+        checkSuccess(null, "--include-symbols", "junk.*", "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass("hello", helloJar);
+            // check a method for "void junk()"
+            assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            assertNotNull(findMethod(cls, "junk3", Object[].class));
+            // check a method for "void func()"
+            assertNull(findMethod(cls, "func", Object[].class));
+            assertNull(findMethod(cls, "func2", Object[].class));
+            assertNull(findMethod(cls, "func3", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+    }
+
+    @Test
+    public void testIncludeExcludeSymbols() {
+        Path helloJar = getOutputFilePath("hello.jar");
+        deleteFile(helloJar);
+        Path helloH = getInputFilePath("hello.h");
+        checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass("hello", helloJar);
+            // check a method for "void func()"
+            assertNotNull(findMethod(cls, "func", Object[].class));
+            assertNotNull(findMethod(cls, "func2", Object[].class));
+            assertNotNull(findMethod(cls, "func3", Object[].class));
+            // check a method for "void junk()"
+            assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            assertNotNull(findMethod(cls, "junk3", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+
+        // try with --include-symbols" this time.
+        checkSuccess(null, "--include-symbols", "junk.*", "--exclude-symbols", "junk3",
+             "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass("hello", helloJar);
+            // check a method for "void junk()"
+            assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            // check a method for "void func()" - not included
+            assertNull(findMethod(cls, "func", Object[].class));
+            assertNull(findMethod(cls, "func2", Object[].class));
+            assertNull(findMethod(cls, "func3", Object[].class));
+            // excluded among the included set!
+            assertNull(findMethod(cls, "junk3", Object[].class));
         } finally {
             deleteFile(helloJar);
         }
