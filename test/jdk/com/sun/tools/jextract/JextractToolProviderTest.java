@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeLocation;
 import java.foreign.memory.Pointer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -424,6 +425,23 @@ public class JextractToolProviderTest extends JextractToolRunner {
             assertNull(findMethod(cls, "func3", Object[].class));
         } finally {
             deleteFile(helloJar);
+        }
+    }
+
+    @Test
+    public void testNoLocations() {
+        Path simpleJar = getOutputFilePath("simple.jar");
+        deleteFile(simpleJar);
+        Path simpleH = getInputFilePath("simple.h");
+        checkSuccess(null, "--no-locations", "-o", simpleJar.toString(), simpleH.toString());
+        try {
+            Class<?> simpleCls = loadClass("simple", simpleJar);
+            Method func = findFirstMethod(simpleCls, "func");
+            assertFalse(func.isAnnotationPresent(NativeLocation.class));
+            Class<?> anonymousCls = loadClass("simple$anonymous", simpleJar);
+            assertFalse(simpleCls.isAnnotationPresent(NativeLocation.class));
+        } finally {
+            deleteFile(simpleJar);
         }
     }
 

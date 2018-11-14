@@ -43,11 +43,11 @@ public class DoubleUpcall {
         @NativeCallback("(f64f64)f64")
         @FunctionalInterface
         static interface cb {
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
+            @NativeLocation(file="dummy", line=47, column=11)
             public double fn(double d1, double d2);
         }
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@double_upcall")
+        @NativeLocation(file="dummy", line=47, column=11)
         public abstract double double_upcall(Callback<cb> cb, double d1, double d2);
     }
 

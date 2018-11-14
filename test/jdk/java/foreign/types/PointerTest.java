@@ -77,22 +77,22 @@ public class PointerTest {
             "get_1_byte_pointer=()u64:i8"
     )
     static interface pointers {
-        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings")
+        @NativeLocation(file="dummy", line=47, column=11)
         void get_strings(Pointer<Pointer<Pointer<Byte>>> p, Pointer<Integer> pcount);
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_strings2")
+        @NativeLocation(file="dummy", line=47, column=11)
         Pointer<Pointer<Byte>> get_strings2(Pointer<Integer> pcount);
 
-        @NativeLocation(file="dummy", line=71, column=0, USR="c:@F@get_stringsAsVoidPtr")
+        @NativeLocation(file="dummy", line=71, column=0)
         Pointer<Void> get_stringsAsVoidPtr(Pointer<Integer> pcount);
 
-        @NativeLocation(file="dummy", line=75, column=0, USR="c:@F@get_stringsAsOpaquePtr")
+        @NativeLocation(file="dummy", line=75, column=0)
         Pointer<Void> get_stringsAsOpaquePtr(Pointer<Integer> pcount);
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs")
+        @NativeLocation(file="dummy", line=47, column=11)
         void get_structs(Pointer<Pointer<Pointer<MyStruct>>> p, Pointer<Integer> pcount);
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@get_structs2")
+        @NativeLocation(file="dummy", line=47, column=11)
         Pointer<Pointer<MyStruct>> get_structs2(Pointer<Integer> pcount);
 
         Pointer<?> get_negative();
@@ -103,18 +103,18 @@ public class PointerTest {
 
         Void notExist(Pointer<Integer> pcount);
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11)
         @NativeStruct("[" +
                       "  [3i32](get=ia$get)(set=ia$set)" +
                       "  u32(pad)" +
                       "  u64(get=str$get)(set=str$set):u8" +
                       "](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@ia")
+            @NativeLocation(file="dummy", line=47, column=11)
             Array<Integer> ia$get();
             void ia$set(Array<Integer> i);
 
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@str")
+            @NativeLocation(file="dummy", line=47, column=11)
             Pointer<Byte> str$get();
             void str$set(Pointer<Byte> str);
         }

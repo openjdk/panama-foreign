@@ -45,11 +45,11 @@ public class Upcall {
         @NativeCallback("(i32)v")
         @FunctionalInterface
         static interface visitor {
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
+            @NativeLocation(file="dummy", line=47, column=11)
             public void fn(int i);
         }
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@do_upcall")
+        @NativeLocation(file="dummy", line=47, column=11)
         public abstract void do_upcall(Callback<visitor> v, int i);
     }
 

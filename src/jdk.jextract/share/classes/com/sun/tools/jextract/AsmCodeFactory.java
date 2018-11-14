@@ -134,15 +134,16 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     }
 
     private void annotateNativeLocation(ClassVisitor cw, Tree tree) {
-        AnnotationVisitor av = cw.visitAnnotation(NATIVE_LOCATION, true);
-        SourceLocation src = tree.location();
-        SourceLocation.Location loc = src.getFileLocation();
-        Path p = loc.path();
-        av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
-        av.visit("line", loc.line());
-        av.visit("column", loc.column());
-        av.visit("USR", tree.USR());
-        av.visitEnd();
+        if (! ctx.getNoNativeLocations()) {
+            AnnotationVisitor av = cw.visitAnnotation(NATIVE_LOCATION, true);
+            SourceLocation src = tree.location();
+            SourceLocation.Location loc = src.getFileLocation();
+            Path p = loc.path();
+            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+            av.visit("line", loc.line());
+            av.visit("column", loc.column());
+            av.visitEnd();
+        }
     }
 
     private void writeClassFile(final ClassWriter cw, String clsName)
@@ -179,15 +180,16 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$get",
                 "()" + jt.getDescriptor(), "()" + jt.getSignature(), null);
 
-        AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
-        SourceLocation src = tree.location();
-        SourceLocation.Location loc = src.getFileLocation();
-        Path p = loc.path();
-        av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
-        av.visit("line", loc.line());
-        av.visit("column", loc.column());
-        av.visit("USR", tree.USR());
-        av.visitEnd();
+        if (! ctx.getNoNativeLocations()) {
+            AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
+            SourceLocation src = tree.location();
+            SourceLocation.Location loc = src.getFileLocation();
+            Path p = loc.path();
+            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+            av.visit("line", loc.line());
+            av.visit("column", loc.column());
+            av.visitEnd();
+        }
 
         mv.visitEnd();
         mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
@@ -448,15 +450,18 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             logger.finer(() -> "  arg " + tmp + ": " + name);
             mv.visitParameter(name, 0);
         }
-        AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
-        SourceLocation src = funcTree.location();
-        SourceLocation.Location loc = src.getFileLocation();
-        Path p = loc.path();
-        av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
-        av.visit("line", loc.line());
-        av.visit("column", loc.column());
-        av.visit("USR", funcTree.USR());
-        av.visitEnd();
+
+        if (! ctx.getNoNativeLocations()) {
+            AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
+            SourceLocation src = funcTree.location();
+            SourceLocation.Location loc = src.getFileLocation();
+            Path p = loc.path();
+            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+            av.visit("line", loc.line());
+            av.visit("column", loc.column());
+            av.visitEnd();
+        }
+
         Type type = funcTree.type();
         final String descStr = Utils.getFunction(type).toString();
         addHeaderDecl(funcTree.name(), descStr);
@@ -545,15 +550,16 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(macroType));
         MethodVisitor mv = global_cw.visitMethod(ACC_PUBLIC, name, sig, sig, null);
 
-        AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
-        SourceLocation src = macroTree.location();
-        SourceLocation.Location loc = src.getFileLocation();
-        Path p = loc.path();
-        av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
-        av.visit("line", loc.line());
-        av.visit("column", loc.column());
-        av.visit("USR", macroTree.USR());
-        av.visitEnd();
+        if (! ctx.getNoNativeLocations()) {
+            AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
+            SourceLocation src = macroTree.location();
+            SourceLocation.Location loc = src.getFileLocation();
+            Path p = loc.path();
+            av.visit("file", p == null ? "builtin" : p.toAbsolutePath().toString());
+            av.visit("line", loc.line());
+            av.visit("column", loc.column());
+            av.visitEnd();
+        }
 
         mv.visitCode();
 

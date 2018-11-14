@@ -87,6 +87,8 @@ public final class Context {
     private final List<Pattern> includeSymbols;
     // Symbol patterns to be excluded
     private final List<Pattern> excludeSymbols;
+    // no NativeLocation info
+    private boolean noNativeLocations;
     // generate static forwarder class or not?
     private boolean genStaticForwarder;
 
@@ -144,6 +146,14 @@ public final class Context {
 
     void addLinkCheckPath(String path) {
         linkCheckPaths.add(path);
+    }
+
+    boolean getNoNativeLocations() {
+        return noNativeLocations;
+    }
+
+    void setNoNativeLocations() {
+        noNativeLocations = true;
     }
 
     void addIncludeSymbols(String pattern) {

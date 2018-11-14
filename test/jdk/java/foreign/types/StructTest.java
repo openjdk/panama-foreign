@@ -45,10 +45,10 @@ public class StructTest {
         return (n + alignment - 1) & ~(alignment - 1);
     }
 
-    @NativeLocation(file="dummy", line=47, column=11, USR="c:@S@MyStruct")
+    @NativeLocation(file="dummy", line=47, column=11)
     @NativeStruct("[[4i32](get=a$get)(set=a$set)]")
     static interface MyStruct extends Struct<MyStruct> {
-        @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@field1")
+        @NativeLocation(file="dummy", line=47, column=11)
         Array<Integer> a$get();
         void a$set(Array<Integer> a);
     }

@@ -32,7 +32,7 @@ import java.foreign.memory.Pointer;
 @NativeHeader(path="TypedefAnonStruct.h")
 public interface TypedefAnonStruct {
     @NativeLocation(
-      file="TypedefAnonStruct.h", line=24, column=9, USR="c:@SA@Point"
+      file="TypedefAnonStruct.h", line=24, column=9
     )
     @NativeStruct("[" +
             "i32(get=i$get)(set=i$set)(ptr=i$ptr)" +
@@ -40,13 +40,13 @@ public interface TypedefAnonStruct {
             "](Point)")
     public static interface Point extends Struct<Point> {
         @NativeLocation(
-          file="TypedefAnonStruct.h", line=25, column=9, USR="c:@SA@Point@FI@i"
+          file="TypedefAnonStruct.h", line=25, column=9
         )
         public int i$get();
         public void i$set(int arg);
         public Pointer<Integer> i$ptr();
         @NativeLocation(
-          file="TypedefAnonStruct.h", line=25, column=12, USR="c:@SA@Point@FI@j"
+          file="TypedefAnonStruct.h", line=25, column=12
         )
         public int j$get();
         public void j$set(int arg);
@@ -54,7 +54,7 @@ public interface TypedefAnonStruct {
     }
 
     @NativeLocation(
-      file="TypedefAnonStruct.h", line=28, column=9, USR="c:@SA@FPoint"
+      file="TypedefAnonStruct.h", line=28, column=9
     )
     @NativeStruct("[" +
             "f32(get=x$get)(set=x$set)(ptr=x$ptr)" +
@@ -62,13 +62,13 @@ public interface TypedefAnonStruct {
             "](FPoint)")
     public static interface FPoint extends Struct<FPoint> {
         @NativeLocation(
-          file="TypedefAnonStruct.h", line=29, column=11, USR="c:@SA@FPoint@FI@x"
+          file="TypedefAnonStruct.h", line=29, column=11
         )
         public float x$get();
         public void x$set(float arg);
         public Pointer<Float> x$ptr();
         @NativeLocation(
-          file="TypedefAnonStruct.h", line=29, column=14, USR="c:@SA@FPoint@FI@y"
+          file="TypedefAnonStruct.h", line=29, column=14
         )
         public float y$get();
         public void y$set(float arg);

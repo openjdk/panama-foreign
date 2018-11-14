@@ -44,7 +44,7 @@ public class StructUpcall {
 
     @NativeHeader(declarations = "struct_upcall=(u64:($(mystruct))v$(mystruct))v")
     public static interface Index {
-        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11)
         @NativeStruct("[" +
                       "  i32(get=field1$get)(set=field1$set)" +
                       "  i32(get=field2$get)(set=field2$set)" +
@@ -54,27 +54,27 @@ public class StructUpcall {
                       "  u64(get=field6$get)(set=field6$set):v" +
                       "](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field1")
+            @NativeLocation(file="dummy", line=47, column=11)
             int field1$get();
             void field1$set(int i);
 
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field2")
+            @NativeLocation(file="dummy", line=47, column=11)
             int field2$get();
             void field2$set(int i);
 
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field3")
+            @NativeLocation(file="dummy", line=47, column=11)
             int field3$get();
             void field3$set(int i);
 
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field4")
+            @NativeLocation(file="dummy", line=47, column=11)
             Pointer<Void> field4$get();
             void field4$set(Pointer<?> p);
 
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field5")
+            @NativeLocation(file="dummy", line=47, column=11)
             Pointer<Void> field5$get();
             void field5$set(Pointer<?> p);
 
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@field6")
+            @NativeLocation(file="dummy", line=47, column=11)
             Pointer<Void> field6$get();
             void field6$set(Pointer<?> p);
         }
@@ -82,11 +82,11 @@ public class StructUpcall {
         @NativeCallback("($(mystruct))$(mystruct)")
         @FunctionalInterface
         static interface MyStructVisitor {
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
+            @NativeLocation(file="dummy", line=47, column=11)
             public MyStruct fn(MyStruct s);
         }
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@struct_upcall")
+        @NativeLocation(file="dummy", line=47, column=11)
         public abstract void struct_upcall(Callback<MyStructVisitor> v, MyStruct s);
     }
 

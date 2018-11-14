@@ -36,6 +36,6 @@ public interface stdlib {
         public int fn(Pointer<Void> e1, Pointer<Void> e2);
     }
 
-    @NativeLocation(file="stdlib.h", line=47, column=11, USR="c:@F@qsort")
+    @NativeLocation(file="stdlib.h", line=47, column=11)
     public abstract void qsort(Pointer<?> base, long nmemb, long size, Callback<compar> compar);
 }

@@ -135,6 +135,7 @@ public final class Main {
         parser.accepts("C", format("help.C")).withRequiredArg();
         parser.accepts("include-symbols", format("help.include_symbols")).withRequiredArg();
         parser.accepts("log", format("help.log")).withRequiredArg();
+        parser.accepts("no-locations", format("help.no.locations"));
         parser.accepts("exclude-symbols", format("help.exclude_symbols")).withRequiredArg();
         parser.accepts("rpath", format("help.rpath")).withRequiredArg();
         parser.accepts("infer-rpath", format("help.infer.rpath"));
@@ -190,6 +191,10 @@ public final class Main {
                 }
                 ctx.addLibraryName(lib);
             }
+        }
+
+        if (options.has("no-locations")) {
+            ctx.setNoNativeLocations();
         }
 
         boolean infer_rpath = options.has("infer-rpath");

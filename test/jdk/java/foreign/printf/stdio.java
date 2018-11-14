@@ -34,18 +34,18 @@ import java.foreign.memory.Pointer;
         "fdopen=(i32u64:u8)u64:v"
 )
 public interface stdio {
-    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@getpid")
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
     int getpid();
 
-    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@printf")
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
     int printf(Pointer<Byte> fmt, Object... args);
 
-    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fprintf")
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
     int fprintf(Pointer<Void> strm, Pointer<Byte> fmt, Object... args);
 
-    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fflush")
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
     int fflush(Pointer<Void> stream);
 
-    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11, USR="c:@F@fdopen")
+    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
     Pointer<Void> fdopen(int fd, Pointer<Byte> mode);
 }
