@@ -36,7 +36,7 @@ import java.foreign.annotations.*;
 public class BindTest {
     @NativeHeader(declarations = "getpid=()i32")
     static interface system {
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@getpid")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract int getpid();
     }
 

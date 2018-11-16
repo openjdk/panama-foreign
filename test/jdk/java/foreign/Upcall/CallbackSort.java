@@ -46,11 +46,11 @@ public class CallbackSort {
         @NativeCallback("(u64:vu64:v)i32")
         @FunctionalInterface
         static interface compar {
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
+            @NativeLocation(file="dummy", line=47, column=11)
             public int fn(Pointer<Void> e1, Pointer<Void> e2);
         }
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="c:@F@slowsort")
+        @NativeLocation(file="dummy", line=47, column=11)
         public abstract void slowsort(Pointer<?> base, long nmemb, long size, Callback<compar> compar);
     }
 

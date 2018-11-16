@@ -326,12 +326,12 @@ On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
 
 The following command can be used to extract the LAPACK header. These are too many symbols in lapacke.h
 and so jextract throws too many constant pool entries (IllegalArgumentException). To workaround, we
-exclude all symbols except the ones used in the Java sample code below.
+include only the symbols used in the Java sample code below.
 
 ```sh
 
-jextract --exclude-symbols ^\(?!LAPACKE_dgels\|LAPACK_COL_MAJOR\).*$ \  
-  -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \  
+jextract --include-symbols LAPACKE_dgels\|LAPACK_COL_MAJOR \
+  -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \
   -l lapacke -t lapack -infer-rpath /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
 
 ```

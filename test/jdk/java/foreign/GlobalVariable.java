@@ -43,53 +43,53 @@ public class GlobalVariable {
             "global_struct=$(mystruct)(get=global_struct$get)(set=global_struct$set)(ptr=global_struct$ptr)"
     )
     static interface globvar {
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@init")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract void init();
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_boolean")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract boolean global_boolean$get();
         public abstract void global_boolean$set(boolean arg);
         public abstract Pointer<Boolean> global_boolean$ptr();
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i8")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract byte global_i8$get();
         public abstract void global_i8$set(byte arg);
         public abstract Pointer<Byte> global_i8$ptr();
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i16")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract short global_i16$get();
         public abstract void global_i16$set(short arg);
         public abstract Pointer<Short> global_i16$ptr();
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i32")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract int global_i32$get();
         public abstract void global_i32$set(int arg);
         public abstract Pointer<Integer> global_i32$ptr();
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_i64")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract long global_i64$get();
         public abstract void global_i64$set(long arg);
         public abstract Pointer<Long> global_i64$ptr();
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_f32")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract float global_f32$get();
         public abstract void global_f32$set(float arg);
         public abstract Pointer<Float> global_f32$ptr();
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_d64")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract double global_d64$get();
         public abstract void global_d64$set(double arg);
         public abstract Pointer<Double> global_d64$ptr();
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11)
         @NativeStruct("[i32(get=i$get)(set=i$set)](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@MyStruct@FI@i")
+            @NativeLocation(file="dummy", line=47, column=11)
             int i$get();
             void i$set(int i);
         }
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@global_struct")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract MyStruct global_struct$get();
         public abstract void global_struct$set(MyStruct arg);
         public abstract Pointer<MyStruct> global_struct$ptr();

@@ -22,4 +22,8 @@
  */
 
 void func();
+void func2();
+void func3();
 void junk();
+void junk2();
+void junk3();

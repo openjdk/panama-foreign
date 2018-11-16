@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeLocation;
 import java.foreign.memory.Pointer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -363,20 +364,121 @@ public class JextractToolProviderTest extends JextractToolRunner {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
+            assertNotNull(findMethod(cls, "func2", Object[].class));
+            assertNotNull(findMethod(cls, "func3", Object[].class));
             // check a method for "void junk()"
             assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            assertNotNull(findMethod(cls, "junk3", Object[].class));
         } finally {
             deleteFile(helloJar);
         }
 
         // try with --exclude-symbols" this time.
-        checkSuccess(null, "--exclude-symbols", "junk", "-o", helloJar.toString(), helloH.toString());
+        checkSuccess(null, "--exclude-symbols", "junk.*", "-o", helloJar.toString(), helloH.toString());
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
+            assertNotNull(findMethod(cls, "func2", Object[].class));
+            assertNotNull(findMethod(cls, "func3", Object[].class));
             // check a method for "void junk()"
             assertNull(findMethod(cls, "junk", Object[].class));
+            assertNull(findMethod(cls, "junk2", Object[].class));
+            assertNull(findMethod(cls, "junk3", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+    }
+
+    @Test
+    public void testIncludeSymbols() {
+        Path helloJar = getOutputFilePath("hello.jar");
+        deleteFile(helloJar);
+        Path helloH = getInputFilePath("hello.h");
+        checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass("hello", helloJar);
+            // check a method for "void func()"
+            assertNotNull(findMethod(cls, "func", Object[].class));
+            assertNotNull(findMethod(cls, "func2", Object[].class));
+            assertNotNull(findMethod(cls, "func3", Object[].class));
+            // check a method for "void junk()"
+            assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            assertNotNull(findMethod(cls, "junk3", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+
+        // try with --include-symbols" this time.
+        checkSuccess(null, "--include-symbols", "junk.*", "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass("hello", helloJar);
+            // check a method for "void junk()"
+            assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            assertNotNull(findMethod(cls, "junk3", Object[].class));
+            // check a method for "void func()"
+            assertNull(findMethod(cls, "func", Object[].class));
+            assertNull(findMethod(cls, "func2", Object[].class));
+            assertNull(findMethod(cls, "func3", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+    }
+
+    @Test
+    public void testNoLocations() {
+        Path simpleJar = getOutputFilePath("simple.jar");
+        deleteFile(simpleJar);
+        Path simpleH = getInputFilePath("simple.h");
+        checkSuccess(null, "--no-locations", "-o", simpleJar.toString(), simpleH.toString());
+        try {
+            Class<?> simpleCls = loadClass("simple", simpleJar);
+            Method func = findFirstMethod(simpleCls, "func");
+            assertFalse(func.isAnnotationPresent(NativeLocation.class));
+            Class<?> anonymousCls = loadClass("simple$anonymous", simpleJar);
+            assertFalse(simpleCls.isAnnotationPresent(NativeLocation.class));
+        } finally {
+            deleteFile(simpleJar);
+        }
+    }
+
+    @Test
+    public void testIncludeExcludeSymbols() {
+        Path helloJar = getOutputFilePath("hello.jar");
+        deleteFile(helloJar);
+        Path helloH = getInputFilePath("hello.h");
+        checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass("hello", helloJar);
+            // check a method for "void func()"
+            assertNotNull(findMethod(cls, "func", Object[].class));
+            assertNotNull(findMethod(cls, "func2", Object[].class));
+            assertNotNull(findMethod(cls, "func3", Object[].class));
+            // check a method for "void junk()"
+            assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            assertNotNull(findMethod(cls, "junk3", Object[].class));
+        } finally {
+            deleteFile(helloJar);
+        }
+
+        // try with --include-symbols" this time.
+        checkSuccess(null, "--include-symbols", "junk.*", "--exclude-symbols", "junk3",
+             "-o", helloJar.toString(), helloH.toString());
+        try {
+            Class<?> cls = loadClass("hello", helloJar);
+            // check a method for "void junk()"
+            assertNotNull(findMethod(cls, "junk", Object[].class));
+            assertNotNull(findMethod(cls, "junk2", Object[].class));
+            // check a method for "void func()" - not included
+            assertNull(findMethod(cls, "func", Object[].class));
+            assertNull(findMethod(cls, "func2", Object[].class));
+            assertNull(findMethod(cls, "func3", Object[].class));
+            // excluded among the included set!
+            assertNull(findMethod(cls, "junk3", Object[].class));
         } finally {
             deleteFile(helloJar);
         }

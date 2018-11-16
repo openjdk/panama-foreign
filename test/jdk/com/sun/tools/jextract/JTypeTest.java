@@ -45,7 +45,7 @@ public class JTypeTest {
 
     @Target(TYPE_USE)
     @Retention(RUNTIME)
-    @NativeLocation(file="", line=1, column=1, USR="")
+    @NativeLocation(file="", line=1, column=1)
     static @interface Alias {};
 
     public JTypeTest() {

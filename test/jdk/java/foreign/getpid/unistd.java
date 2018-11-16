@@ -27,6 +27,6 @@ import java.foreign.annotations.NativeLocation;
 
 @NativeHeader(path="unistd.h", declarations = "getpid=()i32")
 public interface unistd {
-    @NativeLocation(file="unistd.h", line=47, column=11, USR="c:@F@getpid")
+    @NativeLocation(file="unistd.h", line=47, column=11)
     public int getpid();
 }

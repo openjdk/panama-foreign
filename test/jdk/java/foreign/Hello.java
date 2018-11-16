@@ -32,7 +32,7 @@ import java.foreign.annotations.*;
 public class Hello {
     @NativeHeader(libraries = { "Hello" }, declarations = "func=()i32")
     static interface hello {
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@func")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract int func();
     }
 

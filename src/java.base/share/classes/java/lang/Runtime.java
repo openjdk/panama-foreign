@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
+import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;

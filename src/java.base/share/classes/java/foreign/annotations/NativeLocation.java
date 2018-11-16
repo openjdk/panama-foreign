@@ -30,5 +30,4 @@ public @interface NativeLocation {
     String file();
     int line();
     int column();
-    String USR();
 }

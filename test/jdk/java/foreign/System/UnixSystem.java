@@ -42,19 +42,19 @@ public class UnixSystem {
             "environ=u64(get=environ$get)(ptr=environ$ptr):u64:v"
     )
     static interface system {
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@getpid")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract int getpid();
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@snprintf")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract int snprintf(Pointer<Byte> buf, long size, Pointer<Byte> fmt, Object... args);
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@strerror")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract Pointer<Byte> strerror(int errno);
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@errno")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract int errno$get();
 
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@environ")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract Pointer<Pointer<Byte>> environ$get();
 
         public abstract Pointer<Pointer<Pointer<Byte>>> environ$ptr();
@@ -62,13 +62,13 @@ public class UnixSystem {
 
     @NativeHeader(declarations = "__xstat=(i32u64:u8u64:$(linux_stat))i32")
     static interface LinuxSystem {
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@__xstat")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract int __xstat(int ver, Pointer<Byte> path, Pointer<stat> buf);
 
-        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11)
         @NativeStruct("[i32i32i32i32i32i32i32i32i32i32i32i32i32(get=st_size$get)(set=st_size$set)](linux_stat)")
         static interface stat extends Struct<stat> {
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@stat@st_size")
+            @NativeLocation(file="dummy", line=47, column=11)
             int st_size$get();
             void st_size$set(int i);
         }
@@ -76,15 +76,15 @@ public class UnixSystem {
 
     @NativeHeader(declarations = "stat$INODE64=(u64:u8u64:$(osx_stat))i32")
     static interface MacOSXSystem {
-        @NativeLocation(file="dummy", line=1, column=1, USR="c:@F@stat")
+        @NativeLocation(file="dummy", line=1, column=1)
         public abstract int stat$INODE64(Pointer<Byte> path, Pointer<stat> buf);
 
 
         @NativeStruct("[i32u16u16u64u32u32i64[i64i64][i64i64][i64i64][i64i64]" +
                       "i64(get=st_size$get)(set=st_size$set)i64i32u32u32i32[2i64]](osx_stat)")
-        @NativeLocation(file="dummy", line=47, column=11, USR="C:@S@MyStruct")
+        @NativeLocation(file="dummy", line=47, column=11)
         static interface stat extends Struct<stat> {
-            @NativeLocation(file="dummy", line=47, column=11, USR="c:@SA@stat@st_size")
+            @NativeLocation(file="dummy", line=47, column=11)
             long st_size$get();
             void st_size$set(long i);
         }
