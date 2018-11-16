@@ -1301,16 +1301,20 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
             return new Double512Vector(res);
         }
 
+        @Override
+        Double512Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Double512Mask(res);
+        }
+
         // Factories
 
         @Override
         public Double512Mask maskFromValues(boolean... bits) {
             return new Double512Mask(bits);
-        }
-
-        @Override
-        public Double512Mask maskFromArray(boolean[] bits, int i) {
-            return new Double512Mask(bits, i);
         }
 
         @Override
@@ -1375,6 +1379,17 @@ final class Double512Vector extends DoubleVector<Shapes.S512Bit> {
                                          es, Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Double512Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Double512Mask.class, long.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

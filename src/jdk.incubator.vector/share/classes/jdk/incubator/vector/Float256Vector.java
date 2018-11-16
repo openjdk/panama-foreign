@@ -1301,16 +1301,20 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
             return new Float256Vector(res);
         }
 
+        @Override
+        Float256Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Float256Mask(res);
+        }
+
         // Factories
 
         @Override
         public Float256Mask maskFromValues(boolean... bits) {
             return new Float256Mask(bits);
-        }
-
-        @Override
-        public Float256Mask maskFromArray(boolean[] bits, int i) {
-            return new Float256Mask(bits, i);
         }
 
         @Override
@@ -1375,6 +1379,17 @@ final class Float256Vector extends FloatVector<Shapes.S256Bit> {
                                          es, Unsafe.ARRAY_FLOAT_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Float256Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Float256Mask.class, int.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

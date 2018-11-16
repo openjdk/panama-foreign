@@ -1159,6 +1159,12 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
 
         abstract IntVector<S> op(Mask<Integer, S> m, FOp f);
 
+        interface FOpm {
+            boolean apply(int i);
+        }
+
+        abstract Mask<Integer, S> opm(FOpm f);
+
         // Factories
 
         @Override

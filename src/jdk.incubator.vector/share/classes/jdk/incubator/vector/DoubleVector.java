@@ -1520,6 +1520,12 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
 
         abstract DoubleVector<S> op(Mask<Double, S> m, FOp f);
 
+        interface FOpm {
+            boolean apply(int i);
+        }
+
+        abstract Mask<Double, S> opm(FOpm f);
+
         // Factories
 
         @Override

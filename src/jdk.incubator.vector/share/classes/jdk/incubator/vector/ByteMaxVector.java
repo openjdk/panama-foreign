@@ -1173,16 +1173,20 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
             return new ByteMaxVector(res);
         }
 
+        @Override
+        ByteMaxMask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new ByteMaxMask(res);
+        }
+
         // Factories
 
         @Override
         public ByteMaxMask maskFromValues(boolean... bits) {
             return new ByteMaxMask(bits);
-        }
-
-        @Override
-        public ByteMaxMask maskFromArray(boolean[] bits, int i) {
-            return new ByteMaxMask(bits, i);
         }
 
         @Override
@@ -1247,6 +1251,17 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
                                          es, Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public ByteMaxMask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(ByteMaxMask.class, byte.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

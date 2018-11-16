@@ -1218,16 +1218,20 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
             return new Long64Vector(res);
         }
 
+        @Override
+        Long64Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Long64Mask(res);
+        }
+
         // Factories
 
         @Override
         public Long64Mask maskFromValues(boolean... bits) {
             return new Long64Mask(bits);
-        }
-
-        @Override
-        public Long64Mask maskFromArray(boolean[] bits, int i) {
-            return new Long64Mask(bits, i);
         }
 
         @Override
@@ -1292,6 +1296,17 @@ final class Long64Vector extends LongVector<Shapes.S64Bit> {
                                          es, Unsafe.ARRAY_LONG_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Long64Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Long64Mask.class, long.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

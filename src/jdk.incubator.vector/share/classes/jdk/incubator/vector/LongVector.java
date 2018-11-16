@@ -1159,6 +1159,12 @@ public abstract class LongVector<S extends Vector.Shape> extends Vector<Long,S> 
 
         abstract LongVector<S> op(Mask<Long, S> m, FOp f);
 
+        interface FOpm {
+            boolean apply(int i);
+        }
+
+        abstract Mask<Long, S> opm(FOpm f);
+
         // Factories
 
         @Override

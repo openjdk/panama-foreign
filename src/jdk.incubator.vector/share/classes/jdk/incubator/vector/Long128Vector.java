@@ -1218,16 +1218,20 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
             return new Long128Vector(res);
         }
 
+        @Override
+        Long128Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Long128Mask(res);
+        }
+
         // Factories
 
         @Override
         public Long128Mask maskFromValues(boolean... bits) {
             return new Long128Mask(bits);
-        }
-
-        @Override
-        public Long128Mask maskFromArray(boolean[] bits, int i) {
-            return new Long128Mask(bits, i);
         }
 
         @Override
@@ -1292,6 +1296,17 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
                                          es, Unsafe.ARRAY_LONG_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Long128Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Long128Mask.class, long.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

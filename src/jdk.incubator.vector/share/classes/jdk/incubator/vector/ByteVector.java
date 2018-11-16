@@ -999,6 +999,12 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
         abstract ByteVector<S> op(Mask<Byte, S> m, FOp f);
 
+        interface FOpm {
+            boolean apply(int i);
+        }
+
+        abstract Mask<Byte, S> opm(FOpm f);
+
         // Factories
 
         @Override

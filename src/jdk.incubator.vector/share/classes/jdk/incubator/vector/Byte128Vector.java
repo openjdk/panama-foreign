@@ -1173,16 +1173,20 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
             return new Byte128Vector(res);
         }
 
+        @Override
+        Byte128Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Byte128Mask(res);
+        }
+
         // Factories
 
         @Override
         public Byte128Mask maskFromValues(boolean... bits) {
             return new Byte128Mask(bits);
-        }
-
-        @Override
-        public Byte128Mask maskFromArray(boolean[] bits, int i) {
-            return new Byte128Mask(bits, i);
         }
 
         @Override
@@ -1247,6 +1251,17 @@ final class Byte128Vector extends ByteVector<Shapes.S128Bit> {
                                          es, Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Byte128Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Byte128Mask.class, byte.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

@@ -1301,16 +1301,20 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
             return new FloatMaxVector(res);
         }
 
+        @Override
+        FloatMaxMask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new FloatMaxMask(res);
+        }
+
         // Factories
 
         @Override
         public FloatMaxMask maskFromValues(boolean... bits) {
             return new FloatMaxMask(bits);
-        }
-
-        @Override
-        public FloatMaxMask maskFromArray(boolean[] bits, int i) {
-            return new FloatMaxMask(bits, i);
         }
 
         @Override
@@ -1375,6 +1379,17 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
                                          es, Unsafe.ARRAY_FLOAT_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public FloatMaxMask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(FloatMaxMask.class, int.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

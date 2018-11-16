@@ -1000,6 +1000,12 @@ public abstract class ShortVector<S extends Vector.Shape> extends Vector<Short,S
 
         abstract ShortVector<S> op(Mask<Short, S> m, FOp f);
 
+        interface FOpm {
+            boolean apply(int i);
+        }
+
+        abstract Mask<Short, S> opm(FOpm f);
+
         // Factories
 
         @Override

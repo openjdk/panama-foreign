@@ -1301,16 +1301,20 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             return new Float64Vector(res);
         }
 
+        @Override
+        Float64Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Float64Mask(res);
+        }
+
         // Factories
 
         @Override
         public Float64Mask maskFromValues(boolean... bits) {
             return new Float64Mask(bits);
-        }
-
-        @Override
-        public Float64Mask maskFromArray(boolean[] bits, int i) {
-            return new Float64Mask(bits, i);
         }
 
         @Override
@@ -1375,6 +1379,17 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                                          es, Unsafe.ARRAY_FLOAT_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Float64Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Float64Mask.class, int.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

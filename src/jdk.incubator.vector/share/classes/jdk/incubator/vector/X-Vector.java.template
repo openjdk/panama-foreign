@@ -2027,6 +2027,12 @@ public abstract class $abstractvectortype$<S extends Vector.Shape> extends Vecto
 
         abstract $abstractvectortype$<S> op(Mask<$Boxtype$, S> m, FOp f);
 
+        interface FOpm {
+            boolean apply(int i);
+        }
+
+        abstract Mask<$Boxtype$, S> opm(FOpm f);
+
         // Factories
 
         @Override

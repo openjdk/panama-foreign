@@ -1174,16 +1174,20 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
             return new ShortMaxVector(res);
         }
 
+        @Override
+        ShortMaxMask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new ShortMaxMask(res);
+        }
+
         // Factories
 
         @Override
         public ShortMaxMask maskFromValues(boolean... bits) {
             return new ShortMaxMask(bits);
-        }
-
-        @Override
-        public ShortMaxMask maskFromArray(boolean[] bits, int i) {
-            return new ShortMaxMask(bits, i);
         }
 
         @Override
@@ -1248,6 +1252,17 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
                                          es, Unsafe.ARRAY_SHORT_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public ShortMaxMask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(ShortMaxMask.class, short.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

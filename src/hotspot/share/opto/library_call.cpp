@@ -7011,7 +7011,7 @@ bool LibraryCallKit::inline_vector_broadcast_coerced() {
 //           Object base, long offset,
 //           /* Vector.Mask<E,S> m*/
 //           Object container, int index,
-//           LoadVectorOperation<C, V> defaultImpl) {
+//           LoadOperation<C, VM> defaultImpl) {
 //
 //    <C, V extends Vector<?,?>>
 //    void store(Class<?> vectorClass, Class<?> elementType, int vlen,

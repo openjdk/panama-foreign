@@ -1174,16 +1174,20 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
             return new Short64Vector(res);
         }
 
+        @Override
+        Short64Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Short64Mask(res);
+        }
+
         // Factories
 
         @Override
         public Short64Mask maskFromValues(boolean... bits) {
             return new Short64Mask(bits);
-        }
-
-        @Override
-        public Short64Mask maskFromArray(boolean[] bits, int i) {
-            return new Short64Mask(bits, i);
         }
 
         @Override
@@ -1248,6 +1252,17 @@ final class Short64Vector extends ShortVector<Shapes.S64Bit> {
                                          es, Unsafe.ARRAY_SHORT_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Short64Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Short64Mask.class, short.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

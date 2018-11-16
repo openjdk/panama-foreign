@@ -1301,16 +1301,20 @@ final class DoubleMaxVector extends DoubleVector<Shapes.SMaxBit> {
             return new DoubleMaxVector(res);
         }
 
+        @Override
+        DoubleMaxMask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new DoubleMaxMask(res);
+        }
+
         // Factories
 
         @Override
         public DoubleMaxMask maskFromValues(boolean... bits) {
             return new DoubleMaxMask(bits);
-        }
-
-        @Override
-        public DoubleMaxMask maskFromArray(boolean[] bits, int i) {
-            return new DoubleMaxMask(bits, i);
         }
 
         @Override
@@ -1375,6 +1379,17 @@ final class DoubleMaxVector extends DoubleVector<Shapes.SMaxBit> {
                                          es, Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public DoubleMaxMask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(DoubleMaxMask.class, long.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override

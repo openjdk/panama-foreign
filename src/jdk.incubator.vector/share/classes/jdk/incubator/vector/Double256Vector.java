@@ -1301,16 +1301,20 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
             return new Double256Vector(res);
         }
 
+        @Override
+        Double256Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Double256Mask(res);
+        }
+
         // Factories
 
         @Override
         public Double256Mask maskFromValues(boolean... bits) {
             return new Double256Mask(bits);
-        }
-
-        @Override
-        public Double256Mask maskFromArray(boolean[] bits, int i) {
-            return new Double256Mask(bits, i);
         }
 
         @Override
@@ -1375,6 +1379,17 @@ final class Double256Vector extends DoubleVector<Shapes.S256Bit> {
                                          es, Unsafe.ARRAY_DOUBLE_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Double256Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Double256Mask.class, long.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override
