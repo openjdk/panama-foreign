@@ -1218,16 +1218,20 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             return new Long512Vector(res);
         }
 
+        @Override
+        Long512Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Long512Mask(res);
+        }
+
         // Factories
 
         @Override
         public Long512Mask maskFromValues(boolean... bits) {
             return new Long512Mask(bits);
-        }
-
-        @Override
-        public Long512Mask maskFromArray(boolean[] bits, int i) {
-            return new Long512Mask(bits, i);
         }
 
         @Override
@@ -1292,6 +1296,17 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
                                          es, Unsafe.ARRAY_LONG_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Long512Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Long512Mask.class, long.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override
@@ -1365,6 +1380,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
             return VectorIntrinsics.cast(
                 o.getClass(),
                 o.elementType(), LENGTH,
+                Long512Vector.class,
                 long.class, LENGTH,
                 o, this,
                 (s, v) -> s.castDefault(v)
@@ -1442,6 +1458,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte512Vector.class,
                     byte.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)
@@ -1451,6 +1468,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short512Vector.class,
                     short.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)
@@ -1460,6 +1478,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Int512Vector.class,
                     int.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)
@@ -1469,6 +1488,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Long512Vector.class,
                     long.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)
@@ -1478,6 +1498,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float512Vector.class,
                     float.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)
@@ -1487,6 +1508,7 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
                 return VectorIntrinsics.reinterpret(
                     Double512Vector.class,
                     double.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)
@@ -1501,38 +1523,53 @@ final class Long512Vector extends LongVector<Shapes.S512Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Long512Vector resize(Vector<Long, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Long64Vector)) {
                 Long64Vector so = (Long64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Long64Vector.class,
                     long.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Long128Vector)) {
                 Long128Vector so = (Long128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Long128Vector.class,
                     long.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Long256Vector)) {
                 Long256Vector so = (Long256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Long256Vector.class,
                     long.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Long512Vector)) {
                 Long512Vector so = (Long512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Long512Vector.class,
                     long.class, so.length(),
+                    Long512Vector.class,
+                    long.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Long512Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof LongMaxVector)) {
+                LongMaxVector so = (LongMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    LongMaxVector.class,
+                    long.class, so.length(),
+                    Long512Vector.class,
                     long.class, LENGTH,
                     so, this,
                     (s, v) -> (Long512Vector) s.reshape(v)

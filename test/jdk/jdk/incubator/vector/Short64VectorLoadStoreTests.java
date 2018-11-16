@@ -45,7 +45,7 @@ import java.util.function.IntFunction;
 
 @Test
 public class Short64VectorLoadStoreTests extends AbstractVectorTest {
-    static final ShortVector.ShortSpecies<Shapes.S64Bit> SPECIES =
+    static final ShortVector.ShortSpecies<Vector.Shape> SPECIES =
                 ShortVector.species(Shapes.S_64_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
@@ -185,7 +185,7 @@ public class Short64VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i);
             }
         }
@@ -198,11 +198,11 @@ public class Short64VectorLoadStoreTests extends AbstractVectorTest {
         short[] a = fa.apply(SPECIES.length());
         short[] r = new short[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i, vmask);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -211,7 +211,7 @@ public class Short64VectorLoadStoreTests extends AbstractVectorTest {
         r = new short[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromArray(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -231,7 +231,7 @@ public class Short64VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromByteBuffer(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -254,7 +254,7 @@ public class Short64VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromByteBuffer(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -272,14 +272,14 @@ public class Short64VectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromByteBuffer(a, i, vmask);
+                ShortVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -293,7 +293,7 @@ public class Short64VectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromByteBuffer(a, i);
+                ShortVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -312,14 +312,14 @@ public class Short64VectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short, Shapes.S64Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ShortVector<Shapes.S64Bit> av = SPECIES.fromByteBuffer(a, i, vmask);
+                ShortVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

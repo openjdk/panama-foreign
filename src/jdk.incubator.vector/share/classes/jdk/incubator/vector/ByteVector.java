@@ -999,6 +999,12 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
 
         abstract ByteVector<S> op(Mask<Byte, S> m, FOp f);
 
+        interface FOpm {
+            boolean apply(int i);
+        }
+
+        abstract Mask<Byte, S> opm(FOpm f);
+
         // Factories
 
         @Override
@@ -1158,6 +1164,8 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
             return (ByteSpecies<S>) Byte256Vector.SPECIES;
         } else if (s == Shapes.S_512_BIT) {
             return (ByteSpecies<S>) Byte512Vector.SPECIES;
+        } else if (s == Shapes.S_Max_BIT) {
+            return (ByteSpecies<S>) ByteMaxVector.SPECIES;
         } else {
             throw new IllegalArgumentException("Bad shape: " + s);
         }

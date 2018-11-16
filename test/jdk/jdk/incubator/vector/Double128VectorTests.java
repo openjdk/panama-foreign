@@ -47,7 +47,7 @@ import java.util.stream.Stream;
 @Test
 public class Double128VectorTests extends AbstractVectorTest {
 
-    static final DoubleVector.DoubleSpecies<Shapes.S128Bit> SPECIES =
+    static final DoubleVector.DoubleSpecies<Vector.Shape> SPECIES =
                 DoubleVector.species(Shapes.S_128_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
@@ -79,50 +79,52 @@ public class Double128VectorTests extends AbstractVectorTest {
     }
 
     interface FReductionOp {
-      double apply(double[] a, int idx);
+        double apply(double[] a, int idx);
     }
 
     static void assertReductionArraysEquals(double[] a, double[] b, FReductionOp f) {
-      int i = 0;
-      try {
-        for (; i < a.length; i += SPECIES.length()) {
-          Assert.assertEquals(b[i], f.apply(a, i));
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(b[i], f.apply(a, i));
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
         }
-      } catch (AssertionError e) {
-        Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
-      }
     }
- 
+
     interface FBoolReductionOp {
-      boolean apply(boolean[] a, int idx);
+        boolean apply(boolean[] a, int idx);
     }
 
     static void assertReductionBoolArraysEquals(boolean[] a, boolean[] b, FBoolReductionOp f) {
-      int i = 0;
-      try {
-        for (; i < a.length; i += SPECIES.length()) {
-          Assert.assertEquals(f.apply(a, i), b[i]);
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(f.apply(a, i), b[i]);
+            }
+        } catch (AssertionError e) {
+            Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
         }
-      } catch (AssertionError e) {
-        Assert.assertEquals(f.apply(a, i), b[i], "at index #" + i);
-      }
     }
 
     static void assertInsertArraysEquals(double[] a, double[] b, double element, int index) {
-      int i = 0;
-      try {
-         for (; i < a.length; i += 1) {
-            if(i%SPECIES.length() == index)
-              Assert.assertEquals(b[i], element);
-            else
-              Assert.assertEquals(b[i], a[i]);
+        int i = 0;
+        try {
+            for (; i < a.length; i += 1) {
+                if(i%SPECIES.length() == index) {
+                    Assert.assertEquals(b[i], element);
+                } else {
+                    Assert.assertEquals(b[i], a[i]);
+                }
+            }
+        } catch (AssertionError e) {
+            if (i%SPECIES.length() == index) {
+                Assert.assertEquals(b[i], element, "at index #" + i);
+            } else {
+                Assert.assertEquals(b[i], a[i], "at index #" + i);
+            }
         }
-      } catch (AssertionError e) {
-        if(i%SPECIES.length() == index)
-              Assert.assertEquals(b[i], element, "at index #" + i);
-            else
-              Assert.assertEquals(b[i], a[i], "at index #" + i);
-      }
     }
 
     static void assertRearrangeArraysEquals(double[] a, double[] r, int[] order, int vector_len) {
@@ -300,7 +302,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     interface FBinArrayOp {
         double apply(double[] a, int b);
     }
-    
+
     static void assertArraysEquals(double[] a, double[] r, FBinArrayOp f) {
         int i = 0;
         try {
@@ -453,7 +455,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         }
         return a;
     }
-    
+
     static double cornerCaseValue(int i) {
         switch(i % 7) {
             case 0:
@@ -473,7 +475,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         }
     }
    static double get(double[] a, int i) {
-     return (double) a[i]; 
+       return (double) a[i];
    }
 
     static double add(double a, double b) {
@@ -482,14 +484,14 @@ public class Double128VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void addDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length()); 
-        double[] b = fb.apply(SPECIES.length()); 
-        double[] r = new double[a.length];       
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length());
+        double[] r = new double[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.add(bv).intoArray(r, i);
             }
         }
@@ -504,12 +506,12 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
@@ -522,14 +524,14 @@ public class Double128VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void subDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length()); 
-        double[] b = fb.apply(SPECIES.length()); 
-        double[] r = new double[a.length];       
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length());
+        double[] r = new double[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.sub(bv).intoArray(r, i);
             }
         }
@@ -544,12 +546,12 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
@@ -563,14 +565,14 @@ public class Double128VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void divDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length()); 
-        double[] b = fb.apply(SPECIES.length()); 
-        double[] r = new double[a.length];       
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length());
+        double[] r = new double[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.div(bv).intoArray(r, i);
             }
         }
@@ -587,12 +589,12 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.div(bv, vmask).intoArray(r, i);
             }
         }
@@ -606,14 +608,14 @@ public class Double128VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void mulDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length()); 
-        double[] b = fb.apply(SPECIES.length()); 
-        double[] r = new double[a.length];       
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length());
+        double[] r = new double[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.mul(bv).intoArray(r, i);
             }
         }
@@ -628,12 +630,12 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
@@ -664,14 +666,14 @@ public class Double128VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void maxDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length()); 
-        double[] b = fb.apply(SPECIES.length()); 
-        double[] r = new double[a.length];       
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length());
+        double[] r = new double[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.max(bv).intoArray(r, i);
             }
         }
@@ -684,14 +686,14 @@ public class Double128VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void minDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length()); 
-        double[] b = fb.apply(SPECIES.length()); 
-        double[] r = new double[a.length];       
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length());
+        double[] r = new double[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.min(bv).intoArray(r, i);
             }
         }
@@ -719,7 +721,7 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.addAll();
             }
         }
@@ -741,7 +743,7 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.subAll();
             }
         }
@@ -763,7 +765,7 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.mulAll();
             }
         }
@@ -773,7 +775,7 @@ public class Double128VectorTests extends AbstractVectorTest {
     static double minAll(double[] a, int idx) {
         double res = Double.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res < a[i])?res:a[i];
+            res = (res < a[i])?res:a[i];
         }
 
         return res;
@@ -785,7 +787,7 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.minAll();
             }
         }
@@ -807,7 +809,7 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               r[i] = av.maxAll();
             }
         }
@@ -826,7 +828,7 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
               av.with(0, (double)4).intoArray(r, i);
             }
         }
@@ -841,9 +843,9 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Shapes.S128Bit> mv = av.lessThan(bv);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Vector.Shape> mv = av.lessThan(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -861,9 +863,9 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Shapes.S128Bit> mv = av.greaterThan(bv);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Vector.Shape> mv = av.greaterThan(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -881,9 +883,9 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Shapes.S128Bit> mv = av.equal(bv);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Vector.Shape> mv = av.equal(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -901,9 +903,9 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Shapes.S128Bit> mv = av.notEqual(bv);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Vector.Shape> mv = av.notEqual(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -921,9 +923,9 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Shapes.S128Bit> mv = av.lessThanEq(bv);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Vector.Shape> mv = av.lessThanEq(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -941,9 +943,9 @@ public class Double128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Shapes.S128Bit> mv = av.greaterThanEq(bv);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double, Vector.Shape> mv = av.greaterThanEq(bv);
 
                 // Check results as part of computation.
                 for (int j = 0; j < SPECIES.length(); j++) {
@@ -965,12 +967,12 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
@@ -986,7 +988,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
             }
         }
@@ -1001,10 +1003,10 @@ public class Double128VectorTests extends AbstractVectorTest {
     static void getDouble128VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
-        
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 int num_lanes = SPECIES.length();
                 // Manually unroll because full unroll happens after intrinsification.
                 // Unroll is needed because get intrinsic requires for index to be a known constant.
@@ -1167,7 +1169,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.sin().intoArray(r, i);
             }
         }
@@ -1190,7 +1192,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.exp().intoArray(r, i);
             }
         }
@@ -1213,7 +1215,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.log1p().intoArray(r, i);
             }
         }
@@ -1236,7 +1238,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.log().intoArray(r, i);
             }
         }
@@ -1259,7 +1261,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.log10().intoArray(r, i);
             }
         }
@@ -1282,7 +1284,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.expm1().intoArray(r, i);
             }
         }
@@ -1305,7 +1307,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.cos().intoArray(r, i);
             }
         }
@@ -1328,7 +1330,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.tan().intoArray(r, i);
             }
         }
@@ -1351,7 +1353,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.sinh().intoArray(r, i);
             }
         }
@@ -1374,7 +1376,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.cosh().intoArray(r, i);
             }
         }
@@ -1397,7 +1399,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.tanh().intoArray(r, i);
             }
         }
@@ -1420,7 +1422,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.asin().intoArray(r, i);
             }
         }
@@ -1443,7 +1445,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.acos().intoArray(r, i);
             }
         }
@@ -1466,7 +1468,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.atan().intoArray(r, i);
             }
         }
@@ -1489,7 +1491,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.cbrt().intoArray(r, i);
             }
         }
@@ -1509,17 +1511,17 @@ public class Double128VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void hypotDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
-        double[] b = fb.apply(SPECIES.length()); 
+        double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.hypot(bv).intoArray(r, i);
             }
         }
- 
-				assertArraysEqualsWithinOneUlp(a, b, r, Double128VectorTests::hypot, Double128VectorTests::stricthypot);
+
+        assertArraysEqualsWithinOneUlp(a, b, r, Double128VectorTests::hypot, Double128VectorTests::stricthypot);
     }
 
 
@@ -1535,17 +1537,17 @@ public class Double128VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void powDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
-        double[] b = fb.apply(SPECIES.length()); 
+        double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.pow(bv).intoArray(r, i);
             }
         }
- 
-				assertArraysEqualsWithinOneUlp(a, b, r, Double128VectorTests::pow, Double128VectorTests::strictpow);
+
+        assertArraysEqualsWithinOneUlp(a, b, r, Double128VectorTests::pow, Double128VectorTests::strictpow);
     }
 
 
@@ -1561,17 +1563,17 @@ public class Double128VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleBinaryOpProvider")
     static void atan2Double128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
-        double[] b = fb.apply(SPECIES.length()); 
+        double[] b = fb.apply(SPECIES.length());
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
                 av.atan2(bv).intoArray(r, i);
             }
         }
- 
-				assertArraysEqualsWithinOneUlp(a, b, r, Double128VectorTests::atan2, Double128VectorTests::strictatan2);
+
+        assertArraysEqualsWithinOneUlp(a, b, r, Double128VectorTests::atan2, Double128VectorTests::strictatan2);
     }
 
 
@@ -1583,16 +1585,16 @@ public class Double128VectorTests extends AbstractVectorTest {
 
     @Test(dataProvider = "doubleTernaryOpProvider")
     static void fmaDouble128VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb, IntFunction<double[]> fc) {
-        double[] a = fa.apply(SPECIES.length()); 
-        double[] b = fb.apply(SPECIES.length()); 
-        double[] c = fc.apply(SPECIES.length()); 
-        double[] r = new double[a.length];       
+        double[] a = fa.apply(SPECIES.length());
+        double[] b = fb.apply(SPECIES.length());
+        double[] c = fc.apply(SPECIES.length());
+        double[] r = new double[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-                DoubleVector<Shapes.S128Bit> cv = SPECIES.fromArray(c, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> cv = SPECIES.fromArray(c, i);
                 av.fma(bv, cv).intoArray(r, i);
             }
         }
@@ -1609,13 +1611,13 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] c = fc.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
-                DoubleVector<Shapes.S128Bit> bv = SPECIES.fromArray(b, i);
-                DoubleVector<Shapes.S128Bit> cv = SPECIES.fromArray(c, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector<Vector.Shape> cv = SPECIES.fromArray(c, i);
                 av.fma(bv, cv, vmask).intoArray(r, i);
             }
         }
@@ -1634,7 +1636,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.neg().intoArray(r, i);
             }
         }
@@ -1648,11 +1650,11 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.neg(vmask).intoArray(r, i);
             }
         }
@@ -1674,7 +1676,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.abs().intoArray(r, i);
             }
         }
@@ -1688,11 +1690,11 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.abs(vmask).intoArray(r, i);
             }
         }
@@ -1720,7 +1722,7 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.sqrt().intoArray(r, i);
             }
         }
@@ -1736,11 +1738,11 @@ public class Double128VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Shapes.S128Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Shapes.S128Bit> av = SPECIES.fromArray(a, i);
+                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.sqrt(vmask).intoArray(r, i);
             }
         }

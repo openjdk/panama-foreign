@@ -62,7 +62,7 @@ function replace_variables {
   guard=$7
   masked=$8
 
-  if [ "${kernel}" != "" ]; then 
+  if [ "${kernel}" != "" ]; then
     kernel_escaped=$(echo -e "$kernel" | tr '\n' '|')
     sed "s/\[\[KERNEL\]\]/${kernel_escaped}/g" $filename > ${filename}.current1
     cat ${filename}.current1 | tr '|' "\n" > ${filename}.current
@@ -87,8 +87,8 @@ function replace_variables {
 
   rm ${filename}.current
 }
- 
-function gen_op_tmpl { 
+
+function gen_op_tmpl {
   template=$1
   test=$2
   op=$3

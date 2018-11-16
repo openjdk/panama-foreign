@@ -200,18 +200,18 @@ import java.util.function.*;
 
     // Memory operations
 
-    interface LoadVectorOperation<C, V extends Vector<?,?>> {
+    interface LoadOperation<C, V> {
         V load(C container, int index);
     }
 
     @HotSpotIntrinsicCandidate
     static
-    <C, V extends Vector<?,?>>
-    V load(Class<?> vectorClass, Class<?> elementType, int length,
+    <C, VM>
+    VM load(Class<VM> vmClass, Class<?> elementType, int length,
            Object base, long offset,    // Unsafe addressing
            // Vector.Mask<E,S> m,
            C container, int index,      // Arguments for default implementation
-           LoadVectorOperation<C, V> defaultImpl) {
+           LoadOperation<C, VM> defaultImpl) {
         return defaultImpl.load(container, index);
     }
 
@@ -322,6 +322,7 @@ import java.util.function.*;
     <S, VIN, V>
     V reinterpret(Class<?> fromVectorClass,
                   Class<?> fromElementType, int fromVLen,
+                  Class<?> toVectorClass,
                   Class<?> toElementType, int toVLen,
                   VIN v, S s,
                   VectorReinterpretOp<S, VIN, V> defaultImpl) {
@@ -339,6 +340,7 @@ import java.util.function.*;
     <S, VIN, V>
     V cast(Class<?> fromVectorClass,
            Class<?> fromElementType, int fromVLen,
+           Class<?> toVectorClass,
            Class<?> toElementType, int toVLen,
            VIN v, S s,
            VectorCastOp<S, VIN, V> defaultImpl) {

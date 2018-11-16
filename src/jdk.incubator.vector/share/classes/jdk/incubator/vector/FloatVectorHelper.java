@@ -67,147 +67,147 @@ public final class FloatVectorHelper {
         return va.uOp((i, a) -> (float) Math.ceil((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> ceil(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.ceil((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> copySign(FloatVector<S> va, FloatVector<S> vb) {
         return va.bOp(vb, (i, a, b) -> (float) Math.copySign((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> copySign(FloatVector<S> va, FloatVector<S> vb, Vector.Mask<Float,S> m) {
         return va.bOp(vb, m, (i, a, b) -> (float) Math.copySign((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> floor(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.floor((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> floor(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.floor((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> getExponent(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.getExponent((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> getExponent(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.getExponent((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> IEEEremainder(FloatVector<S> va, FloatVector<S> vb) {
         return va.bOp(vb, (i, a, b) -> (float) Math.IEEEremainder((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> IEEEremainder(FloatVector<S> va, FloatVector<S> vb, Vector.Mask<Float,S> m) {
         return va.bOp(vb, m, (i, a, b) -> (float) Math.IEEEremainder((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> nextAfter(FloatVector<S> va, FloatVector<S> vb) {
         return va.bOp(vb, (i, a, b) -> (float) Math.nextAfter((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> nextAfter(FloatVector<S> va, FloatVector<S> vb, Vector.Mask<Float,S> m) {
         return va.bOp(vb, m, (i, a, b) -> (float) Math.nextAfter((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> nextDown(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.nextDown((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> nextDown(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.nextDown((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> nextUp(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.nextUp((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> nextUp(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.nextUp((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> rint(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.rint((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> rint(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.rint((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> round(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.round((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> round(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.round((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> scalb(Vector<Integer, S> o) {
         throw  new UnsupportedOperationException("Scalb not implemented yet.");
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> scalb(Vector<Integer, S> o, Vector.Mask<Float,S> m) {
         throw  new UnsupportedOperationException("Scalb not implemented yet.");
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> signum(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.signum((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> signum(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.signum((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> toDegrees(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.toDegrees((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> toDegrees(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.toDegrees((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> toRadians(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.toRadians((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> toRadians(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.toRadians((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> ulp(FloatVector<S> va) {
         return va.uOp((i, a) -> (float) Math.ulp((double) a));
     }
 
-    public static <S extends Vector.Shape> 
+    public static <S extends Vector.Shape>
     FloatVector<S> ulp(FloatVector<S> va, Vector.Mask<Float,S> m) {
         return va.uOp(m, (i, a) -> (float) Math.ulp((double) a));
     }

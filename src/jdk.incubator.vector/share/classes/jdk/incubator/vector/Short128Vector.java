@@ -1174,16 +1174,20 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             return new Short128Vector(res);
         }
 
+        @Override
+        Short128Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Short128Mask(res);
+        }
+
         // Factories
 
         @Override
         public Short128Mask maskFromValues(boolean... bits) {
             return new Short128Mask(bits);
-        }
-
-        @Override
-        public Short128Mask maskFromArray(boolean[] bits, int i) {
-            return new Short128Mask(bits, i);
         }
 
         @Override
@@ -1248,6 +1252,17 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
                                          es, Unsafe.ARRAY_SHORT_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Short128Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Short128Mask.class, short.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override
@@ -1321,6 +1336,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
             return VectorIntrinsics.cast(
                 o.getClass(),
                 o.elementType(), LENGTH,
+                Short128Vector.class,
                 short.class, LENGTH,
                 o, this,
                 (s, v) -> s.castDefault(v)
@@ -1398,6 +1414,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte128Vector.class,
                     byte.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)
@@ -1407,6 +1424,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short128Vector.class,
                     short.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)
@@ -1416,6 +1434,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Int128Vector.class,
                     int.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)
@@ -1425,6 +1444,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Long128Vector.class,
                     long.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)
@@ -1434,6 +1454,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float128Vector.class,
                     float.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)
@@ -1443,6 +1464,7 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
                 return VectorIntrinsics.reinterpret(
                     Double128Vector.class,
                     double.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)
@@ -1457,38 +1479,53 @@ final class Short128Vector extends ShortVector<Shapes.S128Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Short128Vector resize(Vector<Short, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Short64Vector)) {
                 Short64Vector so = (Short64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Short64Vector.class,
                     short.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Short128Vector)) {
                 Short128Vector so = (Short128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Short128Vector.class,
                     short.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Short256Vector)) {
                 Short256Vector so = (Short256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Short256Vector.class,
                     short.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Short512Vector)) {
                 Short512Vector so = (Short512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Short512Vector.class,
                     short.class, so.length(),
+                    Short128Vector.class,
+                    short.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Short128Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof ShortMaxVector)) {
+                ShortMaxVector so = (ShortMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    ShortMaxVector.class,
+                    short.class, so.length(),
+                    Short128Vector.class,
                     short.class, LENGTH,
                     so, this,
                     (s, v) -> (Short128Vector) s.reshape(v)

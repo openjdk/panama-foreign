@@ -25,6 +25,8 @@
 
 package jdk.incubator.vector;
 
+import jdk.internal.misc.Unsafe;
+
 final public class Shapes {
 
     public static final S64Bit S_64_BIT = new S64Bit();
@@ -63,4 +65,13 @@ final public class Shapes {
         }
     }
 
+    private static final int MAX_VECTOR_SIZE = Unsafe.getUnsafe().getMaxVectorSize(byte.class) * 8;
+
+    static final SMaxBit S_Max_BIT = new SMaxBit();
+    static final class SMaxBit extends Vector.Shape {
+        @Override
+        public int bitSize() {
+            return MAX_VECTOR_SIZE;
+        }
+    }
 }

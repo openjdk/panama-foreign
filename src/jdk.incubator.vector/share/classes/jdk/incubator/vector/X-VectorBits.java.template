@@ -1649,16 +1649,20 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             return new $vectortype$(res);
         }
 
+        @Override
+        $masktype$ opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new $masktype$(res);
+        }
+
         // Factories
 
         @Override
         public $masktype$ maskFromValues(boolean... bits) {
             return new $masktype$(bits);
-        }
-
-        @Override
-        public $masktype$ maskFromArray(boolean[] bits, int i) {
-            return new $masktype$(bits, i);
         }
 
         @Override
@@ -1747,6 +1751,17 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
 
         @Override
         @ForceInline
+        public $masktype$ maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load($masktype$.class, $bitstype$.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
         public $vectortype$ fromArray($type$[] a, int ix) {
             Objects.requireNonNull(a);
             ix = VectorIntrinsics.checkIndex(ix, a.length, LENGTH);
@@ -1816,6 +1831,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
             return VectorIntrinsics.cast(
                 o.getClass(),
                 o.elementType(), LENGTH,
+                $vectortype$.class,
                 $type$.class, LENGTH,
                 o, this,
                 (s, v) -> s.castDefault(v)
@@ -1893,6 +1909,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Byte$bits$Vector.class,
                     byte.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1902,6 +1919,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Short$bits$Vector.class,
                     short.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1911,6 +1929,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Int$bits$Vector.class,
                     int.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1920,6 +1939,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Long$bits$Vector.class,
                     long.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1929,6 +1949,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Float$bits$Vector.class,
                     float.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1938,6 +1959,7 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
                 return VectorIntrinsics.reinterpret(
                     Double$bits$Vector.class,
                     double.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
@@ -1952,38 +1974,53 @@ final class $vectortype$ extends $abstractvectortype$<Shapes.$shape$> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> $vectortype$ resize(Vector<$Boxtype$, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof $Type$64Vector)) {
                 $Type$64Vector so = ($Type$64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     $Type$64Vector.class,
                     $type$.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof $Type$128Vector)) {
                 $Type$128Vector so = ($Type$128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     $Type$128Vector.class,
                     $type$.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof $Type$256Vector)) {
                 $Type$256Vector so = ($Type$256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     $Type$256Vector.class,
                     $type$.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof $Type$512Vector)) {
                 $Type$512Vector so = ($Type$512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     $Type$512Vector.class,
                     $type$.class, so.length(),
+                    $vectortype$.class,
+                    $type$.class, LENGTH,
+                    so, this,
+                    (s, v) -> ($vectortype$) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof $Type$MaxVector)) {
+                $Type$MaxVector so = ($Type$MaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    $Type$MaxVector.class,
+                    $type$.class, so.length(),
+                    $vectortype$.class,
                     $type$.class, LENGTH,
                     so, this,
                     (s, v) -> ($vectortype$) s.reshape(v)

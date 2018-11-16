@@ -1173,16 +1173,20 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             return new Byte256Vector(res);
         }
 
+        @Override
+        Byte256Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Byte256Mask(res);
+        }
+
         // Factories
 
         @Override
         public Byte256Mask maskFromValues(boolean... bits) {
             return new Byte256Mask(bits);
-        }
-
-        @Override
-        public Byte256Mask maskFromArray(boolean[] bits, int i) {
-            return new Byte256Mask(bits, i);
         }
 
         @Override
@@ -1247,6 +1251,17 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
                                          es, Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Byte256Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Byte256Mask.class, byte.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override
@@ -1320,6 +1335,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
             return VectorIntrinsics.cast(
                 o.getClass(),
                 o.elementType(), LENGTH,
+                Byte256Vector.class,
                 byte.class, LENGTH,
                 o, this,
                 (s, v) -> s.castDefault(v)
@@ -1397,6 +1413,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte256Vector.class,
                     byte.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)
@@ -1406,6 +1423,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short256Vector.class,
                     short.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)
@@ -1415,6 +1433,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Int256Vector.class,
                     int.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)
@@ -1424,6 +1443,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Long256Vector.class,
                     long.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)
@@ -1433,6 +1453,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float256Vector.class,
                     float.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)
@@ -1442,6 +1463,7 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
                 return VectorIntrinsics.reinterpret(
                     Double256Vector.class,
                     double.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)
@@ -1456,38 +1478,53 @@ final class Byte256Vector extends ByteVector<Shapes.S256Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Byte256Vector resize(Vector<Byte, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Byte64Vector)) {
                 Byte64Vector so = (Byte64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Byte64Vector.class,
                     byte.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Byte128Vector)) {
                 Byte128Vector so = (Byte128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Byte128Vector.class,
                     byte.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Byte256Vector)) {
                 Byte256Vector so = (Byte256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Byte256Vector.class,
                     byte.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Byte512Vector)) {
                 Byte512Vector so = (Byte512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Byte512Vector.class,
                     byte.class, so.length(),
+                    Byte256Vector.class,
+                    byte.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Byte256Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof ByteMaxVector)) {
+                ByteMaxVector so = (ByteMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    ByteMaxVector.class,
+                    byte.class, so.length(),
+                    Byte256Vector.class,
                     byte.class, LENGTH,
                     so, this,
                     (s, v) -> (Byte256Vector) s.reshape(v)

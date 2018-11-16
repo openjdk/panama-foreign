@@ -1301,16 +1301,20 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             return new Float64Vector(res);
         }
 
+        @Override
+        Float64Mask opm(FOpm f) {
+            boolean[] res = new boolean[length()];
+            for (int i = 0; i < length(); i++) {
+                res[i] = (boolean)f.apply(i);
+            }
+            return new Float64Mask(res);
+        }
+
         // Factories
 
         @Override
         public Float64Mask maskFromValues(boolean... bits) {
             return new Float64Mask(bits);
-        }
-
-        @Override
-        public Float64Mask maskFromArray(boolean[] bits, int i) {
-            return new Float64Mask(bits, i);
         }
 
         @Override
@@ -1375,6 +1379,17 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                                          es, Unsafe.ARRAY_FLOAT_BASE_OFFSET,
                                          es, ix,
                                          (c, idx) -> op(n -> c[idx + n]));
+        }
+
+        @Override
+        @ForceInline
+        public Float64Mask maskFromArray(boolean[] bits, int ix) {
+            Objects.requireNonNull(bits);
+            ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
+            return VectorIntrinsics.load(Float64Mask.class, int.class, LENGTH,
+                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, ix,
+                                         (c, idx) -> opm(n -> c[idx + n]));
         }
 
         @Override
@@ -1448,6 +1463,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
             return VectorIntrinsics.cast(
                 o.getClass(),
                 o.elementType(), LENGTH,
+                Float64Vector.class,
                 float.class, LENGTH,
                 o, this,
                 (s, v) -> s.castDefault(v)
@@ -1525,6 +1541,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                 return VectorIntrinsics.reinterpret(
                     Byte64Vector.class,
                     byte.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)
@@ -1534,6 +1551,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                 return VectorIntrinsics.reinterpret(
                     Short64Vector.class,
                     short.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)
@@ -1543,6 +1561,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                 return VectorIntrinsics.reinterpret(
                     Int64Vector.class,
                     int.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)
@@ -1552,6 +1571,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                 return VectorIntrinsics.reinterpret(
                     Long64Vector.class,
                     long.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)
@@ -1561,6 +1581,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                 return VectorIntrinsics.reinterpret(
                     Float64Vector.class,
                     float.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)
@@ -1570,6 +1591,7 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
                 return VectorIntrinsics.reinterpret(
                     Double64Vector.class,
                     double.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)
@@ -1584,38 +1606,53 @@ final class Float64Vector extends FloatVector<Shapes.S64Bit> {
         @SuppressWarnings("unchecked")
         public <T extends Shape> Float64Vector resize(Vector<Float, T> o) {
             Objects.requireNonNull(o);
-            if (o.bitSize() == 64) {
+            if (o.bitSize() == 64 && (o instanceof Float64Vector)) {
                 Float64Vector so = (Float64Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Float64Vector.class,
                     float.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 128) {
+            } else if (o.bitSize() == 128 && (o instanceof Float128Vector)) {
                 Float128Vector so = (Float128Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Float128Vector.class,
                     float.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 256) {
+            } else if (o.bitSize() == 256 && (o instanceof Float256Vector)) {
                 Float256Vector so = (Float256Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Float256Vector.class,
                     float.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)
                 );
-            } else if (o.bitSize() == 512) {
+            } else if (o.bitSize() == 512 && (o instanceof Float512Vector)) {
                 Float512Vector so = (Float512Vector)o;
                 return VectorIntrinsics.reinterpret(
                     Float512Vector.class,
                     float.class, so.length(),
+                    Float64Vector.class,
+                    float.class, LENGTH,
+                    so, this,
+                    (s, v) -> (Float64Vector) s.reshape(v)
+                );
+            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
+                    && (o.bitSize() % 128 == 0) && (o instanceof FloatMaxVector)) {
+                FloatMaxVector so = (FloatMaxVector)o;
+                return VectorIntrinsics.reinterpret(
+                    FloatMaxVector.class,
+                    float.class, so.length(),
+                    Float64Vector.class,
                     float.class, LENGTH,
                     so, this,
                     (s, v) -> (Float64Vector) s.reshape(v)

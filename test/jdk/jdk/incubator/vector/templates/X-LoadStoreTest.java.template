@@ -24,7 +24,12 @@
 /*
  * @test
  * @modules jdk.incubator.vector
+#if[MaxBit]
+ * @run testng/othervm --add-opens jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED
+ *      $vectorteststype$
+#else[MaxBit]
  * @run testng $vectorteststype$
+#end[MaxBit]
  *
  */
 
@@ -37,6 +42,10 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+#if[MaxBit]
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+#end[MaxBit]
 import java.nio.ByteBuffer;
 #if[!byte]
 import java.nio.$Type$Buffer;
@@ -47,11 +56,31 @@ import java.util.function.IntFunction;
 
 @Test
 public class $vectorteststype$ extends AbstractVectorTest {
-    static final $abstractvectortype$.$Type$Species<Shapes.S$bits$Bit> SPECIES =
+#if[MaxBit]
+    static final Vector.Shape S_Max_BIT = getMaxBit();
+
+    static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
+                $Type$Vector.species(S_Max_BIT);
+#else[MaxBit]
+    static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
                 $Type$Vector.species(Shapes.S_$bits$_BIT);
+#end[MaxBit]
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
+#if[MaxBit]
+    static Vector.Shape getMaxBit() {
+        try {
+            Class<?> clazz = Class.forName("jdk.incubator.vector.Shapes$SMaxBit");
+            VarHandle privateHandle = MethodHandles.privateLookupIn(Shapes.class, MethodHandles.lookup())
+                .findStaticVarHandle(Shapes.class, "S_Max_BIT", clazz);
+            return (Vector.Shape)(privateHandle.get());
+        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
+            throw new Error(e);
+        }
+    }
+
+#end[MaxBit]
     static void assertArraysEquals($type$[] a, $type$[] r, boolean[] mask) {
         int i = 0;
         try {
@@ -187,7 +216,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i);
             }
         }
@@ -200,11 +229,11 @@ public class $vectorteststype$ extends AbstractVectorTest {
         $type$[] a = fa.apply(SPECIES.length());
         $type$[] r = new $type$[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$, Shapes.S$bits$Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<$Boxtype$, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i, vmask);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromArray(a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -213,7 +242,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         r = new $type$[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -231,7 +260,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, 0, im, i);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromArray(a, 0, im, i);
                 av.intoArray(r, i);
             }
         }
@@ -244,7 +273,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         r = new $type$[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.intoArray(r, 0, im, i);
             }
         }
@@ -260,11 +289,11 @@ public class $vectorteststype$ extends AbstractVectorTest {
         $type$[] r = new $type$[a.length];
         int[] im = fim.apply(a.length);
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$, Shapes.S$bits$Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<$Boxtype$, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, 0, vmask, im, i);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromArray(a, 0, vmask, im, i);
                 av.intoArray(r, i);
             }
         }
@@ -274,7 +303,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         r = new $type$[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromArray(a, i);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromArray(a, i);
                 av.intoArray(r, 0, vmask, im, i);
             }
         }
@@ -294,7 +323,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromByteBuffer(a, i);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -317,7 +346,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromByteBuffer(a, i);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -335,14 +364,14 @@ public class $vectorteststype$ extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$, Shapes.S$bits$Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<$Boxtype$, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromByteBuffer(a, i, vmask);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -356,7 +385,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromByteBuffer(a, i);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -375,14 +404,14 @@ public class $vectorteststype$ extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<$Boxtype$, Shapes.S$bits$Bit> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<$Boxtype$, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                $abstractvectortype$<Shapes.S$bits$Bit> av = SPECIES.fromByteBuffer(a, i, vmask);
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

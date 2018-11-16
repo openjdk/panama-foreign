@@ -91,7 +91,7 @@ do
     mv temp ${abstractvectortype}Helper.java
   fi
 
-  for bits in 64 128 256 512
+  for bits in 64 128 256 512 Max
   do
     vectortype=${typeprefix}${Type}${bits}Vector
     masktype=${typeprefix}${Type}${bits}Mask

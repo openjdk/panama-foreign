@@ -105,7 +105,7 @@ do
 
   # Generate tests for operations
   # For each size
-  for bits in 64 128 256 512
+  for bits in 64 128 256 512 Max
   do
     vectortype=${typeprefix}${Type}${bits}Vector
     vectorteststype=${typeprefix}${Type}${bits}VectorTests
@@ -115,6 +115,9 @@ do
     shape=S${bits}Bit
     Shape=S_${bits}_BIT
     bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dvectorteststype=$vectorteststype -Dmasktype=$masktype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
+    if [ $bits == 'Max' ]; then
+      bitargs="$bitargs -KMaxBit"
+    fi
 
     # Generate jtreg tests
     Log true "Generating jtreg $vectorteststype... "
@@ -145,7 +148,7 @@ do
 
   # Generate tests for loads and stores
   # For each size
-  for bits in 64 128 256 512
+  for bits in 64 128 256 512 Max
   do
     vectortype=${typeprefix}${Type}${bits}Vector
     vectorteststype=${typeprefix}${Type}${bits}VectorLoadStoreTests
@@ -155,6 +158,9 @@ do
     shape=S${bits}Bit
     Shape=S_${bits}_BIT
     bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dvectorteststype=$vectorteststype -Dmasktype=$masktype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
+    if [ $bits == 'Max' ]; then
+      bitargs="$bitargs -KMaxBit"
+    fi
 
     # Generate
     Log true "Generating $vectorteststype... "

@@ -3,7 +3,7 @@
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<$Wideboxtype$, Shapes.S$bits$Bit> vmask = SPECIES.maskFromArray(mask, i);
+              Vector.Mask<$Wideboxtype$, Vector.Shape> vmask = SPECIES.maskFromArray(mask, i);
               r[i] = vmask.[[TEST]]();
             }
         }
