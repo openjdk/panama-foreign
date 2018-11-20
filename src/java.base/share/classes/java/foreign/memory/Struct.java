@@ -48,6 +48,7 @@ public interface Struct<T extends Struct<T>> extends Resource {
     /**
      * Return the size of the struct represented by the given class.
      *
+     * @param <X> the struct type.
      * @param clazz Class object representing the struct.
      * @return the size of the struct in bytes.
      */
@@ -67,7 +68,7 @@ public interface Struct<T extends Struct<T>> extends Resource {
             throw new IllegalArgumentException("Structs have different layouts!");
         }
         try {
-            Util.copy(src.ptr(), dst.ptr(), src.ptr().type().layout().bitsSize() / 8);
+            Util.copy(src.ptr(), dst.ptr(), src.ptr().type().bytesSize());
         } catch (IllegalAccessException ex) {
             throw new IllegalArgumentException(ex);
         }
