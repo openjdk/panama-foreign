@@ -141,10 +141,6 @@ public class BoundedMemoryRegion {
         return (this.mode & mode) == mode;
     }
 
-    public long length() {
-        return length;
-    }
-
     public long addr() throws UnsupportedOperationException {
         if (base != null) {
             throw new UnsupportedOperationException();
@@ -344,11 +340,6 @@ public class BoundedMemoryRegion {
         @Override
         void checkRange(long offset, long length) {
             checkOverflow(offset, length);
-        }
-
-        @Override
-        public long length() {
-            throw new UnsupportedOperationException(); // can not represent as 'long'
         }
 
     }

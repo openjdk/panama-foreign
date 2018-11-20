@@ -26,10 +26,10 @@ import java.foreign.NativeTypes;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.stream.Stream;
+import java.util.function.Predicate;
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedMemoryRegion;
 import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.access.SharedSecrets;
 
 /**
  * This interface models a native pointer.
@@ -47,69 +47,76 @@ public interface Pointer<X> extends Resource {
     }
 
     /**
-     * Move the array by a given offset.
+     * Add a given offset to this pointer.
      * @param nElements offset (expressed in number of elements).
-     * @return a new array array to the new address.
-     * @throws IllegalArgumentException if offset if zero
-     * @throws IndexOutOfBoundsException if offset exceeds the boundaries of the memory region pointed to by this array.
+     * @return a new pointer with the added offset.
+     * @throws IllegalArgumentException if the size of the layout of this pointer is zero.
+     * @throws IndexOutOfBoundsException if offset exceeds the boundaries of the memory region of this pointer.
      */
     Pointer<X> offset(long nElements) throws IllegalArgumentException, IndexOutOfBoundsException;
 
     /**
-     * Obtain a stream of pointers from current array. The n-th array in the stream is obtained by moving
-     * the (n-1)-th array off one element. The size of the stream depends on the layout from which this array
-     * was obtained. For example, element pointers obtained through {@link Array#elementPointer()} will return a stream
-     * whose number of elements is the same as that in the underlying array layout.
-     * @return a stream of pointers; the first pointer points at the first element of the underlying array.
+     * Returns a stream of pointers starting at this pointer and incrementing the pointer by 1 until
+     * the {@code hasNext} predicate returns {@code false}. This is effectively the same as:
+     * <p>
+     *     <code>
+     *         Stream.iterate(pointer, hasNext, p -> p.offset(1))
+     *     </code>
+     * </p>
+     * 
+     * @param hasNext a predicate which should return {@code true} as long as the stream should continue
+     * @return a stream limited by the {@code hasNext} predicate.
+     * @throws IllegalArgumentException if the size of the layout of this pointer is zero.
+     * @throws IndexOutOfBoundsException if offset exceeds the boundaries of the memory region of this pointer.
      */
-    Stream<Pointer<X>> elements();
+    default Stream<Pointer<X>> iterate(Predicate<? super Pointer<X>> hasNext) throws IllegalArgumentException, IndexOutOfBoundsException {
+        return Stream.iterate(this, hasNext, p -> p.offset(1));
+    }
 
     /**
-     * Retrieves the {@code LayoutType} associated with the memory region pointed to by this pointer.
-     * @return the pointer's {@code LayoutType}.
+     * Returns a stream of pointers starting at this pointer and incrementing the pointer by 1 until
+     * the pointer is equal to {@code end}. This is effectively the same as:
+     * <p>
+     *     <code>
+     *         Stream.iterate(pointer, p -> !p.equals(end), p -> p.offset(1))
+     *     </code>
+     * </p>
+     *
+     * @param end a pointer which is used as the end-point of the iteration
+     * @return a stream from this pointer until {@code end}
+     * @throws IllegalArgumentException if the size of the layout of this pointer is zero.
+     * @throws IndexOutOfBoundsException if offset exceeds the boundaries of the memory region of this pointer.
+     */
+    default Stream<Pointer<X>> iterate(Pointer<X> end) throws IllegalArgumentException, IndexOutOfBoundsException {
+        return Stream.iterate(this, p -> !p.equals(end), p -> p.offset(1));
+    }
+
+    /**
+     * Retrieves the {@link LayoutType} associated with this pointer.
+     * @return the pointer's {@link LayoutType}.
      */
     LayoutType<X> type();
 
     /**
-     * Is this pointer NULL?
-     * @return true if pointer is NULL.
+     * Checks if this pointer is {@code NULL}.
+     * @return {@code true} if pointer is {@code NULL}.
      */
     boolean isNull();
 
     /**
-     * Is the memory accessible from the array for the given mode
-     *
-     * @param mode the mode
-     * @return true if accessible, otherwise false
+     * Is the memory this pointer points to accessible for the given mode.
+     * 
+     * @param mode the access mode
+     * @return {@code true} if accessible, otherwise {@code false}
      */
     boolean isAccessibleFor(int mode);
 
     /**
-     * Returns the underlying memory address associated with this array.
-     * @return memory address.
-     * @throws IllegalAccessException if the memory address cannot be safely obtained.
+     * Returns the underlying memory address associated with this pointer.
+     * @return the memory address.
+     * @throws IllegalAccessException if the memory address is not a native address.
      */
     long addr() throws IllegalAccessException;
-
-    /**
-     * Returns the length, in bytes, of the memory region covered by this
-     * pointer. The number of elements covered is the same as
-     * {@code bytesSize() / (layout().size() / 8)}
-     *
-     * @return the length of the memory region covered
-     * @see #elementSize
-     */
-    long bytesSize();
-
-    /**
-     * Returns the number of elements covered by this pointer.
-     *
-     * @return returns the number of elements
-     * @see #bytesSize
-     */
-    default long elementSize() {
-        return bytesSize() / (type().layout().bitsSize() / 8);
-    }
 
     /**
      * Construct an array out of an element pointer, with given size.
@@ -152,7 +159,7 @@ public interface Pointer<X> extends Resource {
     }
 
     /**
-     * Returns a pointer to the memory region covered by the given direct byte
+     * Returns a pointer to the memory region covered by the given byte
      * buffer. The region starts relative to the buffer's position (inclusive)
      * and ends relative to the buffer's limit (exclusive).
      * <p>
@@ -163,20 +170,21 @@ public interface Pointer<X> extends Resource {
      * where as for a heap ByteBuffer this method throws an
      * {@code IllegalStateException}.
      *
-     * @param bb the direct byte buffer
-     * @return a pointer
+     * @param bb the byte buffer
+     * @return the created pointer
      */
     static Pointer<Byte> fromByteBuffer(ByteBuffer bb) {
         return new BoundedPointer<>(NativeTypes.UINT8, BoundedMemoryRegion.ofByteBuffer(bb));
     }
 
-    static ByteBuffer asDirectByteBuffer(Pointer<?> buf, int bytes) throws IllegalAccessException {
-        if (bytes > buf.bytesSize()) {
-            throw new IllegalAccessException();
-        }
-        return SharedSecrets.getJavaNioAccess()
-                .newDirectByteBuffer(buf.addr(), bytes, null);
-    }
+    /**
+     * Wraps the this pointer in a direct {@link ByteBuffer}
+     * 
+     * @param bytes the size of the buffer in bytes
+     * @return the created {@link ByteBuffer}
+     * @throws IllegalAccessException if bytes is larger than the region covered by this pointer
+     */
+    ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException;
 
     static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
         Util.copy(src, dst, bytes);

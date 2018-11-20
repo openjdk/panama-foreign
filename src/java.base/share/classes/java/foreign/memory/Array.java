@@ -30,6 +30,7 @@ import jdk.internal.foreign.memory.BoundedArray;
 
 import java.foreign.Scope;
 import java.util.function.IntFunction;
+import java.util.stream.Stream;
 
 /**
  * This interface models a native array. An array is composed by a base pointer and a size.
@@ -54,6 +55,34 @@ public interface Array<X> extends Resource {
      * @return the array element type's {@code LayoutType}.
      */
     LayoutType<X> type();
+
+    /**
+     * Returns a stream of pointers starting at the start of this array and incrementing the pointer by 1 until
+     * the end of this array.  This is effectively the same as:
+     * <p>
+     *     <code>
+     *         array.elementPointer().iterate(elementPointer().offset(length()))
+     *     </code>
+     * </p>
+     * 
+     * @return a stream limited by the size of this array.
+     * @throws IllegalArgumentException if the size of the element layout of this array is zero.
+     * @see Pointer#iterate(Pointer)
+     */
+    default Stream<Pointer<X>> iterate() throws IllegalArgumentException {
+        return elementPointer().iterate(elementPointer().offset(length()));
+    }
+
+    /**
+     * Returns the length, in bytes, of the memory region covered by this
+     * array. This is the same as
+     * {@code length() * type().bytesSize()}
+     *
+     * @return the length of the memory region covered by this array
+     */
+    default long bytesSize() {
+        return length() * type().bytesSize();
+    }
 
     @Override
     default Scope scope() {
@@ -145,7 +174,7 @@ public interface Array<X> extends Resource {
         }
         try {
             Util.copy(src.elementPointer(), dst.elementPointer(),
-                            dst.elementPointer().bytesSize());
+                            dst.bytesSize());
         } catch (IllegalAccessException ex) {
             throw new IllegalArgumentException(ex);
         }

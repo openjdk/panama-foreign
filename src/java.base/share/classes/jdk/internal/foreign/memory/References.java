@@ -85,12 +85,12 @@ public final class References {
             BoundedPointer<?> ptr = (BoundedPointer<?>)p2;
             boolean signed = ptr.type.layout() instanceof Value &&
                     ((Value)ptr.type.layout()).kind() != Kind.INTEGRAL_UNSIGNED;
-            return ptr.region.getBits(ptr.offset, ptr.type.layout().bitsSize() / 8, signed);
+            return ptr.region.getBits(ptr.offset, ptr.type.bytesSize(), signed);
         }
 
         static void setLongBits(Pointer<?> p2, long value) {
             BoundedPointer<?> ptr = (BoundedPointer<?>)p2;
-            ptr.region.putBits(ptr.offset, ptr.type.layout().bitsSize() / 8, value);
+            ptr.region.putBits(ptr.offset, ptr.type.bytesSize(), value);
         }
 
         OfPrimitive(Class<?> carrier) {
@@ -181,7 +181,7 @@ public final class References {
          * @return the double value.
          */
         public double get(Pointer<?> pointer) {
-            long size = pointer.bytesSize();
+            long size = pointer.type().bytesSize();
             try {
                 if (size == 8) {
                     //fastpath
@@ -202,7 +202,7 @@ public final class References {
          * @param value the double value.
          */
         public void set(Pointer<?> pointer, double value) {
-            long size = pointer.bytesSize();
+            long size = pointer.type().bytesSize();
             try {
                 if (size == 8) {
                     //fastpath
@@ -331,7 +331,7 @@ public final class References {
         static void set(Pointer<?> pointer, Array<?> arrayValue) {
             try {
                 Util.copy(arrayValue.elementPointer(), pointer,
-                        arrayValue.elementPointer().bytesSize());
+                        arrayValue.bytesSize());
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
@@ -374,7 +374,7 @@ public final class References {
 
         static void set(Pointer<?> pointer, Struct<?> t) {
             try {
-                Util.copy(t.ptr(), pointer, pointer.type().layout().bitsSize() / 8);
+                Util.copy(t.ptr(), pointer, pointer.type().bytesSize());
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException("Access denied", iae);
             }

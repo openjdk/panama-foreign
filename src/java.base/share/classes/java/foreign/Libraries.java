@@ -34,9 +34,10 @@ public final class Libraries {
     /**
      * Create a raw, uncivilized version of the interface
      *
+     * @param <T> the interface type
      * @param c the interface class to bind
      * @param lib the library in which to look for native symbols
-     * @return an object of class implementing the interfacce
+     * @return an object of class implementing the interface
      */
     public static <T> T bind(Class<T> c, Library lib) {
         SecurityManager security = System.getSecurityManager();
@@ -49,9 +50,10 @@ public final class Libraries {
     /**
      * Create a raw, uncivilized version of the interface
      *
+     * @param <T> the interface type
      * @param lookup the lookup object (used for implicit native library lookup)
      * @param c the class to bind
-     * @return an object of class implementing the interfacce
+     * @return an object of class implementing the interface
      */
     public static <T> T bind(Lookup lookup, Class<T> c) {
         SecurityManager security = System.getSecurityManager();
@@ -73,6 +75,7 @@ public final class Libraries {
      *
      * @param      lookup     the lookup object
      * @param      filename   the name of the library.
+     * @return     the library object to be loaded.
      * @exception  SecurityException  if a security manager exists and its
      *             <code>checkLink</code> method doesn't allow
      *             loading of the specified dynamic library
@@ -103,6 +106,7 @@ public final class Libraries {
      *
      * @param      lookup     the lookup object
      * @param      filename   the file to load.
+     * @return     the library object to be loaded.
      * @exception  SecurityException  if a security manager exists and its
      *             <code>checkLink</code> method doesn't allow
      *             loading of the specified dynamic library

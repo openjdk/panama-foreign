@@ -24,6 +24,7 @@ package jdk.internal.foreign.memory;
 
 import jdk.internal.foreign.Util;
 
+import java.nio.ByteBuffer;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.layout.Layout;
@@ -31,12 +32,8 @@ import java.foreign.layout.Unresolved;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
-import java.util.Iterator;
 import java.util.Objects;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import jdk.internal.access.SharedSecrets;
 
 public class BoundedPointer<X> implements Pointer<X> {
 
@@ -74,7 +71,7 @@ public class BoundedPointer<X> implements Pointer<X> {
         this.type = Objects.requireNonNull(type);
         this.mode = mode;
         if (! (type.layout() instanceof Unresolved)) {
-            region.checkRange(offset, type.layout().bitsSize() / 8);
+            region.checkRange(offset, type.bytesSize());
         }
     }
 
@@ -99,24 +96,12 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     @Override
-    public long bytesSize() {
-        return region.length() - offset;
-    }
-
-    @Override
     public Array<X> withSize(long size) {
         return new BoundedArray<>(this, (int)size);
     }
 
-    @Override
-    public Stream<Pointer<X>> elements() {
-        return StreamSupport.stream(Spliterators.spliterator(new PointerIterator<>(this),
-                region.length() / (type.layout().bitsSize() / 8),
-                Spliterator.NONNULL | Spliterator.DISTINCT | Spliterator.ORDERED), false);
-    }
-
     public BoundedPointer<X> limit(long nelems) {
-        return new BoundedPointer<>(type, region.limit(offset + ((type.layout().bitsSize() / 8) * nelems)), offset);
+        return new BoundedPointer<>(type, region.limit(offset + ((type.bytesSize()) * nelems)), offset);
     }
 
     @Override
@@ -126,7 +111,7 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     @Override
     public BoundedPointer<X> offset(long nElements) throws IllegalArgumentException, IndexOutOfBoundsException {
-        long elemSize = type.layout().bitsSize() / 8;
+        long elemSize = type.bytesSize();
         if (elemSize == 0) {
             throw new IllegalArgumentException();
         }
@@ -136,6 +121,13 @@ public class BoundedPointer<X> implements Pointer<X> {
         // Note: the pointer may point outside of the memory region bounds.
         // This is allowed, as long as the pointer/data is not dereferenced
         return new BoundedPointer<>(type, region, newOffset);
+    }
+
+    @Override
+    public ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException {
+        region.checkRange(offset, bytes);
+        return SharedSecrets.getJavaNioAccess()
+                .newDirectByteBuffer(addr(), bytes, null);
     }
 
     public void copyTo(BoundedPointer<?> dst, long bytes) throws IllegalAccessException {
@@ -199,39 +191,6 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     public String dump(int nbytes) {
         return region.dump(offset, nbytes);
-    }
-
-    static class PointerIterator<X> implements Iterator<BoundedPointer<X>> {
-
-        BoundedPointer<X> next;
-
-        PointerIterator(BoundedPointer<X> pointer) {
-            this.next = pointer;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return next != null;
-        }
-
-        @Override
-        public BoundedPointer<X> next() {
-            if (next == null) {
-                throw new IllegalStateException("Pointer iterator doesn't have next()");
-            } else {
-                BoundedPointer<X> prev = next;
-                update();
-                return prev;
-            }
-        }
-
-        private void update() {
-            try {
-                next = next.offset(1);
-            } catch (IndexOutOfBoundsException ex) {
-                next = null;
-            }
-        }
     }
 
     @Override

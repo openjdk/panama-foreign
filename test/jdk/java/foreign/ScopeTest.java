@@ -131,10 +131,10 @@ public class ScopeTest {
 
             assertEquals(nar.length(), data.length);
             int byteCounts = Integer.BYTES * data.length;
-            assertEquals(nar.elementPointer().bytesSize(), byteCounts);
+            assertEquals(nar.bytesSize(), byteCounts);
 
             Pointer<Byte> ptr = nar.elementPointer().cast(NativeTypes.VOID).cast(NativeTypes.INT8);
-            IntBuffer ibNative = Pointer.asDirectByteBuffer(ptr, byteCounts)
+            IntBuffer ibNative = ptr.asDirectByteBuffer(byteCounts)
                     // got to make sure it's native order
                     .order(ByteOrder.nativeOrder()).asIntBuffer();
 
