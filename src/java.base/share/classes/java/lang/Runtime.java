@@ -26,7 +26,12 @@
 package java.lang;
 
 import java.io.*;
+import java.lang.ClassLoader.NativeLibrary;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.math.BigInteger;
+import java.foreign.Library;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -34,6 +39,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
+import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
@@ -753,7 +759,7 @@ public class Runtime {
         load0(Reflection.getCallerClass(), filename);
     }
 
-    synchronized void load0(Class<?> fromClass, String filename) {
+    synchronized NativeLibrary load0(Class<?> fromClass, String filename) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(filename);
@@ -762,7 +768,7 @@ public class Runtime {
             throw new UnsatisfiedLinkError(
                 "Expecting an absolute path of the library: " + filename);
         }
-        ClassLoader.loadLibrary(fromClass, filename, true);
+        return ClassLoader.loadLibrary(fromClass, filename, true);
     }
 
     /**
@@ -815,7 +821,23 @@ public class Runtime {
         loadLibrary0(Reflection.getCallerClass(), libname);
     }
 
-    synchronized void loadLibrary0(Class<?> fromClass, String libname) {
+    /**
+     * Panama specific: find library given name and lookup.
+     * See {@link jdk.internal.misc.JavaLangAccess#loadLibrary(Lookup, String)}.
+     */
+    Library loadLibrary(MethodHandles.Lookup lookup, String libname) {
+        return loadLibrary0(lookup.lookupClass(), libname);
+    }
+
+    /**
+     * Panama specific: find default system library.
+     * See {@link JavaLangAccess#defaultLibrary()}.
+     */
+    Library defaultLibrary() {
+        return NativeLibrary.defaultLibrary;
+    }
+
+    synchronized NativeLibrary loadLibrary0(Class<?> fromClass, String libname) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkLink(libname);
@@ -824,7 +846,7 @@ public class Runtime {
             throw new UnsatisfiedLinkError(
     "Directory separator should not appear in library name: " + libname);
         }
-        ClassLoader.loadLibrary(fromClass, libname, false);
+        return ClassLoader.loadLibrary(fromClass, libname, false);
     }
 
     /**

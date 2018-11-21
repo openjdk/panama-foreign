@@ -86,6 +86,10 @@ module java.base {
     exports java.math;
     exports java.net;
     exports java.net.spi;
+    exports java.foreign;
+    exports java.foreign.annotations;
+    exports java.foreign.memory;
+    exports java.foreign.layout;
     exports java.nio;
     exports java.nio.channels;
     exports java.nio.channels.spi;
@@ -162,7 +166,8 @@ module java.base {
         jdk.jartool,
         jdk.jfr,
         jdk.jlink,
-        jdk.scripting.nashorn;
+        jdk.scripting.nashorn,
+        jdk.jextract;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jfr,
         jdk.jlink;

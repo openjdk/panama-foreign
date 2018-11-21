@@ -33,6 +33,7 @@ m4_include([lib-std.m4])
 m4_include([lib-x11.m4])
 m4_include([lib-fontconfig.m4])
 m4_include([lib-tests.m4])
+m4_include([lib-clang.m4])
 
 ################################################################################
 # Determine which libraries are needed for this configuration
@@ -103,6 +104,7 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
   LIB_SETUP_MISC_LIBS
   LIB_SETUP_SOLARIS_STLPORT
   LIB_TESTS_SETUP_GRAALUNIT
+  LIB_SETUP_LIBCLANG
 
   if test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     GLOBAL_LIBS="-lc"

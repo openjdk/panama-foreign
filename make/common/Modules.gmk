@@ -184,8 +184,10 @@ INTERIM_IMAGE_MODULES := java.base java.logging
 LANGTOOLS_MODULES := \
     java.compiler \
     jdk.compiler \
+    jdk.internal.clang \
     jdk.javadoc \
     jdk.jdeps \
+    jdk.jextract \
     jdk.jshell \
     #
 
@@ -224,6 +226,14 @@ endif
 
 ifeq ($(ENABLE_AOT), false)
   MODULES_FILTER += jdk.aot
+endif
+
+################################################################################
+# Filter out panama specific modules if libclang is disabled
+
+ifeq ($(ENABLE_LIBCLANG), false)
+  MODULES_FILTER += jdk.internal.clang
+  MODULES_FILTER += jdk.jextract
 endif
 
 ################################################################################

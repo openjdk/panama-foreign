@@ -710,6 +710,10 @@ public abstract class Buffer {
                 public JavaNioAccess.BufferPool getDirectBufferPool() {
                     return Bits.BUFFER_POOL;
                 }
+                @Override
+                public ByteBuffer newDirectByteBuffer(long addr, int cap, Object ob) {
+                    return new DirectByteBuffer(addr, cap, ob);
+                }
             });
     }
 

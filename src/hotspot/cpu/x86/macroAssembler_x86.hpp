@@ -850,6 +850,7 @@ class MacroAssembler: public Assembler {
 
   void call(Label& L, relocInfo::relocType rtype);
   void call(Register entry);
+  void call(Address addr) { Assembler::call(addr); }
 
   // NOTE: this call transfers to the effective address of entry NOT
   // the address contained by entry. This is because this is more natural

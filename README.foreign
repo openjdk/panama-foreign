@@ -1,0 +1,35 @@
+README.foreign
+==============
+
+Build prerequisite:
+
+libclang is required to build jextract, the tool to read C header file and generate jar files with the Java interfaces for the native functions. To enable build jextract, libclang is required.
+
+Prebuild libclang binaries can be download from http://releases.llvm.org/download.html.
+
+On Debian-based system, such binary can be obtained with `apt-get install libclang-dev` command.
+
+On MacOS, you can use homebrew with `brew install llvm`.
+
+
+
+Build:
+
+Use --with-libclang to specify the location where the llvm package is extracted/installed. The pointed folder should have "include/clang-c/Index.h" and the libclang binary under "lib".
+
+On Debian-based system, this should be under /usr/lib/llvm-${version}. On MacOS with brew, this should be under /usr/local/opt/llvm.
+
+The rest should be the same as OpenJDK. To verify if libclang is found, looking into configure.log and search for Index.h. Following lines indicate libclang was installed and found,
+
+checking clang-c/Index.h usability... yes
+checking clang-c/Index.h presence... yes
+checking for clang-c/Index.h... yes
+checking for clang_getClangVersion in -lclang... yes
+
+
+
+Run:
+
+The working scenario is basically run jextract on a C header file should to generate a jar file contains the Java interfaces. Then in java code, simply bind the interface to the library to obtain an instance and then that should enable the native call.
+
+Look into test/jdk/java/foreign for some examples.

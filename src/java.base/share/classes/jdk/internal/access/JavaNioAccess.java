@@ -25,7 +25,6 @@
 
 package jdk.internal.access;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public interface JavaNioAccess {
@@ -39,4 +38,12 @@ public interface JavaNioAccess {
         long getMemoryUsed();
     }
     BufferPool getDirectBufferPool();
+
+    /**
+     * Constructs a direct ByteBuffer referring to the block of memory starting
+     * at the given memory address and extending {@code cap} bytes.
+     * The {@code ob} parameter is an arbitrary object that is attached
+     * to the resulting buffer.
+     */
+    ByteBuffer newDirectByteBuffer(long addr, int cap, Object ob);
 }

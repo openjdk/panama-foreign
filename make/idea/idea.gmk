@@ -29,5 +29,6 @@ else #with SPEC
 	$(ECHO) "CYGPATH=\"$(CYGPATH)\"" >> $(OUT)
 	$(ECHO) "SPEC=\"$(SPEC)\"" >> $(OUT)
 	$(ECHO) "JT_HOME=\"$(JT_HOME)\"" >> $(OUT)
+	$(ECHO) "LIBCLANG_LDFLAGS=\"$(LIBCLANG_LDFLAGS)\"" >> $(OUT)
 
 endif

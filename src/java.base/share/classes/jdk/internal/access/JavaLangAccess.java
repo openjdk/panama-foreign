@@ -26,10 +26,12 @@
 package jdk.internal.access;
 
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandles;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.foreign.Library;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.security.AccessControlContext;
@@ -311,4 +313,36 @@ public interface JavaLangAccess {
      * @param cause set t's cause to new value
      */
     void setCause(Throwable t, Throwable cause);
+
+    //Panama
+
+    /**
+     * Panama: load a native library.
+     * @param lookup the lookup object.
+     * @param libname the name of the library.
+     * @return the found library
+     * @throws     UnsatisfiedLinkError if either the libname argument
+     *             contains a file path, the native library is not statically
+     *             linked with the VM,  or the library cannot be mapped to a
+     *             native library image by the host system.
+     */
+    Library loadLibrary(MethodHandles.Lookup lookup, String libname);
+
+    /**
+     * Panama: load a native library.
+     * @param lookup the lookup object.
+     * @param libname the absolute path of the library.
+     * @return the loaded library
+     * @throws     UnsatisfiedLinkError if either the libname argument is not an
+     *             absolute path name, the native library is not statically
+     *             linked with the VM, or the library cannot be mapped to
+     *             a native library image by the host system.
+     */
+    Library load(MethodHandles.Lookup lookup, String libname);
+
+    /**
+     * Panama: lookup default library
+     * @return defauult library.
+     */
+    Library defaultLibrary();
 }

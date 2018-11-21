@@ -35,12 +35,15 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URI;
+import java.foreign.Library;
 import java.nio.charset.CharacterCodingException;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
@@ -2250,6 +2253,20 @@ public final class System {
 
             public void setCause(Throwable t, Throwable cause) {
                 t.setCause(cause);
+            }
+
+            //Panama
+            @Override
+            public Library loadLibrary(MethodHandles.Lookup lookup, String libname) {
+                return Runtime.getRuntime().loadLibrary(lookup, libname);
+            }
+            @Override
+            public Library load(MethodHandles.Lookup lookup, String libname) {
+                return Runtime.getRuntime().load0(lookup.lookupClass(), libname);
+            }
+            @Override
+            public Library defaultLibrary() {
+                return Runtime.getRuntime().defaultLibrary();
             }
         });
     }

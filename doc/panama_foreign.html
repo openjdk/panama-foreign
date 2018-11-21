@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Using Panama “foreign” JDK</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../make/data/docs-resources/resources/jdk-default.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header>
+<h1 class="title">Using Panama “foreign” JDK</h1>
+</header>
+<nav id="TOC">
+<ul>
+<li><a href="#using-panama-foreign-jdk">Using Panama “foreign” JDK</a><ul>
+<li><a href="#embedding-python-interpreter-in-your-java-program-mac-os">Embedding Python interpreter in your Java program (Mac OS)</a><ul>
+<li><a href="#jextract-a-jar-file-for-python.h">jextract a Jar file for Python.h</a></li>
+<li><a href="#java-program-that-uses-extracted-python-interface">Java program that uses extracted Python interface</a></li>
+<li><a href="#running-the-java-code-that-calls-python-interpreter">Running the Java code that calls Python interpreter</a></li>
+</ul></li>
+<li><a href="#embedding-python-interpreter-in-your-java-program-ubuntu-16.04">Embedding Python interpreter in your Java program (Ubuntu 16.04)</a><ul>
+<li><a href="#jextract-a-jar-file-for-python.h-1">jextract a Jar file for Python.h</a></li>
+<li><a href="#compiling-and-running-python-java-example">Compiling and Running Python Java example</a></li>
+</ul></li>
+<li><a href="#using-blas-library">Using BLAS library</a><ul>
+<li><a href="#installing-openblas-mac-os">Installing OpenBLAS (Mac OS)</a></li>
+<li><a href="#installing-openblas-ubuntu-16.04">Installing OpenBLAS (Ubuntu 16.04)</a></li>
+<li><a href="#jextracting-cblas.h-macos">jextracting cblas.h (MacOS)</a></li>
+<li><a href="#jextracting-cblas.h-ubuntu-16.04">jextracting cblas.h (Ubuntu 16.04)</a></li>
+<li><a href="#java-sample-code-that-uses-cblas-library">Java sample code that uses cblas library</a></li>
+<li><a href="#compiling-and-running-the-above-cblas-samples">Compiling and running the above cblas samples</a></li>
+</ul></li>
+<li><a href="#using-lapack-library-ubuntu">Using LAPACK library (Ubuntu)</a><ul>
+<li><a href="#jextracting-clapack.h-ubuntu-16.04">jextracting clapack.h (Ubuntu 16.04)</a></li>
+<li><a href="#java-sample-code-that-uses-lapack-library">Java sample code that uses LAPACK library</a></li>
+<li><a href="#compiling-and-running-the-above-lapack-sample">Compiling and running the above LAPACK sample</a></li>
+</ul></li>
+<li><a href="#using-lapack-library-mac-os">Using LAPACK library (Mac OS)</a><ul>
+<li><a href="#jextracting-lapacke.h">jextracting lapacke.h</a></li>
+<li><a href="#java-sample-code-that-uses-lapack-library-1">Java sample code that uses LAPACK library</a></li>
+<li><a href="#compiling-and-running-the-above-lapack-sample-1">Compiling and running the above LAPACK sample</a></li>
+</ul></li>
+<li><a href="#using-libproc-library-to-list-processes-from-java-mac-os">Using libproc library to list processes from Java (Mac OS)</a><ul>
+<li><a href="#jextract-a-jar-file-for-libproc.h">jextract a jar file for libproc.h</a></li>
+<li><a href="#java-program-that-uses-libproc-to-list-processes">Java program that uses libproc to list processes</a></li>
+<li><a href="#running-the-java-code-that-uses-libproc">Running the Java code that uses libproc</a></li>
+</ul></li>
+<li><a href="#using-readline-library-from-java-code-mac-os">Using readline library from Java code (Mac OS)</a><ul>
+<li><a href="#jextract-a-jar-file-for-readline.h">jextract a jar file for readline.h</a></li>
+<li><a href="#java-code-that-uses-readline">Java code that uses readline</a></li>
+<li><a href="#running-the-java-code-that-uses-readline">Running the java code that uses readline</a></li>
+</ul></li>
+<li><a href="#using-unistd.h-from-java-code-linux">Using unistd.h from Java code (Linux)</a><ul>
+<li><a href="#jextract-a-jar-file-for-unistd.h">jextract a jar file for unistd.h</a></li>
+<li><a href="#java-code-that-calls-getpid">Java code that calls getpid</a></li>
+<li><a href="#running-the-java-code-that-uses-getpid">Running the Java code that uses getpid</a></li>
+</ul></li>
+<li><a href="#using-opengl-graphic-library-ubuntu-16.04">Using OpenGL graphic library (Ubuntu 16.04)</a><ul>
+<li><a href="#installing-opengl-ubuntu-16.04">Installing OpenGL (Ubuntu 16.04)</a></li>
+<li><a href="#jextracting-opengl-ubuntu-16.04">jextracting OpenGL (Ubuntu 16.04)</a></li>
+<li><a href="#java-sample-code-that-uses-the-opengl-library">Java sample code that uses the OpenGL library</a></li>
+<li><a href="#running-the-java-code-that-uses-opengl">Running the Java code that uses OpenGL</a></li>
+</ul></li>
+<li><a href="#using-tensorflow-c-api-mac-os">Using TensorFlow C API (Mac OS)</a><ul>
+<li><a href="#installing-libtensorflow">Installing libtensorflow</a></li>
+<li><a href="#jextracting-libtensorflow-c_api.h">jextracting libtensorflow c_api.h</a></li>
+<li><a href="#java-sample-code-that-uses-tensorflow-library">Java sample code that uses tensorflow library</a></li>
+<li><a href="#compiling-and-running-the-above-tensorflow-sample">Compiling and running the above TensorFlow sample</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="using-panama-foreign-jdk">Using Panama “foreign” JDK</h1>
+<p>There are two ways to get a panama foreign branch JDK.</p>
+<ol type="1">
+<li>Locally build “foreign” branch of panama repo <a href="http://hg.openjdk.java.net/panama/dev/" class="uri">http://hg.openjdk.java.net/panama/dev/</a></li>
+<li>Download pre-built panama “foreign” early access binaries from <a href="http://jdk.java.net/panama/" class="uri">http://jdk.java.net/panama/</a></li>
+</ol>
+<p>Using foreign function call in Java involves the following three steps:</p>
+<ol type="1">
+<li>Use <strong>jextract</strong> tool to generate java interface for your C header file(s)</li>
+<li>Use <strong>java.foreign</strong> API to create (“bind”) implementation for C header interfaces</li>
+<li>Invoke C functions via the jextracted Java interface</li>
+</ol>
+<h2 id="embedding-python-interpreter-in-your-java-program-mac-os">Embedding Python interpreter in your Java program (Mac OS)</h2>
+<h3 id="jextract-a-jar-file-for-python.h">jextract a Jar file for Python.h</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ex">jextract</span> -l python2.7 \</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">  -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">  --exclude-symbols .*_FromFormatV<span class="dt">\|</span>_.*<span class="dt">\|</span>PyOS_vsnprintf<span class="dt">\|</span>.*_VaParse.*<span class="dt">\|</span>.*_VaBuild.*<span class="dt">\|</span>PyBuffer_SizeFromFormat<span class="dt">\|</span>vasprintf<span class="dt">\|</span>vfprintf<span class="dt">\|</span>vprintf<span class="dt">\|</span>vsprintf \</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">  -t org.python \</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  -o python.jar</a></code></pre></div>
+<h3 id="java-program-that-uses-extracted-python-interface">Java program that uses extracted Python interface</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb2-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="co">// import java.foreign packages</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.Libraries;</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5"><span class="kw">import</span><span class="im"> java.foreign.memory.Pointer;</span></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb2-7" data-line-number="7"><span class="co">// import jextracted python &#39;header&#39; classes</span></a>
+<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="kw">import static</span><span class="im"> org.python.Python_h.*;</span></a>
+<a class="sourceLine" id="cb2-9" data-line-number="9"><span class="kw">import static</span><span class="im"> org.python.pythonrun_h.*;</span></a>
+<a class="sourceLine" id="cb2-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb2-11" data-line-number="11"><span class="kw">public</span> <span class="kw">class</span> PythonMain {</a>
+<a class="sourceLine" id="cb2-12" data-line-number="12">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb2-13" data-line-number="13">        <span class="fu">Py_Initialize</span>();</a>
+<a class="sourceLine" id="cb2-14" data-line-number="14">        <span class="kw">try</span> (Scope s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb2-15" data-line-number="15">            <span class="fu">PyRun_SimpleStringFlags</span>(s.<span class="fu">allocateCString</span>(</a>
+<a class="sourceLine" id="cb2-16" data-line-number="16">                <span class="st">&quot;print(sum([33, 55, 66])); print(&#39;Hello from Python!&#39;)</span><span class="sc">\n</span><span class="st">&quot;</span>),</a>
+<a class="sourceLine" id="cb2-17" data-line-number="17">                Pointer.<span class="fu">nullPointer</span>());</a>
+<a class="sourceLine" id="cb2-18" data-line-number="18">        }</a>
+<a class="sourceLine" id="cb2-19" data-line-number="19">        <span class="fu">Py_Finalize</span>();</a>
+<a class="sourceLine" id="cb2-20" data-line-number="20">    }</a>
+<a class="sourceLine" id="cb2-21" data-line-number="21">}</a></code></pre></div>
+<h3 id="running-the-java-code-that-calls-python-interpreter">Running the Java code that calls Python interpreter</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb3-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="ex">javac</span> -cp pythor.jar PythonMain.java</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"><span class="ex">java</span> -cp python.jar:. PythonMain</a></code></pre></div>
+<h2 id="embedding-python-interpreter-in-your-java-program-ubuntu-16.04">Embedding Python interpreter in your Java program (Ubuntu 16.04)</h2>
+<h3 id="jextract-a-jar-file-for-python.h-1">jextract a Jar file for Python.h</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb4-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="ex">jextract</span> -l python2.7 \</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  -rpath /usr/lib/python2.7/config-x86_64-linux-gnu \</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">  --exclude-symbols .*_FromFormatV<span class="dt">\|</span>_.*<span class="dt">\|</span>PyOS_vsnprintf<span class="dt">\|</span>.*_VaParse.*<span class="dt">\|</span>.*_VaBuild.*<span class="dt">\|</span>PyBuffer_SizeFromFormat<span class="dt">\|</span>vasprintf<span class="dt">\|</span>vfprintf<span class="dt">\|</span>vprintf<span class="dt">\|</span>vsprintf \</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">  -t org.python \</a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">  /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \</a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">  -o python.jar</a></code></pre></div>
+<h3 id="compiling-and-running-python-java-example">Compiling and Running Python Java example</h3>
+<p>Follow the instructions from the Mac OS section</p>
+<h2 id="using-blas-library">Using BLAS library</h2>
+<p>BLAS is a popular library that allows fast matrix and vector computation: <a href="http://www.netlib.org/blas/" class="uri">http://www.netlib.org/blas/</a>.</p>
+<h3 id="installing-openblas-mac-os">Installing OpenBLAS (Mac OS)</h3>
+<p>On Mac, blas is available as part of the OpenBLAS library: <a href="https://github.com/xianyi/OpenBLAS/wiki" class="uri">https://github.com/xianyi/OpenBLAS/wiki</a></p>
+<p>OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version.</p>
+<p>You can install openblas using HomeBrew</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb5-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="ex">brew</span> install openblas</a></code></pre></div>
+<p>It installs include and lib directories under /usr/local/opt/openblas</p>
+<h3 id="installing-openblas-ubuntu-16.04">Installing OpenBLAS (Ubuntu 16.04)</h3>
+<p>On Ubuntu, blas is distributed as part of the atlas library: <a href="http://math-atlas.sourceforge.net/" class="uri">http://math-atlas.sourceforge.net/</a>.</p>
+<p>You can install atlas using apt</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb6-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="fu">sudo</span> apt-get install libatlas-base-dev</a></code></pre></div>
+<p>This command will install include files under <code>/usr/include/atlas</code> and corresponding libraries under <code>/usr/lib/atlas-dev</code>.</p>
+<h3 id="jextracting-cblas.h-macos">jextracting cblas.h (MacOS)</h3>
+<p>The following command can be used to extract cblas.h on MacOs</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb7-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="ex">jextract</span> -C <span class="st">&quot;-D FORCE_OPENBLAS_COMPLEX_STRUCT&quot;</span> \</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">  -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">  -o cblas.jar</a></code></pre></div>
+<p>The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not yet handle C99 <code>_Complex</code> types. The rest of the options are standard ones.</p>
+<h3 id="jextracting-cblas.h-ubuntu-16.04">jextracting cblas.h (Ubuntu 16.04)</h3>
+<p>The following command can be used to extract cblas.h on Ubuntu</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb8-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb8-2" data-line-number="2"><span class="ex">jextract</span> -L /usr/lib/atlas-base -I /usr/include/atlas/ \</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">   -l cblas -t blas -infer-rpath \</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">   /usr/include/atlas/cblas.h -o cblas.jar</a></code></pre></div>
+<h3 id="java-sample-code-that-uses-cblas-library">Java sample code that uses cblas library</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb9-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="kw">import</span><span class="im"> blas.cblas;</span></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4"><span class="kw">import static</span><span class="im"> blas.cblas_h.*;</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
+<a class="sourceLine" id="cb9-7" data-line-number="7"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
+<a class="sourceLine" id="cb9-8" data-line-number="8"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
+<a class="sourceLine" id="cb9-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb9-10" data-line-number="10"><span class="kw">public</span> <span class="kw">class</span> TestBlas {</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb9-12" data-line-number="12">       <span class="at">@cblas</span>.<span class="fu">CBLAS_ORDER</span> <span class="dt">int</span> Layout;</a>
+<a class="sourceLine" id="cb9-13" data-line-number="13">       <span class="at">@cblas</span>.<span class="fu">CBLAS_TRANSPOSE</span> <span class="dt">int</span> transa;</a>
+<a class="sourceLine" id="cb9-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb9-15" data-line-number="15">       <span class="dt">double</span> alpha, beta;</a>
+<a class="sourceLine" id="cb9-16" data-line-number="16">       <span class="dt">int</span> m, n, lda, incx, incy, i;</a>
+<a class="sourceLine" id="cb9-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb9-18" data-line-number="18">       Layout = CblasColMajor;</a>
+<a class="sourceLine" id="cb9-19" data-line-number="19">       transa = CblasNoTrans;</a>
+<a class="sourceLine" id="cb9-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb9-21" data-line-number="21">       m = <span class="dv">4</span>; <span class="co">/* Size of Column ( the number of rows ) */</span></a>
+<a class="sourceLine" id="cb9-22" data-line-number="22">       n = <span class="dv">4</span>; <span class="co">/* Size of Row ( the number of columns ) */</span></a>
+<a class="sourceLine" id="cb9-23" data-line-number="23">       lda = <span class="dv">4</span>; <span class="co">/* Leading dimension of 5 * 4 matrix is 5 */</span></a>
+<a class="sourceLine" id="cb9-24" data-line-number="24">       incx = <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb9-25" data-line-number="25">       incy = <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb9-26" data-line-number="26">       alpha = <span class="dv">1</span>;</a>
+<a class="sourceLine" id="cb9-27" data-line-number="27">       beta = <span class="dv">0</span>;</a>
+<a class="sourceLine" id="cb9-28" data-line-number="28"></a>
+<a class="sourceLine" id="cb9-29" data-line-number="29">       <span class="kw">try</span> (Scope sc = Scope.<span class="fu">newNativeScope</span>()){</a>
+<a class="sourceLine" id="cb9-30" data-line-number="30">           <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; a = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, m * n);</a>
+<a class="sourceLine" id="cb9-31" data-line-number="31">           <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; x = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, n);</a>
+<a class="sourceLine" id="cb9-32" data-line-number="32">           <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; y = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, n);</a>
+<a class="sourceLine" id="cb9-33" data-line-number="33">           <span class="co">/* The elements of the first column */</span></a>
+<a class="sourceLine" id="cb9-34" data-line-number="34">           a.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb9-35" data-line-number="35">           a.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">2.0</span>);</a>
+<a class="sourceLine" id="cb9-36" data-line-number="36">           a.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">3.0</span>);</a>
+<a class="sourceLine" id="cb9-37" data-line-number="37">           a.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">4.0</span>);</a>
+<a class="sourceLine" id="cb9-38" data-line-number="38">           <span class="co">/* The elements of the second column */</span></a>
+<a class="sourceLine" id="cb9-39" data-line-number="39">           a.<span class="fu">set</span>(m, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb9-40" data-line-number="40">           a.<span class="fu">set</span>(m + <span class="dv">1</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb9-41" data-line-number="41">           a.<span class="fu">set</span>(m + <span class="dv">2</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb9-42" data-line-number="42">           a.<span class="fu">set</span>(m + <span class="dv">3</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb9-43" data-line-number="43">           <span class="co">/* The elements of the third column */</span></a>
+<a class="sourceLine" id="cb9-44" data-line-number="44">           a.<span class="fu">set</span>(m * <span class="dv">2</span>, <span class="fl">3.0</span>);</a>
+<a class="sourceLine" id="cb9-45" data-line-number="45">           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">1</span>, <span class="fl">4.0</span>);</a>
+<a class="sourceLine" id="cb9-46" data-line-number="46">           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">2</span>, <span class="fl">5.0</span>);</a>
+<a class="sourceLine" id="cb9-47" data-line-number="47">           a.<span class="fu">set</span>(m * <span class="dv">2</span> + <span class="dv">3</span>, <span class="fl">6.0</span>);</a>
+<a class="sourceLine" id="cb9-48" data-line-number="48">           <span class="co">/* The elements of the fourth column */</span></a>
+<a class="sourceLine" id="cb9-49" data-line-number="49">           a.<span class="fu">set</span>(m * <span class="dv">3</span>, <span class="fl">5.0</span>);</a>
+<a class="sourceLine" id="cb9-50" data-line-number="50">           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">1</span>, <span class="fl">6.0</span>);</a>
+<a class="sourceLine" id="cb9-51" data-line-number="51">           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">2</span>, <span class="fl">7.0</span>);</a>
+<a class="sourceLine" id="cb9-52" data-line-number="52">           a.<span class="fu">set</span>(m * <span class="dv">3</span> + <span class="dv">3</span>, <span class="fl">8.0</span>);</a>
+<a class="sourceLine" id="cb9-53" data-line-number="53">           <span class="co">/* The elemetns of x and y */</span></a>
+<a class="sourceLine" id="cb9-54" data-line-number="54">           x.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb9-55" data-line-number="55">           x.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">2.0</span>);</a>
+<a class="sourceLine" id="cb9-56" data-line-number="56">           x.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb9-57" data-line-number="57">           x.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">1.0</span>);</a>
+<a class="sourceLine" id="cb9-58" data-line-number="58">           y.<span class="fu">set</span>(<span class="dv">0</span>, <span class="fl">0.0</span>);</a>
+<a class="sourceLine" id="cb9-59" data-line-number="59">           y.<span class="fu">set</span>(<span class="dv">1</span>, <span class="fl">0.0</span>);</a>
+<a class="sourceLine" id="cb9-60" data-line-number="60">           y.<span class="fu">set</span>(<span class="dv">2</span>, <span class="fl">0.0</span>);</a>
+<a class="sourceLine" id="cb9-61" data-line-number="61">           y.<span class="fu">set</span>(<span class="dv">3</span>, <span class="fl">0.0</span>);</a>
+<a class="sourceLine" id="cb9-62" data-line-number="62"></a>
+<a class="sourceLine" id="cb9-63" data-line-number="63">           <span class="fu">cblas_dgemv</span>(Layout, transa, m, n, alpha, a.<span class="fu">elementPointer</span>(), lda, x.<span class="fu">elementPointer</span>(), incx, beta,</a>
+<a class="sourceLine" id="cb9-64" data-line-number="64">                   y.<span class="fu">elementPointer</span>(), incy);</a>
+<a class="sourceLine" id="cb9-65" data-line-number="65">           <span class="co">/* Print y */</span></a>
+<a class="sourceLine" id="cb9-66" data-line-number="66">           <span class="kw">for</span> (i = <span class="dv">0</span>; i &lt; n; i++)</a>
+<a class="sourceLine" id="cb9-67" data-line-number="67">               <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">print</span>(<span class="bu">String</span><span class="fu">.format</span>(<span class="st">&quot; y</span><span class="sc">%d</span><span class="st"> = </span><span class="sc">%f\n</span><span class="st">&quot;</span>, i, y.<span class="fu">get</span>(i)));</a>
+<a class="sourceLine" id="cb9-68" data-line-number="68">       }</a>
+<a class="sourceLine" id="cb9-69" data-line-number="69">   }</a>
+<a class="sourceLine" id="cb9-70" data-line-number="70">}</a></code></pre></div>
+<h3 id="compiling-and-running-the-above-cblas-samples">Compiling and running the above cblas samples</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb10-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb10-2" data-line-number="2"><span class="ex">javac</span> -cp cblas.jar TestBlas.java</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb10-4" data-line-number="4"><span class="ex">java</span> -cp cblas.jar:. TestBlas</a></code></pre></div>
+<h2 id="using-lapack-library-ubuntu">Using LAPACK library (Ubuntu)</h2>
+<p>On Ubuntu, the same steps used to install the blas (via atlas) library also install headers and libraries for the LAPACK library, a linear algebra computation library built on top of blas.</p>
+<h3 id="jextracting-clapack.h-ubuntu-16.04">jextracting clapack.h (Ubuntu 16.04)</h3>
+<p>The following command can be used to extract the LAPACK header:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb11-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2"><span class="ex">jextract</span> -L /usr/lib/atlas-base/atlas -I /usr/include/atlas/ \</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">   -l lapack -t lapack -infer-rpath /usr/include/atlas/clapack.h -o clapack.jar</a></code></pre></div>
+<h3 id="java-sample-code-that-uses-lapack-library">Java sample code that uses LAPACK library</h3>
+<div class="sourceCode" id="cb12"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
+<a class="sourceLine" id="cb12-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
+<a class="sourceLine" id="cb12-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
+<a class="sourceLine" id="cb12-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb12-5" data-line-number="5"><span class="kw">import static</span><span class="im"> lapack.clapack_h.*;</span></a>
+<a class="sourceLine" id="cb12-6" data-line-number="6"><span class="kw">import static</span><span class="im"> lapack.cblas_h.*;</span></a>
+<a class="sourceLine" id="cb12-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb12-8" data-line-number="8"><span class="kw">public</span> <span class="kw">class</span> TestLapack {</a>
+<a class="sourceLine" id="cb12-9" data-line-number="9">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb12-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb12-11" data-line-number="11">        <span class="co">/* Locals */</span></a>
+<a class="sourceLine" id="cb12-12" data-line-number="12">        <span class="kw">try</span> (Scope sc = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb12-13" data-line-number="13">            <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; A = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, <span class="kw">new</span> <span class="dt">double</span>[]{</a>
+<a class="sourceLine" id="cb12-14" data-line-number="14">                    <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">3</span></a>
+<a class="sourceLine" id="cb12-15" data-line-number="15">            });</a>
+<a class="sourceLine" id="cb12-16" data-line-number="16">            <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; b = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, <span class="kw">new</span> <span class="dt">double</span>[]{</a>
+<a class="sourceLine" id="cb12-17" data-line-number="17">                    <span class="dv">-10</span>, <span class="dv">12</span>, <span class="dv">14</span>, <span class="dv">16</span>, <span class="dv">18</span>, <span class="dv">-3</span>, <span class="dv">14</span>, <span class="dv">12</span>, <span class="dv">16</span>, <span class="dv">16</span></a>
+<a class="sourceLine" id="cb12-18" data-line-number="18">            });</a>
+<a class="sourceLine" id="cb12-19" data-line-number="19">            <span class="dt">int</span> info, m, n, lda, ldb, nrhs;</a>
+<a class="sourceLine" id="cb12-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb12-21" data-line-number="21">            <span class="co">/* Initialization */</span></a>
+<a class="sourceLine" id="cb12-22" data-line-number="22">            m = <span class="dv">5</span>;</a>
+<a class="sourceLine" id="cb12-23" data-line-number="23">            n = <span class="dv">3</span>;</a>
+<a class="sourceLine" id="cb12-24" data-line-number="24">            nrhs = <span class="dv">2</span>;</a>
+<a class="sourceLine" id="cb12-25" data-line-number="25">            lda = <span class="dv">5</span>;</a>
+<a class="sourceLine" id="cb12-26" data-line-number="26">            ldb = <span class="dv">5</span>;</a>
+<a class="sourceLine" id="cb12-27" data-line-number="27"></a>
+<a class="sourceLine" id="cb12-28" data-line-number="28">            <span class="co">/* Print Entry Matrix */</span></a>
+<a class="sourceLine" id="cb12-29" data-line-number="29">            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Entry Matrix A&quot;</span>, m, n, A, lda );</a>
+<a class="sourceLine" id="cb12-30" data-line-number="30">            <span class="co">/* Print Right Rand Side */</span></a>
+<a class="sourceLine" id="cb12-31" data-line-number="31">            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Right Hand Side b&quot;</span>, n, nrhs, b, ldb );</a>
+<a class="sourceLine" id="cb12-32" data-line-number="32">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</a>
+<a class="sourceLine" id="cb12-33" data-line-number="33"></a>
+<a class="sourceLine" id="cb12-34" data-line-number="34">            <span class="co">/* Executable statements */</span></a>
+<a class="sourceLine" id="cb12-35" data-line-number="35">            <span class="co">//            printf( &quot;LAPACKE_dgels (col-major, high-level) Example Program Results\n&quot; );</span></a>
+<a class="sourceLine" id="cb12-36" data-line-number="36">            <span class="co">/* Solve least squares problem*/</span></a>
+<a class="sourceLine" id="cb12-37" data-line-number="37">            info = <span class="fu">clapack_dgels</span>(CblasColMajor, CblasNoTrans, m, n, nrhs, A.<span class="fu">elementPointer</span>(), lda, b.<span class="fu">elementPointer</span>(), ldb);</a>
+<a class="sourceLine" id="cb12-38" data-line-number="38"></a>
+<a class="sourceLine" id="cb12-39" data-line-number="39">            <span class="co">/* Print Solution */</span></a>
+<a class="sourceLine" id="cb12-40" data-line-number="40">            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Solution&quot;</span>, n, nrhs, b, ldb );</a>
+<a class="sourceLine" id="cb12-41" data-line-number="41">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</a>
+<a class="sourceLine" id="cb12-42" data-line-number="42">            <span class="bu">System</span>.<span class="fu">exit</span>(info);</a>
+<a class="sourceLine" id="cb12-43" data-line-number="43">        }</a>
+<a class="sourceLine" id="cb12-44" data-line-number="44">    }</a>
+<a class="sourceLine" id="cb12-45" data-line-number="45"></a>
+<a class="sourceLine" id="cb12-46" data-line-number="46">    <span class="dt">static</span> <span class="dt">void</span> <span class="fu">print_matrix_colmajor</span>(<span class="bu">String</span> msg, <span class="dt">int</span> m, <span class="dt">int</span> n, <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; mat, <span class="dt">int</span> ldm) {</a>
+<a class="sourceLine" id="cb12-47" data-line-number="47">        <span class="dt">int</span> i, j;</a>
+<a class="sourceLine" id="cb12-48" data-line-number="48">        <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, msg);</a>
+<a class="sourceLine" id="cb12-49" data-line-number="49"></a>
+<a class="sourceLine" id="cb12-50" data-line-number="50">        <span class="kw">for</span>( i = <span class="dv">0</span>; i &lt; m; i++ ) {</a>
+<a class="sourceLine" id="cb12-51" data-line-number="51">            <span class="kw">for</span>( j = <span class="dv">0</span>; j &lt; n; j++ ) <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot; </span><span class="sc">%6.2f</span><span class="st">&quot;</span>, mat.<span class="fu">get</span>(i+j*ldm));</a>
+<a class="sourceLine" id="cb12-52" data-line-number="52">            <span class="bu">System</span>.<span class="fu">out.printf</span>( <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span> );</a>
+<a class="sourceLine" id="cb12-53" data-line-number="53">        }</a>
+<a class="sourceLine" id="cb12-54" data-line-number="54">    }</a>
+<a class="sourceLine" id="cb12-55" data-line-number="55">}</a></code></pre></div>
+<h3 id="compiling-and-running-the-above-lapack-sample">Compiling and running the above LAPACK sample</h3>
+<div class="sourceCode" id="cb13"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb13-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb13-2" data-line-number="2"><span class="ex">javac</span> -cp clapack.jar TestLapack.java</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb13-4" data-line-number="4"><span class="ex">java</span> -cp clapack.jar:. TestLapack</a></code></pre></div>
+<h2 id="using-lapack-library-mac-os">Using LAPACK library (Mac OS)</h2>
+<p>On Mac OS, lapack is installed under /usr/local/opt/lapack directory.</p>
+<h3 id="jextracting-lapacke.h">jextracting lapacke.h</h3>
+<p>The following command can be used to extract the LAPACK header. These are too many symbols in lapacke.h and so jextract throws too many constant pool entries (IllegalArgumentException). To workaround, we include only the symbols used in the Java sample code below.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb14-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb14-2" data-line-number="2"><span class="ex">jextract</span> --include-symbols LAPACKE_dgels<span class="dt">\|</span>LAPACK_COL_MAJOR \</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">  -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \</a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">  -l lapacke -t lapack -infer-rpath /usr/local/opt/lapack/include/lapacke.h -o clapack.jar</a></code></pre></div>
+<h3 id="java-sample-code-that-uses-lapack-library-1">Java sample code that uses LAPACK library</h3>
+<div class="sourceCode" id="cb15"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb15-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
+<a class="sourceLine" id="cb15-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
+<a class="sourceLine" id="cb15-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
+<a class="sourceLine" id="cb15-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb15-6" data-line-number="6"><span class="kw">import static</span><span class="im"> lapack.lapacke_h.*;</span></a>
+<a class="sourceLine" id="cb15-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb15-8" data-line-number="8"><span class="kw">public</span> <span class="kw">class</span> TestLapack {</a>
+<a class="sourceLine" id="cb15-9" data-line-number="9">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb15-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb15-11" data-line-number="11">        <span class="co">/* Locals */</span></a>
+<a class="sourceLine" id="cb15-12" data-line-number="12">        <span class="kw">try</span> (Scope sc = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb15-13" data-line-number="13">            <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; A = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, <span class="kw">new</span> <span class="dt">double</span>[]{</a>
+<a class="sourceLine" id="cb15-14" data-line-number="14">                    <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">4</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">3</span></a>
+<a class="sourceLine" id="cb15-15" data-line-number="15">            });</a>
+<a class="sourceLine" id="cb15-16" data-line-number="16">            <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; b = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">DOUBLE</span>, <span class="kw">new</span> <span class="dt">double</span>[]{</a>
+<a class="sourceLine" id="cb15-17" data-line-number="17">                    <span class="dv">-10</span>, <span class="dv">12</span>, <span class="dv">14</span>, <span class="dv">16</span>, <span class="dv">18</span>, <span class="dv">-3</span>, <span class="dv">14</span>, <span class="dv">12</span>, <span class="dv">16</span>, <span class="dv">16</span></a>
+<a class="sourceLine" id="cb15-18" data-line-number="18">            });</a>
+<a class="sourceLine" id="cb15-19" data-line-number="19">            <span class="dt">int</span> info, m, n, lda, ldb, nrhs;</a>
+<a class="sourceLine" id="cb15-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb15-21" data-line-number="21">            <span class="co">/* Initialization */</span></a>
+<a class="sourceLine" id="cb15-22" data-line-number="22">            m = <span class="dv">5</span>;</a>
+<a class="sourceLine" id="cb15-23" data-line-number="23">            n = <span class="dv">3</span>;</a>
+<a class="sourceLine" id="cb15-24" data-line-number="24">            nrhs = <span class="dv">2</span>;</a>
+<a class="sourceLine" id="cb15-25" data-line-number="25">            lda = <span class="dv">5</span>;</a>
+<a class="sourceLine" id="cb15-26" data-line-number="26">            ldb = <span class="dv">5</span>;</a>
+<a class="sourceLine" id="cb15-27" data-line-number="27"></a>
+<a class="sourceLine" id="cb15-28" data-line-number="28">            <span class="co">/* Print Entry Matrix */</span></a>
+<a class="sourceLine" id="cb15-29" data-line-number="29">            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Entry Matrix A&quot;</span>, m, n, A, lda );</a>
+<a class="sourceLine" id="cb15-30" data-line-number="30">            <span class="co">/* Print Right Rand Side */</span></a>
+<a class="sourceLine" id="cb15-31" data-line-number="31">            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Right Hand Side b&quot;</span>, n, nrhs, b, ldb );</a>
+<a class="sourceLine" id="cb15-32" data-line-number="32">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</a>
+<a class="sourceLine" id="cb15-33" data-line-number="33"></a>
+<a class="sourceLine" id="cb15-34" data-line-number="34">            <span class="co">/* Executable statements */</span></a>
+<a class="sourceLine" id="cb15-35" data-line-number="35">            <span class="co">//            printf( &quot;LAPACKE_dgels (col-major, high-level) Example Program Results\n&quot; );</span></a>
+<a class="sourceLine" id="cb15-36" data-line-number="36">            <span class="co">/* Solve least squares problem*/</span></a>
+<a class="sourceLine" id="cb15-37" data-line-number="37">            info = <span class="fu">LAPACKE_dgels</span>(LAPACK_COL_MAJOR, (<span class="dt">byte</span>)<span class="ch">&#39;N&#39;</span>, m, n, nrhs, A.<span class="fu">elementPointer</span>(), lda, b.<span class="fu">elementPointer</span>(), ldb);</a>
+<a class="sourceLine" id="cb15-38" data-line-number="38"></a>
+<a class="sourceLine" id="cb15-39" data-line-number="39">            <span class="co">/* Print Solution */</span></a>
+<a class="sourceLine" id="cb15-40" data-line-number="40">            <span class="fu">print_matrix_colmajor</span>(<span class="st">&quot;Solution&quot;</span>, n, nrhs, b, ldb );</a>
+<a class="sourceLine" id="cb15-41" data-line-number="41">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>();</a>
+<a class="sourceLine" id="cb15-42" data-line-number="42">            <span class="bu">System</span>.<span class="fu">exit</span>(info);</a>
+<a class="sourceLine" id="cb15-43" data-line-number="43">        }</a>
+<a class="sourceLine" id="cb15-44" data-line-number="44">    }</a>
+<a class="sourceLine" id="cb15-45" data-line-number="45"></a>
+<a class="sourceLine" id="cb15-46" data-line-number="46">    <span class="dt">static</span> <span class="dt">void</span> <span class="fu">print_matrix_colmajor</span>(<span class="bu">String</span> msg, <span class="dt">int</span> m, <span class="dt">int</span> n, <span class="bu">Array</span>&lt;<span class="bu">Double</span>&gt; mat, <span class="dt">int</span> ldm) {</a>
+<a class="sourceLine" id="cb15-47" data-line-number="47">        <span class="dt">int</span> i, j;</a>
+<a class="sourceLine" id="cb15-48" data-line-number="48">        <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, msg);</a>
+<a class="sourceLine" id="cb15-49" data-line-number="49"></a>
+<a class="sourceLine" id="cb15-50" data-line-number="50">        <span class="kw">for</span>( i = <span class="dv">0</span>; i &lt; m; i++ ) {</a>
+<a class="sourceLine" id="cb15-51" data-line-number="51">            <span class="kw">for</span>( j = <span class="dv">0</span>; j &lt; n; j++ ) <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot; </span><span class="sc">%6.2f</span><span class="st">&quot;</span>, mat.<span class="fu">get</span>(i+j*ldm));</a>
+<a class="sourceLine" id="cb15-52" data-line-number="52">            <span class="bu">System</span>.<span class="fu">out.printf</span>( <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span> );</a>
+<a class="sourceLine" id="cb15-53" data-line-number="53">        }</a>
+<a class="sourceLine" id="cb15-54" data-line-number="54">    }</a>
+<a class="sourceLine" id="cb15-55" data-line-number="55">}</a></code></pre></div>
+<h3 id="compiling-and-running-the-above-lapack-sample-1">Compiling and running the above LAPACK sample</h3>
+<div class="sourceCode" id="cb16"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb16-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb16-2" data-line-number="2"><span class="ex">javac</span> -cp clapack.jar TestLapack.java</a>
+<a class="sourceLine" id="cb16-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb16-4" data-line-number="4"><span class="ex">java</span> -cp clapack.jar:. TestLapack</a></code></pre></div>
+<h2 id="using-libproc-library-to-list-processes-from-java-mac-os">Using libproc library to list processes from Java (Mac OS)</h2>
+<h3 id="jextract-a-jar-file-for-libproc.h">jextract a jar file for libproc.h</h3>
+<p>jextract -t org.unix -lproc -rpath /usr/lib -o libproc.jar /usr/include/libproc.h</p>
+<h3 id="java-program-that-uses-libproc-to-list-processes">Java program that uses libproc to list processes</h3>
+<div class="sourceCode" id="cb17"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb17-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb17-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
+<a class="sourceLine" id="cb17-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.memory.*;</span></a>
+<a class="sourceLine" id="cb17-4" data-line-number="4"><span class="kw">import static</span><span class="im"> org.unix.libproc_h.*;</span></a>
+<a class="sourceLine" id="cb17-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb17-6" data-line-number="6"><span class="kw">public</span> <span class="kw">class</span> LibprocMain {</a>
+<a class="sourceLine" id="cb17-7" data-line-number="7">    <span class="kw">private</span> <span class="dt">static</span> <span class="dt">final</span> <span class="dt">int</span> NAME_BUF_MAX = <span class="dv">256</span>;</a>
+<a class="sourceLine" id="cb17-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb17-9" data-line-number="9">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb17-10" data-line-number="10">        <span class="co">// Scope for native allocations</span></a>
+<a class="sourceLine" id="cb17-11" data-line-number="11">        <span class="kw">try</span> (Scope s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb17-12" data-line-number="12">            <span class="co">// get the number of processes</span></a>
+<a class="sourceLine" id="cb17-13" data-line-number="13">            <span class="dt">int</span> numPids = <span class="fu">proc_listallpids</span>(Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb17-14" data-line-number="14">            <span class="co">// allocate an array</span></a>
+<a class="sourceLine" id="cb17-15" data-line-number="15">            <span class="bu">Array</span>&lt;<span class="bu">Integer</span>&gt; pids = s.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">INT32</span>, numPids);</a>
+<a class="sourceLine" id="cb17-16" data-line-number="16">            <span class="co">// list all the pids into the native array</span></a>
+<a class="sourceLine" id="cb17-17" data-line-number="17">            <span class="fu">proc_listallpids</span>(pids.<span class="fu">elementPointer</span>(), numPids);</a>
+<a class="sourceLine" id="cb17-18" data-line-number="18">            <span class="co">// convert native array to java array</span></a>
+<a class="sourceLine" id="cb17-19" data-line-number="19">            <span class="dt">int</span>[] jpids = pids.<span class="fu">toArray</span>(num -&gt; <span class="kw">new</span> <span class="dt">int</span>[num]);</a>
+<a class="sourceLine" id="cb17-20" data-line-number="20">            <span class="co">// buffer for process name</span></a>
+<a class="sourceLine" id="cb17-21" data-line-number="21">            Pointer&lt;<span class="bu">Byte</span>&gt; nameBuf = s.<span class="fu">allocate</span>(NativeTypes.<span class="fu">INT8</span>, NAME_BUF_MAX);</a>
+<a class="sourceLine" id="cb17-22" data-line-number="22">            <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; jpids.<span class="fu">length</span>; i++) {</a>
+<a class="sourceLine" id="cb17-23" data-line-number="23">                <span class="dt">int</span> pid = jpids[i];</a>
+<a class="sourceLine" id="cb17-24" data-line-number="24">                <span class="co">// get the process name</span></a>
+<a class="sourceLine" id="cb17-25" data-line-number="25">                <span class="fu">proc_name</span>(pid, nameBuf, NAME_BUF_MAX);</a>
+<a class="sourceLine" id="cb17-26" data-line-number="26">                <span class="bu">String</span> procName = Pointer.<span class="fu">toString</span>(nameBuf);</a>
+<a class="sourceLine" id="cb17-27" data-line-number="27">                <span class="co">// print pid and process name</span></a>
+<a class="sourceLine" id="cb17-28" data-line-number="28">                <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%d</span><span class="st"> </span><span class="sc">%s\n</span><span class="st">&quot;</span>, pid, procName);</a>
+<a class="sourceLine" id="cb17-29" data-line-number="29">            }</a>
+<a class="sourceLine" id="cb17-30" data-line-number="30">        }</a>
+<a class="sourceLine" id="cb17-31" data-line-number="31">    }</a>
+<a class="sourceLine" id="cb17-32" data-line-number="32">}</a></code></pre></div>
+<h3 id="running-the-java-code-that-uses-libproc">Running the Java code that uses libproc</h3>
+<div class="sourceCode" id="cb18"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb18-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb18-2" data-line-number="2"><span class="ex">javac</span> -cp libproc.jar LibprocMain.java</a>
+<a class="sourceLine" id="cb18-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb18-4" data-line-number="4"><span class="ex">java</span> -cp libproc.jar:. LibprocMain</a></code></pre></div>
+<h2 id="using-readline-library-from-java-code-mac-os">Using readline library from Java code (Mac OS)</h2>
+<h3 id="jextract-a-jar-file-for-readline.h">jextract a jar file for readline.h</h3>
+<div class="sourceCode" id="cb19"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb19-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="ex">jextract</span> -l readline -rpath /usr/local/opt/readline/lib/ \</a>
+<a class="sourceLine" id="cb19-3" data-line-number="3">    -t org.unix \</a>
+<a class="sourceLine" id="cb19-4" data-line-number="4">    /usr/include/readline/readline.h /usr/include/_stdio.h \</a>
+<a class="sourceLine" id="cb19-5" data-line-number="5">    --exclude-symbol readline_echoing_p -o readline.jar</a></code></pre></div>
+<h3 id="java-code-that-uses-readline">Java code that uses readline</h3>
+<div class="sourceCode" id="cb20"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb20-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb20-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
+<a class="sourceLine" id="cb20-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.memory.*;</span></a>
+<a class="sourceLine" id="cb20-4" data-line-number="4"><span class="kw">import static</span><span class="im"> org.unix.readline_h.*;</span></a>
+<a class="sourceLine" id="cb20-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb20-6" data-line-number="6"><span class="kw">public</span> <span class="kw">class</span> Readline {</a>
+<a class="sourceLine" id="cb20-7" data-line-number="7">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb20-8" data-line-number="8">        <span class="co">// Scope for native allocations</span></a>
+<a class="sourceLine" id="cb20-9" data-line-number="9">        <span class="kw">try</span> (Scope s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb20-10" data-line-number="10">            <span class="co">// allocate C memory initialized with Java string content</span></a>
+<a class="sourceLine" id="cb20-11" data-line-number="11">            var pstr = s.<span class="fu">allocateCString</span>(<span class="st">&quot;name? &quot;</span>);</a>
+<a class="sourceLine" id="cb20-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb20-13" data-line-number="13">            <span class="co">// call &quot;readline&quot; API</span></a>
+<a class="sourceLine" id="cb20-14" data-line-number="14">            var p = <span class="fu">readline</span>(pstr);</a>
+<a class="sourceLine" id="cb20-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb20-16" data-line-number="16">            <span class="co">// print char* as is</span></a>
+<a class="sourceLine" id="cb20-17" data-line-number="17">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(p);</a>
+<a class="sourceLine" id="cb20-18" data-line-number="18">            <span class="co">// convert char* ptr from readline as Java String &amp; print it</span></a>
+<a class="sourceLine" id="cb20-19" data-line-number="19">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(Pointer.<span class="fu">toString</span>(p));</a>
+<a class="sourceLine" id="cb20-20" data-line-number="20">        }</a>
+<a class="sourceLine" id="cb20-21" data-line-number="21">    }</a>
+<a class="sourceLine" id="cb20-22" data-line-number="22">}</a></code></pre></div>
+<h3 id="running-the-java-code-that-uses-readline">Running the java code that uses readline</h3>
+<pre><code>
+javac -cp readline.jar Readline.java
+
+java -cp readline.jar:. Readline
+</code></pre>
+<h2 id="using-unistd.h-from-java-code-linux">Using unistd.h from Java code (Linux)</h2>
+<h3 id="jextract-a-jar-file-for-unistd.h">jextract a jar file for unistd.h</h3>
+<div class="sourceCode" id="cb22"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb22-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb22-2" data-line-number="2"><span class="ex">jextract</span> /usr/include/unistd.h -t org.unix -o unistd.jar</a></code></pre></div>
+<h3 id="java-code-that-calls-getpid">Java code that calls getpid</h3>
+<div class="sourceCode" id="cb23"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb23-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb23-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
+<a class="sourceLine" id="cb23-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.lang.invoke.*;</span></a>
+<a class="sourceLine" id="cb23-4" data-line-number="4"><span class="kw">import</span><span class="im"> org.unix.unistd;</span></a>
+<a class="sourceLine" id="cb23-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb23-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb23-7" data-line-number="7"><span class="kw">public</span> <span class="kw">class</span> Getpid {</a>
+<a class="sourceLine" id="cb23-8" data-line-number="8">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb23-9" data-line-number="9">        <span class="co">// bind unistd interface</span></a>
+<a class="sourceLine" id="cb23-10" data-line-number="10">        var u = Libraries.<span class="fu">bind</span>(MethodHandles.<span class="fu">lookup</span>(), unistd.<span class="fu">class</span>);</a>
+<a class="sourceLine" id="cb23-11" data-line-number="11">        <span class="co">// call getpid from the unistd.h</span></a>
+<a class="sourceLine" id="cb23-12" data-line-number="12">        <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(u.<span class="fu">getpid</span>());</a>
+<a class="sourceLine" id="cb23-13" data-line-number="13">        <span class="co">// check process id from Java API!</span></a>
+<a class="sourceLine" id="cb23-14" data-line-number="14">        <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(ProcessHandle.<span class="fu">current</span>().<span class="fu">pid</span>());</a>
+<a class="sourceLine" id="cb23-15" data-line-number="15">    }</a>
+<a class="sourceLine" id="cb23-16" data-line-number="16">}</a></code></pre></div>
+<h3 id="running-the-java-code-that-uses-getpid">Running the Java code that uses getpid</h3>
+<div class="sourceCode" id="cb24"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb24-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb24-2" data-line-number="2"><span class="ex">javac</span> -cp unistd.jar Getpid.java</a>
+<a class="sourceLine" id="cb24-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb24-4" data-line-number="4"><span class="ex">java</span> -cp unistd.jar:. Getpid</a></code></pre></div>
+<h2 id="using-opengl-graphic-library-ubuntu-16.04">Using OpenGL graphic library (Ubuntu 16.04)</h2>
+<p>OpenGL is a popular portable graphic library: <a href="https://www.opengl.org/" class="uri">https://www.opengl.org/</a></p>
+<h3 id="installing-opengl-ubuntu-16.04">Installing OpenGL (Ubuntu 16.04)</h3>
+<p>Installing relevant OpenGL headers and libraries can be a bit tricky, as it depends on what graphic card is installed on the target platform. The following instruction assume that the standard version of OpenGL is used (e.g. mesa), rather than a proprietary one (Nvidia or AMD), although the changes to get these working are rather small.</p>
+<p>OpenGL is always coupled with a bunch of other libraries, namely GLU and glut. You can install all those libraries using <code>apt</code>, as follows:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb25-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb25-2" data-line-number="2"><span class="fu">sudo</span> apt-get install libgl1-mesa-dev libglu1-mesa-dev freeglut3-dev</a></code></pre></div>
+<p>If the installation was successful, OpenGL headers can be found under <code>/usr/include/GL</code>, while libraries can be found in the folder <code>/usr/lib/x86_64-linux-gnu/</code>.</p>
+<h3 id="jextracting-opengl-ubuntu-16.04">jextracting OpenGL (Ubuntu 16.04)</h3>
+<p>To extract the opengl libraries the following command suffices:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb26-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb26-2" data-line-number="2"><span class="ex">jextract</span> -L /usr/lib/x86_64-linux-gnu  -l glut -l GLU -l GL --infer-rpath -t opengl -o opengl.jar /usr/include/GL/glut.h</a></code></pre></div>
+<p>Since glut depends on the other libraries (GLU and GL), it is not necessary to give additional headers to jextract.</p>
+<h3 id="java-sample-code-that-uses-the-opengl-library">Java sample code that uses the OpenGL library</h3>
+<div class="sourceCode" id="cb27"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="kw">import</span><span class="im"> java.foreign.Libraries;</span></a>
+<a class="sourceLine" id="cb27-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
+<a class="sourceLine" id="cb27-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
+<a class="sourceLine" id="cb27-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
+<a class="sourceLine" id="cb27-5" data-line-number="5"><span class="kw">import</span><span class="im"> java.foreign.memory.Pointer;</span></a>
+<a class="sourceLine" id="cb27-6" data-line-number="6"><span class="kw">import</span><span class="im"> java.lang.invoke.MethodHandles;</span></a>
+<a class="sourceLine" id="cb27-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb27-8" data-line-number="8"><span class="kw">import</span><span class="im"> opengl.*;</span></a>
+<a class="sourceLine" id="cb27-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb27-10" data-line-number="10"><span class="kw">import</span><span class="im"> javax.imageio.ImageIO;</span></a>
+<a class="sourceLine" id="cb27-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb27-12" data-line-number="12"><span class="kw">public</span> <span class="kw">class</span> Teapot {</a>
+<a class="sourceLine" id="cb27-13" data-line-number="13">    <span class="dt">static</span> gl gl = Libraries.<span class="fu">bind</span>(MethodHandles.<span class="fu">lookup</span>(), gl.<span class="fu">class</span>);</a>
+<a class="sourceLine" id="cb27-14" data-line-number="14">    <span class="dt">static</span> freeglut_std glut = Libraries.<span class="fu">bind</span>(MethodHandles.<span class="fu">lookup</span>(), freeglut_std.<span class="fu">class</span>);</a>
+<a class="sourceLine" id="cb27-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb27-16" data-line-number="16">    <span class="dt">float</span> rot = <span class="dv">0</span>;</a>
+<a class="sourceLine" id="cb27-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb27-18" data-line-number="18">    <span class="fu">Teapot</span>(Scope sc) {</a>
+<a class="sourceLine" id="cb27-19" data-line-number="19">        <span class="co">// Misc Parameters</span></a>
+<a class="sourceLine" id="cb27-20" data-line-number="20">        <span class="bu">Array</span>&lt;<span class="bu">Float</span>&gt; pos = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">FLOAT</span>, <span class="kw">new</span> <span class="dt">float</span>[] {<span class="fl">0.0f</span>, <span class="fl">15.0f</span>, <span class="fl">-15.0f</span>, <span class="dv">0</span>});</a>
+<a class="sourceLine" id="cb27-21" data-line-number="21">        <span class="bu">Array</span>&lt;<span class="bu">Float</span>&gt; spec = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">FLOAT</span>, <span class="kw">new</span> <span class="dt">float</span>[] {<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>});</a>
+<a class="sourceLine" id="cb27-22" data-line-number="22">        <span class="bu">Array</span>&lt;<span class="bu">Float</span>&gt; shini = sc.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">FLOAT</span>, <span class="kw">new</span> <span class="dt">float</span>[] {<span class="dv">113</span>});</a>
+<a class="sourceLine" id="cb27-23" data-line-number="23"></a>
+<a class="sourceLine" id="cb27-24" data-line-number="24">        <span class="co">// Reset Background</span></a>
+<a class="sourceLine" id="cb27-25" data-line-number="25">        gl.<span class="fu">glClearColor</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb27-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb27-27" data-line-number="27">        <span class="co">// Setup Lighting</span></a>
+<a class="sourceLine" id="cb27-28" data-line-number="28">        gl.<span class="fu">glShadeModel</span>(gl.<span class="fu">GL_SMOOTH</span>());</a>
+<a class="sourceLine" id="cb27-29" data-line-number="29">        gl.<span class="fu">glLightfv</span>(gl.<span class="fu">GL_LIGHT0</span>(), gl.<span class="fu">GL_POSITION</span>(), pos.<span class="fu">elementPointer</span>());</a>
+<a class="sourceLine" id="cb27-30" data-line-number="30">        gl.<span class="fu">glLightfv</span>(gl.<span class="fu">GL_LIGHT0</span>(), gl.<span class="fu">GL_AMBIENT</span>(), spec.<span class="fu">elementPointer</span>());</a>
+<a class="sourceLine" id="cb27-31" data-line-number="31">        gl.<span class="fu">glLightfv</span>(gl.<span class="fu">GL_LIGHT0</span>(), gl.<span class="fu">GL_DIFFUSE</span>(), spec.<span class="fu">elementPointer</span>());</a>
+<a class="sourceLine" id="cb27-32" data-line-number="32">        gl.<span class="fu">glLightfv</span>(gl.<span class="fu">GL_LIGHT0</span>(), gl.<span class="fu">GL_SPECULAR</span>(), spec.<span class="fu">elementPointer</span>());</a>
+<a class="sourceLine" id="cb27-33" data-line-number="33">        gl.<span class="fu">glMaterialfv</span>(gl.<span class="fu">GL_FRONT</span>(), gl.<span class="fu">GL_SHININESS</span>(), shini.<span class="fu">elementPointer</span>());</a>
+<a class="sourceLine" id="cb27-34" data-line-number="34">        gl.<span class="fu">glEnable</span>(gl.<span class="fu">GL_LIGHTING</span>());</a>
+<a class="sourceLine" id="cb27-35" data-line-number="35">        gl.<span class="fu">glEnable</span>(gl.<span class="fu">GL_LIGHT0</span>());</a>
+<a class="sourceLine" id="cb27-36" data-line-number="36">        gl.<span class="fu">glEnable</span>(gl.<span class="fu">GL_DEPTH_TEST</span>());</a>
+<a class="sourceLine" id="cb27-37" data-line-number="37">    }</a>
+<a class="sourceLine" id="cb27-38" data-line-number="38"></a>
+<a class="sourceLine" id="cb27-39" data-line-number="39">    <span class="dt">void</span> <span class="fu">display</span>() {</a>
+<a class="sourceLine" id="cb27-40" data-line-number="40">        gl.<span class="fu">glClear</span>(gl.<span class="fu">GL_COLOR_BUFFER_BIT</span>() | gl.<span class="fu">GL_DEPTH_BUFFER_BIT</span>());</a>
+<a class="sourceLine" id="cb27-41" data-line-number="41">        gl.<span class="fu">glPushMatrix</span>();</a>
+<a class="sourceLine" id="cb27-42" data-line-number="42">        gl.<span class="fu">glRotatef</span>(-<span class="dv">20</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb27-43" data-line-number="43">        gl.<span class="fu">glRotatef</span>(rot, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb27-44" data-line-number="44">        glut.<span class="fu">glutSolidTeapot</span>(<span class="fl">0.5</span>);</a>
+<a class="sourceLine" id="cb27-45" data-line-number="45">        gl.<span class="fu">glPopMatrix</span>();</a>
+<a class="sourceLine" id="cb27-46" data-line-number="46">        glut.<span class="fu">glutSwapBuffers</span>();</a>
+<a class="sourceLine" id="cb27-47" data-line-number="47">    }</a>
+<a class="sourceLine" id="cb27-48" data-line-number="48"></a>
+<a class="sourceLine" id="cb27-49" data-line-number="49">    <span class="dt">void</span> <span class="fu">onIdle</span>() {</a>
+<a class="sourceLine" id="cb27-50" data-line-number="50">        rot += <span class="fl">0.1</span>;</a>
+<a class="sourceLine" id="cb27-51" data-line-number="51">        glut.<span class="fu">glutPostRedisplay</span>();</a>
+<a class="sourceLine" id="cb27-52" data-line-number="52">    }</a>
+<a class="sourceLine" id="cb27-53" data-line-number="53"></a>
+<a class="sourceLine" id="cb27-54" data-line-number="54">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb27-55" data-line-number="55">        <span class="kw">try</span> (Scope sc = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb27-56" data-line-number="56">            Pointer&lt;<span class="bu">Integer</span>&gt; argc = sc.<span class="fu">allocate</span>(NativeTypes.<span class="fu">INT32</span>);</a>
+<a class="sourceLine" id="cb27-57" data-line-number="57">            argc.<span class="fu">set</span>(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb27-58" data-line-number="58">            glut.<span class="fu">glutInit</span>(argc, Pointer.<span class="fu">nullPointer</span>());</a>
+<a class="sourceLine" id="cb27-59" data-line-number="59">            glut.<span class="fu">glutInitDisplayMode</span>(glut.<span class="fu">GLUT_DOUBLE</span>() | glut.<span class="fu">GLUT_RGBA</span>() | glut.<span class="fu">GLUT_DEPTH</span>());</a>
+<a class="sourceLine" id="cb27-60" data-line-number="60">            glut.<span class="fu">glutInitWindowSize</span>(<span class="dv">900</span>, <span class="dv">900</span>);</a>
+<a class="sourceLine" id="cb27-61" data-line-number="61">            glut.<span class="fu">glutCreateWindow</span>(sc.<span class="fu">allocateCString</span>(<span class="st">&quot;Hello Panama!&quot;</span>));</a>
+<a class="sourceLine" id="cb27-62" data-line-number="62">            Teapot teapot = <span class="kw">new</span> <span class="fu">Teapot</span>(sc);</a>
+<a class="sourceLine" id="cb27-63" data-line-number="63">            glut.<span class="fu">glutDisplayFunc</span>(sc.<span class="fu">allocateCallback</span>(teapot::display));</a>
+<a class="sourceLine" id="cb27-64" data-line-number="64">            glut.<span class="fu">glutIdleFunc</span>(sc.<span class="fu">allocateCallback</span>(teapot::onIdle));</a>
+<a class="sourceLine" id="cb27-65" data-line-number="65">            glut.<span class="fu">glutMainLoop</span>();</a>
+<a class="sourceLine" id="cb27-66" data-line-number="66">        }</a>
+<a class="sourceLine" id="cb27-67" data-line-number="67">    }</a>
+<a class="sourceLine" id="cb27-68" data-line-number="68">}</a></code></pre></div>
+<h3 id="running-the-java-code-that-uses-opengl">Running the Java code that uses OpenGL</h3>
+<div class="sourceCode" id="cb28"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb28-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb28-2" data-line-number="2"><span class="ex">javac</span> -cp opengl.jar Teapot.java</a>
+<a class="sourceLine" id="cb28-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb28-4" data-line-number="4"><span class="ex">java</span> -cp opengl.jar:. Teapot</a></code></pre></div>
+<h2 id="using-tensorflow-c-api-mac-os">Using TensorFlow C API (Mac OS)</h2>
+<p>Quoted from <a href="https://www.tensorflow.org/install/lang_c" class="uri">https://www.tensorflow.org/install/lang_c</a></p>
+<p>“TensorFlow provides a C API that can be used to build bindings for other languages. The API is defined in c_api.h and designed for simplicity and uniformity rather than convenience.”</p>
+<h3 id="installing-libtensorflow">Installing libtensorflow</h3>
+<p>You can follow the setup procedure as described in the above page.</p>
+<p>Alternatively, on Mac, you can install libtensorflow using HomeBrew</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb29-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb29-2" data-line-number="2"><span class="ex">brew</span> install libtensorflow</a></code></pre></div>
+<p>Tensorflow ship the libtensorflow with an .so extension, this doesn’t work well for java on MacOS as java expect .dylib extension. To work around this, create a symbolic link.</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb30-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb30-2" data-line-number="2"><span class="fu">sudo</span> ln -s /usr/local/lib/libtensorflow.so /usr/local/lib/libtensorflow.dylib</a></code></pre></div>
+<h3 id="jextracting-libtensorflow-c_api.h">jextracting libtensorflow c_api.h</h3>
+<p>The following command can be used to extract c_api.h.</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb31-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb31-2" data-line-number="2"><span class="ex">jextract</span> -C -x -C c++  \</a>
+<a class="sourceLine" id="cb31-3" data-line-number="3">        -L /usr/local/lib -l tensorflow -infer-rpath \</a>
+<a class="sourceLine" id="cb31-4" data-line-number="4">        -o tf.jar -t org.tensorflow.panama \</a>
+<a class="sourceLine" id="cb31-5" data-line-number="5">        /usr/local/include/tensorflow/c/c_api.h</a></code></pre></div>
+<p>The caveat to extract tensorflow C API is that it declare function prototype without argument in C++ style, for example, TF_Version(), which is considered incomplete C function prototype instead of C style as in TF_Version(void). An incomplete function prototype will become vararg funciton. To avoid that, we need to pass clang ‘-x c++’ options to jextract with ‘-C -x -C c++’</p>
+<h3 id="java-sample-code-that-uses-tensorflow-library">Java sample code that uses tensorflow library</h3>
+<div class="sourceCode" id="cb32"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb32-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb32-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
+<a class="sourceLine" id="cb32-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
+<a class="sourceLine" id="cb32-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.Array;</span></a>
+<a class="sourceLine" id="cb32-5" data-line-number="5"><span class="kw">import</span><span class="im"> java.foreign.memory.LayoutType;</span></a>
+<a class="sourceLine" id="cb32-6" data-line-number="6"><span class="kw">import</span><span class="im"> java.foreign.memory.Pointer;</span></a>
+<a class="sourceLine" id="cb32-7" data-line-number="7"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_DataType;</span></a>
+<a class="sourceLine" id="cb32-8" data-line-number="8"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Graph;</span></a>
+<a class="sourceLine" id="cb32-9" data-line-number="9"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Operation;</span></a>
+<a class="sourceLine" id="cb32-10" data-line-number="10"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_OperationDescription;</span></a>
+<a class="sourceLine" id="cb32-11" data-line-number="11"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Output;</span></a>
+<a class="sourceLine" id="cb32-12" data-line-number="12"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Session;</span></a>
+<a class="sourceLine" id="cb32-13" data-line-number="13"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_SessionOptions;</span></a>
+<a class="sourceLine" id="cb32-14" data-line-number="14"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Status;</span></a>
+<a class="sourceLine" id="cb32-15" data-line-number="15"><span class="kw">import</span><span class="im"> org.tensorflow.panama.c_api.TF_Tensor;</span></a>
+<a class="sourceLine" id="cb32-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb32-17" data-line-number="17"><span class="kw">import static</span><span class="im"> org.tensorflow.panama.c_api_h.*;</span></a>
+<a class="sourceLine" id="cb32-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb32-19" data-line-number="19"><span class="kw">public</span> <span class="kw">class</span> TensorFlowExample {</a>
+<a class="sourceLine" id="cb32-20" data-line-number="20">    <span class="dt">static</span> Pointer&lt;TF_Operation&gt; <span class="fu">PlaceHolder</span>(Pointer&lt;TF_Graph&gt; graph, Pointer&lt;TF_Status&gt; status,</a>
+<a class="sourceLine" id="cb32-21" data-line-number="21">                                      <span class="at">@TF_DataType</span> <span class="dt">int</span> dtype, <span class="bu">String</span> name) {</a>
+<a class="sourceLine" id="cb32-22" data-line-number="22">        <span class="kw">try</span> (var s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb32-23" data-line-number="23">            Pointer&lt;TF_OperationDescription&gt; desc = <span class="fu">TF_NewOperation</span>(graph,</a>
+<a class="sourceLine" id="cb32-24" data-line-number="24">                    s.<span class="fu">allocateCString</span>(<span class="st">&quot;Placeholder&quot;</span>), s.<span class="fu">allocateCString</span>(name));</a>
+<a class="sourceLine" id="cb32-25" data-line-number="25">            <span class="fu">TF_SetAttrType</span>(desc, s.<span class="fu">allocateCString</span>(<span class="st">&quot;dtype&quot;</span>), TF_FLOAT);</a>
+<a class="sourceLine" id="cb32-26" data-line-number="26">            <span class="kw">return</span> <span class="fu">TF_FinishOperation</span>(desc, status);</a>
+<a class="sourceLine" id="cb32-27" data-line-number="27">        }</a>
+<a class="sourceLine" id="cb32-28" data-line-number="28">    }</a>
+<a class="sourceLine" id="cb32-29" data-line-number="29"></a>
+<a class="sourceLine" id="cb32-30" data-line-number="30">    <span class="dt">static</span> Pointer&lt;TF_Operation&gt; <span class="fu">ConstValue</span>(Pointer&lt;TF_Graph&gt; graph, Pointer&lt;TF_Status&gt; status,</a>
+<a class="sourceLine" id="cb32-31" data-line-number="31">                                Pointer&lt;TF_Tensor&gt; tensor, <span class="bu">String</span> name) {</a>
+<a class="sourceLine" id="cb32-32" data-line-number="32">        <span class="kw">try</span> (var s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb32-33" data-line-number="33">            Pointer&lt;TF_OperationDescription&gt; desc = <span class="fu">TF_NewOperation</span>(graph,</a>
+<a class="sourceLine" id="cb32-34" data-line-number="34">                    s.<span class="fu">allocateCString</span>(<span class="st">&quot;Const&quot;</span>), s.<span class="fu">allocateCString</span>(name));</a>
+<a class="sourceLine" id="cb32-35" data-line-number="35">            <span class="fu">TF_SetAttrTensor</span>(desc, s.<span class="fu">allocateCString</span>(<span class="st">&quot;value&quot;</span>), tensor, status);</a>
+<a class="sourceLine" id="cb32-36" data-line-number="36">            <span class="fu">TF_SetAttrType</span>(desc, s.<span class="fu">allocateCString</span>(<span class="st">&quot;dtype&quot;</span>), <span class="fu">TF_TensorType</span>(tensor));</a>
+<a class="sourceLine" id="cb32-37" data-line-number="37">            <span class="kw">return</span> <span class="fu">TF_FinishOperation</span>(desc, status);</a>
+<a class="sourceLine" id="cb32-38" data-line-number="38">        }</a>
+<a class="sourceLine" id="cb32-39" data-line-number="39">    }</a>
+<a class="sourceLine" id="cb32-40" data-line-number="40"></a>
+<a class="sourceLine" id="cb32-41" data-line-number="41">    <span class="dt">static</span> Pointer&lt;TF_Operation&gt; <span class="fu">Add</span>(Pointer&lt;TF_Graph&gt; graph, Pointer&lt;TF_Status&gt; status,</a>
+<a class="sourceLine" id="cb32-42" data-line-number="42">                              Pointer&lt;TF_Operation&gt; one, Pointer&lt;TF_Operation&gt; two,</a>
+<a class="sourceLine" id="cb32-43" data-line-number="43">                              <span class="bu">String</span> name) {</a>
+<a class="sourceLine" id="cb32-44" data-line-number="44">        <span class="kw">try</span> (var s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb32-45" data-line-number="45">            Pointer&lt;TF_OperationDescription&gt; desc = <span class="fu">TF_NewOperation</span>(graph,</a>
+<a class="sourceLine" id="cb32-46" data-line-number="46">                    s.<span class="fu">allocateCString</span>(<span class="st">&quot;AddN&quot;</span>), s.<span class="fu">allocateCString</span>(name));</a>
+<a class="sourceLine" id="cb32-47" data-line-number="47">            <span class="bu">Array</span>&lt;TF_Output&gt; add_inputs = s.<span class="fu">allocateArray</span>(</a>
+<a class="sourceLine" id="cb32-48" data-line-number="48">                    LayoutType.<span class="fu">ofStruct</span>(TF_Output.<span class="fu">class</span>),<span class="dv">2</span>);</a>
+<a class="sourceLine" id="cb32-49" data-line-number="49">            add_inputs.<span class="fu">get</span>(<span class="dv">0</span>).<span class="fu">oper</span>$<span class="fu">set</span>(one);</a>
+<a class="sourceLine" id="cb32-50" data-line-number="50">            add_inputs.<span class="fu">get</span>(<span class="dv">0</span>).<span class="fu">index</span>$<span class="fu">set</span>(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb32-51" data-line-number="51">            add_inputs.<span class="fu">get</span>(<span class="dv">1</span>).<span class="fu">oper</span>$<span class="fu">set</span>(two);</a>
+<a class="sourceLine" id="cb32-52" data-line-number="52">            add_inputs.<span class="fu">get</span>(<span class="dv">1</span>).<span class="fu">index</span>$<span class="fu">set</span>(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb32-53" data-line-number="53">            <span class="fu">TF_AddInputList</span>(desc, add_inputs.<span class="fu">elementPointer</span>(), <span class="dv">2</span>);</a>
+<a class="sourceLine" id="cb32-54" data-line-number="54">            <span class="kw">return</span> <span class="fu">TF_FinishOperation</span>(desc, status);</a>
+<a class="sourceLine" id="cb32-55" data-line-number="55">        }</a>
+<a class="sourceLine" id="cb32-56" data-line-number="56">    }</a>
+<a class="sourceLine" id="cb32-57" data-line-number="57"></a>
+<a class="sourceLine" id="cb32-58" data-line-number="58">    <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span><span class="kw">... </span>args) {</a>
+<a class="sourceLine" id="cb32-59" data-line-number="59">        <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;TensorFlow C library version: &quot;</span> + Pointer.<span class="fu">toString</span>(<span class="fu">TF_Version</span>()));</a>
+<a class="sourceLine" id="cb32-60" data-line-number="60"></a>
+<a class="sourceLine" id="cb32-61" data-line-number="61">        Pointer&lt;TF_Graph&gt; graph = <span class="fu">TF_NewGraph</span>();</a>
+<a class="sourceLine" id="cb32-62" data-line-number="62">        Pointer&lt;TF_SessionOptions&gt; options = <span class="fu">TF_NewSessionOptions</span>();</a>
+<a class="sourceLine" id="cb32-63" data-line-number="63">        Pointer&lt;TF_Status&gt; status = <span class="fu">TF_NewStatus</span>();</a>
+<a class="sourceLine" id="cb32-64" data-line-number="64">        Pointer&lt;TF_Session&gt; session = <span class="fu">TF_NewSession</span>(graph, options, status);</a>
+<a class="sourceLine" id="cb32-65" data-line-number="65"></a>
+<a class="sourceLine" id="cb32-66" data-line-number="66">        <span class="dt">float</span> in_val_one = <span class="fl">4.0f</span>;</a>
+<a class="sourceLine" id="cb32-67" data-line-number="67">        <span class="dt">float</span> const_two = <span class="fl">2.0f</span>;</a>
+<a class="sourceLine" id="cb32-68" data-line-number="68"></a>
+<a class="sourceLine" id="cb32-69" data-line-number="69">        Pointer&lt;TF_Tensor&gt; tensor_in = <span class="fu">TF_AllocateTensor</span>(TF_FLOAT, Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>, <span class="bu">Float</span>.<span class="fu">BYTES</span>);</a>
+<a class="sourceLine" id="cb32-70" data-line-number="70">        <span class="fu">TF_TensorData</span>(tensor_in).<span class="fu">cast</span>(NativeTypes.<span class="fu">FLOAT</span>).<span class="fu">set</span>(in_val_one);</a>
+<a class="sourceLine" id="cb32-71" data-line-number="71">        Pointer&lt;TF_Tensor&gt; tensor_const_two = <span class="fu">TF_AllocateTensor</span>(TF_FLOAT, Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>, <span class="bu">Float</span>.<span class="fu">BYTES</span>);</a>
+<a class="sourceLine" id="cb32-72" data-line-number="72">        <span class="fu">TF_TensorData</span>(tensor_const_two).<span class="fu">cast</span>(NativeTypes.<span class="fu">FLOAT</span>).<span class="fu">set</span>(const_two);</a>
+<a class="sourceLine" id="cb32-73" data-line-number="73"></a>
+<a class="sourceLine" id="cb32-74" data-line-number="74">        <span class="co">// Operations</span></a>
+<a class="sourceLine" id="cb32-75" data-line-number="75">        Pointer&lt;TF_Operation&gt; feed = <span class="fu">PlaceHolder</span>(graph, status, TF_FLOAT, <span class="st">&quot;feed&quot;</span>);</a>
+<a class="sourceLine" id="cb32-76" data-line-number="76">        Pointer&lt;TF_Operation&gt; two = <span class="fu">ConstValue</span>(graph, status, tensor_const_two, <span class="st">&quot;const&quot;</span>);</a>
+<a class="sourceLine" id="cb32-77" data-line-number="77">        Pointer&lt;TF_Operation&gt; add = <span class="fu">Add</span>(graph, status, feed, two, <span class="st">&quot;add&quot;</span>);</a>
+<a class="sourceLine" id="cb32-78" data-line-number="78"></a>
+<a class="sourceLine" id="cb32-79" data-line-number="79"></a>
+<a class="sourceLine" id="cb32-80" data-line-number="80">        <span class="kw">try</span> (var s = Scope.<span class="fu">newNativeScope</span>()) {</a>
+<a class="sourceLine" id="cb32-81" data-line-number="81">            var ltPtrTensor = LayoutType.<span class="fu">ofStruct</span>(TF_Tensor.<span class="fu">class</span>).<span class="fu">pointer</span>();</a>
+<a class="sourceLine" id="cb32-82" data-line-number="82"></a>
+<a class="sourceLine" id="cb32-83" data-line-number="83">            <span class="co">// Session Inputs</span></a>
+<a class="sourceLine" id="cb32-84" data-line-number="84">            TF_Output input_operations = s.<span class="fu">allocateStruct</span>(TF_Output.<span class="fu">class</span>);</a>
+<a class="sourceLine" id="cb32-85" data-line-number="85">            input_operations.<span class="fu">oper</span>$<span class="fu">set</span>(feed);</a>
+<a class="sourceLine" id="cb32-86" data-line-number="86">            input_operations.<span class="fu">index</span>$<span class="fu">set</span>(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb32-87" data-line-number="87">            Pointer&lt;Pointer&lt;TF_Tensor&gt;&gt; input_tensors = s.<span class="fu">allocate</span>(ltPtrTensor);</a>
+<a class="sourceLine" id="cb32-88" data-line-number="88">            input_tensors.<span class="fu">set</span>(tensor_in);</a>
+<a class="sourceLine" id="cb32-89" data-line-number="89"></a>
+<a class="sourceLine" id="cb32-90" data-line-number="90">            <span class="co">// Session Outputs</span></a>
+<a class="sourceLine" id="cb32-91" data-line-number="91">            TF_Output output_operations = s.<span class="fu">allocateStruct</span>(TF_Output.<span class="fu">class</span>);</a>
+<a class="sourceLine" id="cb32-92" data-line-number="92">            output_operations.<span class="fu">oper</span>$<span class="fu">set</span>(add);</a>
+<a class="sourceLine" id="cb32-93" data-line-number="93">            output_operations.<span class="fu">index</span>$<span class="fu">set</span>(<span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb32-94" data-line-number="94">            Pointer&lt;Pointer&lt;TF_Tensor&gt;&gt; output_tensors = s.<span class="fu">allocate</span>(ltPtrTensor);</a>
+<a class="sourceLine" id="cb32-95" data-line-number="95">            <span class="fu">TF_SessionRun</span>(session, Pointer.<span class="fu">nullPointer</span>(),</a>
+<a class="sourceLine" id="cb32-96" data-line-number="96">                <span class="co">// Inputs</span></a>
+<a class="sourceLine" id="cb32-97" data-line-number="97">                input_operations.<span class="fu">ptr</span>(), input_tensors, <span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb32-98" data-line-number="98">                <span class="co">// Outputs</span></a>
+<a class="sourceLine" id="cb32-99" data-line-number="99">                output_operations.<span class="fu">ptr</span>(), output_tensors, <span class="dv">1</span>,</a>
+<a class="sourceLine" id="cb32-100" data-line-number="100">                <span class="co">// Target operations</span></a>
+<a class="sourceLine" id="cb32-101" data-line-number="101">                Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>, Pointer.<span class="fu">nullPointer</span>(),</a>
+<a class="sourceLine" id="cb32-102" data-line-number="102">                status);</a>
+<a class="sourceLine" id="cb32-103" data-line-number="103"></a>
+<a class="sourceLine" id="cb32-104" data-line-number="104">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="bu">String</span><span class="fu">.format</span>(<span class="st">&quot;Session Run Status: </span><span class="sc">%d</span><span class="st"> - </span><span class="sc">%s</span><span class="st">&quot;</span>,</a>
+<a class="sourceLine" id="cb32-105" data-line-number="105">                    <span class="fu">TF_GetCode</span>(status), Pointer.<span class="fu">toString</span>(<span class="fu">TF_Message</span>(status))));</a>
+<a class="sourceLine" id="cb32-106" data-line-number="106">            Pointer&lt;TF_Tensor&gt; tensor_out = output_tensors.<span class="fu">get</span>();</a>
+<a class="sourceLine" id="cb32-107" data-line-number="107">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Output Tensor Type: &quot;</span> + <span class="fu">TF_TensorType</span>(tensor_out));</a>
+<a class="sourceLine" id="cb32-108" data-line-number="108">            <span class="dt">float</span> outval = <span class="fu">TF_TensorData</span>(tensor_out).<span class="fu">cast</span>(NativeTypes.<span class="fu">FLOAT</span>).<span class="fu">get</span>();</a>
+<a class="sourceLine" id="cb32-109" data-line-number="109">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Output Tensor Value: &quot;</span> + outval);</a>
+<a class="sourceLine" id="cb32-110" data-line-number="110"></a>
+<a class="sourceLine" id="cb32-111" data-line-number="111">            <span class="fu">TF_CloseSession</span>(session, status);</a>
+<a class="sourceLine" id="cb32-112" data-line-number="112">            <span class="fu">TF_DeleteSession</span>(session, status);</a>
+<a class="sourceLine" id="cb32-113" data-line-number="113"></a>
+<a class="sourceLine" id="cb32-114" data-line-number="114">            <span class="fu">TF_DeleteSessionOptions</span>(options);</a>
+<a class="sourceLine" id="cb32-115" data-line-number="115"></a>
+<a class="sourceLine" id="cb32-116" data-line-number="116">            <span class="fu">TF_DeleteGraph</span>(graph);</a>
+<a class="sourceLine" id="cb32-117" data-line-number="117"></a>
+<a class="sourceLine" id="cb32-118" data-line-number="118">            <span class="fu">TF_DeleteTensor</span>(tensor_in);</a>
+<a class="sourceLine" id="cb32-119" data-line-number="119">            <span class="fu">TF_DeleteTensor</span>(tensor_out);</a>
+<a class="sourceLine" id="cb32-120" data-line-number="120">            <span class="fu">TF_DeleteTensor</span>(tensor_const_two);</a>
+<a class="sourceLine" id="cb32-121" data-line-number="121"></a>
+<a class="sourceLine" id="cb32-122" data-line-number="122">            <span class="fu">TF_DeleteStatus</span>(status);</a>
+<a class="sourceLine" id="cb32-123" data-line-number="123">        }</a>
+<a class="sourceLine" id="cb32-124" data-line-number="124">    }</a>
+<a class="sourceLine" id="cb32-125" data-line-number="125">}</a></code></pre></div>
+<h3 id="compiling-and-running-the-above-tensorflow-sample">Compiling and running the above TensorFlow sample</h3>
+<div class="sourceCode" id="cb33"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb33-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb33-2" data-line-number="2"><span class="ex">javac</span> -cp tf.jar TensorFlowExample.java</a>
+<a class="sourceLine" id="cb33-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb33-4" data-line-number="4"><span class="ex">java</span> -cp tf.jar:. TensorFlowExample</a></code></pre></div>
+</body>
+</html>
