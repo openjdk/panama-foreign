@@ -33,7 +33,6 @@
 #include "classfile/stringTable.hpp"
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/weakHandle.inline.hpp"
@@ -66,6 +65,7 @@ template <MEMFLAGS F> BasicHashtableEntry<F>* BasicHashtable<F>::new_entry(unsig
       len = 1 << log2_intptr(len); // round down to power of 2
       assert(len >= _entry_size, "");
       _first_free_entry = NEW_C_HEAP_ARRAY2(char, len, F, CURRENT_PC);
+      _entry_blocks->append(_first_free_entry);
       _end_block = _first_free_entry + len;
     }
     entry = (BasicHashtableEntry<F>*)_first_free_entry;
@@ -87,7 +87,9 @@ template <class T, MEMFLAGS F> HashtableEntry<T, F>* Hashtable<T, F>::new_entry(
 }
 
 // Version of hashtable entry allocation that allocates in the C heap directly.
-// The allocator in blocks is preferable but doesn't have free semantics.
+// The block allocator in BasicHashtable has less fragmentation, but the memory is not freed until
+// the whole table is freed. Use allocate_new_entry() if you want to individually free the memory
+// used by each entry
 template <class T, MEMFLAGS F> HashtableEntry<T, F>* Hashtable<T, F>::allocate_new_entry(unsigned int hashValue, T obj) {
   HashtableEntry<T, F>* entry = (HashtableEntry<T, F>*) NEW_C_HEAP_ARRAY(char, this->entry_size(), F);
 
@@ -99,11 +101,7 @@ template <class T, MEMFLAGS F> HashtableEntry<T, F>* Hashtable<T, F>::allocate_n
 
 template <MEMFLAGS F> void BasicHashtable<F>::free_buckets() {
   if (NULL != _buckets) {
-    // Don't delete the buckets in the shared space.  They aren't
-    // allocated by os::malloc
-    if (!MetaspaceShared::is_in_shared_metaspace(_buckets)) {
-       FREE_C_HEAP_ARRAY(HashtableBucket, _buckets);
-    }
+    FREE_C_HEAP_ARRAY(HashtableBucket, _buckets);
     _buckets = NULL;
   }
 }
@@ -136,47 +134,6 @@ template <MEMFLAGS F> void BasicHashtable<F>::bulk_free_entries(BucketUnlinkCont
     current = old;
   }
   Atomic::add(-context->_num_removed, &_number_of_entries);
-}
-// Copy the table to the shared space.
-template <MEMFLAGS F> size_t BasicHashtable<F>::count_bytes_for_table() {
-  size_t bytes = 0;
-  bytes += sizeof(intptr_t); // len
-
-  for (int i = 0; i < _table_size; ++i) {
-    for (BasicHashtableEntry<F>** p = _buckets[i].entry_addr();
-         *p != NULL;
-         p = (*p)->next_addr()) {
-      bytes += entry_size();
-    }
-  }
-
-  return bytes;
-}
-
-// Dump the hash table entries (into CDS archive)
-template <MEMFLAGS F> void BasicHashtable<F>::copy_table(char* top, char* end) {
-  assert(is_aligned(top, sizeof(intptr_t)), "bad alignment");
-  intptr_t *plen = (intptr_t*)(top);
-  top += sizeof(*plen);
-
-  int i;
-  for (i = 0; i < _table_size; ++i) {
-    for (BasicHashtableEntry<F>** p = _buckets[i].entry_addr();
-         *p != NULL;
-         p = (*p)->next_addr()) {
-      *p = (BasicHashtableEntry<F>*)memcpy(top, (void*)*p, entry_size());
-      top += entry_size();
-    }
-  }
-  *plen = (char*)(top) - (char*)plen - sizeof(*plen);
-  assert(top == end, "count_bytes_for_table is wrong");
-  // Set the shared bit.
-
-  for (i = 0; i < _table_size; ++i) {
-    for (BasicHashtableEntry<F>* p = bucket(i); p != NULL; p = p->next()) {
-      p->set_shared();
-    }
-  }
 }
 
 // For oops and Strings the size of the literal is interesting. For other types, nobody cares.
@@ -249,6 +206,20 @@ template <MEMFLAGS F> bool BasicHashtable<F>::resize(int new_size) {
   return true;
 }
 
+template <MEMFLAGS F> bool BasicHashtable<F>::maybe_grow(int max_size, int load_factor) {
+  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
+
+  if (table_size() >= max_size) {
+    return false;
+  }
+  if (number_of_entries() / table_size() > load_factor) {
+    resize(MIN2<int>(table_size() * 2, max_size));
+    return true;
+  } else {
+    return false;
+  }
+}
+
 // Dump footprint and bucket length statistics
 //
 // Note: if you create a new subclass of Hashtable<MyNewType, F>, you will need to
@@ -295,34 +266,6 @@ template <class T, MEMFLAGS F> void Hashtable<T, F>::print_table_statistics(outp
   st->print_cr("Variance of bucket size : %9.3f", summary.variance());
   st->print_cr("Std. dev. of bucket size: %9.3f", summary.sd());
   st->print_cr("Maximum bucket size     : %9d", (int)summary.maximum());
-}
-
-
-// Dump the hash table buckets.
-
-template <MEMFLAGS F> size_t BasicHashtable<F>::count_bytes_for_buckets() {
-  size_t bytes = 0;
-  bytes += sizeof(intptr_t); // len
-  bytes += sizeof(intptr_t); // _number_of_entries
-  bytes += _table_size * sizeof(HashtableBucket<F>); // the buckets
-
-  return bytes;
-}
-
-// Dump the buckets (into CDS archive)
-template <MEMFLAGS F> void BasicHashtable<F>::copy_buckets(char* top, char* end) {
-  assert(is_aligned(top, sizeof(intptr_t)), "bad alignment");
-  intptr_t len = _table_size * sizeof(HashtableBucket<F>);
-  *(intptr_t*)(top) = len;
-  top += sizeof(intptr_t);
-
-  *(intptr_t*)(top) = _number_of_entries;
-  top += sizeof(intptr_t);
-
-  _buckets = (HashtableBucket<F>*)memcpy(top, (void*)_buckets, len);
-  top += len;
-
-  assert(top == end, "count_bytes_for_buckets is wrong");
 }
 
 #ifndef PRODUCT

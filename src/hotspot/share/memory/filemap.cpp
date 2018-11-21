@@ -209,6 +209,8 @@ void FileMapHeader::populate(FileMapInfo* mapinfo, size_t alignment) {
   _verify_local = BytecodeVerificationLocal;
   _verify_remote = BytecodeVerificationRemote;
   _has_platform_or_app_classes = ClassLoaderExt::has_platform_or_app_classes();
+  _shared_base_address = SharedBaseAddress;
+  _allow_archiving_with_java_agent = AllowArchivingWithJavaAgent;
 }
 
 void SharedClassPathEntry::init(const char* name, bool is_modules_image, TRAPS) {
@@ -285,6 +287,12 @@ bool SharedClassPathEntry::validate(bool is_class_path) {
       FileMapInfo::fail_continue("A jar file is not the one used while building"
                                  " the shared archive file: %s", name);
     }
+  }
+
+  if (PrintSharedArchiveAndExit && !ok) {
+    // If PrintSharedArchiveAndExit is enabled, don't report failure to the
+    // caller. Please see above comments for more details.
+    ok = true;
   }
   return ok;
 }
@@ -478,16 +486,17 @@ bool FileMapInfo::validate_shared_path_table() {
     if (i < module_paths_start_index) {
       if (shared_path(i)->validate()) {
         log_info(class, path)("ok");
+      } else {
+        assert(!UseSharedSpaces, "UseSharedSpaces should be disabled");
+        return false;
       }
     } else if (i >= module_paths_start_index) {
       if (shared_path(i)->validate(false /* not a class path entry */)) {
         log_info(class, path)("ok");
+      } else {
+        assert(!UseSharedSpaces, "UseSharedSpaces should be disabled");
+        return false;
       }
-    } else if (!PrintSharedArchiveAndExit) {
-      _validating_shared_path_table = false;
-      _shared_path_table = NULL;
-      _shared_path_table_size = 0;
-      return false;
     }
   }
 
@@ -533,6 +542,7 @@ bool FileMapInfo::init_from_file(int fd) {
   }
 
   _file_offset += (long)n;
+  SharedBaseAddress = _header->_shared_base_address;
   return true;
 }
 
@@ -666,7 +676,8 @@ void FileMapInfo::write_region(int region, char* base, size_t size,
 //             +-- gap
 size_t FileMapInfo::write_archive_heap_regions(GrowableArray<MemRegion> *heap_mem,
                                                GrowableArray<ArchiveHeapOopmapInfo> *oopmaps,
-                                               int first_region_id, int max_num_regions) {
+                                               int first_region_id, int max_num_regions,
+                                               bool print_log) {
   assert(max_num_regions <= 2, "Only support maximum 2 memory regions");
 
   int arr_len = heap_mem == NULL ? 0 : heap_mem->length();
@@ -687,8 +698,10 @@ size_t FileMapInfo::write_archive_heap_regions(GrowableArray<MemRegion> *heap_me
       total_size += size;
     }
 
-    log_info(cds)("Archive heap region %d " INTPTR_FORMAT " - " INTPTR_FORMAT " = " SIZE_FORMAT_W(8) " bytes",
-                  i, p2i(start), p2i(start + size), size);
+    if (print_log) {
+      log_info(cds)("Archive heap region %d " INTPTR_FORMAT " - " INTPTR_FORMAT " = " SIZE_FORMAT_W(8) " bytes",
+                    i, p2i(start), p2i(start + size), size);
+    }
     write_region(i, start, size, false, false);
     if (size > 0) {
       space_at(i)->_oopmap = oopmaps->at(arr_idx)._oopmap;
@@ -1344,6 +1357,21 @@ bool FileMapHeader::validate() {
     FileMapInfo::fail_continue("The shared archive file was created with less restrictive "
                   "verification setting than the current setting.");
     return false;
+  }
+
+  // Java agents are allowed during run time. Therefore, the following condition is not
+  // checked: (!_allow_archiving_with_java_agent && AllowArchivingWithJavaAgent)
+  // Note: _allow_archiving_with_java_agent is set in the shared archive during dump time
+  // while AllowArchivingWithJavaAgent is set during the current run.
+  if (_allow_archiving_with_java_agent && !AllowArchivingWithJavaAgent) {
+    FileMapInfo::fail_continue("The setting of the AllowArchivingWithJavaAgent is different "
+                               "from the setting in the shared archive.");
+    return false;
+  }
+
+  if (_allow_archiving_with_java_agent) {
+    warning("This archive was created with AllowArchivingWithJavaAgent. It should be used "
+            "for testing purposes only and should not be used in a production environment");
   }
 
   return true;
