@@ -46,7 +46,7 @@ class ciEnv : StackObj {
 
   friend class CompileBroker;
   friend class Dependencies;  // for get_object, during logging
-
+  friend class ciNativeEntryPoint; // FIXME
 private:
   Arena*           _arena;       // Alias for _ciEnv_arena except in init_shared_objects()
   Arena            _ciEnv_arena;

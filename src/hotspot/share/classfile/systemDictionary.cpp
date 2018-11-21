@@ -2396,7 +2396,8 @@ methodHandle SystemDictionary::find_method_handle_intrinsic(vmIntrinsics::ID iid
     spe = NULL;
     // Must create lots of stuff here, but outside of the SystemDictionary lock.
     m = Method::make_method_handle_intrinsic(iid, signature, CHECK_(empty));
-    if (!Arguments::is_interpreter_only()) {
+    if (!Arguments::is_interpreter_only() ||
+        iid == vmIntrinsics::_linkToNative) { // FIXME: make MH::linkToNative work in -Xint mode.
       // Generate a compiled form of the MH intrinsic.
       AdapterHandlerLibrary::create_native_wrapper(m);
       // Check if have the compiled code.

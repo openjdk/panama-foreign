@@ -2524,6 +2524,33 @@ Node* GraphKit::make_runtime_call(int flags,
 
 }
 
+//-----------------------------make_runtime_call-------------------------------
+Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, address call_addr) {
+  CallNode* call = new CallLeafNode(call_type, call_addr, "native_call", TypePtr::BOTTOM);
+  set_predefined_input_for_runtime_call(call);
+
+  for (uint i = 0; i < nargs; i++) {
+    Node* arg = argument(i);
+    call->init_req(i + TypeFunc::Parms, arg);
+  }
+
+  Node* c = _gvn.transform(call);
+  assert(c == call, "cannot disappear");
+
+  set_predefined_output_for_runtime_call(call);
+
+  Node* ret;
+  if (method() == NULL || method()->return_type()->basic_type() == T_VOID) {
+    ret = top();
+  } else {
+    ret = gvn().transform(new ProjNode(call, TypeFunc::Parms));
+  }
+
+  push_node(method()->return_type()->basic_type(), ret);
+
+  return call;
+}
+
 //------------------------------merge_memory-----------------------------------
 // Merge memory from one path into the current memory state.
 void GraphKit::merge_memory(Node* new_mem, Node* region, int new_path) {

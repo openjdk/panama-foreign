@@ -684,6 +684,7 @@ void CallNode::dump_spec(outputStream *st) const {
   st->print(" ");
   if (tf() != NULL)  tf()->dump_on(st);
   if (_cnt != COUNT_UNKNOWN)  st->print(" C=%f",_cnt);
+  if (_entry_point != NULL) st->print(" entry=" INTPTR_FORMAT, p2i(_entry_point));
   if (jvms() != NULL)  jvms()->dump_spec(st);
 }
 #endif
@@ -942,7 +943,7 @@ Node *CallNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         phase->C->prepend_late_inline(cg);
         set_generator(NULL);
       }
-    } else {
+    } else if (iid != vmIntrinsics::_linkToNative) {
       assert(callee->has_member_arg(), "wrong type of call?");
       if (in(TypeFunc::Parms + callee->arg_size() - 1)->Opcode() == Op_ConP) {
         phase->C->prepend_late_inline(cg);
@@ -1078,9 +1079,7 @@ void CallRuntimeNode::calling_convention( BasicType* sig_bt, VMRegPair *parm_reg
 //=============================================================================
 #ifndef PRODUCT
 void CallLeafNode::dump_spec(outputStream *st) const {
-  st->print("# ");
-  st->print("%s", _name);
-  CallNode::dump_spec(st);
+  CallRuntimeNode::dump_spec(st);
 }
 #endif
 

@@ -554,6 +554,31 @@ UNSAFE_ENTRY(jboolean, Unsafe_ShouldBeInitialized0(JNIEnv *env, jobject unsafe, 
 
   return false;
 }
+
+UNSAFE_END
+
+UNSAFE_ENTRY(jlong, Unsafe_FindNativeAddress(JNIEnv *env, jobject unsafe, jstring name)) {
+  ThreadToNativeFromVM ttnfv(thread);
+  if (name != NULL) {
+    char utfName[128];
+    uint len = env->GetStringUTFLength(name);
+    int unicode_len = env->GetStringLength(name);
+    if (len >= sizeof (utfName)) {
+      // FIXME: don't bother with memory allocation for now.
+      THROW_(vmSymbols::java_lang_NullPointerException(), 0);
+    }
+    env->GetStringUTFRegion(name, 0, unicode_len, utfName);
+
+#ifndef _WINDOWS
+    void* handle = RTLD_DEFAULT;
+#else
+    void* handle = 0; // FIXME
+#endif // _WINDOWS
+    return (jlong)os::dll_lookup(handle, utfName);
+  } else {
+    THROW_(vmSymbols::java_lang_NullPointerException(), 0);
+  }
+}
 UNSAFE_END
 
 static void getBaseAndScale(int& base, int& scale, jclass clazz, TRAPS) {
@@ -1086,6 +1111,7 @@ static JNINativeMethod jdk_internal_misc_Unsafe_methods[] = {
     {CC "defineAnonymousClass0", CC "(" DAC_Args ")" CLS, FN_PTR(Unsafe_DefineAnonymousClass0)},
 
     {CC "shouldBeInitialized0", CC "(" CLS ")Z",         FN_PTR(Unsafe_ShouldBeInitialized0)},
+    {CC "findNativeAddress",  CC "(" LANG "String;)J",   FN_PTR(Unsafe_FindNativeAddress)},
 
     {CC "loadFence",          CC "()V",                  FN_PTR(Unsafe_LoadFence)},
     {CC "storeFence",         CC "()V",                  FN_PTR(Unsafe_StoreFence)},

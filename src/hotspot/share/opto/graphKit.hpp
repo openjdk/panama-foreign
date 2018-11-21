@@ -782,6 +782,9 @@ class GraphKit : public Phase {
                           Node* parm2 = NULL, Node* parm3 = NULL,
                           Node* parm4 = NULL, Node* parm5 = NULL,
                           Node* parm6 = NULL, Node* parm7 = NULL);
+
+  Node* make_native_call(const TypeFunc* call_type, uint nargs, address call_addr);
+
   enum {  // flag values for make_runtime_call
     RC_NO_FP = 1,               // CallLeafNoFPNode
     RC_NO_IO = 2,               // do not hook IO edges

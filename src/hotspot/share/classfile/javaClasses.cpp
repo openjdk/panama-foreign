@@ -3490,6 +3490,42 @@ bool java_lang_invoke_LambdaForm::is_instance(oop obj) {
 }
 
 
+int java_lang_invoke_NativeEntryPoint::_addr_offset;
+int java_lang_invoke_NativeEntryPoint::_name_offset;
+int java_lang_invoke_NativeEntryPoint::_type_offset;
+
+#define NEP_FIELDS_DO(macro) \
+  macro(_addr_offset,  k, "addr", long_signature, false); \
+  macro(_name_offset, k, "name", string_signature, false); \
+  macro(_type_offset, k, "type", java_lang_invoke_MethodType_signature, false) \
+
+bool java_lang_invoke_NativeEntryPoint::is_instance(oop obj) {
+  return obj != NULL && is_subclass(obj->klass());
+}
+
+void java_lang_invoke_NativeEntryPoint::compute_offsets() {
+  InstanceKlass* k = SystemDictionary::NativeEntryPoint_klass();
+  NEP_FIELDS_DO(FIELD_COMPUTE_OFFSET);
+}
+
+#if INCLUDE_CDS
+void java_lang_invoke_NativeEntryPoint::serialize_offsets(SerializeClosure* f) {
+  NEP_FIELDS_DO(FIELD_SERIALIZE_OFFSET);
+}
+#endif
+
+address java_lang_invoke_NativeEntryPoint::addr(oop entry) {
+  return (address)entry->long_field(_addr_offset);
+}
+
+oop java_lang_invoke_NativeEntryPoint::name(oop entry) {
+  return entry->obj_field(_name_offset);
+}
+
+oop java_lang_invoke_NativeEntryPoint::type(oop entry) {
+  return entry->obj_field(_type_offset);
+}
+
 oop java_lang_invoke_MethodHandle::type(oop mh) {
   return mh->obj_field(_type_offset);
 }
@@ -4263,7 +4299,6 @@ void JavaClasses::serialize_offsets(SerializeClosure* soc) {
   BASIC_JAVA_CLASSES_DO(DO_SERIALIZE_OFFSETS);
 }
 #endif
-
 
 #ifndef PRODUCT
 

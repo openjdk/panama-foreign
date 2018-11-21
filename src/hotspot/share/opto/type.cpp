@@ -1940,6 +1940,19 @@ const TypeTuple *TypeTuple::make( uint cnt, const Type **fields ) {
   return (TypeTuple*)(new TypeTuple(cnt,fields))->hashcons();
 }
 
+const TypeTuple *TypeTuple::make(const TypeTuple* t, uint drop_arg) {
+  assert(drop_arg >= TypeFunc::Parms && drop_arg < t->cnt(), "sanity");
+  uint arg_cnt = t->cnt() - TypeFunc::Parms - 1;
+
+  uint pos = TypeFunc::Parms;
+  const Type **field_array = fields(arg_cnt);
+  for (uint i = TypeFunc::Parms; i < t->cnt(); i++) {
+    if (drop_arg == i)  continue;
+    field_array[i] = t->field_at(i);
+  }
+  return TypeTuple::make(TypeFunc::Parms + arg_cnt, field_array);
+}
+
 //------------------------------fields-----------------------------------------
 // Subroutine call type with space allocated for argument types
 // Memory for Control, I_O, Memory, FramePtr, and ReturnAdr is allocated implicitly
@@ -5249,6 +5262,12 @@ const TypeFunc *TypeFunc::make(ciMethod* method) {
   tf = TypeFunc::make(domain, range);
   C->set_last_tf(method, tf);  // fill cache
   return tf;
+}
+
+//------------------------------make-------------------------------------------
+const TypeFunc *TypeFunc::make(const TypeFunc* t, uint drop_arg) {
+  const TypeTuple *domain = TypeTuple::make(t->domain(), drop_arg);
+  return TypeFunc::make(domain, t->range());
 }
 
 //------------------------------meet-------------------------------------------

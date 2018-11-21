@@ -254,6 +254,7 @@
   template(linkToStatic_name,                         "linkToStatic")                             \
   template(linkToSpecial_name,                        "linkToSpecial")                            \
   template(linkToInterface_name,                      "linkToInterface")                          \
+  template(linkToNative_name,                         "linkToNative")                             \
   template(compiledLambdaForm_name,                   "<compiledLambdaForm>")  /*fake name*/      \
   template(star_name,                                 "*") /*not really a name*/                  \
   template(invoke_name,                               "invoke")                                   \
@@ -293,11 +294,13 @@
   template(java_lang_invoke_MethodType_signature,     "Ljava/lang/invoke/MethodType;")            \
   template(java_lang_invoke_ResolvedMethodName_signature, "Ljava/lang/invoke/ResolvedMethodName;")\
   template(java_lang_invoke_MemberName_signature,     "Ljava/lang/invoke/MemberName;")            \
+  template(java_lang_invoke_NativeEntryPoint_signature, "Ljava/lang/invoke/NativeEntryPoint;")    \
   template(java_lang_invoke_LambdaForm_signature,     "Ljava/lang/invoke/LambdaForm;")            \
   template(java_lang_invoke_MethodHandle_signature,   "Ljava/lang/invoke/MethodHandle;")          \
   /* internal classes known only to the JVM: */                                                   \
   template(java_lang_invoke_MemberName,               "java/lang/invoke/MemberName")              \
   template(java_lang_invoke_ResolvedMethodName,       "java/lang/invoke/ResolvedMethodName")      \
+  template(java_lang_invoke_NativeEntryPoint,         "java/lang/invoke/NativeEntryPoint")        \
   template(java_lang_invoke_MethodHandleNatives,      "java/lang/invoke/MethodHandleNatives")     \
   template(java_lang_invoke_MethodHandleNatives_CallSiteContext, "java/lang/invoke/MethodHandleNatives$CallSiteContext") \
   template(java_lang_invoke_LambdaForm,               "java/lang/invoke/LambdaForm")              \
@@ -409,6 +412,8 @@
   template(method_name,                               "method")                                   \
   template(vmindex_name,                              "vmindex")                                  \
   template(vmcount_name,                              "vmcount")                                  \
+  template(addr_name,                                 "addr")                                     \
+  template(snippet_name,                              "snippet")                                  \
   template(flags_name,                                "flags")                                    \
   template(basicType_name,                            "basicType")                                \
   template(append_name,                               "append")                                   \
@@ -1403,6 +1408,7 @@
   do_intrinsic(_linkToStatic,             java_lang_invoke_MethodHandle, linkToStatic_name,     star_name, F_SN)        \
   do_intrinsic(_linkToSpecial,            java_lang_invoke_MethodHandle, linkToSpecial_name,    star_name, F_SN)        \
   do_intrinsic(_linkToInterface,          java_lang_invoke_MethodHandle, linkToInterface_name,  star_name, F_SN)        \
+  do_intrinsic(_linkToNative,             java_lang_invoke_MethodHandle, linkToNative_name,     star_name, F_SN)        \
   /* special marker for bytecode generated for the JVM from a LambdaForm: */                                            \
   do_intrinsic(_compiledLambdaForm,       java_lang_invoke_MethodHandle, compiledLambdaForm_name, star_name, F_RN)      \
                                                                                                                         \
@@ -1546,7 +1552,7 @@ class vmIntrinsics: AllStatic {
     LAST_COMPILER_INLINE = _getAndSetReference,
     FIRST_MH_SIG_POLY    = _invokeGeneric,
     FIRST_MH_STATIC      = _linkToVirtual,
-    LAST_MH_SIG_POLY     = _linkToInterface,
+    LAST_MH_SIG_POLY     = _linkToNative,
 
     FIRST_ID = _none + 1
   };

@@ -710,6 +710,10 @@ public abstract class MethodHandle {
         return invocationType.invokers().spreadInvoker(0).invokeExact(asType(invocationType), arguments);
     }
 
+    /** TODO */
+    @HotSpotIntrinsicCandidate
+    /*non-public*/ static native @PolymorphicSignature Object linkToNative(Object... args) throws Throwable;
+
     /**
      * Performs a variable arity invocation, passing the arguments in the given list
      * to the method handle, as if via an inexact {@link #invoke invoke} from a call site

@@ -32,6 +32,9 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "prims/methodHandles.hpp"
+#include "runtime/javaCalls.hpp"
+#include "logging/log.hpp"
+#include "logging/logStream.hpp"
 #include "runtime/flags/flagSetting.hpp"
 #include "runtime/frame.inline.hpp"
 #include "utilities/preserveException.hpp"
@@ -211,6 +214,12 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
     // They are linked to Java-generated adapters via MethodHandleNatives.linkMethod.
     // They all allow an appendix argument.
     __ hlt();           // empty stubs make SG sick
+    return NULL;
+  }
+  // No need in interpreter entry for linkToNative for now.
+  // Interpreter calls compiled entry through i2c.
+  if (iid == vmIntrinsics::_linkToNative) {
+    __ hlt();
     return NULL;
   }
 

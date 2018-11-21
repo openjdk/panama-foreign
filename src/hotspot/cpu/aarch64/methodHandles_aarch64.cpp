@@ -176,6 +176,12 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
     __ hlt(0);           // empty stubs make SG sick
     return NULL;
   }
+  // No need in interpreter entry for linkToNative for now.
+  // Interpreter calls compiled entry through i2c.
+  if (iid == vmIntrinsics::_linkToNative) {
+    __ hlt();
+    return NULL;
+  }
 
   // r13: sender SP (must preserve; see prepare_to_jump_from_interpreted)
   // rmethod: Method*

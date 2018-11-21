@@ -1236,6 +1236,12 @@ static void gen_special_dispatch(MacroAssembler* masm,
   verify_oop_args(masm, method, sig_bt, regs);
   vmIntrinsics::ID iid = method->intrinsic_id();
 
+  if (iid == vmIntrinsics::_linkToNative) {
+//    generate_native_call(masm, method->size_of_parameters(), sig_bt, regs, ret_type,
+//                         /*for_compiler_entry=*/true);
+    return;
+  }
+
   // Now write the args into the outgoing interpreter space
   bool     has_receiver   = false;
   Register receiver_reg   = noreg;
@@ -1248,6 +1254,10 @@ static void gen_special_dispatch(MacroAssembler* masm,
     has_receiver = MethodHandles::ref_kind_has_receiver(ref_kind);
   } else if (iid == vmIntrinsics::_invokeBasic) {
     has_receiver = true;
+  } else if (iid == vmIntrinsics::_invokeNative) {
+    member_arg_pos = method->size_of_parameters() - 1;  // trailing MemberName argument
+    member_reg = r19;  // known to be free at this point
+    has_receiver = false;
   } else {
     fatal("unexpected intrinsic id %d", iid);
   }

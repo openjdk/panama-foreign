@@ -82,6 +82,7 @@
   f(java_lang_StackFrameInfo) \
   f(java_lang_LiveStackFrameInfo) \
   f(java_util_concurrent_locks_AbstractOwnableSynchronizer) \
+  f(java_lang_invoke_NativeEntryPoint)
   //end
 
 #define BASIC_JAVA_CLASSES_DO(f) \
@@ -1024,6 +1025,47 @@ class java_lang_invoke_LambdaForm: AllStatic {
   static int vmentry_offset_in_bytes()          { return _vmentry_offset; }
 };
 
+// Interface to java.lang.invoke.NativeEntryPoint objects
+// (These are a private interface for managing adapter code generation.)
+
+class java_lang_invoke_NativeEntryPoint: AllStatic {
+  friend class JavaClasses;
+
+ private:
+  static int _addr_offset;  // type is jlong
+  static int _name_offset;
+  static int _snippet_offset;
+  static int _type_offset;
+  static int _reg_masks_offset;
+  static int _generator_offset;
+
+  static void compute_offsets();
+
+ public:
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
+
+  // Accessors
+  static address         addr(oop entry);
+  static void        set_addr(oop entry, address addr);
+
+  static oop             name(oop entry);
+  static typeArrayOop snippet(oop entry);
+  static oop             type(oop entry);
+  static typeArrayOop reg_masks(oop entry);
+  static oop        generator(oop entry);
+
+  // Testers
+  static bool is_subclass(Klass* klass) {
+    return SystemDictionary::NativeEntryPoint_klass() != NULL &&
+      klass->is_subclass_of(SystemDictionary::NativeEntryPoint_klass());
+  }
+  static bool is_instance(oop obj);
+
+  // Accessors for code generation:
+  static int      addr_offset_in_bytes() { return      _addr_offset; }
+  static int      name_offset_in_bytes() { return      _name_offset; }
+  static int      type_offset_in_bytes() { return      _type_offset; }
+};
 
 // Interface to java.lang.invoke.MemberName objects
 // (These are a private interface for Java code to query the class hierarchy.)

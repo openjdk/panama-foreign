@@ -190,6 +190,12 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
     __ should_not_reach_here();           // empty stubs make SG sick
     return NULL;
   }
+  // No need in interpreter entry for linkToNative for now.
+  // Interpreter calls compiled entry through i2c.
+  if (iid == vmIntrinsics::_linkToNative) {
+    __ should_not_reach_here();
+    return NULL;
+  }
 
   // Rmethod: Method*
   // Rparams (SP on 32-bit ARM): pointer to parameters

@@ -68,6 +68,7 @@ protected:
   // Get the VM oop that this object holds.
   oop get_oop() const;
 
+ protected:
   void init_flags_from(oop x);
 
   // Virtual behavior of the print() method.
@@ -113,16 +114,17 @@ public:
   virtual bool is_object() const            { return true; }
 
   // What kind of ciObject is this?
-  virtual bool is_null_object()       const { return false; }
-  virtual bool is_call_site()         const { return false; }
-  virtual bool is_cpcache()           const { return false; }
-  virtual bool is_instance()                { return false; }
-  virtual bool is_member_name()       const { return false; }
-  virtual bool is_method_handle()     const { return false; }
-  virtual bool is_method_type()       const { return false; }
-  virtual bool is_array()                   { return false; }
-  virtual bool is_obj_array()               { return false; }
-  virtual bool is_type_array()              { return false; }
+  virtual bool is_null_object()          const { return false; }
+  virtual bool is_call_site()            const { return false; }
+  virtual bool is_cpcache()              const { return false; }
+  virtual bool is_instance()                   { return false; }
+  virtual bool is_member_name()          const { return false; }
+  virtual bool is_native_entry_point()   const { return false; }
+  virtual bool is_method_handle()        const { return false; }
+  virtual bool is_method_type()          const { return false; }
+  virtual bool is_array()                      { return false; }
+  virtual bool is_obj_array()                  { return false; }
+  virtual bool is_type_array()                 { return false; }
 
   // Is this a type or value which has no associated class?
   // It is true of primitive types and null objects.
@@ -155,6 +157,10 @@ public:
   ciMemberName* as_member_name() {
     assert(is_member_name(), "bad cast");
     return (ciMemberName*)this;
+  }
+  ciNativeEntryPoint* as_native_entry_point() {
+    assert(is_native_entry_point(), "bad cast");
+    return (ciNativeEntryPoint*)this;
   }
   ciMethodHandle* as_method_handle() {
     assert(is_method_handle(), "bad cast");

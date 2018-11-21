@@ -52,6 +52,7 @@
 #endif
 #ifdef COMPILER2
 #include "opto/runtime.hpp"
+#include "ci/ciMethodType.hpp"
 #endif
 #if INCLUDE_JVMCI
 #include "jvmci/jvmciJavaClasses.hpp"
@@ -60,6 +61,13 @@
 #define __ masm->
 
 const int StackAlignmentInSlots = StackAlignmentInBytes / VMRegImpl::stack_slot_size;
+
+static nmethod* generate_native_call_quick(MacroAssembler* masm,
+                                           methodHandle method,
+                                           int compile_id,
+                                           const BasicType* sig_bt,
+                                           const VMRegPair* in_regs,
+                                           BasicType ret_type);
 
 class SimpleRuntimeFrame {
 
@@ -1688,8 +1696,8 @@ class ComputeMoveOrder: public StackObj {
   GrowableArray<MoveOperation*> edges;
 
  public:
-  ComputeMoveOrder(int total_in_args, VMRegPair* in_regs, int total_c_args, VMRegPair* out_regs,
-                    BasicType* in_sig_bt, GrowableArray<int>& arg_order, VMRegPair tmp_vmreg) {
+  ComputeMoveOrder(int total_in_args, const VMRegPair* in_regs, int total_c_args, VMRegPair* out_regs,
+                   const BasicType* in_sig_bt, GrowableArray<int>& arg_order, VMRegPair tmp_vmreg) {
     // Move operations where the dest is the stack can all be
     // scheduled first since they can't interfere with the other moves.
     for (int i = total_in_args - 1, c_arg = total_c_args - 1; i >= 0; i--, c_arg--) {
@@ -1807,7 +1815,8 @@ static void verify_oop_args(MacroAssembler* masm,
 static void gen_special_dispatch(MacroAssembler* masm,
                                  const methodHandle& method,
                                  const BasicType* sig_bt,
-                                 const VMRegPair* regs) {
+                                 const VMRegPair* regs,
+                                 BasicType ret_type) {
   verify_oop_args(masm, method, sig_bt, regs);
   vmIntrinsics::ID iid = method->intrinsic_id();
 
@@ -1857,7 +1866,6 @@ static void gen_special_dispatch(MacroAssembler* masm,
       receiver_reg = r->as_Register();
     }
   }
-
   // Figure out which address we are really jumping to:
   MethodHandles::generate_method_handle_dispatch(masm, iid,
                                                  receiver_reg, member_reg, /*for_compiler_entry:*/ true);
@@ -1900,24 +1908,33 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 BasicType ret_type) {
   if (method->is_method_handle_intrinsic()) {
     vmIntrinsics::ID iid = method->intrinsic_id();
-    intptr_t start = (intptr_t)__ pc();
-    int vep_offset = ((intptr_t)__ pc()) - start;
-    gen_special_dispatch(masm,
-                         method,
-                         in_sig_bt,
-                         in_regs);
-    int frame_complete = ((intptr_t)__ pc()) - start;  // not complete, period
-    __ flush();
-    int stack_slots = SharedRuntime::out_preserve_stack_slots();  // no out slots at all, actually
-    return nmethod::new_native_nmethod(method,
-                                       compile_id,
-                                       masm->code(),
-                                       vep_offset,
-                                       frame_complete,
-                                       stack_slots / VMRegImpl::slots_per_word,
-                                       in_ByteSize(-1),
-                                       in_ByteSize(-1),
-                                       (OopMapSet*)NULL);
+
+    if (iid == vmIntrinsics::_linkToNative) {
+      // generate quick entry stub
+      return generate_native_call_quick(masm, method, compile_id, in_sig_bt, in_regs, ret_type);
+    } else {
+      intptr_t start = (intptr_t)__ pc();
+      int vep_offset = ((intptr_t)__ pc()) - start;
+
+      gen_special_dispatch(masm,
+                           method,
+                           in_sig_bt,
+                           in_regs,
+                           ret_type);
+      int frame_complete = ((intptr_t)__ pc()) - start;  // not complete, period
+      __ flush();
+      int stack_slots = SharedRuntime::out_preserve_stack_slots();  // no out slots at all, actually
+
+      return nmethod::new_native_nmethod(method,
+                                         compile_id,
+                                         masm->code(),
+                                         vep_offset,
+                                         frame_complete,
+                                         stack_slots / VMRegImpl::slots_per_word,
+                                         in_ByteSize(-1),
+                                         in_ByteSize(-1),
+                                         (OopMapSet*)NULL);
+    }
   }
   bool is_critical_native = true;
   address native_func = method->critical_native_function();
@@ -4025,3 +4042,200 @@ void OptoRuntime::generate_exception_blob() {
   _exception_blob =  ExceptionBlob::create(&buffer, oop_maps, SimpleRuntimeFrame::framesize >> 1);
 }
 #endif // COMPILER2
+
+
+
+
+//////// Panama stub generation starts here ////////
+
+//// quick (vlivanov style) stub ////
+
+static nmethod* generate_native_call_quick(MacroAssembler* masm,
+                                           methodHandle method,
+                                           int compile_id,
+                                           const BasicType* sig_bt,
+                                           const VMRegPair* in_regs,
+                                           BasicType ret_type) {
+  intptr_t start = (intptr_t)__ pc();
+  int vep_offset = ((intptr_t)__ pc()) - start;
+  int frame_complete;
+
+  // MH.linkToNative basic signature should determine the arity and argument sizes.
+  // The call is inherently unsafe - all type conversions are done before calling the stub.
+  // What this stub does is: state transition + argument shuffling (both for compiled & interpreter layouts).
+  //
+  // TODO: NativeEntryPoint should specify the following:
+  //    - Java->Native thread state transition
+  //
+  // FIXME: ugly hack to make getpid() work!
+  int arg_count = method->size_of_parameters();
+  int total_in_args = arg_count;
+  int total_c_args  = arg_count;
+
+  VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, total_c_args);
+
+  int out_arg_slots = SharedRuntime::c_calling_convention(sig_bt, out_regs, NULL, total_c_args);
+
+  int stack_slots = SharedRuntime::out_preserve_stack_slots() + out_arg_slots;
+
+  const int StackAlignmentInSlots = StackAlignmentInBytes / VMRegImpl::stack_slot_size;
+  stack_slots = align_up(stack_slots, StackAlignmentInSlots);
+
+  int stack_size = stack_slots * VMRegImpl::stack_slot_size;
+
+  // Generate a new frame for the wrapper.
+  __ enter();
+  if (stack_size > 0) {
+    __ subptr(rsp, stack_size);
+  }
+#ifdef ASSERT
+  if (VerifyMethodHandles) {
+    Label L;
+    __ mov(rax, rsp);
+    __ andptr(rax, -16); // must be 16 byte boundary (see amd64 ABI)
+    __ cmpptr(rax, rsp);
+    __ jcc(Assembler::equal, L);
+    __ stop("improperly aligned stack");
+    __ bind(L);
+  }
+#endif /* ASSERT */
+
+  GrowableArray<int> arg_order(2 * total_in_args);
+
+  VMRegPair tmp_vmreg;
+  tmp_vmreg.set2(rscratch1->as_VMReg());
+
+  // Compute a valid move order, using tmp_vmreg to break any cycles
+  ComputeMoveOrder cmo(total_in_args, in_regs, total_c_args, out_regs, sig_bt, arg_order, tmp_vmreg);
+
+  int temploc = -1;
+  Register tempreg = noreg;
+  for (int ai = 0; ai < arg_order.length(); ai += 2) {
+    int i = arg_order.at(ai);
+    int c_arg = arg_order.at(ai + 1);
+
+    VMRegPair in_reg  = in_regs[i];
+    VMRegPair out_reg = out_regs[c_arg];
+
+    if (c_arg == -1) {
+      // This arg needs to be moved to a temporary
+      __ mov(tmp_vmreg.first()->as_Register(), in_regs[i].first()->as_Register());
+      temploc = i;
+      continue;
+    } else if (i == -1) {
+      // Read from the temporary location
+      assert(temploc != -1, "must be valid");
+      i = temploc;
+      in_reg = tmp_vmreg;
+      temploc = -1;
+    }
+    switch (sig_bt[i]) {
+    case T_BOOLEAN:
+    case T_BYTE:
+    case T_SHORT:
+    case T_CHAR:
+    case T_INT:
+      move32_64(masm, in_reg, out_reg);
+      break;
+    case T_LONG:
+      long_move(masm, in_reg, out_reg);
+      break;
+    case T_FLOAT:
+      float_move(masm, in_reg, out_reg);
+      break;
+    case T_DOUBLE:
+      double_move(masm, in_reg, out_reg);
+      break;
+    case T_ARRAY:
+    case T_OBJECT:
+      move_ptr(masm, in_reg, out_reg);
+      break;
+    case T_VOID:
+      break;
+    case T_ADDRESS: // FIXME: pass addresses as T_ADDRESS?
+    case T_NARROWOOP:
+    case T_METADATA:
+    case T_NARROWKLASS:
+    case T_CONFLICT:
+      fatal("not supported: %s", type2name(sig_bt[i]));
+      break;
+    default:
+      fatal("unknown: %d", sig_bt[i]);
+      break;
+    }
+  }
+
+  Register member_reg = rbx;
+  int member_arg_pos = total_c_args - 1;
+  VMReg r = out_regs[member_arg_pos].first();
+  if (r->is_stack()) {
+    __ movptr(member_reg, Address(rsp, r->reg2stack() * VMRegImpl::stack_slot_size));
+  } else {
+    // no data motion is needed
+    member_reg = r->as_Register();
+  }
+
+  __ call(Address(member_reg, java_lang_invoke_NativeEntryPoint::addr_offset_in_bytes()));
+
+//    __ restore_cpu_control_state_after_jni();
+
+  // Unpack native results.
+  // FIXME: not used right now since all small integral primitives are erased to int.
+//    switch (ret_type) {
+//      case T_BOOLEAN: __ c2bool(rax);            break;
+//      case T_CHAR   : __ movzwl(rax, rax);       break;
+//      case T_BYTE   : __ sign_extend_byte (rax); break;
+//      case T_SHORT  : __ sign_extend_short(rax); break;
+//      case T_INT    : /* nothing to do */        break;
+//      case T_DOUBLE :
+//      case T_FLOAT  :
+//         Result is in xmm0 we'll save as needed
+//        break;
+//      case T_ARRAY  : /* nothing to do */        break;
+//      case T_OBJECT : /* nothing to do */        break;
+//      case T_VOID   : /* nothing to do */        break;
+//      case T_LONG   : /* nothing to do */        break;
+//      default       : ShouldNotReachHere();
+//    }
+
+  /* FIXME: NOT NEEDED?
+  // Reguard the stack if needed
+  Label reguard;
+  Label reguard_done;
+  __ cmpl(Address(r15_thread, JavaThread::stack_guard_state_offset()), JavaThread::stack_guard_yellow_disabled);
+  __ jcc(Assembler::equal, reguard);
+  __ bind(reguard_done);
+  */
+
+  __ leave();
+  __ ret(0);
+
+  /* FIXME: NOT NEEDED?
+  // SLOW PATH Reguard the stack if needed
+  __ bind(reguard);
+  SharedRuntime::save_native_result(masm, ret_type, stack_slots);
+  __ mov(r12, rsp); // remember sp
+  __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
+  __ andptr(rsp, -16); // align stack as required by ABI
+  __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages)));
+  __ mov(rsp, r12); // restore sp
+  __ reinit_heapbase();
+  SharedRuntime::restore_native_result(masm, ret_type, stack_slots);
+  // and continue
+  __ jmp(reguard_done);
+  */
+
+  frame_complete = ((intptr_t)__ pc()) - start;
+
+  __ flush();
+
+  return nmethod::new_native_nmethod(method,
+                                     compile_id,
+                                     masm->code(),
+                                     vep_offset,
+                                     frame_complete,
+                                     stack_slots / (VMRegImpl::stack_slot_size * VMRegImpl::slots_per_word),
+                                     in_ByteSize(-1),
+                                     in_ByteSize(-1),
+                                     (OopMapSet*)NULL);
+}
