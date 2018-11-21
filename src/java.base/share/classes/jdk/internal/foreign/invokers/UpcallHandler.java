@@ -74,8 +74,8 @@ public abstract class UpcallHandler {
         CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(function);
 
         if (fastPath == null || !fastPath.equals("none")) {
-            if (DirectSignatureShuffler.acceptUpcall(function, callingSequence)) {
-                return new DirectUpcallHandler(callingSequence, fiMethod, function, receiver);
+            if (LinkToNativeSignatureShuffler.acceptUpcall(function, callingSequence)) {
+                return new LinkToNativeUpcallHandler(callingSequence, fiMethod, function, receiver);
             } else if (fastPath != null && fastPath.equals("direct")) {
                 throw new IllegalStateException(
                         String.format("No fast path for: %s = %s",

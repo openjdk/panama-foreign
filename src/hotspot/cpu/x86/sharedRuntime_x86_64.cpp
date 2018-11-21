@@ -4056,9 +4056,10 @@ static nmethod* generate_native_call_quick(MacroAssembler* masm,
                                            const BasicType* sig_bt,
                                            const VMRegPair* in_regs,
                                            BasicType ret_type) {
+  OopMapSet *oop_maps = new OopMapSet();
+
   intptr_t start = (intptr_t)__ pc();
   int vep_offset = ((intptr_t)__ pc()) - start;
-  int frame_complete;
 
   // MH.linkToNative basic signature should determine the arity and argument sizes.
   // The call is inherently unsafe - all type conversions are done before calling the stub.
@@ -4078,16 +4079,28 @@ static nmethod* generate_native_call_quick(MacroAssembler* masm,
 
   int stack_slots = SharedRuntime::out_preserve_stack_slots() + out_arg_slots;
 
-  const int StackAlignmentInSlots = StackAlignmentInBytes / VMRegImpl::stack_slot_size;
+  int total_save_slots = 6 * VMRegImpl::slots_per_word;  // 6 arguments passed in registers
+  stack_slots += total_save_slots;
+
+  stack_slots += 6;
+
   stack_slots = align_up(stack_slots, StackAlignmentInSlots);
 
   int stack_size = stack_slots * VMRegImpl::stack_slot_size;
 
+  if (UseStackBanging) {
+    __ bang_stack_with_offset((int)JavaThread::stack_shadow_zone_size());
+  }
+
   // Generate a new frame for the wrapper.
   __ enter();
   if (stack_size > 0) {
-    __ subptr(rsp, stack_size);
+    __ subptr(rsp, stack_size - 2*wordSize);
+
   }
+  // Frame is now completed as far as size and linkage.
+  int frame_complete = ((intptr_t)__ pc()) - start;
+
 #ifdef ASSERT
   if (VerifyMethodHandles) {
     Label L;
@@ -4175,9 +4188,16 @@ static nmethod* generate_native_call_quick(MacroAssembler* masm,
     member_reg = r->as_Register();
   }
 
+  intptr_t the_pc = (intptr_t) __ pc();
+  OopMap* map = new OopMap(2 * stack_slots, 0);
+  oop_maps->add_gc_map(the_pc - start, map);
+  __ set_last_Java_frame(rsp, noreg, (address)the_pc);
+
+  __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native);
+
   __ call(Address(member_reg, java_lang_invoke_NativeEntryPoint::addr_offset_in_bytes()));
 
-//    __ restore_cpu_control_state_after_jni();
+  __ restore_cpu_control_state_after_jni();
 
   // Unpack native results.
   // FIXME: not used right now since all small integral primitives are erased to int.
@@ -4198,21 +4218,65 @@ static nmethod* generate_native_call_quick(MacroAssembler* masm,
 //      default       : ShouldNotReachHere();
 //    }
 
-  /* FIXME: NOT NEEDED?
-  // Reguard the stack if needed
+  __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native_trans);
+
+  if(os::is_MP()) {
+    // Force this write out before the read below
+    __ membar(Assembler::Membar_mask_bits(
+           Assembler::LoadLoad | Assembler::LoadStore |
+           Assembler::StoreLoad | Assembler::StoreStore));
+  }
+
+  Label after_transition;
+
+
+  { Label Continue;
+    Label slow_path;
+
+    __ safepoint_poll(slow_path, r15_thread, rscratch1);
+
+    __ cmpl(Address(r15_thread, JavaThread::suspend_flags_offset()), 0);
+    __ jcc(Assembler::equal, Continue);
+    __ bind(slow_path);
+
+    // Don't use call_VM as it will see a possible pending exception and forward it
+    // and never return here preventing us from clearing _last_native_pc down below.
+    // Also can't use call_VM_leaf either as it will check to see if rsi & rdi are
+    // preserved and correspond to the bcp/locals pointers. So we do a runtime call
+    // by hand.
+    //
+    __ vzeroupper();
+    SharedRuntime::save_native_result(masm, ret_type, stack_slots);
+    __ mov(c_rarg0, r15_thread);
+    __ mov(r12, rsp); // remember sp
+    __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
+    __ andptr(rsp, -16); // align stack as required by ABI
+    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
+    __ mov(rsp, r12); // restore sp
+    __ reinit_heapbase();
+    // Restore any method result value
+    SharedRuntime::restore_native_result(masm, ret_type, stack_slots);
+
+    __ bind(Continue);
+  }
+
+  // change thread state
+  __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_Java);
+  __ bind(after_transition);
+
   Label reguard;
   Label reguard_done;
-  __ cmpl(Address(r15_thread, JavaThread::stack_guard_state_offset()), JavaThread::stack_guard_yellow_disabled);
+  __ cmpl(Address(r15_thread, JavaThread::stack_guard_state_offset()), JavaThread::stack_guard_yellow_reserved_disabled);
   __ jcc(Assembler::equal, reguard);
   __ bind(reguard_done);
-  */
+
+  __ reset_last_Java_frame(false);
 
   __ leave();
   __ ret(0);
 
-  /* FIXME: NOT NEEDED?
-  // SLOW PATH Reguard the stack if needed
   __ bind(reguard);
+  __ vzeroupper();
   SharedRuntime::save_native_result(masm, ret_type, stack_slots);
   __ mov(r12, rsp); // remember sp
   __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
@@ -4223,9 +4287,6 @@ static nmethod* generate_native_call_quick(MacroAssembler* masm,
   SharedRuntime::restore_native_result(masm, ret_type, stack_slots);
   // and continue
   __ jmp(reguard_done);
-  */
-
-  frame_complete = ((intptr_t)__ pc()) - start;
 
   __ flush();
 
@@ -4234,8 +4295,8 @@ static nmethod* generate_native_call_quick(MacroAssembler* masm,
                                      masm->code(),
                                      vep_offset,
                                      frame_complete,
-                                     stack_slots / (VMRegImpl::stack_slot_size * VMRegImpl::slots_per_word),
+                                     stack_slots / VMRegImpl::slots_per_word,
                                      in_ByteSize(-1),
                                      in_ByteSize(-1),
-                                     (OopMapSet*)NULL);
+                                     oop_maps);
 }

@@ -38,6 +38,7 @@ import sun.invoke.util.Wrapper;
 import sun.reflect.misc.ReflectUtil;
 import sun.security.util.SecurityConstants;
 
+import java.foreign.Library;
 import java.lang.invoke.LambdaForm.BasicType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -1571,27 +1572,14 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
             return getDirectField(REF_putStatic, refc, field);
         }
 
-        /** TODO */
-        public MethodHandle findNative(Object dll, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
-            // FIXME: take dll into account during symbol lookup
-            return findNative(name, type);
+        public MethodHandle findNative(Library.Symbol symbol, MethodType type) throws IllegalAccessException {
+            return findNative(symbol.getAddress().addr(), symbol.getName(), type);
         }
 
-        public MethodHandle findNative(String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
-            long addr = findNativeAddress(name);
-            if (addr == 0) {
-                throw new NoSuchMethodException("Failed to look up " + name);
-            }
-            NativeEntryPoint nativeFunc = NativeEntryPoint.make(addr, name, type);
+        public MethodHandle findNative(long address, String name, MethodType type) {
+            NativeEntryPoint nativeFunc = NativeEntryPoint.make(address, name, type);
             MethodHandle mh = NativeMethodHandle.make(type, nativeFunc);
             return mh;
-        }
-
-        private static Unsafe UNSAFE = Unsafe.getUnsafe();
-
-        /** TODO */
-        private long findNativeAddress(String name) {
-            return UNSAFE.findNativeAddress(name);
         }
 
         /**
@@ -4992,7 +4980,7 @@ assertEquals("boojum", (String) catTrace.invokeExact("boo", "jum"));
         // Step 2: determine parameter lists.
         final List<Class<?>> commonParameterSequence = new ArrayList<>(commonPrefix);
         commonParameterSequence.addAll(commonSuffix);
-        loopChecks2(step, pred, fini, commonParameterSequence);
+        loopChecks2(step, pred,fini, commonParameterSequence);
 
         // Step 3: fill in omitted functions.
         for (int i = 0; i < nclauses; ++i) {

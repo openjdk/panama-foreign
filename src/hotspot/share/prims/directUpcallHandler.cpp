@@ -31,6 +31,11 @@ JVM_ENTRY(static jlong, DUH_AllocateSpecializedUpcallStub(JNIEnv *env, jobject _
   return (jlong)DirectUpcallHandler::generate_specialized_upcall_stub(receiver, nlongs, ndoubles, rettag);
 JVM_END
 
+JVM_ENTRY(static jlong, DUH_AllocateLinkToNativeUpcallStub(JNIEnv *env, jobject _unused, jobject rec))
+  Handle receiver(THREAD, JNIHandles::resolve(rec));
+  return (jlong)DirectUpcallHandler::generate_linkToNative_upcall_stub(receiver);
+JVM_END
+
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 #define LANG "Ljava/lang/"
@@ -39,6 +44,7 @@ JVM_END
 // These are the native methods on jdk.internal.foreign.invokers.DirectUpcallHandler.
 static JNINativeMethod DUH_methods[] = {
   {CC "allocateSpecializedUpcallStub", CC "(" UPCALL "III)J",      FN_PTR(DUH_AllocateSpecializedUpcallStub)},
+  {CC "allocateLinkToNativeUpcallStub", CC "(" UPCALL ")J",      FN_PTR(DUH_AllocateLinkToNativeUpcallStub)},
 };
 
 /**

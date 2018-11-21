@@ -971,17 +971,17 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
   case vmIntrinsics::_linkToNative:
     {
       Node* member_name = kit.argument(callee->arg_size() - 1);
-      if (member_name->Opcode() == Op_ConP) {
-        const TypeOopPtr* oop_ptr = member_name->bottom_type()->is_oopptr();
-        ciNativeEntryPoint* nep = oop_ptr->const_oop()->as_native_entry_point();
-        address addr = nep->get_entry_point();
-        if (PrintInlining)  C->print_inlining(callee, jvms->depth() - 1, jvms->bci(), "direct native call");
-        return new NativeCallGenerator(callee, nep);
-      } else {
+//      if (member_name->Opcode() == Op_ConP) {
+//        const TypeOopPtr* oop_ptr = member_name->bottom_type()->is_oopptr();
+//        ciNativeEntryPoint* nep = oop_ptr->const_oop()->as_native_entry_point();
+//        address addr = nep->get_entry_point();
+//        if (PrintInlining)  C->print_inlining(callee, jvms->depth() - 1, jvms->bci(), "direct native call");
+//        return new NativeCallGenerator(callee, nep);
+//      } else {
         const char* msg = "member_name not constant";
         if (PrintInlining)  C->print_inlining(callee, jvms->depth() - 1, jvms->bci(), msg);
         C->log_inline_failure(msg);
-      }
+//      }
     }
     break;
   default:

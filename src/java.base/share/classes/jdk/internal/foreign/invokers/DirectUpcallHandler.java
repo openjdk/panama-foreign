@@ -168,6 +168,9 @@ class DirectUpcallHandler extends UpcallHandler {
     }
     public static long invoke_J_JJ(DirectUpcallHandler handler, long arg0, long arg1) throws Throwable {
         long l = (long)handler.mh.invokeExact(arg0, arg1);
+//        if (true) {
+//            throw new UnsupportedOperationException();
+//        }
         return l;
     }
     public static long invoke_J_DDD(DirectUpcallHandler handler, double arg0, double arg1, double arg2) throws Throwable {
@@ -283,7 +286,7 @@ class DirectUpcallHandler extends UpcallHandler {
 
     static native long allocateSpecializedUpcallStub(UpcallHandler handler, int nlongs, int ndoubles, int rettag);
 
-    private static native void registerNatives();
+    static native void registerNatives();
     static {
         registerNatives();
     }

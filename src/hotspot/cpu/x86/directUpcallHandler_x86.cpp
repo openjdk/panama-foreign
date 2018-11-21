@@ -249,3 +249,95 @@ address DirectUpcallHandler::generate_specialized_upcall_stub(Handle& rec_handle
 
   return blob->code_begin();
 }
+
+address DirectUpcallHandler::generate_linkToNative_upcall_stub(Handle& rec_handle) {
+    CodeBuffer buffer("upcall_stub", 1024, 1024);
+    MacroAssembler* _masm = new MacroAssembler(&buffer);
+
+    jobject rec = JNIHandles::make_global(rec_handle);
+
+    #if 0
+      fprintf(stderr, "generate_upcall_stub(%p)\n", rec);
+    #endif
+
+      // stub code
+      __ enter();
+
+      // save pointer to JNI receiver handle into constant segment
+      Address rec_adr = __ as_Address(InternalAddress(__ address_constant((address)rec)));
+
+      //just save registers
+
+      __ subptr(rsp, sizeof(struct upcall_context));
+      __ andptr(rsp, -64);
+
+      // Save preserved registers according to calling convention
+      __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.rbx)), rbx);
+    #ifdef _LP64
+      __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r12)), r12);
+      __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r13)), r13);
+      __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r14)), r14);
+      __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r15)), r15);
+    #endif
+
+
+  // Call upcall helper , assume arguments are two longs (for now)
+
+  __ get_thread(r15_thread);
+
+
+  //shuffle (need to add receiver in front)
+
+  __ movptr(r13, c_rarg0);
+  __ movptr(r14, c_rarg1);
+
+  //this wants destination as c_rarg1 (!!)
+  __ movptr(c_rarg2, rec_adr);
+  __ resolve_jobject(c_rarg2, r15_thread, r12);
+  __ movptr(j_rarg0, c_rarg2);
+  __ movptr(j_rarg1, r13);
+  __ movptr(j_rarg2, r14);
+
+  if (!specialized_upcall_info[2][0][1].inited) {
+    specialized_upcall_init(2, 0, 1);
+  }
+  Method* meth = specialized_upcall_info[2][0][1].meth;
+
+  __ mov_metadata(rbx, meth);
+
+  __ reinit_heapbase();
+
+  __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_Java);
+  __ reset_last_Java_frame(r15_thread, true);
+  __ mov(r13, rsp);                   // set sender sp
+  __ call(Address(rbx, Method::from_compiled_offset()));
+
+  //most likely rsp is affected at this point
+  __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native);
+
+ #ifndef _LP64
+   __ addptr(rsp, 8);
+ #endif
+
+  // FIXME: More stuff stripped here
+
+  // Restore preserved registers
+#ifdef _LP64
+  __ movptr(r12, Address(rsp, offsetof(struct upcall_context, preserved.r12)));
+  __ movptr(r13, Address(rsp, offsetof(struct upcall_context, preserved.r13)));
+  __ movptr(r14, Address(rsp, offsetof(struct upcall_context, preserved.r14)));
+  __ movptr(r15, Address(rsp, offsetof(struct upcall_context, preserved.r15)));
+#endif
+  __ movptr(rbx, Address(rsp, offsetof(struct upcall_context, preserved.rbx)));
+
+  // FIXME: More stuff stripped here
+
+  __ leave();
+  __ ret(0);
+
+  _masm->flush();
+
+  BufferBlob* blob = BufferBlob::create("upcall_stub", &buffer);
+
+  return blob->code_begin();
+}

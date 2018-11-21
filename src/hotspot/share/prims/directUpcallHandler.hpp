@@ -30,6 +30,7 @@
 class DirectUpcallHandler: AllStatic {
 public:
   static address generate_specialized_upcall_stub(Handle& rec, int nlongs, int ndoubles, int rettag);
+  static address generate_linkToNative_upcall_stub(Handle& rec);
 };
 
 

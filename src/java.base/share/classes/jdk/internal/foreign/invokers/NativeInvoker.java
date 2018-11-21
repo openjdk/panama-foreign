@@ -64,8 +64,8 @@ public abstract class NativeInvoker {
         } else {
             CallingSequence callingSequence = SystemABI.getInstance().arrangeCall(function);
             if (fastPath == null || !fastPath.equals("none")) {
-                if (DirectSignatureShuffler.acceptDowncall(function, callingSequence)) {
-                    return new DirectNativeInvoker(addr, callingSequence, function, methodType, method);
+                if (LinkToNativeSignatureShuffler.acceptDowncall(function, callingSequence)) {
+                    return new LinkToNativeInvoker(addr, callingSequence, function, methodType, method);
                 } else if (fastPath != null && fastPath.equals("direct")) {
                     throw new IllegalStateException(
                             String.format("No fast path for: %s = %s", method.getName(), function));

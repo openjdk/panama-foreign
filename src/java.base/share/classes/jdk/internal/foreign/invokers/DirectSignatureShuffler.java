@@ -89,12 +89,12 @@ class DirectSignatureShuffler {
 
     private final ShuffleDirection direction;
     private final MethodType javaMethodType;
-    private MethodType erasedMethodType = MethodType.methodType(void.class);
+    protected MethodType erasedMethodType = MethodType.methodType(void.class);
     private List<UnaryOperator<MethodHandle>> adapters = new ArrayList<>();
     private List<Integer> longPerms = new ArrayList<>();
     private List<Integer> doublePerms = new ArrayList<>();
 
-    private DirectSignatureShuffler(CallingSequence callingSequence, MethodType javaMethodType,
+    protected DirectSignatureShuffler(CallingSequence callingSequence, MethodType javaMethodType,
                                     IntFunction<LayoutType<?>> layoutTypeFactory, ShuffleDirection direction) {
         checkCallingSequence(callingSequence);
         this.direction = direction;
@@ -157,7 +157,7 @@ class DirectSignatureShuffler {
         }
     }
 
-    private void processType(int sigPos, LayoutType<?> lt, List<ArgumentBinding> bindings, ShuffleDirection direction) {
+    protected void processType(int sigPos, LayoutType<?> lt, List<ArgumentBinding> bindings, ShuffleDirection direction) {
         Class<?> carrier = (Class<?>) Util.unboxIfNeeded(((LayoutTypeImpl<?>)lt).carrier());
         if (carrier.isPrimitive()) {
             if (carrier == long.class) {
@@ -208,7 +208,7 @@ class DirectSignatureShuffler {
         }
     }   
 
-    private void updateNativeMethodType(int sigPos, Class<?> carrier) {
+    protected void updateNativeMethodType(int sigPos, Class<?> carrier) {
         if (sigPos == -1) {
             erasedMethodType = erasedMethodType.changeReturnType(carrier);
         } else {
@@ -221,7 +221,7 @@ class DirectSignatureShuffler {
         }
     }
 
-    private int[] forwardPermutations() {
+    protected int[] forwardPermutations() {
         return Stream.concat(longPerms.stream(), doublePerms.stream())
                 .mapToInt(x -> x)
                 .toArray();
