@@ -22,14 +22,16 @@
  */
 package java.foreign.memory;
 
-import java.foreign.NativeTypes;
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.util.stream.Stream;
-import java.util.function.Predicate;
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedMemoryRegion;
 import jdk.internal.foreign.memory.BoundedPointer;
+
+import java.foreign.NativeTypes;
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.security.AccessControlException;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * This interface models a native pointer.
@@ -109,7 +111,23 @@ public interface Pointer<X> extends Resource {
      * @param mode the access mode
      * @return {@code true} if accessible, otherwise {@code false}
      */
-    boolean isAccessibleFor(int mode);
+    boolean isAccessibleFor(AccessMode mode);
+
+    /**
+     * Creates a new, read-only pointer with the same offset as this pointer.
+     *
+     * @return The created Pointer
+     * @throws AccessControlException If this pointer does not have read access
+     */
+    Pointer<X> asReadOnly() throws AccessControlException;
+
+    /**
+     * Creates a new, write-only pointer with the same offset as this pointer.
+     *
+     * @return The created Pointer
+     * @throws AccessControlException If this pointer does not have write access
+     */
+    Pointer<X> asWriteOnly() throws AccessControlException;
 
     /**
      * Returns the underlying memory address associated with this pointer.
@@ -202,5 +220,41 @@ public interface Pointer<X> extends Resource {
             os.write(b);
         }
         return os.toString();
+    }
+
+    /**
+     * Defines a set of memory access modes
+     */
+    enum AccessMode {
+        /**
+         * A read-only access mode
+         */
+        READ(1 << 0),
+        /**
+         * A write-only access mode
+         */
+        WRITE(1 << 1),
+        /**
+         * A read and write access mode
+         */
+        READ_WRITE(READ.value | WRITE.value);
+
+        private final int value;
+
+        AccessMode(int value) {
+            this.value = value;
+        }
+
+        /**
+         * Compare this access mode to the given access mode
+         * to see if the given access mode is available as
+         * a part of this access mode.
+         *
+         * @param mode the mode to check
+         * @return {@coder true} if the given mode is available
+         */
+        public boolean isAvailable(AccessMode mode) {
+            return (this.value & mode.value) == mode.value;
+        }
     }
 }
