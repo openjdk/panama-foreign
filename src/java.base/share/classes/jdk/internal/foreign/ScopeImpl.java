@@ -34,6 +34,7 @@ import jdk.internal.foreign.memory.CallbackImpl;
 import jdk.internal.misc.Unsafe;
 
 import java.foreign.Scope;
+import java.foreign.memory.Pointer.AccessMode;
 import java.foreign.memory.Array;
 import java.foreign.memory.Callback;
 import java.foreign.memory.LayoutType;
@@ -263,7 +264,7 @@ public abstract class ScopeImpl implements Scope {
             }
 
             long[] arr = new long[(int)nElems];
-            return BoundedMemoryRegion.of(arr, Unsafe.ARRAY_LONG_BASE_OFFSET, allocSize, BoundedMemoryRegion.MODE_RW, this);
+            return BoundedMemoryRegion.of(arr, Unsafe.ARRAY_LONG_BASE_OFFSET, allocSize, AccessMode.READ_WRITE, this);
         }
 
         @Override

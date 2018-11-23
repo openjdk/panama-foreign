@@ -23,11 +23,11 @@
 package jdk.internal.foreign;
 
 import jdk.internal.foreign.invokers.NativeInvoker;
-import jdk.internal.foreign.memory.BoundedMemoryRegion;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 
+import java.foreign.memory.Pointer.AccessMode;
 import java.foreign.Scope;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -148,7 +148,7 @@ class HeaderImplGenerator extends BinderClassGenerator {
 
         try {
             p = BoundedPointer.createNativeVoidPointer(libScope,
-                    lookup.lookup(info.symbolName).getAddress().addr(), BoundedMemoryRegion.MODE_RW).
+                    lookup.lookup(info.symbolName).getAddress().addr(), AccessMode.READ_WRITE).
                     cast(lt).limit(1);
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new IllegalStateException(e);

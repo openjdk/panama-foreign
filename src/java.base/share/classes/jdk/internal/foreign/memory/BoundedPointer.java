@@ -29,16 +29,18 @@ import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Unresolved;
+import java.foreign.memory.Pointer.AccessMode;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
+import java.security.AccessControlException;
 import java.util.Objects;
 import jdk.internal.access.SharedSecrets;
 
 public class BoundedPointer<X> implements Pointer<X> {
 
     private static final BoundedPointer<?> theNullPointer = new BoundedPointer<>(
-        LayoutTypeImpl.nullType, BoundedMemoryRegion.NOTHING, 0, 0);
+        LayoutTypeImpl.nullType, BoundedMemoryRegion.NOTHING);
 
     public static boolean isNull(long addr) {
         // FIMXE: Include the 64k?
@@ -52,24 +54,16 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     public final BoundedMemoryRegion region;
     public final long offset;
-
     public final LayoutType<X> type;
-    // @@@ Unused
-    public final int mode;
 
     public BoundedPointer(LayoutType<X> type, BoundedMemoryRegion region) {
         this(type, region, 0);
     }
 
     public BoundedPointer(LayoutType<X> type, BoundedMemoryRegion region, long offset) {
-        this(type, region, offset, BoundedMemoryRegion.MODE_RW);
-    }
-
-    public BoundedPointer(LayoutType<X> type, BoundedMemoryRegion region, long offset, int mode) {
         this.region = Objects.requireNonNull(region);
         this.offset = offset;
         this.type = Objects.requireNonNull(type);
-        this.mode = mode;
         if (! (type.layout() instanceof Unresolved)) {
             region.checkRange(offset, type.bytesSize());
         }
@@ -86,8 +80,18 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     @Override
-    public boolean isAccessibleFor(int mode) {
+    public boolean isAccessibleFor(AccessMode mode) {
         return region.isAccessibleFor(mode);
+    }
+
+    @Override
+    public Pointer<X> asReadOnly() throws AccessControlException {
+        return new BoundedPointer<>(type, region.asReadOnly(), offset);
+    }
+
+    @Override
+    public Pointer<X> asWriteOnly() throws AccessControlException {
+        return new BoundedPointer<>(type, region.asWriteOnly(), offset);
     }
 
     @Override
@@ -138,7 +142,7 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     public <Z> BoundedPointer<Z> cast(LayoutType<Z> layoutType) {
         if (isCompatible(type.layout(), layoutType.layout())) {
-            return new BoundedPointer<>(layoutType, region, offset, mode);
+            return new BoundedPointer<>(layoutType, region, offset);
         } else {
             throw new ClassCastException("Pointer to " + type.layout() +
                 " cannot be cast to pointer to " + layoutType.layout());
@@ -168,10 +172,10 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset) {
-        return createNativeVoidPointer(scope, offset, BoundedMemoryRegion.MODE_R);
+        return createNativeVoidPointer(scope, offset, AccessMode.READ);
     }
 
-    public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset, int mode) {
+    public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset, AccessMode mode) {
         return new BoundedPointer<>(NativeTypes.VOID, BoundedMemoryRegion.ofEverything(mode, scope), offset);
     }
 
@@ -214,4 +218,5 @@ public class BoundedPointer<X> implements Pointer<X> {
             return false;
         }
     }
+
 }
