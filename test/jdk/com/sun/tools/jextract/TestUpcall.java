@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.testng.Assert.*;
 
@@ -55,28 +56,56 @@ public class TestUpcall extends JextractToolRunner {
 
     final static int MAX_CODE = 20;
 
-    @Test(dataProvider = "filters")
-    public void testUpcall(String filter) throws ReflectiveOperationException {
-        Path clzPath = getOutputFilePath("libTestUpcall.jar");
-        checkSuccess(null,"-o", clzPath.toString(),
-                "--exclude-symbols", filter,
-                getInputFilePath("libTestUpcall.h").toString());
-        Class<?> headerCls = loadClass("libTestUpcall", clzPath);
-        Object lib = Libraries.bind(headerCls, Libraries.loadLibrary(MethodHandles.lookup(), "TestUpcall"));
-        for (Method m : headerCls.getDeclaredMethods()) {
-            try (Scope sc = Scope.newNativeScope()) {
+    public static class UpcallTest {
+
+        private final Class<?> headerCls;
+        private final Object lib;
+    
+        public UpcallTest(Class<?> headerCls, Object lib) {
+            this.headerCls = headerCls;
+            this.lib = lib;
+        }
+    
+        @Test(dataProvider = "getArgs")
+        public void testUpCall(String mName, @NoInjection Method m)  throws ReflectiveOperationException {
+            System.err.print("Calling " + mName + "...");
+            try(Scope scope = Scope.newNativeScope()) {
                 List<Consumer<Object>> checks = new ArrayList<>();
-                Object res = m.invoke(lib, makeArgs(sc, m, checks));
+                Object res = m.invoke(lib, makeArgs(scope, m, checks));
                 if (m.getReturnType() != void.class) {
                     checks.forEach(c -> c.accept(res));
                 }
-            } catch (Throwable t) {
-                throw new IllegalStateException(t);
             }
+            System.err.println("...done");
         }
+    
+        @DataProvider
+        public Object[][] getArgs() {
+            return Stream.of(headerCls.getDeclaredMethods())
+                    .map(m -> new Object[]{ m.getName(), m })
+                    .toArray(Object[][]::new);
+        }
+    
     }
 
-    Object[] makeArgs(Scope sc, Method m, List<Consumer<Object>> checks) throws ReflectiveOperationException {
+    @Factory
+    public Object[] getTests() throws ReflectiveOperationException {
+        List<UpcallTest> res = new ArrayList<>();
+        for (int i = 0 ; i < MAX_CODE ; i++) {
+            Path clzPath = getOutputFilePath("libTestUpcall.jar");
+            checkSuccess(null,"-o", clzPath.toString(),
+                    "--exclude-symbols", filterFor(i),
+                    getInputFilePath("libTestUpcall.h").toString());
+            Class<?> headerCls = loadClass("libTestUpcall", clzPath);
+            Object lib = Libraries.bind(headerCls, Libraries.loadLibrary(MethodHandles.lookup(), "TestUpcall"));
+            res.add(new UpcallTest(headerCls, lib));
+        }
+        if(res.isEmpty())
+            throw new RuntimeException("Could not generate any tests");
+        return res.toArray();
+    }
+
+    static Object[] makeArgs(Scope sc, Method m, List<Consumer<Object>> checks) throws ReflectiveOperationException {
         Class<?>[] params = m.getParameterTypes();
         Object[] args = new Object[params.length];
         for (int i = 0 ; i < params.length - 1 ; i++) {
@@ -87,7 +116,7 @@ public class TestUpcall extends JextractToolRunner {
     }
 
     @SuppressWarnings("unchecked")
-    Object makeArg(Scope sc, Class<?> carrier, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
+    static Object makeArg(Scope sc, Class<?> carrier, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         if (Struct.class.isAssignableFrom(carrier)) {
             Struct<?> str = sc.allocateStruct((Class)carrier);
             initStruct(sc, str, checks, check);
@@ -124,7 +153,7 @@ public class TestUpcall extends JextractToolRunner {
         }
     }
 
-    void initStruct(Scope sc, Struct<?> str, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
+    static void initStruct(Scope sc, Struct<?> str, List<Consumer<Object>> checks, boolean check) throws ReflectiveOperationException {
         Group g = (Group)str.ptr().type().layout();
         for (Layout l : g.elements()) {
             if (l instanceof Padding) continue;
@@ -150,7 +179,7 @@ public class TestUpcall extends JextractToolRunner {
     }
 
     @SuppressWarnings("unchecked")
-    Object makeCallback(Scope sc, Method m) {
+    static Object makeCallback(Scope sc, Method m) {
         ParameterizedType callbackParam = ((ParameterizedType)m.getGenericParameterTypes()[m.getParameterCount() - 1]);
         Class<?> callbackType = (Class<?>)callbackParam.getActualTypeArguments()[0];
         Object cb = sc.allocateCallback((Class)callbackType, allocateCallbackInstance(callbackType));
@@ -158,18 +187,9 @@ public class TestUpcall extends JextractToolRunner {
         //throw new UnsupportedOperationException("Hello " + callbackType);
     }
 
-    Object allocateCallbackInstance(Class<?> carrier) {
+    static Object allocateCallbackInstance(Class<?> carrier) {
         return Proxy.newProxyInstance(carrier.getClassLoader(), new Class<?>[] { carrier },
                 (proxy, method, args) -> args.length > 0 ? args[0] : null);
-    }
-
-    @DataProvider(name = "filters")
-    public static Object[][] filters() {
-        Object[][] res = new Object[MAX_CODE][];
-        for (int i = 0 ; i < MAX_CODE ; i++) {
-            res[i] = new Object[] { filterFor(i) };
-        }
-        return res;
     }
 
     static String filterFor(int k) {
