@@ -1316,7 +1316,7 @@ private:
 class ShuffleRecipeVerifier : public StackObj {
 public:
   ShuffleRecipeVerifier(ShuffleRecipe& recipe, size_t args_length, size_t rets_length)
-    : _recipe(recipe), _args_length(args_length), _rets_length(rets_length), _stream(_recipe) {
+    : _recipe(recipe), _stream(_recipe), _args_length(args_length), _rets_length(rets_length) {
   }
 
   void verify() {
