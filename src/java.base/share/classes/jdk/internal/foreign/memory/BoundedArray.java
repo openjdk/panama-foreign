@@ -58,7 +58,7 @@ public class BoundedArray<X> implements Array<X> {
 
     @Override
     public <Z> Array<Z> cast(LayoutType<Z> type, long size) {
-        BoundedPointer<Z> np = new BoundedPointer<>(type, pointer.region, pointer.offset, pointer.mode);
+        BoundedPointer<Z> np = new BoundedPointer<>(type, pointer.region, pointer.offset);
         return new BoundedArray<>(np, size);
     }
 

@@ -24,6 +24,7 @@ package jdk.internal.foreign.memory;
 
 import jdk.internal.misc.Unsafe;
 
+import java.foreign.memory.Pointer.AccessMode;
 import java.foreign.Scope;
 import java.util.Objects;
 import java.security.AccessControlException;
@@ -31,12 +32,8 @@ import java.nio.ByteBuffer;
 import jdk.internal.foreign.Util;
 
 public class BoundedMemoryRegion {
-
-    public static final int MODE_R  = (1 << 0);
-    public static final int MODE_W  = (1 << 1);
-    public static final int MODE_RW = MODE_R | MODE_W;
     
-    public static final BoundedMemoryRegion EVERYTHING = BoundedMemoryRegion.ofEverything(MODE_RW, null);
+    public static final BoundedMemoryRegion EVERYTHING = BoundedMemoryRegion.ofEverything(AccessMode.READ_WRITE, null);
     public static final BoundedMemoryRegion NOTHING = BoundedMemoryRegion.of(0, 0);
 
     private static final Unsafe U = Unsafe.getUnsafe();
@@ -46,9 +43,9 @@ public class BoundedMemoryRegion {
     private final long min;
     private final long length;
 
-    private final int mode;
+    private final AccessMode mode;
 
-    private BoundedMemoryRegion(Object base, long min, long length, int mode, Scope scope) {
+    private BoundedMemoryRegion(Object base, long min, long length, AccessMode mode, Scope scope) {
         this.base = base;
         this.min = min;
         this.length = length;
@@ -58,19 +55,19 @@ public class BoundedMemoryRegion {
 
     // # Length = everything
     public static BoundedMemoryRegion ofEverything(Scope scope) {
-        return ofEverything(MODE_RW, null);
+        return ofEverything(AccessMode.READ_WRITE, null);
     }
 
-    public static BoundedMemoryRegion ofEverything(int mode, Scope scope) {
+    public static BoundedMemoryRegion ofEverything(AccessMode mode, Scope scope) {
         return new Everything(mode, scope);
     }
 
     // # Length unknown:
     public static BoundedMemoryRegion of(long min) {
-        return BoundedMemoryRegion.of(min, MODE_RW, null);
+        return BoundedMemoryRegion.of(min, AccessMode.READ_WRITE, null);
     }
 
-    public static BoundedMemoryRegion of(long min, int mode, Scope scope) {
+    public static BoundedMemoryRegion of(long min, AccessMode mode, Scope scope) {
         // min + length may not overflow to positive, and length must be positive
         long maxLength = min < 0 && min != Long.MIN_VALUE ? -min : Long.MAX_VALUE; 
         return BoundedMemoryRegion.ofInternal(null, min, maxLength, mode, scope);
@@ -82,11 +79,11 @@ public class BoundedMemoryRegion {
     }
 
     public static BoundedMemoryRegion of(long min, long length, Scope scope) {
-        return BoundedMemoryRegion.of(null, min, length, MODE_RW, scope);
+        return BoundedMemoryRegion.of(null, min, length, AccessMode.READ_WRITE, scope);
     }
 
     public static BoundedMemoryRegion of(Object base, long min, long length) {
-        return BoundedMemoryRegion.of(base, min, length, MODE_RW, null);
+        return BoundedMemoryRegion.of(base, min, length, AccessMode.READ_WRITE, null);
     }
 
     public static BoundedMemoryRegion ofByteBuffer(ByteBuffer bb) {
@@ -95,7 +92,7 @@ public class BoundedMemoryRegion {
         long address = Util.getBufferAddress(bb);
         int pos = bb.position();
         int limit = bb.limit();
-        return new BoundedMemoryRegion(base, address + pos, limit - pos, bb.isReadOnly() ? MODE_R : MODE_RW, null) {
+        return new BoundedMemoryRegion(base, address + pos, limit - pos, bb.isReadOnly() ? AccessMode.READ : AccessMode.READ_WRITE, null) {
             // Keep a reference to the buffer so it is kept alive while the
             // region is alive
             final Object ref = bb;
@@ -117,12 +114,12 @@ public class BoundedMemoryRegion {
         };
     }    
 
-    public static BoundedMemoryRegion of(Object base, long min, long length, int mode, Scope scope) {
+    public static BoundedMemoryRegion of(Object base, long min, long length, AccessMode mode, Scope scope) {
         checkOverflow(min, length);
         return ofInternal(base, min, length, mode, scope);
     }
 
-    private static BoundedMemoryRegion ofInternal(Object base, long min, long length, int mode, Scope scope) {
+    private static BoundedMemoryRegion ofInternal(Object base, long min, long length, AccessMode mode, Scope scope) {
         if(length < 0) {
             throw new IllegalArgumentException("length must be positive");
         }
@@ -137,8 +134,24 @@ public class BoundedMemoryRegion {
         Util.addUnsignedExact(min, length == 0 ? 0 : length - 1);
     }
 
-    public boolean isAccessibleFor(int mode) {
-        return (this.mode & mode) == mode;
+    public boolean isAccessibleFor(AccessMode mode) {
+        return this.mode.isAvailable(mode);
+    }
+
+    BoundedMemoryRegion withAccess(AccessMode mode) {
+        return BoundedMemoryRegion.ofInternal(base, min, length, mode, scope);
+    }
+
+    BoundedMemoryRegion asReadOnly() throws AccessControlException {
+        if(!isAccessibleFor(AccessMode.READ))
+            throw new AccessControlException("This memory region is not read-accessible");
+        return withAccess(AccessMode.READ);
+    }
+
+    BoundedMemoryRegion asWriteOnly() throws AccessControlException {
+        if(!isAccessibleFor(AccessMode.WRITE))
+            throw new AccessControlException("This memory region is not write-accessible");
+        return withAccess(AccessMode.WRITE);
     }
 
     public long addr() throws UnsupportedOperationException {
@@ -153,8 +166,8 @@ public class BoundedMemoryRegion {
         return scope;
     }
 
-    public void checkAccess(int mode) {
-        if ((this.mode & mode) == 0) {
+    public void checkAccess(AccessMode mode) {
+        if (!isAccessibleFor(mode)) {
             throw new AccessControlException("Access denied");
         }
     }
@@ -184,13 +197,13 @@ public class BoundedMemoryRegion {
 
     private void checkRead(long offset, long length) {
         checkAlive();
-        checkAccess(MODE_R);
+        checkAccess(AccessMode.READ);
         checkRange(offset, length);
     }
 
     private void checkWrite(long offset, long length) {
         checkAlive();
-        checkAccess(MODE_W);
+        checkAccess(AccessMode.WRITE);
         checkRange(offset, length);
     }
 
@@ -330,8 +343,13 @@ public class BoundedMemoryRegion {
 
     private static class Everything extends BoundedMemoryRegion {
 
-        public Everything(int mode, Scope scope) {
+        public Everything(AccessMode mode, Scope scope) {
             super(null, 0, Long.MAX_VALUE, mode, scope);
+        }
+
+        @Override
+        BoundedMemoryRegion withAccess(AccessMode mode) {
+            return BoundedMemoryRegion.ofEverything(mode, super.scope);
         }
 
         @Override
