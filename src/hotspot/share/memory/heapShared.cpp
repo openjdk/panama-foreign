@@ -64,6 +64,10 @@ int       HeapShared::_narrow_oop_shift;
 // assigned at runtime.
 static ArchivableStaticFieldInfo closed_archive_subgraph_entry_fields[] = {
   {"java/lang/Integer$IntegerCache",           "archivedCache"},
+  {"java/lang/Long$LongCache",                 "archivedCache"},
+  {"java/lang/Byte$ByteCache",                 "archivedCache"},
+  {"java/lang/Short$ShortCache",               "archivedCache"},
+  {"java/lang/Character$CharacterCache",       "archivedCache"},
 };
 // Entry fields for subgraphs archived in the open archive heap region.
 static ArchivableStaticFieldInfo open_archive_subgraph_entry_fields[] = {
@@ -391,9 +395,7 @@ struct CopyKlassSubGraphInfoToArchive : StackObj {
       record->init(&info);
 
       unsigned int hash = primitive_hash<Klass*>(klass);
-      uintx deltax = MetaspaceShared::object_delta(record);
-      guarantee(deltax <= MAX_SHARED_DELTA, "must not be");
-      u4 delta = u4(deltax);
+      u4 delta = MetaspaceShared::object_delta_u4(record);
       _writer->add(hash, delta);
     }
     return true; // keep on iterating
@@ -417,7 +419,7 @@ void HeapShared::write_subgraph_info_table() {
   int num_buckets = CompactHashtableWriter::default_num_buckets(d_table->_count);
   CompactHashtableWriter writer(num_buckets, &stats);
   CopyKlassSubGraphInfoToArchive copy(&writer);
-  _dump_time_subgraph_info_table->iterate(&copy);
+  d_table->iterate(&copy);
 
   writer.dump(&_run_time_subgraph_info_table, "subgraphs");
 }
@@ -433,7 +435,7 @@ void HeapShared::initialize_from_archived_subgraph(Klass* k) {
   assert(!DumpSharedSpaces, "Should not be called with DumpSharedSpaces");
 
   unsigned int hash = primitive_hash<Klass*>(k);
-  ArchivedKlassSubGraphInfoRecord* record = _run_time_subgraph_info_table.lookup(k, hash, 0);
+  const ArchivedKlassSubGraphInfoRecord* record = _run_time_subgraph_info_table.lookup(k, hash, 0);
 
   // Initialize from archived data. Currently this is done only
   // during VM initialization time. No lock is needed.
@@ -886,6 +888,10 @@ void HeapShared::init_subgraph_entry_fields(ArchivableStaticFieldInfo fields[],
     Klass* k = SystemDictionary::resolve_or_null(klass_name, THREAD);
     assert(k != NULL && !HAS_PENDING_EXCEPTION, "class must exist");
     InstanceKlass* ik = InstanceKlass::cast(k);
+    assert(InstanceKlass::cast(ik)->is_shared_boot_class(),
+           "Only support boot classes");
+    ik->initialize(THREAD);
+    guarantee(!HAS_PENDING_EXCEPTION, "exception in initialize");
 
     ArchivableStaticFieldFinder finder(ik, field_name);
     ik->do_local_static_fields(&finder);
