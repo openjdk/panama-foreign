@@ -1664,6 +1664,7 @@ private:
   // Pack with unsigned saturation
   void packuswb(XMMRegister dst, XMMRegister src);
   void packuswb(XMMRegister dst, Address src);
+  void packusdw(XMMRegister dst, XMMRegister src);
   void vpackuswb(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vpackusdw(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
 
@@ -1827,6 +1828,8 @@ private:
   void pshuflw(XMMRegister dst, Address src,     int mode);
 
   //shuffle floats and doubles
+  void pshufps(XMMRegister, XMMRegister, int);
+  void pshufpd(XMMRegister, XMMRegister, int);
   void vpshufps(XMMRegister, XMMRegister, XMMRegister, int, int);
   void vpshufpd(XMMRegister, XMMRegister, XMMRegister, int, int);
 
