@@ -732,7 +732,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
-     * and the identity value is {@link Byte.MAX_VALUE}.
+     * and the identity value is {@link Byte#MAX_VALUE}.
      *
      * @return the minimum lane element of this vector
      */
@@ -744,7 +744,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
-     * and the identity value is {@link Byte.MAX_VALUE}.
+     * and the identity value is {@link Byte#MAX_VALUE}.
      *
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
@@ -756,7 +756,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
-     * and the identity value is {@link Byte.MIN_VALUE}.
+     * and the identity value is {@link Byte#MIN_VALUE}.
      *
      * @return the maximum lane element of this vector
      */
@@ -768,7 +768,7 @@ public abstract class ByteVector<S extends Vector.Shape> extends Vector<Byte,S> 
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
-     * and the identity value is {@link Byte.MIN_VALUE}.
+     * and the identity value is {@link Byte#MIN_VALUE}.
      *
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
