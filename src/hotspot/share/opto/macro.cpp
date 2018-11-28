@@ -2623,8 +2623,7 @@ bool PhaseMacroExpand::expand_macro_nodes() {
   C->print_method(PHASE_MACRO_STEP, 4);
 
   if (C->failing())  return true;
-  BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
-  return bs->expand_macro_nodes(this);
+  return false;
 }
 
 //------------------------------expand_macro_nodes----------------------
