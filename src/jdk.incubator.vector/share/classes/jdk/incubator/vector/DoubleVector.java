@@ -393,7 +393,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the primitive division
      * operation ({@code /}) is applied to lane elements.
      *
-     * @param v the input scalar
+     * @param s the input scalar
      * @return the result of dividing this vector by the broadcast of an input
      * scalar
      */
@@ -419,7 +419,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * This is a vector binary operation where the primitive division
      * operation ({@code /}) is applied to lane elements.
      *
-     * @param v the input scalar
+     * @param s the input scalar
      * @param m the mask controlling lane selection
      * @return the result of dividing this vector by the broadcast of an input
      * scalar
@@ -1324,7 +1324,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
-     * and the identity value is {@link Double.MAX_VALUE}.
+     * and the identity value is {@link Double#MAX_VALUE}.
      *
      * @return the minimum lane element of this vector
      */
@@ -1336,7 +1336,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
-     * and the identity value is {@link Double.MAX_VALUE}.
+     * and the identity value is {@link Double#MAX_VALUE}.
      *
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
@@ -1348,7 +1348,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
-     * and the identity value is {@link Double.MIN_VALUE}.
+     * and the identity value is {@link Double#MIN_VALUE}.
      *
      * @return the maximum lane element of this vector
      */
@@ -1360,7 +1360,7 @@ public abstract class DoubleVector<S extends Vector.Shape> extends Vector<Double
      * <p>
      * This is an associative vector reduction operation where the operation
      * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
-     * and the identity value is {@link Double.MIN_VALUE}.
+     * and the identity value is {@link Double#MIN_VALUE}.
      *
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector

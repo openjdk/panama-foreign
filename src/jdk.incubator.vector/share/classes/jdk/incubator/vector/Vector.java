@@ -1572,7 +1572,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * Tests if the lane at index {@code i} is set
          * @param i the lane index
          * @return true if the lane at index {@code i} is set, otherwise false
-         * @see getElement
+         * @see #getElement
          */
         public boolean isSet(int i) {
             return getElement(i);
@@ -1777,7 +1777,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      *
      * @param bitSize the size in bits
      * @return the shape corresponding to bitsize
-     * @see bitSize
+     * @see #bitSize
      */
     public static Shape shapeForVectorBitSize(int bitSize) {
         switch (bitSize) {
