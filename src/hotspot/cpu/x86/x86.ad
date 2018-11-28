@@ -1619,6 +1619,9 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_MulReductionVI:
           if (bt ==T_BYTE && size_in_bits == 512 && !VM_Version::supports_avx512bw()) { ret_value = false; }
           break;
+        case Op_FmaVD:
+        case Op_FmaVF:
+          if (!UseFMA) { ret_value = false; }
         default:
           break;
       }
@@ -16377,41 +16380,43 @@ instruct vsra1L_reg_evex(vecD dst, vecD src, vecS shift) %{
 %}
 
 instruct vsra2L_reg_imm(vecX dst, vecX src, immI8 shift, vecX tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
+  predicate(UseSSE >= 2 && n->as_Vector()->length() == 2);
   match(Set dst (RShiftVL src shift));
   effect(TEMP dst, TEMP tmp);
-  format %{ "vpsrlq   $dst,$src,$shift\n\t"
-            "vmovdqu  $tmp,[0x8000000000000000]\n\t"
-            "vpsrlq   $tmp,$tmp,$shift\n\t"
-            "vpxor    $dst,$dst,$tmp\n\t"
-            "vpsubq   $dst,$dst,$tmp\t! arithmetic right shift packed2L" %}
+  format %{ "movdqu  $dst,$src\n\t"
+            "psrlq   $dst,$shift\n\t"
+            "movdqu  $tmp,[0x8000000000000000]\n\t"
+            "psrlq   $tmp,$shift\n\t"
+            "pxor    $dst,$tmp\n\t"
+            "psubq   $dst,$tmp\t! arithmetic right shift packed2L" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpsrlq($dst$$XMMRegister, $src$$XMMRegister, (int)$shift$$constant, vector_len);
-    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
-    __ vpsrlq($tmp$$XMMRegister, $tmp$$XMMRegister, (int)$shift$$constant, vector_len);
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ psrlq($dst$$XMMRegister, (int)$shift$$constant);
+    __ movdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ psrlq($tmp$$XMMRegister, (int)$shift$$constant);
+    __ pxor($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ psubq($dst$$XMMRegister, $tmp$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct vsra2L_reg(vecX dst, vecX src, vecS shift, vecX tmp) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
+  predicate(UseSSE >= 2 && n->as_Vector()->length() == 2);
   match(Set dst (RShiftVL src shift));
   effect(TEMP dst, TEMP tmp);
-  format %{ "vpsrlq   $dst,$src,$shift\n\t"
-            "vmovdqu  $tmp,[0x8000000000000000]\n\t"
-            "vpsrlq   $tmp,$tmp,$shift\n\t"
-            "vpxor    $dst,$dst,$tmp\n\t"
-            "vpsubq   $dst,$dst,$tmp\t! arithmetic right shift packed2L" %}
+  format %{ "movdqu  $dst,$src\n\t"
+            "psrlq   $dst,$shift\n\t"
+            "movdqu  $tmp,[0x8000000000000000]\n\t"
+            "psrlq   $tmp,$shift\n\t"
+            "pxor    $dst,$tmp\n\t"
+            "psubq   $dst,$tmp\t! arithmetic right shift packed2L" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpsrlq($dst$$XMMRegister, $src$$XMMRegister, $shift$$XMMRegister, vector_len);
-    __ vmovdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
-    __ vpsrlq($tmp$$XMMRegister, $tmp$$XMMRegister, $shift$$XMMRegister, vector_len);
-    __ vpxor($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
-    __ vpsubq($dst$$XMMRegister, $dst$$XMMRegister, $tmp$$XMMRegister, vector_len);
+    __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    __ psrlq($dst$$XMMRegister, $shift$$XMMRegister);
+    __ movdqu($tmp$$XMMRegister, ExternalAddress(vector_all_ones_mask()));
+    __ psrlq($tmp$$XMMRegister, $shift$$XMMRegister);
+    __ pxor($dst$$XMMRegister, $tmp$$XMMRegister);
+    __ psubq($dst$$XMMRegister, $tmp$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -19629,28 +19634,27 @@ instruct extract4d(regD dst, vecY src, vecY tmp, immI idx) %{
 %}
 
 instruct extract2d(regD dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 2);
+  predicate(UseSSE >= 2 && n->in(1)->bottom_type()->is_vect()->length() == 2);
   match(Set dst (ExtractD src idx));
   ins_encode %{
-    int vector_len = 0;
     int midx = 0x1 & $idx$$constant;
-    if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
-      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else if (midx >=1) {
-      __ vpshufpd($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    } 
+    if (midx > 0) {
+      __ pshufpd($dst$$XMMRegister, $dst$$XMMRegister, midx);  
     } 
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct extract1d(regD dst, vecD src, immI idx) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 1);
+  predicate(UseSSE >= 2  && n->in(1)->bottom_type()->is_vect()->length() == 1);
   match(Set dst (ExtractD src idx));
   ins_encode %{
-    int vector_len = 0;
     int midx = 0x1 & $idx$$constant;
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
-      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     } 
   %}
   ins_pipe( pipe_slow );
@@ -19697,30 +19701,31 @@ instruct extract8f(regF dst, vecY src, vecY tmp, immI idx) %{
 %}
 
 instruct extract4f(regF dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 4);
+  predicate(UseSSE >= 2 && n->in(1)->bottom_type()->is_vect()->length() == 4);
   match(Set dst (ExtractF src idx));
   ins_encode %{
-    int vector_len=0;
     int midx = 0x3 & $idx$$constant;
-    if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
-      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else if (midx >= 1 && midx <= 3) {
-      __ vpshufps($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    } 
+    if (midx > 0) {
+      __ pshufps($dst$$XMMRegister, $dst$$XMMRegister, midx);  
     } 
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct extract2f(regF dst, vecD src, immI idx) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 2);
+  predicate(UseSSE >= 2 && n->in(1)->bottom_type()->is_vect()->length() == 2);
   match(Set dst (ExtractF src idx));
   ins_encode %{
-    int vector_len=0;
     int midx = 0x1 & $idx$$constant;
-    if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
-      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else {
-      __ vpshufps($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
+    if ($dst$$XMMRegister != $src$$XMMRegister) {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
+    }
+    if (midx > 0) 
+    {
+      __ pshufps($dst$$XMMRegister, $dst$$XMMRegister, midx);  
     } 
   %}
   ins_pipe( pipe_slow );
@@ -19739,7 +19744,7 @@ instruct extract1l(rRegL dst, vecD src, immI idx) %{
 %}
 
 instruct extract2l(rRegL dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 2);
+  predicate(UseSSE >= 4 && n->in(1)->bottom_type()->is_vect()->length() == 2);
   match(Set dst (ExtractL src idx));
   ins_encode %{
     int midx = 0x1 & $idx$$constant;
@@ -19875,7 +19880,7 @@ instruct extract4s(rRegI dst, vecD src, immI idx) %{
 %}
 
 instruct extract8s(rRegI dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 8);
+  predicate(UseSSE > 1 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractS src idx));
   ins_encode %{
     int midx = 0x7 & $idx$$constant;
@@ -19935,7 +19940,7 @@ instruct extract32s(rRegI dst, vecZ src, vecX tmp, immI idx) %{
 %}
 
 instruct extract8b(rRegI dst, vecD src, immI idx) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 8);
+  predicate(UseSSE >= 4 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractB src idx));
   ins_encode %{
     int midx = 0x7 & $idx$$constant;
@@ -19951,7 +19956,7 @@ instruct extract8b(rRegI dst, vecD src, immI idx) %{
 %}
 
 instruct extract16b(rRegI dst, vecX src, immI idx) %{
-  predicate(UseAVX > 0 && n->in(1)->bottom_type()->is_vect()->length() == 16);
+  predicate(UseSSE >= 4 && n->in(1)->bottom_type()->is_vect()->length() == 16);
   match(Set dst (ExtractB src idx));
   ins_encode %{
     int midx = 0xF & $idx$$constant;
@@ -22232,23 +22237,21 @@ instruct loadmask8l(vecZ dst, vecD src, vecZ tmp) %{
 %}
 
 instruct storemask8b(vecD dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 1);
+  predicate(UseSSE >= 3 && n->as_Vector()->length() == 8 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 1);
   match(Set dst (VectorStoreMask src));
-  format %{ "vpabsb $dst,$src\t! store mask (8B to 8B)" %}
+  format %{ "pabsb $dst,$src\t! store mask (8B to 8B)" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpabsb($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ pabsb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct storemask16b(vecX dst, vecX src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 16 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 1);
+  predicate(UseSSE >=3 && n->as_Vector()->length() == 16 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 1);
   match(Set dst (VectorStoreMask src));
-  format %{ "vpabsb $dst,$src\t! store mask (16B to 16B)" %}
+  format %{ "pabsb $dst,$src\t! store mask (16B to 16B)" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpabsb($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    __ pabsb($dst$$XMMRegister, $src$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22281,27 +22284,25 @@ instruct storemask64b(vecZ dst, vecZ src, rRegL scratch) %{
 %}
 
 instruct storemask4s(vecS dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 2);
+  predicate(UseSSE >= 3 && n->as_Vector()->length() == 4 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 2);
   match(Set dst (VectorStoreMask src));
-  format %{ "vpabsw $dst,$src\n\t"
-           "vpackuswb $dst,$dst,$dst\t! store mask (4S to 4B)" %}
+  format %{ "pabsw $dst,$src\n\t"
+            "packuswb $dst,$dst\t! store mask (4S to 4B)" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpabsw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ pabsw($dst$$XMMRegister, $src$$XMMRegister);
+    __ packuswb($dst$$XMMRegister, $dst$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct storemask8s(vecD dst, vecX src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 8 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 2);
+  predicate(UseSSE >=3  && n->as_Vector()->length() == 8 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 2);
   match(Set dst (VectorStoreMask src));
-  format %{ "vpabsw $dst,$src\n\t"
-           "vpackuswb $dst,$dst,$dst\t! store mask (8S to 8B)" %}
+  format %{ "pabsw $dst,$src\n\t"
+            "packuswb $dst,$dst\t! store mask (8S to 8B)" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpabsw($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ pabsw($dst$$XMMRegister, $src$$XMMRegister);
+    __ packuswb($dst$$XMMRegister, $dst$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22341,31 +22342,29 @@ instruct storemask32s(vecY dst, vecZ src, rRegL scratch) %{
 
 
 instruct storemask2i(vecS dst, vecD src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 2 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 4);
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 2 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 4);
   match(Set dst (VectorStoreMask src));
-  format %{ "vpabsd $dst,$src\n\t"
-           "vpackusdw $dst,$dst,$dst\n\t"
-           "vpackuswb $dst,$dst,$dst\t! store mask (2I to 2B)" %}
+  format %{ "pabsd $dst,$src\n\t"
+            "packusdw $dst,$dst\n\t"
+            "packuswb $dst,$dst\t! store mask (2I to 2B)" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpabsd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ pabsd($dst$$XMMRegister, $src$$XMMRegister);
+    __ packusdw($dst$$XMMRegister, $dst$$XMMRegister);
+    __ packuswb($dst$$XMMRegister, $dst$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct storemask4i(vecS dst, vecX src) %{
-  predicate(UseAVX > 0 && n->as_Vector()->length() == 4 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 4);
+  predicate(UseSSE >=4 && n->as_Vector()->length() == 4 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 4);
   match(Set dst (VectorStoreMask src));
-  format %{ "vpabsd $dst,$src\n\t"
-           "vpackusdw $dst,$dst,$dst\n\t"
-           "vpackuswb $dst,$dst,$dst\t! store mask (4I to 4B)" %}
+  format %{ "pabsd $dst,$src\n\t"
+            "packusdw $dst,$dst\n\t"
+            "packuswb $dst,$dst\t! store mask (4I to 4B)" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpabsd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ pabsd($dst$$XMMRegister, $src$$XMMRegister);
+    __ packusdw($dst$$XMMRegister, $dst$$XMMRegister);
+    __ packuswb($dst$$XMMRegister, $dst$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22407,33 +22406,31 @@ instruct storemask16i(vecX dst, vecZ src, rRegL scratch) %{
 %}
 
 instruct storemask1l(vecS dst, vecD src) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 1 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 8);
+  predicate(UseSSE >= 4 && n->as_Vector()->length() == 1 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 8);
   match(Set dst (VectorStoreMask src));
-  format %{ "vpabsd $dst,$src\n\t"
-           "vpackusdw $dst,$dst,$dst\n\t"
-           "vpackuswb $dst,$dst,$dst\t! store mask (1L to 1B)" %}
+  format %{ "pabsd $dst,$src\n\t"
+           "packusdw $dst,$dst\n\t"
+           "packuswb $dst,$dst\t! store mask (1L to 1B)" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpabsd($dst$$XMMRegister, $src$$XMMRegister, vector_len);
-    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ pabsd($dst$$XMMRegister, $src$$XMMRegister);
+    __ packusdw($dst$$XMMRegister, $dst$$XMMRegister);
+    __ packuswb($dst$$XMMRegister, $dst$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct storemask2l(vecS dst, vecX src) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 2 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 8);
+  predicate(UseSSE >=4 && n->as_Vector()->length() == 2 && static_cast<const VectorStoreMaskNode*>(n)->GetInputMaskSize() == 8);
   match(Set dst (VectorStoreMask src));
-  format %{ "vpshufd $dst,$src,0x8\n\t"
-           "vpabsd $dst,$dst\n\t"
-           "vpackusdw $dst,$dst,$dst\n\t"
-           "vpackuswb $dst,$dst,$dst\t! store mask (2L to 2B)" %}
+  format %{ "pshufd $dst,$src,0x8\n\t"
+            "pabsd $dst,$dst\n\t"
+            "packusdw $dst,$dst\n\t"
+            "packuswb $dst,$dst\t! store mask (2L to 2B)" %}
   ins_encode %{
-    int vector_len = 0;
-    __ vpshufd($dst$$XMMRegister, $src$$XMMRegister, 0x8, vector_len);
-    __ vpabsd($dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vpackusdw($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
-    __ vpackuswb($dst$$XMMRegister, $dst$$XMMRegister, $dst$$XMMRegister, vector_len);
+    __ pshufd($dst$$XMMRegister, $src$$XMMRegister, 0x8);
+    __ pabsd($dst$$XMMRegister, $dst$$XMMRegister);
+    __ packusdw($dst$$XMMRegister, $dst$$XMMRegister);
+    __ packuswb($dst$$XMMRegister, $dst$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
@@ -22600,7 +22597,7 @@ instruct loadshuffle4i(vecX dst, vecS src, vecX tmp, vecX tmp2, rRegI scratch) %
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorLoadShuffle src));
   effect(TEMP dst, TEMP tmp, TEMP tmp2, TEMP scratch);
-  format %{ "vpmovsxbd   $tmp, $src \n\t"
+  format %{ "pmovsxbd   $tmp, $src \n\t"
             "movdqu      $tmp2, 0x0000000400000004 \n\t"
             "pmulld      $tmp2, $tmp \n\t"
             "movdqu      $tmp,$tmp2\n\t"
@@ -22614,7 +22611,7 @@ instruct loadshuffle4i(vecX dst, vecS src, vecX tmp, vecX tmp2, rRegI scratch) %
             "paddb       $tmp2,$tmp\n\t"
             "movdqu      $dst, $tmp2\t! load shuffle (load 4B for 4IRearrange)" %}
   ins_encode %{
-    __ vpmovsxbd($tmp$$XMMRegister, $src$$XMMRegister, 0);
+    __ pmovsxbd($tmp$$XMMRegister, $src$$XMMRegister);
     __ movdqu($tmp2$$XMMRegister, ExternalAddress(vector_int_sizemask()), $scratch$$Register);
     __ pmulld($tmp2$$XMMRegister, $tmp$$XMMRegister);
     __ movdqu($tmp$$XMMRegister, $tmp2$$XMMRegister);
