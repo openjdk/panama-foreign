@@ -1,0 +1,20 @@
+
+    @Benchmark
+    public Object [[TEST]][[TEST_TYPE]][[OP_NAME]]() {
+        $type$[] as = fa.apply(size);
+        $type$[] bs = fb.apply(size);
+        boolean[] ms = fm.apply(size);
+        Vector.Mask<$Wideboxtype$, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                $abstractvectortype$<Vector.Shape> av = SPECIES.fromArray(a, i);
+                $abstractvectortype$<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                Vector.Mask<$Wideboxtype$, Vector.Shape> mv = av.[[TEST]](bv);
+
+                m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
+            }
+        }
+        return m;
+    }
+

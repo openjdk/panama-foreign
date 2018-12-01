@@ -42,6 +42,7 @@ JCOMMANDER_JAR="${TESTNG_PLUGIN}/plugins/com.beust.jcommander_1.72.0.jar"
 TEST_ITER_COUNT=100
 
 PERF_TEMPLATE_FILE="perf_tests.template"
+PERF_SCALAR_TEMPLATE_FILE="perf_scalar_tests.template"
 PERF_DEST="benchmark/src/main/java/benchmark/jdk/incubator/vector/"
 
 function Log () {

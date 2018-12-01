@@ -105,6 +105,8 @@ do
 
   # Generate tests for operations
   # For each size
+  Log true "${Type}:"
+
   for bits in 64 128 256 512 Max
   do
     vectortype=${typeprefix}${Type}${bits}Vector
@@ -120,8 +122,9 @@ do
       bitargs="$bitargs -KMaxBit"
     fi
 
+
     # Generate jtreg tests
-    Log true "Generating jtreg $vectorteststype... "
+    Log true " ${bits}_jtreg"
     Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${TEMPLATE_FILE} > $vectorteststype.java "
     TEST_DEST_FILE="${vectorteststype}.java"
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
@@ -131,23 +134,31 @@ do
       tr -d  '\r' < ${TEST_DEST_FILE} > temp
       mv temp ${TEST_DEST_FILE}
     fi
-    Log true "done\n"
 
     # Generate jmh performance tests
-    if [ $# -gt 0 ] && [ "$1" == "jmh" ]; then
-      Log true "Generating jmh $vectorteststype... "
-      Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${PERF_TEMPLATE_FILE} > ${vectorteststype}Perf.java "
-      PERF_DEST_FILE="${PERF_DEST}/${vectorbenchtype}.java"
-      ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
-        < ${PERF_TEMPLATE_FILE} \
-        > ${PERF_DEST_FILE}
-      if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
-        tr -d  '\r' < ${PERF_DEST_FILE} > temp
-        mv temp ${PERF_DEST_FILE}
-      fi
-      Log true "done\n"
+    Log true " ${bits}_jmh"
+    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${PERF_TEMPLATE_FILE} > ${vectorteststype}Perf.java "
+    PERF_DEST_FILE="${PERF_DEST}/${vectorbenchtype}.java"
+    ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
+      < ${PERF_TEMPLATE_FILE} \
+      > ${PERF_DEST_FILE}
+    if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
+      tr -d  '\r' < ${PERF_DEST_FILE} > temp
+      mv temp ${PERF_DEST_FILE}
     fi
   done
+
+  # Generate jmh performance tests
+  Log true " scalar"
+  PERF_DEST_FILE="${PERF_DEST}/${Type}Scalar.java"
+  ${JAVA} -cp . ${SPP_CLASSNAME} -nel $args \
+    < ${PERF_SCALAR_TEMPLATE_FILE} \
+    > ${PERF_DEST_FILE}
+  if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
+    tr -d  '\r' < ${PERF_DEST_FILE} > temp
+    mv temp ${PERF_DEST_FILE}
+  fi
+
 
   # Generate tests for loads and stores
   # For each size
@@ -167,7 +178,7 @@ do
     fi
 
     # Generate
-    Log true "Generating $vectorteststype... "
+    Log true " ${bits}_ls"
     Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < templates/X-LoadStoreTest.java.template > $vectorteststype.java "
     TEST_DEST_FILE="${vectorteststype}.java"
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
@@ -177,10 +188,11 @@ do
       tr -d  '\r' < ${TEST_DEST_FILE} > temp
       mv temp ${TEST_DEST_FILE}
     fi
-    Log true "done\n"
 
     # TODO: Generate jmh performance tests for LoadStore variants
   done
+
+  Log true " done\n"
 
 done
 

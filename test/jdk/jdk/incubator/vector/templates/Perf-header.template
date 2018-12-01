@@ -32,6 +32,7 @@ import java.lang.invoke.VarHandle;
 #end[MaxBit]
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 
 import org.openjdk.jmh.annotations.*;
@@ -39,55 +40,58 @@ import org.openjdk.jmh.annotations.*;
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
-public class $vectorbenchtype$ extends AbstractVectorBenchmark {
+@Warmup(iterations = 3, time = 1)
+@Measurement(iterations = 5, time = 1)
 #if[MaxBit]
+@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector", "--add-opens=jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED"})
+#else[MaxBit]
+@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
+#end[MaxBit]
+public class $vectorbenchtype$ extends AbstractVectorBenchmark {
     static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
+#if[MaxBit]
                 $Type$Vector.species(getMaxBitShape());
 #else[MaxBit]
-    static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
                 $Type$Vector.species(Shapes.S_$bits$_BIT);
 #end[MaxBit]
 
+    static final int INVOC_COUNT = 1; // get rid of outer loop
+
     @Param("1024")
-    int arr_length;
+    int size;
 
-    @Param("100")
-    int INVOC_COUNT;
-
-    final IntFunction<$type$[]> fa = (vl) -> {
-      int length = arr_length * vl;
-      $type$[] arr = new $type$[length];
-      for (int i = 0; i < length; i++) {
-        arr[i] = ($type$)(2*i);
-      }
-      return arr;
-    };
-
-    final IntFunction<$type$[]> fb = (vl) -> {
-      int length = arr_length * vl;
-      $type$[] arr = new $type$[length];
-      for (int i = 0; i < length; i++) {
-        arr[i] = ($type$)(i+1);
-      }
-      return arr;
-    };
-
-    final IntFunction<$type$[]> fc = (vl) -> {
-      int length = arr_length * vl;
-      $type$[] arr = new $type$[length];
-      for (int i = 0; i < length; i++) {
-        arr[i] = ($type$)(i+5);
-      }
-      return arr;
-    };
-
-    final IntFunction<boolean[]> fm = (vl) -> {
-        int length = arr_length * vl;
-        boolean[] arr = new boolean[length];
-        for (int i = 0; i < length; i++) {
-            arr[i] = (i % 2) == 0;
+    $type$[] fill(IntFunction<$Wideboxtype$> f) {
+        $type$[] array = new $type$[size];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = f.apply(i);
         }
-        return arr;
-    };
+        return array;
+    }
+
+    $type$[] a, b, c, r;
+    boolean[] m, rm;
+    int[] s;
+
+    @Setup
+    public void init() {
+        size += size % SPECIES.length(); // FIXME: add post-loops
+
+        a = fill(i -> ($type$)(2*i));
+        b = fill(i -> ($type$)(i+1));
+        c = fill(i -> ($type$)(i+5));
+        r = fill(i -> ($type$)0);
+
+        m = fillMask(size, i -> (i % 2) == 0);
+        rm = fillMask(size, i -> false);
+
+        s = fillInt(size, i -> RANDOM.nextInt(SPECIES.length()));
+    }
+
+    final IntFunction<$type$[]> fa = vl -> a;
+    final IntFunction<$type$[]> fb = vl -> b;
+    final IntFunction<$type$[]> fc = vl -> c;
+    final IntFunction<$type$[]> fr = vl -> r;
+    final IntFunction<boolean[]> fm = vl -> m;
+    final IntFunction<boolean[]> fmr = vl -> rm;
+    final BiFunction<Integer,Integer,int[]> fs = (i,j) -> s;
 

@@ -63,7 +63,7 @@ function replace_variables {
   masked=$8
   op_name=$9
 
-  if [ "${kernel}" != "" ]; then
+  if [ "x${kernel}" != "x" ]; then
     kernel_escaped=$(echo -e "$kernel" | tr '\n' '|')
     sed "s/\[\[KERNEL\]\]/${kernel_escaped}/g" $filename > ${filename}.current1
     cat ${filename}.current1 | tr '|' "\n" > ${filename}.current
@@ -96,41 +96,54 @@ function gen_op_tmpl {
   op=$3
   unit_output=$4
   perf_output=$5
+  perf_scalar_output=$6
   guard=""
   init=""
-  if [ $# -gt 5 ]; then
-    guard=$6
+  if [ $# -gt 6 ]; then
+    guard=$7
   fi
-  if [ $# == 7 ]; then
-    init=$7
-  fi
-  if [[ $template == *"Masked"* ]]; then
-    masked="Masked"
-  else
-    masked=""
+  if [ $# == 8 ]; then
+    init=$8
   fi
 
+  masked=""
+  if [[ $template == *"Masked"* ]]; then
+    masked="Masked"
+  fi
+
+  op_name=""
   if [[ $template == *"Shift"* ]]; then
     op_name="Shift"
   elif [[ $template == *"Get"* ]]; then
     op_name="extract"
   fi
 
-  perf_filename="${TEMPLATE_FOLDER}/Perf-wrapper.template"
   unit_filename="${TEMPLATE_FOLDER}/Unit-${template}.template"
   kernel_filename="${TEMPLATE_FOLDER}/Kernel-${template}.template"
+  perf_wrapper_filename="${TEMPLATE_FOLDER}/Perf-wrapper.template"
+  perf_vector_filename="${TEMPLATE_FOLDER}/Perf-${template}.template"
+  perf_scalar_filename="${TEMPLATE_FOLDER}/Perf-Scalar-${template}.template"
+
+  kernel=""
   if [ -f $kernel_filename ]; then
     kernel="$(cat $kernel_filename)"
-  else
-    #echo "Warning: No kernel found for template ${template}"
-    kernel=""
   fi
 
   # Replace template variables in both unit and performance test files (if any)
   replace_variables $unit_filename $unit_output "$kernel" "$test" "$op" "$init" "$guard" "$masked" "$op_name"
 
-  if [ "${perf_output}" != "" ] && [ -f $kernel_filename ] && [ $generate_perf_tests ]; then
-    replace_variables $perf_filename $perf_output "$kernel" "$test" "$op" "$init" "$guard" "$masked" "$op_name"
+  if [ -f $perf_vector_filename ]; then
+    replace_variables $perf_vector_filename  $perf_output "$kernel" "$test" "$op" "$init" "$guard" "$masked" "$op_name"
+  elif [ -f $kernel_filename ]; then
+    replace_variables $perf_wrapper_filename $perf_output "$kernel" "$test" "$op" "$init" "$guard" "$masked" "$op_name"
+  elif [[ $template != *"-Scalar-"* ]] && [[ $template != "Get-op" ]] && [[ $template != "With-Op" ]]; then
+    echo "Warning: missing perf: $@"
+  fi
+
+  if [ -f $perf_scalar_filename ]; then
+    replace_variables $perf_scalar_filename $perf_scalar_output "$kernel" "$test" "$op" "$init" "$guard" "$masked" "$op_name"
+  elif [[ $template != *"-Scalar-"* ]] && [[ $template != "Get-op" ]] && [[ $template != "With-Op" ]]; then
+    echo "Warning: Missing PERF SCALAR: $perf_scalar_filename"
   fi
 }
 
@@ -216,94 +229,106 @@ function gen_perf_footer {
   cat $TEMPLATE_FOLDER/Perf-footer.template >> $1
 }
 
+function gen_perf_scalar_header {
+  cat $TEMPLATE_FOLDER/Perf-Scalar-header.template > $1
+}
+
+function gen_perf_scalar_footer {
+  cat $TEMPLATE_FOLDER/Perf-Scalar-footer.template >> $1
+}
 unit_output="unit_tests.template"
 perf_output="perf_tests.template"
+perf_scalar_output="perf_scalar_tests.template"
 gen_unit_header $unit_output
 gen_perf_header $perf_output
+gen_perf_scalar_header $perf_scalar_output
 
 # ALU binary ops.
-gen_binary_alu_op "add" "a + b" $unit_output $perf_output
-gen_binary_alu_op "sub" "a - b" $unit_output $perf_output
-gen_binary_alu_op "div" "a \/ b" $unit_output $perf_output "FP"
-gen_binary_alu_op "mul" "a \* b" $unit_output $perf_output
-gen_binary_alu_op "and" "a \& b" $unit_output $perf_output "BITWISE"
-gen_binary_alu_op "or" "a | b" $unit_output $perf_output "BITWISE"
-gen_binary_alu_op "xor" "a ^ b" $unit_output $perf_output "BITWISE"
+gen_binary_alu_op "add" "a + b" $unit_output $perf_output $perf_scalar_output
+gen_binary_alu_op "sub" "a - b" $unit_output $perf_output $perf_scalar_output
+gen_binary_alu_op "div" "a \/ b" $unit_output $perf_output $perf_scalar_output "FP"
+gen_binary_alu_op "mul" "a \* b" $unit_output $perf_output $perf_scalar_output
+gen_binary_alu_op "and" "a \& b" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_binary_alu_op "or" "a | b" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_binary_alu_op "xor" "a ^ b" $unit_output $perf_output $perf_scalar_output "BITWISE"
 
 # Shifts
-gen_binary_alu_op "shiftR" "(a >>> b)" $unit_output $perf_output "intOrLong"
-gen_binary_alu_op "shiftL" "(a << b)" $unit_output $perf_output "intOrLong"
-gen_binary_alu_op "aShiftR" "(a >> b)" $unit_output $perf_output "intOrLong"
-gen_shift_cst_op "aShiftR" "(a >> b)" $unit_output $perf_output "BITWISE"
-gen_shift_cst_op "shiftR" "(a >>> b)" $unit_output $perf_output "BITWISE"
-gen_shift_cst_op "shiftL" "(a << b)" $unit_output $perf_output "BITWISE"
+gen_binary_alu_op "shiftR" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_binary_alu_op "shiftL" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_binary_alu_op "aShiftR" "(a >> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_shift_cst_op "aShiftR" "(a >> b)" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_shift_cst_op "shiftR" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_shift_cst_op "shiftL" "(a << b)" $unit_output $perf_output $perf_scalar_output "BITWISE"
 
 # Masked reductions.
-gen_binary_op "max" "(a > b) ? a : b" $unit_output $perf_output
-gen_binary_op "min" "(a < b) ? a : b" $unit_output $perf_output
+gen_binary_op "max" "(a > b) ? a : b" $unit_output $perf_output $perf_scalar_output
+gen_binary_op "min" "(a < b) ? a : b" $unit_output $perf_output $perf_scalar_output
 
 # Reductions.
-gen_reduction_op "andAll" "\&" $unit_output $perf_output "BITWISE" "-1"
-gen_reduction_op "orAll" "|" $unit_output $perf_output "BITWISE" "0"
-gen_reduction_op "xorAll" "^" $unit_output $perf_output "BITWISE" "0"
-gen_reduction_op "addAll" "+" $unit_output $perf_output "" "0"
-gen_reduction_op "subAll" "-" $unit_output $perf_output "" "0"
-gen_reduction_op "mulAll" "*" $unit_output $perf_output "" "1"
-gen_reduction_op_min "minAll" "" $unit_output $perf_output "" "MAX_VALUE"
-gen_reduction_op_max "maxAll" "" $unit_output $perf_output "" "MIN_VALUE"
+gen_reduction_op "andAll" "\&" $unit_output $perf_output $perf_scalar_output "BITWISE" "-1"
+gen_reduction_op "orAll" "|" $unit_output $perf_output $perf_scalar_output "BITWISE" "0"
+gen_reduction_op "xorAll" "^" $unit_output $perf_output $perf_scalar_output "BITWISE" "0"
+gen_reduction_op "addAll" "+" $unit_output $perf_output $perf_scalar_output "" "0"
+gen_reduction_op "subAll" "-" $unit_output $perf_output $perf_scalar_output "" "0"
+gen_reduction_op "mulAll" "*" $unit_output $perf_output $perf_scalar_output "" "1"
+gen_reduction_op_min "minAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.MAX_VALUE"
+gen_reduction_op_max "maxAll" "" $unit_output $perf_output $perf_scalar_output "" "\$Wideboxtype\$.MIN_VALUE"
 
 # Boolean reductions.
-gen_bool_reduction_op "anyTrue" "|" $unit_output $perf_output "BITWISE" "false"
-gen_bool_reduction_op "allTrue" "\&" $unit_output $perf_output "BITWISE" "true"
+gen_bool_reduction_op "anyTrue" "|" $unit_output $perf_output $perf_scalar_output "BITWISE" "false"
+gen_bool_reduction_op "allTrue" "\&" $unit_output $perf_output $perf_scalar_output "BITWISE" "true"
 
 #Insert
-gen_with_op "with" "" $unit_output $perf_output "" ""
+gen_with_op "with" "" $unit_output $perf_output $perf_scalar_output "" ""
 
 # Compares
-gen_op_tmpl $compare_template "lessThan" "<" $unit_output $perf_output
-gen_op_tmpl $compare_template "greaterThan" ">" $unit_output $perf_output
-gen_op_tmpl $compare_template "equal" "==" $unit_output $perf_output
-gen_op_tmpl $compare_template "notEqual" "!=" $unit_output $perf_output
-gen_op_tmpl $compare_template "lessThanEq" "<=" $unit_output $perf_output
-gen_op_tmpl $compare_template "greaterThanEq" ">=" $unit_output $perf_output
+gen_op_tmpl $compare_template "lessThan" "<" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $compare_template "greaterThan" ">" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $compare_template "equal" "==" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $compare_template "notEqual" "!=" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $compare_template "lessThanEq" "<=" $unit_output $perf_output $perf_scalar_output
+gen_op_tmpl $compare_template "greaterThanEq" ">=" $unit_output $perf_output $perf_scalar_output
 
 # Blend.
-gen_op_tmpl $blend "blend" "" $unit_output $perf_output
+gen_op_tmpl $blend "blend" "" $unit_output $perf_output $perf_scalar_output
 
 # Rearrange
-gen_op_tmpl $rearrange_template "rearrange" "" $unit_output $perf_output
+gen_op_tmpl $rearrange_template "rearrange" "" $unit_output $perf_output $perf_scalar_output
 
 # Get
-gen_get_op "" "" $unit_output $perf_output
+gen_get_op "" "" $unit_output $perf_output $perf_scalar_output
 
 # Math
-gen_op_tmpl $unary_math_template "sin" "Math.sin((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "exp" "Math.exp((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "log1p" "Math.log1p((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "log" "Math.log((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "log10" "Math.log10((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "expm1" "Math.expm1((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "cos" "Math.cos((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "tan" "Math.tan((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "sinh" "Math.sinh((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "cosh" "Math.cosh((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "tanh" "Math.tanh((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "asin" "Math.asin((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "acos" "Math.acos((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "atan" "Math.atan((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $unary_math_template "cbrt" "Math.cbrt((double)a)" $unit_output $perf_output "FP"
-gen_op_tmpl $binary_math_template "hypot" "Math.hypot((double)a, (double)b)" $unit_output $perf_output "FP"
-gen_op_tmpl $binary_math_template "pow" "Math.pow((double)a, (double)b)" $unit_output $perf_output "FP"
-gen_op_tmpl $binary_math_template "atan2" "Math.atan2((double)a, (double)b)" $unit_output $perf_output "FP"
+gen_op_tmpl $unary_math_template "sin" "Math.sin((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "exp" "Math.exp((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "log1p" "Math.log1p((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "log" "Math.log((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "log10" "Math.log10((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "expm1" "Math.expm1((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "cos" "Math.cos((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "tan" "Math.tan((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "sinh" "Math.sinh((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "cosh" "Math.cosh((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "tanh" "Math.tanh((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "asin" "Math.asin((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "acos" "Math.acos((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "atan" "Math.atan((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $unary_math_template "cbrt" "Math.cbrt((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $binary_math_template "hypot" "Math.hypot((double)a, (double)b)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $binary_math_template "pow" "Math.pow((double)a, (double)b)" $unit_output $perf_output $perf_scalar_output "FP"
+gen_op_tmpl $binary_math_template "atan2" "Math.atan2((double)a, (double)b)" $unit_output $perf_output $perf_scalar_output "FP"
 
 # Ternary operations.
-gen_ternary_alu_op "fma" "Math.fma(a, b, c)" $unit_output $perf_output "FP"
+gen_ternary_alu_op "fma" "Math.fma(a, b, c)" $unit_output $perf_output $perf_scalar_output "FP"
 
 # Unary operations.
-gen_unary_alu_op "neg" "-((\$type\$)a)" $unit_output $perf_output
-gen_unary_alu_op "abs" "Math.abs((\$type\$)a)" $unit_output $perf_output
-gen_unary_alu_op "not" "~((\$type\$)a)" $unit_output $perf_output "BITWISE"
-gen_unary_alu_op "sqrt" "Math.sqrt((double)a)" $unit_output $perf_output "FP"
+gen_unary_alu_op "neg" "-((\$type\$)a)" $unit_output $perf_output $perf_scalar_output
+gen_unary_alu_op "abs" "Math.abs((\$type\$)a)" $unit_output $perf_output $perf_scalar_output
+gen_unary_alu_op "not" "~((\$type\$)a)" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_unary_alu_op "sqrt" "Math.sqrt((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
 
 gen_unit_footer $unit_output
 gen_perf_footer $perf_output
+gen_perf_scalar_footer $perf_scalar_output
+
+rm templates/*.current*
