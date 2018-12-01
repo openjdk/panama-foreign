@@ -61,6 +61,7 @@ function replace_variables {
   init=$6
   guard=$7
   masked=$8
+  op_name=$9
 
   if [ "${kernel}" != "" ]; then
     kernel_escaped=$(echo -e "$kernel" | tr '\n' '|')
@@ -75,6 +76,7 @@ function replace_variables {
   sed -i -e "s/\[\[TEST_TYPE\]\]/${masked}/g" ${filename}.current
   sed -i -e "s/\[\[TEST_OP\]\]/${op}/g" ${filename}.current
   sed -i -e "s/\[\[TEST_INIT\]\]/${init}/g" ${filename}.current
+  sed -i -e "s/\[\[OP_NAME\]\]/${op_name}/g" ${filename}.current
 
   # Guard the test if necessary
   if [ "$guard" != "" ]; then
@@ -106,7 +108,13 @@ function gen_op_tmpl {
     masked="Masked"
   else
     masked=""
-   fi
+  fi
+
+  if [[ $template == *"Shift"* ]]; then
+    op_name="Shift"
+  elif [[ $template == *"Get"* ]]; then
+    op_name="extract"
+  fi
 
   perf_filename="${TEMPLATE_FOLDER}/Perf-wrapper.template"
   unit_filename="${TEMPLATE_FOLDER}/Unit-${template}.template"
@@ -116,13 +124,13 @@ function gen_op_tmpl {
   else
     #echo "Warning: No kernel found for template ${template}"
     kernel=""
-   fi
+  fi
 
   # Replace template variables in both unit and performance test files (if any)
-  replace_variables $unit_filename $unit_output "$kernel" "$test" "$op" "$init" "$guard" "$masked"
+  replace_variables $unit_filename $unit_output "$kernel" "$test" "$op" "$init" "$guard" "$masked" "$op_name"
 
   if [ "${perf_output}" != "" ] && [ -f $kernel_filename ] && [ $generate_perf_tests ]; then
-    replace_variables $perf_filename $perf_output "$kernel" "$test" "$op" "$init" "$guard" "$masked"
+    replace_variables $perf_filename $perf_output "$kernel" "$test" "$op" "$init" "$guard" "$masked" "$op_name"
   fi
 }
 

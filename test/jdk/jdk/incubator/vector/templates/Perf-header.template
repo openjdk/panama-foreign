@@ -21,71 +21,73 @@
  * questions.
  */
 
+package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.Shapes;
 import jdk.incubator.vector.Vector;
-import jdk.incubator.vector.IntVector;
+import jdk.incubator.vector.$Type$Vector;
 #if[MaxBit]
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 #end[MaxBit]
 
-import org.openjdk.jmh.annotations.Benchmark;
+import java.util.concurrent.TimeUnit;
+import java.util.function.IntFunction;
 
-public class $vectorteststype$Perf {
+import org.openjdk.jmh.annotations.*;
+
+@BenchmarkMode(Mode.Throughput)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@State(Scope.Benchmark)
+@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
+public class $vectorbenchtype$ extends AbstractVectorBenchmark {
 #if[MaxBit]
-    static final Vector.Shape S_Max_BIT = getMaxBit();
-
     static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
-                $Type$Vector.species(S_Max_BIT);
+                $Type$Vector.species(getMaxBitShape());
 #else[MaxBit]
     static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
                 $Type$Vector.species(Shapes.S_$bits$_BIT);
 #end[MaxBit]
 
-    static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
-    static final int arr_length = Integer.getInteger("jdk.incubator.vector.test.array-length", 1000);
+    @Param("1024")
+    int arr_length;
 
-#if[MaxBit]
-    static Vector.Shape getMaxBit() {
-        try {
-            Class<?> clazz = Class.forName("jdk.incubator.vector.Shapes$SMaxBit");
-            VarHandle privateHandle = MethodHandles.privateLookupIn(Shapes.class, MethodHandles.lookup())
-                .findStaticVarHandle(Shapes.class, "S_Max_BIT", clazz);
-            return (Vector.Shape)(privateHandle.get());
-        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
-            throw new Error(e);
+    @Param("100")
+    int INVOC_COUNT;
+
+    final IntFunction<$type$[]> fa = (vl) -> {
+      int length = arr_length * vl;
+      $type$[] arr = new $type$[length];
+      for (int i = 0; i < length; i++) {
+        arr[i] = ($type$)(2*i);
+      }
+      return arr;
+    };
+
+    final IntFunction<$type$[]> fb = (vl) -> {
+      int length = arr_length * vl;
+      $type$[] arr = new $type$[length];
+      for (int i = 0; i < length; i++) {
+        arr[i] = ($type$)(i+1);
+      }
+      return arr;
+    };
+
+    final IntFunction<$type$[]> fc = (vl) -> {
+      int length = arr_length * vl;
+      $type$[] arr = new $type$[length];
+      for (int i = 0; i < length; i++) {
+        arr[i] = ($type$)(i+5);
+      }
+      return arr;
+    };
+
+    final IntFunction<boolean[]> fm = (vl) -> {
+        int length = arr_length * vl;
+        boolean[] arr = new boolean[length];
+        for (int i = 0; i < length; i++) {
+            arr[i] = (i % 2) == 0;
         }
-    }
-
-#end[MaxBit]
-    static final IntFunction<$type$[]> fa = (vl) -> {
-      int length = arr_length * vl;
-      $type$[] arr = new $type$[length];
-      for (int i = 0; i < length; i++) {
-        arr[i] = ($type$)2*i;
-      }
-
-      return arr;
-    };
-
-    static final IntFunction<$type$[]> fb = (vl) -> {
-      int length = arr_length * vl;
-      $type$[] arr = new $type$[length];
-      for (int i = 0; i < length; i++) {
-        arr[i] = ($type$)i+1;
-      }
-
-      return arr;
-    };
-
-    static final IntFunction<$type$[]> fc = (vl) -> {
-      int length = arr_length * vl;
-      $type$[] arr = new $type$[length];
-      for (int i = 0; i < length; i++) {
-        arr[i] = ($type$)i+5;
-      }
-
-      return arr;
+        return arr;
     };
 

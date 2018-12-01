@@ -109,12 +109,13 @@ do
   do
     vectortype=${typeprefix}${Type}${bits}Vector
     vectorteststype=${typeprefix}${Type}${bits}VectorTests
+    vectorbenchtype=${typeprefix}${Type}${bits}Vector
     masktype=${typeprefix}${Type}${bits}Mask
     bitsvectortype=${typeprefix}${Bitstype}${bits}Vector
     fpvectortype=${typeprefix}${Fptype}${bits}Vector
     shape=S${bits}Bit
     Shape=S_${bits}_BIT
-    bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dvectorteststype=$vectorteststype -Dmasktype=$masktype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
+    bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dvectorteststype=$vectorteststype -Dvectorbenchtype=$vectorbenchtype -Dmasktype=$masktype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
     if [ $bits == 'Max' ]; then
       bitargs="$bitargs -KMaxBit"
     fi
@@ -122,12 +123,13 @@ do
     # Generate jtreg tests
     Log true "Generating jtreg $vectorteststype... "
     Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${TEMPLATE_FILE} > $vectorteststype.java "
+    TEST_DEST_FILE="${vectorteststype}.java"
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
       < ${TEMPLATE_FILE} \
-      > $vectorteststype.java
-    if [ VAR_OS_ENV==windows.cygwin ]; then
-      tr -d  '\r' < $vectorteststype.java > temp
-      mv temp $vectorteststype.java
+      > ${TEST_DEST_FILE}
+    if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
+      tr -d  '\r' < ${TEST_DEST_FILE} > temp
+      mv temp ${TEST_DEST_FILE}
     fi
     Log true "done\n"
 
@@ -135,12 +137,13 @@ do
     if [ $# -gt 0 ] && [ "$1" == "jmh" ]; then
       Log true "Generating jmh $vectorteststype... "
       Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${PERF_TEMPLATE_FILE} > ${vectorteststype}Perf.java "
+      PERF_DEST_FILE="${PERF_DEST}/${vectorbenchtype}.java"
       ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
         < ${PERF_TEMPLATE_FILE} \
-        > ${vectorteststype}Perf.java
-      if [ VAR_OS_ENV==windows.cygwin ]; then
-        tr -d  '\r' < ${vectorteststype}Perf.java > temp
-        mv temp ${vectorteststype}Perf.java
+        > ${PERF_DEST_FILE}
+      if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
+        tr -d  '\r' < ${PERF_DEST_FILE} > temp
+        mv temp ${PERF_DEST_FILE}
       fi
       Log true "done\n"
     fi
@@ -152,12 +155,13 @@ do
   do
     vectortype=${typeprefix}${Type}${bits}Vector
     vectorteststype=${typeprefix}${Type}${bits}VectorLoadStoreTests
+    vectorbenchtype=${typeprefix}${Type}${bits}VectorLoadStore
     masktype=${typeprefix}${Type}${bits}Mask
     bitsvectortype=${typeprefix}${Bitstype}${bits}Vector
     fpvectortype=${typeprefix}${Fptype}${bits}Vector
     shape=S${bits}Bit
     Shape=S_${bits}_BIT
-    bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dvectorteststype=$vectorteststype -Dmasktype=$masktype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
+    bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dvectorteststype=$vectorteststype -Dvectorbenchtype=$vectorbenchtype -Dmasktype=$masktype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
     if [ $bits == 'Max' ]; then
       bitargs="$bitargs -KMaxBit"
     fi
@@ -165,28 +169,17 @@ do
     # Generate
     Log true "Generating $vectorteststype... "
     Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < templates/X-LoadStoreTest.java.template > $vectorteststype.java "
+    TEST_DEST_FILE="${vectorteststype}.java"
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
       < templates/X-LoadStoreTest.java.template \
-      > $vectorteststype.java
-    if [ VAR_OS_ENV==windows.cygwin ]; then
-      tr -d  '\r' < $vectorteststype.java > temp
-      mv temp $vectorteststype.java
+      > ${TEST_DEST_FILE}
+    if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
+      tr -d  '\r' < ${TEST_DEST_FILE} > temp
+      mv temp ${TEST_DEST_FILE}
     fi
     Log true "done\n"
 
-    # Generate jmh performance tests
-    if [ $# -gt 0 ] && [ "$1" == "jmh" ]; then
-      Log true "Generating jmh $vectorteststype... "
-      Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${PERF_TEMPLATE_FILE} > ${vectorteststype}Perf.java "
-      ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
-        < ${PERF_TEMPLATE_FILE} \
-        > ${vectorteststype}Perf.java
-      if [ VAR_OS_ENV==windows.cygwin ]; then
-        tr -d  '\r' < ${vectorteststype}Perf.java > temp
-        mv temp ${vectorteststype}Perf.java
-      fi
-      Log true "done\n"
-    fi
+    # TODO: Generate jmh performance tests for LoadStore variants
   done
 
 done

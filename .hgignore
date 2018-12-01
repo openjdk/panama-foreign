@@ -14,3 +14,4 @@ NashornProfile.txt
 .*/JTreport/.*
 .*/JTwork/.*
 .*/.git/.*
+test/jdk/jdk/incubator/vector/benchmark/target/

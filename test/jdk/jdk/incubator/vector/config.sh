@@ -36,11 +36,13 @@ SPP_CLASSNAME="build.tools.spp.Spp"
 SEPARATOR=":"
 TYPEPREFIX=""
 TEMPLATE_FILE="unit_tests.template"
-PERF_TEMPLATE_FILE="perf_tests.template"
 TESTNG_JAR="${TESTNG_PLUGIN}/plugins/org.testng.source_6.13.1.r201712040515.jar"
 TESTNG_RUN_JAR="${TESTNG_PLUGIN}/plugins/org.testng_6.13.1.r201712040515.jar"
 JCOMMANDER_JAR="${TESTNG_PLUGIN}/plugins/com.beust.jcommander_1.72.0.jar"
 TEST_ITER_COUNT=100
+
+PERF_TEMPLATE_FILE="perf_tests.template"
+PERF_DEST="benchmark/src/main/java/benchmark/jdk/incubator/vector/"
 
 function Log () {
   if [ $1 == true ]; then
@@ -60,7 +62,7 @@ function LogRun () {
 # Windows uses ";", while Unix-based OSes use ":"
 uname_s=$(uname -s)
 VECTORTESTS_HOME_CP=$VECTORTESTS_HOME
-if [ VAR_OS_ENV==windows.cygwin ]; then
+if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
   VECTORTESTS_HOME_CP=$(cygpath -pw $VECTORTESTS_HOME)
 fi
 
