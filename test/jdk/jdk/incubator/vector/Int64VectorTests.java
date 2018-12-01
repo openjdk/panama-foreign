@@ -369,6 +369,16 @@ public class Int64VectorTests extends AbstractVectorTest {
        return (int) a[i];
    }
 
+   static final IntFunction<int[]> fr = (vl) -> {
+        int length = 1000 * vl;
+        return new int[length];
+    };
+
+    static final IntFunction<boolean[]> fmr = (vl) -> {
+        int length = 1000 * vl;
+        return new boolean[length];
+    };
+
     static int add(int a, int b) {
         return (int)(a + b);
     }
@@ -377,7 +387,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void addInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -395,7 +405,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -417,7 +427,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void subInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -435,7 +445,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -459,7 +469,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void mulInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -477,7 +487,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -500,7 +510,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void andInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -520,7 +530,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -544,7 +554,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void orInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -564,7 +574,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -588,7 +598,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void xorInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -608,7 +618,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -632,7 +642,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void shiftRInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -652,7 +662,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -676,7 +686,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void shiftLInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -696,7 +706,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -720,7 +730,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void aShiftRInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -740,7 +750,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -764,7 +774,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void aShiftRInt64VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -783,7 +793,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -806,7 +816,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void shiftRInt64VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -825,7 +835,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -848,7 +858,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void shiftLInt64VectorTestsShift(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -867,7 +877,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -889,7 +899,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void maxInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -909,7 +919,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void minInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -935,7 +945,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void andAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -961,7 +971,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void orAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -987,7 +997,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void xorAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1010,7 +1020,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void addAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1032,7 +1042,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void subAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1054,7 +1064,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void mulAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1076,7 +1086,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void minAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1098,7 +1108,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void maxAllInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1123,7 +1133,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "boolUnaryOpProvider")
     static void anyTrueInt64VectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
-        boolean[] r = new boolean[mask.length];
+        boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
@@ -1149,7 +1159,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "boolUnaryOpProvider")
     static void allTrueInt64VectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
-        boolean[] r = new boolean[mask.length];
+        boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
@@ -1165,7 +1175,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void withInt64VectorTests(IntFunction<int []> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1306,7 +1316,7 @@ public class Int64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
         int[] b = fb.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1326,7 +1336,8 @@ public class Int64VectorTests extends AbstractVectorTest {
                                            BiFunction<Integer,Integer,int[]> fs) {
         int[] a = fa.apply(SPECIES.length());
         int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1343,7 +1354,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void getInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1524,7 +1535,8 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void negInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1539,7 +1551,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void negMaskedInt64VectorTests(IntFunction<int[]> fa,
                                                 IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1564,7 +1576,8 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void absInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1579,7 +1592,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void absMaskedInt64VectorTests(IntFunction<int[]> fa,
                                                 IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1607,7 +1620,8 @@ public class Int64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "intUnaryOpProvider")
     static void notInt64VectorTests(IntFunction<int[]> fa) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1624,7 +1638,7 @@ public class Int64VectorTests extends AbstractVectorTest {
     static void notMaskedInt64VectorTests(IntFunction<int[]> fa,
                                                 IntFunction<boolean[]> fm) {
         int[] a = fa.apply(SPECIES.length());
-        int[] r = new int[a.length];
+        int[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Integer, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 

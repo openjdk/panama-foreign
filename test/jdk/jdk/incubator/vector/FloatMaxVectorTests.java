@@ -494,6 +494,16 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
        return (float) a[i];
    }
 
+   static final IntFunction<float[]> fr = (vl) -> {
+        int length = 1000 * vl;
+        return new float[length];
+    };
+
+    static final IntFunction<boolean[]> fmr = (vl) -> {
+        int length = 1000 * vl;
+        return new boolean[length];
+    };
+
     static float add(float a, float b) {
         return (float)(a + b);
     }
@@ -502,7 +512,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void addFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -520,7 +530,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -542,7 +552,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void subFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -560,7 +570,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -583,7 +593,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void divFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -603,7 +613,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -626,7 +636,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void mulFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -644,7 +654,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -684,7 +694,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void maxFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -704,7 +714,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void minFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -733,7 +743,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void addAllFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -755,7 +765,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void subAllFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -777,7 +787,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void mulAllFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -799,7 +809,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void minAllFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -821,7 +831,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void maxAllFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -840,7 +850,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void withFloatMaxVectorTests(IntFunction<float []> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -981,7 +991,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1001,7 +1011,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
                                            BiFunction<Integer,Integer,int[]> fs) {
         float[] a = fa.apply(SPECIES.length());
         int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1018,7 +1029,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void getFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1182,7 +1193,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void sinFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1205,7 +1217,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void expFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1228,7 +1241,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void log1pFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1251,7 +1265,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void logFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1274,7 +1289,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void log10FloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1297,7 +1313,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void expm1FloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1320,7 +1337,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void cosFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1343,7 +1361,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void tanFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1366,7 +1385,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void sinhFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1389,7 +1409,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void coshFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1412,7 +1433,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void tanhFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1435,7 +1457,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void asinFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1458,7 +1481,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void acosFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1481,7 +1505,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void atanFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1504,7 +1529,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void cbrtFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1528,7 +1554,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void hypotFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1554,7 +1581,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void powFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1580,7 +1608,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void atan2FloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1604,7 +1633,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] c = fc.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1625,7 +1654,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         float[] a = fa.apply(SPECIES.length());
         float[] b = fb.apply(SPECIES.length());
         float[] c = fc.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1649,7 +1678,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void negFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1664,7 +1694,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void negMaskedFloatMaxVectorTests(IntFunction<float[]> fa,
                                                 IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1689,7 +1719,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void absFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1704,7 +1735,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void absMaskedFloatMaxVectorTests(IntFunction<float[]> fa,
                                                 IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1735,7 +1766,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "floatUnaryOpProvider")
     static void sqrtFloatMaxVectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1752,7 +1784,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static void sqrtMaskedFloatMaxVectorTests(IntFunction<float[]> fa,
                                                 IntFunction<boolean[]> fm) {
         float[] a = fa.apply(SPECIES.length());
-        float[] r = new float[a.length];
+        float[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 

@@ -385,6 +385,16 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
        return (short) a[i];
    }
 
+   static final IntFunction<short[]> fr = (vl) -> {
+        int length = 1000 * vl;
+        return new short[length];
+    };
+
+    static final IntFunction<boolean[]> fmr = (vl) -> {
+        int length = 1000 * vl;
+        return new boolean[length];
+    };
+
     static short add(short a, short b) {
         return (short)(a + b);
     }
@@ -393,7 +403,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void addShortMaxVectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -411,7 +421,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -433,7 +443,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void subShortMaxVectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -451,7 +461,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -475,7 +485,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void mulShortMaxVectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -493,7 +503,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -516,7 +526,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void andShortMaxVectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -536,7 +546,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -560,7 +570,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void orShortMaxVectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -580,7 +590,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -604,7 +614,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void xorShortMaxVectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -624,7 +634,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -654,7 +664,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void aShiftRShortMaxVectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -673,7 +683,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -696,7 +706,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void shiftRShortMaxVectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -715,7 +725,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -738,7 +748,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void shiftLShortMaxVectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -757,7 +767,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -779,7 +789,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void maxShortMaxVectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -799,7 +809,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void minShortMaxVectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -825,7 +835,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void andAllShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -851,7 +861,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void orAllShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -877,7 +887,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void xorAllShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -900,7 +910,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void addAllShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -922,7 +932,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void subAllShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -944,7 +954,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void mulAllShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -966,7 +976,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void minAllShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -988,7 +998,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void maxAllShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1013,7 +1023,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "boolUnaryOpProvider")
     static void anyTrueShortMaxVectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
-        boolean[] r = new boolean[mask.length];
+        boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
@@ -1039,7 +1049,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "boolUnaryOpProvider")
     static void allTrueShortMaxVectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
-        boolean[] r = new boolean[mask.length];
+        boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
@@ -1055,7 +1065,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void withShortMaxVectorTests(IntFunction<short []> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1196,7 +1206,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1216,7 +1226,8 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                                            BiFunction<Integer,Integer,int[]> fs) {
         short[] a = fa.apply(SPECIES.length());
         int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1233,7 +1244,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void getShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1414,7 +1425,8 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void negShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1429,7 +1441,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void negMaskedShortMaxVectorTests(IntFunction<short[]> fa,
                                                 IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1454,7 +1466,8 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void absShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1469,7 +1482,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void absMaskedShortMaxVectorTests(IntFunction<short[]> fa,
                                                 IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1497,7 +1510,8 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void notShortMaxVectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1514,7 +1528,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void notMaskedShortMaxVectorTests(IntFunction<short[]> fa,
                                                 IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 

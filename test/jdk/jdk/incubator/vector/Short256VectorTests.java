@@ -369,6 +369,16 @@ public class Short256VectorTests extends AbstractVectorTest {
        return (short) a[i];
    }
 
+   static final IntFunction<short[]> fr = (vl) -> {
+        int length = 1000 * vl;
+        return new short[length];
+    };
+
+    static final IntFunction<boolean[]> fmr = (vl) -> {
+        int length = 1000 * vl;
+        return new boolean[length];
+    };
+
     static short add(short a, short b) {
         return (short)(a + b);
     }
@@ -377,7 +387,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void addShort256VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -395,7 +405,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -417,7 +427,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void subShort256VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -435,7 +445,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -459,7 +469,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void mulShort256VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -477,7 +487,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -500,7 +510,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void andShort256VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -520,7 +530,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -544,7 +554,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void orShort256VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -564,7 +574,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -588,7 +598,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void xorShort256VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -608,7 +618,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -638,7 +648,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void aShiftRShort256VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -657,7 +667,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -680,7 +690,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void shiftRShort256VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -699,7 +709,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -722,7 +732,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void shiftLShort256VectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -741,7 +751,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -763,7 +773,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void maxShort256VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -783,7 +793,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void minShort256VectorTests(IntFunction<short[]> fa, IntFunction<short[]> fb) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -809,7 +819,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void andAllShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -835,7 +845,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void orAllShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -861,7 +871,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void xorAllShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -884,7 +894,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void addAllShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -906,7 +916,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void subAllShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -928,7 +938,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void mulAllShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -950,7 +960,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void minAllShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -972,7 +982,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void maxAllShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -997,7 +1007,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "boolUnaryOpProvider")
     static void anyTrueShort256VectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
-        boolean[] r = new boolean[mask.length];
+        boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
@@ -1023,7 +1033,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "boolUnaryOpProvider")
     static void allTrueShort256VectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
-        boolean[] r = new boolean[mask.length];
+        boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
@@ -1039,7 +1049,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void withShort256VectorTests(IntFunction<short []> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1180,7 +1190,7 @@ public class Short256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1200,7 +1210,8 @@ public class Short256VectorTests extends AbstractVectorTest {
                                            BiFunction<Integer,Integer,int[]> fs) {
         short[] a = fa.apply(SPECIES.length());
         int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1217,7 +1228,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void getShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1398,7 +1409,8 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void negShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1413,7 +1425,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void negMaskedShort256VectorTests(IntFunction<short[]> fa,
                                                 IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1438,7 +1450,8 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void absShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1453,7 +1466,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void absMaskedShort256VectorTests(IntFunction<short[]> fa,
                                                 IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1481,7 +1494,8 @@ public class Short256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "shortUnaryOpProvider")
     static void notShort256VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1498,7 +1512,7 @@ public class Short256VectorTests extends AbstractVectorTest {
     static void notMaskedShort256VectorTests(IntFunction<short[]> fa,
                                                 IntFunction<boolean[]> fm) {
         short[] a = fa.apply(SPECIES.length());
-        short[] r = new short[a.length];
+        short[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Short, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
