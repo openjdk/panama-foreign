@@ -494,6 +494,16 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
        return (double) a[i];
    }
 
+   static final IntFunction<double[]> fr = (vl) -> {
+        int length = 1000 * vl;
+        return new double[length];
+    };
+
+    static final IntFunction<boolean[]> fmr = (vl) -> {
+        int length = 1000 * vl;
+        return new boolean[length];
+    };
+
     static double add(double a, double b) {
         return (double)(a + b);
     }
@@ -502,7 +512,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void addDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -520,7 +530,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -542,7 +552,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void subDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -560,7 +570,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -583,7 +593,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void divDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -603,7 +613,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -626,7 +636,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void mulDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -644,7 +654,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -684,7 +694,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void maxDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -704,7 +714,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void minDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -733,7 +743,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void addAllDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -755,7 +765,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void subAllDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -777,7 +787,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void mulAllDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -799,7 +809,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void minAllDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -821,7 +831,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void maxAllDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -840,7 +850,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void withDoubleMaxVectorTests(IntFunction<double []> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -981,7 +991,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1001,7 +1011,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
                                            BiFunction<Integer,Integer,int[]> fs) {
         double[] a = fa.apply(SPECIES.length());
         int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1018,7 +1029,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void getDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1182,7 +1193,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void sinDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1205,7 +1217,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void expDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1228,7 +1241,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void log1pDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1251,7 +1265,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void logDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1274,7 +1289,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void log10DoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1297,7 +1313,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void expm1DoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1320,7 +1337,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void cosDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1343,7 +1361,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void tanDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1366,7 +1385,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void sinhDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1389,7 +1409,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void coshDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1412,7 +1433,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void tanhDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1435,7 +1457,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void asinDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1458,7 +1481,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void acosDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1481,7 +1505,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void atanDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1504,7 +1529,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void cbrtDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1528,7 +1554,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void hypotDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1554,7 +1581,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void powDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1580,7 +1608,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void atan2DoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1604,7 +1633,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] c = fc.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1625,7 +1654,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] c = fc.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1649,7 +1678,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void negDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1664,7 +1694,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void negMaskedDoubleMaxVectorTests(IntFunction<double[]> fa,
                                                 IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1689,7 +1719,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void absDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1704,7 +1735,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void absMaskedDoubleMaxVectorTests(IntFunction<double[]> fa,
                                                 IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1735,7 +1766,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void sqrtDoubleMaxVectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1752,7 +1784,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static void sqrtMaskedDoubleMaxVectorTests(IntFunction<double[]> fa,
                                                 IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 

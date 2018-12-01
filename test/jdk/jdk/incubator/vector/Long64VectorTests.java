@@ -369,6 +369,16 @@ public class Long64VectorTests extends AbstractVectorTest {
        return (long) a[i];
    }
 
+   static final IntFunction<long[]> fr = (vl) -> {
+        int length = 1000 * vl;
+        return new long[length];
+    };
+
+    static final IntFunction<boolean[]> fmr = (vl) -> {
+        int length = 1000 * vl;
+        return new boolean[length];
+    };
+
     static long add(long a, long b) {
         return (long)(a + b);
     }
@@ -377,7 +387,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void addLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -395,7 +405,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -417,7 +427,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void subLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -435,7 +445,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -459,7 +469,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void mulLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -477,7 +487,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -500,7 +510,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void andLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -520,7 +530,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -544,7 +554,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void orLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -564,7 +574,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -588,7 +598,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void xorLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -608,7 +618,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -632,7 +642,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void shiftRLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -652,7 +662,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -676,7 +686,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void shiftLLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -696,7 +706,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -720,7 +730,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void aShiftRLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -740,7 +750,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -764,7 +774,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void aShiftRLong64VectorTestsShift(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -783,7 +793,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -806,7 +816,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void shiftRLong64VectorTestsShift(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -825,7 +835,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -848,7 +858,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void shiftLLong64VectorTestsShift(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -867,7 +877,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -889,7 +899,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void maxLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -909,7 +919,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void minLong64VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -935,7 +945,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void andAllLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -961,7 +971,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void orAllLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -987,7 +997,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void xorAllLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1010,7 +1020,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void addAllLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1032,7 +1042,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void subAllLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1054,7 +1064,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void mulAllLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1076,7 +1086,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void minAllLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1098,7 +1108,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void maxAllLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1123,7 +1133,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "boolUnaryOpProvider")
     static void anyTrueLong64VectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
-        boolean[] r = new boolean[mask.length];
+        boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
@@ -1149,7 +1159,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "boolUnaryOpProvider")
     static void allTrueLong64VectorTests(IntFunction<boolean[]> fm) {
         boolean[] mask = fm.apply(SPECIES.length());
-        boolean[] r = new boolean[mask.length];
+        boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
@@ -1165,7 +1175,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void withLong64VectorTests(IntFunction<long []> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1306,7 +1316,7 @@ public class Long64VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1326,7 +1336,8 @@ public class Long64VectorTests extends AbstractVectorTest {
                                            BiFunction<Integer,Integer,int[]> fs) {
         long[] a = fa.apply(SPECIES.length());
         int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1343,7 +1354,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void getLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1524,7 +1535,8 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void negLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1539,7 +1551,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void negMaskedLong64VectorTests(IntFunction<long[]> fa,
                                                 IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1564,7 +1576,8 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void absLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1579,7 +1592,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void absMaskedLong64VectorTests(IntFunction<long[]> fa,
                                                 IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1607,7 +1620,8 @@ public class Long64VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "longUnaryOpProvider")
     static void notLong64VectorTests(IntFunction<long[]> fa) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1624,7 +1638,7 @@ public class Long64VectorTests extends AbstractVectorTest {
     static void notMaskedLong64VectorTests(IntFunction<long[]> fa,
                                                 IntFunction<boolean[]> fm) {
         long[] a = fa.apply(SPECIES.length());
-        long[] r = new long[a.length];
+        long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 

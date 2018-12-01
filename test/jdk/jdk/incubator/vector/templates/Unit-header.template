@@ -545,3 +545,13 @@ public class $vectorteststype$ extends AbstractVectorTest {
        return ($type$) a[i];
    }
 
+   static final IntFunction<$type$[]> fr = (vl) -> {
+        int length = 1000 * vl;
+        return new $type$[length];
+    };
+
+    static final IntFunction<boolean[]> fmr = (vl) -> {
+        int length = 1000 * vl;
+        return new boolean[length];
+    };
+

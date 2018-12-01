@@ -21,71 +21,77 @@
  * questions.
  */
 
+package benchmark.jdk.incubator.vector;
 
 import jdk.incubator.vector.Shapes;
 import jdk.incubator.vector.Vector;
-import jdk.incubator.vector.IntVector;
+import jdk.incubator.vector.$Type$Vector;
 #if[MaxBit]
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 #end[MaxBit]
 
-import org.openjdk.jmh.annotations.Benchmark;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.IntFunction;
 
-public class $vectorteststype$Perf {
+import org.openjdk.jmh.annotations.*;
+
+@BenchmarkMode(Mode.Throughput)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@State(Scope.Benchmark)
+@Warmup(iterations = 3, time = 1)
+@Measurement(iterations = 5, time = 1)
 #if[MaxBit]
-    static final Vector.Shape S_Max_BIT = getMaxBit();
-
-    static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
-                $Type$Vector.species(S_Max_BIT);
+@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector", "--add-opens=jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED"})
 #else[MaxBit]
+@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
+#end[MaxBit]
+public class $vectorbenchtype$ extends AbstractVectorBenchmark {
     static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
+#if[MaxBit]
+                $Type$Vector.species(getMaxBitShape());
+#else[MaxBit]
                 $Type$Vector.species(Shapes.S_$bits$_BIT);
 #end[MaxBit]
 
-    static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
-    static final int arr_length = Integer.getInteger("jdk.incubator.vector.test.array-length", 1000);
+    static final int INVOC_COUNT = 1; // get rid of outer loop
 
-#if[MaxBit]
-    static Vector.Shape getMaxBit() {
-        try {
-            Class<?> clazz = Class.forName("jdk.incubator.vector.Shapes$SMaxBit");
-            VarHandle privateHandle = MethodHandles.privateLookupIn(Shapes.class, MethodHandles.lookup())
-                .findStaticVarHandle(Shapes.class, "S_Max_BIT", clazz);
-            return (Vector.Shape)(privateHandle.get());
-        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
-            throw new Error(e);
+    @Param("1024")
+    int size;
+
+    $type$[] fill(IntFunction<$Wideboxtype$> f) {
+        $type$[] array = new $type$[size];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = f.apply(i);
         }
+        return array;
     }
 
-#end[MaxBit]
-    static final IntFunction<$type$[]> fa = (vl) -> {
-      int length = arr_length * vl;
-      $type$[] arr = new $type$[length];
-      for (int i = 0; i < length; i++) {
-        arr[i] = ($type$)2*i;
-      }
+    $type$[] a, b, c, r;
+    boolean[] m, rm;
+    int[] s;
 
-      return arr;
-    };
+    @Setup
+    public void init() {
+        size += size % SPECIES.length(); // FIXME: add post-loops
 
-    static final IntFunction<$type$[]> fb = (vl) -> {
-      int length = arr_length * vl;
-      $type$[] arr = new $type$[length];
-      for (int i = 0; i < length; i++) {
-        arr[i] = ($type$)i+1;
-      }
+        a = fill(i -> ($type$)(2*i));
+        b = fill(i -> ($type$)(i+1));
+        c = fill(i -> ($type$)(i+5));
+        r = fill(i -> ($type$)0);
 
-      return arr;
-    };
+        m = fillMask(size, i -> (i % 2) == 0);
+        rm = fillMask(size, i -> false);
 
-    static final IntFunction<$type$[]> fc = (vl) -> {
-      int length = arr_length * vl;
-      $type$[] arr = new $type$[length];
-      for (int i = 0; i < length; i++) {
-        arr[i] = ($type$)i+5;
-      }
+        s = fillInt(size, i -> RANDOM.nextInt(SPECIES.length()));
+    }
 
-      return arr;
-    };
+    final IntFunction<$type$[]> fa = vl -> a;
+    final IntFunction<$type$[]> fb = vl -> b;
+    final IntFunction<$type$[]> fc = vl -> c;
+    final IntFunction<$type$[]> fr = vl -> r;
+    final IntFunction<boolean[]> fm = vl -> m;
+    final IntFunction<boolean[]> fmr = vl -> rm;
+    final BiFunction<Integer,Integer,int[]> fs = (i,j) -> s;
 

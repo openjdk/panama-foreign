@@ -478,6 +478,16 @@ public class Double256VectorTests extends AbstractVectorTest {
        return (double) a[i];
    }
 
+   static final IntFunction<double[]> fr = (vl) -> {
+        int length = 1000 * vl;
+        return new double[length];
+    };
+
+    static final IntFunction<boolean[]> fmr = (vl) -> {
+        int length = 1000 * vl;
+        return new boolean[length];
+    };
+
     static double add(double a, double b) {
         return (double)(a + b);
     }
@@ -486,7 +496,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void addDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -504,7 +514,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -526,7 +536,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void subDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -544,7 +554,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -567,7 +577,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void divDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -587,7 +597,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -610,7 +620,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void mulDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -628,7 +638,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -668,7 +678,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void maxDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -688,7 +698,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void minDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -717,7 +727,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void addAllDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -739,7 +749,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void subAllDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -761,7 +771,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void mulAllDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -783,7 +793,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void minAllDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -805,7 +815,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void maxAllDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -824,7 +834,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void withDouble256VectorTests(IntFunction<double []> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -965,7 +975,7 @@ public class Double256VectorTests extends AbstractVectorTest {
                                           IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -985,7 +995,8 @@ public class Double256VectorTests extends AbstractVectorTest {
                                            BiFunction<Integer,Integer,int[]> fs) {
         double[] a = fa.apply(SPECIES.length());
         int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1002,7 +1013,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void getDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1166,7 +1177,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void sinDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1189,7 +1201,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void expDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1212,7 +1225,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void log1pDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1235,7 +1249,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void logDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1258,7 +1273,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void log10Double256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1281,7 +1297,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void expm1Double256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1304,7 +1321,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void cosDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1327,7 +1345,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void tanDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1350,7 +1369,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void sinhDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1373,7 +1393,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void coshDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1396,7 +1417,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void tanhDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1419,7 +1441,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void asinDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1442,7 +1465,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void acosDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1465,7 +1489,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void atanDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1488,7 +1513,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void cbrtDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1512,7 +1538,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void hypotDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1538,7 +1565,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void powDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1564,7 +1592,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void atan2Double256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1588,7 +1617,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] c = fc.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1609,7 +1638,7 @@ public class Double256VectorTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] b = fb.apply(SPECIES.length());
         double[] c = fc.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1633,7 +1662,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void negDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1648,7 +1678,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void negMaskedDouble256VectorTests(IntFunction<double[]> fa,
                                                 IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1673,7 +1703,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void absDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1688,7 +1719,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void absMaskedDouble256VectorTests(IntFunction<double[]> fa,
                                                 IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
@@ -1719,7 +1750,8 @@ public class Double256VectorTests extends AbstractVectorTest {
     @Test(dataProvider = "doubleUnaryOpProvider")
     static void sqrtDouble256VectorTests(IntFunction<double[]> fa) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
+
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
@@ -1736,7 +1768,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void sqrtMaskedDouble256VectorTests(IntFunction<double[]> fa,
                                                 IntFunction<boolean[]> fm) {
         double[] a = fa.apply(SPECIES.length());
-        double[] r = new double[a.length];
+        double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 

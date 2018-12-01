@@ -7,8 +7,7 @@ Pre-Setup:
 
 Setup:
 
-1. Run bash gen-tests.sh from this directory. This will generate unit tests source files from the templates to each vector shape and type.
- - Running "gen-tests.sh jmh" will also generate JMH performance tests source files.
+1. Run bash gen-tests.sh from this directory. This will generate unit tests and microbenchmarks source files from the templates to each vector shape and type.
 
 2. Run jtreg. Example:
 jtreg -ea -esa -avm -va -nr *VectorTests.java

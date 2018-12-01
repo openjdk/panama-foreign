@@ -1,5 +1,5 @@
         $type$[] a = fa.apply(SPECIES.length());
-        $type$[] r = new $type$[a.length];
+        $type$[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
         Vector.Mask<$Wideboxtype$, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
 
