@@ -33,7 +33,7 @@
  *
  */
 
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 
 #if[Byte]
@@ -74,27 +74,20 @@ import java.util.stream.Stream;
 public class $vectorteststype$ extends AbstractVectorTest {
 
 #if[MaxBit]
-    static final Vector.Shape S_Max_BIT = getMaxBit();
+    static final Shape S_Max_BIT = getMaxBit();
 
-    static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
+    static final $abstractvectortype$.$Type$Species SPECIES =
                 $Type$Vector.species(S_Max_BIT);
 #else[MaxBit]
-    static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
-                $Type$Vector.species(Shapes.S_$bits$_BIT);
+    static final $abstractvectortype$.$Type$Species SPECIES =
+                $Type$Vector.species(Shape.S_$bits$_BIT);
 #end[MaxBit]
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 100);
 
 #if[MaxBit]
-    static Vector.Shape getMaxBit() {
-        try {
-            Class<?> clazz = Class.forName("jdk.incubator.vector.Shapes$SMaxBit");
-            VarHandle privateHandle = MethodHandles.privateLookupIn(Shapes.class, MethodHandles.lookup())
-                .findStaticVarHandle(Shapes.class, "S_Max_BIT", clazz);
-            return (Vector.Shape)(privateHandle.get());
-        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
-            throw new Error(e);
-        }
+    static Shape getMaxBit() {
+        return Shape.S_Max_BIT;
     }
 
 #end[MaxBit]

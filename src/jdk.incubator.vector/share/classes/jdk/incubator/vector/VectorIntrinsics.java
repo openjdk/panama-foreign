@@ -122,7 +122,7 @@ import java.util.function.*;
 
     @HotSpotIntrinsicCandidate
     static
-    <V extends Vector<?,?>>
+    <V extends Vector<?>>
     long reductionCoerced(int oprId, Class<?> vectorClass, Class<?> elementType, int length,
                           V v,
                           Function<V,Long> defaultImpl) {
@@ -137,7 +137,7 @@ import java.util.function.*;
 
     @HotSpotIntrinsicCandidate
     static
-    <V extends Vector<?,?>>
+    <V extends Vector<?>>
     long extract(Class<?> vectorClass, Class<?> elementType, int vlen,
                  V vec, int ix,
                  VecExtractOp<V> defaultImpl) {
@@ -151,7 +151,7 @@ import java.util.function.*;
     }
 
     @HotSpotIntrinsicCandidate
-    static <V extends Vector<?,?>>
+    static <V extends Vector<?>>
     V insert(Class<V> vectorClass, Class<?> elementType, int vlen,
                         V vec, int ix, long val,
                         VecInsertOp<V> defaultImpl) {
@@ -215,13 +215,13 @@ import java.util.function.*;
         return defaultImpl.load(container, index);
     }
 
-    interface StoreVectorOperation<C, V extends Vector<?,?>> {
+    interface StoreVectorOperation<C, V extends Vector<?>> {
         void store(C container, int index, V v);
     }
 
     @HotSpotIntrinsicCandidate
     static
-    <C, V extends Vector<?,?>>
+    <C, V extends Vector<?>>
     void store(Class<?> vectorClass, Class<?> elementType, int length,
                Object base, long offset,    // Unsafe addressing
                V v,
@@ -249,9 +249,9 @@ import java.util.function.*;
     }
 
     @HotSpotIntrinsicCandidate
-    static <V extends Vector<E,S>,
-            M extends Vector.Mask<E,S>,
-            S extends Vector.Shape, E>
+    static <V extends Vector<E>,
+            M extends Vector.Mask<E>,
+            E>
     M compare(int cond, Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int length,
               V v1, V v2,
               VectorCompareOp<V,M> defaultImpl) {
@@ -260,51 +260,51 @@ import java.util.function.*;
 
     /* ============================================================================ */
 
-    interface VectorRearrangeOp<V extends Vector<E,S>,
-                            Sh extends Vector.Shuffle<E,S>,
-                            S extends Vector.Shape, E> {
+    interface VectorRearrangeOp<V extends Vector<E>,
+            Sh extends Vector.Shuffle<E>,
+            E> {
         V apply(V v1, Sh shuffle);
     }
 
     @HotSpotIntrinsicCandidate
     static
-    <V extends Vector<E,S>,
-     Sh extends Vector.Shuffle<E,S>,
-     S extends Vector.Shape, E>
+    <V extends Vector<E>,
+            Sh extends Vector.Shuffle<E>,
+            E>
     V rearrangeOp(Class<V> vectorClass, Class<Sh> shuffleClass, Class<?> elementType, int vlen,
             V v1, Sh sh,
-            VectorRearrangeOp<V,Sh,S,E> defaultImpl) {
+            VectorRearrangeOp<V,Sh, E> defaultImpl) {
         return defaultImpl.apply(v1, sh);
     }
 
     /* ============================================================================ */
 
-    interface VectorBlendOp<V extends Vector<E,S>,
-                            M extends Vector.Mask<E,S>,
-                            S extends Vector.Shape, E> {
+    interface VectorBlendOp<V extends Vector<E>,
+            M extends Vector.Mask<E>,
+            E> {
         V apply(V v1, V v2, M mask);
     }
 
     @HotSpotIntrinsicCandidate
     static
-    <V extends Vector<E,S>,
-     M extends Vector.Mask<E,S>,
-     S extends Vector.Shape, E>
+    <V extends Vector<E>,
+     M extends Vector.Mask<E>,
+     E>
     V blend(Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int length,
             V v1, V v2, M m,
-            VectorBlendOp<V,M,S,E> defaultImpl) {
+            VectorBlendOp<V,M, E> defaultImpl) {
         return defaultImpl.apply(v1, v2, m);
     }
 
     /* ============================================================================ */
 
-    interface VectorBroadcastIntOp<V extends Vector<?,?>> {
+    interface VectorBroadcastIntOp<V extends Vector<?>> {
         V apply(V v, int i);
     }
 
     @HotSpotIntrinsicCandidate
     static
-    <V extends Vector<?,?>>
+    <V extends Vector<?>>
     V broadcastInt(int opr, Class<V> vectorClass, Class<?> elementType, int length,
                    V v, int i,
                    VectorBroadcastIntOp<V> defaultImpl) {

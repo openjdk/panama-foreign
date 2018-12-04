@@ -27,15 +27,15 @@
  */
 
 import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class AddTest {
-    static final FloatVector.FloatSpecies<Shapes.S256Bit> SPECIES =
-            FloatVector.species(Shapes.S_256_BIT);
+    static final FloatVector.FloatSpecies SPECIES =
+            FloatVector.species(Shape.S_256_BIT);
 
     static final int SIZE = 1024;
     static float[] a = new float[SIZE];
@@ -51,8 +51,8 @@ public class AddTest {
 
     static void workload() {
         for (int i = 0; i < a.length; i += SPECIES.length()) {
-            FloatVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i);
-            FloatVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i);
+            FloatVector av = SPECIES.fromArray(a, i);
+            FloatVector bv = SPECIES.fromArray(b, i);
             av.add(bv).intoArray(c, i);
         }
     }
@@ -61,8 +61,8 @@ public class AddTest {
 
     static void workloadIndexMapped() {
         for (int i = 0; i < a.length; i += SPECIES.length()) {
-            FloatVector<Shapes.S256Bit> av = SPECIES.fromArray(a, i, IDENTITY_INDEX_MAPPING, 0);
-            FloatVector<Shapes.S256Bit> bv = SPECIES.fromArray(b, i, IDENTITY_INDEX_MAPPING, 0);
+            FloatVector av = SPECIES.fromArray(a, i, IDENTITY_INDEX_MAPPING, 0);
+            FloatVector bv = SPECIES.fromArray(b, i, IDENTITY_INDEX_MAPPING, 0);
             av.add(bv).intoArray(c, i, IDENTITY_INDEX_MAPPING, 0);
         }
     }

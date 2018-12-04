@@ -23,7 +23,7 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.$Type$Vector;
 #if[MaxBit]

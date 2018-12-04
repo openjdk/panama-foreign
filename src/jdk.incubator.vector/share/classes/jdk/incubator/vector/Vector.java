@@ -66,9 +66,9 @@ import java.util.function.IntUnaryOperator;
  * on values of integral elements types, or transcendental operations on values
  * of floating point element types).
  * There are six sub-classes of Vector corresponding to the supported set
- * of element types, {@link ByteVector<S>}, {@link ShortVector<S>},
- * {@link IntVector<S>} {@link LongVector<S>}, {@link FloatVector<S>}, and
- * {@link DoubleVector<S>}.
+ * of element types, {@link ByteVector}, {@link ShortVector},
+ * {@link IntVector} {@link LongVector}, {@link FloatVector}, and
+ * {@link DoubleVector}.
  * <p>
  * Vector values, instances of Vector, are created from a special kind of
  * factory called a {@link Species}.  A Species has an
@@ -174,7 +174,7 @@ import java.util.function.IntUnaryOperator;
  * for (int i = 0; i < a.length(); i++) {
  *     ar[i] = scalar_binary_test_op(a.get(i), b.get(i));
  * }
- * Mask<E, S> r = a.species().maskFromArray(ar, 0);
+ * Mask<E> r = a.species().maskFromArray(ar, 0);
  * }</pre>
  *
  * Unless otherwise specified the two input vectors and result mask will have
@@ -249,9 +249,8 @@ import java.util.function.IntUnaryOperator;
  * {@code Vector} may have unpredictable results and should be avoided.
  *
  * @param <E> the boxed element type of elements in this vector
- * @param <S> the type of shape of this vector
  */
-public abstract class Vector<E, S extends Vector.Shape> {
+public abstract class Vector<E> {
 
     Vector() {}
 
@@ -260,7 +259,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      *
      * @return the species of this vector
      */
-    public abstract Species<E, S> species();
+    public abstract Species<E> species();
 
     /**
      * Returns the primitive element type of this vector.
@@ -281,7 +280,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      *
      * @return the shape of this vector
      */
-    public S shape() { return species().shape(); }
+    public Shape shape() { return species().shape(); }
 
     /**
      * Returns the number of vector lanes (the length).
@@ -308,7 +307,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param v the input vector
      * @return the result of adding this vector to the input vector
      */
-    public abstract Vector<E, S> add(Vector<E, S> v);
+    public abstract Vector<E> add(Vector<E> v);
 
     /**
      * Adds this vector to an input vector, selecting lane elements
@@ -321,7 +320,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param m the mask controlling lane selection
      * @return the result of adding this vector to the given vector
      */
-    public abstract Vector<E, S> add(Vector<E, S> v, Mask<E, S> m);
+    public abstract Vector<E> add(Vector<E> v, Mask<E> m);
 
     /**
      * Subtracts an input vector from this vector.
@@ -332,7 +331,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param v the input vector
      * @return the result of subtracting the input vector from this vector
      */
-    public abstract Vector<E, S> sub(Vector<E, S> v);
+    public abstract Vector<E> sub(Vector<E> v);
 
     /**
      * Subtracts an input vector from this vector, selecting lane elements
@@ -345,7 +344,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param m the mask controlling lane selection
      * @return the result of subtracting the input vector from this vector
      */
-    public abstract Vector<E, S> sub(Vector<E, S> v, Mask<E, S> m);
+    public abstract Vector<E> sub(Vector<E> v, Mask<E> m);
 
     /**
      * Multiplies this vector with an input vector.
@@ -356,7 +355,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param v the input vector
      * @return the result of multiplying this vector with the input vector
      */
-    public abstract Vector<E, S> mul(Vector<E, S> v);
+    public abstract Vector<E> mul(Vector<E> v);
 
     /**
      * Multiplies this vector with an input vector, selecting lane elements
@@ -369,7 +368,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param m the mask controlling lane selection
      * @return the result of multiplying this vector with the input vector
      */
-    public abstract Vector<E, S> mul(Vector<E, S> v, Mask<E, S> m);
+    public abstract Vector<E> mul(Vector<E> v, Mask<E> m);
 
     /**
      * Negates this vector.
@@ -379,7 +378,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      *
      * @return the negation this vector
      */
-    public abstract Vector<E, S> neg();
+    public abstract Vector<E> neg();
 
     /**
      * Negates this vector, selecting lane elements controlled by a mask.
@@ -390,7 +389,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param m the mask controlling lane selection
      * @return the negation this vector
      */
-    public abstract Vector<E, S> neg(Mask<E, S> m);
+    public abstract Vector<E> neg(Mask<E> m);
 
     // Maths from java.math
 
@@ -402,7 +401,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      *
      * @return the modulus this vector
      */
-    public abstract Vector<E, S> abs();
+    public abstract Vector<E> abs();
 
     /**
      * Returns the modulus of this vector, selecting lane elements controlled by
@@ -414,7 +413,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param m the mask controlling lane selection
      * @return the modulus this vector
      */
-    public abstract Vector<E, S> abs(Mask<E, S> m);
+    public abstract Vector<E> abs(Mask<E> m);
 
     /**
      * Returns the minimum of this vector and an input vector.
@@ -425,7 +424,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param v the input vector
      * @return the minimum of this vector and the input vector
      */
-    public abstract Vector<E, S> min(Vector<E, S> v);
+    public abstract Vector<E> min(Vector<E> v);
 
     /**
      * Returns the minimum of this vector and an input vector,
@@ -438,7 +437,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param m the mask controlling lane selection
      * @return the minimum of this vector and the input vector
      */
-    public abstract Vector<E, S> min(Vector<E, S> v, Mask<E, S> m);
+    public abstract Vector<E> min(Vector<E> v, Mask<E> m);
 
     /**
      * Returns the maximum of this vector and an input vector.
@@ -449,7 +448,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param v the input vector
      * @return the maximum of this vector and the input vector
      */
-    public abstract Vector<E, S> max(Vector<E, S> v);
+    public abstract Vector<E> max(Vector<E> v);
 
     /**
      * Returns the maximum of this vector and an input vector,
@@ -462,7 +461,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param m the mask controlling lane selection
      * @return the maximum of this vector and the input vector
      */
-    public abstract Vector<E, S> max(Vector<E, S> v, Mask<E, S> m);
+    public abstract Vector<E> max(Vector<E> v, Mask<E> m);
 
     // Comparisons
 
@@ -476,7 +475,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the result mask of testing if this vector is equal to the input
      * vector
      */
-    public abstract Mask<E, S> equal(Vector<E, S> v);
+    public abstract Mask<E> equal(Vector<E> v);
 
     /**
      * Tests if this vector is not equal to an input vector.
@@ -488,7 +487,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the result mask of testing if this vector is not equal to the
      * input vector
      */
-    public abstract Mask<E, S> notEqual(Vector<E, S> v);
+    public abstract Mask<E> notEqual(Vector<E> v);
 
     /**
      * Tests if this vector is less than an input vector.
@@ -500,7 +499,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the mask result of testing if this vector is less than the input
      * vector
      */
-    public abstract Mask<E, S> lessThan(Vector<E, S> v);
+    public abstract Mask<E> lessThan(Vector<E> v);
 
     /**
      * Tests if this vector is less or equal to an input vector.
@@ -512,7 +511,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the mask result of testing if this vector is less than or equal
      * to the input vector
      */
-    public abstract Mask<E, S> lessThanEq(Vector<E, S> v);
+    public abstract Mask<E> lessThanEq(Vector<E> v);
 
     /**
      * Tests if this vector is greater than an input vector.
@@ -524,7 +523,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the mask result of testing if this vector is greater than the
      * input vector
      */
-    public abstract Mask<E, S> greaterThan(Vector<E, S> v);
+    public abstract Mask<E> greaterThan(Vector<E> v);
 
     /**
      * Tests if this vector is greater than or equal to an input vector.
@@ -536,7 +535,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the mask result of testing if this vector is greater than or
      * equal to the given vector
      */
-    public abstract Mask<E, S> greaterThanEq(Vector<E, S> v);
+    public abstract Mask<E> greaterThanEq(Vector<E> v);
 
     // Elemental shifting
 
@@ -554,7 +553,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the result of rotating left lane elements of this vector by the
      * given number of lanes
      */
-    public abstract Vector<E, S> rotateEL(int i);
+    public abstract Vector<E> rotateEL(int i);
 
     /**
      * Rotates right the lane elements of this vector by the given number of
@@ -568,7 +567,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the result of rotating right lane elements of this vector by the
      * given number of lanes
      */
-    public abstract Vector<E, S> rotateER(int i);
+    public abstract Vector<E> rotateER(int i);
 
     /**
      * Shift left the lane elements of this vector by the given number of
@@ -584,7 +583,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * given number of lanes
      * @throws IllegalArgumentException if {@code i} is {@code < 0}.
      */
-    public abstract Vector<E, S> shiftEL(int i);
+    public abstract Vector<E> shiftEL(int i);
 
     /**
      * Shift right the lane elements of this vector by the given number of
@@ -600,7 +599,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * given number of lanes
      * @throws IllegalArgumentException if {@code i} is {@code < 0}.
      */
-    public abstract Vector<E, S> shiftER(int i);
+    public abstract Vector<E> shiftER(int i);
 
     /**
      * Blends the lane elements of this vector with those of an input vector,
@@ -617,7 +616,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the result of blending the lane elements of this vector with
      * those of an input vector
      */
-    public abstract Vector<E, S> blend(Vector<E, S> v, Mask<E, S> m);
+    public abstract Vector<E> blend(Vector<E> v, Mask<E> m);
 
     /**
      * Rearranges the lane elements of this vector and those of an input vector,
@@ -641,8 +640,8 @@ public abstract class Vector<E, S extends Vector.Shape> {
      */
     @ForceInline
     // rearrange
-    public abstract Vector<E, S> rearrange(Vector<E, S> v,
-                                           Shuffle<E, S> s, Mask<E, S> m);
+    public abstract Vector<E> rearrange(Vector<E> v,
+                                           Shuffle<E> s, Mask<E> m);
 
     /**
      * Rearranges the lane elements of this vector selecting lane indexes
@@ -658,7 +657,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @return the rearrangement of the lane elements of this vector
      */
     // rearrange
-    public abstract Vector<E, S> rearrange(Shuffle<E, S> s);
+    public abstract Vector<E> rearrange(Shuffle<E> s);
 
 
     // Conversions
@@ -681,7 +680,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      *
      * @return a shuffle representation of this vector
      */
-    public abstract Shuffle<E, S> toShuffle();
+    public abstract Shuffle<E> toShuffle();
 
     // Bitwise preserving
 
@@ -698,12 +697,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
      *
      * @param species the species
      * @param <F> the boxed element type of the species
-     * @param <T> the type of shape of the species
      * @return a vector transformed by shape and element type
      * @see Species#reshape(Vector)
      */
     @ForceInline
-    public <F, T extends Shape> Vector<F, T> reshape(Species<F, T> species) {
+    public <F> Vector<F> reshape(Species<F> species) {
         return species.reshape(this);
     }
 
@@ -724,7 +722,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @see Species#rebracket(Vector)
      */
     @ForceInline
-    public <F> Vector<F, S> rebracket(Species<F, S> species) {
+    public <F> Vector<F> rebracket(Species<F> species) {
         return species.rebracket(this);
     }
 
@@ -739,11 +737,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * }</pre>
      *
      * @param species the species
-     * @param <T> the type of shape of the species
      * @return a vector transformed by shape
      * @see Species#resize(Vector)
      */
-    public abstract <T extends Shape> Vector<E, T> resize(Species<E, T> species);
+    public abstract Vector<E> resize(Species<E> species);
 
     // Cast
 
@@ -759,12 +756,11 @@ public abstract class Vector<E, S extends Vector.Shape> {
      *
      * @param species the species
      * @param <F> the boxed element type of the species
-     * @param <T> the type of shape of the species
      * @return a vector converted by shape and element type
      * @see Species#cast(Vector)
      */
     @ForceInline
-    public <F, T extends Shape> Vector<F, T> cast(Species<F, T> species) {
+    public <F> Vector<F> cast(Species<F> species) {
         return species.cast(this);
     }
 
@@ -812,7 +808,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * is set
      * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
      */
-    public abstract void intoByteArray(byte[] a, int i, Mask<E, S> m);
+    public abstract void intoByteArray(byte[] a, int i, Mask<E> m);
 
     /**
      * Stores this vector into a {@link ByteBuffer byte buffer} starting at an
@@ -872,7 +868,47 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * is set
      * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)} bytes
      */
-    public abstract void intoByteBuffer(ByteBuffer b, int i, Mask<E, S> m);
+    public abstract void intoByteBuffer(ByteBuffer b, int i, Mask<E> m);
+
+
+    /**
+     * A {@code Shape} governs the total size, in bits, of a
+     * {@link Vector}, {@link Mask}, or {@code Shuffle}.  The shape in
+     * combination with the element type together govern the number of lanes.
+     */
+    public enum Shape {
+        S_64_BIT(64),
+        S_128_BIT(128),
+        S_256_BIT(256),
+        S_512_BIT(512),
+        S_Max_BIT(Unsafe.getUnsafe().getMaxVectorSize(byte.class) * 8);
+
+        final int bitSize;
+
+        Shape(int bitSize) {
+            this.bitSize = bitSize;
+        }
+
+        /**
+         * Returns the size, in bits, of this shape.
+         *
+         * @return the size, in bits, of this shape.
+         */
+        public int bitSize() {
+            return bitSize;
+        }
+
+        /**
+         * Return the number of lanes of a vector of this shape and whose element
+         * type is of the provided species
+         *
+         * @param s the species describing the element type
+         * @return the number of lanes
+         */
+        int length(Species<?> s) {
+            return bitSize() / s.elementSize();
+        }
+    }
 
 
     /**
@@ -880,9 +916,8 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * values of the same element type and shape.
      *
      * @param <E> the boxed element type of this species
-     * @param <S> the type of shape of this species
      */
-    public static abstract class Species<E, S extends Shape> {
+    public static abstract class Species<E> {
         Species() {}
 
         /**
@@ -907,7 +942,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @return the primitive element type
          */
-        public abstract S shape();
+        public abstract Shape shape();
 
         /**
          * Returns the mask, shuffe, or vector lanes produced by this species.
@@ -932,7 +967,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @return a zero vector
          */
-        public abstract Vector<E, S> zero();
+        public abstract Vector<E> zero();
 
         /**
          * Loads a vector from a byte array starting at an offset.
@@ -953,7 +988,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @throws IndexOutOfBoundsException if {@code i < 0} or
          * {@code i > a.length - (this.length() * this.elementSize() / Byte.SIZE)}
          */
-        public abstract Vector<E, S> fromByteArray(byte[] a, int i);
+        public abstract Vector<E> fromByteArray(byte[] a, int i);
 
         /**
          * Loads a vector from a byte array starting at an offset and using a
@@ -981,7 +1016,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * is set
          * {@code i >= a.length - (N * this.elementSize() / Byte.SIZE)}
          */
-        public abstract Vector<E, S> fromByteArray(byte[] a, int i, Mask<E, S> m);
+        public abstract Vector<E> fromByteArray(byte[] a, int i, Mask<E> m);
 
         /**
          * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
@@ -1006,7 +1041,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * {@code this.length() * this.elementSize() / Byte.SIZE} bytes
          * remaining in the byte buffer from the given offset
          */
-        public abstract Vector<E, S> fromByteBuffer(ByteBuffer b, int i);
+        public abstract Vector<E> fromByteBuffer(ByteBuffer b, int i);
 
         /**
          * Loads a vector from a {@link ByteBuffer byte buffer} starting at an
@@ -1030,7 +1065,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *     if (m.isSet(n))
          *         es[n] = eb.get(n);
          * }
-         * Vector<E, S> r = ((ESpecies<S>)this).fromArray(es, 0, m);
+         * Vector<E> r = ((ESpecies<S>)this).fromArray(es, 0, m);
          * }</pre>
          *
          * @param b the byte buffer
@@ -1042,7 +1077,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * is set
          * {@code i >= b.limit() - (N * this.elementSize() / Byte.SIZE)}
          */
-        public abstract Vector<E, S> fromByteBuffer(ByteBuffer b, int i, Mask<E, S> m);
+        public abstract Vector<E> fromByteBuffer(ByteBuffer b, int i, Mask<E> m);
 
         //Mask and shuffle constructions
 
@@ -1059,7 +1094,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * {@code boolean} value
          * @throws IndexOutOfBoundsException if {@code bits.length < this.length()}
          */
-        public abstract Mask<E, S> maskFromValues(boolean... bits);
+        public abstract Mask<E> maskFromValues(boolean... bits);
 
         /**
          * Loads a mask from a {@code boolean} array starting at an offset.
@@ -1074,21 +1109,21 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @throws IndexOutOfBoundsException if {@code i < 0}, or
          * {@code i > a.length - this.length()}
          */
-        public abstract Mask<E, S> maskFromArray(boolean[] a, int i);
+        public abstract Mask<E> maskFromArray(boolean[] a, int i);
 
         /**
          * Returns a mask where all lanes are a set.
          *
          * @return a mask where all lanes are a set
          */
-        public abstract Mask<E, S> maskAllTrue();
+        public abstract Mask<E> maskAllTrue();
 
         /**
          * Returns a mask where all lanes are unset.
          *
          * @return a mask where all lanes are unset
          */
-        public abstract Mask<E, S> maskAllFalse();
+        public abstract Mask<E> maskAllFalse();
 
         /**
          * Returns a shuffle of mapped indexes where each lane element is
@@ -1113,7 +1148,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @param f the lane index mapping function
          * @return a shuffle of mapped indexes.
          */
-        public abstract Shuffle<E, S> shuffle(IntUnaryOperator f);
+        public abstract Shuffle<E> shuffle(IntUnaryOperator f);
 
         /**
          * Returns a shuffle where each lane element is the value of its
@@ -1127,7 +1162,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @return a shuffle of lane indexes.
          */
-        public abstract Shuffle<E, S> shuffleIota();
+        public abstract Shuffle<E> shuffleIota();
 
         /**
          * Returns a shuffle where each lane element is set to a given
@@ -1144,7 +1179,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @throws IndexOutOfBoundsException if the number of int values is
          * {@code < this.length()}.
          */
-        public abstract Shuffle<E, S> shuffleFromValues(int... indexes);
+        public abstract Shuffle<E> shuffleFromValues(int... indexes);
 
         /**
          * Loads a shuffle from an {@code int} array starting at offset.
@@ -1160,7 +1195,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @throws IndexOutOfBoundsException if {@code i < 0}, or
          * {@code i > a.length - this.length()}
          */
-        public abstract Shuffle<E, S> shuffleFromArray(int[] a, int i);
+        public abstract Shuffle<E> shuffleFromArray(int[] a, int i);
 
         // Shuffle iota, 0...N
 
@@ -1199,11 +1234,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @param v the input vector
          * @param <F> the boxed element type of the vector
-         * @param <T> the type of shape of the vector
          * @return a vector transformed, by shape and element type, from an
          * input vector
          */
-        public abstract <F, T extends Shape> Vector<E, S> reshape(Vector<F, T> v);
+        public abstract <F> Vector<E> reshape(Vector<F> v);
 
         /**
          * Transforms an input vector of element type {@code F} to a vector of
@@ -1236,7 +1270,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @param <F> the boxed element type of the vector
          * @return a vector transformed, by element type, from an input vector
          */
-        public abstract <F> Vector<E, S> rebracket(Vector<F, S> v);
+        public abstract <F> Vector<E> rebracket(Vector<F> v);
 
         /**
          * Transforms an input vector of shape {@code T} to a vector of this
@@ -1260,10 +1294,9 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * }</pre>
          *
          * @param v the input vector
-         * @param <T> the type of shape of the vector
          * @return a vector transformed, by shape, from an input vector
          */
-        public abstract <T extends Shape> Vector<E, S> resize(Vector<E, T> v);
+        public abstract Vector<E> resize(Vector<E> v);
 
         /**
          * Converts an input vector of shape {@code T} and element type
@@ -1282,11 +1315,10 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @param v the input vector
          * @param <F> the boxed element type of the vector
-         * @param <T> the type of shape of the vector
          * @return a vector, converted by shape and element type, from an input
          * vector.
          */
-        public abstract <F, T extends Shape> Vector<E, S> cast(Vector<F, T> v);
+        public abstract <F> Vector<E> cast(Vector<F> v);
 
         /**
          * Converts a given mask of shape {@code T} and element type
@@ -1300,13 +1332,12 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @param m the mask
          * @param <F> the boxed element type of the mask
-         * @param <T> the type of shape of the mask
          * @return a mask, converted by shape and element type, from a given
          * mask.
          * @throws IllegalArgumentException if the mask length and this species
          * length differ
          */
-        public abstract <F, T extends Shape> Mask<E, S> cast(Mask<F, T> m);
+        public abstract <F> Mask<E> cast(Mask<F> m);
 
         /**
          * Converts a given shuffle of shape {@code T} and element type
@@ -1319,31 +1350,12 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @param s the shuffle
          * @param <F> the boxed element type of the mask
-         * @param <T> the type of shape of the mask
          * @return a shuffle, converted by shape and element type, from a given
          * shuffle.
          * @throws IllegalArgumentException if the shuffle length and this
          * species length differ
          */
-        public abstract <F, T extends Shape> Shuffle<E, S> cast(Shuffle<F, T> s);
-    }
-
-    /**
-     * A {@code Shape} governs the total size, in bits, of a
-     * {@link Vector}, {@link Mask}, or {@code Shuffle}.  The shape in
-     * combination with the element type together govern the number of lanes.
-     */
-    public static abstract class Shape {
-        Shape() {}
-
-        /**
-         * Returns the size, in bits, of this shape.
-         *
-         * @return the size, in bits, of this shape.
-         */
-        public abstract int bitSize();
-
-        public int length(Species<?, ?> s) { return bitSize() / s.elementSize(); }
+        public abstract <F> Shuffle<E> cast(Shuffle<F> s);
     }
 
     /**
@@ -1375,12 +1387,12 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * The following pseudocode expresses the behaviour of this operation category:
      *
      * <pre>{@code
-     * Mask<E, S> a = ...;
+     * Mask<E> a = ...;
      * boolean[] ar = new boolean[a.length()];
      * for (int i = 0; i < a.length(); i++) {
      *     ar[i] = boolean_unary_op(a.isSet(i));
      * }
-     * Mask<E, S> r = a.species().maskFromArray(ar, 0);
+     * Mask<E> r = a.species().maskFromArray(ar, 0);
      * }</pre>
      *
      * <li>
@@ -1393,19 +1405,18 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * The following pseudocode expresses the behaviour of this operation category:
      *
      * <pre>{@code
-     * Mask<E, S> a = ...;
-     * Mask<E, S> b = ...;
+     * Mask<E> a = ...;
+     * Mask<E> b = ...;
      * boolean[] ar = new boolean[a.length()];
      * for (int i = 0; i < a.length(); i++) {
      *     ar[i] = scalar_binary_op(a.isSet(i), b.isSet(i));
      * }
-     * Mask<E, S> r = a.species().maskFromArray(ar, 0);
+     * Mask<E> r = a.species().maskFromArray(ar, 0);
      * }</pre>
      *
      * @param <E> the boxed element type of this mask
-     * @param <S> the type of shape of this mask
      */
-    public static abstract class Mask<E, S extends Shape> {
+    public static abstract class Mask<E> {
         Mask() {}
 
         /**
@@ -1413,7 +1424,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @return the species of this mask
          */
-        public abstract Species<E, S> species();
+        public abstract Species<E> species();
 
         /**
          * Returns the number of mask lanes (the length).
@@ -1434,14 +1445,13 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @param species the species
          * @param <F> the boxed element type of the species
-         * @param <T> the type of shape of the species
          * @return a mask converted by shape and element type
          * @throws IllegalArgumentException if this mask length and the species
          * length differ
          * @see Species#cast(Mask)
          */
         @ForceInline
-        public <F, T extends Shape> Mask<F, T> cast(Species<F, T> species) {
+        public <F> Mask<F> cast(Species<F> species) {
             return species.cast(this);
         }
 
@@ -1524,7 +1534,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @param o the input mask
          * @return the result of logically and'ing this mask with an input mask
          */
-        public abstract Mask<E, S> and(Mask<E, S> o);
+        public abstract Mask<E> and(Mask<E> o);
 
         /**
          * Logically ors this mask with an input mask.
@@ -1535,7 +1545,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @param o the input mask
          * @return the result of logically or'ing this mask with an input mask
          */
-        public abstract Mask<E, S> or(Mask<E, S> o);
+        public abstract Mask<E> or(Mask<E> o);
 
         /**
          * Logically negates this mask.
@@ -1545,7 +1555,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @return the result of logically negating this mask.
          */
-        public abstract Mask<E, S> not();
+        public abstract Mask<E> not();
 
         /**
          * Returns a vector representation of this mask.
@@ -1558,7 +1568,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @return a vector representation of this mask.
          */
-        public abstract Vector<E, S> toVector();
+        public abstract Vector<E> toVector();
 
         /**
          * Tests if the lane at index {@code i} is set
@@ -1601,9 +1611,8 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * used with vectors operations and vectors of the same length.
      *
      * @param <E> the boxed element type of this mask
-     * @param <S> the type of shape of this mask
      */
-    public static abstract class Shuffle<E, S extends Shape> {
+    public static abstract class Shuffle<E> {
         Shuffle() {}
 
         /**
@@ -1611,7 +1620,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @return the species of this shuffle
          */
-        public abstract Species<E, S> species();
+        public abstract Species<E> species();
 
         /**
          * Returns the number of shuffle lanes (the length).
@@ -1633,14 +1642,13 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @param species the species
          * @param <F> the boxed element type of the species
-         * @param <T> the type of shape of the species
          * @return a shuffle converted by shape and element type
          * @throws IllegalArgumentException if this shuffle length and the
          * species length differ
          * @see Species#cast(Mask)
          */
         @ForceInline
-        public <F, T extends Shape> Shuffle<F, T> cast(Species<F, T> species) {
+        public <F> Shuffle<F> cast(Species<F> species) {
             return species.cast(this);
         }
 
@@ -1693,7 +1701,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          *
          * @return a vector representation of this shuffle
          */
-        public abstract Vector<E, S> toVector();
+        public abstract Vector<E> toVector();
 
         /**
          * Gets the {@code int} lane element at lane index {@code i}
@@ -1714,7 +1722,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
          * @param s the shuffle controlling lane index selection
          * @return the rearrangement of the lane elements of this shuffle
          */
-        public abstract Shuffle<E, S> rearrange(Shuffle<E, S> s);
+        public abstract Shuffle<E> rearrange(Shuffle<E> s);
     }
 
     /**
@@ -1732,7 +1740,7 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * element type
      */
     @SuppressWarnings("unchecked")
-    public static <E> Vector.Species<E, ?> preferredSpecies(Class<E> c) {
+    public static <E> Vector.Species<E> preferredSpecies(Class<E> c) {
         Unsafe u = Unsafe.getUnsafe();
 
         int vectorLength = u.getMaxVectorSize(c);
@@ -1782,16 +1790,16 @@ public abstract class Vector<E, S extends Vector.Shape> {
     public static Shape shapeForVectorBitSize(int bitSize) {
         switch (bitSize) {
             case 64:
-                return Shapes.S_64_BIT;
+                return Shape.S_64_BIT;
             case 128:
-                return Shapes.S_128_BIT;
+                return Shape.S_128_BIT;
             case 256:
-                return Shapes.S_256_BIT;
+                return Shape.S_256_BIT;
             case 512:
-                return Shapes.S_512_BIT;
+                return Shape.S_512_BIT;
             default:
                 if ((bitSize > 0) && (bitSize <= 2048) && (bitSize % 128 == 0)) {
-                    return Shapes.S_Max_BIT;
+                    return Shape.S_Max_BIT;
                 } else {
                     throw new IllegalArgumentException("Bad vector bit size: " + bitSize);
                 }
@@ -1804,30 +1812,29 @@ public abstract class Vector<E, S extends Vector.Shape> {
      * @param c the element type
      * @param s the shape
      * @param <E> the boxed element type
-     * @param <S> the type of shape
      * @return a species for an element type and shape
      * @throws IllegalArgumentException if no such species exists for the
      * element type and/or shape
      */
     @SuppressWarnings("unchecked")
-    public static <E, S extends Shape> Vector.Species<E, S> species(Class<E> c, S s) {
+    public static <E> Vector.Species<E> species(Class<E> c, Shape s) {
         if (c == float.class) {
-            return (Vector.Species<E, S>) FloatVector.species(s);
+            return (Vector.Species<E>) FloatVector.species(s);
         }
         else if (c == double.class) {
-            return (Vector.Species<E, S>) DoubleVector.species(s);
+            return (Vector.Species<E>) DoubleVector.species(s);
         }
         else if (c == byte.class) {
-            return (Vector.Species<E, S>) ByteVector.species(s);
+            return (Vector.Species<E>) ByteVector.species(s);
         }
         else if (c == short.class) {
-            return (Vector.Species<E, S>) ShortVector.species(s);
+            return (Vector.Species<E>) ShortVector.species(s);
         }
         else if (c == int.class) {
-            return (Vector.Species<E, S>) IntVector.species(s);
+            return (Vector.Species<E>) IntVector.species(s);
         }
         else if (c == long.class) {
-            return (Vector.Species<E, S>) LongVector.species(s);
+            return (Vector.Species<E>) LongVector.species(s);
         }
         else {
             throw new IllegalArgumentException("Bad vector element type: " + c.getName());

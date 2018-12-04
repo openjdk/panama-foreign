@@ -29,7 +29,7 @@
  *
  */
 
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.DoubleVector;
@@ -48,22 +48,15 @@ import java.util.function.IntFunction;
 
 @Test
 public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
-    static final Vector.Shape S_Max_BIT = getMaxBit();
+    static final Shape S_Max_BIT = getMaxBit();
 
-    static final DoubleVector.DoubleSpecies<Vector.Shape> SPECIES =
+    static final DoubleVector.DoubleSpecies SPECIES =
                 DoubleVector.species(S_Max_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
-    static Vector.Shape getMaxBit() {
-        try {
-            Class<?> clazz = Class.forName("jdk.incubator.vector.Shapes$SMaxBit");
-            VarHandle privateHandle = MethodHandles.privateLookupIn(Shapes.class, MethodHandles.lookup())
-                .findStaticVarHandle(Shapes.class, "S_Max_BIT", clazz);
-            return (Vector.Shape)(privateHandle.get());
-        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
-            throw new Error(e);
-        }
+    static Shape getMaxBit() {
+        return Shape.S_Max_BIT;
     }
 
     static void assertArraysEquals(double[] a, double[] r, boolean[] mask) {
@@ -201,7 +194,7 @@ public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i);
             }
         }
@@ -214,11 +207,11 @@ public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
         double[] a = fa.apply(SPECIES.length());
         double[] r = new double[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i, vmask);
+                DoubleVector av = SPECIES.fromArray(a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -227,7 +220,7 @@ public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = new double[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -247,7 +240,7 @@ public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                DoubleVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -270,7 +263,7 @@ public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                DoubleVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -288,14 +281,14 @@ public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
+                DoubleVector av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -309,7 +302,7 @@ public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                DoubleVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -328,14 +321,14 @@ public class DoubleMaxVectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
+                DoubleVector av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

@@ -22,7 +22,7 @@
  */
 
 import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 
 import java.util.stream.IntStream;
@@ -64,7 +64,7 @@ public class VectorRuns {
 
 
     static int countRunAscendingVector(int[] a) {
-        IntVector.IntSpecies<Shapes.S256Bit> species = IntVector.species(Shapes.S_256_BIT);
+        IntVector.IntSpecies species = IntVector.species(Shape.S_256_BIT);
 
         int r = 1;
         if (r >= a.length)
@@ -73,9 +73,9 @@ public class VectorRuns {
         int length = a.length & (species.length() - 1);
         if (length == a.length) length -= species.length();
         while (r < length) {
-            IntVector<Shapes.S256Bit> vl = species.fromArray(a, r - 1);
-            IntVector<Shapes.S256Bit> vr = species.fromArray(a, r);
-            Vector.Mask<Integer, Shapes.S256Bit> m = vl.greaterThan(vr);
+            IntVector vl = species.fromArray(a, r - 1);
+            IntVector vr = species.fromArray(a, r);
+            Vector.Mask<Integer> m = vl.greaterThan(vr);
             if (m.anyTrue())
                 return r + Long.numberOfTrailingZeros(m.toLong());
             r += species.length();

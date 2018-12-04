@@ -28,7 +28,7 @@
 
 import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 
 import java.nio.charset.StandardCharsets;
@@ -119,8 +119,8 @@ public class VectorHash {
         int h = 1;
         int i = 0;
         for (; i < (a.length & ~(BYTE_64_SPECIES.length() - 1)); i += BYTE_64_SPECIES.length()) {
-            ByteVector<Shapes.S64Bit> b = BYTE_64_SPECIES.fromArray(a, i);
-            IntVector<Shapes.S256Bit> x = (IntVector<Shapes.S256Bit>) b.cast(INT_256_SPECIES);
+            ByteVector b = BYTE_64_SPECIES.fromArray(a, i);
+            IntVector x = (IntVector) b.cast(INT_256_SPECIES);
             h = h * COEFF_31_TO_8 + x.mul(H_COEFF_8).addAll();
         }
 
@@ -134,8 +134,8 @@ public class VectorHash {
         int h = 1;
         int i = 0;
         for (; i < (a.length & ~(BYTE_128_SPECIES.length() - 1)); i += BYTE_128_SPECIES.length()) {
-            ByteVector<Shapes.S128Bit> b = BYTE_128_SPECIES.fromArray(a, i);
-            IntVector<Shapes.S512Bit> x = (IntVector<Shapes.S512Bit>) b.cast(INT_512_SPECIES);
+            ByteVector b = BYTE_128_SPECIES.fromArray(a, i);
+            IntVector x = (IntVector) b.cast(INT_512_SPECIES);
             h = h * COEFF_31_TO_16 + x.mul(H_COEFF_16).addAll();
         }
 
@@ -154,22 +154,22 @@ public class VectorHash {
                                           H_COEFF_16);
     }
 
-    static <S extends Vector.Shape> int hashCodeVectorGenericShift(
+    static int hashCodeVectorGenericShift(
             byte[] a,
-            ByteVector.ByteSpecies<?> bytesForIntsSpecies,
-            ByteVector.ByteSpecies<S> byteSpecies, IntVector.IntSpecies<S> intSpecies,
+            ByteVector.ByteSpecies bytesForIntsSpecies,
+            ByteVector.ByteSpecies byteSpecies, IntVector.IntSpecies intSpecies,
             int top_h_coeff,
-            IntVector<S> v_h_coeff) {
+            IntVector v_h_coeff) {
         assert bytesForIntsSpecies.length() == intSpecies.length();
 
         int h = 1;
         int i = 0;
         for (; i < (a.length & ~(byteSpecies.length() - 1)); i += byteSpecies.length()) {
-            ByteVector<S> b = byteSpecies.fromArray(a, i);
+            ByteVector b = byteSpecies.fromArray(a, i);
 
             for (int j = 0; j < byteSpecies.length() / intSpecies.length(); j++) {
                 // Reduce the size of the byte vector and then cast to int
-                IntVector<S> x = intSpecies.cast(bytesForIntsSpecies.resize(b));
+                IntVector x = intSpecies.cast(bytesForIntsSpecies.resize(b));
 
                 h = h * top_h_coeff + x.mul(v_h_coeff).addAll();
 
@@ -183,21 +183,21 @@ public class VectorHash {
         return h;
     }
 
-    static final IntVector.IntSpecies<Shapes.S512Bit> INT_512_SPECIES =
-            IntVector.species(Shapes.S_512_BIT);
-    static final IntVector.IntSpecies<Shapes.S256Bit> INT_256_SPECIES =
-            IntVector.species(Shapes.S_256_BIT);
+    static final IntVector.IntSpecies INT_512_SPECIES =
+            IntVector.species(Shape.S_512_BIT);
+    static final IntVector.IntSpecies INT_256_SPECIES =
+            IntVector.species(Shape.S_256_BIT);
     static final int COEFF_31_TO_16;
-    static final IntVector<Shapes.S512Bit> H_COEFF_16;
+    static final IntVector H_COEFF_16;
 
-    static final ByteVector.ByteSpecies<Shapes.S512Bit> BYTE_512_SPECIES =
-            ByteVector.species(Shapes.S_512_BIT);
-    static final ByteVector.ByteSpecies<Shapes.S128Bit> BYTE_128_SPECIES =
-            ByteVector.species(Shapes.S_128_BIT);
-    static final ByteVector.ByteSpecies<Shapes.S64Bit> BYTE_64_SPECIES =
-            ByteVector.species(Shapes.S_64_BIT);
+    static final ByteVector.ByteSpecies BYTE_512_SPECIES =
+            ByteVector.species(Shape.S_512_BIT);
+    static final ByteVector.ByteSpecies BYTE_128_SPECIES =
+            ByteVector.species(Shape.S_128_BIT);
+    static final ByteVector.ByteSpecies BYTE_64_SPECIES =
+            ByteVector.species(Shape.S_64_BIT);
     static final int COEFF_31_TO_8;
-    static final IntVector<Shapes.S256Bit> H_COEFF_8;
+    static final IntVector H_COEFF_8;
 
     static {
         int[] a = new int[INT_256_SPECIES.length()];

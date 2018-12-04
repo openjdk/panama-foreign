@@ -40,175 +40,175 @@ public final class DoubleVectorHelper {
         double apply(int i, double a);
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> map(DoubleVector<S> va, DoubleVector<S> vb, BinaryOp op) {
+    public static 
+    DoubleVector map(DoubleVector va, DoubleVector vb, BinaryOp op) {
         return va.bOp(vb, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> map(DoubleVector<S> va, DoubleVector<S> vb, Vector.Mask<Double,S> m, BinaryOp op) {
+    public static 
+    DoubleVector map(DoubleVector va, DoubleVector vb, Vector.Mask<Double> m, BinaryOp op) {
         return va.bOp(vb, m, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> map(DoubleVector<S> va, UnaryOp op) {
+    public static 
+    DoubleVector map(DoubleVector va, UnaryOp op) {
         return va.uOp((i, a) -> op.apply(i, a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> map(DoubleVector<S> va, Vector.Mask<Double,S> m, UnaryOp op) {
+    public static 
+    DoubleVector map(DoubleVector va, Vector.Mask<Double> m, UnaryOp op) {
         return va.uOp(m, (i, a) -> op.apply(i, a));
     }
 
 
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> ceil(DoubleVector<S> va) {
+    public static 
+    DoubleVector ceil(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.ceil((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> ceil(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector ceil(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.ceil((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> copySign(DoubleVector<S> va, DoubleVector<S> vb) {
+    public static 
+    DoubleVector copySign(DoubleVector va, DoubleVector vb) {
         return va.bOp(vb, (i, a, b) -> (double) Math.copySign((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> copySign(DoubleVector<S> va, DoubleVector<S> vb, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector copySign(DoubleVector va, DoubleVector vb, Vector.Mask<Double> m) {
         return va.bOp(vb, m, (i, a, b) -> (double) Math.copySign((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> floor(DoubleVector<S> va) {
+    public static 
+    DoubleVector floor(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.floor((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> floor(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector floor(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.floor((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> getExponent(DoubleVector<S> va) {
+    public static 
+    DoubleVector getExponent(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.getExponent((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> getExponent(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector getExponent(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.getExponent((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> IEEEremainder(DoubleVector<S> va, DoubleVector<S> vb) {
+    public static 
+    DoubleVector IEEEremainder(DoubleVector va, DoubleVector vb) {
         return va.bOp(vb, (i, a, b) -> (double) Math.IEEEremainder((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> IEEEremainder(DoubleVector<S> va, DoubleVector<S> vb, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector IEEEremainder(DoubleVector va, DoubleVector vb, Vector.Mask<Double> m) {
         return va.bOp(vb, m, (i, a, b) -> (double) Math.IEEEremainder((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> nextAfter(DoubleVector<S> va, DoubleVector<S> vb) {
+    public static 
+    DoubleVector nextAfter(DoubleVector va, DoubleVector vb) {
         return va.bOp(vb, (i, a, b) -> (double) Math.nextAfter((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> nextAfter(DoubleVector<S> va, DoubleVector<S> vb, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector nextAfter(DoubleVector va, DoubleVector vb, Vector.Mask<Double> m) {
         return va.bOp(vb, m, (i, a, b) -> (double) Math.nextAfter((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> nextDown(DoubleVector<S> va) {
+    public static 
+    DoubleVector nextDown(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.nextDown((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> nextDown(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector nextDown(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.nextDown((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> nextUp(DoubleVector<S> va) {
+    public static 
+    DoubleVector nextUp(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.nextUp((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> nextUp(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector nextUp(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.nextUp((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> rint(DoubleVector<S> va) {
+    public static 
+    DoubleVector rint(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.rint((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> rint(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector rint(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.rint((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> round(DoubleVector<S> va) {
+    public static 
+    DoubleVector round(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.round((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> round(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector round(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.round((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> scalb(Vector<Integer, S> o) {
+    public static 
+    DoubleVector scalb(Vector<Integer> o) {
         throw  new UnsupportedOperationException("Scalb not implemented yet.");
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> scalb(Vector<Integer, S> o, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector scalb(Vector<Integer> o, Vector.Mask<Double> m) {
         throw  new UnsupportedOperationException("Scalb not implemented yet.");
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> signum(DoubleVector<S> va) {
+    public static 
+    DoubleVector signum(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.signum((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> signum(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector signum(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.signum((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> toDegrees(DoubleVector<S> va) {
+    public static 
+    DoubleVector toDegrees(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.toDegrees((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> toDegrees(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector toDegrees(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.toDegrees((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> toRadians(DoubleVector<S> va) {
+    public static 
+    DoubleVector toRadians(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.toRadians((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> toRadians(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector toRadians(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.toRadians((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> ulp(DoubleVector<S> va) {
+    public static 
+    DoubleVector ulp(DoubleVector va) {
         return va.uOp((i, a) -> (double) Math.ulp((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    DoubleVector<S> ulp(DoubleVector<S> va, Vector.Mask<Double,S> m) {
+    public static 
+    DoubleVector ulp(DoubleVector va, Vector.Mask<Double> m) {
         return va.uOp(m, (i, a) -> (double) Math.ulp((double) a));
     }
 

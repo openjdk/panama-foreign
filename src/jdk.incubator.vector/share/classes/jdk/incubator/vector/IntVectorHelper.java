@@ -40,103 +40,103 @@ public final class IntVectorHelper {
         int apply(int i, int a);
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> map(IntVector<S> va, IntVector<S> vb, BinaryOp op) {
+    public static 
+    IntVector map(IntVector va, IntVector vb, BinaryOp op) {
         return va.bOp(vb, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> map(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer,S> m, BinaryOp op) {
+    public static 
+    IntVector map(IntVector va, IntVector vb, Vector.Mask<Integer> m, BinaryOp op) {
         return va.bOp(vb, m, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> map(IntVector<S> va, UnaryOp op) {
+    public static 
+    IntVector map(IntVector va, UnaryOp op) {
         return va.uOp((i, a) -> op.apply(i, a));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> map(IntVector<S> va, Vector.Mask<Integer,S> m, UnaryOp op) {
+    public static 
+    IntVector map(IntVector va, Vector.Mask<Integer> m, UnaryOp op) {
         return va.uOp(m, (i, a) -> op.apply(i, a));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> div(IntVector<S> va, IntVector<S> vb) {
+    public static 
+    IntVector div(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> (int) (a / b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> div(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer, S> m) {
+    public static 
+    IntVector div(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> (int) (a / b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> mod(IntVector<S> va, IntVector<S> vb) {
+    public static 
+    IntVector mod(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> (int) (a % b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> mod(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer, S> m) {
+    public static 
+    IntVector mod(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> (int) (a % b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> addExact(IntVector<S> va, IntVector<S> vb) {
+    public static 
+    IntVector addExact(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> Math.addExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> addExact(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer,S> m) {
+    public static 
+    IntVector addExact(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.addExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> decrementExact(IntVector<S> va) {
+    public static 
+    IntVector decrementExact(IntVector va) {
         return va.uOp((i, a) -> Math.decrementExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> decrementExact(IntVector<S> va, Vector.Mask<Integer,S> m) {
+    public static 
+    IntVector decrementExact(IntVector va, Vector.Mask<Integer> m) {
         return va.uOp(m, (i, a) -> Math.decrementExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> incrementExact(IntVector<S> va) {
+    public static 
+    IntVector incrementExact(IntVector va) {
         return va.uOp((i, a) -> Math.incrementExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> incrementExact(IntVector<S> va, Vector.Mask<Integer,S> m) {
+    public static 
+    IntVector incrementExact(IntVector va, Vector.Mask<Integer> m) {
         return va.uOp(m, (i, a) -> Math.incrementExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> multiplyExact(IntVector<S> va, IntVector<S> vb) {
+    public static 
+    IntVector multiplyExact(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> Math.multiplyExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> multiplyExact(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer, S> m) {
+    public static 
+    IntVector multiplyExact(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.multiplyExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> negateExact(IntVector<S> va) {
+    public static 
+    IntVector negateExact(IntVector va) {
         return va.uOp((i, a) -> Math.negateExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> negateExact(IntVector<S> va, Vector.Mask<Integer, S> m) {
+    public static 
+    IntVector negateExact(IntVector va, Vector.Mask<Integer> m) {
         return va.uOp(m, (i, a) -> Math.negateExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> subtractExtract(IntVector<S> va, IntVector<S> vb) {
+    public static 
+    IntVector subtractExtract(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> Math.subtractExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    IntVector<S> subtractExtract(IntVector<S> va, IntVector<S> vb, Vector.Mask<Integer,S> m) {
+    public static 
+    IntVector subtractExtract(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.subtractExact(a, b));
     }
 

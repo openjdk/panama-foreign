@@ -28,7 +28,7 @@
  *
  */
 
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.ByteVector;
@@ -44,8 +44,8 @@ import java.util.function.IntFunction;
 
 @Test
 public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
-    static final ByteVector.ByteSpecies<Vector.Shape> SPECIES =
-                ByteVector.species(Shapes.S_128_BIT);
+    static final ByteVector.ByteSpecies SPECIES =
+                ByteVector.species(Shape.S_128_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
@@ -184,7 +184,7 @@ public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ByteVector av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i);
             }
         }
@@ -197,11 +197,11 @@ public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = new byte[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Vector.Shape> av = SPECIES.fromArray(a, i, vmask);
+                ByteVector av = SPECIES.fromArray(a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -210,7 +210,7 @@ public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
         r = new byte[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                ByteVector av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -230,7 +230,7 @@ public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                ByteVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -253,7 +253,7 @@ public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                ByteVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -271,14 +271,14 @@ public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
+                ByteVector av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -292,7 +292,7 @@ public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                ByteVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -311,14 +311,14 @@ public class Byte128VectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                ByteVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
+                ByteVector av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

@@ -28,7 +28,7 @@
  *
  */
 
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.LongVector;
@@ -45,8 +45,8 @@ import java.util.function.IntFunction;
 
 @Test
 public class Long128VectorLoadStoreTests extends AbstractVectorTest {
-    static final LongVector.LongSpecies<Vector.Shape> SPECIES =
-                LongVector.species(Shapes.S_128_BIT);
+    static final LongVector.LongSpecies SPECIES =
+                LongVector.species(Shape.S_128_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
@@ -185,7 +185,7 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i);
             }
         }
@@ -198,11 +198,11 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
         long[] a = fa.apply(SPECIES.length());
         long[] r = new long[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i, vmask);
+                LongVector av = SPECIES.fromArray(a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -211,7 +211,7 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
         r = new long[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -231,7 +231,7 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                LongVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -254,7 +254,7 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                LongVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -272,14 +272,14 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
+                LongVector av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -293,7 +293,7 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                LongVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -312,14 +312,14 @@ public class Long128VectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                LongVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
+                LongVector av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

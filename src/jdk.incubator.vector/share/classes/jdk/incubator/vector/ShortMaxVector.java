@@ -37,7 +37,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
-final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
+final class ShortMaxVector extends ShortVector {
     static final ShortMaxSpecies SPECIES = new ShortMaxSpecies();
 
     static final ShortMaxVector ZERO = new ShortMaxVector();
@@ -74,7 +74,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
     }
 
     @Override
-    ShortMaxVector uOp(Mask<Short, Shapes.SMaxBit> o, FUnOp f) {
+    ShortMaxVector uOp(Mask<Short> o, FUnOp f) {
         short[] vec = getElements();
         short[] res = new short[length()];
         boolean[] mbits = ((ShortMaxMask)o).getBits();
@@ -87,7 +87,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
     // Binary operator
 
     @Override
-    ShortMaxVector bOp(Vector<Short, Shapes.SMaxBit> o, FBinOp f) {
+    ShortMaxVector bOp(Vector<Short> o, FBinOp f) {
         short[] res = new short[length()];
         short[] vec1 = this.getElements();
         short[] vec2 = ((ShortMaxVector)o).getElements();
@@ -98,7 +98,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
     }
 
     @Override
-    ShortMaxVector bOp(Vector<Short, Shapes.SMaxBit> o1, Mask<Short, Shapes.SMaxBit> o2, FBinOp f) {
+    ShortMaxVector bOp(Vector<Short> o1, Mask<Short> o2, FBinOp f) {
         short[] res = new short[length()];
         short[] vec1 = this.getElements();
         short[] vec2 = ((ShortMaxVector)o1).getElements();
@@ -112,7 +112,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
     // Trinary operator
 
     @Override
-    ShortMaxVector tOp(Vector<Short, Shapes.SMaxBit> o1, Vector<Short, Shapes.SMaxBit> o2, FTriOp f) {
+    ShortMaxVector tOp(Vector<Short> o1, Vector<Short> o2, FTriOp f) {
         short[] res = new short[length()];
         short[] vec1 = this.getElements();
         short[] vec2 = ((ShortMaxVector)o1).getElements();
@@ -124,7 +124,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
     }
 
     @Override
-    ShortMaxVector tOp(Vector<Short, Shapes.SMaxBit> o1, Vector<Short, Shapes.SMaxBit> o2, Mask<Short, Shapes.SMaxBit> o3, FTriOp f) {
+    ShortMaxVector tOp(Vector<Short> o1, Vector<Short> o2, Mask<Short> o3, FTriOp f) {
         short[] res = new short[length()];
         short[] vec1 = getElements();
         short[] vec2 = ((ShortMaxVector)o1).getElements();
@@ -149,128 +149,128 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> add(short o) {
+    public ShortVector add(short o) {
         return add(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> add(short o, Mask<Short,Shapes.SMaxBit> m) {
+    public ShortVector add(short o, Mask<Short> m) {
         return add(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> sub(short o) {
+    public ShortVector sub(short o) {
         return sub(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> sub(short o, Mask<Short,Shapes.SMaxBit> m) {
+    public ShortVector sub(short o, Mask<Short> m) {
         return sub(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> mul(short o) {
+    public ShortVector mul(short o) {
         return mul(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> mul(short o, Mask<Short,Shapes.SMaxBit> m) {
+    public ShortVector mul(short o, Mask<Short> m) {
         return mul(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> min(short o) {
+    public ShortVector min(short o) {
         return min(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> max(short o) {
+    public ShortVector max(short o) {
         return max(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Short, Shapes.SMaxBit> equal(short o) {
+    public Mask<Short> equal(short o) {
         return equal(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Short, Shapes.SMaxBit> notEqual(short o) {
+    public Mask<Short> notEqual(short o) {
         return notEqual(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Short, Shapes.SMaxBit> lessThan(short o) {
+    public Mask<Short> lessThan(short o) {
         return lessThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Short, Shapes.SMaxBit> lessThanEq(short o) {
+    public Mask<Short> lessThanEq(short o) {
         return lessThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Short, Shapes.SMaxBit> greaterThan(short o) {
+    public Mask<Short> greaterThan(short o) {
         return greaterThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Short, Shapes.SMaxBit> greaterThanEq(short o) {
+    public Mask<Short> greaterThanEq(short o) {
         return greaterThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> blend(short o, Mask<Short,Shapes.SMaxBit> m) {
+    public ShortVector blend(short o, Mask<Short> m) {
         return blend(SPECIES.broadcast(o), m);
     }
 
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> and(short o) {
+    public ShortVector and(short o) {
         return and(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> and(short o, Mask<Short,Shapes.SMaxBit> m) {
+    public ShortVector and(short o, Mask<Short> m) {
         return and(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> or(short o) {
+    public ShortVector or(short o) {
         return or(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> or(short o, Mask<Short,Shapes.SMaxBit> m) {
+    public ShortVector or(short o, Mask<Short> m) {
         return or(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> xor(short o) {
+    public ShortVector xor(short o) {
         return xor(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ShortVector<Shapes.SMaxBit> xor(short o, Mask<Short,Shapes.SMaxBit> m) {
+    public ShortVector xor(short o, Mask<Short> m) {
         return xor(SPECIES.broadcast(o), m);
     }
 
@@ -284,7 +284,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public ShortMaxVector neg(Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector neg(Mask<Short> m) {
         return blend(neg(), m);
     }
 
@@ -299,7 +299,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public ShortMaxVector abs(Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector abs(Mask<Short> m) {
         return blend(abs(), m);
     }
 
@@ -315,14 +315,14 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public ShortMaxVector not(Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector not(Mask<Short> m) {
         return blend(not(), m);
     }
     // Binary operations
 
     @Override
     @ForceInline
-    public ShortMaxVector add(Vector<Short,Shapes.SMaxBit> o) {
+    public ShortMaxVector add(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -333,13 +333,13 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector add(Vector<Short,Shapes.SMaxBit> v, Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector add(Vector<Short> v, Mask<Short> m) {
         return blend(add(v), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector sub(Vector<Short,Shapes.SMaxBit> o) {
+    public ShortMaxVector sub(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -350,13 +350,13 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector sub(Vector<Short,Shapes.SMaxBit> v, Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector sub(Vector<Short> v, Mask<Short> m) {
         return blend(sub(v), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector mul(Vector<Short,Shapes.SMaxBit> o) {
+    public ShortMaxVector mul(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -367,13 +367,13 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector mul(Vector<Short,Shapes.SMaxBit> v, Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector mul(Vector<Short> v, Mask<Short> m) {
         return blend(mul(v), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector min(Vector<Short,Shapes.SMaxBit> o) {
+    public ShortMaxVector min(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
         return (ShortMaxVector) VectorIntrinsics.binaryOp(
@@ -384,13 +384,13 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector min(Vector<Short,Shapes.SMaxBit> v, Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector min(Vector<Short> v, Mask<Short> m) {
         return blend(min(v), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector max(Vector<Short,Shapes.SMaxBit> o) {
+    public ShortMaxVector max(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -401,13 +401,13 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector max(Vector<Short,Shapes.SMaxBit> v, Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector max(Vector<Short> v, Mask<Short> m) {
         return blend(max(v), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector and(Vector<Short,Shapes.SMaxBit> o) {
+    public ShortMaxVector and(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -418,7 +418,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector or(Vector<Short,Shapes.SMaxBit> o) {
+    public ShortMaxVector or(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -429,7 +429,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector xor(Vector<Short,Shapes.SMaxBit> o) {
+    public ShortMaxVector xor(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -440,19 +440,19 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector and(Vector<Short,Shapes.SMaxBit> v, Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector and(Vector<Short> v, Mask<Short> m) {
         return blend(and(v), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector or(Vector<Short,Shapes.SMaxBit> v, Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector or(Vector<Short> v, Mask<Short> m) {
         return blend(or(v), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector xor(Vector<Short,Shapes.SMaxBit> v, Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector xor(Vector<Short> v, Mask<Short> m) {
         return blend(xor(v), m);
     }
 
@@ -507,7 +507,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public short andAll(Mask<Short, Shapes.SMaxBit> m) {
+    public short andAll(Mask<Short> m) {
         return blend(SPECIES.broadcast((short) -1), m).andAll();
     }
 
@@ -558,7 +558,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public short orAll(Mask<Short, Shapes.SMaxBit> m) {
+    public short orAll(Mask<Short> m) {
         return blend(SPECIES.broadcast((short) 0), m).orAll();
     }
 
@@ -573,44 +573,44 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public short xorAll(Mask<Short, Shapes.SMaxBit> m) {
+    public short xorAll(Mask<Short> m) {
         return blend(SPECIES.broadcast((short) 0), m).xorAll();
     }
 
 
     @Override
     @ForceInline
-    public short addAll(Mask<Short, Shapes.SMaxBit> m) {
+    public short addAll(Mask<Short> m) {
         return blend(SPECIES.broadcast((short) 0), m).addAll();
     }
 
     @Override
     @ForceInline
-    public short subAll(Mask<Short, Shapes.SMaxBit> m) {
+    public short subAll(Mask<Short> m) {
         return blend(SPECIES.broadcast((short) 0), m).subAll();
     }
 
     @Override
     @ForceInline
-    public short mulAll(Mask<Short, Shapes.SMaxBit> m) {
+    public short mulAll(Mask<Short> m) {
         return blend(SPECIES.broadcast((short) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
-    public short minAll(Mask<Short, Shapes.SMaxBit> m) {
+    public short minAll(Mask<Short> m) {
         return blend(SPECIES.broadcast(Short.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
-    public short maxAll(Mask<Short, Shapes.SMaxBit> m) {
+    public short maxAll(Mask<Short> m) {
         return blend(SPECIES.broadcast(Short.MIN_VALUE), m).maxAll();
     }
 
     @Override
     @ForceInline
-    public Shuffle<Short, Shapes.SMaxBit> toShuffle() {
+    public Shuffle<Short> toShuffle() {
         short[] a = toArray();
         int[] sa = new int[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -637,7 +637,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public final void intoArray(short[] a, int ax, Mask<Short, Shapes.SMaxBit> m) {
+    public final void intoArray(short[] a, int ax, Mask<Short> m) {
         ShortMaxVector oldVal = SPECIES.fromArray(a, ax);
         ShortMaxVector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -661,7 +661,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, Mask<Short, Shapes.SMaxBit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Short> m) {
         ShortMaxVector oldVal = SPECIES.fromByteArray(a, ix);
         ShortMaxVector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -690,7 +690,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Short, Shapes.SMaxBit> m) {
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Short> m) {
         ShortMaxVector oldVal = SPECIES.fromByteBuffer(bb, ix);
         ShortMaxVector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -720,7 +720,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
     // Binary test
 
     @Override
-    ShortMaxMask bTest(Vector<Short, Shapes.SMaxBit> o, FBinTest f) {
+    ShortMaxMask bTest(Vector<Short> o, FBinTest f) {
         short[] vec1 = getElements();
         short[] vec2 = ((ShortMaxVector)o).getElements();
         boolean[] bits = new boolean[length()];
@@ -734,7 +734,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxMask equal(Vector<Short, Shapes.SMaxBit> o) {
+    public ShortMaxMask equal(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
 
@@ -746,7 +746,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxMask notEqual(Vector<Short, Shapes.SMaxBit> o) {
+    public ShortMaxMask notEqual(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
 
@@ -758,7 +758,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxMask lessThan(Vector<Short, Shapes.SMaxBit> o) {
+    public ShortMaxMask lessThan(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
 
@@ -770,7 +770,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxMask lessThanEq(Vector<Short, Shapes.SMaxBit> o) {
+    public ShortMaxMask lessThanEq(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
 
@@ -782,7 +782,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxMask greaterThan(Vector<Short, Shapes.SMaxBit> o) {
+    public ShortMaxMask greaterThan(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
 
@@ -794,7 +794,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxMask greaterThanEq(Vector<Short, Shapes.SMaxBit> o) {
+    public ShortMaxMask greaterThanEq(Vector<Short> o) {
         Objects.requireNonNull(o);
         ShortMaxVector v = (ShortMaxVector)o;
 
@@ -815,7 +815,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
     }
 
     @Override
-    void forEach(Mask<Short, Shapes.SMaxBit> o, FUnCon f) {
+    void forEach(Mask<Short> o, FUnCon f) {
         boolean[] mbits = ((ShortMaxMask)o).getBits();
         forEach((i, a) -> {
             if (mbits[i]) { f.apply(i, a); }
@@ -871,14 +871,14 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector rearrange(Vector<Short, Shapes.SMaxBit> v,
-                                  Shuffle<Short, Shapes.SMaxBit> s, Mask<Short, Shapes.SMaxBit> m) {
+    public ShortMaxVector rearrange(Vector<Short> v,
+                                  Shuffle<Short> s, Mask<Short> m) {
         return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
     @ForceInline
-    public ShortMaxVector rearrange(Shuffle<Short, Shapes.SMaxBit> o1) {
+    public ShortMaxVector rearrange(Shuffle<Short> o1) {
     Objects.requireNonNull(o1);
     ShortMaxShuffle s =  (ShortMaxShuffle)o1;
 
@@ -894,7 +894,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ShortMaxVector blend(Vector<Short, Shapes.SMaxBit> o1, Mask<Short, Shapes.SMaxBit> o2) {
+    public ShortMaxVector blend(Vector<Short> o1, Mask<Short> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         ShortMaxVector v = (ShortMaxVector)o1;
@@ -939,7 +939,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     // Mask
 
-    static final class ShortMaxMask extends AbstractMask<Short, Shapes.SMaxBit> {
+    static final class ShortMaxMask extends AbstractMask<Short> {
         static final ShortMaxMask TRUE_MASK = new ShortMaxMask(true);
         static final ShortMaxMask FALSE_MASK = new ShortMaxMask(false);
 
@@ -978,7 +978,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
         }
 
         @Override
-        ShortMaxMask bOp(Mask<Short, Shapes.SMaxBit> o, MBinOp f) {
+        ShortMaxMask bOp(Mask<Short> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
             boolean[] bits = getBits();
             boolean[] mbits = ((ShortMaxMask)o).getBits();
@@ -1020,7 +1020,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ShortMaxMask and(Mask<Short,Shapes.SMaxBit> o) {
+        public ShortMaxMask and(Mask<Short> o) {
             Objects.requireNonNull(o);
             ShortMaxMask m = (ShortMaxMask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, ShortMaxMask.class, short.class, LENGTH,
@@ -1030,7 +1030,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ShortMaxMask or(Mask<Short,Shapes.SMaxBit> o) {
+        public ShortMaxMask or(Mask<Short> o) {
             Objects.requireNonNull(o);
             ShortMaxMask m = (ShortMaxMask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, ShortMaxMask.class, short.class, LENGTH,
@@ -1059,7 +1059,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
     // Shuffle
 
-    static final class ShortMaxShuffle extends AbstractShuffle<Short, Shapes.SMaxBit> {
+    static final class ShortMaxShuffle extends AbstractShuffle<Short> {
         ShortMaxShuffle(byte[] reorder) {
             super(reorder);
         }
@@ -1091,7 +1091,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
         }
 
         @Override
-        public ShortMaxShuffle rearrange(Vector.Shuffle<Short, Shapes.SMaxBit> o) {
+        public ShortMaxShuffle rearrange(Vector.Shuffle<Short> o) {
             ShortMaxShuffle s = (ShortMaxShuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
@@ -1108,8 +1108,8 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
         return SPECIES;
     }
 
-    static final class ShortMaxSpecies extends ShortSpecies<Shapes.SMaxBit> {
-        static final int BIT_SIZE = Shapes.S_Max_BIT.bitSize();
+    static final class ShortMaxSpecies extends ShortSpecies {
+        static final int BIT_SIZE = Shape.S_Max_BIT.bitSize();
 
         static final int LENGTH = BIT_SIZE / Short.SIZE;
 
@@ -1149,8 +1149,8 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public Shapes.SMaxBit shape() {
-            return Shapes.S_Max_BIT;
+        public Shape shape() {
+            return Shape.S_Max_BIT;
         }
 
         @Override
@@ -1163,7 +1163,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
         }
 
         @Override
-        ShortMaxVector op(Mask<Short, Shapes.SMaxBit> o, FOp f) {
+        ShortMaxVector op(Mask<Short> o, FOp f) {
             short[] res = new short[length()];
             boolean[] mbits = ((ShortMaxMask)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1278,7 +1278,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ShortMaxVector fromArray(short[] a, int ax, Mask<Short, Shapes.SMaxBit> m) {
+        public ShortMaxVector fromArray(short[] a, int ax, Mask<Short> m) {
             return zero().blend(fromArray(a, ax), m);
         }
 
@@ -1299,7 +1299,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ShortMaxVector fromByteArray(byte[] a, int ix, Mask<Short, Shapes.SMaxBit> m) {
+        public ShortMaxVector fromByteArray(byte[] a, int ix, Mask<Short> m) {
             return zero().blend(fromByteArray(a, ix), m);
         }
 
@@ -1322,14 +1322,14 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ShortMaxVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Short, Shapes.SMaxBit> m) {
+        public ShortMaxVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Short> m) {
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F, T extends Shape> ShortMaxVector cast(Vector<F, T> o) {
+        public <F> ShortMaxVector cast(Vector<F> o) {
             if (o.length() != LENGTH)
                 throw new IllegalArgumentException("Vector length this species length differ");
 
@@ -1345,39 +1345,39 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
         @SuppressWarnings("unchecked")
         @ForceInline
-        private <F, T extends Shape> ShortMaxVector castDefault(Vector<F, T> v) {
+        private <F> ShortMaxVector castDefault(Vector<F> v) {
             // Allocate array of required size
             int limit = length();
             short[] a = new short[limit];
 
             Class<?> vtype = v.species().elementType();
             if (vtype == byte.class) {
-                ByteVector<T> tv = (ByteVector<T>)v;
+                ByteVector tv = (ByteVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (short) tv.get(i);
                 }
             } else if (vtype == short.class) {
-                ShortVector<T> tv = (ShortVector<T>)v;
+                ShortVector tv = (ShortVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (short) tv.get(i);
                 }
             } else if (vtype == int.class) {
-                IntVector<T> tv = (IntVector<T>)v;
+                IntVector tv = (IntVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (short) tv.get(i);
                 }
             } else if (vtype == long.class){
-                LongVector<T> tv = (LongVector<T>)v;
+                LongVector tv = (LongVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (short) tv.get(i);
                 }
             } else if (vtype == float.class){
-                FloatVector<T> tv = (FloatVector<T>)v;
+                FloatVector tv = (FloatVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (short) tv.get(i);
                 }
             } else if (vtype == double.class){
-                DoubleVector<T> tv = (DoubleVector<T>)v;
+                DoubleVector tv = (DoubleVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (short) tv.get(i);
                 }
@@ -1390,7 +1390,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> ShortMaxMask cast(Mask<E, S> m) {
+        public <E> ShortMaxMask cast(Mask<E> m) {
             if (m.length() != LENGTH)
                 throw new IllegalArgumentException("Mask length this species length differ");
             return new ShortMaxMask(m.toArray());
@@ -1398,7 +1398,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> ShortMaxShuffle cast(Shuffle<E, S> s) {
+        public <E> ShortMaxShuffle cast(Shuffle<E> s) {
             if (s.length() != LENGTH)
                 throw new IllegalArgumentException("Shuffle length this species length differ");
             return new ShortMaxShuffle(s.toArray());
@@ -1407,7 +1407,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F> ShortMaxVector rebracket(Vector<F, Shapes.SMaxBit> o) {
+        public <F> ShortMaxVector rebracket(Vector<F> o) {
             Objects.requireNonNull(o);
             if (o.elementType() == byte.class) {
                 ByteMaxVector so = (ByteMaxVector)o;
@@ -1477,7 +1477,7 @@ final class ShortMaxVector extends ShortVector<Shapes.SMaxBit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <T extends Shape> ShortMaxVector resize(Vector<Short, T> o) {
+        public ShortMaxVector resize(Vector<Short> o) {
             Objects.requireNonNull(o);
             if (o.bitSize() == 64 && (o instanceof Short64Vector)) {
                 Short64Vector so = (Short64Vector)o;
