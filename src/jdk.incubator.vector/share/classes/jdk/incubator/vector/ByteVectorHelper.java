@@ -40,43 +40,43 @@ public final class ByteVectorHelper {
         byte apply(int i, byte a);
     }
 
-    public static <S extends Vector.Shape>
-    ByteVector<S> map(ByteVector<S> va, ByteVector<S> vb, BinaryOp op) {
+    public static 
+    ByteVector map(ByteVector va, ByteVector vb, BinaryOp op) {
         return va.bOp(vb, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    ByteVector<S> map(ByteVector<S> va, ByteVector<S> vb, Vector.Mask<Byte,S> m, BinaryOp op) {
+    public static 
+    ByteVector map(ByteVector va, ByteVector vb, Vector.Mask<Byte> m, BinaryOp op) {
         return va.bOp(vb, m, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    ByteVector<S> map(ByteVector<S> va, UnaryOp op) {
+    public static 
+    ByteVector map(ByteVector va, UnaryOp op) {
         return va.uOp((i, a) -> op.apply(i, a));
     }
 
-    public static <S extends Vector.Shape>
-    ByteVector<S> map(ByteVector<S> va, Vector.Mask<Byte,S> m, UnaryOp op) {
+    public static 
+    ByteVector map(ByteVector va, Vector.Mask<Byte> m, UnaryOp op) {
         return va.uOp(m, (i, a) -> op.apply(i, a));
     }
 
-    public static <S extends Vector.Shape>
-    ByteVector<S> div(ByteVector<S> va, ByteVector<S> vb) {
+    public static 
+    ByteVector div(ByteVector va, ByteVector vb) {
         return va.bOp(vb, (i, a, b) -> (byte) (a / b));
     }
 
-    public static <S extends Vector.Shape>
-    ByteVector<S> div(ByteVector<S> va, ByteVector<S> vb, Vector.Mask<Byte, S> m) {
+    public static 
+    ByteVector div(ByteVector va, ByteVector vb, Vector.Mask<Byte> m) {
         return va.bOp(vb, m, (i, a, b) -> (byte) (a / b));
     }
 
-    public static <S extends Vector.Shape>
-    ByteVector<S> mod(ByteVector<S> va, ByteVector<S> vb) {
+    public static 
+    ByteVector mod(ByteVector va, ByteVector vb) {
         return va.bOp(vb, (i, a, b) -> (byte) (a % b));
     }
 
-    public static <S extends Vector.Shape>
-    ByteVector<S> mod(ByteVector<S> va, ByteVector<S> vb, Vector.Mask<Byte, S> m) {
+    public static 
+    ByteVector mod(ByteVector va, ByteVector vb, Vector.Mask<Byte> m) {
         return va.bOp(vb, m, (i, a, b) -> (byte) (a % b));
     }
 

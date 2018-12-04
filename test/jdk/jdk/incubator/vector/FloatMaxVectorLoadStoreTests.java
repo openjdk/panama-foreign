@@ -29,7 +29,7 @@
  *
  */
 
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 
 import jdk.incubator.vector.FloatVector;
@@ -48,22 +48,15 @@ import java.util.function.IntFunction;
 
 @Test
 public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
-    static final Vector.Shape S_Max_BIT = getMaxBit();
+    static final Shape S_Max_BIT = getMaxBit();
 
-    static final FloatVector.FloatSpecies<Vector.Shape> SPECIES =
+    static final FloatVector.FloatSpecies SPECIES =
                 FloatVector.species(S_Max_BIT);
 
     static final int INVOC_COUNT = Integer.getInteger("jdk.incubator.vector.test.loop-iterations", 10);
 
-    static Vector.Shape getMaxBit() {
-        try {
-            Class<?> clazz = Class.forName("jdk.incubator.vector.Shapes$SMaxBit");
-            VarHandle privateHandle = MethodHandles.privateLookupIn(Shapes.class, MethodHandles.lookup())
-                .findStaticVarHandle(Shapes.class, "S_Max_BIT", clazz);
-            return (Vector.Shape)(privateHandle.get());
-        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
-            throw new Error(e);
-        }
+    static Shape getMaxBit() {
+        return Shape.S_Max_BIT;
     }
 
     static void assertArraysEquals(float[] a, float[] r, boolean[] mask) {
@@ -201,7 +194,7 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                FloatVector av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i);
             }
         }
@@ -214,11 +207,11 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
         float[] a = fa.apply(SPECIES.length());
         float[] r = new float[a.length];
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i, vmask);
+                FloatVector av = SPECIES.fromArray(a, i, vmask);
                 av.intoArray(r, i);
             }
         }
@@ -227,7 +220,7 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = new float[a.length];
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                FloatVector av = SPECIES.fromArray(a, i);
                 av.intoArray(r, i, vmask);
             }
         }
@@ -247,7 +240,7 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                FloatVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -270,7 +263,7 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                FloatVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -288,14 +281,14 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
         ByteBuffer a = toBuffer(fa.apply(SPECIES.length()), fb);
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
+                FloatVector av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }
@@ -309,7 +302,7 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
         r = fb.apply(a.limit());
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i);
+                FloatVector av = SPECIES.fromByteBuffer(a, i);
                 av.intoByteBuffer(r, i, vmask);
             }
         }
@@ -328,14 +321,14 @@ public class FloatMaxVectorLoadStoreTests extends AbstractVectorTest {
         a = a.asReadOnlyBuffer().order(a.order());
         ByteBuffer r = fb.apply(a.limit());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Float, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Float> vmask = SPECIES.maskFromValues(mask);
 
         int l = a.limit();
         int s = SPECIES.length() * SPECIES.elementSize() / 8;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < l; i += s) {
-                FloatVector<Vector.Shape> av = SPECIES.fromByteBuffer(a, i, vmask);
+                FloatVector av = SPECIES.fromByteBuffer(a, i, vmask);
                 av.intoByteBuffer(r, i);
             }
         }

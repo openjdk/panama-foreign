@@ -28,7 +28,6 @@ import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -36,11 +35,9 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * A specialized {@link Vector} representing an ordered immutable sequence of
  * {@code int} values.
- *
- * @param <S> the type of shape of this vector
  */
 @SuppressWarnings("cast")
-public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S> {
+public abstract class IntVector extends Vector<Integer> {
 
     IntVector() {}
 
@@ -50,9 +47,9 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         int apply(int i, int a);
     }
 
-    abstract IntVector<S> uOp(FUnOp f);
+    abstract IntVector uOp(FUnOp f);
 
-    abstract IntVector<S> uOp(Mask<Integer, S> m, FUnOp f);
+    abstract IntVector uOp(Mask<Integer> m, FUnOp f);
 
     // Binary operator
 
@@ -60,9 +57,9 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         int apply(int i, int a, int b);
     }
 
-    abstract IntVector<S> bOp(Vector<Integer,S> v, FBinOp f);
+    abstract IntVector bOp(Vector<Integer> v, FBinOp f);
 
-    abstract IntVector<S> bOp(Vector<Integer,S> v, Mask<Integer, S> m, FBinOp f);
+    abstract IntVector bOp(Vector<Integer> v, Mask<Integer> m, FBinOp f);
 
     // Trinary operator
 
@@ -70,9 +67,9 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         int apply(int i, int a, int b, int c);
     }
 
-    abstract IntVector<S> tOp(Vector<Integer,S> v1, Vector<Integer,S> v2, FTriOp f);
+    abstract IntVector tOp(Vector<Integer> v1, Vector<Integer> v2, FTriOp f);
 
-    abstract IntVector<S> tOp(Vector<Integer,S> v1, Vector<Integer,S> v2, Mask<Integer, S> m, FTriOp f);
+    abstract IntVector tOp(Vector<Integer> v1, Vector<Integer> v2, Mask<Integer> m, FTriOp f);
 
     // Reduction operator
 
@@ -84,7 +81,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         boolean apply(int i, int a, int b);
     }
 
-    abstract Mask<Integer, S> bTest(Vector<Integer,S> v, FBinTest f);
+    abstract Mask<Integer> bTest(Vector<Integer> v, FBinTest f);
 
     // Foreach
 
@@ -94,12 +91,12 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
 
     abstract void forEach(FUnCon f);
 
-    abstract void forEach(Mask<Integer, S> m, FUnCon f);
+    abstract void forEach(Mask<Integer> m, FUnCon f);
 
     //
 
     @Override
-    public abstract IntVector<S> add(Vector<Integer,S> v);
+    public abstract IntVector add(Vector<Integer> v);
 
     /**
      * Adds this vector to the broadcast of an input scalar.
@@ -111,10 +108,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> add(int s);
+    public abstract IntVector add(int s);
 
     @Override
-    public abstract IntVector<S> add(Vector<Integer,S> v, Mask<Integer, S> m);
+    public abstract IntVector add(Vector<Integer> v, Mask<Integer> m);
 
     /**
      * Adds this vector to broadcast of an input scalar,
@@ -128,10 +125,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of adding this vector to the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> add(int s, Mask<Integer, S> m);
+    public abstract IntVector add(int s, Mask<Integer> m);
 
     @Override
-    public abstract IntVector<S> sub(Vector<Integer,S> v);
+    public abstract IntVector sub(Vector<Integer> v);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector.
@@ -143,10 +140,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract IntVector<S> sub(int s);
+    public abstract IntVector sub(int s);
 
     @Override
-    public abstract IntVector<S> sub(Vector<Integer,S> v, Mask<Integer, S> m);
+    public abstract IntVector sub(Vector<Integer> v, Mask<Integer> m);
 
     /**
      * Subtracts the broadcast of an input scalar from this vector, selecting
@@ -160,10 +157,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of subtracting the broadcast of an input
      * scalar from this vector
      */
-    public abstract IntVector<S> sub(int s, Mask<Integer, S> m);
+    public abstract IntVector sub(int s, Mask<Integer> m);
 
     @Override
-    public abstract IntVector<S> mul(Vector<Integer,S> v);
+    public abstract IntVector mul(Vector<Integer> v);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar.
@@ -175,10 +172,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract IntVector<S> mul(int s);
+    public abstract IntVector mul(int s);
 
     @Override
-    public abstract IntVector<S> mul(Vector<Integer,S> v, Mask<Integer, S> m);
+    public abstract IntVector mul(Vector<Integer> v, Mask<Integer> m);
 
     /**
      * Multiplies this vector with the broadcast of an input scalar, selecting
@@ -192,25 +189,25 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of multiplying this vector with the broadcast of an
      * input scalar
      */
-    public abstract IntVector<S> mul(int s, Mask<Integer, S> m);
+    public abstract IntVector mul(int s, Mask<Integer> m);
 
     @Override
-    public abstract IntVector<S> neg();
+    public abstract IntVector neg();
 
     @Override
-    public abstract IntVector<S> neg(Mask<Integer, S> m);
+    public abstract IntVector neg(Mask<Integer> m);
 
     @Override
-    public abstract IntVector<S> abs();
+    public abstract IntVector abs();
 
     @Override
-    public abstract IntVector<S> abs(Mask<Integer, S> m);
+    public abstract IntVector abs(Mask<Integer> m);
 
     @Override
-    public abstract IntVector<S> min(Vector<Integer,S> v);
+    public abstract IntVector min(Vector<Integer> v);
 
     @Override
-    public abstract IntVector<S> min(Vector<Integer,S> v, Mask<Integer, S> m);
+    public abstract IntVector min(Vector<Integer> v, Mask<Integer> m);
 
     /**
      * Returns the minimum of this vector and the broadcast of an input scalar.
@@ -221,13 +218,13 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param s the input scalar
      * @return the minimum of this vector and the broadcast of an input scalar
      */
-    public abstract IntVector<S> min(int s);
+    public abstract IntVector min(int s);
 
     @Override
-    public abstract IntVector<S> max(Vector<Integer,S> v);
+    public abstract IntVector max(Vector<Integer> v);
 
     @Override
-    public abstract IntVector<S> max(Vector<Integer,S> v, Mask<Integer, S> m);
+    public abstract IntVector max(Vector<Integer> v, Mask<Integer> m);
 
     /**
      * Returns the maximum of this vector and the broadcast of an input scalar.
@@ -238,10 +235,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param s the input scalar
      * @return the maximum of this vector and the broadcast of an input scalar
      */
-    public abstract IntVector<S> max(int s);
+    public abstract IntVector max(int s);
 
     @Override
-    public abstract Mask<Integer, S> equal(Vector<Integer,S> v);
+    public abstract Mask<Integer> equal(Vector<Integer> v);
 
     /**
      * Tests if this vector is equal to the broadcast of an input scalar.
@@ -253,10 +250,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result mask of testing if this vector is equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> equal(int s);
+    public abstract Mask<Integer> equal(int s);
 
     @Override
-    public abstract Mask<Integer, S> notEqual(Vector<Integer,S> v);
+    public abstract Mask<Integer> notEqual(Vector<Integer> v);
 
     /**
      * Tests if this vector is not equal to the broadcast of an input scalar.
@@ -268,10 +265,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result mask of testing if this vector is not equal to the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> notEqual(int s);
+    public abstract Mask<Integer> notEqual(int s);
 
     @Override
-    public abstract Mask<Integer, S> lessThan(Vector<Integer,S> v);
+    public abstract Mask<Integer> lessThan(Vector<Integer> v);
 
     /**
      * Tests if this vector is less than the broadcast of an input scalar.
@@ -283,10 +280,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the mask result of testing if this vector is less than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> lessThan(int s);
+    public abstract Mask<Integer> lessThan(int s);
 
     @Override
-    public abstract Mask<Integer, S> lessThanEq(Vector<Integer,S> v);
+    public abstract Mask<Integer> lessThanEq(Vector<Integer> v);
 
     /**
      * Tests if this vector is less or equal to the broadcast of an input scalar.
@@ -298,10 +295,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the mask result of testing if this vector is less than or equal
      * to the broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> lessThanEq(int s);
+    public abstract Mask<Integer> lessThanEq(int s);
 
     @Override
-    public abstract Mask<Integer, S> greaterThan(Vector<Integer,S> v);
+    public abstract Mask<Integer> greaterThan(Vector<Integer> v);
 
     /**
      * Tests if this vector is greater than the broadcast of an input scalar.
@@ -313,10 +310,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the mask result of testing if this vector is greater than the
      * broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> greaterThan(int s);
+    public abstract Mask<Integer> greaterThan(int s);
 
     @Override
-    public abstract Mask<Integer, S> greaterThanEq(Vector<Integer,S> v);
+    public abstract Mask<Integer> greaterThanEq(Vector<Integer> v);
 
     /**
      * Tests if this vector is greater than or equal to the broadcast of an
@@ -329,10 +326,10 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the mask result of testing if this vector is greater than or
      * equal to the broadcast of an input scalar
      */
-    public abstract Mask<Integer, S> greaterThanEq(int s);
+    public abstract Mask<Integer> greaterThanEq(int s);
 
     @Override
-    public abstract IntVector<S> blend(Vector<Integer,S> v, Mask<Integer, S> m);
+    public abstract IntVector blend(Vector<Integer> v, Mask<Integer> m);
 
     /**
      * Blends the lane elements of this vector with those of the broadcast of an
@@ -349,32 +346,32 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of blending the lane elements of this vector with
      * those of the broadcast of an input scalar
      */
-    public abstract IntVector<S> blend(int s, Mask<Integer, S> m);
+    public abstract IntVector blend(int s, Mask<Integer> m);
 
     @Override
-    public abstract IntVector<S> rearrange(Vector<Integer, S> v,
-                                                      Shuffle<Integer, S> s, Mask<Integer, S> m);
+    public abstract IntVector rearrange(Vector<Integer> v,
+                                                      Shuffle<Integer> s, Mask<Integer> m);
 
     @Override
-    public abstract IntVector<S> rearrange(Shuffle<Integer, S> m);
+    public abstract IntVector rearrange(Shuffle<Integer> m);
 
     @Override
     @ForceInline
-    public <T extends Shape> IntVector<T> resize(Species<Integer, T> species) {
-        return (IntVector<T>) species.resize(this);
+    public IntVector resize(Species<Integer> species) {
+        return (IntVector) species.resize(this);
     }
 
     @Override
-    public abstract IntVector<S> rotateEL(int i);
+    public abstract IntVector rotateEL(int i);
 
     @Override
-    public abstract IntVector<S> rotateER(int i);
+    public abstract IntVector rotateER(int i);
 
     @Override
-    public abstract IntVector<S> shiftEL(int i);
+    public abstract IntVector shiftEL(int i);
 
     @Override
-    public abstract IntVector<S> shiftER(int i);
+    public abstract IntVector shiftER(int i);
 
 
 
@@ -387,7 +384,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param v the input vector
      * @return the bitwise AND of this vector with the input vector
      */
-    public abstract IntVector<S> and(Vector<Integer,S> v);
+    public abstract IntVector and(Vector<Integer> v);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar.
@@ -399,7 +396,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the bitwise AND of this vector with the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> and(int s);
+    public abstract IntVector and(int s);
 
     /**
      * Bitwise ANDs this vector with an input vector, selecting lane elements
@@ -412,7 +409,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the bitwise AND of this vector with the input vector
      */
-    public abstract IntVector<S> and(Vector<Integer,S> v, Mask<Integer, S> m);
+    public abstract IntVector and(Vector<Integer> v, Mask<Integer> m);
 
     /**
      * Bitwise ANDs this vector with the broadcast of an input scalar, selecting
@@ -426,7 +423,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the bitwise AND of this vector with the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> and(int s, Mask<Integer, S> m);
+    public abstract IntVector and(int s, Mask<Integer> m);
 
     /**
      * Bitwise ORs this vector with an input vector.
@@ -437,7 +434,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param v the input vector
      * @return the bitwise OR of this vector with the input vector
      */
-    public abstract IntVector<S> or(Vector<Integer,S> v);
+    public abstract IntVector or(Vector<Integer> v);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar.
@@ -449,7 +446,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the bitwise OR of this vector with the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> or(int s);
+    public abstract IntVector or(int s);
 
     /**
      * Bitwise ORs this vector with an input vector, selecting lane elements
@@ -462,7 +459,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the bitwise OR of this vector with the input vector
      */
-    public abstract IntVector<S> or(Vector<Integer,S> v, Mask<Integer, S> m);
+    public abstract IntVector or(Vector<Integer> v, Mask<Integer> m);
 
     /**
      * Bitwise ORs this vector with the broadcast of an input scalar, selecting
@@ -476,7 +473,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the bitwise OR of this vector with the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> or(int s, Mask<Integer, S> m);
+    public abstract IntVector or(int s, Mask<Integer> m);
 
     /**
      * Bitwise XORs this vector with an input vector.
@@ -487,7 +484,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param v the input vector
      * @return the bitwise XOR of this vector with the input vector
      */
-    public abstract IntVector<S> xor(Vector<Integer,S> v);
+    public abstract IntVector xor(Vector<Integer> v);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar.
@@ -499,7 +496,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the bitwise XOR of this vector with the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> xor(int s);
+    public abstract IntVector xor(int s);
 
     /**
      * Bitwise XORs this vector with an input vector, selecting lane elements
@@ -512,7 +509,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the bitwise XOR of this vector with the input vector
      */
-    public abstract IntVector<S> xor(Vector<Integer,S> v, Mask<Integer, S> m);
+    public abstract IntVector xor(Vector<Integer> v, Mask<Integer> m);
 
     /**
      * Bitwise XORs this vector with the broadcast of an input scalar, selecting
@@ -526,7 +523,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the bitwise XOR of this vector with the broadcast of an input
      * scalar
      */
-    public abstract IntVector<S> xor(int s, Mask<Integer, S> m);
+    public abstract IntVector xor(int s, Mask<Integer> m);
 
     /**
      * Bitwise NOTs this vector.
@@ -536,7 +533,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      *
      * @return the bitwise NOT of this vector
      */
-    public abstract IntVector<S> not();
+    public abstract IntVector not();
 
     /**
      * Bitwise NOTs this vector, selecting lane elements controlled by a mask.
@@ -547,7 +544,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the bitwise NOT of this vector
      */
-    public abstract IntVector<S> not(Mask<Integer, S> m);
+    public abstract IntVector not(Mask<Integer> m);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar.
@@ -559,7 +556,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically left shifting left this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector<S> shiftL(int s);
+    public abstract IntVector shiftL(int s);
 
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
@@ -573,7 +570,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public IntVector<S> shiftL(int s, Mask<Integer, S> m) {
+    public IntVector shiftL(int s, Mask<Integer> m) {
         return uOp(m, (i, a) -> (int) (a << s));
     }
 
@@ -587,7 +584,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public abstract IntVector<S> shiftL(Vector<Integer,S> v);
+    public abstract IntVector shiftL(Vector<Integer> v);
 
     /**
      * Logically left shifts this vector by an input vector, selecting lane
@@ -601,7 +598,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically left shifting this vector by the input
      * vector
      */
-    public IntVector<S> shiftL(Vector<Integer,S> v, Mask<Integer, S> m) {
+    public IntVector shiftL(Vector<Integer> v, Mask<Integer> m) {
         return bOp(v, m, (i, a, b) -> (int) (a << b));
     }
 
@@ -618,7 +615,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector<S> shiftR(int s);
+    public abstract IntVector shiftR(int s);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
@@ -632,7 +629,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public IntVector<S> shiftR(int s, Mask<Integer, S> m) {
+    public IntVector shiftR(int s, Mask<Integer> m) {
         return uOp(m, (i, a) -> (int) (a >>> s));
     }
 
@@ -647,7 +644,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public abstract IntVector<S> shiftR(Vector<Integer,S> v);
+    public abstract IntVector shiftR(Vector<Integer> v);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
@@ -661,7 +658,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of logically right shifting this vector by the
      * input vector
      */
-    public IntVector<S> shiftR(Vector<Integer,S> v, Mask<Integer, S> m) {
+    public IntVector shiftR(Vector<Integer> v, Mask<Integer> m) {
         return bOp(v, m, (i, a, b) -> (int) (a >>> b));
     }
 
@@ -676,7 +673,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public abstract IntVector<S> aShiftR(int s);
+    public abstract IntVector aShiftR(int s);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
@@ -691,7 +688,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public IntVector<S> aShiftR(int s, Mask<Integer, S> m) {
+    public IntVector aShiftR(int s, Mask<Integer> m) {
         return uOp(m, (i, a) -> (int) (a >> s));
     }
 
@@ -706,7 +703,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public abstract IntVector<S> aShiftR(Vector<Integer,S> v);
+    public abstract IntVector aShiftR(Vector<Integer> v);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an
@@ -720,7 +717,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the result of arithmetically right shifting this vector by the
      * input vector
      */
-    public IntVector<S> aShiftR(Vector<Integer,S> v, Mask<Integer, S> m) {
+    public IntVector aShiftR(Vector<Integer> v, Mask<Integer> m) {
         return bOp(v, m, (i, a, b) -> (int) (a >> b));
     }
 
@@ -738,7 +735,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * input scalar
      */
     @ForceInline
-    public final IntVector<S> rotateL(int s) {
+    public final IntVector rotateL(int s) {
         return shiftL(s).or(shiftR(-s));
     }
 
@@ -758,7 +755,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * input scalar
      */
     @ForceInline
-    public final IntVector<S> rotateL(int s, Mask<Integer, S> m) {
+    public final IntVector rotateL(int s, Mask<Integer> m) {
         return shiftL(s, m).or(shiftR(-s, m), m);
     }
 
@@ -776,7 +773,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * input scalar
      */
     @ForceInline
-    public final IntVector<S> rotateR(int s) {
+    public final IntVector rotateR(int s) {
         return shiftR(s).or(shiftL(-s));
     }
 
@@ -796,7 +793,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * input scalar
      */
     @ForceInline
-    public final IntVector<S> rotateR(int s, Mask<Integer, S> m) {
+    public final IntVector rotateR(int s, Mask<Integer> m) {
         return shiftR(s, m).or(shiftL(-s, m), m);
     }
 
@@ -804,13 +801,13 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
     public abstract void intoByteArray(byte[] a, int ix);
 
     @Override
-    public abstract void intoByteArray(byte[] a, int ix, Mask<Integer, S> m);
+    public abstract void intoByteArray(byte[] a, int ix, Mask<Integer> m);
 
     @Override
     public abstract void intoByteBuffer(ByteBuffer bb, int ix);
 
     @Override
-    public abstract void intoByteBuffer(ByteBuffer bb, int ix, Mask<Integer, S> m);
+    public abstract void intoByteBuffer(ByteBuffer bb, int ix, Mask<Integer> m);
 
 
     // Type specific horizontal reductions
@@ -837,7 +834,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the addition of all the lane elements of this vector
      */
-    public abstract int addAll(Mask<Integer, S> m);
+    public abstract int addAll(Mask<Integer> m);
 
     /**
      * Subtracts all lane elements of this vector.
@@ -861,7 +858,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the subtraction of all the lane elements of this vector
      */
-    public abstract int subAll(Mask<Integer, S> m);
+    public abstract int subAll(Mask<Integer> m);
 
     /**
      * Multiplies all lane elements of this vector.
@@ -885,7 +882,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the multiplication of all the lane elements of this vector
      */
-    public abstract int mulAll(Mask<Integer, S> m);
+    public abstract int mulAll(Mask<Integer> m);
 
     /**
      * Returns the minimum lane element of this vector.
@@ -909,7 +906,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the minimum lane element of this vector
      */
-    public abstract int minAll(Mask<Integer, S> m);
+    public abstract int minAll(Mask<Integer> m);
 
     /**
      * Returns the maximum lane element of this vector.
@@ -933,7 +930,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the maximum lane element of this vector
      */
-    public abstract int maxAll(Mask<Integer, S> m);
+    public abstract int maxAll(Mask<Integer> m);
 
     /**
      * Logically ORs all lane elements of this vector.
@@ -957,7 +954,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the logical OR all the lane elements of this vector
      */
-    public abstract int orAll(Mask<Integer, S> m);
+    public abstract int orAll(Mask<Integer> m);
 
     /**
      * Logically ANDs all lane elements of this vector.
@@ -981,7 +978,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the logical AND all the lane elements of this vector
      */
-    public abstract int andAll(Mask<Integer, S> m);
+    public abstract int andAll(Mask<Integer> m);
 
     /**
      * Logically XORs all lane elements of this vector.
@@ -1005,7 +1002,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @param m the mask controlling lane selection
      * @return the logical XOR all the lane elements of this vector
      */
-    public abstract int xorAll(Mask<Integer, S> m);
+    public abstract int xorAll(Mask<Integer> m);
 
     // Type specific accessors
 
@@ -1035,7 +1032,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @throws IllegalArgumentException if the index is is out of range
      * ({@code < 0 || >= length()})
      */
-    public abstract IntVector<S> with(int i, int e);
+    public abstract IntVector with(int i, int e);
 
     // Type specific extractors
 
@@ -1087,7 +1084,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * for any vector lane index {@code N} where the mask at lane {@code N}
      * is set {@code i >= a.length - N}
      */
-    public abstract void intoArray(int[] a, int i, Mask<Integer, S> m);
+    public abstract void intoArray(int[] a, int i, Mask<Integer> m);
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -1134,41 +1131,39 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * {@code N} is set the result of {@code i + indexMap[j + N]} is
      * {@code < 0} or {@code >= a.length}
      */
-    public void intoArray(int[] a, int i, Mask<Integer, S> m, int[] indexMap, int j) {
+    public void intoArray(int[] a, int i, Mask<Integer> m, int[] indexMap, int j) {
         forEach(m, (n, e) -> a[i + indexMap[j + n]] = e);
     }
 
     // Species
 
     @Override
-    public abstract IntSpecies<S> species();
+    public abstract IntSpecies species();
 
     /**
      * A specialized factory for creating {@link IntVector} value of the same
      * shape, and a {@link Mask} and {@link Shuffle} values of the same shape
      * and {@code int} element type.
-     *
-     * @param <S> the type of shape of this species
      */
-    public static abstract class IntSpecies<S extends Vector.Shape> extends Vector.Species<Integer, S> {
+    public static abstract class IntSpecies extends Vector.Species<Integer> {
         interface FOp {
             int apply(int i);
         }
 
-        abstract IntVector<S> op(FOp f);
+        abstract IntVector op(FOp f);
 
-        abstract IntVector<S> op(Mask<Integer, S> m, FOp f);
+        abstract IntVector op(Mask<Integer> m, FOp f);
 
         interface FOpm {
             boolean apply(int i);
         }
 
-        abstract Mask<Integer, S> opm(FOpm f);
+        abstract Mask<Integer> opm(FOpm f);
 
         // Factories
 
         @Override
-        public abstract IntVector<S> zero();
+        public abstract IntVector zero();
 
         /**
          * Returns a vector where all lane elements are set to the primitive
@@ -1178,7 +1173,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * @return a vector of vector where all lane elements are set to
          * the primitive value {@code e}
          */
-        public abstract IntVector<S> broadcast(int e);
+        public abstract IntVector broadcast(int e);
 
         /**
          * Returns a vector where the first lane element is set to the primtive
@@ -1190,7 +1185,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * value {@code e}
          */
         @ForceInline
-        public final IntVector<S> single(int e) {
+        public final IntVector single(int e) {
             return zero().with(0, e);
         }
 
@@ -1204,7 +1199,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * @return a vector where each lane elements is set to a randomly
          * generated primitive value
          */
-        public IntVector<S> random() {
+        public IntVector random() {
             ThreadLocalRandom r = ThreadLocalRandom.current();
             return op(i -> r.nextInt());
         }
@@ -1222,7 +1217,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * value
          * @throws IndexOutOfBoundsException if {@code es.length < this.length()}
          */
-        public abstract IntVector<S> scalars(int... es);
+        public abstract IntVector scalars(int... es);
 
         /**
          * Loads a vector from an array starting at offset.
@@ -1237,7 +1232,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * @throws IndexOutOfBoundsException if {@code i < 0}, or
          * {@code i > a.length - this.length()}
          */
-        public abstract IntVector<S> fromArray(int[] a, int i);
+        public abstract IntVector fromArray(int[] a, int i);
 
         /**
          * Loads a vector from an array starting at offset and using a mask.
@@ -1256,7 +1251,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * for any vector lane index {@code N} where the mask at lane {@code N}
          * is set {@code i > a.length - N}
          */
-        public abstract IntVector<S> fromArray(int[] a, int i, Mask<Integer, S> m);
+        public abstract IntVector fromArray(int[] a, int i, Mask<Integer> m);
 
         /**
          * Loads a vector from an array using indexes obtained from an index
@@ -1278,7 +1273,7 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * or for any vector lane index {@code N} the result of
          * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
          */
-        public IntVector<S> fromArray(int[] a, int i, int[] indexMap, int j) {
+        public IntVector fromArray(int[] a, int i, int[] indexMap, int j) {
             return op(n -> a[i + indexMap[j + n]]);
         }
 
@@ -1304,24 +1299,24 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
          * {@code N} is set the result of {@code i + indexMap[j + N]} is
          * {@code < 0} or {@code >= a.length}
          */
-        public IntVector<S> fromArray(int[] a, int i, Mask<Integer, S> m, int[] indexMap, int j) {
+        public IntVector fromArray(int[] a, int i, Mask<Integer> m, int[] indexMap, int j) {
             return op(m, n -> a[i + indexMap[j + n]]);
         }
 
         @Override
-        public abstract IntVector<S> fromByteArray(byte[] a, int ix);
+        public abstract IntVector fromByteArray(byte[] a, int ix);
 
         @Override
-        public abstract IntVector<S> fromByteArray(byte[] a, int ix, Mask<Integer, S> m);
+        public abstract IntVector fromByteArray(byte[] a, int ix, Mask<Integer> m);
 
         @Override
-        public abstract IntVector<S> fromByteBuffer(ByteBuffer bb, int ix);
+        public abstract IntVector fromByteBuffer(ByteBuffer bb, int ix);
 
         @Override
-        public abstract IntVector<S> fromByteBuffer(ByteBuffer bb, int ix, Mask<Integer, S> m);
+        public abstract IntVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Integer> m);
 
         @Override
-        public <F, T extends Shape> IntVector<S> reshape(Vector<F, T> o) {
+        public <F> IntVector reshape(Vector<F> o) {
             int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
             ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
             o.intoByteBuffer(bb, 0);
@@ -1329,13 +1324,13 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
         }
 
         @Override
-        public abstract <F> IntVector<S> rebracket(Vector<F, S> o);
+        public abstract <F> IntVector rebracket(Vector<F> o);
 
         @Override
-        public abstract <T extends Shape> IntVector<S> resize(Vector<Integer, T> o);
+        public abstract IntVector resize(Vector<Integer> o);
 
         @Override
-        public abstract <F, T extends Shape> IntVector<S> cast(Vector<F, T> v);
+        public abstract <F> IntVector cast(Vector<F> v);
 
     }
 
@@ -1350,31 +1345,30 @@ public abstract class IntVector<S extends Vector.Shape> extends Vector<Integer,S
      * @return the preferred species for an element type of {@code int}
      */
     @SuppressWarnings("unchecked")
-    public static IntSpecies<?> preferredSpecies() {
-        return (IntSpecies<?>) Vector.preferredSpecies(int.class);
+    public static IntSpecies preferredSpecies() {
+        return (IntSpecies) Vector.preferredSpecies(int.class);
     }
 
     /**
      * Finds a species for an element type of {@code int} and shape.
      *
      * @param s the shape
-     * @param <S> the type of shape
      * @return a species for an element type of {@code int} and shape
      * @throws IllegalArgumentException if no such species exists for the shape
      */
     @SuppressWarnings("unchecked")
-    public static <S extends Shape> IntSpecies<S> species(S s) {
+    public static IntSpecies species(Vector.Shape s) {
         Objects.requireNonNull(s);
-        if (s == Shapes.S_64_BIT) {
-            return (IntSpecies<S>) Int64Vector.SPECIES;
-        } else if (s == Shapes.S_128_BIT) {
-            return (IntSpecies<S>) Int128Vector.SPECIES;
-        } else if (s == Shapes.S_256_BIT) {
-            return (IntSpecies<S>) Int256Vector.SPECIES;
-        } else if (s == Shapes.S_512_BIT) {
-            return (IntSpecies<S>) Int512Vector.SPECIES;
-        } else if (s == Shapes.S_Max_BIT) {
-            return (IntSpecies<S>) IntMaxVector.SPECIES;
+        if (s == Shape.S_64_BIT) {
+            return Int64Vector.SPECIES;
+        } else if (s == Shape.S_128_BIT) {
+            return Int128Vector.SPECIES;
+        } else if (s == Shape.S_256_BIT) {
+            return Int256Vector.SPECIES;
+        } else if (s == Shape.S_512_BIT) {
+            return Int512Vector.SPECIES;
+        } else if (s == Shape.S_Max_BIT) {
+            return IntMaxVector.SPECIES;
         } else {
             throw new IllegalArgumentException("Bad shape: " + s);
         }

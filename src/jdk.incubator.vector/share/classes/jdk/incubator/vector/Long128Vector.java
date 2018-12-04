@@ -37,7 +37,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
-final class Long128Vector extends LongVector<Shapes.S128Bit> {
+final class Long128Vector extends LongVector {
     static final Long128Species SPECIES = new Long128Species();
 
     static final Long128Vector ZERO = new Long128Vector();
@@ -74,7 +74,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
     @Override
-    Long128Vector uOp(Mask<Long, Shapes.S128Bit> o, FUnOp f) {
+    Long128Vector uOp(Mask<Long> o, FUnOp f) {
         long[] vec = getElements();
         long[] res = new long[length()];
         boolean[] mbits = ((Long128Mask)o).getBits();
@@ -87,7 +87,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     // Binary operator
 
     @Override
-    Long128Vector bOp(Vector<Long, Shapes.S128Bit> o, FBinOp f) {
+    Long128Vector bOp(Vector<Long> o, FBinOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((Long128Vector)o).getElements();
@@ -98,7 +98,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
     @Override
-    Long128Vector bOp(Vector<Long, Shapes.S128Bit> o1, Mask<Long, Shapes.S128Bit> o2, FBinOp f) {
+    Long128Vector bOp(Vector<Long> o1, Mask<Long> o2, FBinOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((Long128Vector)o1).getElements();
@@ -112,7 +112,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     // Trinary operator
 
     @Override
-    Long128Vector tOp(Vector<Long, Shapes.S128Bit> o1, Vector<Long, Shapes.S128Bit> o2, FTriOp f) {
+    Long128Vector tOp(Vector<Long> o1, Vector<Long> o2, FTriOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((Long128Vector)o1).getElements();
@@ -124,7 +124,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
     @Override
-    Long128Vector tOp(Vector<Long, Shapes.S128Bit> o1, Vector<Long, Shapes.S128Bit> o2, Mask<Long, Shapes.S128Bit> o3, FTriOp f) {
+    Long128Vector tOp(Vector<Long> o1, Vector<Long> o2, Mask<Long> o3, FTriOp f) {
         long[] res = new long[length()];
         long[] vec1 = getElements();
         long[] vec2 = ((Long128Vector)o1).getElements();
@@ -149,128 +149,128 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> add(long o) {
+    public LongVector add(long o) {
         return add(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> add(long o, Mask<Long,Shapes.S128Bit> m) {
+    public LongVector add(long o, Mask<Long> m) {
         return add(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> sub(long o) {
+    public LongVector sub(long o) {
         return sub(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> sub(long o, Mask<Long,Shapes.S128Bit> m) {
+    public LongVector sub(long o, Mask<Long> m) {
         return sub(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> mul(long o) {
+    public LongVector mul(long o) {
         return mul(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> mul(long o, Mask<Long,Shapes.S128Bit> m) {
+    public LongVector mul(long o, Mask<Long> m) {
         return mul(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> min(long o) {
+    public LongVector min(long o) {
         return min(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> max(long o) {
+    public LongVector max(long o) {
         return max(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.S128Bit> equal(long o) {
+    public Mask<Long> equal(long o) {
         return equal(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.S128Bit> notEqual(long o) {
+    public Mask<Long> notEqual(long o) {
         return notEqual(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.S128Bit> lessThan(long o) {
+    public Mask<Long> lessThan(long o) {
         return lessThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.S128Bit> lessThanEq(long o) {
+    public Mask<Long> lessThanEq(long o) {
         return lessThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.S128Bit> greaterThan(long o) {
+    public Mask<Long> greaterThan(long o) {
         return greaterThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.S128Bit> greaterThanEq(long o) {
+    public Mask<Long> greaterThanEq(long o) {
         return greaterThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> blend(long o, Mask<Long,Shapes.S128Bit> m) {
+    public LongVector blend(long o, Mask<Long> m) {
         return blend(SPECIES.broadcast(o), m);
     }
 
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> and(long o) {
+    public LongVector and(long o) {
         return and(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> and(long o, Mask<Long,Shapes.S128Bit> m) {
+    public LongVector and(long o, Mask<Long> m) {
         return and(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> or(long o) {
+    public LongVector or(long o) {
         return or(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> or(long o, Mask<Long,Shapes.S128Bit> m) {
+    public LongVector or(long o, Mask<Long> m) {
         return or(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> xor(long o) {
+    public LongVector xor(long o) {
         return xor(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.S128Bit> xor(long o, Mask<Long,Shapes.S128Bit> m) {
+    public LongVector xor(long o, Mask<Long> m) {
         return xor(SPECIES.broadcast(o), m);
     }
 
@@ -284,7 +284,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @ForceInline
     @Override
-    public Long128Vector neg(Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector neg(Mask<Long> m) {
         return blend(neg(), m);
     }
 
@@ -299,7 +299,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @ForceInline
     @Override
-    public Long128Vector abs(Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector abs(Mask<Long> m) {
         return blend(abs(), m);
     }
 
@@ -315,14 +315,14 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @ForceInline
     @Override
-    public Long128Vector not(Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector not(Mask<Long> m) {
         return blend(not(), m);
     }
     // Binary operations
 
     @Override
     @ForceInline
-    public Long128Vector add(Vector<Long,Shapes.S128Bit> o) {
+    public Long128Vector add(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -333,13 +333,13 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector add(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector add(Vector<Long> v, Mask<Long> m) {
         return blend(add(v), m);
     }
 
     @Override
     @ForceInline
-    public Long128Vector sub(Vector<Long,Shapes.S128Bit> o) {
+    public Long128Vector sub(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -350,13 +350,13 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector sub(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector sub(Vector<Long> v, Mask<Long> m) {
         return blend(sub(v), m);
     }
 
     @Override
     @ForceInline
-    public Long128Vector mul(Vector<Long,Shapes.S128Bit> o) {
+    public Long128Vector mul(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -367,13 +367,13 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector mul(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector mul(Vector<Long> v, Mask<Long> m) {
         return blend(mul(v), m);
     }
 
     @Override
     @ForceInline
-    public Long128Vector min(Vector<Long,Shapes.S128Bit> o) {
+    public Long128Vector min(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
         return (Long128Vector) VectorIntrinsics.binaryOp(
@@ -384,13 +384,13 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector min(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector min(Vector<Long> v, Mask<Long> m) {
         return blend(min(v), m);
     }
 
     @Override
     @ForceInline
-    public Long128Vector max(Vector<Long,Shapes.S128Bit> o) {
+    public Long128Vector max(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -401,13 +401,13 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector max(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector max(Vector<Long> v, Mask<Long> m) {
         return blend(max(v), m);
     }
 
     @Override
     @ForceInline
-    public Long128Vector and(Vector<Long,Shapes.S128Bit> o) {
+    public Long128Vector and(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -418,7 +418,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector or(Vector<Long,Shapes.S128Bit> o) {
+    public Long128Vector or(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -429,7 +429,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector xor(Vector<Long,Shapes.S128Bit> o) {
+    public Long128Vector xor(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -440,19 +440,19 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector and(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector and(Vector<Long> v, Mask<Long> m) {
         return blend(and(v), m);
     }
 
     @Override
     @ForceInline
-    public Long128Vector or(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector or(Vector<Long> v, Mask<Long> m) {
         return blend(or(v), m);
     }
 
     @Override
     @ForceInline
-    public Long128Vector xor(Vector<Long,Shapes.S128Bit> v, Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector xor(Vector<Long> v, Mask<Long> m) {
         return blend(xor(v), m);
     }
 
@@ -485,7 +485,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector shiftL(Vector<Long,Shapes.S128Bit> s) {
+    public Long128Vector shiftL(Vector<Long> s) {
         Long128Vector shiftv = (Long128Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x3f));
@@ -497,7 +497,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector shiftR(Vector<Long,Shapes.S128Bit> s) {
+    public Long128Vector shiftR(Vector<Long> s) {
         Long128Vector shiftv = (Long128Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x3f));
@@ -509,7 +509,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector aShiftR(Vector<Long,Shapes.S128Bit> s) {
+    public Long128Vector aShiftR(Vector<Long> s) {
         Long128Vector shiftv = (Long128Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x3f));
@@ -543,7 +543,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public long andAll(Mask<Long, Shapes.S128Bit> m) {
+    public long andAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) -1), m).andAll();
     }
 
@@ -594,7 +594,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public long orAll(Mask<Long, Shapes.S128Bit> m) {
+    public long orAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 0), m).orAll();
     }
 
@@ -609,44 +609,44 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public long xorAll(Mask<Long, Shapes.S128Bit> m) {
+    public long xorAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 0), m).xorAll();
     }
 
 
     @Override
     @ForceInline
-    public long addAll(Mask<Long, Shapes.S128Bit> m) {
+    public long addAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 0), m).addAll();
     }
 
     @Override
     @ForceInline
-    public long subAll(Mask<Long, Shapes.S128Bit> m) {
+    public long subAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 0), m).subAll();
     }
 
     @Override
     @ForceInline
-    public long mulAll(Mask<Long, Shapes.S128Bit> m) {
+    public long mulAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
-    public long minAll(Mask<Long, Shapes.S128Bit> m) {
+    public long minAll(Mask<Long> m) {
         return blend(SPECIES.broadcast(Long.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
-    public long maxAll(Mask<Long, Shapes.S128Bit> m) {
+    public long maxAll(Mask<Long> m) {
         return blend(SPECIES.broadcast(Long.MIN_VALUE), m).maxAll();
     }
 
     @Override
     @ForceInline
-    public Shuffle<Long, Shapes.S128Bit> toShuffle() {
+    public Shuffle<Long> toShuffle() {
         long[] a = toArray();
         int[] sa = new int[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -673,7 +673,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public final void intoArray(long[] a, int ax, Mask<Long, Shapes.S128Bit> m) {
+    public final void intoArray(long[] a, int ax, Mask<Long> m) {
         Long128Vector oldVal = SPECIES.fromArray(a, ax);
         Long128Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -697,7 +697,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, Mask<Long, Shapes.S128Bit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Long> m) {
         Long128Vector oldVal = SPECIES.fromByteArray(a, ix);
         Long128Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -726,7 +726,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Long, Shapes.S128Bit> m) {
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Long> m) {
         Long128Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
         Long128Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -756,7 +756,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     // Binary test
 
     @Override
-    Long128Mask bTest(Vector<Long, Shapes.S128Bit> o, FBinTest f) {
+    Long128Mask bTest(Vector<Long> o, FBinTest f) {
         long[] vec1 = getElements();
         long[] vec2 = ((Long128Vector)o).getElements();
         boolean[] bits = new boolean[length()];
@@ -770,7 +770,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Mask equal(Vector<Long, Shapes.S128Bit> o) {
+    public Long128Mask equal(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
@@ -782,7 +782,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Mask notEqual(Vector<Long, Shapes.S128Bit> o) {
+    public Long128Mask notEqual(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
@@ -794,7 +794,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Mask lessThan(Vector<Long, Shapes.S128Bit> o) {
+    public Long128Mask lessThan(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
@@ -806,7 +806,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Mask lessThanEq(Vector<Long, Shapes.S128Bit> o) {
+    public Long128Mask lessThanEq(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
@@ -818,7 +818,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Mask greaterThan(Vector<Long, Shapes.S128Bit> o) {
+    public Long128Mask greaterThan(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
@@ -830,7 +830,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Mask greaterThanEq(Vector<Long, Shapes.S128Bit> o) {
+    public Long128Mask greaterThanEq(Vector<Long> o) {
         Objects.requireNonNull(o);
         Long128Vector v = (Long128Vector)o;
 
@@ -851,7 +851,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
     }
 
     @Override
-    void forEach(Mask<Long, Shapes.S128Bit> o, FUnCon f) {
+    void forEach(Mask<Long> o, FUnCon f) {
         boolean[] mbits = ((Long128Mask)o).getBits();
         forEach((i, a) -> {
             if (mbits[i]) { f.apply(i, a); }
@@ -915,14 +915,14 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector rearrange(Vector<Long, Shapes.S128Bit> v,
-                                  Shuffle<Long, Shapes.S128Bit> s, Mask<Long, Shapes.S128Bit> m) {
+    public Long128Vector rearrange(Vector<Long> v,
+                                  Shuffle<Long> s, Mask<Long> m) {
         return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
     @ForceInline
-    public Long128Vector rearrange(Shuffle<Long, Shapes.S128Bit> o1) {
+    public Long128Vector rearrange(Shuffle<Long> o1) {
     Objects.requireNonNull(o1);
     Long128Shuffle s =  (Long128Shuffle)o1;
 
@@ -938,7 +938,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     @Override
     @ForceInline
-    public Long128Vector blend(Vector<Long, Shapes.S128Bit> o1, Mask<Long, Shapes.S128Bit> o2) {
+    public Long128Vector blend(Vector<Long> o1, Mask<Long> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         Long128Vector v = (Long128Vector)o1;
@@ -983,7 +983,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     // Mask
 
-    static final class Long128Mask extends AbstractMask<Long, Shapes.S128Bit> {
+    static final class Long128Mask extends AbstractMask<Long> {
         static final Long128Mask TRUE_MASK = new Long128Mask(true);
         static final Long128Mask FALSE_MASK = new Long128Mask(false);
 
@@ -1022,7 +1022,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         }
 
         @Override
-        Long128Mask bOp(Mask<Long, Shapes.S128Bit> o, MBinOp f) {
+        Long128Mask bOp(Mask<Long> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
             boolean[] bits = getBits();
             boolean[] mbits = ((Long128Mask)o).getBits();
@@ -1064,7 +1064,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public Long128Mask and(Mask<Long,Shapes.S128Bit> o) {
+        public Long128Mask and(Mask<Long> o) {
             Objects.requireNonNull(o);
             Long128Mask m = (Long128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Long128Mask.class, long.class, LENGTH,
@@ -1074,7 +1074,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public Long128Mask or(Mask<Long,Shapes.S128Bit> o) {
+        public Long128Mask or(Mask<Long> o) {
             Objects.requireNonNull(o);
             Long128Mask m = (Long128Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Long128Mask.class, long.class, LENGTH,
@@ -1103,7 +1103,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
     // Shuffle
 
-    static final class Long128Shuffle extends AbstractShuffle<Long, Shapes.S128Bit> {
+    static final class Long128Shuffle extends AbstractShuffle<Long> {
         Long128Shuffle(byte[] reorder) {
             super(reorder);
         }
@@ -1135,7 +1135,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         }
 
         @Override
-        public Long128Shuffle rearrange(Vector.Shuffle<Long, Shapes.S128Bit> o) {
+        public Long128Shuffle rearrange(Vector.Shuffle<Long> o) {
             Long128Shuffle s = (Long128Shuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
@@ -1152,8 +1152,8 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         return SPECIES;
     }
 
-    static final class Long128Species extends LongSpecies<Shapes.S128Bit> {
-        static final int BIT_SIZE = Shapes.S_128_BIT.bitSize();
+    static final class Long128Species extends LongSpecies {
+        static final int BIT_SIZE = Shape.S_128_BIT.bitSize();
 
         static final int LENGTH = BIT_SIZE / Long.SIZE;
 
@@ -1193,8 +1193,8 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public Shapes.S128Bit shape() {
-            return Shapes.S_128_BIT;
+        public Shape shape() {
+            return Shape.S_128_BIT;
         }
 
         @Override
@@ -1207,7 +1207,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         }
 
         @Override
-        Long128Vector op(Mask<Long, Shapes.S128Bit> o, FOp f) {
+        Long128Vector op(Mask<Long> o, FOp f) {
             long[] res = new long[length()];
             boolean[] mbits = ((Long128Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1322,7 +1322,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public Long128Vector fromArray(long[] a, int ax, Mask<Long, Shapes.S128Bit> m) {
+        public Long128Vector fromArray(long[] a, int ax, Mask<Long> m) {
             return zero().blend(fromArray(a, ax), m);
         }
 
@@ -1343,7 +1343,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public Long128Vector fromByteArray(byte[] a, int ix, Mask<Long, Shapes.S128Bit> m) {
+        public Long128Vector fromByteArray(byte[] a, int ix, Mask<Long> m) {
             return zero().blend(fromByteArray(a, ix), m);
         }
 
@@ -1366,14 +1366,14 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public Long128Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Long, Shapes.S128Bit> m) {
+        public Long128Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Long> m) {
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F, T extends Shape> Long128Vector cast(Vector<F, T> o) {
+        public <F> Long128Vector cast(Vector<F> o) {
             if (o.length() != LENGTH)
                 throw new IllegalArgumentException("Vector length this species length differ");
 
@@ -1389,39 +1389,39 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @SuppressWarnings("unchecked")
         @ForceInline
-        private <F, T extends Shape> Long128Vector castDefault(Vector<F, T> v) {
+        private <F> Long128Vector castDefault(Vector<F> v) {
             // Allocate array of required size
             int limit = length();
             long[] a = new long[limit];
 
             Class<?> vtype = v.species().elementType();
             if (vtype == byte.class) {
-                ByteVector<T> tv = (ByteVector<T>)v;
+                ByteVector tv = (ByteVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == short.class) {
-                ShortVector<T> tv = (ShortVector<T>)v;
+                ShortVector tv = (ShortVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == int.class) {
-                IntVector<T> tv = (IntVector<T>)v;
+                IntVector tv = (IntVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == long.class){
-                LongVector<T> tv = (LongVector<T>)v;
+                LongVector tv = (LongVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == float.class){
-                FloatVector<T> tv = (FloatVector<T>)v;
+                FloatVector tv = (FloatVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == double.class){
-                DoubleVector<T> tv = (DoubleVector<T>)v;
+                DoubleVector tv = (DoubleVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
@@ -1434,7 +1434,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> Long128Mask cast(Mask<E, S> m) {
+        public <E> Long128Mask cast(Mask<E> m) {
             if (m.length() != LENGTH)
                 throw new IllegalArgumentException("Mask length this species length differ");
             return new Long128Mask(m.toArray());
@@ -1442,7 +1442,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> Long128Shuffle cast(Shuffle<E, S> s) {
+        public <E> Long128Shuffle cast(Shuffle<E> s) {
             if (s.length() != LENGTH)
                 throw new IllegalArgumentException("Shuffle length this species length differ");
             return new Long128Shuffle(s.toArray());
@@ -1451,7 +1451,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F> Long128Vector rebracket(Vector<F, Shapes.S128Bit> o) {
+        public <F> Long128Vector rebracket(Vector<F> o) {
             Objects.requireNonNull(o);
             if (o.elementType() == byte.class) {
                 Byte128Vector so = (Byte128Vector)o;
@@ -1521,7 +1521,7 @@ final class Long128Vector extends LongVector<Shapes.S128Bit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <T extends Shape> Long128Vector resize(Vector<Long, T> o) {
+        public Long128Vector resize(Vector<Long> o) {
             Objects.requireNonNull(o);
             if (o.bitSize() == 64 && (o instanceof Long64Vector)) {
                 Long64Vector so = (Long64Vector)o;

@@ -32,7 +32,7 @@ import jdk.incubator.vector.ByteVector;
 import jdk.incubator.vector.DoubleVector;
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.ShortVector;
 import jdk.incubator.vector.Vector;
 import org.testng.Assert;
@@ -75,12 +75,12 @@ public class MethodOverideTest {
 
     static List<Object> getConcreteSpeciesInstances(Class<?> primitiveVectorClass) {
         try {
-            Method species = primitiveVectorClass.getMethod("species", Vector.Shape.class);
+            Method species = primitiveVectorClass.getMethod("species", Shape.class);
 
             List<Object> csis = new ArrayList<>();
-            for (Field sf : Shapes.class.getFields()) {
-                if (Vector.Shape.class.isAssignableFrom(sf.getType())) {
-                    Vector.Shape s = (Vector.Shape) sf.get(null);
+            for (Field sf : Shape.class.getFields()) {
+                if (Shape.class.isAssignableFrom(sf.getType())) {
+                    Shape s = (Shape) sf.get(null);
                     Object speciesInstance = species.invoke(null, s);
 
                     csis.add(speciesInstance);

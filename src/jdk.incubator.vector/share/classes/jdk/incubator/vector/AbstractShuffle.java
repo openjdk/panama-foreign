@@ -26,7 +26,7 @@ package jdk.incubator.vector;
 
 import java.util.function.IntUnaryOperator;
 
-abstract class AbstractShuffle<E, S extends Vector.Shape> extends Vector.Shuffle<E, S> {
+abstract class AbstractShuffle<E> extends Vector.Shuffle<E> {
     static final IntUnaryOperator IDENTITY = i -> i;
 
     // Internal representation allows for a maximum index of 256

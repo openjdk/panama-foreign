@@ -37,7 +37,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
-final class Float512Vector extends FloatVector<Shapes.S512Bit> {
+final class Float512Vector extends FloatVector {
     static final Float512Species SPECIES = new Float512Species();
 
     static final Float512Vector ZERO = new Float512Vector();
@@ -74,7 +74,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     }
 
     @Override
-    Float512Vector uOp(Mask<Float, Shapes.S512Bit> o, FUnOp f) {
+    Float512Vector uOp(Mask<Float> o, FUnOp f) {
         float[] vec = getElements();
         float[] res = new float[length()];
         boolean[] mbits = ((Float512Mask)o).getBits();
@@ -87,7 +87,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     // Binary operator
 
     @Override
-    Float512Vector bOp(Vector<Float, Shapes.S512Bit> o, FBinOp f) {
+    Float512Vector bOp(Vector<Float> o, FBinOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((Float512Vector)o).getElements();
@@ -98,7 +98,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     }
 
     @Override
-    Float512Vector bOp(Vector<Float, Shapes.S512Bit> o1, Mask<Float, Shapes.S512Bit> o2, FBinOp f) {
+    Float512Vector bOp(Vector<Float> o1, Mask<Float> o2, FBinOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((Float512Vector)o1).getElements();
@@ -112,7 +112,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     // Trinary operator
 
     @Override
-    Float512Vector tOp(Vector<Float, Shapes.S512Bit> o1, Vector<Float, Shapes.S512Bit> o2, FTriOp f) {
+    Float512Vector tOp(Vector<Float> o1, Vector<Float> o2, FTriOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((Float512Vector)o1).getElements();
@@ -124,7 +124,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     }
 
     @Override
-    Float512Vector tOp(Vector<Float, Shapes.S512Bit> o1, Vector<Float, Shapes.S512Bit> o2, Mask<Float, Shapes.S512Bit> o3, FTriOp f) {
+    Float512Vector tOp(Vector<Float> o1, Vector<Float> o2, Mask<Float> o3, FTriOp f) {
         float[] res = new float[length()];
         float[] vec1 = getElements();
         float[] vec2 = ((Float512Vector)o1).getElements();
@@ -149,157 +149,157 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> add(float o) {
+    public FloatVector add(float o) {
         return add(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> add(float o, Mask<Float,Shapes.S512Bit> m) {
+    public FloatVector add(float o, Mask<Float> m) {
         return add(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> sub(float o) {
+    public FloatVector sub(float o) {
         return sub(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> sub(float o, Mask<Float,Shapes.S512Bit> m) {
+    public FloatVector sub(float o, Mask<Float> m) {
         return sub(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> mul(float o) {
+    public FloatVector mul(float o) {
         return mul(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> mul(float o, Mask<Float,Shapes.S512Bit> m) {
+    public FloatVector mul(float o, Mask<Float> m) {
         return mul(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> min(float o) {
+    public FloatVector min(float o) {
         return min(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> max(float o) {
+    public FloatVector max(float o) {
         return max(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.S512Bit> equal(float o) {
+    public Mask<Float> equal(float o) {
         return equal(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.S512Bit> notEqual(float o) {
+    public Mask<Float> notEqual(float o) {
         return notEqual(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.S512Bit> lessThan(float o) {
+    public Mask<Float> lessThan(float o) {
         return lessThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.S512Bit> lessThanEq(float o) {
+    public Mask<Float> lessThanEq(float o) {
         return lessThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.S512Bit> greaterThan(float o) {
+    public Mask<Float> greaterThan(float o) {
         return greaterThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.S512Bit> greaterThanEq(float o) {
+    public Mask<Float> greaterThanEq(float o) {
         return greaterThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> blend(float o, Mask<Float,Shapes.S512Bit> m) {
+    public FloatVector blend(float o, Mask<Float> m) {
         return blend(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> div(float o) {
+    public FloatVector div(float o) {
         return div(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> div(float o, Mask<Float,Shapes.S512Bit> m) {
+    public FloatVector div(float o, Mask<Float> m) {
         return div(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public Float512Vector div(Vector<Float,Shapes.S512Bit> v, Mask<Float, Shapes.S512Bit> m) {
+    public Float512Vector div(Vector<Float> v, Mask<Float> m) {
         return blend(div(v), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> atan2(float o) {
+    public FloatVector atan2(float o) {
         return atan2(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> atan2(float o, Mask<Float,Shapes.S512Bit> m) {
+    public FloatVector atan2(float o, Mask<Float> m) {
         return atan2(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> pow(float o) {
+    public FloatVector pow(float o) {
         return pow(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> pow(float o, Mask<Float,Shapes.S512Bit> m) {
+    public FloatVector pow(float o, Mask<Float> m) {
         return pow(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> fma(float o1, float o2) {
+    public FloatVector fma(float o1, float o2) {
         return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> fma(float o1, float o2, Mask<Float,Shapes.S512Bit> m) {
+    public FloatVector fma(float o1, float o2, Mask<Float> m) {
         return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> hypot(float o) {
+    public FloatVector hypot(float o) {
         return hypot(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.S512Bit> hypot(float o, Mask<Float,Shapes.S512Bit> m) {
+    public FloatVector hypot(float o, Mask<Float> m) {
         return hypot(SPECIES.broadcast(o), m);
     }
 
@@ -308,7 +308,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @ForceInline
     @Override
-    public Float512Vector neg(Mask<Float, Shapes.S512Bit> m) {
+    public Float512Vector neg(Mask<Float> m) {
         return blend(neg(), m);
     }
 
@@ -323,7 +323,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @ForceInline
     @Override
-    public Float512Vector abs(Mask<Float, Shapes.S512Bit> m) {
+    public Float512Vector abs(Mask<Float> m) {
         return blend(abs(), m);
     }
 
@@ -338,7 +338,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector div(Vector<Float,Shapes.S512Bit> o) {
+    public Float512Vector div(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -493,7 +493,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector pow(Vector<Float,Shapes.S512Bit> o) {
+    public Float512Vector pow(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
         return (Float512Vector) VectorIntrinsics.binaryOp(
@@ -504,7 +504,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector hypot(Vector<Float,Shapes.S512Bit> o) {
+    public Float512Vector hypot(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
         return (Float512Vector) VectorIntrinsics.binaryOp(
@@ -515,7 +515,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector atan2(Vector<Float,Shapes.S512Bit> o) {
+    public Float512Vector atan2(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
         return (Float512Vector) VectorIntrinsics.binaryOp(
@@ -529,7 +529,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector add(Vector<Float,Shapes.S512Bit> o) {
+    public Float512Vector add(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -540,13 +540,13 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector add(Vector<Float,Shapes.S512Bit> v, Mask<Float, Shapes.S512Bit> m) {
+    public Float512Vector add(Vector<Float> v, Mask<Float> m) {
         return blend(add(v), m);
     }
 
     @Override
     @ForceInline
-    public Float512Vector sub(Vector<Float,Shapes.S512Bit> o) {
+    public Float512Vector sub(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -557,13 +557,13 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector sub(Vector<Float,Shapes.S512Bit> v, Mask<Float, Shapes.S512Bit> m) {
+    public Float512Vector sub(Vector<Float> v, Mask<Float> m) {
         return blend(sub(v), m);
     }
 
     @Override
     @ForceInline
-    public Float512Vector mul(Vector<Float,Shapes.S512Bit> o) {
+    public Float512Vector mul(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -574,13 +574,13 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector mul(Vector<Float,Shapes.S512Bit> v, Mask<Float, Shapes.S512Bit> m) {
+    public Float512Vector mul(Vector<Float> v, Mask<Float> m) {
         return blend(mul(v), m);
     }
 
     @Override
     @ForceInline
-    public Float512Vector min(Vector<Float,Shapes.S512Bit> o) {
+    public Float512Vector min(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
         return (Float512Vector) VectorIntrinsics.binaryOp(
@@ -591,13 +591,13 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector min(Vector<Float,Shapes.S512Bit> v, Mask<Float, Shapes.S512Bit> m) {
+    public Float512Vector min(Vector<Float> v, Mask<Float> m) {
         return blend(min(v), m);
     }
 
     @Override
     @ForceInline
-    public Float512Vector max(Vector<Float,Shapes.S512Bit> o) {
+    public Float512Vector max(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -608,7 +608,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector max(Vector<Float,Shapes.S512Bit> v, Mask<Float, Shapes.S512Bit> m) {
+    public Float512Vector max(Vector<Float> v, Mask<Float> m) {
         return blend(max(v), m);
     }
 
@@ -617,7 +617,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector fma(Vector<Float,Shapes.S512Bit> o1, Vector<Float,Shapes.S512Bit> o2) {
+    public Float512Vector fma(Vector<Float> o1, Vector<Float> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         Float512Vector v1 = (Float512Vector)o1;
@@ -698,37 +698,37 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public float addAll(Mask<Float, Shapes.S512Bit> m) {
+    public float addAll(Mask<Float> m) {
         return blend(SPECIES.broadcast((float) 0), m).addAll();
     }
 
     @Override
     @ForceInline
-    public float subAll(Mask<Float, Shapes.S512Bit> m) {
+    public float subAll(Mask<Float> m) {
         return blend(SPECIES.broadcast((float) 0), m).subAll();
     }
 
     @Override
     @ForceInline
-    public float mulAll(Mask<Float, Shapes.S512Bit> m) {
+    public float mulAll(Mask<Float> m) {
         return blend(SPECIES.broadcast((float) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
-    public float minAll(Mask<Float, Shapes.S512Bit> m) {
+    public float minAll(Mask<Float> m) {
         return blend(SPECIES.broadcast(Float.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
-    public float maxAll(Mask<Float, Shapes.S512Bit> m) {
+    public float maxAll(Mask<Float> m) {
         return blend(SPECIES.broadcast(Float.MIN_VALUE), m).maxAll();
     }
 
     @Override
     @ForceInline
-    public Shuffle<Float, Shapes.S512Bit> toShuffle() {
+    public Shuffle<Float> toShuffle() {
         float[] a = toArray();
         int[] sa = new int[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -755,7 +755,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public final void intoArray(float[] a, int ax, Mask<Float, Shapes.S512Bit> m) {
+    public final void intoArray(float[] a, int ax, Mask<Float> m) {
         Float512Vector oldVal = SPECIES.fromArray(a, ax);
         Float512Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -779,7 +779,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, Mask<Float, Shapes.S512Bit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Float> m) {
         Float512Vector oldVal = SPECIES.fromByteArray(a, ix);
         Float512Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -808,7 +808,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Float, Shapes.S512Bit> m) {
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Float> m) {
         Float512Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
         Float512Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -838,7 +838,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     // Binary test
 
     @Override
-    Float512Mask bTest(Vector<Float, Shapes.S512Bit> o, FBinTest f) {
+    Float512Mask bTest(Vector<Float> o, FBinTest f) {
         float[] vec1 = getElements();
         float[] vec2 = ((Float512Vector)o).getElements();
         boolean[] bits = new boolean[length()];
@@ -852,7 +852,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Mask equal(Vector<Float, Shapes.S512Bit> o) {
+    public Float512Mask equal(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
 
@@ -864,7 +864,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Mask notEqual(Vector<Float, Shapes.S512Bit> o) {
+    public Float512Mask notEqual(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
 
@@ -876,7 +876,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Mask lessThan(Vector<Float, Shapes.S512Bit> o) {
+    public Float512Mask lessThan(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
 
@@ -888,7 +888,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Mask lessThanEq(Vector<Float, Shapes.S512Bit> o) {
+    public Float512Mask lessThanEq(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
 
@@ -900,7 +900,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Mask greaterThan(Vector<Float, Shapes.S512Bit> o) {
+    public Float512Mask greaterThan(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
 
@@ -912,7 +912,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Mask greaterThanEq(Vector<Float, Shapes.S512Bit> o) {
+    public Float512Mask greaterThanEq(Vector<Float> o) {
         Objects.requireNonNull(o);
         Float512Vector v = (Float512Vector)o;
 
@@ -933,7 +933,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
     }
 
     @Override
-    void forEach(Mask<Float, Shapes.S512Bit> o, FUnCon f) {
+    void forEach(Mask<Float> o, FUnCon f) {
         boolean[] mbits = ((Float512Mask)o).getBits();
         forEach((i, a) -> {
             if (mbits[i]) { f.apply(i, a); }
@@ -997,14 +997,14 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector rearrange(Vector<Float, Shapes.S512Bit> v,
-                                  Shuffle<Float, Shapes.S512Bit> s, Mask<Float, Shapes.S512Bit> m) {
+    public Float512Vector rearrange(Vector<Float> v,
+                                  Shuffle<Float> s, Mask<Float> m) {
         return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
     @ForceInline
-    public Float512Vector rearrange(Shuffle<Float, Shapes.S512Bit> o1) {
+    public Float512Vector rearrange(Shuffle<Float> o1) {
     Objects.requireNonNull(o1);
     Float512Shuffle s =  (Float512Shuffle)o1;
 
@@ -1020,7 +1020,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     @Override
     @ForceInline
-    public Float512Vector blend(Vector<Float, Shapes.S512Bit> o1, Mask<Float, Shapes.S512Bit> o2) {
+    public Float512Vector blend(Vector<Float> o1, Mask<Float> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         Float512Vector v = (Float512Vector)o1;
@@ -1066,7 +1066,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     // Mask
 
-    static final class Float512Mask extends AbstractMask<Float, Shapes.S512Bit> {
+    static final class Float512Mask extends AbstractMask<Float> {
         static final Float512Mask TRUE_MASK = new Float512Mask(true);
         static final Float512Mask FALSE_MASK = new Float512Mask(false);
 
@@ -1105,7 +1105,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         }
 
         @Override
-        Float512Mask bOp(Mask<Float, Shapes.S512Bit> o, MBinOp f) {
+        Float512Mask bOp(Mask<Float> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
             boolean[] bits = getBits();
             boolean[] mbits = ((Float512Mask)o).getBits();
@@ -1147,7 +1147,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Float512Mask and(Mask<Float,Shapes.S512Bit> o) {
+        public Float512Mask and(Mask<Float> o) {
             Objects.requireNonNull(o);
             Float512Mask m = (Float512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Float512Mask.class, int.class, LENGTH,
@@ -1157,7 +1157,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Float512Mask or(Mask<Float,Shapes.S512Bit> o) {
+        public Float512Mask or(Mask<Float> o) {
             Objects.requireNonNull(o);
             Float512Mask m = (Float512Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Float512Mask.class, int.class, LENGTH,
@@ -1186,7 +1186,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
     // Shuffle
 
-    static final class Float512Shuffle extends AbstractShuffle<Float, Shapes.S512Bit> {
+    static final class Float512Shuffle extends AbstractShuffle<Float> {
         Float512Shuffle(byte[] reorder) {
             super(reorder);
         }
@@ -1218,7 +1218,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         }
 
         @Override
-        public Float512Shuffle rearrange(Vector.Shuffle<Float, Shapes.S512Bit> o) {
+        public Float512Shuffle rearrange(Vector.Shuffle<Float> o) {
             Float512Shuffle s = (Float512Shuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
@@ -1235,8 +1235,8 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         return SPECIES;
     }
 
-    static final class Float512Species extends FloatSpecies<Shapes.S512Bit> {
-        static final int BIT_SIZE = Shapes.S_512_BIT.bitSize();
+    static final class Float512Species extends FloatSpecies {
+        static final int BIT_SIZE = Shape.S_512_BIT.bitSize();
 
         static final int LENGTH = BIT_SIZE / Float.SIZE;
 
@@ -1276,8 +1276,8 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Shapes.S512Bit shape() {
-            return Shapes.S_512_BIT;
+        public Shape shape() {
+            return Shape.S_512_BIT;
         }
 
         @Override
@@ -1290,7 +1290,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         }
 
         @Override
-        Float512Vector op(Mask<Float, Shapes.S512Bit> o, FOp f) {
+        Float512Vector op(Mask<Float> o, FOp f) {
             float[] res = new float[length()];
             boolean[] mbits = ((Float512Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1405,7 +1405,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Float512Vector fromArray(float[] a, int ax, Mask<Float, Shapes.S512Bit> m) {
+        public Float512Vector fromArray(float[] a, int ax, Mask<Float> m) {
             return zero().blend(fromArray(a, ax), m);
         }
 
@@ -1426,7 +1426,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Float512Vector fromByteArray(byte[] a, int ix, Mask<Float, Shapes.S512Bit> m) {
+        public Float512Vector fromByteArray(byte[] a, int ix, Mask<Float> m) {
             return zero().blend(fromByteArray(a, ix), m);
         }
 
@@ -1449,14 +1449,14 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public Float512Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Float, Shapes.S512Bit> m) {
+        public Float512Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Float> m) {
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F, T extends Shape> Float512Vector cast(Vector<F, T> o) {
+        public <F> Float512Vector cast(Vector<F> o) {
             if (o.length() != LENGTH)
                 throw new IllegalArgumentException("Vector length this species length differ");
 
@@ -1472,39 +1472,39 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @SuppressWarnings("unchecked")
         @ForceInline
-        private <F, T extends Shape> Float512Vector castDefault(Vector<F, T> v) {
+        private <F> Float512Vector castDefault(Vector<F> v) {
             // Allocate array of required size
             int limit = length();
             float[] a = new float[limit];
 
             Class<?> vtype = v.species().elementType();
             if (vtype == byte.class) {
-                ByteVector<T> tv = (ByteVector<T>)v;
+                ByteVector tv = (ByteVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == short.class) {
-                ShortVector<T> tv = (ShortVector<T>)v;
+                ShortVector tv = (ShortVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == int.class) {
-                IntVector<T> tv = (IntVector<T>)v;
+                IntVector tv = (IntVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == long.class){
-                LongVector<T> tv = (LongVector<T>)v;
+                LongVector tv = (LongVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == float.class){
-                FloatVector<T> tv = (FloatVector<T>)v;
+                FloatVector tv = (FloatVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == double.class){
-                DoubleVector<T> tv = (DoubleVector<T>)v;
+                DoubleVector tv = (DoubleVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
@@ -1517,7 +1517,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> Float512Mask cast(Mask<E, S> m) {
+        public <E> Float512Mask cast(Mask<E> m) {
             if (m.length() != LENGTH)
                 throw new IllegalArgumentException("Mask length this species length differ");
             return new Float512Mask(m.toArray());
@@ -1525,7 +1525,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> Float512Shuffle cast(Shuffle<E, S> s) {
+        public <E> Float512Shuffle cast(Shuffle<E> s) {
             if (s.length() != LENGTH)
                 throw new IllegalArgumentException("Shuffle length this species length differ");
             return new Float512Shuffle(s.toArray());
@@ -1534,7 +1534,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F> Float512Vector rebracket(Vector<F, Shapes.S512Bit> o) {
+        public <F> Float512Vector rebracket(Vector<F> o) {
             Objects.requireNonNull(o);
             if (o.elementType() == byte.class) {
                 Byte512Vector so = (Byte512Vector)o;
@@ -1604,7 +1604,7 @@ final class Float512Vector extends FloatVector<Shapes.S512Bit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <T extends Shape> Float512Vector resize(Vector<Float, T> o) {
+        public Float512Vector resize(Vector<Float> o) {
             Objects.requireNonNull(o);
             if (o.bitSize() == 64 && (o instanceof Float64Vector)) {
                 Float64Vector so = (Float64Vector)o;

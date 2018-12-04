@@ -36,7 +36,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
-final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
+final class Byte64Vector extends ByteVector {
     static final Byte64Species SPECIES = new Byte64Species();
 
     static final Byte64Vector ZERO = new Byte64Vector();
@@ -73,7 +73,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     }
 
     @Override
-    Byte64Vector uOp(Mask<Byte, Shapes.S64Bit> o, FUnOp f) {
+    Byte64Vector uOp(Mask<Byte> o, FUnOp f) {
         byte[] vec = getElements();
         byte[] res = new byte[length()];
         boolean[] mbits = ((Byte64Mask)o).getBits();
@@ -86,7 +86,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     // Binary operator
 
     @Override
-    Byte64Vector bOp(Vector<Byte, Shapes.S64Bit> o, FBinOp f) {
+    Byte64Vector bOp(Vector<Byte> o, FBinOp f) {
         byte[] res = new byte[length()];
         byte[] vec1 = this.getElements();
         byte[] vec2 = ((Byte64Vector)o).getElements();
@@ -97,7 +97,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     }
 
     @Override
-    Byte64Vector bOp(Vector<Byte, Shapes.S64Bit> o1, Mask<Byte, Shapes.S64Bit> o2, FBinOp f) {
+    Byte64Vector bOp(Vector<Byte> o1, Mask<Byte> o2, FBinOp f) {
         byte[] res = new byte[length()];
         byte[] vec1 = this.getElements();
         byte[] vec2 = ((Byte64Vector)o1).getElements();
@@ -111,7 +111,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     // Trinary operator
 
     @Override
-    Byte64Vector tOp(Vector<Byte, Shapes.S64Bit> o1, Vector<Byte, Shapes.S64Bit> o2, FTriOp f) {
+    Byte64Vector tOp(Vector<Byte> o1, Vector<Byte> o2, FTriOp f) {
         byte[] res = new byte[length()];
         byte[] vec1 = this.getElements();
         byte[] vec2 = ((Byte64Vector)o1).getElements();
@@ -123,7 +123,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     }
 
     @Override
-    Byte64Vector tOp(Vector<Byte, Shapes.S64Bit> o1, Vector<Byte, Shapes.S64Bit> o2, Mask<Byte, Shapes.S64Bit> o3, FTriOp f) {
+    Byte64Vector tOp(Vector<Byte> o1, Vector<Byte> o2, Mask<Byte> o3, FTriOp f) {
         byte[] res = new byte[length()];
         byte[] vec1 = getElements();
         byte[] vec2 = ((Byte64Vector)o1).getElements();
@@ -148,128 +148,128 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> add(byte o) {
+    public ByteVector add(byte o) {
         return add(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> add(byte o, Mask<Byte,Shapes.S64Bit> m) {
+    public ByteVector add(byte o, Mask<Byte> m) {
         return add(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> sub(byte o) {
+    public ByteVector sub(byte o) {
         return sub(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> sub(byte o, Mask<Byte,Shapes.S64Bit> m) {
+    public ByteVector sub(byte o, Mask<Byte> m) {
         return sub(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> mul(byte o) {
+    public ByteVector mul(byte o) {
         return mul(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> mul(byte o, Mask<Byte,Shapes.S64Bit> m) {
+    public ByteVector mul(byte o, Mask<Byte> m) {
         return mul(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> min(byte o) {
+    public ByteVector min(byte o) {
         return min(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> max(byte o) {
+    public ByteVector max(byte o) {
         return max(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.S64Bit> equal(byte o) {
+    public Mask<Byte> equal(byte o) {
         return equal(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.S64Bit> notEqual(byte o) {
+    public Mask<Byte> notEqual(byte o) {
         return notEqual(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.S64Bit> lessThan(byte o) {
+    public Mask<Byte> lessThan(byte o) {
         return lessThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.S64Bit> lessThanEq(byte o) {
+    public Mask<Byte> lessThanEq(byte o) {
         return lessThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.S64Bit> greaterThan(byte o) {
+    public Mask<Byte> greaterThan(byte o) {
         return greaterThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.S64Bit> greaterThanEq(byte o) {
+    public Mask<Byte> greaterThanEq(byte o) {
         return greaterThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> blend(byte o, Mask<Byte,Shapes.S64Bit> m) {
+    public ByteVector blend(byte o, Mask<Byte> m) {
         return blend(SPECIES.broadcast(o), m);
     }
 
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> and(byte o) {
+    public ByteVector and(byte o) {
         return and(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> and(byte o, Mask<Byte,Shapes.S64Bit> m) {
+    public ByteVector and(byte o, Mask<Byte> m) {
         return and(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> or(byte o) {
+    public ByteVector or(byte o) {
         return or(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> or(byte o, Mask<Byte,Shapes.S64Bit> m) {
+    public ByteVector or(byte o, Mask<Byte> m) {
         return or(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> xor(byte o) {
+    public ByteVector xor(byte o) {
         return xor(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.S64Bit> xor(byte o, Mask<Byte,Shapes.S64Bit> m) {
+    public ByteVector xor(byte o, Mask<Byte> m) {
         return xor(SPECIES.broadcast(o), m);
     }
 
@@ -283,7 +283,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @ForceInline
     @Override
-    public Byte64Vector neg(Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector neg(Mask<Byte> m) {
         return blend(neg(), m);
     }
 
@@ -298,7 +298,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @ForceInline
     @Override
-    public Byte64Vector abs(Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector abs(Mask<Byte> m) {
         return blend(abs(), m);
     }
 
@@ -314,14 +314,14 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @ForceInline
     @Override
-    public Byte64Vector not(Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector not(Mask<Byte> m) {
         return blend(not(), m);
     }
     // Binary operations
 
     @Override
     @ForceInline
-    public Byte64Vector add(Vector<Byte,Shapes.S64Bit> o) {
+    public Byte64Vector add(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -332,13 +332,13 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector add(Vector<Byte,Shapes.S64Bit> v, Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector add(Vector<Byte> v, Mask<Byte> m) {
         return blend(add(v), m);
     }
 
     @Override
     @ForceInline
-    public Byte64Vector sub(Vector<Byte,Shapes.S64Bit> o) {
+    public Byte64Vector sub(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -349,13 +349,13 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector sub(Vector<Byte,Shapes.S64Bit> v, Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector sub(Vector<Byte> v, Mask<Byte> m) {
         return blend(sub(v), m);
     }
 
     @Override
     @ForceInline
-    public Byte64Vector mul(Vector<Byte,Shapes.S64Bit> o) {
+    public Byte64Vector mul(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -366,13 +366,13 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector mul(Vector<Byte,Shapes.S64Bit> v, Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector mul(Vector<Byte> v, Mask<Byte> m) {
         return blend(mul(v), m);
     }
 
     @Override
     @ForceInline
-    public Byte64Vector min(Vector<Byte,Shapes.S64Bit> o) {
+    public Byte64Vector min(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
         return (Byte64Vector) VectorIntrinsics.binaryOp(
@@ -383,13 +383,13 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector min(Vector<Byte,Shapes.S64Bit> v, Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector min(Vector<Byte> v, Mask<Byte> m) {
         return blend(min(v), m);
     }
 
     @Override
     @ForceInline
-    public Byte64Vector max(Vector<Byte,Shapes.S64Bit> o) {
+    public Byte64Vector max(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -400,13 +400,13 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector max(Vector<Byte,Shapes.S64Bit> v, Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector max(Vector<Byte> v, Mask<Byte> m) {
         return blend(max(v), m);
     }
 
     @Override
     @ForceInline
-    public Byte64Vector and(Vector<Byte,Shapes.S64Bit> o) {
+    public Byte64Vector and(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -417,7 +417,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector or(Vector<Byte,Shapes.S64Bit> o) {
+    public Byte64Vector or(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -428,7 +428,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector xor(Vector<Byte,Shapes.S64Bit> o) {
+    public Byte64Vector xor(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -439,19 +439,19 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector and(Vector<Byte,Shapes.S64Bit> v, Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector and(Vector<Byte> v, Mask<Byte> m) {
         return blend(and(v), m);
     }
 
     @Override
     @ForceInline
-    public Byte64Vector or(Vector<Byte,Shapes.S64Bit> v, Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector or(Vector<Byte> v, Mask<Byte> m) {
         return blend(or(v), m);
     }
 
     @Override
     @ForceInline
-    public Byte64Vector xor(Vector<Byte,Shapes.S64Bit> v, Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector xor(Vector<Byte> v, Mask<Byte> m) {
         return blend(xor(v), m);
     }
 
@@ -506,7 +506,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public byte andAll(Mask<Byte, Shapes.S64Bit> m) {
+    public byte andAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) -1), m).andAll();
     }
 
@@ -557,7 +557,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public byte orAll(Mask<Byte, Shapes.S64Bit> m) {
+    public byte orAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 0), m).orAll();
     }
 
@@ -572,44 +572,44 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public byte xorAll(Mask<Byte, Shapes.S64Bit> m) {
+    public byte xorAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 0), m).xorAll();
     }
 
 
     @Override
     @ForceInline
-    public byte addAll(Mask<Byte, Shapes.S64Bit> m) {
+    public byte addAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 0), m).addAll();
     }
 
     @Override
     @ForceInline
-    public byte subAll(Mask<Byte, Shapes.S64Bit> m) {
+    public byte subAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 0), m).subAll();
     }
 
     @Override
     @ForceInline
-    public byte mulAll(Mask<Byte, Shapes.S64Bit> m) {
+    public byte mulAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
-    public byte minAll(Mask<Byte, Shapes.S64Bit> m) {
+    public byte minAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast(Byte.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
-    public byte maxAll(Mask<Byte, Shapes.S64Bit> m) {
+    public byte maxAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast(Byte.MIN_VALUE), m).maxAll();
     }
 
     @Override
     @ForceInline
-    public Shuffle<Byte, Shapes.S64Bit> toShuffle() {
+    public Shuffle<Byte> toShuffle() {
         byte[] a = toArray();
         int[] sa = new int[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -636,7 +636,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public final void intoArray(byte[] a, int ax, Mask<Byte, Shapes.S64Bit> m) {
+    public final void intoArray(byte[] a, int ax, Mask<Byte> m) {
         Byte64Vector oldVal = SPECIES.fromArray(a, ax);
         Byte64Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -660,7 +660,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, Mask<Byte, Shapes.S64Bit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Byte> m) {
         Byte64Vector oldVal = SPECIES.fromByteArray(a, ix);
         Byte64Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -689,7 +689,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Byte, Shapes.S64Bit> m) {
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Byte> m) {
         Byte64Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
         Byte64Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -719,7 +719,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     // Binary test
 
     @Override
-    Byte64Mask bTest(Vector<Byte, Shapes.S64Bit> o, FBinTest f) {
+    Byte64Mask bTest(Vector<Byte> o, FBinTest f) {
         byte[] vec1 = getElements();
         byte[] vec2 = ((Byte64Vector)o).getElements();
         boolean[] bits = new boolean[length()];
@@ -733,7 +733,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Mask equal(Vector<Byte, Shapes.S64Bit> o) {
+    public Byte64Mask equal(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
 
@@ -745,7 +745,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Mask notEqual(Vector<Byte, Shapes.S64Bit> o) {
+    public Byte64Mask notEqual(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
 
@@ -757,7 +757,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Mask lessThan(Vector<Byte, Shapes.S64Bit> o) {
+    public Byte64Mask lessThan(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
 
@@ -769,7 +769,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Mask lessThanEq(Vector<Byte, Shapes.S64Bit> o) {
+    public Byte64Mask lessThanEq(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
 
@@ -781,7 +781,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Mask greaterThan(Vector<Byte, Shapes.S64Bit> o) {
+    public Byte64Mask greaterThan(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
 
@@ -793,7 +793,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Mask greaterThanEq(Vector<Byte, Shapes.S64Bit> o) {
+    public Byte64Mask greaterThanEq(Vector<Byte> o) {
         Objects.requireNonNull(o);
         Byte64Vector v = (Byte64Vector)o;
 
@@ -814,7 +814,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
     }
 
     @Override
-    void forEach(Mask<Byte, Shapes.S64Bit> o, FUnCon f) {
+    void forEach(Mask<Byte> o, FUnCon f) {
         boolean[] mbits = ((Byte64Mask)o).getBits();
         forEach((i, a) -> {
             if (mbits[i]) { f.apply(i, a); }
@@ -870,14 +870,14 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector rearrange(Vector<Byte, Shapes.S64Bit> v,
-                                  Shuffle<Byte, Shapes.S64Bit> s, Mask<Byte, Shapes.S64Bit> m) {
+    public Byte64Vector rearrange(Vector<Byte> v,
+                                  Shuffle<Byte> s, Mask<Byte> m) {
         return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
     @ForceInline
-    public Byte64Vector rearrange(Shuffle<Byte, Shapes.S64Bit> o1) {
+    public Byte64Vector rearrange(Shuffle<Byte> o1) {
     Objects.requireNonNull(o1);
     Byte64Shuffle s =  (Byte64Shuffle)o1;
 
@@ -893,7 +893,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     @Override
     @ForceInline
-    public Byte64Vector blend(Vector<Byte, Shapes.S64Bit> o1, Mask<Byte, Shapes.S64Bit> o2) {
+    public Byte64Vector blend(Vector<Byte> o1, Mask<Byte> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         Byte64Vector v = (Byte64Vector)o1;
@@ -938,7 +938,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     // Mask
 
-    static final class Byte64Mask extends AbstractMask<Byte, Shapes.S64Bit> {
+    static final class Byte64Mask extends AbstractMask<Byte> {
         static final Byte64Mask TRUE_MASK = new Byte64Mask(true);
         static final Byte64Mask FALSE_MASK = new Byte64Mask(false);
 
@@ -977,7 +977,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         }
 
         @Override
-        Byte64Mask bOp(Mask<Byte, Shapes.S64Bit> o, MBinOp f) {
+        Byte64Mask bOp(Mask<Byte> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
             boolean[] bits = getBits();
             boolean[] mbits = ((Byte64Mask)o).getBits();
@@ -1019,7 +1019,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Byte64Mask and(Mask<Byte,Shapes.S64Bit> o) {
+        public Byte64Mask and(Mask<Byte> o) {
             Objects.requireNonNull(o);
             Byte64Mask m = (Byte64Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Byte64Mask.class, byte.class, LENGTH,
@@ -1029,7 +1029,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Byte64Mask or(Mask<Byte,Shapes.S64Bit> o) {
+        public Byte64Mask or(Mask<Byte> o) {
             Objects.requireNonNull(o);
             Byte64Mask m = (Byte64Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Byte64Mask.class, byte.class, LENGTH,
@@ -1058,7 +1058,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
     // Shuffle
 
-    static final class Byte64Shuffle extends AbstractShuffle<Byte, Shapes.S64Bit> {
+    static final class Byte64Shuffle extends AbstractShuffle<Byte> {
         Byte64Shuffle(byte[] reorder) {
             super(reorder);
         }
@@ -1090,7 +1090,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         }
 
         @Override
-        public Byte64Shuffle rearrange(Vector.Shuffle<Byte, Shapes.S64Bit> o) {
+        public Byte64Shuffle rearrange(Vector.Shuffle<Byte> o) {
             Byte64Shuffle s = (Byte64Shuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
@@ -1107,8 +1107,8 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         return SPECIES;
     }
 
-    static final class Byte64Species extends ByteSpecies<Shapes.S64Bit> {
-        static final int BIT_SIZE = Shapes.S_64_BIT.bitSize();
+    static final class Byte64Species extends ByteSpecies {
+        static final int BIT_SIZE = Shape.S_64_BIT.bitSize();
 
         static final int LENGTH = BIT_SIZE / Byte.SIZE;
 
@@ -1148,8 +1148,8 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Shapes.S64Bit shape() {
-            return Shapes.S_64_BIT;
+        public Shape shape() {
+            return Shape.S_64_BIT;
         }
 
         @Override
@@ -1162,7 +1162,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         }
 
         @Override
-        Byte64Vector op(Mask<Byte, Shapes.S64Bit> o, FOp f) {
+        Byte64Vector op(Mask<Byte> o, FOp f) {
             byte[] res = new byte[length()];
             boolean[] mbits = ((Byte64Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1277,7 +1277,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Byte64Vector fromArray(byte[] a, int ax, Mask<Byte, Shapes.S64Bit> m) {
+        public Byte64Vector fromArray(byte[] a, int ax, Mask<Byte> m) {
             return zero().blend(fromArray(a, ax), m);
         }
 
@@ -1298,7 +1298,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Byte64Vector fromByteArray(byte[] a, int ix, Mask<Byte, Shapes.S64Bit> m) {
+        public Byte64Vector fromByteArray(byte[] a, int ix, Mask<Byte> m) {
             return zero().blend(fromByteArray(a, ix), m);
         }
 
@@ -1321,14 +1321,14 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public Byte64Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte, Shapes.S64Bit> m) {
+        public Byte64Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte> m) {
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F, T extends Shape> Byte64Vector cast(Vector<F, T> o) {
+        public <F> Byte64Vector cast(Vector<F> o) {
             if (o.length() != LENGTH)
                 throw new IllegalArgumentException("Vector length this species length differ");
 
@@ -1344,39 +1344,39 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @SuppressWarnings("unchecked")
         @ForceInline
-        private <F, T extends Shape> Byte64Vector castDefault(Vector<F, T> v) {
+        private <F> Byte64Vector castDefault(Vector<F> v) {
             // Allocate array of required size
             int limit = length();
             byte[] a = new byte[limit];
 
             Class<?> vtype = v.species().elementType();
             if (vtype == byte.class) {
-                ByteVector<T> tv = (ByteVector<T>)v;
+                ByteVector tv = (ByteVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == short.class) {
-                ShortVector<T> tv = (ShortVector<T>)v;
+                ShortVector tv = (ShortVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == int.class) {
-                IntVector<T> tv = (IntVector<T>)v;
+                IntVector tv = (IntVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == long.class){
-                LongVector<T> tv = (LongVector<T>)v;
+                LongVector tv = (LongVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == float.class){
-                FloatVector<T> tv = (FloatVector<T>)v;
+                FloatVector tv = (FloatVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == double.class){
-                DoubleVector<T> tv = (DoubleVector<T>)v;
+                DoubleVector tv = (DoubleVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
@@ -1389,7 +1389,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> Byte64Mask cast(Mask<E, S> m) {
+        public <E> Byte64Mask cast(Mask<E> m) {
             if (m.length() != LENGTH)
                 throw new IllegalArgumentException("Mask length this species length differ");
             return new Byte64Mask(m.toArray());
@@ -1397,7 +1397,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> Byte64Shuffle cast(Shuffle<E, S> s) {
+        public <E> Byte64Shuffle cast(Shuffle<E> s) {
             if (s.length() != LENGTH)
                 throw new IllegalArgumentException("Shuffle length this species length differ");
             return new Byte64Shuffle(s.toArray());
@@ -1406,7 +1406,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F> Byte64Vector rebracket(Vector<F, Shapes.S64Bit> o) {
+        public <F> Byte64Vector rebracket(Vector<F> o) {
             Objects.requireNonNull(o);
             if (o.elementType() == byte.class) {
                 Byte64Vector so = (Byte64Vector)o;
@@ -1476,7 +1476,7 @@ final class Byte64Vector extends ByteVector<Shapes.S64Bit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <T extends Shape> Byte64Vector resize(Vector<Byte, T> o) {
+        public Byte64Vector resize(Vector<Byte> o) {
             Objects.requireNonNull(o);
             if (o.bitSize() == 64 && (o instanceof Byte64Vector)) {
                 Byte64Vector so = (Byte64Vector)o;

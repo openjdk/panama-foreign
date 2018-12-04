@@ -37,7 +37,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
-final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
+final class LongMaxVector extends LongVector {
     static final LongMaxSpecies SPECIES = new LongMaxSpecies();
 
     static final LongMaxVector ZERO = new LongMaxVector();
@@ -74,7 +74,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
     }
 
     @Override
-    LongMaxVector uOp(Mask<Long, Shapes.SMaxBit> o, FUnOp f) {
+    LongMaxVector uOp(Mask<Long> o, FUnOp f) {
         long[] vec = getElements();
         long[] res = new long[length()];
         boolean[] mbits = ((LongMaxMask)o).getBits();
@@ -87,7 +87,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
     // Binary operator
 
     @Override
-    LongMaxVector bOp(Vector<Long, Shapes.SMaxBit> o, FBinOp f) {
+    LongMaxVector bOp(Vector<Long> o, FBinOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((LongMaxVector)o).getElements();
@@ -98,7 +98,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
     }
 
     @Override
-    LongMaxVector bOp(Vector<Long, Shapes.SMaxBit> o1, Mask<Long, Shapes.SMaxBit> o2, FBinOp f) {
+    LongMaxVector bOp(Vector<Long> o1, Mask<Long> o2, FBinOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((LongMaxVector)o1).getElements();
@@ -112,7 +112,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
     // Trinary operator
 
     @Override
-    LongMaxVector tOp(Vector<Long, Shapes.SMaxBit> o1, Vector<Long, Shapes.SMaxBit> o2, FTriOp f) {
+    LongMaxVector tOp(Vector<Long> o1, Vector<Long> o2, FTriOp f) {
         long[] res = new long[length()];
         long[] vec1 = this.getElements();
         long[] vec2 = ((LongMaxVector)o1).getElements();
@@ -124,7 +124,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
     }
 
     @Override
-    LongMaxVector tOp(Vector<Long, Shapes.SMaxBit> o1, Vector<Long, Shapes.SMaxBit> o2, Mask<Long, Shapes.SMaxBit> o3, FTriOp f) {
+    LongMaxVector tOp(Vector<Long> o1, Vector<Long> o2, Mask<Long> o3, FTriOp f) {
         long[] res = new long[length()];
         long[] vec1 = getElements();
         long[] vec2 = ((LongMaxVector)o1).getElements();
@@ -149,128 +149,128 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> add(long o) {
+    public LongVector add(long o) {
         return add(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> add(long o, Mask<Long,Shapes.SMaxBit> m) {
+    public LongVector add(long o, Mask<Long> m) {
         return add(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> sub(long o) {
+    public LongVector sub(long o) {
         return sub(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> sub(long o, Mask<Long,Shapes.SMaxBit> m) {
+    public LongVector sub(long o, Mask<Long> m) {
         return sub(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> mul(long o) {
+    public LongVector mul(long o) {
         return mul(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> mul(long o, Mask<Long,Shapes.SMaxBit> m) {
+    public LongVector mul(long o, Mask<Long> m) {
         return mul(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> min(long o) {
+    public LongVector min(long o) {
         return min(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> max(long o) {
+    public LongVector max(long o) {
         return max(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.SMaxBit> equal(long o) {
+    public Mask<Long> equal(long o) {
         return equal(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.SMaxBit> notEqual(long o) {
+    public Mask<Long> notEqual(long o) {
         return notEqual(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.SMaxBit> lessThan(long o) {
+    public Mask<Long> lessThan(long o) {
         return lessThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.SMaxBit> lessThanEq(long o) {
+    public Mask<Long> lessThanEq(long o) {
         return lessThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.SMaxBit> greaterThan(long o) {
+    public Mask<Long> greaterThan(long o) {
         return greaterThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Long, Shapes.SMaxBit> greaterThanEq(long o) {
+    public Mask<Long> greaterThanEq(long o) {
         return greaterThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> blend(long o, Mask<Long,Shapes.SMaxBit> m) {
+    public LongVector blend(long o, Mask<Long> m) {
         return blend(SPECIES.broadcast(o), m);
     }
 
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> and(long o) {
+    public LongVector and(long o) {
         return and(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> and(long o, Mask<Long,Shapes.SMaxBit> m) {
+    public LongVector and(long o, Mask<Long> m) {
         return and(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> or(long o) {
+    public LongVector or(long o) {
         return or(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> or(long o, Mask<Long,Shapes.SMaxBit> m) {
+    public LongVector or(long o, Mask<Long> m) {
         return or(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> xor(long o) {
+    public LongVector xor(long o) {
         return xor(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public LongVector<Shapes.SMaxBit> xor(long o, Mask<Long,Shapes.SMaxBit> m) {
+    public LongVector xor(long o, Mask<Long> m) {
         return xor(SPECIES.broadcast(o), m);
     }
 
@@ -284,7 +284,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public LongMaxVector neg(Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector neg(Mask<Long> m) {
         return blend(neg(), m);
     }
 
@@ -299,7 +299,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public LongMaxVector abs(Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector abs(Mask<Long> m) {
         return blend(abs(), m);
     }
 
@@ -315,14 +315,14 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public LongMaxVector not(Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector not(Mask<Long> m) {
         return blend(not(), m);
     }
     // Binary operations
 
     @Override
     @ForceInline
-    public LongMaxVector add(Vector<Long,Shapes.SMaxBit> o) {
+    public LongMaxVector add(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -333,13 +333,13 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector add(Vector<Long,Shapes.SMaxBit> v, Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector add(Vector<Long> v, Mask<Long> m) {
         return blend(add(v), m);
     }
 
     @Override
     @ForceInline
-    public LongMaxVector sub(Vector<Long,Shapes.SMaxBit> o) {
+    public LongMaxVector sub(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -350,13 +350,13 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector sub(Vector<Long,Shapes.SMaxBit> v, Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector sub(Vector<Long> v, Mask<Long> m) {
         return blend(sub(v), m);
     }
 
     @Override
     @ForceInline
-    public LongMaxVector mul(Vector<Long,Shapes.SMaxBit> o) {
+    public LongMaxVector mul(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -367,13 +367,13 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector mul(Vector<Long,Shapes.SMaxBit> v, Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector mul(Vector<Long> v, Mask<Long> m) {
         return blend(mul(v), m);
     }
 
     @Override
     @ForceInline
-    public LongMaxVector min(Vector<Long,Shapes.SMaxBit> o) {
+    public LongMaxVector min(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
         return (LongMaxVector) VectorIntrinsics.binaryOp(
@@ -384,13 +384,13 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector min(Vector<Long,Shapes.SMaxBit> v, Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector min(Vector<Long> v, Mask<Long> m) {
         return blend(min(v), m);
     }
 
     @Override
     @ForceInline
-    public LongMaxVector max(Vector<Long,Shapes.SMaxBit> o) {
+    public LongMaxVector max(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -401,13 +401,13 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector max(Vector<Long,Shapes.SMaxBit> v, Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector max(Vector<Long> v, Mask<Long> m) {
         return blend(max(v), m);
     }
 
     @Override
     @ForceInline
-    public LongMaxVector and(Vector<Long,Shapes.SMaxBit> o) {
+    public LongMaxVector and(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -418,7 +418,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector or(Vector<Long,Shapes.SMaxBit> o) {
+    public LongMaxVector or(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -429,7 +429,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector xor(Vector<Long,Shapes.SMaxBit> o) {
+    public LongMaxVector xor(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -440,19 +440,19 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector and(Vector<Long,Shapes.SMaxBit> v, Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector and(Vector<Long> v, Mask<Long> m) {
         return blend(and(v), m);
     }
 
     @Override
     @ForceInline
-    public LongMaxVector or(Vector<Long,Shapes.SMaxBit> v, Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector or(Vector<Long> v, Mask<Long> m) {
         return blend(or(v), m);
     }
 
     @Override
     @ForceInline
-    public LongMaxVector xor(Vector<Long,Shapes.SMaxBit> v, Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector xor(Vector<Long> v, Mask<Long> m) {
         return blend(xor(v), m);
     }
 
@@ -485,7 +485,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector shiftL(Vector<Long,Shapes.SMaxBit> s) {
+    public LongMaxVector shiftL(Vector<Long> s) {
         LongMaxVector shiftv = (LongMaxVector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x3f));
@@ -497,7 +497,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector shiftR(Vector<Long,Shapes.SMaxBit> s) {
+    public LongMaxVector shiftR(Vector<Long> s) {
         LongMaxVector shiftv = (LongMaxVector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x3f));
@@ -509,7 +509,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector aShiftR(Vector<Long,Shapes.SMaxBit> s) {
+    public LongMaxVector aShiftR(Vector<Long> s) {
         LongMaxVector shiftv = (LongMaxVector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x3f));
@@ -543,7 +543,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public long andAll(Mask<Long, Shapes.SMaxBit> m) {
+    public long andAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) -1), m).andAll();
     }
 
@@ -594,7 +594,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public long orAll(Mask<Long, Shapes.SMaxBit> m) {
+    public long orAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 0), m).orAll();
     }
 
@@ -609,44 +609,44 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public long xorAll(Mask<Long, Shapes.SMaxBit> m) {
+    public long xorAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 0), m).xorAll();
     }
 
 
     @Override
     @ForceInline
-    public long addAll(Mask<Long, Shapes.SMaxBit> m) {
+    public long addAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 0), m).addAll();
     }
 
     @Override
     @ForceInline
-    public long subAll(Mask<Long, Shapes.SMaxBit> m) {
+    public long subAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 0), m).subAll();
     }
 
     @Override
     @ForceInline
-    public long mulAll(Mask<Long, Shapes.SMaxBit> m) {
+    public long mulAll(Mask<Long> m) {
         return blend(SPECIES.broadcast((long) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
-    public long minAll(Mask<Long, Shapes.SMaxBit> m) {
+    public long minAll(Mask<Long> m) {
         return blend(SPECIES.broadcast(Long.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
-    public long maxAll(Mask<Long, Shapes.SMaxBit> m) {
+    public long maxAll(Mask<Long> m) {
         return blend(SPECIES.broadcast(Long.MIN_VALUE), m).maxAll();
     }
 
     @Override
     @ForceInline
-    public Shuffle<Long, Shapes.SMaxBit> toShuffle() {
+    public Shuffle<Long> toShuffle() {
         long[] a = toArray();
         int[] sa = new int[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -673,7 +673,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public final void intoArray(long[] a, int ax, Mask<Long, Shapes.SMaxBit> m) {
+    public final void intoArray(long[] a, int ax, Mask<Long> m) {
         LongMaxVector oldVal = SPECIES.fromArray(a, ax);
         LongMaxVector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -697,7 +697,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, Mask<Long, Shapes.SMaxBit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Long> m) {
         LongMaxVector oldVal = SPECIES.fromByteArray(a, ix);
         LongMaxVector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -726,7 +726,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Long, Shapes.SMaxBit> m) {
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Long> m) {
         LongMaxVector oldVal = SPECIES.fromByteBuffer(bb, ix);
         LongMaxVector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -756,7 +756,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
     // Binary test
 
     @Override
-    LongMaxMask bTest(Vector<Long, Shapes.SMaxBit> o, FBinTest f) {
+    LongMaxMask bTest(Vector<Long> o, FBinTest f) {
         long[] vec1 = getElements();
         long[] vec2 = ((LongMaxVector)o).getElements();
         boolean[] bits = new boolean[length()];
@@ -770,7 +770,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxMask equal(Vector<Long, Shapes.SMaxBit> o) {
+    public LongMaxMask equal(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
 
@@ -782,7 +782,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxMask notEqual(Vector<Long, Shapes.SMaxBit> o) {
+    public LongMaxMask notEqual(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
 
@@ -794,7 +794,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxMask lessThan(Vector<Long, Shapes.SMaxBit> o) {
+    public LongMaxMask lessThan(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
 
@@ -806,7 +806,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxMask lessThanEq(Vector<Long, Shapes.SMaxBit> o) {
+    public LongMaxMask lessThanEq(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
 
@@ -818,7 +818,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxMask greaterThan(Vector<Long, Shapes.SMaxBit> o) {
+    public LongMaxMask greaterThan(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
 
@@ -830,7 +830,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxMask greaterThanEq(Vector<Long, Shapes.SMaxBit> o) {
+    public LongMaxMask greaterThanEq(Vector<Long> o) {
         Objects.requireNonNull(o);
         LongMaxVector v = (LongMaxVector)o;
 
@@ -851,7 +851,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
     }
 
     @Override
-    void forEach(Mask<Long, Shapes.SMaxBit> o, FUnCon f) {
+    void forEach(Mask<Long> o, FUnCon f) {
         boolean[] mbits = ((LongMaxMask)o).getBits();
         forEach((i, a) -> {
             if (mbits[i]) { f.apply(i, a); }
@@ -915,14 +915,14 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector rearrange(Vector<Long, Shapes.SMaxBit> v,
-                                  Shuffle<Long, Shapes.SMaxBit> s, Mask<Long, Shapes.SMaxBit> m) {
+    public LongMaxVector rearrange(Vector<Long> v,
+                                  Shuffle<Long> s, Mask<Long> m) {
         return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
     @ForceInline
-    public LongMaxVector rearrange(Shuffle<Long, Shapes.SMaxBit> o1) {
+    public LongMaxVector rearrange(Shuffle<Long> o1) {
     Objects.requireNonNull(o1);
     LongMaxShuffle s =  (LongMaxShuffle)o1;
 
@@ -938,7 +938,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public LongMaxVector blend(Vector<Long, Shapes.SMaxBit> o1, Mask<Long, Shapes.SMaxBit> o2) {
+    public LongMaxVector blend(Vector<Long> o1, Mask<Long> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         LongMaxVector v = (LongMaxVector)o1;
@@ -983,7 +983,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     // Mask
 
-    static final class LongMaxMask extends AbstractMask<Long, Shapes.SMaxBit> {
+    static final class LongMaxMask extends AbstractMask<Long> {
         static final LongMaxMask TRUE_MASK = new LongMaxMask(true);
         static final LongMaxMask FALSE_MASK = new LongMaxMask(false);
 
@@ -1022,7 +1022,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
         }
 
         @Override
-        LongMaxMask bOp(Mask<Long, Shapes.SMaxBit> o, MBinOp f) {
+        LongMaxMask bOp(Mask<Long> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
             boolean[] bits = getBits();
             boolean[] mbits = ((LongMaxMask)o).getBits();
@@ -1064,7 +1064,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public LongMaxMask and(Mask<Long,Shapes.SMaxBit> o) {
+        public LongMaxMask and(Mask<Long> o) {
             Objects.requireNonNull(o);
             LongMaxMask m = (LongMaxMask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, LongMaxMask.class, long.class, LENGTH,
@@ -1074,7 +1074,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public LongMaxMask or(Mask<Long,Shapes.SMaxBit> o) {
+        public LongMaxMask or(Mask<Long> o) {
             Objects.requireNonNull(o);
             LongMaxMask m = (LongMaxMask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, LongMaxMask.class, long.class, LENGTH,
@@ -1103,7 +1103,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
     // Shuffle
 
-    static final class LongMaxShuffle extends AbstractShuffle<Long, Shapes.SMaxBit> {
+    static final class LongMaxShuffle extends AbstractShuffle<Long> {
         LongMaxShuffle(byte[] reorder) {
             super(reorder);
         }
@@ -1135,7 +1135,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
         }
 
         @Override
-        public LongMaxShuffle rearrange(Vector.Shuffle<Long, Shapes.SMaxBit> o) {
+        public LongMaxShuffle rearrange(Vector.Shuffle<Long> o) {
             LongMaxShuffle s = (LongMaxShuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
@@ -1152,8 +1152,8 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
         return SPECIES;
     }
 
-    static final class LongMaxSpecies extends LongSpecies<Shapes.SMaxBit> {
-        static final int BIT_SIZE = Shapes.S_Max_BIT.bitSize();
+    static final class LongMaxSpecies extends LongSpecies {
+        static final int BIT_SIZE = Shape.S_Max_BIT.bitSize();
 
         static final int LENGTH = BIT_SIZE / Long.SIZE;
 
@@ -1193,8 +1193,8 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public Shapes.SMaxBit shape() {
-            return Shapes.S_Max_BIT;
+        public Shape shape() {
+            return Shape.S_Max_BIT;
         }
 
         @Override
@@ -1207,7 +1207,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
         }
 
         @Override
-        LongMaxVector op(Mask<Long, Shapes.SMaxBit> o, FOp f) {
+        LongMaxVector op(Mask<Long> o, FOp f) {
             long[] res = new long[length()];
             boolean[] mbits = ((LongMaxMask)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1322,7 +1322,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public LongMaxVector fromArray(long[] a, int ax, Mask<Long, Shapes.SMaxBit> m) {
+        public LongMaxVector fromArray(long[] a, int ax, Mask<Long> m) {
             return zero().blend(fromArray(a, ax), m);
         }
 
@@ -1343,7 +1343,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public LongMaxVector fromByteArray(byte[] a, int ix, Mask<Long, Shapes.SMaxBit> m) {
+        public LongMaxVector fromByteArray(byte[] a, int ix, Mask<Long> m) {
             return zero().blend(fromByteArray(a, ix), m);
         }
 
@@ -1366,14 +1366,14 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public LongMaxVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Long, Shapes.SMaxBit> m) {
+        public LongMaxVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Long> m) {
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F, T extends Shape> LongMaxVector cast(Vector<F, T> o) {
+        public <F> LongMaxVector cast(Vector<F> o) {
             if (o.length() != LENGTH)
                 throw new IllegalArgumentException("Vector length this species length differ");
 
@@ -1389,39 +1389,39 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
         @SuppressWarnings("unchecked")
         @ForceInline
-        private <F, T extends Shape> LongMaxVector castDefault(Vector<F, T> v) {
+        private <F> LongMaxVector castDefault(Vector<F> v) {
             // Allocate array of required size
             int limit = length();
             long[] a = new long[limit];
 
             Class<?> vtype = v.species().elementType();
             if (vtype == byte.class) {
-                ByteVector<T> tv = (ByteVector<T>)v;
+                ByteVector tv = (ByteVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == short.class) {
-                ShortVector<T> tv = (ShortVector<T>)v;
+                ShortVector tv = (ShortVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == int.class) {
-                IntVector<T> tv = (IntVector<T>)v;
+                IntVector tv = (IntVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == long.class){
-                LongVector<T> tv = (LongVector<T>)v;
+                LongVector tv = (LongVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == float.class){
-                FloatVector<T> tv = (FloatVector<T>)v;
+                FloatVector tv = (FloatVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
             } else if (vtype == double.class){
-                DoubleVector<T> tv = (DoubleVector<T>)v;
+                DoubleVector tv = (DoubleVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (long) tv.get(i);
                 }
@@ -1434,7 +1434,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> LongMaxMask cast(Mask<E, S> m) {
+        public <E> LongMaxMask cast(Mask<E> m) {
             if (m.length() != LENGTH)
                 throw new IllegalArgumentException("Mask length this species length differ");
             return new LongMaxMask(m.toArray());
@@ -1442,7 +1442,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> LongMaxShuffle cast(Shuffle<E, S> s) {
+        public <E> LongMaxShuffle cast(Shuffle<E> s) {
             if (s.length() != LENGTH)
                 throw new IllegalArgumentException("Shuffle length this species length differ");
             return new LongMaxShuffle(s.toArray());
@@ -1451,7 +1451,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F> LongMaxVector rebracket(Vector<F, Shapes.SMaxBit> o) {
+        public <F> LongMaxVector rebracket(Vector<F> o) {
             Objects.requireNonNull(o);
             if (o.elementType() == byte.class) {
                 ByteMaxVector so = (ByteMaxVector)o;
@@ -1521,7 +1521,7 @@ final class LongMaxVector extends LongVector<Shapes.SMaxBit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <T extends Shape> LongMaxVector resize(Vector<Long, T> o) {
+        public LongMaxVector resize(Vector<Long> o) {
             Objects.requireNonNull(o);
             if (o.bitSize() == 64 && (o instanceof Long64Vector)) {
                 Long64Vector so = (Long64Vector)o;

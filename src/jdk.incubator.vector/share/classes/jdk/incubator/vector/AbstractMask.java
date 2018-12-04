@@ -26,7 +26,7 @@ package jdk.incubator.vector;
 
 import java.util.Arrays;
 
-abstract class AbstractMask<E, S extends Vector.Shape> extends Vector.Mask<E, S> {
+abstract class AbstractMask<E> extends Vector.Mask<E> {
 
     /*package-private*/
     abstract boolean[] getBits();
@@ -37,7 +37,7 @@ abstract class AbstractMask<E, S extends Vector.Shape> extends Vector.Mask<E, S>
         boolean apply(int i, boolean a);
     }
 
-    abstract AbstractMask<E, S> uOp(MUnOp f);
+    abstract AbstractMask<E> uOp(MUnOp f);
 
     // Binary operator
 
@@ -45,7 +45,7 @@ abstract class AbstractMask<E, S extends Vector.Shape> extends Vector.Mask<E, S>
         boolean apply(int i, boolean a, boolean b);
     }
 
-    abstract AbstractMask<E, S> bOp(Vector.Mask<E, S> o, MBinOp f);
+    abstract AbstractMask<E> bOp(Vector.Mask<E> o, MBinOp f);
 
     @Override
     public String toString() {
@@ -105,17 +105,17 @@ abstract class AbstractMask<E, S extends Vector.Shape> extends Vector.Mask<E, S>
     }
 
     @Override
-    public AbstractMask<E, S> and(Vector.Mask<E, S> o) {
+    public AbstractMask<E> and(Vector.Mask<E> o) {
         return bOp(o, (i, a, b) -> a && b);
     }
 
     @Override
-    public AbstractMask<E, S> or(Vector.Mask<E, S> o) {
+    public AbstractMask<E> or(Vector.Mask<E> o) {
         return bOp(o, (i, a, b) -> a || b);
     }
 
     @Override
-    public AbstractMask<E, S> not() {
+    public AbstractMask<E> not() {
         return uOp((i, a) -> !a);
     }
 }

@@ -37,7 +37,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
-final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
+final class FloatMaxVector extends FloatVector {
     static final FloatMaxSpecies SPECIES = new FloatMaxSpecies();
 
     static final FloatMaxVector ZERO = new FloatMaxVector();
@@ -74,7 +74,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
     }
 
     @Override
-    FloatMaxVector uOp(Mask<Float, Shapes.SMaxBit> o, FUnOp f) {
+    FloatMaxVector uOp(Mask<Float> o, FUnOp f) {
         float[] vec = getElements();
         float[] res = new float[length()];
         boolean[] mbits = ((FloatMaxMask)o).getBits();
@@ -87,7 +87,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
     // Binary operator
 
     @Override
-    FloatMaxVector bOp(Vector<Float, Shapes.SMaxBit> o, FBinOp f) {
+    FloatMaxVector bOp(Vector<Float> o, FBinOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((FloatMaxVector)o).getElements();
@@ -98,7 +98,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
     }
 
     @Override
-    FloatMaxVector bOp(Vector<Float, Shapes.SMaxBit> o1, Mask<Float, Shapes.SMaxBit> o2, FBinOp f) {
+    FloatMaxVector bOp(Vector<Float> o1, Mask<Float> o2, FBinOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((FloatMaxVector)o1).getElements();
@@ -112,7 +112,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
     // Trinary operator
 
     @Override
-    FloatMaxVector tOp(Vector<Float, Shapes.SMaxBit> o1, Vector<Float, Shapes.SMaxBit> o2, FTriOp f) {
+    FloatMaxVector tOp(Vector<Float> o1, Vector<Float> o2, FTriOp f) {
         float[] res = new float[length()];
         float[] vec1 = this.getElements();
         float[] vec2 = ((FloatMaxVector)o1).getElements();
@@ -124,7 +124,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
     }
 
     @Override
-    FloatMaxVector tOp(Vector<Float, Shapes.SMaxBit> o1, Vector<Float, Shapes.SMaxBit> o2, Mask<Float, Shapes.SMaxBit> o3, FTriOp f) {
+    FloatMaxVector tOp(Vector<Float> o1, Vector<Float> o2, Mask<Float> o3, FTriOp f) {
         float[] res = new float[length()];
         float[] vec1 = getElements();
         float[] vec2 = ((FloatMaxVector)o1).getElements();
@@ -149,157 +149,157 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> add(float o) {
+    public FloatVector add(float o) {
         return add(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> add(float o, Mask<Float,Shapes.SMaxBit> m) {
+    public FloatVector add(float o, Mask<Float> m) {
         return add(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> sub(float o) {
+    public FloatVector sub(float o) {
         return sub(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> sub(float o, Mask<Float,Shapes.SMaxBit> m) {
+    public FloatVector sub(float o, Mask<Float> m) {
         return sub(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> mul(float o) {
+    public FloatVector mul(float o) {
         return mul(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> mul(float o, Mask<Float,Shapes.SMaxBit> m) {
+    public FloatVector mul(float o, Mask<Float> m) {
         return mul(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> min(float o) {
+    public FloatVector min(float o) {
         return min(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> max(float o) {
+    public FloatVector max(float o) {
         return max(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.SMaxBit> equal(float o) {
+    public Mask<Float> equal(float o) {
         return equal(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.SMaxBit> notEqual(float o) {
+    public Mask<Float> notEqual(float o) {
         return notEqual(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.SMaxBit> lessThan(float o) {
+    public Mask<Float> lessThan(float o) {
         return lessThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.SMaxBit> lessThanEq(float o) {
+    public Mask<Float> lessThanEq(float o) {
         return lessThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.SMaxBit> greaterThan(float o) {
+    public Mask<Float> greaterThan(float o) {
         return greaterThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Float, Shapes.SMaxBit> greaterThanEq(float o) {
+    public Mask<Float> greaterThanEq(float o) {
         return greaterThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> blend(float o, Mask<Float,Shapes.SMaxBit> m) {
+    public FloatVector blend(float o, Mask<Float> m) {
         return blend(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> div(float o) {
+    public FloatVector div(float o) {
         return div(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> div(float o, Mask<Float,Shapes.SMaxBit> m) {
+    public FloatVector div(float o, Mask<Float> m) {
         return div(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatMaxVector div(Vector<Float,Shapes.SMaxBit> v, Mask<Float, Shapes.SMaxBit> m) {
+    public FloatMaxVector div(Vector<Float> v, Mask<Float> m) {
         return blend(div(v), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> atan2(float o) {
+    public FloatVector atan2(float o) {
         return atan2(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> atan2(float o, Mask<Float,Shapes.SMaxBit> m) {
+    public FloatVector atan2(float o, Mask<Float> m) {
         return atan2(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> pow(float o) {
+    public FloatVector pow(float o) {
         return pow(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> pow(float o, Mask<Float,Shapes.SMaxBit> m) {
+    public FloatVector pow(float o, Mask<Float> m) {
         return pow(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> fma(float o1, float o2) {
+    public FloatVector fma(float o1, float o2) {
         return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> fma(float o1, float o2, Mask<Float,Shapes.SMaxBit> m) {
+    public FloatVector fma(float o1, float o2, Mask<Float> m) {
         return fma(SPECIES.broadcast(o1), SPECIES.broadcast(o2), m);
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> hypot(float o) {
+    public FloatVector hypot(float o) {
         return hypot(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public FloatVector<Shapes.SMaxBit> hypot(float o, Mask<Float,Shapes.SMaxBit> m) {
+    public FloatVector hypot(float o, Mask<Float> m) {
         return hypot(SPECIES.broadcast(o), m);
     }
 
@@ -308,7 +308,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public FloatMaxVector neg(Mask<Float, Shapes.SMaxBit> m) {
+    public FloatMaxVector neg(Mask<Float> m) {
         return blend(neg(), m);
     }
 
@@ -323,7 +323,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public FloatMaxVector abs(Mask<Float, Shapes.SMaxBit> m) {
+    public FloatMaxVector abs(Mask<Float> m) {
         return blend(abs(), m);
     }
 
@@ -338,7 +338,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector div(Vector<Float,Shapes.SMaxBit> o) {
+    public FloatMaxVector div(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -493,7 +493,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector pow(Vector<Float,Shapes.SMaxBit> o) {
+    public FloatMaxVector pow(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
         return (FloatMaxVector) VectorIntrinsics.binaryOp(
@@ -504,7 +504,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector hypot(Vector<Float,Shapes.SMaxBit> o) {
+    public FloatMaxVector hypot(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
         return (FloatMaxVector) VectorIntrinsics.binaryOp(
@@ -515,7 +515,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector atan2(Vector<Float,Shapes.SMaxBit> o) {
+    public FloatMaxVector atan2(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
         return (FloatMaxVector) VectorIntrinsics.binaryOp(
@@ -529,7 +529,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector add(Vector<Float,Shapes.SMaxBit> o) {
+    public FloatMaxVector add(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -540,13 +540,13 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector add(Vector<Float,Shapes.SMaxBit> v, Mask<Float, Shapes.SMaxBit> m) {
+    public FloatMaxVector add(Vector<Float> v, Mask<Float> m) {
         return blend(add(v), m);
     }
 
     @Override
     @ForceInline
-    public FloatMaxVector sub(Vector<Float,Shapes.SMaxBit> o) {
+    public FloatMaxVector sub(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -557,13 +557,13 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector sub(Vector<Float,Shapes.SMaxBit> v, Mask<Float, Shapes.SMaxBit> m) {
+    public FloatMaxVector sub(Vector<Float> v, Mask<Float> m) {
         return blend(sub(v), m);
     }
 
     @Override
     @ForceInline
-    public FloatMaxVector mul(Vector<Float,Shapes.SMaxBit> o) {
+    public FloatMaxVector mul(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -574,13 +574,13 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector mul(Vector<Float,Shapes.SMaxBit> v, Mask<Float, Shapes.SMaxBit> m) {
+    public FloatMaxVector mul(Vector<Float> v, Mask<Float> m) {
         return blend(mul(v), m);
     }
 
     @Override
     @ForceInline
-    public FloatMaxVector min(Vector<Float,Shapes.SMaxBit> o) {
+    public FloatMaxVector min(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
         return (FloatMaxVector) VectorIntrinsics.binaryOp(
@@ -591,13 +591,13 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector min(Vector<Float,Shapes.SMaxBit> v, Mask<Float, Shapes.SMaxBit> m) {
+    public FloatMaxVector min(Vector<Float> v, Mask<Float> m) {
         return blend(min(v), m);
     }
 
     @Override
     @ForceInline
-    public FloatMaxVector max(Vector<Float,Shapes.SMaxBit> o) {
+    public FloatMaxVector max(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -608,7 +608,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector max(Vector<Float,Shapes.SMaxBit> v, Mask<Float, Shapes.SMaxBit> m) {
+    public FloatMaxVector max(Vector<Float> v, Mask<Float> m) {
         return blend(max(v), m);
     }
 
@@ -617,7 +617,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector fma(Vector<Float,Shapes.SMaxBit> o1, Vector<Float,Shapes.SMaxBit> o2) {
+    public FloatMaxVector fma(Vector<Float> o1, Vector<Float> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         FloatMaxVector v1 = (FloatMaxVector)o1;
@@ -698,37 +698,37 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public float addAll(Mask<Float, Shapes.SMaxBit> m) {
+    public float addAll(Mask<Float> m) {
         return blend(SPECIES.broadcast((float) 0), m).addAll();
     }
 
     @Override
     @ForceInline
-    public float subAll(Mask<Float, Shapes.SMaxBit> m) {
+    public float subAll(Mask<Float> m) {
         return blend(SPECIES.broadcast((float) 0), m).subAll();
     }
 
     @Override
     @ForceInline
-    public float mulAll(Mask<Float, Shapes.SMaxBit> m) {
+    public float mulAll(Mask<Float> m) {
         return blend(SPECIES.broadcast((float) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
-    public float minAll(Mask<Float, Shapes.SMaxBit> m) {
+    public float minAll(Mask<Float> m) {
         return blend(SPECIES.broadcast(Float.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
-    public float maxAll(Mask<Float, Shapes.SMaxBit> m) {
+    public float maxAll(Mask<Float> m) {
         return blend(SPECIES.broadcast(Float.MIN_VALUE), m).maxAll();
     }
 
     @Override
     @ForceInline
-    public Shuffle<Float, Shapes.SMaxBit> toShuffle() {
+    public Shuffle<Float> toShuffle() {
         float[] a = toArray();
         int[] sa = new int[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -755,7 +755,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public final void intoArray(float[] a, int ax, Mask<Float, Shapes.SMaxBit> m) {
+    public final void intoArray(float[] a, int ax, Mask<Float> m) {
         FloatMaxVector oldVal = SPECIES.fromArray(a, ax);
         FloatMaxVector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -779,7 +779,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, Mask<Float, Shapes.SMaxBit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Float> m) {
         FloatMaxVector oldVal = SPECIES.fromByteArray(a, ix);
         FloatMaxVector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -808,7 +808,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Float, Shapes.SMaxBit> m) {
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Float> m) {
         FloatMaxVector oldVal = SPECIES.fromByteBuffer(bb, ix);
         FloatMaxVector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -838,7 +838,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
     // Binary test
 
     @Override
-    FloatMaxMask bTest(Vector<Float, Shapes.SMaxBit> o, FBinTest f) {
+    FloatMaxMask bTest(Vector<Float> o, FBinTest f) {
         float[] vec1 = getElements();
         float[] vec2 = ((FloatMaxVector)o).getElements();
         boolean[] bits = new boolean[length()];
@@ -852,7 +852,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxMask equal(Vector<Float, Shapes.SMaxBit> o) {
+    public FloatMaxMask equal(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
 
@@ -864,7 +864,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxMask notEqual(Vector<Float, Shapes.SMaxBit> o) {
+    public FloatMaxMask notEqual(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
 
@@ -876,7 +876,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxMask lessThan(Vector<Float, Shapes.SMaxBit> o) {
+    public FloatMaxMask lessThan(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
 
@@ -888,7 +888,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxMask lessThanEq(Vector<Float, Shapes.SMaxBit> o) {
+    public FloatMaxMask lessThanEq(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
 
@@ -900,7 +900,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxMask greaterThan(Vector<Float, Shapes.SMaxBit> o) {
+    public FloatMaxMask greaterThan(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
 
@@ -912,7 +912,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxMask greaterThanEq(Vector<Float, Shapes.SMaxBit> o) {
+    public FloatMaxMask greaterThanEq(Vector<Float> o) {
         Objects.requireNonNull(o);
         FloatMaxVector v = (FloatMaxVector)o;
 
@@ -933,7 +933,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
     }
 
     @Override
-    void forEach(Mask<Float, Shapes.SMaxBit> o, FUnCon f) {
+    void forEach(Mask<Float> o, FUnCon f) {
         boolean[] mbits = ((FloatMaxMask)o).getBits();
         forEach((i, a) -> {
             if (mbits[i]) { f.apply(i, a); }
@@ -997,14 +997,14 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector rearrange(Vector<Float, Shapes.SMaxBit> v,
-                                  Shuffle<Float, Shapes.SMaxBit> s, Mask<Float, Shapes.SMaxBit> m) {
+    public FloatMaxVector rearrange(Vector<Float> v,
+                                  Shuffle<Float> s, Mask<Float> m) {
         return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
     @ForceInline
-    public FloatMaxVector rearrange(Shuffle<Float, Shapes.SMaxBit> o1) {
+    public FloatMaxVector rearrange(Shuffle<Float> o1) {
     Objects.requireNonNull(o1);
     FloatMaxShuffle s =  (FloatMaxShuffle)o1;
 
@@ -1020,7 +1020,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public FloatMaxVector blend(Vector<Float, Shapes.SMaxBit> o1, Mask<Float, Shapes.SMaxBit> o2) {
+    public FloatMaxVector blend(Vector<Float> o1, Mask<Float> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         FloatMaxVector v = (FloatMaxVector)o1;
@@ -1066,7 +1066,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     // Mask
 
-    static final class FloatMaxMask extends AbstractMask<Float, Shapes.SMaxBit> {
+    static final class FloatMaxMask extends AbstractMask<Float> {
         static final FloatMaxMask TRUE_MASK = new FloatMaxMask(true);
         static final FloatMaxMask FALSE_MASK = new FloatMaxMask(false);
 
@@ -1105,7 +1105,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
         }
 
         @Override
-        FloatMaxMask bOp(Mask<Float, Shapes.SMaxBit> o, MBinOp f) {
+        FloatMaxMask bOp(Mask<Float> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
             boolean[] bits = getBits();
             boolean[] mbits = ((FloatMaxMask)o).getBits();
@@ -1147,7 +1147,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public FloatMaxMask and(Mask<Float,Shapes.SMaxBit> o) {
+        public FloatMaxMask and(Mask<Float> o) {
             Objects.requireNonNull(o);
             FloatMaxMask m = (FloatMaxMask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, FloatMaxMask.class, int.class, LENGTH,
@@ -1157,7 +1157,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public FloatMaxMask or(Mask<Float,Shapes.SMaxBit> o) {
+        public FloatMaxMask or(Mask<Float> o) {
             Objects.requireNonNull(o);
             FloatMaxMask m = (FloatMaxMask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, FloatMaxMask.class, int.class, LENGTH,
@@ -1186,7 +1186,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
     // Shuffle
 
-    static final class FloatMaxShuffle extends AbstractShuffle<Float, Shapes.SMaxBit> {
+    static final class FloatMaxShuffle extends AbstractShuffle<Float> {
         FloatMaxShuffle(byte[] reorder) {
             super(reorder);
         }
@@ -1218,7 +1218,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
         }
 
         @Override
-        public FloatMaxShuffle rearrange(Vector.Shuffle<Float, Shapes.SMaxBit> o) {
+        public FloatMaxShuffle rearrange(Vector.Shuffle<Float> o) {
             FloatMaxShuffle s = (FloatMaxShuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
@@ -1235,8 +1235,8 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
         return SPECIES;
     }
 
-    static final class FloatMaxSpecies extends FloatSpecies<Shapes.SMaxBit> {
-        static final int BIT_SIZE = Shapes.S_Max_BIT.bitSize();
+    static final class FloatMaxSpecies extends FloatSpecies {
+        static final int BIT_SIZE = Shape.S_Max_BIT.bitSize();
 
         static final int LENGTH = BIT_SIZE / Float.SIZE;
 
@@ -1276,8 +1276,8 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public Shapes.SMaxBit shape() {
-            return Shapes.S_Max_BIT;
+        public Shape shape() {
+            return Shape.S_Max_BIT;
         }
 
         @Override
@@ -1290,7 +1290,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
         }
 
         @Override
-        FloatMaxVector op(Mask<Float, Shapes.SMaxBit> o, FOp f) {
+        FloatMaxVector op(Mask<Float> o, FOp f) {
             float[] res = new float[length()];
             boolean[] mbits = ((FloatMaxMask)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1405,7 +1405,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public FloatMaxVector fromArray(float[] a, int ax, Mask<Float, Shapes.SMaxBit> m) {
+        public FloatMaxVector fromArray(float[] a, int ax, Mask<Float> m) {
             return zero().blend(fromArray(a, ax), m);
         }
 
@@ -1426,7 +1426,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public FloatMaxVector fromByteArray(byte[] a, int ix, Mask<Float, Shapes.SMaxBit> m) {
+        public FloatMaxVector fromByteArray(byte[] a, int ix, Mask<Float> m) {
             return zero().blend(fromByteArray(a, ix), m);
         }
 
@@ -1449,14 +1449,14 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public FloatMaxVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Float, Shapes.SMaxBit> m) {
+        public FloatMaxVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Float> m) {
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F, T extends Shape> FloatMaxVector cast(Vector<F, T> o) {
+        public <F> FloatMaxVector cast(Vector<F> o) {
             if (o.length() != LENGTH)
                 throw new IllegalArgumentException("Vector length this species length differ");
 
@@ -1472,39 +1472,39 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
         @SuppressWarnings("unchecked")
         @ForceInline
-        private <F, T extends Shape> FloatMaxVector castDefault(Vector<F, T> v) {
+        private <F> FloatMaxVector castDefault(Vector<F> v) {
             // Allocate array of required size
             int limit = length();
             float[] a = new float[limit];
 
             Class<?> vtype = v.species().elementType();
             if (vtype == byte.class) {
-                ByteVector<T> tv = (ByteVector<T>)v;
+                ByteVector tv = (ByteVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == short.class) {
-                ShortVector<T> tv = (ShortVector<T>)v;
+                ShortVector tv = (ShortVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == int.class) {
-                IntVector<T> tv = (IntVector<T>)v;
+                IntVector tv = (IntVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == long.class){
-                LongVector<T> tv = (LongVector<T>)v;
+                LongVector tv = (LongVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == float.class){
-                FloatVector<T> tv = (FloatVector<T>)v;
+                FloatVector tv = (FloatVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
             } else if (vtype == double.class){
-                DoubleVector<T> tv = (DoubleVector<T>)v;
+                DoubleVector tv = (DoubleVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (float) tv.get(i);
                 }
@@ -1517,7 +1517,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> FloatMaxMask cast(Mask<E, S> m) {
+        public <E> FloatMaxMask cast(Mask<E> m) {
             if (m.length() != LENGTH)
                 throw new IllegalArgumentException("Mask length this species length differ");
             return new FloatMaxMask(m.toArray());
@@ -1525,7 +1525,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> FloatMaxShuffle cast(Shuffle<E, S> s) {
+        public <E> FloatMaxShuffle cast(Shuffle<E> s) {
             if (s.length() != LENGTH)
                 throw new IllegalArgumentException("Shuffle length this species length differ");
             return new FloatMaxShuffle(s.toArray());
@@ -1534,7 +1534,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F> FloatMaxVector rebracket(Vector<F, Shapes.SMaxBit> o) {
+        public <F> FloatMaxVector rebracket(Vector<F> o) {
             Objects.requireNonNull(o);
             if (o.elementType() == byte.class) {
                 ByteMaxVector so = (ByteMaxVector)o;
@@ -1604,7 +1604,7 @@ final class FloatMaxVector extends FloatVector<Shapes.SMaxBit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <T extends Shape> FloatMaxVector resize(Vector<Float, T> o) {
+        public FloatMaxVector resize(Vector<Float> o) {
             Objects.requireNonNull(o);
             if (o.bitSize() == 64 && (o instanceof Float64Vector)) {
                 Float64Vector so = (Float64Vector)o;

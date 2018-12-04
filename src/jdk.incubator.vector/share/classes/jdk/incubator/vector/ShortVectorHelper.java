@@ -40,43 +40,43 @@ public final class ShortVectorHelper {
         short apply(int i, short a);
     }
 
-    public static <S extends Vector.Shape>
-    ShortVector<S> map(ShortVector<S> va, ShortVector<S> vb, BinaryOp op) {
+    public static 
+    ShortVector map(ShortVector va, ShortVector vb, BinaryOp op) {
         return va.bOp(vb, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    ShortVector<S> map(ShortVector<S> va, ShortVector<S> vb, Vector.Mask<Short,S> m, BinaryOp op) {
+    public static 
+    ShortVector map(ShortVector va, ShortVector vb, Vector.Mask<Short> m, BinaryOp op) {
         return va.bOp(vb, m, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    ShortVector<S> map(ShortVector<S> va, UnaryOp op) {
+    public static 
+    ShortVector map(ShortVector va, UnaryOp op) {
         return va.uOp((i, a) -> op.apply(i, a));
     }
 
-    public static <S extends Vector.Shape>
-    ShortVector<S> map(ShortVector<S> va, Vector.Mask<Short,S> m, UnaryOp op) {
+    public static 
+    ShortVector map(ShortVector va, Vector.Mask<Short> m, UnaryOp op) {
         return va.uOp(m, (i, a) -> op.apply(i, a));
     }
 
-    public static <S extends Vector.Shape>
-    ShortVector<S> div(ShortVector<S> va, ShortVector<S> vb) {
+    public static 
+    ShortVector div(ShortVector va, ShortVector vb) {
         return va.bOp(vb, (i, a, b) -> (short) (a / b));
     }
 
-    public static <S extends Vector.Shape>
-    ShortVector<S> div(ShortVector<S> va, ShortVector<S> vb, Vector.Mask<Short, S> m) {
+    public static 
+    ShortVector div(ShortVector va, ShortVector vb, Vector.Mask<Short> m) {
         return va.bOp(vb, m, (i, a, b) -> (short) (a / b));
     }
 
-    public static <S extends Vector.Shape>
-    ShortVector<S> mod(ShortVector<S> va, ShortVector<S> vb) {
+    public static 
+    ShortVector mod(ShortVector va, ShortVector vb) {
         return va.bOp(vb, (i, a, b) -> (short) (a % b));
     }
 
-    public static <S extends Vector.Shape>
-    ShortVector<S> mod(ShortVector<S> va, ShortVector<S> vb, Vector.Mask<Short, S> m) {
+    public static 
+    ShortVector mod(ShortVector va, ShortVector vb, Vector.Mask<Short> m) {
         return va.bOp(vb, m, (i, a, b) -> (short) (a % b));
     }
 

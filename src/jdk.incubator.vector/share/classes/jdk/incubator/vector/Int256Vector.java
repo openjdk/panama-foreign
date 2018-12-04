@@ -37,7 +37,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
-final class Int256Vector extends IntVector<Shapes.S256Bit> {
+final class Int256Vector extends IntVector {
     static final Int256Species SPECIES = new Int256Species();
 
     static final Int256Vector ZERO = new Int256Vector();
@@ -74,7 +74,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     }
 
     @Override
-    Int256Vector uOp(Mask<Integer, Shapes.S256Bit> o, FUnOp f) {
+    Int256Vector uOp(Mask<Integer> o, FUnOp f) {
         int[] vec = getElements();
         int[] res = new int[length()];
         boolean[] mbits = ((Int256Mask)o).getBits();
@@ -87,7 +87,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     // Binary operator
 
     @Override
-    Int256Vector bOp(Vector<Integer, Shapes.S256Bit> o, FBinOp f) {
+    Int256Vector bOp(Vector<Integer> o, FBinOp f) {
         int[] res = new int[length()];
         int[] vec1 = this.getElements();
         int[] vec2 = ((Int256Vector)o).getElements();
@@ -98,7 +98,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     }
 
     @Override
-    Int256Vector bOp(Vector<Integer, Shapes.S256Bit> o1, Mask<Integer, Shapes.S256Bit> o2, FBinOp f) {
+    Int256Vector bOp(Vector<Integer> o1, Mask<Integer> o2, FBinOp f) {
         int[] res = new int[length()];
         int[] vec1 = this.getElements();
         int[] vec2 = ((Int256Vector)o1).getElements();
@@ -112,7 +112,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     // Trinary operator
 
     @Override
-    Int256Vector tOp(Vector<Integer, Shapes.S256Bit> o1, Vector<Integer, Shapes.S256Bit> o2, FTriOp f) {
+    Int256Vector tOp(Vector<Integer> o1, Vector<Integer> o2, FTriOp f) {
         int[] res = new int[length()];
         int[] vec1 = this.getElements();
         int[] vec2 = ((Int256Vector)o1).getElements();
@@ -124,7 +124,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     }
 
     @Override
-    Int256Vector tOp(Vector<Integer, Shapes.S256Bit> o1, Vector<Integer, Shapes.S256Bit> o2, Mask<Integer, Shapes.S256Bit> o3, FTriOp f) {
+    Int256Vector tOp(Vector<Integer> o1, Vector<Integer> o2, Mask<Integer> o3, FTriOp f) {
         int[] res = new int[length()];
         int[] vec1 = getElements();
         int[] vec2 = ((Int256Vector)o1).getElements();
@@ -149,128 +149,128 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> add(int o) {
+    public IntVector add(int o) {
         return add(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> add(int o, Mask<Integer,Shapes.S256Bit> m) {
+    public IntVector add(int o, Mask<Integer> m) {
         return add(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> sub(int o) {
+    public IntVector sub(int o) {
         return sub(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> sub(int o, Mask<Integer,Shapes.S256Bit> m) {
+    public IntVector sub(int o, Mask<Integer> m) {
         return sub(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> mul(int o) {
+    public IntVector mul(int o) {
         return mul(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> mul(int o, Mask<Integer,Shapes.S256Bit> m) {
+    public IntVector mul(int o, Mask<Integer> m) {
         return mul(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> min(int o) {
+    public IntVector min(int o) {
         return min(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> max(int o) {
+    public IntVector max(int o) {
         return max(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Integer, Shapes.S256Bit> equal(int o) {
+    public Mask<Integer> equal(int o) {
         return equal(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Integer, Shapes.S256Bit> notEqual(int o) {
+    public Mask<Integer> notEqual(int o) {
         return notEqual(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Integer, Shapes.S256Bit> lessThan(int o) {
+    public Mask<Integer> lessThan(int o) {
         return lessThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Integer, Shapes.S256Bit> lessThanEq(int o) {
+    public Mask<Integer> lessThanEq(int o) {
         return lessThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Integer, Shapes.S256Bit> greaterThan(int o) {
+    public Mask<Integer> greaterThan(int o) {
         return greaterThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Integer, Shapes.S256Bit> greaterThanEq(int o) {
+    public Mask<Integer> greaterThanEq(int o) {
         return greaterThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> blend(int o, Mask<Integer,Shapes.S256Bit> m) {
+    public IntVector blend(int o, Mask<Integer> m) {
         return blend(SPECIES.broadcast(o), m);
     }
 
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> and(int o) {
+    public IntVector and(int o) {
         return and(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> and(int o, Mask<Integer,Shapes.S256Bit> m) {
+    public IntVector and(int o, Mask<Integer> m) {
         return and(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> or(int o) {
+    public IntVector or(int o) {
         return or(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> or(int o, Mask<Integer,Shapes.S256Bit> m) {
+    public IntVector or(int o, Mask<Integer> m) {
         return or(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> xor(int o) {
+    public IntVector xor(int o) {
         return xor(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public IntVector<Shapes.S256Bit> xor(int o, Mask<Integer,Shapes.S256Bit> m) {
+    public IntVector xor(int o, Mask<Integer> m) {
         return xor(SPECIES.broadcast(o), m);
     }
 
@@ -284,7 +284,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @ForceInline
     @Override
-    public Int256Vector neg(Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector neg(Mask<Integer> m) {
         return blend(neg(), m);
     }
 
@@ -299,7 +299,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @ForceInline
     @Override
-    public Int256Vector abs(Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector abs(Mask<Integer> m) {
         return blend(abs(), m);
     }
 
@@ -315,14 +315,14 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @ForceInline
     @Override
-    public Int256Vector not(Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector not(Mask<Integer> m) {
         return blend(not(), m);
     }
     // Binary operations
 
     @Override
     @ForceInline
-    public Int256Vector add(Vector<Integer,Shapes.S256Bit> o) {
+    public Int256Vector add(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -333,13 +333,13 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector add(Vector<Integer,Shapes.S256Bit> v, Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector add(Vector<Integer> v, Mask<Integer> m) {
         return blend(add(v), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector sub(Vector<Integer,Shapes.S256Bit> o) {
+    public Int256Vector sub(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -350,13 +350,13 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector sub(Vector<Integer,Shapes.S256Bit> v, Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector sub(Vector<Integer> v, Mask<Integer> m) {
         return blend(sub(v), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector mul(Vector<Integer,Shapes.S256Bit> o) {
+    public Int256Vector mul(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -367,13 +367,13 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector mul(Vector<Integer,Shapes.S256Bit> v, Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector mul(Vector<Integer> v, Mask<Integer> m) {
         return blend(mul(v), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector min(Vector<Integer,Shapes.S256Bit> o) {
+    public Int256Vector min(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
         return (Int256Vector) VectorIntrinsics.binaryOp(
@@ -384,13 +384,13 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector min(Vector<Integer,Shapes.S256Bit> v, Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector min(Vector<Integer> v, Mask<Integer> m) {
         return blend(min(v), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector max(Vector<Integer,Shapes.S256Bit> o) {
+    public Int256Vector max(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -401,13 +401,13 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector max(Vector<Integer,Shapes.S256Bit> v, Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector max(Vector<Integer> v, Mask<Integer> m) {
         return blend(max(v), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector and(Vector<Integer,Shapes.S256Bit> o) {
+    public Int256Vector and(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -418,7 +418,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector or(Vector<Integer,Shapes.S256Bit> o) {
+    public Int256Vector or(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -429,7 +429,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector xor(Vector<Integer,Shapes.S256Bit> o) {
+    public Int256Vector xor(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
         return VectorIntrinsics.binaryOp(
@@ -440,19 +440,19 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector and(Vector<Integer,Shapes.S256Bit> v, Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector and(Vector<Integer> v, Mask<Integer> m) {
         return blend(and(v), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector or(Vector<Integer,Shapes.S256Bit> v, Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector or(Vector<Integer> v, Mask<Integer> m) {
         return blend(or(v), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector xor(Vector<Integer,Shapes.S256Bit> v, Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector xor(Vector<Integer> v, Mask<Integer> m) {
         return blend(xor(v), m);
     }
 
@@ -485,7 +485,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector shiftL(Vector<Integer,Shapes.S256Bit> s) {
+    public Int256Vector shiftL(Vector<Integer> s) {
         Int256Vector shiftv = (Int256Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x1f));
@@ -497,7 +497,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector shiftR(Vector<Integer,Shapes.S256Bit> s) {
+    public Int256Vector shiftR(Vector<Integer> s) {
         Int256Vector shiftv = (Int256Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x1f));
@@ -509,7 +509,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector aShiftR(Vector<Integer,Shapes.S256Bit> s) {
+    public Int256Vector aShiftR(Vector<Integer> s) {
         Int256Vector shiftv = (Int256Vector)s;
         // As per shift specification for Java, mask the shift count.
         shiftv = shiftv.and(species().broadcast(0x1f));
@@ -543,7 +543,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public int andAll(Mask<Integer, Shapes.S256Bit> m) {
+    public int andAll(Mask<Integer> m) {
         return blend(SPECIES.broadcast((int) -1), m).andAll();
     }
 
@@ -594,7 +594,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public int orAll(Mask<Integer, Shapes.S256Bit> m) {
+    public int orAll(Mask<Integer> m) {
         return blend(SPECIES.broadcast((int) 0), m).orAll();
     }
 
@@ -609,44 +609,44 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public int xorAll(Mask<Integer, Shapes.S256Bit> m) {
+    public int xorAll(Mask<Integer> m) {
         return blend(SPECIES.broadcast((int) 0), m).xorAll();
     }
 
 
     @Override
     @ForceInline
-    public int addAll(Mask<Integer, Shapes.S256Bit> m) {
+    public int addAll(Mask<Integer> m) {
         return blend(SPECIES.broadcast((int) 0), m).addAll();
     }
 
     @Override
     @ForceInline
-    public int subAll(Mask<Integer, Shapes.S256Bit> m) {
+    public int subAll(Mask<Integer> m) {
         return blend(SPECIES.broadcast((int) 0), m).subAll();
     }
 
     @Override
     @ForceInline
-    public int mulAll(Mask<Integer, Shapes.S256Bit> m) {
+    public int mulAll(Mask<Integer> m) {
         return blend(SPECIES.broadcast((int) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
-    public int minAll(Mask<Integer, Shapes.S256Bit> m) {
+    public int minAll(Mask<Integer> m) {
         return blend(SPECIES.broadcast(Integer.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
-    public int maxAll(Mask<Integer, Shapes.S256Bit> m) {
+    public int maxAll(Mask<Integer> m) {
         return blend(SPECIES.broadcast(Integer.MIN_VALUE), m).maxAll();
     }
 
     @Override
     @ForceInline
-    public Shuffle<Integer, Shapes.S256Bit> toShuffle() {
+    public Shuffle<Integer> toShuffle() {
         int[] a = toArray();
         int[] sa = new int[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -673,7 +673,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public final void intoArray(int[] a, int ax, Mask<Integer, Shapes.S256Bit> m) {
+    public final void intoArray(int[] a, int ax, Mask<Integer> m) {
         Int256Vector oldVal = SPECIES.fromArray(a, ax);
         Int256Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -697,7 +697,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, Mask<Integer, Shapes.S256Bit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Integer> m) {
         Int256Vector oldVal = SPECIES.fromByteArray(a, ix);
         Int256Vector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -726,7 +726,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Integer, Shapes.S256Bit> m) {
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Integer> m) {
         Int256Vector oldVal = SPECIES.fromByteBuffer(bb, ix);
         Int256Vector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -756,7 +756,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     // Binary test
 
     @Override
-    Int256Mask bTest(Vector<Integer, Shapes.S256Bit> o, FBinTest f) {
+    Int256Mask bTest(Vector<Integer> o, FBinTest f) {
         int[] vec1 = getElements();
         int[] vec2 = ((Int256Vector)o).getElements();
         boolean[] bits = new boolean[length()];
@@ -770,7 +770,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Mask equal(Vector<Integer, Shapes.S256Bit> o) {
+    public Int256Mask equal(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
 
@@ -782,7 +782,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Mask notEqual(Vector<Integer, Shapes.S256Bit> o) {
+    public Int256Mask notEqual(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
 
@@ -794,7 +794,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Mask lessThan(Vector<Integer, Shapes.S256Bit> o) {
+    public Int256Mask lessThan(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
 
@@ -806,7 +806,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Mask lessThanEq(Vector<Integer, Shapes.S256Bit> o) {
+    public Int256Mask lessThanEq(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
 
@@ -818,7 +818,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Mask greaterThan(Vector<Integer, Shapes.S256Bit> o) {
+    public Int256Mask greaterThan(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
 
@@ -830,7 +830,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Mask greaterThanEq(Vector<Integer, Shapes.S256Bit> o) {
+    public Int256Mask greaterThanEq(Vector<Integer> o) {
         Objects.requireNonNull(o);
         Int256Vector v = (Int256Vector)o;
 
@@ -851,7 +851,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
     }
 
     @Override
-    void forEach(Mask<Integer, Shapes.S256Bit> o, FUnCon f) {
+    void forEach(Mask<Integer> o, FUnCon f) {
         boolean[] mbits = ((Int256Mask)o).getBits();
         forEach((i, a) -> {
             if (mbits[i]) { f.apply(i, a); }
@@ -915,14 +915,14 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector rearrange(Vector<Integer, Shapes.S256Bit> v,
-                                  Shuffle<Integer, Shapes.S256Bit> s, Mask<Integer, Shapes.S256Bit> m) {
+    public Int256Vector rearrange(Vector<Integer> v,
+                                  Shuffle<Integer> s, Mask<Integer> m) {
         return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
     @ForceInline
-    public Int256Vector rearrange(Shuffle<Integer, Shapes.S256Bit> o1) {
+    public Int256Vector rearrange(Shuffle<Integer> o1) {
     Objects.requireNonNull(o1);
     Int256Shuffle s =  (Int256Shuffle)o1;
 
@@ -938,7 +938,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     @Override
     @ForceInline
-    public Int256Vector blend(Vector<Integer, Shapes.S256Bit> o1, Mask<Integer, Shapes.S256Bit> o2) {
+    public Int256Vector blend(Vector<Integer> o1, Mask<Integer> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         Int256Vector v = (Int256Vector)o1;
@@ -983,7 +983,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     // Mask
 
-    static final class Int256Mask extends AbstractMask<Integer, Shapes.S256Bit> {
+    static final class Int256Mask extends AbstractMask<Integer> {
         static final Int256Mask TRUE_MASK = new Int256Mask(true);
         static final Int256Mask FALSE_MASK = new Int256Mask(false);
 
@@ -1022,7 +1022,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         }
 
         @Override
-        Int256Mask bOp(Mask<Integer, Shapes.S256Bit> o, MBinOp f) {
+        Int256Mask bOp(Mask<Integer> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
             boolean[] bits = getBits();
             boolean[] mbits = ((Int256Mask)o).getBits();
@@ -1064,7 +1064,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public Int256Mask and(Mask<Integer,Shapes.S256Bit> o) {
+        public Int256Mask and(Mask<Integer> o) {
             Objects.requireNonNull(o);
             Int256Mask m = (Int256Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, Int256Mask.class, int.class, LENGTH,
@@ -1074,7 +1074,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public Int256Mask or(Mask<Integer,Shapes.S256Bit> o) {
+        public Int256Mask or(Mask<Integer> o) {
             Objects.requireNonNull(o);
             Int256Mask m = (Int256Mask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, Int256Mask.class, int.class, LENGTH,
@@ -1103,7 +1103,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
     // Shuffle
 
-    static final class Int256Shuffle extends AbstractShuffle<Integer, Shapes.S256Bit> {
+    static final class Int256Shuffle extends AbstractShuffle<Integer> {
         Int256Shuffle(byte[] reorder) {
             super(reorder);
         }
@@ -1135,7 +1135,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         }
 
         @Override
-        public Int256Shuffle rearrange(Vector.Shuffle<Integer, Shapes.S256Bit> o) {
+        public Int256Shuffle rearrange(Vector.Shuffle<Integer> o) {
             Int256Shuffle s = (Int256Shuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
@@ -1152,8 +1152,8 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         return SPECIES;
     }
 
-    static final class Int256Species extends IntSpecies<Shapes.S256Bit> {
-        static final int BIT_SIZE = Shapes.S_256_BIT.bitSize();
+    static final class Int256Species extends IntSpecies {
+        static final int BIT_SIZE = Shape.S_256_BIT.bitSize();
 
         static final int LENGTH = BIT_SIZE / Integer.SIZE;
 
@@ -1193,8 +1193,8 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public Shapes.S256Bit shape() {
-            return Shapes.S_256_BIT;
+        public Shape shape() {
+            return Shape.S_256_BIT;
         }
 
         @Override
@@ -1207,7 +1207,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         }
 
         @Override
-        Int256Vector op(Mask<Integer, Shapes.S256Bit> o, FOp f) {
+        Int256Vector op(Mask<Integer> o, FOp f) {
             int[] res = new int[length()];
             boolean[] mbits = ((Int256Mask)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1322,7 +1322,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public Int256Vector fromArray(int[] a, int ax, Mask<Integer, Shapes.S256Bit> m) {
+        public Int256Vector fromArray(int[] a, int ax, Mask<Integer> m) {
             return zero().blend(fromArray(a, ax), m);
         }
 
@@ -1343,7 +1343,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public Int256Vector fromByteArray(byte[] a, int ix, Mask<Integer, Shapes.S256Bit> m) {
+        public Int256Vector fromByteArray(byte[] a, int ix, Mask<Integer> m) {
             return zero().blend(fromByteArray(a, ix), m);
         }
 
@@ -1366,14 +1366,14 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public Int256Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Integer, Shapes.S256Bit> m) {
+        public Int256Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Integer> m) {
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F, T extends Shape> Int256Vector cast(Vector<F, T> o) {
+        public <F> Int256Vector cast(Vector<F> o) {
             if (o.length() != LENGTH)
                 throw new IllegalArgumentException("Vector length this species length differ");
 
@@ -1389,39 +1389,39 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @SuppressWarnings("unchecked")
         @ForceInline
-        private <F, T extends Shape> Int256Vector castDefault(Vector<F, T> v) {
+        private <F> Int256Vector castDefault(Vector<F> v) {
             // Allocate array of required size
             int limit = length();
             int[] a = new int[limit];
 
             Class<?> vtype = v.species().elementType();
             if (vtype == byte.class) {
-                ByteVector<T> tv = (ByteVector<T>)v;
+                ByteVector tv = (ByteVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
             } else if (vtype == short.class) {
-                ShortVector<T> tv = (ShortVector<T>)v;
+                ShortVector tv = (ShortVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
             } else if (vtype == int.class) {
-                IntVector<T> tv = (IntVector<T>)v;
+                IntVector tv = (IntVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
             } else if (vtype == long.class){
-                LongVector<T> tv = (LongVector<T>)v;
+                LongVector tv = (LongVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
             } else if (vtype == float.class){
-                FloatVector<T> tv = (FloatVector<T>)v;
+                FloatVector tv = (FloatVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
             } else if (vtype == double.class){
-                DoubleVector<T> tv = (DoubleVector<T>)v;
+                DoubleVector tv = (DoubleVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (int) tv.get(i);
                 }
@@ -1434,7 +1434,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> Int256Mask cast(Mask<E, S> m) {
+        public <E> Int256Mask cast(Mask<E> m) {
             if (m.length() != LENGTH)
                 throw new IllegalArgumentException("Mask length this species length differ");
             return new Int256Mask(m.toArray());
@@ -1442,7 +1442,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> Int256Shuffle cast(Shuffle<E, S> s) {
+        public <E> Int256Shuffle cast(Shuffle<E> s) {
             if (s.length() != LENGTH)
                 throw new IllegalArgumentException("Shuffle length this species length differ");
             return new Int256Shuffle(s.toArray());
@@ -1451,7 +1451,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F> Int256Vector rebracket(Vector<F, Shapes.S256Bit> o) {
+        public <F> Int256Vector rebracket(Vector<F> o) {
             Objects.requireNonNull(o);
             if (o.elementType() == byte.class) {
                 Byte256Vector so = (Byte256Vector)o;
@@ -1521,7 +1521,7 @@ final class Int256Vector extends IntVector<Shapes.S256Bit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <T extends Shape> Int256Vector resize(Vector<Integer, T> o) {
+        public Int256Vector resize(Vector<Integer> o) {
             Objects.requireNonNull(o);
             if (o.bitSize() == 64 && (o instanceof Int64Vector)) {
                 Int64Vector so = (Int64Vector)o;

@@ -40,258 +40,258 @@ public final class $abstractvectortype$Helper {
         $type$ apply(int i, $type$ a);
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> map($abstractvectortype$<S> va, $abstractvectortype$<S> vb, BinaryOp op) {
+    public static 
+    $abstractvectortype$ map($abstractvectortype$ va, $abstractvectortype$ vb, BinaryOp op) {
         return va.bOp(vb, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> map($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$,S> m, BinaryOp op) {
+    public static 
+    $abstractvectortype$ map($abstractvectortype$ va, $abstractvectortype$ vb, Vector.Mask<$Boxtype$> m, BinaryOp op) {
         return va.bOp(vb, m, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> map($abstractvectortype$<S> va, UnaryOp op) {
+    public static 
+    $abstractvectortype$ map($abstractvectortype$ va, UnaryOp op) {
         return va.uOp((i, a) -> op.apply(i, a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> map($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m, UnaryOp op) {
+    public static 
+    $abstractvectortype$ map($abstractvectortype$ va, Vector.Mask<$Boxtype$> m, UnaryOp op) {
         return va.uOp(m, (i, a) -> op.apply(i, a));
     }
 
 #if[BITWISE]
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> div($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+    public static 
+    $abstractvectortype$ div($abstractvectortype$ va, $abstractvectortype$ vb) {
         return va.bOp(vb, (i, a, b) -> ($type$) (a / b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> div($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$, S> m) {
+    public static 
+    $abstractvectortype$ div($abstractvectortype$ va, $abstractvectortype$ vb, Vector.Mask<$Boxtype$> m) {
         return va.bOp(vb, m, (i, a, b) -> ($type$) (a / b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> mod($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+    public static 
+    $abstractvectortype$ mod($abstractvectortype$ va, $abstractvectortype$ vb) {
         return va.bOp(vb, (i, a, b) -> ($type$) (a % b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> mod($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$, S> m) {
+    public static 
+    $abstractvectortype$ mod($abstractvectortype$ va, $abstractvectortype$ vb, Vector.Mask<$Boxtype$> m) {
         return va.bOp(vb, m, (i, a, b) -> ($type$) (a % b));
     }
 #end[BITWISE]
 
 #if[intOrLong]
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> addExact($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+    public static 
+    $abstractvectortype$ addExact($abstractvectortype$ va, $abstractvectortype$ vb) {
         return va.bOp(vb, (i, a, b) -> Math.addExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> addExact($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ addExact($abstractvectortype$ va, $abstractvectortype$ vb, Vector.Mask<$Boxtype$> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.addExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> decrementExact($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ decrementExact($abstractvectortype$ va) {
         return va.uOp((i, a) -> Math.decrementExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> decrementExact($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ decrementExact($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> Math.decrementExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> incrementExact($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ incrementExact($abstractvectortype$ va) {
         return va.uOp((i, a) -> Math.incrementExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> incrementExact($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ incrementExact($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> Math.incrementExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> multiplyExact($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+    public static 
+    $abstractvectortype$ multiplyExact($abstractvectortype$ va, $abstractvectortype$ vb) {
         return va.bOp(vb, (i, a, b) -> Math.multiplyExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> multiplyExact($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$, S> m) {
+    public static 
+    $abstractvectortype$ multiplyExact($abstractvectortype$ va, $abstractvectortype$ vb, Vector.Mask<$Boxtype$> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.multiplyExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> negateExact($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ negateExact($abstractvectortype$ va) {
         return va.uOp((i, a) -> Math.negateExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> negateExact($abstractvectortype$<S> va, Vector.Mask<$Boxtype$, S> m) {
+    public static 
+    $abstractvectortype$ negateExact($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> Math.negateExact(a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> subtractExtract($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+    public static 
+    $abstractvectortype$ subtractExtract($abstractvectortype$ va, $abstractvectortype$ vb) {
         return va.bOp(vb, (i, a, b) -> Math.subtractExact(a, b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> subtractExtract($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ subtractExtract($abstractvectortype$ va, $abstractvectortype$ vb, Vector.Mask<$Boxtype$> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.subtractExact(a, b));
     }
 #end[intOrLong]
 
 #if[FP]
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> ceil($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ ceil($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.ceil((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> ceil($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ ceil($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.ceil((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> copySign($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+    public static 
+    $abstractvectortype$ copySign($abstractvectortype$ va, $abstractvectortype$ vb) {
         return va.bOp(vb, (i, a, b) -> ($type$) Math.copySign((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> copySign($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ copySign($abstractvectortype$ va, $abstractvectortype$ vb, Vector.Mask<$Boxtype$> m) {
         return va.bOp(vb, m, (i, a, b) -> ($type$) Math.copySign((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> floor($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ floor($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.floor((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> floor($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ floor($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.floor((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> getExponent($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ getExponent($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.getExponent((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> getExponent($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ getExponent($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.getExponent((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> IEEEremainder($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+    public static 
+    $abstractvectortype$ IEEEremainder($abstractvectortype$ va, $abstractvectortype$ vb) {
         return va.bOp(vb, (i, a, b) -> ($type$) Math.IEEEremainder((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> IEEEremainder($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ IEEEremainder($abstractvectortype$ va, $abstractvectortype$ vb, Vector.Mask<$Boxtype$> m) {
         return va.bOp(vb, m, (i, a, b) -> ($type$) Math.IEEEremainder((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> nextAfter($abstractvectortype$<S> va, $abstractvectortype$<S> vb) {
+    public static 
+    $abstractvectortype$ nextAfter($abstractvectortype$ va, $abstractvectortype$ vb) {
         return va.bOp(vb, (i, a, b) -> ($type$) Math.nextAfter((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> nextAfter($abstractvectortype$<S> va, $abstractvectortype$<S> vb, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ nextAfter($abstractvectortype$ va, $abstractvectortype$ vb, Vector.Mask<$Boxtype$> m) {
         return va.bOp(vb, m, (i, a, b) -> ($type$) Math.nextAfter((double) a, (double) b));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> nextDown($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ nextDown($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.nextDown((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> nextDown($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ nextDown($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.nextDown((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> nextUp($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ nextUp($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.nextUp((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> nextUp($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ nextUp($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.nextUp((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> rint($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ rint($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.rint((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> rint($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ rint($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.rint((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> round($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ round($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.round((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> round($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ round($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.round((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> scalb(Vector<Integer, S> o) {
+    public static 
+    $abstractvectortype$ scalb(Vector<Integer> o) {
         throw  new UnsupportedOperationException("Scalb not implemented yet.");
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> scalb(Vector<Integer, S> o, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ scalb(Vector<Integer> o, Vector.Mask<$Boxtype$> m) {
         throw  new UnsupportedOperationException("Scalb not implemented yet.");
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> signum($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ signum($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.signum((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> signum($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ signum($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.signum((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> toDegrees($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ toDegrees($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.toDegrees((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> toDegrees($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ toDegrees($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.toDegrees((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> toRadians($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ toRadians($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.toRadians((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> toRadians($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ toRadians($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.toRadians((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> ulp($abstractvectortype$<S> va) {
+    public static 
+    $abstractvectortype$ ulp($abstractvectortype$ va) {
         return va.uOp((i, a) -> ($type$) Math.ulp((double) a));
     }
 
-    public static <S extends Vector.Shape>
-    $abstractvectortype$<S> ulp($abstractvectortype$<S> va, Vector.Mask<$Boxtype$,S> m) {
+    public static 
+    $abstractvectortype$ ulp($abstractvectortype$ va, Vector.Mask<$Boxtype$> m) {
         return va.uOp(m, (i, a) -> ($type$) Math.ulp((double) a));
     }
 #end[FP]

@@ -36,7 +36,7 @@ import jdk.internal.vm.annotation.ForceInline;
 import static jdk.incubator.vector.VectorIntrinsics.*;
 
 @SuppressWarnings("cast")
-final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
+final class ByteMaxVector extends ByteVector {
     static final ByteMaxSpecies SPECIES = new ByteMaxSpecies();
 
     static final ByteMaxVector ZERO = new ByteMaxVector();
@@ -73,7 +73,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
     }
 
     @Override
-    ByteMaxVector uOp(Mask<Byte, Shapes.SMaxBit> o, FUnOp f) {
+    ByteMaxVector uOp(Mask<Byte> o, FUnOp f) {
         byte[] vec = getElements();
         byte[] res = new byte[length()];
         boolean[] mbits = ((ByteMaxMask)o).getBits();
@@ -86,7 +86,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
     // Binary operator
 
     @Override
-    ByteMaxVector bOp(Vector<Byte, Shapes.SMaxBit> o, FBinOp f) {
+    ByteMaxVector bOp(Vector<Byte> o, FBinOp f) {
         byte[] res = new byte[length()];
         byte[] vec1 = this.getElements();
         byte[] vec2 = ((ByteMaxVector)o).getElements();
@@ -97,7 +97,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
     }
 
     @Override
-    ByteMaxVector bOp(Vector<Byte, Shapes.SMaxBit> o1, Mask<Byte, Shapes.SMaxBit> o2, FBinOp f) {
+    ByteMaxVector bOp(Vector<Byte> o1, Mask<Byte> o2, FBinOp f) {
         byte[] res = new byte[length()];
         byte[] vec1 = this.getElements();
         byte[] vec2 = ((ByteMaxVector)o1).getElements();
@@ -111,7 +111,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
     // Trinary operator
 
     @Override
-    ByteMaxVector tOp(Vector<Byte, Shapes.SMaxBit> o1, Vector<Byte, Shapes.SMaxBit> o2, FTriOp f) {
+    ByteMaxVector tOp(Vector<Byte> o1, Vector<Byte> o2, FTriOp f) {
         byte[] res = new byte[length()];
         byte[] vec1 = this.getElements();
         byte[] vec2 = ((ByteMaxVector)o1).getElements();
@@ -123,7 +123,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
     }
 
     @Override
-    ByteMaxVector tOp(Vector<Byte, Shapes.SMaxBit> o1, Vector<Byte, Shapes.SMaxBit> o2, Mask<Byte, Shapes.SMaxBit> o3, FTriOp f) {
+    ByteMaxVector tOp(Vector<Byte> o1, Vector<Byte> o2, Mask<Byte> o3, FTriOp f) {
         byte[] res = new byte[length()];
         byte[] vec1 = getElements();
         byte[] vec2 = ((ByteMaxVector)o1).getElements();
@@ -148,128 +148,128 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> add(byte o) {
+    public ByteVector add(byte o) {
         return add(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> add(byte o, Mask<Byte,Shapes.SMaxBit> m) {
+    public ByteVector add(byte o, Mask<Byte> m) {
         return add(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> sub(byte o) {
+    public ByteVector sub(byte o) {
         return sub(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> sub(byte o, Mask<Byte,Shapes.SMaxBit> m) {
+    public ByteVector sub(byte o, Mask<Byte> m) {
         return sub(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> mul(byte o) {
+    public ByteVector mul(byte o) {
         return mul(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> mul(byte o, Mask<Byte,Shapes.SMaxBit> m) {
+    public ByteVector mul(byte o, Mask<Byte> m) {
         return mul(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> min(byte o) {
+    public ByteVector min(byte o) {
         return min(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> max(byte o) {
+    public ByteVector max(byte o) {
         return max(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.SMaxBit> equal(byte o) {
+    public Mask<Byte> equal(byte o) {
         return equal(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.SMaxBit> notEqual(byte o) {
+    public Mask<Byte> notEqual(byte o) {
         return notEqual(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.SMaxBit> lessThan(byte o) {
+    public Mask<Byte> lessThan(byte o) {
         return lessThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.SMaxBit> lessThanEq(byte o) {
+    public Mask<Byte> lessThanEq(byte o) {
         return lessThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.SMaxBit> greaterThan(byte o) {
+    public Mask<Byte> greaterThan(byte o) {
         return greaterThan(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public Mask<Byte, Shapes.SMaxBit> greaterThanEq(byte o) {
+    public Mask<Byte> greaterThanEq(byte o) {
         return greaterThanEq(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> blend(byte o, Mask<Byte,Shapes.SMaxBit> m) {
+    public ByteVector blend(byte o, Mask<Byte> m) {
         return blend(SPECIES.broadcast(o), m);
     }
 
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> and(byte o) {
+    public ByteVector and(byte o) {
         return and(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> and(byte o, Mask<Byte,Shapes.SMaxBit> m) {
+    public ByteVector and(byte o, Mask<Byte> m) {
         return and(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> or(byte o) {
+    public ByteVector or(byte o) {
         return or(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> or(byte o, Mask<Byte,Shapes.SMaxBit> m) {
+    public ByteVector or(byte o, Mask<Byte> m) {
         return or(SPECIES.broadcast(o), m);
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> xor(byte o) {
+    public ByteVector xor(byte o) {
         return xor(SPECIES.broadcast(o));
     }
 
     @Override
     @ForceInline
-    public ByteVector<Shapes.SMaxBit> xor(byte o, Mask<Byte,Shapes.SMaxBit> m) {
+    public ByteVector xor(byte o, Mask<Byte> m) {
         return xor(SPECIES.broadcast(o), m);
     }
 
@@ -283,7 +283,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public ByteMaxVector neg(Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector neg(Mask<Byte> m) {
         return blend(neg(), m);
     }
 
@@ -298,7 +298,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public ByteMaxVector abs(Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector abs(Mask<Byte> m) {
         return blend(abs(), m);
     }
 
@@ -314,14 +314,14 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @ForceInline
     @Override
-    public ByteMaxVector not(Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector not(Mask<Byte> m) {
         return blend(not(), m);
     }
     // Binary operations
 
     @Override
     @ForceInline
-    public ByteMaxVector add(Vector<Byte,Shapes.SMaxBit> o) {
+    public ByteMaxVector add(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -332,13 +332,13 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector add(Vector<Byte,Shapes.SMaxBit> v, Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector add(Vector<Byte> v, Mask<Byte> m) {
         return blend(add(v), m);
     }
 
     @Override
     @ForceInline
-    public ByteMaxVector sub(Vector<Byte,Shapes.SMaxBit> o) {
+    public ByteMaxVector sub(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -349,13 +349,13 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector sub(Vector<Byte,Shapes.SMaxBit> v, Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector sub(Vector<Byte> v, Mask<Byte> m) {
         return blend(sub(v), m);
     }
 
     @Override
     @ForceInline
-    public ByteMaxVector mul(Vector<Byte,Shapes.SMaxBit> o) {
+    public ByteMaxVector mul(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -366,13 +366,13 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector mul(Vector<Byte,Shapes.SMaxBit> v, Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector mul(Vector<Byte> v, Mask<Byte> m) {
         return blend(mul(v), m);
     }
 
     @Override
     @ForceInline
-    public ByteMaxVector min(Vector<Byte,Shapes.SMaxBit> o) {
+    public ByteMaxVector min(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
         return (ByteMaxVector) VectorIntrinsics.binaryOp(
@@ -383,13 +383,13 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector min(Vector<Byte,Shapes.SMaxBit> v, Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector min(Vector<Byte> v, Mask<Byte> m) {
         return blend(min(v), m);
     }
 
     @Override
     @ForceInline
-    public ByteMaxVector max(Vector<Byte,Shapes.SMaxBit> o) {
+    public ByteMaxVector max(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -400,13 +400,13 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector max(Vector<Byte,Shapes.SMaxBit> v, Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector max(Vector<Byte> v, Mask<Byte> m) {
         return blend(max(v), m);
     }
 
     @Override
     @ForceInline
-    public ByteMaxVector and(Vector<Byte,Shapes.SMaxBit> o) {
+    public ByteMaxVector and(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -417,7 +417,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector or(Vector<Byte,Shapes.SMaxBit> o) {
+    public ByteMaxVector or(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -428,7 +428,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector xor(Vector<Byte,Shapes.SMaxBit> o) {
+    public ByteMaxVector xor(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
         return VectorIntrinsics.binaryOp(
@@ -439,19 +439,19 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector and(Vector<Byte,Shapes.SMaxBit> v, Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector and(Vector<Byte> v, Mask<Byte> m) {
         return blend(and(v), m);
     }
 
     @Override
     @ForceInline
-    public ByteMaxVector or(Vector<Byte,Shapes.SMaxBit> v, Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector or(Vector<Byte> v, Mask<Byte> m) {
         return blend(or(v), m);
     }
 
     @Override
     @ForceInline
-    public ByteMaxVector xor(Vector<Byte,Shapes.SMaxBit> v, Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector xor(Vector<Byte> v, Mask<Byte> m) {
         return blend(xor(v), m);
     }
 
@@ -506,7 +506,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public byte andAll(Mask<Byte, Shapes.SMaxBit> m) {
+    public byte andAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) -1), m).andAll();
     }
 
@@ -557,7 +557,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public byte orAll(Mask<Byte, Shapes.SMaxBit> m) {
+    public byte orAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 0), m).orAll();
     }
 
@@ -572,44 +572,44 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public byte xorAll(Mask<Byte, Shapes.SMaxBit> m) {
+    public byte xorAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 0), m).xorAll();
     }
 
 
     @Override
     @ForceInline
-    public byte addAll(Mask<Byte, Shapes.SMaxBit> m) {
+    public byte addAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 0), m).addAll();
     }
 
     @Override
     @ForceInline
-    public byte subAll(Mask<Byte, Shapes.SMaxBit> m) {
+    public byte subAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 0), m).subAll();
     }
 
     @Override
     @ForceInline
-    public byte mulAll(Mask<Byte, Shapes.SMaxBit> m) {
+    public byte mulAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast((byte) 1), m).mulAll();
     }
 
     @Override
     @ForceInline
-    public byte minAll(Mask<Byte, Shapes.SMaxBit> m) {
+    public byte minAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast(Byte.MAX_VALUE), m).minAll();
     }
 
     @Override
     @ForceInline
-    public byte maxAll(Mask<Byte, Shapes.SMaxBit> m) {
+    public byte maxAll(Mask<Byte> m) {
         return blend(SPECIES.broadcast(Byte.MIN_VALUE), m).maxAll();
     }
 
     @Override
     @ForceInline
-    public Shuffle<Byte, Shapes.SMaxBit> toShuffle() {
+    public Shuffle<Byte> toShuffle() {
         byte[] a = toArray();
         int[] sa = new int[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -636,7 +636,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public final void intoArray(byte[] a, int ax, Mask<Byte, Shapes.SMaxBit> m) {
+    public final void intoArray(byte[] a, int ax, Mask<Byte> m) {
         ByteMaxVector oldVal = SPECIES.fromArray(a, ax);
         ByteMaxVector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
@@ -660,7 +660,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public final void intoByteArray(byte[] a, int ix, Mask<Byte, Shapes.SMaxBit> m) {
+    public final void intoByteArray(byte[] a, int ix, Mask<Byte> m) {
         ByteMaxVector oldVal = SPECIES.fromByteArray(a, ix);
         ByteMaxVector newVal = oldVal.blend(this, m);
         newVal.intoByteArray(a, ix);
@@ -689,7 +689,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Byte, Shapes.SMaxBit> m) {
+    public void intoByteBuffer(ByteBuffer bb, int ix, Mask<Byte> m) {
         ByteMaxVector oldVal = SPECIES.fromByteBuffer(bb, ix);
         ByteMaxVector newVal = oldVal.blend(this, m);
         newVal.intoByteBuffer(bb, ix);
@@ -719,7 +719,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
     // Binary test
 
     @Override
-    ByteMaxMask bTest(Vector<Byte, Shapes.SMaxBit> o, FBinTest f) {
+    ByteMaxMask bTest(Vector<Byte> o, FBinTest f) {
         byte[] vec1 = getElements();
         byte[] vec2 = ((ByteMaxVector)o).getElements();
         boolean[] bits = new boolean[length()];
@@ -733,7 +733,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxMask equal(Vector<Byte, Shapes.SMaxBit> o) {
+    public ByteMaxMask equal(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
 
@@ -745,7 +745,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxMask notEqual(Vector<Byte, Shapes.SMaxBit> o) {
+    public ByteMaxMask notEqual(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
 
@@ -757,7 +757,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxMask lessThan(Vector<Byte, Shapes.SMaxBit> o) {
+    public ByteMaxMask lessThan(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
 
@@ -769,7 +769,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxMask lessThanEq(Vector<Byte, Shapes.SMaxBit> o) {
+    public ByteMaxMask lessThanEq(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
 
@@ -781,7 +781,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxMask greaterThan(Vector<Byte, Shapes.SMaxBit> o) {
+    public ByteMaxMask greaterThan(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
 
@@ -793,7 +793,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxMask greaterThanEq(Vector<Byte, Shapes.SMaxBit> o) {
+    public ByteMaxMask greaterThanEq(Vector<Byte> o) {
         Objects.requireNonNull(o);
         ByteMaxVector v = (ByteMaxVector)o;
 
@@ -814,7 +814,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
     }
 
     @Override
-    void forEach(Mask<Byte, Shapes.SMaxBit> o, FUnCon f) {
+    void forEach(Mask<Byte> o, FUnCon f) {
         boolean[] mbits = ((ByteMaxMask)o).getBits();
         forEach((i, a) -> {
             if (mbits[i]) { f.apply(i, a); }
@@ -870,14 +870,14 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector rearrange(Vector<Byte, Shapes.SMaxBit> v,
-                                  Shuffle<Byte, Shapes.SMaxBit> s, Mask<Byte, Shapes.SMaxBit> m) {
+    public ByteMaxVector rearrange(Vector<Byte> v,
+                                  Shuffle<Byte> s, Mask<Byte> m) {
         return this.rearrange(s).blend(v.rearrange(s), m);
     }
 
     @Override
     @ForceInline
-    public ByteMaxVector rearrange(Shuffle<Byte, Shapes.SMaxBit> o1) {
+    public ByteMaxVector rearrange(Shuffle<Byte> o1) {
     Objects.requireNonNull(o1);
     ByteMaxShuffle s =  (ByteMaxShuffle)o1;
 
@@ -893,7 +893,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     @Override
     @ForceInline
-    public ByteMaxVector blend(Vector<Byte, Shapes.SMaxBit> o1, Mask<Byte, Shapes.SMaxBit> o2) {
+    public ByteMaxVector blend(Vector<Byte> o1, Mask<Byte> o2) {
         Objects.requireNonNull(o1);
         Objects.requireNonNull(o2);
         ByteMaxVector v = (ByteMaxVector)o1;
@@ -938,7 +938,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     // Mask
 
-    static final class ByteMaxMask extends AbstractMask<Byte, Shapes.SMaxBit> {
+    static final class ByteMaxMask extends AbstractMask<Byte> {
         static final ByteMaxMask TRUE_MASK = new ByteMaxMask(true);
         static final ByteMaxMask FALSE_MASK = new ByteMaxMask(false);
 
@@ -977,7 +977,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
         }
 
         @Override
-        ByteMaxMask bOp(Mask<Byte, Shapes.SMaxBit> o, MBinOp f) {
+        ByteMaxMask bOp(Mask<Byte> o, MBinOp f) {
             boolean[] res = new boolean[species().length()];
             boolean[] bits = getBits();
             boolean[] mbits = ((ByteMaxMask)o).getBits();
@@ -1019,7 +1019,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ByteMaxMask and(Mask<Byte,Shapes.SMaxBit> o) {
+        public ByteMaxMask and(Mask<Byte> o) {
             Objects.requireNonNull(o);
             ByteMaxMask m = (ByteMaxMask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_AND, ByteMaxMask.class, byte.class, LENGTH,
@@ -1029,7 +1029,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ByteMaxMask or(Mask<Byte,Shapes.SMaxBit> o) {
+        public ByteMaxMask or(Mask<Byte> o) {
             Objects.requireNonNull(o);
             ByteMaxMask m = (ByteMaxMask)o;
             return VectorIntrinsics.binaryOp(VECTOR_OP_OR, ByteMaxMask.class, byte.class, LENGTH,
@@ -1058,7 +1058,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
     // Shuffle
 
-    static final class ByteMaxShuffle extends AbstractShuffle<Byte, Shapes.SMaxBit> {
+    static final class ByteMaxShuffle extends AbstractShuffle<Byte> {
         ByteMaxShuffle(byte[] reorder) {
             super(reorder);
         }
@@ -1090,7 +1090,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
         }
 
         @Override
-        public ByteMaxShuffle rearrange(Vector.Shuffle<Byte, Shapes.SMaxBit> o) {
+        public ByteMaxShuffle rearrange(Vector.Shuffle<Byte> o) {
             ByteMaxShuffle s = (ByteMaxShuffle) o;
             byte[] r = new byte[reorder.length];
             for (int i = 0; i < reorder.length; i++) {
@@ -1107,8 +1107,8 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
         return SPECIES;
     }
 
-    static final class ByteMaxSpecies extends ByteSpecies<Shapes.SMaxBit> {
-        static final int BIT_SIZE = Shapes.S_Max_BIT.bitSize();
+    static final class ByteMaxSpecies extends ByteSpecies {
+        static final int BIT_SIZE = Shape.S_Max_BIT.bitSize();
 
         static final int LENGTH = BIT_SIZE / Byte.SIZE;
 
@@ -1148,8 +1148,8 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public Shapes.SMaxBit shape() {
-            return Shapes.S_Max_BIT;
+        public Shape shape() {
+            return Shape.S_Max_BIT;
         }
 
         @Override
@@ -1162,7 +1162,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
         }
 
         @Override
-        ByteMaxVector op(Mask<Byte, Shapes.SMaxBit> o, FOp f) {
+        ByteMaxVector op(Mask<Byte> o, FOp f) {
             byte[] res = new byte[length()];
             boolean[] mbits = ((ByteMaxMask)o).getBits();
             for (int i = 0; i < length(); i++) {
@@ -1277,7 +1277,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ByteMaxVector fromArray(byte[] a, int ax, Mask<Byte, Shapes.SMaxBit> m) {
+        public ByteMaxVector fromArray(byte[] a, int ax, Mask<Byte> m) {
             return zero().blend(fromArray(a, ax), m);
         }
 
@@ -1298,7 +1298,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ByteMaxVector fromByteArray(byte[] a, int ix, Mask<Byte, Shapes.SMaxBit> m) {
+        public ByteMaxVector fromByteArray(byte[] a, int ix, Mask<Byte> m) {
             return zero().blend(fromByteArray(a, ix), m);
         }
 
@@ -1321,14 +1321,14 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public ByteMaxVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte, Shapes.SMaxBit> m) {
+        public ByteMaxVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte> m) {
             return zero().blend(fromByteBuffer(bb, ix), m);
         }
 
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F, T extends Shape> ByteMaxVector cast(Vector<F, T> o) {
+        public <F> ByteMaxVector cast(Vector<F> o) {
             if (o.length() != LENGTH)
                 throw new IllegalArgumentException("Vector length this species length differ");
 
@@ -1344,39 +1344,39 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
         @SuppressWarnings("unchecked")
         @ForceInline
-        private <F, T extends Shape> ByteMaxVector castDefault(Vector<F, T> v) {
+        private <F> ByteMaxVector castDefault(Vector<F> v) {
             // Allocate array of required size
             int limit = length();
             byte[] a = new byte[limit];
 
             Class<?> vtype = v.species().elementType();
             if (vtype == byte.class) {
-                ByteVector<T> tv = (ByteVector<T>)v;
+                ByteVector tv = (ByteVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == short.class) {
-                ShortVector<T> tv = (ShortVector<T>)v;
+                ShortVector tv = (ShortVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == int.class) {
-                IntVector<T> tv = (IntVector<T>)v;
+                IntVector tv = (IntVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == long.class){
-                LongVector<T> tv = (LongVector<T>)v;
+                LongVector tv = (LongVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == float.class){
-                FloatVector<T> tv = (FloatVector<T>)v;
+                FloatVector tv = (FloatVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
             } else if (vtype == double.class){
-                DoubleVector<T> tv = (DoubleVector<T>)v;
+                DoubleVector tv = (DoubleVector)v;
                 for (int i = 0; i < limit; i++) {
                     a[i] = (byte) tv.get(i);
                 }
@@ -1389,7 +1389,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> ByteMaxMask cast(Mask<E, S> m) {
+        public <E> ByteMaxMask cast(Mask<E> m) {
             if (m.length() != LENGTH)
                 throw new IllegalArgumentException("Mask length this species length differ");
             return new ByteMaxMask(m.toArray());
@@ -1397,7 +1397,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
 
         @Override
         @ForceInline
-        public <E, S extends Shape> ByteMaxShuffle cast(Shuffle<E, S> s) {
+        public <E> ByteMaxShuffle cast(Shuffle<E> s) {
             if (s.length() != LENGTH)
                 throw new IllegalArgumentException("Shuffle length this species length differ");
             return new ByteMaxShuffle(s.toArray());
@@ -1406,7 +1406,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <F> ByteMaxVector rebracket(Vector<F, Shapes.SMaxBit> o) {
+        public <F> ByteMaxVector rebracket(Vector<F> o) {
             Objects.requireNonNull(o);
             if (o.elementType() == byte.class) {
                 ByteMaxVector so = (ByteMaxVector)o;
@@ -1476,7 +1476,7 @@ final class ByteMaxVector extends ByteVector<Shapes.SMaxBit> {
         @Override
         @ForceInline
         @SuppressWarnings("unchecked")
-        public <T extends Shape> ByteMaxVector resize(Vector<Byte, T> o) {
+        public ByteMaxVector resize(Vector<Byte> o) {
             Objects.requireNonNull(o);
             if (o.bitSize() == 64 && (o instanceof Byte64Vector)) {
                 Byte64Vector so = (Byte64Vector)o;
