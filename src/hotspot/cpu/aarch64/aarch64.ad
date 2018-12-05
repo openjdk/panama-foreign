@@ -15537,33 +15537,115 @@ instruct replicate2D(vecX dst, vRegD src)
 
 // ====================REDUCTION ARITHMETIC====================================
 
+instruct reduce_add8B(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (AddReductionVI src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "addv  $tmp, T8B, $src2\n\t"
+            "umov  $dst, $tmp, B, 0\n\t"
+            "addw  $dst, $dst, $src1\n\t"
+            "sxtb  $dst, $dst\t add reduction8B"
+  %}
+  ins_encode %{
+    __ addv(as_FloatRegister($tmp$$reg), __ T8B, as_FloatRegister($src2$$reg));
+    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
+    __ addw($dst$$Register, $dst$$Register, $src1$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_add16B(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (AddReductionVI src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "addv  $tmp, T16B, $src2\n\t"
+            "umov  $dst, $tmp, B, 0\n\t"
+            "addw  $dst, $dst, $src1\n\t"
+            "sxtb  $dst, $dst\t add reduction16B"
+  %}
+  ins_encode %{
+    __ addv(as_FloatRegister($tmp$$reg), __ T16B, as_FloatRegister($src2$$reg));
+    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
+    __ addw($dst$$Register, $dst$$Register, $src1$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_add4S(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (AddReductionVI src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "addv  $tmp, T4H, $src2\n\t"
+            "umov  $dst, $tmp, H, 0\n\t"
+            "addw  $dst, $dst, $src1\n\t"
+            "sxth  $dst, $dst\t add reduction4S"
+  %}
+  ins_encode %{
+    __ addv(as_FloatRegister($tmp$$reg), __ T4H, as_FloatRegister($src2$$reg));
+    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
+    __ addw($dst$$Register, $dst$$Register, $src1$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_add8S(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (AddReductionVI src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "addv  $tmp, T8H, $src2\n\t"
+            "umov  $dst, $tmp, H, 0\n\t"
+            "addw  $dst, $dst, $src1\n\t"
+            "sxth  $dst, $dst\t add reduction8S"
+  %}
+  ins_encode %{
+    __ addv(as_FloatRegister($tmp$$reg), __ T8H, as_FloatRegister($src2$$reg));
+    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
+    __ addw($dst$$Register, $dst$$Register, $src1$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
 instruct reduce_add2I(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp, iRegINoSp tmp2)
 %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (AddReductionVI src1 src2));
   ins_cost(INSN_COST);
   effect(TEMP tmp, TEMP tmp2);
   format %{ "umov  $tmp, $src2, S, 0\n\t"
             "umov  $tmp2, $src2, S, 1\n\t"
-            "addw  $dst, $src1, $tmp\n\t"
-            "addw  $dst, $dst, $tmp2\t add reduction2i"
+            "addw  $tmp, $src1, $tmp\n\t"
+            "addw  $dst, $tmp, $tmp2\t add reduction2I"
   %}
   ins_encode %{
     __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
     __ umov($tmp2$$Register, as_FloatRegister($src2$$reg), __ S, 1);
-    __ addw($dst$$Register, $src1$$Register, $tmp$$Register);
-    __ addw($dst$$Register, $dst$$Register, $tmp2$$Register);
+    __ addw($tmp$$Register, $src1$$Register, $tmp$$Register);
+    __ addw($dst$$Register, $tmp$$Register, $tmp2$$Register);
   %}
   ins_pipe(pipe_class_default);
 %}
 
 instruct reduce_add4I(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, iRegINoSp tmp2)
 %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (AddReductionVI src1 src2));
   ins_cost(INSN_COST);
   effect(TEMP tmp, TEMP tmp2);
   format %{ "addv  $tmp, T4S, $src2\n\t"
             "umov  $tmp2, $tmp, S, 0\n\t"
-            "addw  $dst, $tmp2, $src1\t add reduction4i"
+            "addw  $dst, $tmp2, $src1\t add reduction4I"
   %}
   ins_encode %{
     __ addv(as_FloatRegister($tmp$$reg), __ T4S,
@@ -15574,15 +15656,160 @@ instruct reduce_add4I(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, iRegI
   ins_pipe(pipe_class_default);
 %}
 
+instruct reduce_mul8B(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD vtmp1, vecD vtmp2, iRegINoSp itmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MulReductionVI src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP vtmp1, TEMP vtmp2, TEMP itmp);
+  format %{ "ins   $vtmp1, S, $src2, 0, 1\n\t"
+            "mulv  $vtmp1, T8B, $vtmp1, $src2\n\t"
+            "ins   $vtmp2, H, $vtmp1, 0, 1\n\t"
+            "mulv  $vtmp2, T8B, $vtmp2, $vtmp1\n\t"
+            "umov  $itmp, $vtmp2, B, 0\n\t"
+            "mulw  $dst, $itmp, $src1\n\t"
+            "sxtb  $dst, $dst\n\t"
+            "umov  $itmp, $vtmp2, B, 1\n\t"
+            "mulw  $dst, $itmp, $dst\n\t"
+            "sxtb  $dst, $dst\t mul reduction8B"
+  %}
+  ins_encode %{
+    __ ins(as_FloatRegister($vtmp1$$reg), __ S,
+           as_FloatRegister($src2$$reg), 0, 1);
+    __ mulv(as_FloatRegister($vtmp1$$reg), __ T8B,
+            as_FloatRegister($vtmp1$$reg), as_FloatRegister($src2$$reg));
+    __ ins(as_FloatRegister($vtmp2$$reg), __ H,
+           as_FloatRegister($vtmp1$$reg), 0, 1);
+    __ mulv(as_FloatRegister($vtmp2$$reg), __ T8B,
+            as_FloatRegister($vtmp2$$reg), as_FloatRegister($vtmp1$$reg));
+    __ umov($itmp$$Register, as_FloatRegister($vtmp2$$reg), __ B, 0);
+    __ mulw($dst$$Register, $itmp$$Register, $src1$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+    __ umov($itmp$$Register, as_FloatRegister($vtmp2$$reg), __ B, 1);
+    __ mulw($dst$$Register, $itmp$$Register, $dst$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_mul16B(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX vtmp1, vecX vtmp2, iRegINoSp itmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MulReductionVI src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP vtmp1, TEMP vtmp2, TEMP itmp);
+  format %{ "ins   $vtmp1, D, $src2, 0, 1\n\t"
+            "mulv  $vtmp1, T8B, $vtmp1, $src2\n\t"
+            "ins   $vtmp2, S, $vtmp1, 0, 1\n\t"
+            "mulv  $vtmp1, T8B, $vtmp2, $vtmp1\n\t"
+            "ins   $vtmp2, H, $vtmp1, 0, 1\n\t"
+            "mulv  $vtmp2, T8B, $vtmp2, $vtmp1\n\t"
+            "umov  $itmp, $vtmp2, B, 0\n\t"
+            "mulw  $dst, $itmp, $src1\n\t"
+            "sxtb  $dst, $dst\n\t"
+            "umov  $itmp, $vtmp2, B, 1\n\t"
+            "mulw  $dst, $itmp, $dst\n\t"
+            "sxtb  $dst, $dst\t mul reduction16B"
+  %}
+  ins_encode %{
+    __ ins(as_FloatRegister($vtmp1$$reg), __ D,
+           as_FloatRegister($src2$$reg), 0, 1);
+    __ mulv(as_FloatRegister($vtmp1$$reg), __ T8B,
+            as_FloatRegister($vtmp1$$reg), as_FloatRegister($src2$$reg));
+    __ ins(as_FloatRegister($vtmp2$$reg), __ S,
+           as_FloatRegister($vtmp1$$reg), 0, 1);
+    __ mulv(as_FloatRegister($vtmp1$$reg), __ T8B,
+            as_FloatRegister($vtmp2$$reg), as_FloatRegister($vtmp1$$reg));
+    __ ins(as_FloatRegister($vtmp2$$reg), __ H,
+           as_FloatRegister($vtmp1$$reg), 0, 1);
+    __ mulv(as_FloatRegister($vtmp2$$reg), __ T8B,
+            as_FloatRegister($vtmp2$$reg), as_FloatRegister($vtmp1$$reg));
+    __ umov($itmp$$Register, as_FloatRegister($vtmp2$$reg), __ B, 0);
+    __ mulw($dst$$Register, $itmp$$Register, $src1$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+    __ umov($itmp$$Register, as_FloatRegister($vtmp2$$reg), __ B, 1);
+    __ mulw($dst$$Register, $itmp$$Register, $dst$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_mul4S(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD vtmp, iRegINoSp itmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MulReductionVI src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP vtmp, TEMP itmp);
+  format %{ "ins   $vtmp, S, $src2, 0, 1\n\t"
+            "mulv  $vtmp, T4H, $vtmp, $src2\n\t"
+            "umov  $itmp, $vtmp, H, 0\n\t"
+            "mulw  $dst, $itmp, $src1\n\t"
+            "sxth  $dst, $dst\n\t"
+            "umov  $itmp, $vtmp, H, 1\n\t"
+            "mulw  $dst, $itmp, $dst\n\t"
+            "sxth  $dst, $dst\t mul reduction4S"
+  %}
+  ins_encode %{
+    __ ins(as_FloatRegister($vtmp$$reg), __ S,
+           as_FloatRegister($src2$$reg), 0, 1);
+    __ mulv(as_FloatRegister($vtmp$$reg), __ T4H,
+            as_FloatRegister($vtmp$$reg), as_FloatRegister($src2$$reg));
+    __ umov($itmp$$Register, as_FloatRegister($vtmp$$reg), __ H, 0);
+    __ mulw($dst$$Register, $itmp$$Register, $src1$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+    __ umov($itmp$$Register, as_FloatRegister($vtmp$$reg), __ H, 1);
+    __ mulw($dst$$Register, $itmp$$Register, $dst$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_mul8S(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX vtmp1, vecX vtmp2, iRegINoSp itmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MulReductionVI src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP vtmp1, TEMP vtmp2, TEMP itmp);
+  format %{ "ins   $vtmp1, D, $src2, 0, 1\n\t"
+            "mulv  $vtmp1, T4H, $vtmp1, $src2\n\t"
+            "ins   $vtmp2, S, $vtmp1, 0, 1\n\t"
+            "mulv  $vtmp2, T4H, $vtmp2, $vtmp1\n\t"
+            "umov  $itmp, $vtmp2, H, 0\n\t"
+            "mulw  $dst, $itmp, $src1\n\t"
+            "sxth  $dst, $dst\n\t"
+            "umov  $itmp, $vtmp2, H, 1\n\t"
+            "mulw  $dst, $itmp, $dst\n\t"
+            "sxth  $dst, $dst\t mul reduction8S"
+  %}
+  ins_encode %{
+    __ ins(as_FloatRegister($vtmp1$$reg), __ D,
+           as_FloatRegister($src2$$reg), 0, 1);
+    __ mulv(as_FloatRegister($vtmp1$$reg), __ T4H,
+            as_FloatRegister($vtmp1$$reg), as_FloatRegister($src2$$reg));
+    __ ins(as_FloatRegister($vtmp2$$reg), __ S,
+           as_FloatRegister($vtmp1$$reg), 0, 1);
+    __ mulv(as_FloatRegister($vtmp2$$reg), __ T4H,
+            as_FloatRegister($vtmp2$$reg), as_FloatRegister($vtmp1$$reg));
+    __ umov($itmp$$Register, as_FloatRegister($vtmp2$$reg), __ H, 0);
+    __ mulw($dst$$Register, $itmp$$Register, $src1$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+    __ umov($itmp$$Register, as_FloatRegister($vtmp2$$reg), __ H, 1);
+    __ mulw($dst$$Register, $itmp$$Register, $dst$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
 instruct reduce_mul2I(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
 %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MulReductionVI src1 src2));
   ins_cost(INSN_COST);
   effect(TEMP tmp, TEMP dst);
   format %{ "umov  $tmp, $src2, S, 0\n\t"
             "mul   $dst, $tmp, $src1\n\t"
             "umov  $tmp, $src2, S, 1\n\t"
-            "mul   $dst, $tmp, $dst\t mul reduction2i\n\t"
+            "mul   $dst, $tmp, $dst\t mul reduction2I\n\t"
   %}
   ins_encode %{
     __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
@@ -15595,21 +15822,22 @@ instruct reduce_mul2I(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
 
 instruct reduce_mul4I(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, iRegINoSp tmp2)
 %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
   match(Set dst (MulReductionVI src1 src2));
   ins_cost(INSN_COST);
   effect(TEMP tmp, TEMP tmp2, TEMP dst);
-  format %{ "ins   $tmp, $src2, 0, 1\n\t"
-            "mul   $tmp, $tmp, $src2\n\t"
+  format %{ "ins   $tmp, D, $src2, 0, 1\n\t"
+            "mulv  $tmp, T2S, $tmp, $src2\n\t"
             "umov  $tmp2, $tmp, S, 0\n\t"
             "mul   $dst, $tmp2, $src1\n\t"
             "umov  $tmp2, $tmp, S, 1\n\t"
-            "mul   $dst, $tmp2, $dst\t mul reduction4i\n\t"
+            "mul   $dst, $tmp2, $dst\t mul reduction4I\n\t"
   %}
   ins_encode %{
     __ ins(as_FloatRegister($tmp$$reg), __ D,
            as_FloatRegister($src2$$reg), 0, 1);
     __ mulv(as_FloatRegister($tmp$$reg), __ T2S,
-           as_FloatRegister($tmp$$reg), as_FloatRegister($src2$$reg));
+            as_FloatRegister($tmp$$reg), as_FloatRegister($src2$$reg));
     __ umov($tmp2$$Register, as_FloatRegister($tmp$$reg), __ S, 0);
     __ mul($dst$$Register, $tmp2$$Register, $src1$$Register);
     __ umov($tmp2$$Register, as_FloatRegister($tmp$$reg), __ S, 1);
@@ -15625,7 +15853,7 @@ instruct reduce_add2F(vRegF dst, vRegF src1, vecD src2, vecD tmp)
   effect(TEMP tmp, TEMP dst);
   format %{ "fadds $dst, $src1, $src2\n\t"
             "ins   $tmp, S, $src2, 0, 1\n\t"
-            "fadds $dst, $dst, $tmp\t add reduction2f"
+            "fadds $dst, $dst, $tmp\t add reduction2F"
   %}
   ins_encode %{
     __ fadds(as_FloatRegister($dst$$reg),
@@ -15649,7 +15877,7 @@ instruct reduce_add4F(vRegF dst, vRegF src1, vecX src2, vecX tmp)
             "ins   $tmp, S, $src2, 0, 2\n\t"
             "fadds $dst, $dst, $tmp\n\t"
             "ins   $tmp, S, $src2, 0, 3\n\t"
-            "fadds $dst, $dst, $tmp\t add reduction4f"
+            "fadds $dst, $dst, $tmp\t add reduction4F"
   %}
   ins_encode %{
     __ fadds(as_FloatRegister($dst$$reg),
@@ -15677,7 +15905,7 @@ instruct reduce_mul2F(vRegF dst, vRegF src1, vecD src2, vecD tmp)
   effect(TEMP tmp, TEMP dst);
   format %{ "fmuls $dst, $src1, $src2\n\t"
             "ins   $tmp, S, $src2, 0, 1\n\t"
-            "fmuls $dst, $dst, $tmp\t add reduction4f"
+            "fmuls $dst, $dst, $tmp\t mul reduction2F"
   %}
   ins_encode %{
     __ fmuls(as_FloatRegister($dst$$reg),
@@ -15701,7 +15929,7 @@ instruct reduce_mul4F(vRegF dst, vRegF src1, vecX src2, vecX tmp)
             "ins   $tmp, S, $src2, 0, 2\n\t"
             "fmuls $dst, $dst, $tmp\n\t"
             "ins   $tmp, S, $src2, 0, 3\n\t"
-            "fmuls $dst, $dst, $tmp\t add reduction4f"
+            "fmuls $dst, $dst, $tmp\t mul reduction4F"
   %}
   ins_encode %{
     __ fmuls(as_FloatRegister($dst$$reg),
@@ -15722,6 +15950,44 @@ instruct reduce_mul4F(vRegF dst, vRegF src1, vecX src2, vecX tmp)
   ins_pipe(pipe_class_default);
 %}
 
+instruct reduce_add2L(iRegLNoSp dst, iRegL src1, vecX src2, iRegLNoSp tmp)
+%{
+  match(Set dst (AddReductionVL src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov  $tmp, $src2, D, 0\n\t"
+            "add   $dst, $src1, $tmp\n\t"
+            "umov  $tmp, $src2, D, 1\n\t"
+            "add   $dst, $dst, $tmp\t add reduction2L"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ add($dst$$Register, $src1$$Register, $tmp$$Register);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ add($dst$$Register, $dst$$Register, $tmp$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_mul2L(iRegLNoSp dst, iRegL src1, vecX src2, iRegLNoSp tmp)
+%{
+  match(Set dst (MulReductionVL src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov  $tmp, $src2, D, 0\n\t"
+            "mul   $dst, $src1, $tmp\n\t"
+            "umov  $tmp, $src2, D, 1\n\t"
+            "mul   $dst, $dst, $tmp\t mul reduction2L"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ mul($dst$$Register, $src1$$Register, $tmp$$Register);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ mul($dst$$Register, $dst$$Register, $tmp$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
 instruct reduce_add2D(vRegD dst, vRegD src1, vecX src2, vecX tmp)
 %{
   match(Set dst (AddReductionVD src1 src2));
@@ -15729,7 +15995,7 @@ instruct reduce_add2D(vRegD dst, vRegD src1, vecX src2, vecX tmp)
   effect(TEMP tmp, TEMP dst);
   format %{ "faddd $dst, $src1, $src2\n\t"
             "ins   $tmp, D, $src2, 0, 1\n\t"
-            "faddd $dst, $dst, $tmp\t add reduction2d"
+            "faddd $dst, $dst, $tmp\t add reduction2D"
   %}
   ins_encode %{
     __ faddd(as_FloatRegister($dst$$reg),
@@ -15749,7 +16015,7 @@ instruct reduce_mul2D(vRegD dst, vRegD src1, vecX src2, vecX tmp)
   effect(TEMP tmp, TEMP dst);
   format %{ "fmuld $dst, $src1, $src2\n\t"
             "ins   $tmp, D, $src2, 0, 1\n\t"
-            "fmuld $dst, $dst, $tmp\t add reduction2d"
+            "fmuld $dst, $dst, $tmp\t mul reduction2D"
   %}
   ins_encode %{
     __ fmuld(as_FloatRegister($dst$$reg),
@@ -16052,6 +16318,34 @@ instruct vsub2D(vecX dst, vecX src1, vecX src2)
 %}
 
 // --------------------------------- MUL --------------------------------------
+
+instruct vmul8B(vecD dst, vecD src1, vecD src2)
+%{
+  predicate(n->as_Vector()->length() == 8);
+  match(Set dst (MulVB src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "mulv  $dst,$src1,$src2\t# vector (8B)" %}
+  ins_encode %{
+    __ mulv(as_FloatRegister($dst$$reg), __ T8B,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vmul64);
+%}
+
+instruct vmul16B(vecX dst, vecX src1, vecX src2)
+%{
+  predicate(n->as_Vector()->length() == 16);
+  match(Set dst (MulVB src1 src2));
+  ins_cost(INSN_COST);
+  format %{ "mulv  $dst,$src1,$src2\t# vector (16B)" %}
+  ins_encode %{
+    __ mulv(as_FloatRegister($dst$$reg), __ T16B,
+            as_FloatRegister($src1$$reg),
+            as_FloatRegister($src2$$reg));
+  %}
+  ins_pipe(vmul128);
+%}
 
 instruct vmul4S(vecD dst, vecD src1, vecD src2)
 %{
