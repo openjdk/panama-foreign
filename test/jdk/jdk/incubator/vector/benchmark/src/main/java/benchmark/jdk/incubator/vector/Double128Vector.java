@@ -23,7 +23,7 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.DoubleVector;
 
@@ -92,8 +92,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.add(bv).intoArray(r, i);
             }
         }
@@ -107,12 +107,12 @@ public class Double128Vector extends AbstractVectorBenchmark {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
@@ -128,8 +128,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.sub(bv).intoArray(r, i);
             }
         }
@@ -143,12 +143,12 @@ public class Double128Vector extends AbstractVectorBenchmark {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
@@ -165,8 +165,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.div(bv).intoArray(r, i);
             }
         }
@@ -182,12 +182,12 @@ public class Double128Vector extends AbstractVectorBenchmark {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.div(bv, vmask).intoArray(r, i);
             }
         }
@@ -204,8 +204,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.mul(bv).intoArray(r, i);
             }
         }
@@ -219,12 +219,12 @@ public class Double128Vector extends AbstractVectorBenchmark {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
@@ -258,8 +258,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.max(bv).intoArray(r, i);
             }
         }
@@ -275,8 +275,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.min(bv).intoArray(r, i);
             }
         }
@@ -294,7 +294,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              DoubleVector av = SPECIES.fromArray(a, i);
               r[i] = av.addAll();
             }
         }
@@ -309,7 +309,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              DoubleVector av = SPECIES.fromArray(a, i);
               r[i] = av.subAll();
             }
         }
@@ -324,7 +324,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              DoubleVector av = SPECIES.fromArray(a, i);
               r[i] = av.mulAll();
             }
         }
@@ -339,7 +339,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              DoubleVector av = SPECIES.fromArray(a, i);
               r[i] = av.minAll();
             }
         }
@@ -354,7 +354,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              DoubleVector av = SPECIES.fromArray(a, i);
               r[i] = av.maxAll();
             }
         }
@@ -371,7 +371,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              DoubleVector av = SPECIES.fromArray(a, i);
               av.with(0, (double)4).intoArray(r, i);
             }
         }
@@ -505,12 +505,12 @@ public class Double128Vector extends AbstractVectorBenchmark {
         double[] b = fb.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
@@ -526,7 +526,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
             }
         }
@@ -541,7 +541,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 int num_lanes = SPECIES.length();
                 // Manually unroll because full unroll happens after intrinsification.
                 // Unroll is needed because get intrinsic requires for index to be a known constant.
@@ -698,7 +698,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.sin().intoArray(r, i);
             }
         }
@@ -715,7 +715,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.exp().intoArray(r, i);
             }
         }
@@ -732,7 +732,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.log1p().intoArray(r, i);
             }
         }
@@ -749,7 +749,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.log().intoArray(r, i);
             }
         }
@@ -766,7 +766,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.log10().intoArray(r, i);
             }
         }
@@ -783,7 +783,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.expm1().intoArray(r, i);
             }
         }
@@ -800,7 +800,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.cos().intoArray(r, i);
             }
         }
@@ -817,7 +817,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.tan().intoArray(r, i);
             }
         }
@@ -834,7 +834,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.sinh().intoArray(r, i);
             }
         }
@@ -851,7 +851,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.cosh().intoArray(r, i);
             }
         }
@@ -868,7 +868,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.tanh().intoArray(r, i);
             }
         }
@@ -885,7 +885,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.asin().intoArray(r, i);
             }
         }
@@ -902,7 +902,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.acos().intoArray(r, i);
             }
         }
@@ -919,7 +919,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.atan().intoArray(r, i);
             }
         }
@@ -936,7 +936,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.cbrt().intoArray(r, i);
             }
         }
@@ -954,8 +954,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.hypot(bv).intoArray(r, i);
             }
         }
@@ -973,8 +973,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.pow(bv).intoArray(r, i);
             }
         }
@@ -992,8 +992,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
                 av.atan2(bv).intoArray(r, i);
             }
         }
@@ -1012,9 +1012,9 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                DoubleVector<Vector.Shape> cv = SPECIES.fromArray(c, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
+                DoubleVector cv = SPECIES.fromArray(c, i);
                 av.fma(bv, cv).intoArray(r, i);
             }
         }
@@ -1031,13 +1031,13 @@ public class Double128Vector extends AbstractVectorBenchmark {
         double[] c = fc.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                DoubleVector<Vector.Shape> cv = SPECIES.fromArray(c, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
+                DoubleVector cv = SPECIES.fromArray(c, i);
                 av.fma(bv, cv, vmask).intoArray(r, i);
             }
         }
@@ -1053,7 +1053,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.neg().intoArray(r, i);
             }
         }
@@ -1066,11 +1066,11 @@ public class Double128Vector extends AbstractVectorBenchmark {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.neg(vmask).intoArray(r, i);
             }
         }
@@ -1085,7 +1085,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.abs().intoArray(r, i);
             }
         }
@@ -1098,11 +1098,11 @@ public class Double128Vector extends AbstractVectorBenchmark {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.abs(vmask).intoArray(r, i);
             }
         }
@@ -1120,7 +1120,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.sqrt().intoArray(r, i);
             }
         }
@@ -1135,11 +1135,11 @@ public class Double128Vector extends AbstractVectorBenchmark {
         double[] a = fa.apply(SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Double, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Double> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                DoubleVector av = SPECIES.fromArray(a, i);
                 av.sqrt(vmask).intoArray(r, i);
             }
         }
@@ -1147,5 +1147,45 @@ public class Double128Vector extends AbstractVectorBenchmark {
         return r;
     }
 
+
+    @Benchmark
+    public Object gather() {
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] bb = fb.apply(SPECIES.length());
+        int[] b = new int[bb.length];
+        for (int i = 0; i < bb.length; i++) {
+          b[i] = (int)(bb[i]%SPECIES.length());
+        }
+        double[] r = new double[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = SPECIES.fromArray(a, i, b, i);
+                av.intoArray(r, i);
+            }
+        }
+
+        return r;
+    }
+
+    @Benchmark
+    public Object scatter() {
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] bb = fb.apply(SPECIES.length());
+        int[] b = new int[bb.length];
+        for (int i = 0; i < bb.length; i++) {
+          b[i] = (int)(bb[i]%SPECIES.length());
+        }
+        double[] r = new double[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = SPECIES.fromArray(a, i);
+                av.intoArray(r, i, b, i);
+            }
+        }
+
+        return r;
+    }
 }
 

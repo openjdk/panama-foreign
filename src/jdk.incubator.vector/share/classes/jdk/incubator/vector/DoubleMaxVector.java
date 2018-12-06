@@ -44,6 +44,11 @@ final class DoubleMaxVector extends DoubleVector {
 
     static final int LENGTH = SPECIES.length();
 
+    static final int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
+    static final Vector.Shape shape = Vector.shapeForVectorBitSize(bitSize);
+
+    // Obtain appropriate species to create vectors of the integer indices
+    static final IntVector.IntSpecies intSpec = (IntVector.IntSpecies) Vector.species(int.class, shape);
     private final double[] vec; // Don't access directly, use getElements() instead.
 
     private double[] getElements() {
@@ -760,6 +765,36 @@ final class DoubleMaxVector extends DoubleVector {
         DoubleMaxVector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
     }
+    @Override
+    @ForceInline
+    public void intoArray(double[] a, int ix, int[] b, int iy) {
+        Objects.requireNonNull(a);
+        Objects.requireNonNull(b);
+
+
+       // Load index map into a vector
+        IntVector vecInd = intSpec.fromArray(b, iy);
+
+        // Compute actual indices into the array taking into account initial index.
+        vecInd = vecInd.add(intSpec.broadcast(ix));
+
+        vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
+
+        VectorIntrinsics.storeWithMap(DoubleMaxVector.class, double.class, LENGTH,
+                               a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vecInd, intSpec.getClass(),
+                               this,
+                               a, ix, b, iy,
+                               (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));
+    }
+
+     @Override
+     @ForceInline
+     public final void intoArray(double[] a, int ax, Mask<Double> m, int[] b, int iy) {
+         // @@@ This can result in out of bounds errors for unset mask lanes
+         DoubleMaxVector oldVal = SPECIES.fromArray(a, ax, b, iy);
+         DoubleMaxVector newVal = oldVal.blend(this, m);
+         newVal.intoArray(a, ax, b, iy);
+     }
 
     @Override
     @ForceInline
@@ -1423,6 +1458,32 @@ final class DoubleMaxVector extends DoubleVector {
                                              return op(i -> tb.get());
                                          });
         }
+        @Override
+        @ForceInline
+        public DoubleMaxVector fromArray(double[] a, int ix, int[] b, int iy) {
+            Objects.requireNonNull(a);
+            Objects.requireNonNull(b);
+
+            // Load index map into a vector
+            IntVector vecInd = intSpec.fromArray(b, iy);
+
+            // Compute actual indices into the array taking into account initial index.
+            vecInd = vecInd.add(intSpec.broadcast(ix));
+            vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
+
+            return VectorIntrinsics.loadWithMap(DoubleMaxVector.class, double.class, LENGTH,
+                                        a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vecInd, vecInd.getClass(),
+                                        a, ix, b, iy,
+                                       (c, idx, indexMap, idy) -> op(n -> c[idx + indexMap[idy+n]]));
+       }
+
+       @Override
+       @ForceInline
+       public DoubleMaxVector fromArray(double[] a, int ax, Mask<Double> m, int[] indexMap, int j) {
+           // @@@ This can result in out of bounds errors for unset mask lanes
+           return zero().blend(fromArray(a, ax, indexMap, j), m);
+       }
+
 
         @Override
         @ForceInline

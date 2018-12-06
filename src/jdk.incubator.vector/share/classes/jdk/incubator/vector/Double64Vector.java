@@ -760,6 +760,23 @@ final class Double64Vector extends DoubleVector {
         Double64Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
     }
+    @Override
+    @ForceInline
+    public void intoArray(double[] a, int ix, int[] b, int iy) {
+        Objects.requireNonNull(a);
+        Objects.requireNonNull(b);
+
+        this.intoArray(a, ix + b[iy]);
+    }
+
+     @Override
+     @ForceInline
+     public final void intoArray(double[] a, int ax, Mask<Double> m, int[] b, int iy) {
+         // @@@ This can result in out of bounds errors for unset mask lanes
+         Double64Vector oldVal = SPECIES.fromArray(a, ax, b, iy);
+         Double64Vector newVal = oldVal.blend(this, m);
+         newVal.intoArray(a, ax, b, iy);
+     }
 
     @Override
     @ForceInline
@@ -1423,6 +1440,22 @@ final class Double64Vector extends DoubleVector {
                                              return op(i -> tb.get());
                                          });
         }
+        @Override
+        @ForceInline
+        public Double64Vector fromArray(double[] a, int ix, int[] b, int iy) {
+            Objects.requireNonNull(a);
+            Objects.requireNonNull(b);
+
+            return SPECIES.fromArray(a, ix + b[iy]);
+       }
+
+       @Override
+       @ForceInline
+       public Double64Vector fromArray(double[] a, int ax, Mask<Double> m, int[] indexMap, int j) {
+           // @@@ This can result in out of bounds errors for unset mask lanes
+           return zero().blend(fromArray(a, ax, indexMap, j), m);
+       }
+
 
         @Override
         @ForceInline

@@ -678,6 +678,23 @@ final class Long64Vector extends LongVector {
         Long64Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
     }
+    @Override
+    @ForceInline
+    public void intoArray(long[] a, int ix, int[] b, int iy) {
+        Objects.requireNonNull(a);
+        Objects.requireNonNull(b);
+
+        this.intoArray(a, ix + b[iy]);
+    }
+
+     @Override
+     @ForceInline
+     public final void intoArray(long[] a, int ax, Mask<Long> m, int[] b, int iy) {
+         // @@@ This can result in out of bounds errors for unset mask lanes
+         Long64Vector oldVal = SPECIES.fromArray(a, ax, b, iy);
+         Long64Vector newVal = oldVal.blend(this, m);
+         newVal.intoArray(a, ax, b, iy);
+     }
 
     @Override
     @ForceInline
@@ -1340,6 +1357,22 @@ final class Long64Vector extends LongVector {
                                              return op(i -> tb.get());
                                          });
         }
+        @Override
+        @ForceInline
+        public Long64Vector fromArray(long[] a, int ix, int[] b, int iy) {
+            Objects.requireNonNull(a);
+            Objects.requireNonNull(b);
+
+            return SPECIES.fromArray(a, ix + b[iy]);
+       }
+
+       @Override
+       @ForceInline
+       public Long64Vector fromArray(long[] a, int ax, Mask<Long> m, int[] indexMap, int j) {
+           // @@@ This can result in out of bounds errors for unset mask lanes
+           return zero().blend(fromArray(a, ax, indexMap, j), m);
+       }
+
 
         @Override
         @ForceInline

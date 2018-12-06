@@ -2463,6 +2463,8 @@ Node *StoreNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       assert(Opcode() == st->Opcode() ||
              st->Opcode() == Op_StoreVector ||
              Opcode() == Op_StoreVector ||
+             st->Opcode() == Op_StoreVectorScatter ||
+             Opcode() == Op_StoreVectorScatter ||
              phase->C->get_alias_index(adr_type()) == Compile::AliasIdxRaw ||
              (Opcode() == Op_StoreL && st->Opcode() == Op_StoreI) || // expanded ClearArrayNode
              (Opcode() == Op_StoreI && st->Opcode() == Op_StoreL) || // initialization by arraycopy

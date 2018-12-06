@@ -1622,6 +1622,14 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_FmaVD:
         case Op_FmaVF:
           if (!UseFMA) { ret_value = false; }
+        case Op_LoadVectorGather:
+          if (UseAVX < 2) { ret_value = false; }
+          else if (size_in_bits == 64 ) { ret_value = false; }
+          break;
+        case Op_StoreVectorScatter:
+          if (UseAVX < 3) { ret_value = false; }
+          else if (size_in_bits == 64 ) { ret_value = false; }
+          break;
         default:
           break;
       }
@@ -2196,22 +2204,6 @@ operand immU6() %{
   op_cost(0);
   format %{ %}
   interface(CONST_INTER);
-%}
-
-operand vecZ() %{
-  constraint(ALLOC_IN_RC(vectorz_reg));
-  match(VecZ);
-
-  format %{ %}
-  interface(REG_INTER);
-%}
-
-operand legVecZ() %{
-  constraint(ALLOC_IN_RC(vectorz_reg_vl));
-  match(VecZ);
-
-  format %{ %}
-  interface(REG_INTER);
 %}
 
 // Comparison Code for FP conditional move

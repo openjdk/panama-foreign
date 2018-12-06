@@ -1574,6 +1574,22 @@
                                   "Ljava/lang/Class;Ljava/lang/Class;ILjava/lang/Object;Ljava/lang/Object;"                                                     \
                                   "Ljdk/incubator/vector/VectorIntrinsics$VectorCastOp;)Ljava/lang/Object;")                                   \
                                                                                                                                                \
+   do_intrinsic(_VectorGatherOp, jdk_incubator_vector_VectorIntrinsics, vector_gather_name, vector_gather_sig, F_S)                            \
+    do_signature(vector_gather_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                     \
+                                   "Ljava/lang/Object;J"                                                                                       \
+                                   "Ljdk/incubator/vector/Vector;Ljava/lang/Class;"                                                            \
+                                   "Ljava/lang/Object;I[II"                                                                                    \
+                                   "Ljdk/incubator/vector/VectorIntrinsics$LoadVectorOperationWithMap;)"                                       \
+                                   "Ljdk/incubator/vector/Vector;")                                                                            \
+    do_name(vector_gather_name, "loadWithMap")                                                                                                 \
+   do_intrinsic(_VectorScatterOp, jdk_incubator_vector_VectorIntrinsics, vector_scatter_name, vector_scatter_sig, F_S)                         \
+    do_signature(vector_scatter_sig, "(Ljava/lang/Class;Ljava/lang/Class;I"                                                                    \
+                                   "Ljava/lang/Object;J"                                                                                       \
+                                   "Ljdk/incubator/vector/Vector;Ljava/lang/Class;"     \
+                                   "Ljdk/incubator/vector/Vector;"                                                                             \
+                                   "Ljava/lang/Object;I[II"                                                                                    \
+                                   "Ljdk/incubator/vector/VectorIntrinsics$StoreVectorOperationWithMap;)V")                                    \
+    do_name(vector_scatter_name, "storeWithMap")                                                                       \
   do_intrinsic(_VectorRebox, jdk_incubator_vector_VectorIntrinsics, vector_rebox_name, vector_rebox_sig, F_S)                                  \
    do_alias(vector_rebox_sig, object_object_signature)                                                                                         \
    do_name(vector_rebox_name, "maybeRebox")                                                                                                    \
@@ -1764,7 +1780,7 @@ class vmIntrinsics: AllStatic {
     #undef VM_INTRINSIC_ENUM
 
     ID_LIMIT,
-    LAST_COMPILER_INLINE = _VectorCast,
+    LAST_COMPILER_INLINE = _VectorScatterOp,
     FIRST_VECTOR_API     = _VectorUnaryOp,
     LAST_VECTOR_API      = _VectorRebox,
     FIRST_MH_SIG_POLY    = _invokeGeneric,

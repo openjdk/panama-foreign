@@ -215,6 +215,22 @@ import java.util.function.*;
         return defaultImpl.load(container, index);
     }
 
+    interface LoadVectorOperationWithMap<C, V extends Vector<?>> {
+        V loadWithMap(C container, int index, int[] indexMap, int indexM);
+    }
+
+    @HotSpotIntrinsicCandidate
+    static
+    <C, V extends Vector<?>, W extends Vector<Integer>>
+    V loadWithMap(Class<?> vectorClass, Class<?> elementType, int length,
+                  Object base, long offset,    // Unsafe addressing
+                  W index_vector, Class<?> vectorIndexClass,
+                  C container, int index,     // Arguments for default implementation
+                  int[] indexMap, int indexM, // Arguments for default implementation
+                  LoadVectorOperationWithMap<C, V> defaultImpl) {
+      return defaultImpl.loadWithMap(container, index, indexMap, indexM);
+    }
+
     interface StoreVectorOperation<C, V extends Vector<?>> {
         void store(C container, int index, V v);
     }
@@ -229,6 +245,22 @@ import java.util.function.*;
                C container, int index,      // Arguments for default implementation
                StoreVectorOperation<C, V> defaultImpl) {
         defaultImpl.store(container, index, v);
+    }
+
+    interface StoreVectorOperationWithMap<C, V extends Vector<?>> {
+        void storeWithMap(C container, int index, V v, int[] indexMap, int indexM);
+    }
+    @HotSpotIntrinsicCandidate
+    static
+    <C, V extends Vector<?>, W extends Vector<Integer>>
+    void storeWithMap(Class<?> vectorClass, Class<?> elementType, int length,
+                      Object base, long offset,    // Unsafe addressing
+                      W index_vector, Class<?> vectorIndexClass,
+                      V v,
+                      C container, int index,     // Arguments for default implementation
+                      int[] indexMap, int indexM, // Arguments for default implementation
+                      StoreVectorOperationWithMap<C, V> defaultImpl) {
+        defaultImpl.storeWithMap(container, index, v, indexMap, indexM);
     }
 
     /* ============================================================================ */
@@ -367,6 +399,21 @@ import java.util.function.*;
             case 0: return ix; // no range check
             case 1: return Objects.checkFromIndexSize(ix, vlen, length);
             case 2: return Objects.checkIndex(ix, length - (vlen - 1));
+            default: throw new InternalError();
+        }
+    }
+
+    @ForceInline
+    static IntVector checkIndex(IntVector vix, int length) {
+        switch (VectorIntrinsics.VECTOR_ACCESS_OOB_CHECK) {
+            case 0: return vix; // no range check
+            case 1: //fall-through
+            case 2:
+                if(vix.lessThan(0).anyTrue() || vix.greaterThanEq(length).anyTrue()) {
+                    String msg = String.format("Range check failed: vector %s out of bounds for length %d", vix, length);
+                    throw new ArrayIndexOutOfBoundsException(msg);
+                }
+                return vix;
             default: throw new InternalError();
         }
     }

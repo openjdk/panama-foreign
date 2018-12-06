@@ -151,7 +151,9 @@ class TypeNode;
 class UnlockNode;
 class VectorNode;
 class LoadVectorNode;
+class LoadVectorGatherNode;
 class StoreVectorNode;
+class StoreVectorScatterNode;
 class VectorBoxNode;
 class VectorMaskCmpNode;
 class VectorSet;
@@ -691,10 +693,12 @@ public:
     DEFINE_CLASS_ID(Mem,   Node, 4)
       DEFINE_CLASS_ID(Load,  Mem, 0)
         DEFINE_CLASS_ID(LoadVector,  Load, 0)
+          DEFINE_CLASS_ID(LoadVectorGather, LoadVector, 0)
           DEFINE_CLASS_ID(LoadBarrierSlowReg, Load, 1)
           DEFINE_CLASS_ID(LoadBarrierWeakSlowReg, Load, 2)
       DEFINE_CLASS_ID(Store, Mem, 1)
         DEFINE_CLASS_ID(StoreVector, Store, 0)
+          DEFINE_CLASS_ID(StoreVectorScatter, StoreVector, 0)
       DEFINE_CLASS_ID(LoadStore, Mem, 2)
         DEFINE_CLASS_ID(LoadStoreConditional, LoadStore, 0)
           DEFINE_CLASS_ID(CompareAndSwap, LoadStoreConditional, 0)
@@ -884,7 +888,9 @@ public:
   DEFINE_CLASS_QUERY(Type)
   DEFINE_CLASS_QUERY(Vector)
   DEFINE_CLASS_QUERY(LoadVector)
+  DEFINE_CLASS_QUERY(LoadVectorGather)
   DEFINE_CLASS_QUERY(StoreVector)
+  DEFINE_CLASS_QUERY(StoreVectorScatter)
   DEFINE_CLASS_QUERY(VectorMaskCmp)
   DEFINE_CLASS_QUERY(Unlock)
 

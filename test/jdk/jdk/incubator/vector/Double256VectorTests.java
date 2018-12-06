@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 
 import java.lang.Integer;
 import java.util.List;
+import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -313,6 +314,29 @@ public class Double256VectorTests extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
         }
     }
+    interface FGatherScatterOp {
+        double[] apply(double[] a, int ix, int[] b, int iy);
+    }
+
+    static void assertArraysEquals(double[] a, int[] b, double[] r, FGatherScatterOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, i, b, i));
+            }
+        } catch (AssertionError e) {
+            double[] ref = f.apply(a, i, b, i);
+            double[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + " at index #" + i);
+        }
+    }
+
 
     static final List<IntFunction<double[]>> DOUBLE_GENERATORS = List.of(
             withToString("double[-i * 5]", (int s) -> {
@@ -1786,5 +1810,61 @@ public class Double256VectorTests extends AbstractVectorTest {
 
 
 
+    static double[] gather(double a[], int ix, int[] b, int iy) {
+      double[] res = new double[SPECIES.length()];
+      for (int i = 0; i < SPECIES.length(); i++) {
+        int bi = iy + i;
+        res[i] = a[b[bi] + ix];
+      }
+      return res;
+    }
+
+    @Test(dataProvider = "doubleBinaryOpProvider")
+    static void gatherDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] bb = fb.apply(SPECIES.length());
+        int[] b = new int[bb.length];
+        for (int i = 0; i < bb.length; i++) {
+          b[i] = (int)(bb[i]%SPECIES.length());
+        }
+        double[] r = new double[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = SPECIES.fromArray(a, i, b, i);
+                av.intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Double256VectorTests::gather);
+    }
+    static double[] scatter(double a[], int ix, int[] b, int iy) {
+      double[] res = new double[SPECIES.length()];
+      for (int i = 0; i < SPECIES.length(); i++) {
+        int bi = iy + i;
+        res[b[bi]] = a[i + ix];
+      }
+      return res;
+    }
+
+    @Test(dataProvider = "doubleBinaryOpProvider")
+    static void scatterDouble256VectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
+        double[] a = fa.apply(SPECIES.length()); 
+        double[] bb = fb.apply(SPECIES.length());
+        int[] b = new int[bb.length];
+        for (int i = 0; i < bb.length; i++) {
+          b[i] = (int)(bb[i]%SPECIES.length());
+        }
+        double[] r = new double[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                DoubleVector av = SPECIES.fromArray(a, i);
+                av.intoArray(r, i, b, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Double256VectorTests::scatter);
+    }
 }
 

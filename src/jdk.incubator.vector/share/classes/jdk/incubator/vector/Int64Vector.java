@@ -44,6 +44,11 @@ final class Int64Vector extends IntVector {
 
     static final int LENGTH = SPECIES.length();
 
+    static final int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
+    static final Vector.Shape shape = Vector.shapeForVectorBitSize(bitSize);
+
+    // Obtain appropriate species to create vectors of the integer indices
+    static final IntVector.IntSpecies intSpec = (IntVector.IntSpecies) Vector.species(int.class, shape);
     private final int[] vec; // Don't access directly, use getElements() instead.
 
     private int[] getElements() {
@@ -678,6 +683,36 @@ final class Int64Vector extends IntVector {
         Int64Vector newVal = oldVal.blend(this, m);
         newVal.intoArray(a, ax);
     }
+    @Override
+    @ForceInline
+    public void intoArray(int[] a, int ix, int[] b, int iy) {
+        Objects.requireNonNull(a);
+        Objects.requireNonNull(b);
+
+
+       // Load index map into a vector
+        IntVector vecInd = intSpec.fromArray(b, iy);
+
+        // Compute actual indices into the array taking into account initial index.
+        vecInd = vecInd.add(intSpec.broadcast(ix));
+
+        vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
+
+        VectorIntrinsics.storeWithMap(Int64Vector.class, int.class, LENGTH,
+                               a, Unsafe.ARRAY_INT_BASE_OFFSET, vecInd, intSpec.getClass(),
+                               this,
+                               a, ix, b, iy,
+                               (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));
+    }
+
+     @Override
+     @ForceInline
+     public final void intoArray(int[] a, int ax, Mask<Integer> m, int[] b, int iy) {
+         // @@@ This can result in out of bounds errors for unset mask lanes
+         Int64Vector oldVal = SPECIES.fromArray(a, ax, b, iy);
+         Int64Vector newVal = oldVal.blend(this, m);
+         newVal.intoArray(a, ax, b, iy);
+     }
 
     @Override
     @ForceInline
@@ -1340,6 +1375,32 @@ final class Int64Vector extends IntVector {
                                              return op(i -> tb.get());
                                          });
         }
+        @Override
+        @ForceInline
+        public Int64Vector fromArray(int[] a, int ix, int[] b, int iy) {
+            Objects.requireNonNull(a);
+            Objects.requireNonNull(b);
+
+            // Load index map into a vector
+            IntVector vecInd = intSpec.fromArray(b, iy);
+
+            // Compute actual indices into the array taking into account initial index.
+            vecInd = vecInd.add(intSpec.broadcast(ix));
+            vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
+
+            return VectorIntrinsics.loadWithMap(Int64Vector.class, int.class, LENGTH,
+                                        a, Unsafe.ARRAY_INT_BASE_OFFSET, vecInd, vecInd.getClass(),
+                                        a, ix, b, iy,
+                                       (c, idx, indexMap, idy) -> op(n -> c[idx + indexMap[idy+n]]));
+       }
+
+       @Override
+       @ForceInline
+       public Int64Vector fromArray(int[] a, int ax, Mask<Integer> m, int[] indexMap, int j) {
+           // @@@ This can result in out of bounds errors for unset mask lanes
+           return zero().blend(fromArray(a, ax, indexMap, j), m);
+       }
+
 
         @Override
         @ForceInline

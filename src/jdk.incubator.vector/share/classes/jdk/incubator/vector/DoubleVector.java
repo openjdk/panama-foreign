@@ -1466,9 +1466,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * or for any vector lane index {@code N} the result of
      * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
      */
-    public void intoArray(double[] a, int i, int[] indexMap, int j) {
-        forEach((n, e) -> a[i + indexMap[j + n]] = e);
-    }
+    public abstract void intoArray(double[] a, int i, int[] indexMap, int j);
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -1492,10 +1490,7 @@ public abstract class DoubleVector extends Vector<Double> {
      * {@code N} is set the result of {@code i + indexMap[j + N]} is
      * {@code < 0} or {@code >= a.length}
      */
-    public void intoArray(double[] a, int i, Mask<Double> m, int[] indexMap, int j) {
-        forEach(m, (n, e) -> a[i + indexMap[j + n]] = e);
-    }
-
+    public abstract void intoArray(double[] a, int i, Mask<Double> m, int[] indexMap, int j);
     // Species
 
     @Override
@@ -1634,10 +1629,7 @@ public abstract class DoubleVector extends Vector<Double> {
          * or for any vector lane index {@code N} the result of
          * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
          */
-        public DoubleVector fromArray(double[] a, int i, int[] indexMap, int j) {
-            return op(n -> a[i + indexMap[j + n]]);
-        }
-
+        public abstract DoubleVector fromArray(double[] a, int i, int[] indexMap, int j);
         /**
          * Loads a vector from an array using indexes obtained from an index
          * map and using a mask.
@@ -1660,9 +1652,7 @@ public abstract class DoubleVector extends Vector<Double> {
          * {@code N} is set the result of {@code i + indexMap[j + N]} is
          * {@code < 0} or {@code >= a.length}
          */
-        public DoubleVector fromArray(double[] a, int i, Mask<Double> m, int[] indexMap, int j) {
-            return op(m, n -> a[i + indexMap[j + n]]);
-        }
+        public abstract DoubleVector fromArray(double[] a, int i, Mask<Double> m, int[] indexMap, int j);
 
         @Override
         public abstract DoubleVector fromByteArray(byte[] a, int ix);

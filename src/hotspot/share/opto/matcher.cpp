@@ -2410,6 +2410,12 @@ void Matcher::find_shared_post_visit(Node* n, uint opcode) {
       n->del_req(3);
       break;
     }
+    case Op_StoreVectorScatter: {
+      Node* pair = new BinaryNode(n->in(MemNode::ValueIn), n->in(MemNode::ValueIn+1));
+      n->set_req(MemNode::ValueIn, pair);
+      n->del_req(MemNode::ValueIn+1);
+      break;
+    }
     default:
       break;
   }
