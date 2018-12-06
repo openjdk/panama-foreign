@@ -837,6 +837,7 @@ class LoadVectorNode : public LoadNode {
   LoadVectorNode(Node* c, Node* mem, Node* adr, const TypePtr* at, const TypeVect* vt, ControlDependency control_dependency = LoadNode::DependsOnlyOnTest)
     : LoadNode(c, mem, adr, at, vt, MemNode::unordered, control_dependency) {
     init_class_id(Class_LoadVector);
+    set_mismatched_access();
   }
 
   const TypeVect* vect_type() const { return type()->is_vect(); }
@@ -864,6 +865,7 @@ class StoreVectorNode : public StoreNode {
   StoreVectorNode(Node* c, Node* mem, Node* adr, const TypePtr* at, Node* val)
     : StoreNode(c, mem, adr, at, val, MemNode::unordered) {
     init_class_id(Class_StoreVector);
+    set_mismatched_access();
   }
 
   const TypeVect* vect_type() const { return in(MemNode::ValueIn)->bottom_type()->is_vect(); }
