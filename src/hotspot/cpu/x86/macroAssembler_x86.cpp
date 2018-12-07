@@ -3349,6 +3349,15 @@ void MacroAssembler::vmovdqu(XMMRegister dst, AddressLiteral src, Register scrat
   }
 }
 
+void MacroAssembler::kmovwl(KRegister dst, AddressLiteral src, Register scratch_reg) {
+  if (reachable(src)) {
+    kmovwl(dst, as_Address(src));
+  } else {
+    lea(scratch_reg, src);
+    kmovwl(dst, Address(scratch_reg, 0));
+  }
+}
+
 void MacroAssembler::evmovdqub(XMMRegister dst, KRegister mask, AddressLiteral src, bool merge,
                                int vector_len, Register scratch_reg) {
   if (reachable(src)) {

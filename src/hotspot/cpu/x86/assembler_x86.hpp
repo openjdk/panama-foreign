@@ -752,7 +752,7 @@ private:
                     Register base, Register index, Address::ScaleFactor scale,
                     int disp,
                     RelocationHolder const& rspec,
-                    int rip_relative_correction = 0);
+                    int rip_relative_correction = 0, bool xmmindexVal = false);
 
   void emit_operand(XMMRegister reg, Register base, XMMRegister index,
                     Address::ScaleFactor scale,
@@ -2339,7 +2339,21 @@ private:
   void evpbroadcastd(XMMRegister dst, Register src, int vector_len);
   void evpbroadcastq(XMMRegister dst, Register src, int vector_len);
 
-  void evpgatherdd(XMMRegister dst, KRegister k1, Address src, int vector_len);
+  // Gather AVX2 and AVX3
+  void vpgatherdd(XMMRegister dst, Address src, XMMRegister mask, int vector_len);
+  void vpgatherdq(XMMRegister dst, Address src, XMMRegister mask, int vector_len);
+  void vgatherdpd(XMMRegister dst, Address src, XMMRegister mask, int vector_len);
+  void vgatherdps(XMMRegister dst, Address src, XMMRegister mask, int vector_len);
+  void evpgatherdd(XMMRegister dst, KRegister mask, Address src, int vector_len);
+  void evpgatherdq(XMMRegister dst, KRegister mask, Address src, int vector_len);
+  void evgatherdpd(XMMRegister dst, KRegister mask, Address src, int vector_len);
+  void evgatherdps(XMMRegister dst, KRegister mask, Address src, int vector_len);
+
+  //Scatter AVX3 only
+  void evpscatterdd(Address dst, KRegister mask, XMMRegister src, int vector_len);
+  void evpscatterdq(Address dst, KRegister mask, XMMRegister src, int vector_len);
+  void evscatterdps(Address dst, KRegister mask, XMMRegister src, int vector_len);
+  void evscatterdpd(Address dst, KRegister mask, XMMRegister src, int vector_len);
 
   // Carry-Less Multiplication Quadword
   void pclmulqdq(XMMRegister dst, XMMRegister src, int mask);

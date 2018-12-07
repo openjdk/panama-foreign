@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 
 import java.lang.Integer;
 import java.util.List;
+import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -226,6 +227,29 @@ public class Long256VectorTests extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
         }
     }
+    interface FGatherScatterOp {
+        long[] apply(long[] a, int ix, int[] b, int iy);
+    }
+
+    static void assertArraysEquals(long[] a, int[] b, long[] r, FGatherScatterOp f) {
+        int i = 0;
+        try {
+            for (; i < a.length; i += SPECIES.length()) {
+                Assert.assertEquals(Arrays.copyOfRange(r, i, i+SPECIES.length()),
+                  f.apply(a, i, b, i));
+            }
+        } catch (AssertionError e) {
+            long[] ref = f.apply(a, i, b, i);
+            long[] res = Arrays.copyOfRange(r, i, i+SPECIES.length());
+            Assert.assertEquals(ref, res,
+              "(ref: " + Arrays.toString(ref) + ", res: " + Arrays.toString(res) + ", a: "
+              + Arrays.toString(Arrays.copyOfRange(a, i, i+SPECIES.length()))
+              + ", b: "
+              + Arrays.toString(Arrays.copyOfRange(b, i, i+SPECIES.length()))
+              + " at index #" + i);
+        }
+    }
+
 
     static final List<IntFunction<long[]>> LONG_GENERATORS = List.of(
             withToString("long[-i * 5]", (int s) -> {
@@ -1659,5 +1683,61 @@ public class Long256VectorTests extends AbstractVectorTest {
 
 
 
+    static long[] gather(long a[], int ix, int[] b, int iy) {
+      long[] res = new long[SPECIES.length()];
+      for (int i = 0; i < SPECIES.length(); i++) {
+        int bi = iy + i;
+        res[i] = a[b[bi] + ix];
+      }
+      return res;
+    }
+
+    @Test(dataProvider = "longBinaryOpProvider")
+    static void gatherLong256VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+        long[] a = fa.apply(SPECIES.length()); 
+        long[] bb = fb.apply(SPECIES.length());
+        int[] b = new int[bb.length];
+        for (int i = 0; i < bb.length; i++) {
+          b[i] = (int)(bb[i]%SPECIES.length());
+        }
+        long[] r = new long[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i, b, i);
+                av.intoArray(r, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Long256VectorTests::gather);
+    }
+    static long[] scatter(long a[], int ix, int[] b, int iy) {
+      long[] res = new long[SPECIES.length()];
+      for (int i = 0; i < SPECIES.length(); i++) {
+        int bi = iy + i;
+        res[b[bi]] = a[i + ix];
+      }
+      return res;
+    }
+
+    @Test(dataProvider = "longBinaryOpProvider")
+    static void scatterLong256VectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
+        long[] a = fa.apply(SPECIES.length()); 
+        long[] bb = fb.apply(SPECIES.length());
+        int[] b = new int[bb.length];
+        for (int i = 0; i < bb.length; i++) {
+          b[i] = (int)(bb[i]%SPECIES.length());
+        }
+        long[] r = new long[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                av.intoArray(r, i, b, i);
+            }
+        }
+
+        assertArraysEquals(a, b, r, Long256VectorTests::scatter);
+    }
 }
 

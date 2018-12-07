@@ -3773,6 +3773,22 @@ operand legVecY() %{
   interface(REG_INTER);
 %}
 
+operand vecZ() %{
+  constraint(ALLOC_IN_RC(vectorz_reg));
+  match(VecZ);
+
+  format %{ %}
+  interface(REG_INTER);
+%}
+
+operand legVecZ() %{
+  constraint(ALLOC_IN_RC(vectorz_reg_vl));
+  match(VecZ);
+
+  format %{ %}
+  interface(REG_INTER);
+%}
+
 //----------Memory Operands----------------------------------------------------
 // Direct Memory Operand
 // operand direct(immP addr)
@@ -6328,6 +6344,436 @@ instruct storeSSD(stackSlotD dst, regD src)
     __ movdbl(Address(rsp, $dst$$disp), $src$$XMMRegister);
   %}
   ins_pipe(pipe_slow); // XXX
+%}
+
+// ---------------------------------------- Gather -----------------------------------------------
+
+instruct gather2I(legVecD dst, memory mem, legVecD idx, rRegP tmp, legVecD mask) %{
+  predicate(UseAVX >= 2 &&  n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP mask);
+  format %{ "movq  $mask,0xFFFFFFFFFF\n\t"
+            "leaq    $tmp,$mem\n\t"
+            "vpgatherdd $dst $mem $mask\t! gather vector (8 bytes)" %}
+  ins_encode %{
+    __ movq($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vpgatherdd($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), $mask$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe(pipe_slow);
+%}
+
+instruct gather4I(legVecX dst, memory mem, legVecX idx, rRegP tmp, legVecX mask) %{
+  predicate(UseAVX >= 2 &&  n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP mask);
+  format %{ "movdqu  $mask,0xFFFFFFFFFF\n\t"
+            "leaq     $tmp,$mem\n\t"
+            "vpgatherdd $dst $mem $mask\t! gather vector (16 bytes)" %}
+  ins_encode %{
+    __ movdqu($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vpgatherdd($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), $mask$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe(pipe_slow);
+%}
+
+instruct gather8I(legVecY dst, memory mem, legVecY idx, rRegP tmp, legVecY mask) %{
+  predicate(UseAVX >= 2 &&  n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP mask);
+  format %{ "vmovdqu  $mask,0xFFFFFFFFFF\n\t"
+            "leaq     $tmp,$mem\n\t"
+            "vpgatherdd $dst $mem $mask\t! gather vector (32 bytes)" %}
+  ins_encode %{
+    __ vmovdqu($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vpgatherdd($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), $mask$$XMMRegister, Assembler::AVX_256bit);
+  %}
+  ins_pipe(pipe_slow);
+%}
+
+instruct gather16I(vecZ dst, memory mem, vecZ idx, rRegP tmp, vecZ tmp1, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP tmp1, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpgatherdd $dst k0,$mem\t! gather vector (64 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evpgatherdd($dst$$XMMRegister, ktmp, Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), Assembler::AVX_512bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct gather2F(legVecD dst, memory mem, legVecD idx, rRegP tmp, legVecD mask) %{
+  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP mask);
+  format %{ "movdqu   $mask,0xFFFFFFFFFF\n\t"
+            "leaq     $tmp,$mem\n\t"
+            "vgatherdps $dst,$mem,$mask\t! gather vector (8 bytes)" %}
+  ins_encode %{
+    __ movdqu($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vgatherdps($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), $mask$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct gather4F(legVecX dst, memory mem, legVecX idx, rRegP tmp, legVecX mask) %{
+  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP mask);
+  format %{ "vmovdqu   $mask,0xFFFFFFFFFF\n\t"
+            "leaq     $tmp,$mem\n\t"
+            "vgatherdps $dst,$mem,$mask\t! gather vector (16 bytes)" %}
+  ins_encode %{
+    __ vmovdqu($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vgatherdps($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), $mask$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct gather8F(legVecY dst, memory mem, legVecY idx, rRegP tmp, legVecY mask) %{
+  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP mask);
+  format %{ "vmovdqu   $mask,0xFFFFFFFFFF\n\t"
+            "leaq     $tmp,$mem\n\t"
+            "vgatherdps $dst,$mem,$mask\t! gather vector (32 bytes)" %}
+  ins_encode %{
+    __ vmovdqu($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vgatherdps($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), $mask$$XMMRegister, Assembler::AVX_256bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct gather16F(vecZ dst, memory mem, vecZ idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evgatherdps $dst k0,$mem\t! gather vector (64 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evgatherdps($dst$$XMMRegister, ktmp, Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), Assembler::AVX_512bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct gather2D(legVecX dst, memory mem, legVecD idx, rRegP tmp, legVecX mask) %{
+  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP dst, TEMP tmp, TEMP mask);
+  format %{ "movdqu   $mask,0xFFFFFFFFFF\n\t"
+            "leaq     $tmp,$mem\n\t"
+            "vgatherdpd $dst,$mem,$mask\t! gather vector (16 bytes)" %}
+  ins_encode %{
+    __ movdqu($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vgatherdpd($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), $mask$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct gather4D(legVecY dst, memory mem, legVecX idx, rRegP tmp, legVecY mask) %{
+  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP mask);
+  format %{ "vmovdqu   $mask,0xFFFFFFFFFF\n\t"
+            "leaq     $tmp,$mem\n\t"
+            "vgatherdpd $dst,$mem,$mask\t! gather vector (32 bytes)" %}
+  ins_encode %{
+    __ vmovdqu($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vgatherdpd($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), $mask$$XMMRegister, Assembler::AVX_256bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct gather8D(vecZ dst, memory mem, vecY idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evgatherdpd $dst k0,$mem\t! gather vector (64 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evgatherdpd($dst$$XMMRegister, ktmp, Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), Assembler::AVX_512bit);
+  %}
+   ins_pipe( pipe_slow );
+%}
+
+// Gather Long VEX
+instruct gather2L(legVecX dst, memory mem, legVecD idx, rRegP tmp, legVecX mask) %{
+  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP mask);
+  format %{ "movdqu   $mask,0xFFFFFFFFFF\n\t"
+            "leaq     $tmp,$mem\n\t"
+            "vpgatherdq $dst,$mem,$mask\t! gather vector (16 bytes)" %}
+  ins_encode %{
+    __ movdqu($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vpgatherdq($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), $mask$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct gather4L(legVecY dst, memory mem, legVecX idx, rRegP tmp, legVecY mask) %{
+  predicate(UseAVX >= 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP mask);
+  format %{ "movdqu   $mask,0xFFFFFFFFFF\n\t"
+            "leaq     $tmp,$mem\n\t"
+            "vpgatherdq $dst,$mem,$mask\t! gather vector (32 bytes)" %}
+  ins_encode %{
+    __ vmovdqu($mask$$XMMRegister, ExternalAddress(vector_all_bits_set()));
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ vpgatherdq($dst$$XMMRegister, Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), $mask$$XMMRegister, Assembler::AVX_256bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct gather8L(vecZ dst, memory mem, vecY idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (LoadVectorGather mem idx));
+  effect(TEMP tmp, TEMP dst, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpgatherdq $dst k0,$mem\t! gather vector (64 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evpgatherdq($dst$$XMMRegister, ktmp, Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), Assembler::AVX_512bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// Scatter INT
+
+instruct scatter4I(memory mem, vecX src, vecX idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdd $mem k0,$src\t! scatter vector (16 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evpscatterdd(Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), ktmp, $src$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct scatter8I(memory mem, vecY src, vecY idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdd $mem k0,$src\t! scatter vector (32 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evpscatterdd(Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), ktmp, $src$$XMMRegister, Assembler::AVX_256bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct scatter16I(memory mem, vecZ src, vecZ idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdd $mem k0,$src\t! scatter vector (64 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evpscatterdd(Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), ktmp, $src$$XMMRegister, Assembler::AVX_512bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+//Scatter Float
+instruct scatter4F(memory mem, vecX src, vecX idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdps $mem k0,$src\t! scatter vector (16 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evscatterdps(Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), ktmp, $src$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct scatter8F(memory mem, vecY src, vecY idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdps $mem k0,$src\t! scatter vector (32 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evscatterdps(Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), ktmp, $src$$XMMRegister, Assembler::AVX_256bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct scatter16F(memory mem, vecZ src, vecZ idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdps $mem k0,$src\t! scatter vector (64 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evscatterdps(Address($tmp$$Register, $idx$$XMMRegister, Address::times_4, 0), ktmp, $src$$XMMRegister, Assembler::AVX_512bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+//Scatter Double
+instruct scatter2D(memory mem, vecX src, vecD idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdpd $mem k0,$src\t! scatter vector (16 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evscatterdpd(Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), ktmp, $src$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct scatter4D(memory mem, vecY src, vecX idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdpd $mem k0,$src\t! scatter vector (32 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evscatterdpd(Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), ktmp, $src$$XMMRegister, Assembler::AVX_256bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct scatter8D(memory mem, vecZ src, vecY idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdpd $mem k0,$src\t! scatter vector (64 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evscatterdpd(Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), ktmp, $src$$XMMRegister, Assembler::AVX_512bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+// Scatter Long 
+instruct scatter2L(memory mem, vecX src, vecD idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdq $mem k0,$src\t! scatter vector (16 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evpscatterdq(Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), ktmp, $src$$XMMRegister, Assembler::AVX_128bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct scatter4L(memory mem, vecY src, vecX idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdq $mem k0,$src\t! scatter vector (32 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+    __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evpscatterdq(Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), ktmp, $src$$XMMRegister, Assembler::AVX_256bit);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
+instruct scatter8L(memory mem, vecZ src, vecY idx, rRegP tmp, rRegI tmp2) %{
+  predicate(UseAVX > 2 && n->in(3)->in(1)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set mem (StoreVectorScatter mem (Binary src idx)));
+  effect(TEMP tmp, TEMP tmp2);
+  format %{ "movl   $tmp,0xFFFF\n\t"
+            "kmovwl k2,$tmp\n\t"
+            "leaq   $tmp,$mem\n\t"
+            "evpscatterdq $mem k0,$src\t! scatter vector (64 bytes)" %}
+  ins_encode %{
+    KRegister ktmp = k2;
+   __ kmovwl(k2, ExternalAddress(vector_all_bits_set()), $tmp2$$Register);
+    __ leaq($tmp$$Register, $mem$$Address);
+    __ evpscatterdq(Address($tmp$$Register, $idx$$XMMRegister, Address::times_8, 0), ktmp, $src$$XMMRegister, Assembler::AVX_512bit);
+  %}
+  ins_pipe( pipe_slow );
 %}
 
 //----------BSWAP Instructions-------------------------------------------------

@@ -900,5 +900,3 @@ public class IntScalar extends AbstractVectorBenchmark {
 
 
 
-}
-

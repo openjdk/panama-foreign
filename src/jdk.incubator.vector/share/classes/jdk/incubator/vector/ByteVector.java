@@ -975,7 +975,6 @@ public abstract class ByteVector extends Vector<Byte> {
     public void intoArray(byte[] a, int i, Mask<Byte> m, int[] indexMap, int j) {
         forEach(m, (n, e) -> a[i + indexMap[j + n]] = e);
     }
-
     // Species
 
     @Override
@@ -1094,6 +1093,54 @@ public abstract class ByteVector extends Vector<Byte> {
          */
         public abstract ByteVector fromArray(byte[] a, int i, Mask<Byte> m);
 
+        /**
+         * Loads a vector from an array using indexes obtained from an index
+         * map.
+         * <p>
+         * For each vector lane, where {@code N} is the vector lane index, the
+         * array element at index {@code i + indexMap[j + N]} is placed into the
+         * resulting vector at lane index {@code N}.
+         *
+         * @param a the array
+         * @param i the offset into the array, may be negative if relative
+         * indexes in the index map compensate to produce a value within the
+         * array bounds
+         * @param indexMap the index map
+         * @param j the offset into the index map
+         * @return the vector loaded from an array
+         * @throws IndexOutOfBoundsException if {@code j < 0}, or
+         * {@code j > indexMap.length - this.length()},
+         * or for any vector lane index {@code N} the result of
+         * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
+         */
+        public ByteVector fromArray(byte[] a, int i, int[] indexMap, int j) {
+            return op(n -> a[i + indexMap[j + n]]);
+        }
+        /**
+         * Loads a vector from an array using indexes obtained from an index
+         * map and using a mask.
+         * <p>
+         * For each vector lane, where {@code N} is the vector lane index,
+         * if the mask lane at index {@code N} is set then the array element at
+         * index {@code i + indexMap[j + N]} is placed into the resulting vector
+         * at lane index {@code N}.
+         *
+         * @param a the array
+         * @param i the offset into the array, may be negative if relative
+         * indexes in the index map compensate to produce a value within the
+         * array bounds
+         * @param indexMap the index map
+         * @param j the offset into the index map
+         * @return the vector loaded from an array
+         * @throws IndexOutOfBoundsException if {@code j < 0}, or
+         * {@code j > indexMap.length - this.length()},
+         * or for any vector lane index {@code N} where the mask at lane
+         * {@code N} is set the result of {@code i + indexMap[j + N]} is
+         * {@code < 0} or {@code >= a.length}
+         */
+        public ByteVector fromArray(byte[] a, int i, Mask<Byte> m, int[] indexMap, int j) {
+            return op(m, n -> a[i + indexMap[j + n]]);
+        }
 
         @Override
         public abstract ByteVector fromByteArray(byte[] a, int ix);

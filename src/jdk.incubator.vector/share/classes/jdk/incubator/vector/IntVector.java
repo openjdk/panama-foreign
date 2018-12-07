@@ -1105,9 +1105,7 @@ public abstract class IntVector extends Vector<Integer> {
      * or for any vector lane index {@code N} the result of
      * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
      */
-    public void intoArray(int[] a, int i, int[] indexMap, int j) {
-        forEach((n, e) -> a[i + indexMap[j + n]] = e);
-    }
+    public abstract void intoArray(int[] a, int i, int[] indexMap, int j);
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -1131,10 +1129,7 @@ public abstract class IntVector extends Vector<Integer> {
      * {@code N} is set the result of {@code i + indexMap[j + N]} is
      * {@code < 0} or {@code >= a.length}
      */
-    public void intoArray(int[] a, int i, Mask<Integer> m, int[] indexMap, int j) {
-        forEach(m, (n, e) -> a[i + indexMap[j + n]] = e);
-    }
-
+    public abstract void intoArray(int[] a, int i, Mask<Integer> m, int[] indexMap, int j);
     // Species
 
     @Override
@@ -1273,10 +1268,7 @@ public abstract class IntVector extends Vector<Integer> {
          * or for any vector lane index {@code N} the result of
          * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
          */
-        public IntVector fromArray(int[] a, int i, int[] indexMap, int j) {
-            return op(n -> a[i + indexMap[j + n]]);
-        }
-
+        public abstract IntVector fromArray(int[] a, int i, int[] indexMap, int j);
         /**
          * Loads a vector from an array using indexes obtained from an index
          * map and using a mask.
@@ -1299,9 +1291,7 @@ public abstract class IntVector extends Vector<Integer> {
          * {@code N} is set the result of {@code i + indexMap[j + N]} is
          * {@code < 0} or {@code >= a.length}
          */
-        public IntVector fromArray(int[] a, int i, Mask<Integer> m, int[] indexMap, int j) {
-            return op(m, n -> a[i + indexMap[j + n]]);
-        }
+        public abstract IntVector fromArray(int[] a, int i, Mask<Integer> m, int[] indexMap, int j);
 
         @Override
         public abstract IntVector fromByteArray(byte[] a, int ix);

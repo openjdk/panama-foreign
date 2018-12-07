@@ -1094,6 +1094,12 @@ public:
   void movdqu(XMMRegister dst, Address src);
   void movdqu(XMMRegister dst, XMMRegister src);
   void movdqu(XMMRegister dst, AddressLiteral src, Register scratchReg = rscratch1);
+  
+  void kmovwl(KRegister dst, Register src) { Assembler::kmovwl(dst, src); }
+  void kmovwl(Register dst, KRegister src) { Assembler::kmovwl(dst, src); }
+  void kmovwl(KRegister dst, Address src) { Assembler::kmovwl(dst, src); }
+  void kmovwl(KRegister dst, AddressLiteral src, Register scratch_reg = rscratch1);
+
   // AVX Unaligned forms
   void vmovdqu(Address     dst, XMMRegister src);
   void vmovdqu(XMMRegister dst, Address src);

@@ -46,7 +46,7 @@ do
       fptype=double
       Fptype=Double
       Boxfptype=Double
-      args="$args -KintOrLong -KintOrLongOrFP"
+      args="$args -KintOrLong -KintOrLongOrFP -KlongOrDouble"
       ;;
     float)
       kind=FP
@@ -60,7 +60,7 @@ do
       bitstype=long
       Bitstype=Long
       Boxbitstype=Long
-      args="$args -KintOrFP -KintOrLongOrFP"
+      args="$args -KintOrFP -KintOrLongOrFP -KlongOrDouble"
       ;;
   esac
 
@@ -91,6 +91,7 @@ do
     mv temp ${abstractvectortype}Helper.java
   fi
 
+  old_args="$args"
   for bits in 64 128 256 512 Max
   do
     vectortype=${typeprefix}${Type}${bits}Vector
@@ -100,6 +101,10 @@ do
     fpvectortype=${typeprefix}${Fptype}${bits}Vector
     shape=S${bits}Bit
     Shape=S_${bits}_BIT
+    args="$old_args"
+    if [[ "${fpvectortype}" = "Double64Vector" ]];then
+      args="$args -KlongOrDouble64"
+    fi
     bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dmasktype=$masktype -Dshuffletype=$shuffletype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
 
     echo $bitargs

@@ -333,6 +333,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_vector_nary_operation(int n);
   bool inline_vector_broadcast_coerced();
   bool inline_vector_mem_operation(bool is_store);
+  bool inline_vector_gather_scatter(bool is_scatter);
   bool inline_vector_reduction();
   bool inline_vector_test();
   bool inline_vector_blend();
@@ -900,6 +901,10 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     return inline_vector_mem_operation(/*is_store=*/false);
   case vmIntrinsics::_VectorStoreOp:
     return inline_vector_mem_operation(/*is_store=*/true);
+  case vmIntrinsics::_VectorGatherOp:
+    return inline_vector_gather_scatter(/*is_scatter*/ false);
+  case vmIntrinsics::_VectorScatterOp:
+    return inline_vector_gather_scatter(/*is_scatter*/ true);
   case vmIntrinsics::_VectorReductionCoerced:
     return inline_vector_reduction();
   case vmIntrinsics::_VectorTest:
@@ -7098,6 +7103,80 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
     } else {
       vload = gvn().transform(LoadVectorNode::make(0, control(), memory(addr), addr, addr_type, num_elem, elem_bt));
     }
+
+    Node* box = box_vector(vload, vbox_type, elem_bt, num_elem);
+    set_vector_result(box);
+  }
+
+  C->set_max_vector_size(MAX2(C->max_vector_size(), (uint)(num_elem * type2aelembytes(elem_bt))));
+  return true;
+}
+
+bool LibraryCallKit::inline_vector_gather_scatter(bool is_scatter) {
+  const TypeInstPtr* vector_klass = gvn().type(argument(0))->is_instptr();
+  const TypeInstPtr* elem_klass   = gvn().type(argument(1))->is_instptr();
+  const TypeInt* vlen             = gvn().type(argument(2))->is_int();
+  const TypeInstPtr* vector_idx_klass = gvn().type(argument(7))->is_instptr();
+
+  if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || vector_idx_klass->const_oop() == NULL || !vlen->is_con()) {
+    return false; // not enough info for intrinsification
+  }
+
+  ciType* elem_type = elem_klass->const_oop()->as_instance()->java_mirror_type();
+  if (!elem_type->is_primitive_type()) {
+    return false; // should be primitive type
+  }
+  BasicType elem_bt = elem_type->basic_type();
+  int num_elem = vlen->get_con();
+
+  if (!arch_supports_vector(is_scatter ? Op_StoreVectorScatter : Op_LoadVectorGather, num_elem, elem_bt, VecMaskNotUsed)) {
+    return false; // not supported
+  }
+
+  // Check that the vector holding indices is supported by architecture
+  if (!arch_supports_vector(Op_LoadVector, num_elem, T_INT, VecMaskNotUsed)) {
+      return false; // not supported
+    }
+
+  Node* base = argument(3);
+  Node* offset = ConvL2X(argument(4));
+  Node* addr = make_unsafe_address(base, offset, C2_UNSAFE_ACCESS, elem_bt, true);
+
+  const TypePtr *addr_type = gvn().type(addr)->isa_ptr();
+  const TypeAryPtr* arr_type = addr_type->isa_aryptr();
+
+  // The array must be consistent with vector type
+  if (arr_type == NULL || (arr_type != NULL && elem_bt != arr_type->elem()->array_element_basic_type())) {
+    return false;
+  }
+  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
+
+  ciKlass* vbox_idx_klass = vector_idx_klass->const_oop()->as_instance()->java_lang_Class_klass();
+
+  if (vbox_idx_klass == NULL) {
+    return false;
+  }
+
+  const TypeInstPtr* vbox_idx_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_idx_klass);
+
+  Node* index_vect = unbox_vector(argument(6), vbox_idx_type, T_INT, num_elem);
+  if (index_vect == NULL) {
+    return false;
+  }
+  const TypeVect* vector_type = TypeVect::make(elem_bt, num_elem);
+  if (is_scatter) {
+    Node* val = unbox_vector(argument(8), vbox_type, elem_bt, num_elem);
+    if (val == NULL) {
+      return false; // operand unboxing failed
+    }
+    set_all_memory(reset_memory());
+
+    Node* vstore = gvn().transform(new StoreVectorScatterNode(control(), memory(addr), addr, addr_type, val, index_vect));
+    set_memory(vstore, addr_type);
+    set_vector_result(vstore, false);
+ } else {
+    Node* vload = gvn().transform(new LoadVectorGatherNode(control(), memory(addr), addr, addr_type, vector_type, index_vect));
 
     Node* box = box_vector(vload, vbox_type, elem_bt, num_elem);
     set_vector_result(box);

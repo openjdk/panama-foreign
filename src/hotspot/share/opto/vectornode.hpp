@@ -858,6 +858,22 @@ class LoadVectorNode : public LoadNode {
   uint element_size(void) { return type2aelembytes(vect_type()->element_basic_type()); }
 };
 
+//------------------------------LoadVectorGatherNode------------------------------
+// Load Vector from memory via index map
+class LoadVectorGatherNode : public LoadVectorNode {
+  public:
+   LoadVectorGatherNode(Node* c, Node* mem, Node* adr, const TypePtr* at, const TypeVect* vt, Node* indices)
+    : LoadVectorNode(c, mem, adr, at, vt) {
+    init_class_id(Class_LoadVectorGather);
+    assert(indices->bottom_type()->is_vect(), "indices must be in vector");
+    add_req(indices);
+    assert(req() == MemNode::ValueIn + 1, "match_edge expects that last input is in MemNode::ValueIn");
+  }
+
+  virtual int Opcode() const;
+  virtual uint match_edge(uint idx) const { return idx == MemNode::Address || idx == MemNode::ValueIn; }
+};
+
 //------------------------------StoreVectorNode--------------------------------
 // Store Vector to memory
 class StoreVectorNode : public StoreNode {
@@ -884,6 +900,23 @@ class StoreVectorNode : public StoreNode {
   uint element_size(void) { return type2aelembytes(vect_type()->element_basic_type()); }
 };
 
+//------------------------------StoreVectorScatterNode------------------------------
+// Store Vector into memory via index map
+
+ class StoreVectorScatterNode : public StoreVectorNode {
+  public:
+   StoreVectorScatterNode(Node* c, Node* mem, Node* adr, const TypePtr* at, Node* val, Node* indices)
+      : StoreVectorNode(c, mem, adr, at, val) {
+      init_class_id(Class_StoreVectorScatter);
+     assert(indices->bottom_type()->is_vect(), "indices must be in vector");
+     add_req(indices);
+     assert(req() == MemNode::ValueIn + 2, "match_edge expects that last input is in MemNode::ValueIn+1");
+   }
+   virtual int Opcode() const;
+   virtual uint match_edge(uint idx) const { return idx == MemNode::Address ||
+                                                     idx == MemNode::ValueIn ||
+                                                     idx == MemNode::ValueIn + 1; }
+};
 
 //=========================Promote_Scalar_to_Vector============================
 

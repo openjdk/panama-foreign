@@ -23,7 +23,7 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Shapes;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.LongVector;
 
@@ -92,8 +92,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.add(bv).intoArray(r, i);
             }
         }
@@ -107,12 +107,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.add(bv, vmask).intoArray(r, i);
             }
         }
@@ -128,8 +128,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.sub(bv).intoArray(r, i);
             }
         }
@@ -143,12 +143,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.sub(bv, vmask).intoArray(r, i);
             }
         }
@@ -166,8 +166,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.mul(bv).intoArray(r, i);
             }
         }
@@ -181,12 +181,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.mul(bv, vmask).intoArray(r, i);
             }
         }
@@ -203,8 +203,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.and(bv).intoArray(r, i);
             }
         }
@@ -220,12 +220,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.and(bv, vmask).intoArray(r, i);
             }
         }
@@ -243,8 +243,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.or(bv).intoArray(r, i);
             }
         }
@@ -260,12 +260,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.or(bv, vmask).intoArray(r, i);
             }
         }
@@ -283,8 +283,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.xor(bv).intoArray(r, i);
             }
         }
@@ -300,12 +300,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.xor(bv, vmask).intoArray(r, i);
             }
         }
@@ -323,8 +323,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.shiftR(bv).intoArray(r, i);
             }
         }
@@ -340,12 +340,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.shiftR(bv, vmask).intoArray(r, i);
             }
         }
@@ -363,8 +363,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.shiftL(bv).intoArray(r, i);
             }
         }
@@ -380,12 +380,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.shiftL(bv, vmask).intoArray(r, i);
             }
         }
@@ -403,8 +403,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.aShiftR(bv).intoArray(r, i);
             }
         }
@@ -420,12 +420,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.aShiftR(bv, vmask).intoArray(r, i);
             }
         }
@@ -443,7 +443,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.aShiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -459,11 +459,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.aShiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -481,7 +481,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.shiftR((int)b[i]).intoArray(r, i);
             }
         }
@@ -497,11 +497,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.shiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -519,7 +519,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.shiftL((int)b[i]).intoArray(r, i);
             }
         }
@@ -535,11 +535,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.shiftL((int)b[i], vmask).intoArray(r, i);
             }
         }
@@ -556,8 +556,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.max(bv).intoArray(r, i);
             }
         }
@@ -573,8 +573,8 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.min(bv).intoArray(r, i);
             }
         }
@@ -590,7 +590,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              LongVector av = SPECIES.fromArray(a, i);
               r[i] = av.andAll();
             }
         }
@@ -607,7 +607,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              LongVector av = SPECIES.fromArray(a, i);
               r[i] = av.orAll();
             }
         }
@@ -624,7 +624,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              LongVector av = SPECIES.fromArray(a, i);
               r[i] = av.xorAll();
             }
         }
@@ -640,7 +640,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              LongVector av = SPECIES.fromArray(a, i);
               r[i] = av.addAll();
             }
         }
@@ -655,7 +655,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              LongVector av = SPECIES.fromArray(a, i);
               r[i] = av.subAll();
             }
         }
@@ -670,7 +670,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              LongVector av = SPECIES.fromArray(a, i);
               r[i] = av.mulAll();
             }
         }
@@ -685,7 +685,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              LongVector av = SPECIES.fromArray(a, i);
               r[i] = av.minAll();
             }
         }
@@ -700,7 +700,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              LongVector av = SPECIES.fromArray(a, i);
               r[i] = av.maxAll();
             }
         }
@@ -716,7 +716,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromArray(mask, i);
+              Vector.Mask<Long> vmask = SPECIES.maskFromArray(mask, i);
               r[i] = vmask.anyTrue();
             }
         }
@@ -733,7 +733,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromArray(mask, i);
+              Vector.Mask<Long> vmask = SPECIES.maskFromArray(mask, i);
               r[i] = vmask.allTrue();
             }
         }
@@ -749,7 +749,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+              LongVector av = SPECIES.fromArray(a, i);
               av.with(0, (long)4).intoArray(r, i);
             }
         }
@@ -883,12 +883,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
                 av.blend(bv, vmask).intoArray(r, i);
             }
         }
@@ -904,7 +904,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.rearrange(SPECIES.shuffleFromArray(order, i)).intoArray(r, i);
             }
         }
@@ -919,7 +919,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 int num_lanes = SPECIES.length();
                 // Manually unroll because full unroll happens after intrinsification.
                 // Unroll is needed because get intrinsic requires for index to be a known constant.
@@ -1095,7 +1095,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.neg().intoArray(r, i);
             }
         }
@@ -1108,11 +1108,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.neg(vmask).intoArray(r, i);
             }
         }
@@ -1127,7 +1127,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.abs().intoArray(r, i);
             }
         }
@@ -1140,11 +1140,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.abs(vmask).intoArray(r, i);
             }
         }
@@ -1160,7 +1160,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.not().intoArray(r, i);
             }
         }
@@ -1175,11 +1175,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Long, Vector.Shape> vmask = SPECIES.maskFromValues(mask);
+        Vector.Mask<Long> vmask = SPECIES.maskFromValues(mask);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
+                LongVector av = SPECIES.fromArray(a, i);
                 av.not(vmask).intoArray(r, i);
             }
         }
@@ -1189,5 +1189,45 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
 
 
+
+    @Benchmark
+    public Object gather() {
+        long[] a = fa.apply(SPECIES.length()); 
+        long[] bb = fb.apply(SPECIES.length());
+        int[] b = new int[bb.length];
+        for (int i = 0; i < bb.length; i++) {
+          b[i] = (int)(bb[i]%SPECIES.length());
+        }
+        long[] r = new long[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i, b, i);
+                av.intoArray(r, i);
+            }
+        }
+
+        return r;
+    }
+
+    @Benchmark
+    public Object scatter() {
+        long[] a = fa.apply(SPECIES.length()); 
+        long[] bb = fb.apply(SPECIES.length());
+        int[] b = new int[bb.length];
+        for (int i = 0; i < bb.length; i++) {
+          b[i] = (int)(bb[i]%SPECIES.length());
+        }
+        long[] r = new long[a.length];       
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                av.intoArray(r, i, b, i);
+            }
+        }
+
+        return r;
+    }
 }
 
