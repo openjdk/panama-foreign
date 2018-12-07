@@ -781,7 +781,7 @@ final class Float256Vector extends FloatVector {
         vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
 
         VectorIntrinsics.storeWithMap(Float256Vector.class, float.class, LENGTH,
-                               a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vecInd, intSpec.getClass(),
+                               a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vecInd, vecInd.getClass(),
                                this,
                                a, ix, b, iy,
                                (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));

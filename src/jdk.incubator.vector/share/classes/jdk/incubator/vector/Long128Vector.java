@@ -699,7 +699,7 @@ final class Long128Vector extends LongVector {
         vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
 
         VectorIntrinsics.storeWithMap(Long128Vector.class, long.class, LENGTH,
-                               a, Unsafe.ARRAY_LONG_BASE_OFFSET, vecInd, intSpec.getClass(),
+                               a, Unsafe.ARRAY_LONG_BASE_OFFSET, vecInd, vecInd.getClass(),
                                this,
                                a, ix, b, iy,
                                (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));

@@ -781,7 +781,7 @@ final class Double512Vector extends DoubleVector {
         vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
 
         VectorIntrinsics.storeWithMap(Double512Vector.class, double.class, LENGTH,
-                               a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vecInd, intSpec.getClass(),
+                               a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vecInd, vecInd.getClass(),
                                this,
                                a, ix, b, iy,
                                (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));
