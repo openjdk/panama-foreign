@@ -781,7 +781,7 @@ final class DoubleMaxVector extends DoubleVector {
         vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
 
         VectorIntrinsics.storeWithMap(DoubleMaxVector.class, double.class, LENGTH,
-                               a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vecInd, intSpec.getClass(),
+                               a, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, vecInd, vecInd.getClass(),
                                this,
                                a, ix, b, iy,
                                (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));

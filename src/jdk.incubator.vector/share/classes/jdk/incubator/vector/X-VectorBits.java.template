@@ -1094,7 +1094,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
 
         VectorIntrinsics.storeWithMap($vectortype$.class, $type$.class, LENGTH,
-                               a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vecInd, intSpec.getClass(),
+                               a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vecInd, vecInd.getClass(),
                                this,
                                a, ix, b, iy,
                                (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));

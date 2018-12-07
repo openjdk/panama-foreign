@@ -699,7 +699,7 @@ final class Int512Vector extends IntVector {
         vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
 
         VectorIntrinsics.storeWithMap(Int512Vector.class, int.class, LENGTH,
-                               a, Unsafe.ARRAY_INT_BASE_OFFSET, vecInd, intSpec.getClass(),
+                               a, Unsafe.ARRAY_INT_BASE_OFFSET, vecInd, vecInd.getClass(),
                                this,
                                a, ix, b, iy,
                                (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));
