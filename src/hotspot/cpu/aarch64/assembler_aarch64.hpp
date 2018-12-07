@@ -2214,7 +2214,9 @@ public:
   INSN(ushl, 1, 0b010001);
   INSN(maxv, 0, 0b011001);
   INSN(minv, 0, 0b011011);
+  INSN(cmeq, 1, 0b100011);
   INSN(cmgt, 0, 0b001101);
+  INSN(cmge, 0, 0b001111);
 
 #undef INSN
 
@@ -2279,6 +2281,9 @@ public:
   INSN(fmls, 0, 1, 0b110011);
   INSN(fmax, 0, 0, 0b111101);
   INSN(fmin, 0, 1, 0b111101);
+  INSN(fcmeq, 0, 0, 0b111001);
+  INSN(fcmgt, 1, 1, 0b111001);
+  INSN(fcmge, 1, 0, 0b111001);
 
 #undef INSN
 
@@ -2421,6 +2426,10 @@ public:
     ushll(Vd, Ta, Vn, Tb, shift);
   }
 
+  void uxtl(FloatRegister Vd, SIMD_Arrangement Ta, FloatRegister Vn,  SIMD_Arrangement Tb) {
+    ushll(Vd, Ta, Vn, Tb, 0);
+  }
+
   // Move from general purpose register
   //   mov  Vd.T[index], Rn
   void mov(FloatRegister Vd, SIMD_Arrangement T, int index, Register Xn) {
@@ -2458,6 +2467,15 @@ public:
     assert(size_b < 3 && size_b == size_a - 1, "Invalid size specifier");
     f(0, 31), f(Tb & 1, 30), f(0b101110, 29, 24), f(size_b, 23, 22);
     f(0b100001010010, 21, 10), rf(Vn, 5), rf(Vd, 0);
+  }
+
+  void xtn(FloatRegister Vd, SIMD_Arrangement Tb, FloatRegister Vn, SIMD_Arrangement Ta) {
+    starti;
+    int size_b = (int)Tb >> 1;
+    int size_a = (int)Ta >> 1;
+    assert(size_b < 3 && size_b == size_a - 1, "Invalid size specifier");
+    f(0, 31), f(Tb & 1, 30), f(0b001110, 29, 24), f(size_b, 23, 22);
+    f(0b100001001010, 21, 10), rf(Vn, 5), rf(Vd, 0);
   }
 
   void dup(FloatRegister Vd, SIMD_Arrangement T, Register Xs)
