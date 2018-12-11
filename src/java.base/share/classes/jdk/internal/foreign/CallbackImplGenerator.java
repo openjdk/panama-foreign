@@ -24,13 +24,9 @@
  */
 package jdk.internal.foreign;
 
-import jdk.internal.foreign.invokers.NativeInvoker;
-import jdk.internal.foreign.invokers.UpcallHandler;
-import jdk.internal.org.objectweb.asm.AnnotationVisitor;
-import jdk.internal.org.objectweb.asm.FieldVisitor;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.Type;
-
+import java.foreign.NativeMethodType;
+import java.foreign.layout.Function;
+import java.foreign.memory.Pointer;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -39,11 +35,24 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.foreign.Scope;
-import java.foreign.layout.Function;
-import java.foreign.memory.Pointer;
+import jdk.internal.foreign.abi.SystemABI;
+import jdk.internal.org.objectweb.asm.AnnotationVisitor;
+import jdk.internal.org.objectweb.asm.FieldVisitor;
+import jdk.internal.org.objectweb.asm.MethodVisitor;
+import jdk.internal.org.objectweb.asm.Type;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.*;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
+import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
+import static jdk.internal.org.objectweb.asm.Opcodes.GETFIELD;
+import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.POP2;
+import static jdk.internal.org.objectweb.asm.Opcodes.PUTFIELD;
+import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
 
 
 class CallbackImplGenerator extends BinderClassGenerator {
@@ -60,7 +69,7 @@ class CallbackImplGenerator extends BinderClassGenerator {
             PTR_ADDR = MethodHandles.lookup().findVirtual(Pointer.class, "addr",
                            MethodType.methodType(long.class));
             INVOKER_FACTORY = MethodHandles.lookup().findStatic(CallbackImplGenerator.class, "makeInvoker",
-                    MethodType.methodType(MethodHandle.class, Pointer.class, Function.class, MethodType.class, Method.class));
+                    MethodType.methodType(MethodHandle.class, Pointer.class, Function.class, Method.class));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -111,10 +120,9 @@ class CallbackImplGenerator extends BinderClassGenerator {
         mv.visitVarInsn(ALOAD, 0);
 
         Method method = Util.findFunctionalInterfaceMethod(interfaces[0]);
-        MethodType methodType = Util.methodTypeFor(method);
         Function function = Util.functionof(interfaces[0]);
 
-        MethodHandle factory = MethodHandles.insertArguments(INVOKER_FACTORY, 1, function, methodType, method);
+        MethodHandle factory = MethodHandles.insertArguments(INVOKER_FACTORY, 1, function, method);
         mv.visitLdcInsn(cw.makeConstantPoolPatch(factory));
         mv.visitTypeInsn(CHECKCAST, Type.getInternalName(MethodHandle.class));
 
@@ -167,36 +175,11 @@ class CallbackImplGenerator extends BinderClassGenerator {
     }
 
     /* Method handle code helpers */
-
-    static boolean isNativeStub(long addr) {
-        try {
-            return UpcallHandler.getUpcallHandler(addr) != null;
-        } catch (Throwable ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
-    static Object getCallbackObject(long addr) {
-        try {
-            return UpcallHandler.getUpcallHandler(addr).getCallbackObject();
-        } catch (Throwable ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
-    static void checkPointer(Pointer<?> ptr) throws Throwable {
-        Scope s = ptr.scope();
-        s.checkAlive();
-    }
-
-    static MethodHandle makeInvoker(Pointer<?> ptr, Function function, MethodType mt, Method meth) throws Throwable {
-        long addr = ptr.addr();
-        if (isNativeStub(addr)) {
-            MethodHandle mh = MethodHandles.publicLookup().unreflect(meth);
-            return mh.bindTo(getCallbackObject(addr));
-        } else {
-            return NativeInvoker.of(ptr.addr(), function, mt, meth).getBoundMethodHandle();
-        }
+    static MethodHandle makeInvoker(Pointer<?> ptr, Function function, Method meth) {
+        // Only native function pointer will get here
+        // Java upcall stub will be detected by CallbackImpl
+        return SystemABI.getInstance().downcallHandle(new SimpleSymbol(ptr, meth.getName()),
+                NativeMethodType.of(function, meth));
     }
 
     @Target(ElementType.TYPE)

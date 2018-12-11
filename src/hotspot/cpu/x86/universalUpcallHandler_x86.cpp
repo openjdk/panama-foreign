@@ -43,7 +43,7 @@ static struct {
     Klass* klass;
     Symbol* name;
     Symbol* sig;
-  } upcall_method;  // jdk.internal.foreign.UniversalUpcallHandler::invoke
+  } upcall_method;  // jdk.internal.foreign.abi.UniversalUpcallHandler::invoke
 } upcall_info;
 
 #include "classfile/symbolTable.hpp"
@@ -56,9 +56,9 @@ static void upcall_init(void) {
   TRAPS = Thread::current();
   ResourceMark rm;
 
-  const char* cname = "jdk/internal/foreign/invokers/UniversalUpcallHandler";
+  const char* cname = "jdk/internal/foreign/abi/UniversalUpcallHandler";
   const char* mname = "invoke";
-  const char* mdesc = "(Ljdk/internal/foreign/invokers/UniversalUpcallHandler;JJJJJJ)V";
+  const char* mdesc = "(Ljdk/internal/foreign/abi/UniversalUpcallHandler;JJJJJJ)V";
   Symbol* cname_sym = SymbolTable::lookup(cname, (int)strlen(cname), THREAD);
   Symbol* mname_sym = SymbolTable::lookup(mname, (int)strlen(mname), THREAD);
   Symbol* mdesc_sym = SymbolTable::lookup(mdesc, (int)strlen(mdesc), THREAD);

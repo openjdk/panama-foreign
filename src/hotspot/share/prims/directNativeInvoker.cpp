@@ -219,7 +219,7 @@ jdouble DNI_invokeNative_D_JJJJJ(JNIEnv *env, jobject _unused, jlong addr, jlong
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 #define LANG "Ljava/lang/"
 
-// These are the native methods on jdk.internal.foreign.invokers.DirectNativeInvoker.
+// These are the native methods on jdk.internal.foreign.abi.DirectNativeInvoker.
 static JNINativeMethod DNI_methods[] = {
   {CC "invokeNative_V_V", CC "(J)V", FN_PTR(DNI_invokeNative_V_V)},
   {CC "invokeNative_V_D", CC "(JD)V", FN_PTR(DNI_invokeNative_V_D)},
@@ -295,7 +295,7 @@ JVM_ENTRY(void, JVM_RegisterDirectNativeInvokerMethods(JNIEnv *env, jclass DNI_c
 
     int status = env->RegisterNatives(DNI_class, DNI_methods, sizeof(DNI_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.invokers.DirectNativeInvoker natives");
+              "register jdk.internal.foreign.abi.DirectNativeInvoker natives");
   }
 }
 JVM_END

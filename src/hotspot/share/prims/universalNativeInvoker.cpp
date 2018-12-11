@@ -68,7 +68,7 @@ JVM_END
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 #define LANG "Ljava/lang/"
 
-// These are the native methods on jdk.internal.foreign.invokers.UniversalNativeInvoker.
+// These are the native methods on jdk.internal.foreign.abi.UniversalNativeInvoker.
 static JNINativeMethod UNI_methods[] = {
   {CC "invokeNative",       CC "([J[J[JJ)V",           FN_PTR(UNI_invokeNative)}
 };
@@ -82,7 +82,7 @@ JVM_ENTRY(void, JVM_RegisterUniversalNativeInvokerMethods(JNIEnv *env, jclass UN
 
     int status = env->RegisterNatives(UNI_class, UNI_methods, sizeof(UNI_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.invokers.UniversalNativeInvoker natives");
+              "register jdk.internal.foreign.abi.UniversalNativeInvoker natives");
   }
 }
 JVM_END

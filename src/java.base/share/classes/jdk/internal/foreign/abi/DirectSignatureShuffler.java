@@ -21,15 +21,7 @@
  * questions.
  */
 
-package jdk.internal.foreign.invokers;
-
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.ArgumentBinding;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.StorageClass;
-import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.foreign.memory.CallbackImpl;
-import jdk.internal.foreign.memory.LayoutTypeImpl;
+package jdk.internal.foreign.abi;
 
 import java.foreign.layout.Function;
 import java.foreign.memory.Callback;
@@ -40,14 +32,16 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.IntFunction;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import jdk.internal.foreign.Util;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.foreign.memory.CallbackImpl;
+import jdk.internal.foreign.memory.LayoutTypeImpl;
 
 /**
  * This class implements the shuffling logic that is required to adapt a method handle modelling a Java method into the
@@ -55,7 +49,7 @@ import java.util.stream.Stream;
  * first we have to adapt incoming Java arguments into native values (or viceversa, in case of upcalls). Once that's done
  * a final permutation step is needed in order to push all the long arguments in front.
  */
-class DirectSignatureShuffler {
+public class DirectSignatureShuffler {
 
     private static final MethodHandle LONG_TO_BOOLEAN;
     private static final MethodHandle BOOLEAN_TO_LONG;
@@ -387,27 +381,35 @@ class DirectSignatureShuffler {
     // predicate: is fast path applicable?
 
     static boolean acceptDowncall(Function function, CallingSequence callingSequence) {
-        return accept(function, callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
+        return accept(function.argumentLayouts().size(), callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
     }
 
     static boolean acceptUpcall(Function function, CallingSequence callingSequence) {
-        return accept(function, callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
+        return accept(function.argumentLayouts().size(), callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
     }
 
-    private static boolean accept(Function function, CallingSequence callingSequence, ShuffleDirection direction) {
-        int arity = function.argumentLayouts().size();
+    public static boolean acceptDowncall(int argCount, CallingSequence callingSequence) {
+        return accept(argCount, callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
+    }
+
+    public static boolean acceptUpcall(int argCount, CallingSequence callingSequence) {
+        return accept(argCount, callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
+    }
+
+    private static boolean accept(int arity, CallingSequence callingSequence, ShuffleDirection direction) {
         if (arity > direction.maxArity) return false;
-        for (int i = 0 ; i < function.argumentLayouts().size() ; i++) {
+        for (int i = 0 ; i < arity; i++) {
             List<ArgumentBinding> argumentBindings = callingSequence.getArgumentBindings(i);
             if (argumentBindings.size() != 1 ||
                     !isDirectBinding(argumentBindings.get(0))) {
                 return false;
             }
         }
-        if (!function.returnLayout().isPresent()) {
+
+        List<ArgumentBinding> returnBindings = callingSequence.getReturnBindings();
+        if (returnBindings.isEmpty()) {
             return true;
         } else {
-            List<ArgumentBinding> returnBindings = callingSequence.getReturnBindings();
             return !callingSequence.returnsInMemory() &&
                     returnBindings.size() == 1 && isDirectBinding(returnBindings.get(0));
         }

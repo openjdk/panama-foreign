@@ -45,7 +45,7 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
     private final Reference reference;
     private final Layout layout;
 
-    private static long PTR_SIZE = SystemABI.getInstance().layoutFor(SystemABI.CType.Pointer).bitsSize();
+    private static long PTR_SIZE = SystemABI.getInstance().layoutOf(SystemABI.CType.Pointer).bitsSize();
 
     LayoutTypeImpl(Class<?> carrier, Layout layout, Reference reference) {
         this.carrier = carrier;
@@ -76,6 +76,7 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
         throw new IllegalStateException();
     }
 
+    @Override
     public Class<?> carrier() {
         return carrier;
     }

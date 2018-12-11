@@ -24,13 +24,21 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.abi.sysv.x64.SysVx64ABI;
-
-import java.foreign.layout.Function;
+import java.foreign.Library;
+import java.foreign.NativeMethodType;
 import java.foreign.layout.Layout;
+import java.lang.invoke.MethodHandle;
+import java.util.Collection;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 
+/**
+ * This class models a system application binary interface (ABI).
+ */
 public interface SystemABI {
-    // The enumeration of types defined as C standard with implementation dependent size
+    /**
+     * This enum represents the set of basic (C) types that should be supported
+     * by the system ABI.
+     */
     enum CType {
         Bool,
         Char,
@@ -51,28 +59,76 @@ public interface SystemABI {
     }
 
     /**
-     * The alignment requirement for a given type
-     * @param isVar indicate if the type is a standalone variable. This change how
-     * array is aligned. for example.
+     * Query the ABI-specific layout of given basic type. Information such as size
+     * and alignment can be obtained by inspecting the result layout (including its layout annotations).
      */
-    long alignment(Layout t, boolean isVar);
+    Layout layoutOf(CType type);
 
     /**
-     * The size of a given type considering alignment requirement
+     * Obtain a method handle which can be used to call a given native function,
+     * given default calling covention.
+     *
+     * This is equivalent to:
+     * downcallHandle(defaultCallingConvention(), addr, nmt, name)
      */
-    long sizeof(Layout t);
+    default MethodHandle downcallHandle(Library.Symbol symbol, java.foreign.NativeMethodType nmt) {
+        return downcallHandle(defaultCallingConvention(), symbol, nmt);
+    }
 
     /**
-     * Align the specified type from a given address
-     * @return The address the data should be at based on alignment requirement
+     * Obtain a method handle which can be used to call a given native function,
+     * given selected calling convention.
      */
-    long align(Layout t, boolean isVar, long addr);
+    MethodHandle downcallHandle(CallingConvention cc, Library.Symbol symbol, java.foreign.NativeMethodType nmt);
 
-    CallingSequence arrangeCall(Function f);
+    /**
+     * Obtain the pointer to a native stub (using default calling convention) which
+     * can be used to upcall into a given method handle.
+     *
+     * This is equivalent to:
+     * upcallStub(defaultCallingConvention(), receiver, ret, args)
+     */
+    default Library.Symbol upcallStub(MethodHandle target, java.foreign.NativeMethodType nmt) {
+        return upcallStub(defaultCallingConvention(), target, nmt);
+    }
 
-    Layout layoutFor(CType type);
+    /**
+     * Obtain the pointer to a native stub (using selected calling convention) which
+     * can be used to upcall into a given method handle.
+     */
+    Library.Symbol upcallStub(CallingConvention cc, MethodHandle target, NativeMethodType nmt);
+
+    /**
+     * Release the native stub.
+     */
+    void freeUpcallStub(Library.Symbol stub);
+
+    /**
+     * Query standard calling convention used by this platform ABI.
+     */
+    CallingConvention defaultCallingConvention();
+
+    /**
+     * Obtain given calling convention by name (if available).
+     */
+    CallingConvention namedCallingConvention(String name) throws IllegalArgumentException;
+
+    /**
+     * Query list of supported calling conventions.
+     */
+    Collection<CallingConvention> callingConventions();
+
+    /**
+     * A calling convention specifies how arguments and return types are communicated
+     * from caller to callee.
+     */
+    interface CallingConvention {
+        String name();
+    }
 
     static SystemABI getInstance() {
+        // FIXME: Either re-introduce system specific class like Host.java we had
+        // or code up factory method based on system properties.
         return SysVx64ABI.getInstance();
     }
 }

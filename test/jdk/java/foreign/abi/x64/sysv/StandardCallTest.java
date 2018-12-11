@@ -23,32 +23,35 @@
 
 /*
  * @test
- * @modules java.base/jdk.internal.foreign.abi java.base/jdk.internal.foreign.memory java.base/jdk.internal.foreign.abi.sysv.x64
+ * @modules java.base/jdk.internal.foreign.abi java.base/jdk.internal.foreign.memory java.base/jdk.internal.foreign.abi.x64.sysv
  */
 
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.CallingSequenceBuilder;
-import jdk.internal.foreign.abi.StorageClass;
-import jdk.internal.foreign.abi.sysv.x64.CallingSequenceBuilderImpl;
-import jdk.internal.foreign.abi.sysv.x64.Constants;
-import jdk.internal.foreign.memory.Types;
-
+import java.foreign.NativeTypes;
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
+import java.foreign.memory.LayoutType;
+import java.util.ArrayList;
+import java.util.List;
+import jdk.internal.foreign.abi.CallingSequence;
+import jdk.internal.foreign.abi.StorageClass;
+import jdk.internal.foreign.abi.x64.sysv.Constants;
+import jdk.internal.foreign.abi.x64.sysv.StandardCall;
+import jdk.internal.foreign.memory.Types;
 
-public class CallingSequenceBuilderTest {
-    public CallingSequenceBuilderTest() {
+public class StandardCallTest {
+    public StandardCallTest() {
     }
 
     public void testInteger() {
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
+        StandardCall sc = new StandardCall();
 
         // Fill registers and spill over with 2 args on stack
+        LayoutType<?> args[] = new LayoutType<?>[Constants.MAX_INTEGER_ARGUMENT_REGISTERS + 2];
         for (int i = 0; i < Constants.MAX_INTEGER_ARGUMENT_REGISTERS + 2; i++) {
-            builder.addArgument(Types.INT64, "l" + i);
+            args[i] = NativeTypes.INT64;
         }
 
-        CallingSequence recipe = builder.build();
+        CallingSequence recipe = sc.arrangeCall(NativeTypes.VOID, args);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(Constants.MAX_INTEGER_ARGUMENT_REGISTERS, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -56,25 +59,27 @@ public class CallingSequenceBuilderTest {
         assertEquals(2, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         for (int i = 0; i < Constants.MAX_INTEGER_ARGUMENT_REGISTERS; i++) {
-            assertEquals(builder.getArguments().get(i), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(i).getMember());
+            assertEquals(args[i].layout(), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(i).getMember().getType());
             assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(i).getOffset());
         }
 
         for (int i = 0; i < 2; i++) {
-            assertEquals(builder.getArguments().get(Constants.MAX_INTEGER_ARGUMENT_REGISTERS + i), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getMember());
+            assertEquals(args[Constants.MAX_INTEGER_ARGUMENT_REGISTERS + i].layout(),
+                    recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getMember().getType());
             assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getOffset());
         }
     }
 
     public void testSse() {
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
+        StandardCall sc = new StandardCall();
 
         // Fill registers and spill over with 2 args on stack
+        LayoutType<?> args[] = new LayoutType<?>[Constants.MAX_VECTOR_ARGUMENT_REGISTERS + 2];
         for (int i = 0; i < Constants.MAX_VECTOR_ARGUMENT_REGISTERS + 2; i++) {
-            builder.addArgument(Types.FLOAT, "f" + i);
+            args[i] = NativeTypes.FLOAT;
         }
 
-        CallingSequence recipe = builder.build();
+        CallingSequence recipe = sc.arrangeCall(null, args);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -82,30 +87,32 @@ public class CallingSequenceBuilderTest {
         assertEquals(2, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         for (int i = 0; i < Constants.MAX_VECTOR_ARGUMENT_REGISTERS; i++) {
-            assertEquals(builder.getArguments().get(i), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(i).getMember());
+            assertEquals(args[i].layout(), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(i).getMember().getType());
             assertEquals(0, recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(i).getOffset());
         }
 
         for (int i = 0; i < 2; i++) {
-            assertEquals(builder.getArguments().get(Constants.MAX_VECTOR_ARGUMENT_REGISTERS + i), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getMember());
+            assertEquals(args[Constants.MAX_VECTOR_ARGUMENT_REGISTERS + i].layout(),
+                    recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getMember().getType());
             assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getOffset());
         }
     }
 
      public void testMixed() {
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
+        StandardCall sc = new StandardCall();
 
         // Fill GP registers + 2 on stack
+        List<LayoutType<?>> args = new ArrayList<>();
         for (int i = 0; i < Constants.MAX_INTEGER_ARGUMENT_REGISTERS + 2; i++) {
-            builder.addArgument(Types.INT64, "l" + i);
+            args.add(NativeTypes.INT64);
         }
 
         // Fill SSE registers + 2 on stack
         for (int i = 0; i < Constants.MAX_VECTOR_ARGUMENT_REGISTERS + 2; i++) {
-            builder.addArgument(Types.FLOAT, "f" + i);
+            args.add(NativeTypes.FLOAT);
         }
 
-        CallingSequence recipe = builder.build();
+        CallingSequence recipe = sc.arrangeCall(null, args.toArray(LayoutType<?>[]::new));
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(Constants.MAX_INTEGER_ARGUMENT_REGISTERS, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -114,22 +121,22 @@ public class CallingSequenceBuilderTest {
 
         int arg = 0;
         for (int i = 0; i < Constants.MAX_INTEGER_ARGUMENT_REGISTERS; i++, arg++) {
-            assertEquals(builder.getArguments().get(arg), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(i).getMember());
+            assertEquals(args.get(arg).layout(), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(i).getMember().getType());
             assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(i).getOffset());
         }
 
         for (int i = 0; i < 2; i++, arg++) {
-            assertEquals(builder.getArguments().get(arg), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getMember());
+            assertEquals(args.get(arg).layout(), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getMember().getType());
             assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getOffset());
         }
 
         for (int i = 0; i < Constants.MAX_VECTOR_ARGUMENT_REGISTERS; i++, arg++) {
-            assertEquals(builder.getArguments().get(arg), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(i).getMember());
+            assertEquals(args.get(arg).layout(), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(i).getMember().getType());
             assertEquals(0, recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(i).getOffset());
         }
 
         for (int i = 2; i < 4; i++, arg++) {
-            assertEquals(builder.getArguments().get(arg), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getMember());
+            assertEquals(args.get(arg).layout(), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getMember().getType());
             assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(i).getOffset());
         }
     }
@@ -150,23 +157,12 @@ public class CallingSequenceBuilderTest {
      * m(s);
      */
     public void testAbiExample() {
-        Group structparm = Group.struct(Types.INT32, Types.INT32, Types.DOUBLE);
+        Layout[] args = { Types.INT32, Types.INT32, Group.struct(Types.INT32, Types.INT32, Types.DOUBLE),
+                Types.INT32, Types.INT32, Types.LONG_DOUBLE, Types.DOUBLE,
+                Types.DOUBLE, Types.INT32, Types.INT32, Types.INT32 };
 
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
-
-        CallingSequence recipe = builder
-                .addArgument(Types.INT32, "e")
-                .addArgument(Types.INT32, "f")
-                .addArgument(structparm, "s")
-                .addArgument(Types.INT32, "g")
-                .addArgument(Types.INT32, "h")
-                .addArgument(Types.LONG_DOUBLE, "ld")
-                .addArgument(Types.DOUBLE, "m")
-                .addArgument(Types.DOUBLE, "n")
-                .addArgument(Types.INT32, "i")
-                .addArgument(Types.INT32, "j")
-                .addArgument(Types.INT32, "k")
-                .build();
+        StandardCall sc = new StandardCall();
+        CallingSequence recipe = sc.arrangeCall(null, args);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(6, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -174,53 +170,53 @@ public class CallingSequenceBuilderTest {
         assertEquals(4, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         // e
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(args[0], recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getOffset());
 
         // f
-        assertEquals(builder.getArguments().get(1), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getMember());
+        assertEquals(args[1], recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getOffset());
 
         // s.a & s.b
-        assertEquals(builder.getArguments().get(2), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(2).getMember());
+        assertEquals(args[2], recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(2).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(2).getOffset());
 
         // s.d
-        assertEquals(builder.getArguments().get(2), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(args[2], recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(8, recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(0).getOffset());
 
         // g
-        assertEquals(builder.getArguments().get(3), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(3).getMember());
+        assertEquals(args[3], recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(3).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(3).getOffset());
 
         // h
-        assertEquals(builder.getArguments().get(4), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(4).getMember());
+        assertEquals(args[4], recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(4).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(4).getOffset());
 
         // ld
-        assertEquals(builder.getArguments().get(5), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getMember());
+        assertEquals(args[5], recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getOffset());
-        assertEquals(builder.getArguments().get(5), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getMember());
+        assertEquals(args[5], recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getMember().getType());
         assertEquals(8, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getOffset());
 
         // m
-        assertEquals(builder.getArguments().get(6), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(1).getMember());
+        assertEquals(args[6], recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(1).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(1).getOffset());
 
         // n
-        assertEquals(builder.getArguments().get(7), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(2).getMember());
+        assertEquals(args[7], recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(2).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(2).getOffset());
 
         // i
-        assertEquals(builder.getArguments().get(8), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(5).getMember());
+        assertEquals(args[8], recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(5).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(5).getOffset());
 
         // j
-        assertEquals(builder.getArguments().get(9), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(2).getMember());
+        assertEquals(args[9], recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(2).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(2).getOffset());
 
         // k
-        assertEquals(builder.getArguments().get(10), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(3).getMember());
+        assertEquals(args[10], recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(3).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(3).getOffset());
     }
 
@@ -237,15 +233,14 @@ public class CallingSequenceBuilderTest {
      * func(a, m, u, b, ld, y, n);
      */
     public void testAbiExampleVarargs() {
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
-
-        CallingSequence recipe = builder
-                .addArgument(Types.INT, "a")
-                .addArgument(Types.DOUBLE, "m")
-                .addArgument(Types.INT, null)
-                .addArgument(Types.LONG_DOUBLE, null)
-                .addArgument(Types.DOUBLE, null)
-                .build();
+        Layout[] args = {
+                Types.INT,
+                Types.DOUBLE,
+                Types.INT,
+                Types.LONG_DOUBLE,
+                Types.DOUBLE };
+        StandardCall sc = new StandardCall();
+        CallingSequence recipe = sc.arrangeCall(null, args);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(2, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -254,25 +249,25 @@ public class CallingSequenceBuilderTest {
 
 
         // a
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(args[0], recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getOffset());
 
         // m
-        assertEquals(builder.getArguments().get(1), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(args[1], recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(0).getOffset());
 
         // b
-        assertEquals(builder.getArguments().get(2), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getMember());
+        assertEquals(args[2], recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getOffset());
 
         // ld
-        assertEquals(builder.getArguments().get(3), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getMember());
+        assertEquals(args[3], recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getOffset());
-        assertEquals(builder.getArguments().get(3), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getMember());
+        assertEquals(args[3], recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getMember().getType());
         assertEquals(8, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getOffset());
 
         // n
-        assertEquals(builder.getArguments().get(4), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(1).getMember());
+        assertEquals(args[4], recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(1).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(1).getOffset());
     }
 
@@ -289,11 +284,8 @@ public class CallingSequenceBuilderTest {
     public void testStruct8() {
         Group structparm = Group.struct(Types.UNSIGNED.INT64);
 
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
-
-        CallingSequence recipe = builder
-                .addArgument(structparm, "s")
-                .build();
+        StandardCall sc = new StandardCall();
+        CallingSequence recipe = sc.arrangeCall(null, structparm);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(1, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -301,7 +293,7 @@ public class CallingSequenceBuilderTest {
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         // s.u0
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getOffset());
     }
 
@@ -317,11 +309,8 @@ public class CallingSequenceBuilderTest {
     public void testStruct16() {
         Group structparm = Group.struct(Types.UNSIGNED.INT64, Types.UNSIGNED.INT64);
 
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
-
-        CallingSequence recipe = builder
-                .addArgument(structparm, "s")
-                .build();
+        StandardCall sc = new StandardCall();
+        CallingSequence recipe = sc.arrangeCall(null, structparm);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(2, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -329,11 +318,11 @@ public class CallingSequenceBuilderTest {
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         // s.u0
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getOffset());
 
         // s.u1
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getMember().getType());
         assertEquals(8, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getOffset());
     }
 
@@ -349,11 +338,8 @@ public class CallingSequenceBuilderTest {
     public void testStruct24() {
         Group structparm = Group.struct(Types.UNSIGNED.INT64, Types.UNSIGNED.INT64, Types.UNSIGNED.INT64);
 
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
-
-        CallingSequence recipe = builder
-                .addArgument(structparm, "s")
-                .build();
+        StandardCall sc = new StandardCall();
+        CallingSequence recipe = sc.arrangeCall(null, structparm);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -361,15 +347,15 @@ public class CallingSequenceBuilderTest {
         assertEquals(3, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         // s.u0
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getOffset());
 
         // s.u1
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getMember().getType());
         assertEquals(8, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getOffset());
 
         // s.u2
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(2).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(2).getMember().getType());
         assertEquals(16, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(2).getOffset());
     }
 
@@ -385,11 +371,8 @@ public class CallingSequenceBuilderTest {
     public void testStruct32() {
         Layout structparm = Layout.of("[u64u64u64u64]");
 
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
-
-        CallingSequence recipe = builder
-                .addArgument(structparm, "s")
-                .build();
+        StandardCall sc = new StandardCall();
+        CallingSequence recipe = sc.arrangeCall(null, structparm);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -397,19 +380,19 @@ public class CallingSequenceBuilderTest {
         assertEquals(4, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         // s.u0
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(0).getOffset());
 
         // s.u1
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getMember().getType());
         assertEquals(8, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(1).getOffset());
 
         // s.u2
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(2).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(2).getMember().getType());
         assertEquals(16, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(2).getOffset());
 
         // s.u3
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(3).getMember());
+        assertEquals(structparm, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(3).getMember().getType());
         assertEquals(24, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).get(3).getOffset());
     }
 
@@ -422,11 +405,8 @@ public class CallingSequenceBuilderTest {
      * m(f_impl);
      */
     public void testFunctionType() {
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
-
-        CallingSequence recipe = builder
-            .addArgument(Layout.of("u64:()v"), "f")
-                .build();
+        Layout arg = Layout.of("u64:()v");
+        CallingSequence recipe = new StandardCall().arrangeCall(null, arg);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(1, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -434,7 +414,7 @@ public class CallingSequenceBuilderTest {
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         // s.u0
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(arg, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getOffset());
     }
 
@@ -442,12 +422,8 @@ public class CallingSequenceBuilderTest {
      * void f(int64_t l0, float f0, __m256 m0);
      */
     public void testMixedArgs() {
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
-
-        CallingSequence recipe = builder
-                .addArgument(Types.INT64, "l0")
-                .addArgument(Types.FLOAT, "f0")
-                .build();
+        CallingSequence recipe = new StandardCall().arrangeCall(null,
+                Types.INT64, Types.FLOAT);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(1, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -455,11 +431,11 @@ public class CallingSequenceBuilderTest {
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         // l0
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(Types.INT64, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getOffset());
 
         // f0
-        assertEquals(builder.getArguments().get(1), recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(Types.FLOAT, recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).get(0).getOffset());
     }
 
@@ -472,11 +448,9 @@ public class CallingSequenceBuilderTest {
      * void f(struct s s1);
      */
     public void testIntegerStruct() {
-        CallingSequenceBuilder builder = new CallingSequenceBuilder(CallingSequenceBuilderImpl.class);
+        Layout arg = Layout.of("[i64i64]");
 
-        CallingSequence recipe = builder
-                .addArgument(Layout.of("[i64i64]"), "s1")
-                .build();
+        CallingSequence recipe = new StandardCall().arrangeCall(null, arg);
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(2, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -484,11 +458,11 @@ public class CallingSequenceBuilderTest {
         assertEquals(0, recipe.getBindings(StorageClass.STACK_ARGUMENT_SLOT).size());
 
         // s.l0
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember());
+        assertEquals(arg, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getMember().getType());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(0).getOffset());
 
         // s.l1
-        assertEquals(builder.getArguments().get(0), recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getMember());
+        assertEquals(arg, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getMember().getType());
         assertEquals(8, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).get(1).getOffset());
     }
 
@@ -511,7 +485,7 @@ public class CallingSequenceBuilderTest {
     }
 
     public static void main(String[] args) {
-        CallingSequenceBuilderTest t = new CallingSequenceBuilderTest();
+        StandardCallTest t = new StandardCallTest();
 
         t.testInteger();
         t.testSse();

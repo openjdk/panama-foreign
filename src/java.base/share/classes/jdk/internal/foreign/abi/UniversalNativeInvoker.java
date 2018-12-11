@@ -20,28 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.invokers;
+package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.ScopeImpl;
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.ArgumentBinding;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.ShuffleRecipe;
-import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.foreign.memory.LayoutTypeImpl;
-import jdk.internal.misc.Unsafe;
-
+import java.foreign.Library;
+import java.foreign.NativeTypes;
+import java.foreign.Scope;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
+import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.foreign.*;
-import java.foreign.layout.Function;
-import java.foreign.layout.Layout;
-import java.foreign.memory.*;
-import java.foreign.memory.Pointer;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.List;
+import jdk.internal.foreign.ScopeImpl;
+import jdk.internal.foreign.Util;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.foreign.memory.LayoutTypeImpl;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
@@ -50,7 +44,7 @@ import static sun.security.action.GetPropertyAction.privilegedGetProperty;
  * an array of longs together with a call 'recipe', which is used to move the arguments in the right places as
  * expected by the system ABI.
  */
-class UniversalNativeInvoker extends NativeInvoker {
+public class UniversalNativeInvoker {
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.foreign.NativeInvoker.DEBUG"));
 
@@ -71,50 +65,34 @@ class UniversalNativeInvoker extends NativeInvoker {
     private final ShuffleRecipe shuffleRecipe;
     private final LayoutType<?> returnLayoutType;
     private final LayoutType<?>[] argLayoutTypes;
+    private final CallingSequence callingSequence;
+    private final long addr;
+    private final String methodName;
 
-    UniversalNativeInvoker(long addr, CallingSequence callingSequence, Function function, MethodType methodType, Method method) {
-        this(addr, callingSequence, function, methodType, method, method.getGenericParameterTypes());
-    }
-
-    UniversalNativeInvoker(long addr, CallingSequence callingSequence, Function function, MethodType methodType, Method method, Type[] paramTypes) {
-        super(addr, callingSequence, function, methodType, method);
+    private UniversalNativeInvoker(long addr, String methodName, CallingSequence callingSequence, LayoutType<?> ret, LayoutType<?>... args) {
+        this.addr = addr;
+        this.methodName = methodName;
+        this.callingSequence = callingSequence;
+        this.returnLayoutType = ret;
+        this.argLayoutTypes = args;
         this.shuffleRecipe = ShuffleRecipe.make(callingSequence);
-        if (function.returnLayout().isPresent()) {
-            returnLayoutType = Util.makeType(method.getGenericReturnType(), function.returnLayout().get());
-        } else {
-            returnLayoutType = null;
-        }
-        List<Layout> args = function.argumentLayouts();
-        argLayoutTypes = new LayoutType<?>[args.size()];
-        for (int i = 0 ; i < args.size() ; i++) {
-            Type carrier = paramTypes[i];
-            argLayoutTypes[i] = Util.makeType(carrier, args.get(i));
-        }
     }
 
-    public MethodHandle getBoundMethodHandle() {
-        return INVOKE_MH.bindTo(this).asCollector(Object[].class, methodType.parameterCount())
-                .asType(methodType);
-    }
+    public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, LayoutType<?> ret, LayoutType<?>... args) {
+        try {
 
-    private void dumpArgs(String debugMethodString, boolean isVarArgs, Object[] args) {
-        System.err.println("invoking method " + debugMethodString);
-
-        int nNamedArgs = args.length - (isVarArgs ? 1 : 0);
-        for (int i = 0; i < nNamedArgs; i++) {
-            System.err.println("    named arg: " + args[i]);
-        }
-
-        if (isVarArgs) {
-            for (Object o : (Object[]) args[args.length - 1]) {
-                System.err.println("  unnamed args: " + o);
-            }
+            UniversalNativeInvoker invoker = new UniversalNativeInvoker(
+                    symbol.getAddress().addr(), symbol.getName(), callingSequence, ret, args);
+            return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, args.length)
+                    .asType(Util.methodType(ret, args));
+        } catch (IllegalAccessException iae) {
+            throw new IllegalStateException(iae);
         }
     }
 
     Object invoke(Object[] args) throws Throwable {
 
-        boolean isVoid = methodType.returnType() == void.class;
+        boolean isVoid = returnLayoutType == null || returnLayoutType.carrier() == void.class;
         int nValues = shuffleRecipe.getNoofArgumentPulls();
         long[] values = new long[nValues];
         Pointer<Long> argsPtr = nValues > 0 ?
@@ -143,7 +121,7 @@ class UniversalNativeInvoker extends NativeInvoker {
         }
 
         if (DEBUG) {
-            System.err.println("Invoking method " + method.getName() + " with " + values.length + " argument values");
+            System.err.println("Invoking method " + methodName + " with " + values.length + " argument values");
             for (int i = 0; i < values.length; i++) {
                 System.err.println("value[" + i + "] = 0x" + Long.toHexString(values[i]));
             }
@@ -152,7 +130,7 @@ class UniversalNativeInvoker extends NativeInvoker {
         INVOKE_NATIVE_MH.invokeExact(values, returnValues, shuffleRecipe.getRecipe(), addr);
 
         if (DEBUG) {
-            System.err.println("Returned from method " + method.getName() + " with " + returnValues.length + " return values");
+            System.err.println("Returned from method " + methodName + " with " + returnValues.length + " return values");
             System.err.println("structPtr = 0x" + Long.toHexString(retPtr.addr()));
             for (int i = 0; i < returnValues.length; i++) {
                 System.err.println("returnValues[" + i + "] = 0x" + Long.toHexString(returnValues[i]));

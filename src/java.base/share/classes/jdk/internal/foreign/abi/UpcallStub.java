@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -20,18 +22,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package jdk.internal.foreign.abi;
 
-import java.util.ArrayList;
+import java.foreign.Library;
+import java.lang.invoke.MethodHandle;
 
-public abstract class AbstractCallingSequenceBuilderImpl {
-    protected final Argument returned;
-    protected final ArrayList<Argument> arguments;
-
-    protected AbstractCallingSequenceBuilderImpl(Argument returned, ArrayList<Argument> arguments) {
-        this.returned = returned;
-        this.arguments = arguments;
-    }
-
-    abstract public CallingSequence build();
+public interface UpcallStub extends Library.Symbol {
+    MethodHandle methodHandle();
 }

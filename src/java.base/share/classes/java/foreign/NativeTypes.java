@@ -86,41 +86,41 @@ public final class NativeTypes {
      * The {@code float} type.
      */
     public static LayoutType<Float> FLOAT = LayoutType.ofFloat(
-            ABI.layoutFor(SystemABI.CType.Float));
+            ABI.layoutOf(SystemABI.CType.Float));
 
     /**
      * The {@code double} type.
      */
     public static LayoutType<Double> DOUBLE = LayoutType.ofDouble(
-            ABI.layoutFor(SystemABI.CType.Double));
+            ABI.layoutOf(SystemABI.CType.Double));
 
     /**
      * The {@code long double} type.
      */
     public static LayoutType<Double> LONG_DOUBLE = LayoutType.ofDouble(
-            ABI.layoutFor(CType.LongDouble));
+            ABI.layoutOf(CType.LongDouble));
 
     /**
      * The {@code int} type.
      */
     public static LayoutType<Integer> INT = LayoutType.ofInt(
-            ABI.layoutFor(SystemABI.CType.Int));
+            ABI.layoutOf(SystemABI.CType.Int));
 
     /**
      * The {@code unsigned} type.
      */
     public static LayoutType<Integer> UINT = LayoutType.ofInt(
-            ABI.layoutFor(SystemABI.CType.UnsignedInt));
+            ABI.layoutOf(SystemABI.CType.UnsignedInt));
 
     /**
      * The {@code long} type.
      */
     public static LayoutType<Long> LONG = LayoutType.ofLong(
-            ABI.layoutFor(SystemABI.CType.Long));
+            ABI.layoutOf(SystemABI.CType.Long));
 
     /**
      * The {@code long long} type.
      */
     public static LayoutType<Long> LONGLONG = LayoutType.ofLong(
-            ABI.layoutFor(SystemABI.CType.LongLong));
+            ABI.layoutOf(SystemABI.CType.LongLong));
 }

@@ -25,7 +25,7 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 
-JVM_ENTRY(void, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
+JVM_ENTRY(static void, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
   //acquire code cache lock
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
@@ -38,29 +38,29 @@ JVM_ENTRY(void, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
   CodeCache::free(cb);
 JVM_END
 
-JVM_ENTRY(jobject, UH_GetUpcallHandler(JNIEnv *env, jobject _unused, jlong addr))
+JVM_ENTRY(static jobject, UH_GetUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
   //acquire code cache lock
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
   CodeBlob* cb = CodeCache::find_blob((char*)addr);
   if (cb != NULL) {
-      //free global JNI handle
-      jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
-      return *rec_ptr;
+    //free global JNI handle
+    jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
+    return *rec_ptr;
   } else {
-      return NULL;
+    return NULL;
   }
-JVM_END
+ JVM_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 #define LANG "Ljava/lang/"
-#define UPCALL "Ljdk/internal/foreign/invokers/UpcallHandler;"
+#define UPCALL "Ljdk/internal/foreign/abi/UpcallStub;"
 
 // These are the native methods on jdk.internal.foreign.NativeInvoker.
 static JNINativeMethod UH_methods[] = {
   {CC "freeUpcallStub",     CC "(J)V",                FN_PTR(UH_FreeUpcallStub)},
-  {CC "getUpcallHandler",  CC "(J)" UPCALL,   FN_PTR(UH_GetUpcallHandler)},
+  {CC "getUpcallStub",  CC "(J)" UPCALL,   FN_PTR(UH_GetUpcallStub)},
 };
 
 /**
@@ -72,7 +72,7 @@ JVM_ENTRY(void, JVM_RegisterUpcallHandlerMethods(JNIEnv *env, jclass UH_class)) 
 
     int status = env->RegisterNatives(UH_class, UH_methods, sizeof(UH_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.invoker.UpcallHandler natives");
+              "register jdk.internal.foreign.abi.x64.sysv.SysVx64ABI natives");
   }
 }
 JVM_END
