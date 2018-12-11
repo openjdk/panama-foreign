@@ -22,23 +22,29 @@
  */
 package jdk.internal.foreign;
 
-import jdk.internal.foreign.ScopeImpl.NativeScope;
-import jdk.internal.foreign.memory.*;
-import jdk.internal.misc.Unsafe;
-
-import java.foreign.Scope;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.*;
 import java.foreign.NativeTypes;
+import java.foreign.Scope;
+import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeStruct;
 import java.foreign.layout.Address;
 import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Sequence;
-import java.foreign.annotations.NativeCallback;
-import java.foreign.annotations.NativeStruct;
-import java.foreign.memory.*;
 import java.foreign.memory.Array;
+import java.foreign.memory.Callback;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
+import java.foreign.memory.Struct;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
@@ -47,6 +53,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
+import jdk.internal.foreign.ScopeImpl.NativeScope;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.foreign.memory.DescriptorParser;
+import jdk.internal.foreign.memory.LayoutTypeImpl;
+import jdk.internal.foreign.memory.References;
+import jdk.internal.foreign.memory.Types;
+import jdk.internal.misc.Unsafe;
 
 public final class Util {
 
@@ -180,6 +193,8 @@ public final class Util {
             methodOpt = Stream.of(c.getDeclaredMethods())
                 .filter(m -> (m.getModifiers() & (Modifier.ABSTRACT | Modifier.PUBLIC)) != 0)
                 .findFirst();
+        } else {
+            throw new IllegalArgumentException("Class is not a @NativeCallback: " + c.getName());
         }
         return methodOpt.orElseThrow(IllegalStateException::new);
     }
@@ -254,7 +269,11 @@ public final class Util {
                 return NativeTypes.VOID.array();
             }
         } else if (isCStruct(erasure(carrier))) {
-            return LayoutType.ofStruct((Class) carrier);
+            LayoutType lt = LayoutType.ofStruct((Class) carrier);
+            if (lt.layout().isPartial()) {
+                lt = LayoutTypeImpl.of((Class) carrier, layout, References.ofStruct);
+            }
+            return lt;
         } else if (Callback.class.isAssignableFrom(erasure(carrier))) {
             if (carrier instanceof ParameterizedType) {
                 ParameterizedType pt = (ParameterizedType) carrier;
@@ -335,7 +354,8 @@ public final class Util {
     }
 
     public static Pointer<?> getSyntheticCallbackAddress(Object o) {
-        return (Pointer<?>)UNSAFE.getReference(o, 0L);
+        // First field
+        return (Pointer<?>) UNSAFE.getReference(o, 0L);
     }
 
     public static <Z> Z withOffHeapAddress(Pointer<?> p, LongFunction<Z> longFunction) {
@@ -356,5 +376,30 @@ public final class Util {
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+    public static MethodType methodType(LayoutType<?> ret, LayoutType<?>... args) {
+        Class<?> r = (ret == null || ret == NativeTypes.VOID) ? void.class : ret.carrier();
+        Class<?>[] a = new Class<?>[args.length];
+        for (int i = 0; i < args.length; i++) {
+            a[i] = args[i].carrier();
+        }
+        return MethodType.methodType(r, a);
+    }
+
+    public static MethodHandle getCallbackMH(Method m) {
+        try {
+            MethodHandle mh = MethodHandles.publicLookup().unreflect(m);
+            Util.checkNoArrays(mh.type());
+            return mh;
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    public static Function getResolvedFunction(Class<?> nativeCallback, Method m) {
+        LayoutResolver resolver = LayoutResolver.get(nativeCallback);
+        resolver.scanMethod(m);
+        return resolver.resolve(Util.functionof(nativeCallback));
     }
 }

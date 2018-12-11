@@ -21,55 +21,34 @@
  * questions.
  */
 
-package jdk.internal.foreign.invokers;
+package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.vm.annotation.Stable;
-
-import java.foreign.NativeTypes;
-import java.foreign.layout.Function;
+import java.foreign.Library;
 import java.foreign.memory.LayoutType;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Method;
-import java.util.List;
+import jdk.internal.foreign.Util;
 
 /**
  *  This class implements native call invocation through specialized adapters. A specialized adapter is a native method
  *  which takes a number N of long arguments followed by a number M of double arguments; possible return types for the
  *  adapter are either long, double or void.
  */
-class DirectNativeInvoker extends NativeInvoker {
-
-    @Stable
-    private final MethodHandle boundMethodHandle;
-
-    public MethodHandle getBoundMethodHandle() {
-        return boundMethodHandle;
-    }
-
-    DirectNativeInvoker(long addr, CallingSequence callingSequence, Function function, MethodType methodType, Method method) {
-        super(addr, callingSequence, function, methodType, method);
+public class DirectNativeInvoker {
+    public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, LayoutType<?> ret, LayoutType<?>... args) {
         DirectSignatureShuffler shuffler =
-                DirectSignatureShuffler.javaToNativeShuffler(callingSequence, methodType, this::layoutFor);
+                DirectSignatureShuffler.javaToNativeShuffler(callingSequence, Util.methodType(ret, args),
+                        pos -> (pos == -1L) ? ret : args[pos]);
         MethodHandle mh;
         try {
             mh = MethodHandles.lookup().findStatic(DirectNativeInvoker.class,
                     "invokeNative_" + shuffler.nativeSigSuffix(),
                     shuffler.nativeMethodType().insertParameterTypes(0, long.class));
-            mh = MethodHandles.insertArguments(mh, 0, addr);
+            mh = MethodHandles.insertArguments(mh, 0, symbol.getAddress().addr());
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
-        boundMethodHandle = shuffler.adapt(mh);
-    }
-
-    private LayoutType<?> layoutFor(int pos) {
-        return pos == -1 ?
-                function.returnLayout().<LayoutType<?>>map(l -> Util.makeType(method.getGenericReturnType(), l)).orElse(NativeTypes.VOID) :
-                Util.makeType(method.getGenericParameterTypes()[pos], function.argumentLayouts().get(pos));
+        return shuffler.adapt(mh);
     }
 
     //natives

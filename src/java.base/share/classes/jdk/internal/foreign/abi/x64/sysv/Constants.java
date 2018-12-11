@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi.sysv.x64;
+package jdk.internal.foreign.abi.x64.sysv;
 
 import jdk.internal.foreign.abi.StorageClass;
 

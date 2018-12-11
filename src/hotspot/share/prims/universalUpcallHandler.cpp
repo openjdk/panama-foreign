@@ -26,7 +26,7 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 
-JVM_ENTRY(static jlong, UUH_AllocateUpcallStub(JNIEnv *env, jobject _unused, jobject rec))
+JVM_ENTRY(jlong, UUH_AllocateUpcallStub(JNIEnv *env, jobject rec))
   Handle receiver(THREAD, JNIHandles::resolve(rec));
   return (jlong)UniversalUpcallHandler::generate_upcall_stub(receiver);
 JVM_END
@@ -34,11 +34,10 @@ JVM_END
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 #define LANG "Ljava/lang/"
-#define UPCALL "Ljdk/internal/foreign/invokers/UpcallHandler;"
 
-// These are the native methods on jdk.internal.foreign.invokers.UniversalUpcallHandler.
+// These are the native methods on jdk.internal.foreign.abi.UniversalUpcallHandler.
 static JNINativeMethod UUH_methods[] = {
-  {CC "allocateUpcallStub", CC "(" UPCALL ")J",                 FN_PTR(UUH_AllocateUpcallStub)},
+  {CC "allocateUpcallStub", CC "()J",                 FN_PTR(UUH_AllocateUpcallStub)},
 };
 
 /**
@@ -50,7 +49,7 @@ JVM_ENTRY(void, JVM_RegisterUniversalUpcallHandlerMethods(JNIEnv *env, jclass UU
 
     int status = env->RegisterNatives(UUH_class, UUH_methods, sizeof(UUH_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.invoker.UniversalUpcallHandler natives");
+              "register jdk.internal.foreign.abi.UniversalUpcallHandler natives");
   }
 }
 JVM_END

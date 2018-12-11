@@ -55,8 +55,14 @@ public interface LayoutType<X> {
      * @return the layout.
      */
     Layout layout();
-    
-        /**
+
+    /**
+     * Retrieves the carrier type associated with this {@code LayoutType}.
+     * @return the carrier type.
+     */
+    Class<?> carrier();
+
+    /**
      * A {@link MethodHandle} which can be used to retrieve the contents of memory layout associated
      * with this {@code LayoutType}. Note: the pointer passed as argument must be compatible with said layout.
      * <p>
@@ -182,7 +188,7 @@ public interface LayoutType<X> {
      * @return the {@code LayoutType}.
      */
     static LayoutType<Void> ofVoid(Layout layout) {
-        return LayoutTypeImpl.of(Void.class, layout, References.ofVoid);
+        return LayoutTypeImpl.of(void.class, layout, References.ofVoid);
     }
 
     /**

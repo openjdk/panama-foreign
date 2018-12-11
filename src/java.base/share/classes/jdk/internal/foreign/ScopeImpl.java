@@ -25,24 +25,28 @@
 
 package jdk.internal.foreign;
 
+import java.foreign.Library;
+import java.foreign.NativeMethodType;
+import java.foreign.Scope;
+import java.foreign.layout.Function;
+import java.foreign.memory.Array;
+import java.foreign.memory.Callback;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
+import java.foreign.memory.Pointer.AccessMode;
+import java.foreign.memory.Struct;
+import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import jdk.internal.foreign.CallbackImplGenerator.SyntheticCallback;
-import jdk.internal.foreign.invokers.UpcallHandler;
+import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.memory.BoundedArray;
 import jdk.internal.foreign.memory.BoundedMemoryRegion;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.CallbackImpl;
 import jdk.internal.misc.Unsafe;
-
-import java.foreign.Scope;
-import java.foreign.memory.Pointer.AccessMode;
-import java.foreign.memory.Array;
-import java.foreign.memory.Callback;
-import java.foreign.memory.LayoutType;
-import java.foreign.memory.Pointer;
-import java.foreign.memory.Struct;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 public abstract class ScopeImpl implements Scope {
 
@@ -104,7 +108,7 @@ public abstract class ScopeImpl implements Scope {
 
     public static class NativeScope extends ScopeImpl {
 
-        private List<UpcallHandler> stubs = new ArrayList<>();
+        private List<Library.Symbol> stubs = new ArrayList<>();
 
         // FIXME: Move this, make it dynamic and correct
         private final static long ALLOC_ALIGNMENT = 8;
@@ -215,7 +219,7 @@ public abstract class ScopeImpl implements Scope {
                 throw new IllegalArgumentException("Not a callback class: " + funcIntfClass.getName());
             }
             try {
-                final Pointer<?> ptr;
+                Pointer<?> ptr;
                 if (funcIntfInstance.getClass().isAnnotationPresent(SyntheticCallback.class)) {
                     //stub already allocated, fetch its code pointer
                     ptr = Util.getSyntheticCallbackAddress(funcIntfInstance);
@@ -223,9 +227,13 @@ public abstract class ScopeImpl implements Scope {
                         throw new IllegalArgumentException("Attempting to re-allocate callback from different scope");
                     }
                 } else {
-                    UpcallHandler handler = UpcallHandler.of(funcIntfClass, funcIntfInstance);
-                    stubs.add(handler);
-                    ptr = BoundedPointer.createNativeVoidPointer(this, handler.getNativeEntryPoint());
+                    Method m = Util.findFunctionalInterfaceMethod(funcIntfClass);
+                    MethodHandle mh = Util.getCallbackMH(m).bindTo(funcIntfInstance);
+                    Function function = Util.getResolvedFunction(funcIntfClass, m);
+                    NativeMethodType nmt = NativeMethodType.of(function, m);
+                    Library.Symbol stub = SystemABI.getInstance().upcallStub(mh, nmt);
+                    ptr = BoundedPointer.createNativeVoidPointer(this, stub.getAddress().addr());
+                    stubs.add(stub);
                 }
                 return new CallbackImpl<>(ptr, funcIntfClass);
             } catch (Throwable ex) {
@@ -235,13 +243,14 @@ public abstract class ScopeImpl implements Scope {
 
         @Override
         public void close() {
+            // Need to free stub first as the Pointer::addr will check scope is still alive
+            stubs.forEach(SystemABI.getInstance()::freeUpcallStub);
             super.close();
             for (Long addr: used_blocks) {
                 U.freeMemory(addr);
             }
             used_blocks.clear();
             U.freeMemory(block);
-            stubs.forEach(UpcallHandler::free);
             stubs = null;
         }
     }

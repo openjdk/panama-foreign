@@ -21,28 +21,26 @@
  * questions.
  */
 
-package jdk.internal.foreign.invokers;
+package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.SystemABI;
-
-import java.foreign.layout.Function;
-import java.foreign.layout.Layout;
+import java.foreign.Library;
+import java.foreign.NativeMethodType;
+import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.stream.Stream;
+import jdk.internal.foreign.Util;
 
-class VarargsInvoker extends NativeInvoker {
+public class VarargsInvoker {
 
     private static final MethodHandle INVOKE_MH;
+    final NativeMethodType nativeMethodType;
+    final Library.Symbol symbol;
 
-    public VarargsInvoker(long addr, Function function, MethodType methodType, Method method) {
-        super(addr, null, function, methodType, method);
+    private VarargsInvoker(Library.Symbol symbol, NativeMethodType nativeMethodType) {
+        this.symbol = symbol;
+        this.nativeMethodType = nativeMethodType;
     }
 
     static {
@@ -53,54 +51,37 @@ class VarargsInvoker extends NativeInvoker {
         }
     }
 
-    @Override
-    public MethodHandle getBoundMethodHandle() {
-        return INVOKE_MH.bindTo(this).asCollector(Object[].class, methodType.parameterCount())
+    public static MethodHandle make(Library.Symbol symbol, NativeMethodType nativeMethodType) {
+        VarargsInvoker invoker = new VarargsInvoker(symbol, nativeMethodType);
+        MethodType methodType = nativeMethodType.methodType();
+        return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, methodType.parameterCount())
                 .asType(methodType);
     }
 
     private Object invoke(Object[] args) throws Throwable {
         // one trailing Object[]
-        int nNamedArgs = methodType.parameterCount() - 1;
+        int nNamedArgs = nativeMethodType.getArgsType().length;
+        assert(args.length == nNamedArgs + 1);
+        // The last argument is the array of vararg collector
         Object[] unnamedArgs = (Object[]) args[args.length - 1];
+
+        LayoutType<?> retLayoutType = nativeMethodType.getReturnType();
+        LayoutType<?>[] argLayoutTypes = new LayoutType<?>[nNamedArgs + unnamedArgs.length];
+        System.arraycopy(nativeMethodType.getArgsType(), 0, argLayoutTypes, 0, nNamedArgs);
+        int pos = nNamedArgs;
+        for (Object o: unnamedArgs) {
+            Class<?> type = o.getClass();
+            argLayoutTypes[pos++] = Util.makeType(computeClass(type), Util.variadicLayout(type));
+        }
+        MethodHandle delegate = SystemABI.getInstance().downcallHandle(symbol,
+                new NativeMethodType(false, retLayoutType, argLayoutTypes));
 
         // flatten argument list so that it can be passed to an asSpreader MH
         Object[] allArgs = new Object[nNamedArgs + unnamedArgs.length];
         System.arraycopy(args, 0, allArgs, 0, nNamedArgs);
         System.arraycopy(unnamedArgs, 0, allArgs, nNamedArgs, unnamedArgs.length);
 
-        //we need to infer layouts for all unnamed arguments
-        Layout[] argLayouts = Stream.concat(function.argumentLayouts().stream(),
-                Stream.of(unnamedArgs).map(Object::getClass).map(Util::variadicLayout))
-                .toArray(Layout[]::new);
-
-        Function varargFunc = function.returnLayout().isPresent() ?
-                Function.of(function.returnLayout().get(), false, argLayouts) :
-                Function.ofVoid(false, argLayouts);
-
-        MethodType dynamicMethodType = getDynamicMethodType(methodType, unnamedArgs);
-
-        UniversalNativeInvoker delegate = new UniversalNativeInvoker(addr, SystemABI.getInstance().arrangeCall(varargFunc),
-                varargFunc, dynamicMethodType,
-                method, dynamicMethodType.parameterArray());
-        return delegate.invoke(allArgs);
-    }
-
-    private MethodType getDynamicMethodType(MethodType baseMethodType, Object[] unnamedArgs) {
-        ArrayList<Class<?>> types = new ArrayList<>();
-
-        Class<?>[] staticArgTypes = baseMethodType.parameterArray();
-
-        // skip trailing Object[]
-        for (int i = 0; i < staticArgTypes.length - 1; i++) {
-            types.add(staticArgTypes[i]);
-        }
-
-        for (Object o : unnamedArgs) {
-            types.add(computeClass(o.getClass()));
-        }
-
-        return MethodType.methodType(baseMethodType.returnType(), types.toArray(new Class<?>[0]));
+        return delegate.invokeWithArguments(allArgs);
     }
 
     private Class<?> computeClass(Class<?> c) {

@@ -21,57 +21,67 @@
  * questions.
  */
 
-package jdk.internal.foreign.invokers;
+package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.StorageClass;
-import jdk.internal.vm.annotation.Stable;
-
-import java.foreign.NativeTypes;
-import java.foreign.layout.Function;
 import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Method;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.vm.annotation.Stable;
 
 /**
  * This class implements upcall invocation from native code through a set of specialized entry points. A specialized
  * entry point is a Java method which takes a number N of long arguments followed by a number M of double arguments;
  * possible return types for the entry point are either long, double or void.
  */
-class DirectUpcallHandler extends UpcallHandler {
+public class DirectUpcallHandler implements UpcallStub {
+
     @Stable
     private final MethodHandle mh;
+    private final LayoutType<?> ret;
+    private final LayoutType<?> args[];
+    private final Pointer<?> entryPoint;
+    private final MethodHandle target;
 
-    DirectUpcallHandler(CallingSequence callingSequence, Method fiMethod, Function function, Object receiver) {
-        super(callingSequence, fiMethod, function, receiver, up -> {
-            MethodType mt = ((DirectUpcallHandler)up).mh.type();
-            Class<?> retClass = mt.returnType();
-            return allocateSpecializedUpcallStub(up,
-                    (int)mt.parameterList().stream().filter(p -> p == long.class).count(),
-                    (int)mt.parameterList().stream().filter(p -> p == double.class).count(),
-                    encode(retClass));
-        });
+    public DirectUpcallHandler(MethodHandle target, CallingSequence callingSequence,
+                        LayoutType<?> ret, LayoutType<?>... args) {
+        this.ret = ret;
+        this.args = args;
+        this.target = target;
+        MethodType methodType = target.type();
+        DirectSignatureShuffler shuffler =
+                DirectSignatureShuffler.nativeToJavaShuffler(callingSequence, methodType, this::layoutFor);
+        this.mh = shuffler.adapt(target);
+        this.entryPoint = BoundedPointer.createNativeVoidPointer(allocateUpcallStub());
+    }
 
-        try {
-            MethodHandle mh = MethodHandles.publicLookup().unreflect(fiMethod);
-            Util.checkNoArrays(mh.type());
-            mh = mh.bindTo(receiver);
-            MethodType methodType = mh.type();
-            DirectSignatureShuffler shuffler =
-                    DirectSignatureShuffler.nativeToJavaShuffler(callingSequence, methodType, this::layoutFor);
-            this.mh = shuffler.adapt(mh);
-        } catch (Throwable ex) {
-            throw new IllegalStateException(ex);
-        }
+    @Override
+    public String getName() {
+        return toString();
+    }
+
+    @Override
+    public Pointer<?> getAddress() {
+        return entryPoint;
+    }
+
+    @Override
+    public MethodHandle methodHandle() {
+        return target;
     }
 
     private LayoutType<?> layoutFor(int pos) {
-        return pos == -1 ?
-                function.returnLayout().<LayoutType<?>>map(l -> Util.makeType(fiMethod.getGenericReturnType(), l)).orElse(NativeTypes.VOID) :
-                Util.makeType(fiMethod.getGenericParameterTypes()[pos], function.argumentLayouts().get(pos));
+        return pos == -1 ? ret : args[pos];
+    }
+
+    public long allocateUpcallStub() {
+        MethodType mt = mh.type();
+        Class<?> retClass = mt.returnType();
+        return allocateSpecializedUpcallStub(
+                (int) mt.parameterList().stream().filter(p -> p == long.class).count(),
+                (int) mt.parameterList().stream().filter(p -> p == double.class).count(),
+                encode(retClass));
     }
 
     private static int encode(Class<?> ret) {
@@ -281,7 +291,7 @@ class DirectUpcallHandler extends UpcallHandler {
 
     // natives
 
-    static native long allocateSpecializedUpcallStub(UpcallHandler handler, int nlongs, int ndoubles, int rettag);
+    native long allocateSpecializedUpcallStub(int nlongs, int ndoubles, int rettag);
 
     private static native void registerNatives();
     static {

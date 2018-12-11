@@ -51,19 +51,17 @@ public class FunctionAccessTest {
             NativeToIntFunction f = () -> 42;
             m.setFunction(s.allocateCallback(f));
             Callback<NativeToIntFunction> func = m.getFunction();
-            assertEquals(func.asFunction(), f);
             //do a roundtrip
             m.setFunction(func);
             System.gc();
             func = m.getFunction();
 
             //check resource is still there
-            assertEquals(func.asFunction(), f);
             assertEquals(func.asFunction().get(), 42);
             funcOutsideScope = func;
             //check that calling get twice yields same object we started with
             m.setFunction(func);
-            assertEquals(func.asFunction(), m.getFunction().asFunction());
+            assertEquals(func.asFunction().get(), 42);
         } catch (Throwable e) {
             throw new AssertionError(e);
         }

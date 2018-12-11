@@ -22,7 +22,7 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.abi.sysv.x64.Constants;
+import jdk.internal.foreign.abi.x64.sysv.Constants;
 
 import java.util.ArrayList;
 import java.util.List;

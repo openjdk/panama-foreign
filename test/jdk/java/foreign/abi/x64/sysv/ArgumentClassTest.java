@@ -23,12 +23,10 @@
 
 /*
  * @test
- * @modules java.base/jdk.internal.foreign.abi.sysv.x64
+ * @modules java.base/jdk.internal.foreign.abi.x64.sysv
  */
 
-import jdk.internal.foreign.abi.sysv.x64.ArgumentClass;
-import java.util.ArrayList;
-import java.util.Collection;
+import jdk.internal.foreign.abi.x64.sysv.ArgumentClass;
 
 public class ArgumentClassTest {
     private final BitMatrix tested = new BitMatrix(ArgumentClass.values().length, ArgumentClass.values().length);

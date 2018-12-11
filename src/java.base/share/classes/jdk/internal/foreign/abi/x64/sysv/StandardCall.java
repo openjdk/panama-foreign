@@ -20,16 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi.sysv.x64;
-
-import jdk.internal.foreign.abi.Argument;
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.AbstractCallingSequenceBuilderImpl;
-import jdk.internal.foreign.abi.ArgumentBinding;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.Storage;
-import jdk.internal.foreign.abi.StorageClass;
-import jdk.internal.foreign.abi.SystemABI;
+package jdk.internal.foreign.abi.x64.sysv;
 
 import java.foreign.layout.Address;
 import java.foreign.layout.Group;
@@ -38,18 +29,28 @@ import java.foreign.layout.Layout;
 import java.foreign.layout.Padding;
 import java.foreign.layout.Sequence;
 import java.foreign.layout.Value;
+import java.foreign.memory.LayoutType;
 import java.util.ArrayList;
+import java.util.stream.Stream;
+import jdk.internal.foreign.Util;
+import jdk.internal.foreign.abi.Argument;
+import jdk.internal.foreign.abi.ArgumentBinding;
+import jdk.internal.foreign.abi.CallingSequence;
+import jdk.internal.foreign.abi.Storage;
+import jdk.internal.foreign.abi.StorageClass;
+
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
-public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderImpl {
+public class StandardCall {
     private static final boolean DEBUG = Boolean.parseBoolean(
-        privilegedGetProperty("jdk.internal.foreign.abi.sysv.x64.DEBUG"));
+        privilegedGetProperty("jdk.internal.foreign.abi.x64.sysv.DEBUG"));
 
     // The AVX 512 enlightened ABI says "eight eightbytes"
     // Although AMD64 0.99.6 states 4 eightbytes
     private static final int MAX_AGGREGATE_REGS_SIZE = 8;
 
     private static final ArrayList<ArgumentClass> COMPLEX_X87_CLASSES;
+    private static final SysVx64ABI abi = SysVx64ABI.getInstance();
 
     static {
         COMPLEX_X87_CLASSES = new ArrayList<>();
@@ -57,10 +58,6 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         COMPLEX_X87_CLASSES.add(ArgumentClass.X87UP);
         COMPLEX_X87_CLASSES.add(ArgumentClass.X87);
         COMPLEX_X87_CLASSES.add(ArgumentClass.X87UP);
-    }
-
-    public CallingSequenceBuilderImpl(Argument returned, ArrayList<Argument> arguments) {
-        super(returned, arguments);
     }
 
     static class ArgumentInfo {
@@ -113,7 +110,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         static ArgumentInfo EMPTY = new ArgumentInfo(new ArrayList<>(), 0, 0, 0);
     }
 
-    private ArrayList<ArgumentClass> classifyValueType(Value type, boolean named) {
+    private ArrayList<ArgumentClass> classifyValueType(Value type) {
         ArrayList<ArgumentClass> classes = new ArrayList<>();
 
         switch (type.kind()) {
@@ -140,9 +137,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         }
     }
 
-    private ArrayList<ArgumentClass> classifyArrayType(Sequence type, boolean named) {
-        SystemABI abi = SystemABI.getInstance();
-
+    private ArrayList<ArgumentClass> classifyArrayType(Sequence type) {
         long nWords = Util.alignUp((type.bitsSize() / 8), 8) / 8;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
             return createMemoryClassArray(nWords);
@@ -159,7 +154,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         for (long idx = 0; idx < count; idx++) {
             Layout t = type.element();
             offset = abi.align(t, false, offset);
-            ArrayList<ArgumentClass> subclasses = classifyType(t, named);
+            ArrayList<ArgumentClass> subclasses = classifyType(t);
             if (subclasses.isEmpty()) {
                 return classes;
             }
@@ -208,9 +203,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
 
     // TODO: handle zero length arrays
     // TODO: Handle nested structs (and primitives)
-    private ArrayList<ArgumentClass> classifyStructType(Group type, boolean named) {
-        SystemABI abi = SystemABI.getInstance();
-
+    private ArrayList<ArgumentClass> classifyStructType(Group type) {
         long nWords = Util.alignUp((type.bitsSize() / 8), 8) / 8;
         if (nWords > MAX_AGGREGATE_REGS_SIZE) {
             return createMemoryClassArray(nWords);
@@ -237,7 +230,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                 }
             }
             offset = abi.align(t, false, offset);
-            ArrayList<ArgumentClass> subclasses = classifyType(t, named);
+            ArrayList<ArgumentClass> subclasses = classifyType(t);
             if (subclasses.isEmpty()) {
                 return classes;
             }
@@ -287,21 +280,26 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         return classes;
     }
 
-    private ArrayList<ArgumentClass> classifyType(Layout type, boolean named) {
-        if (type instanceof Value) {
-            return classifyValueType((Value) type, named);
-        } else if (type instanceof Address) {
-            ArrayList<ArgumentClass> classes = new ArrayList<>();
-            classes.add(ArgumentClass.INTEGER);
-            return classes;
-        } else if (type instanceof Sequence) {
-            return classifyArrayType((Sequence) type, named);
-        } else if (type instanceof Group) {
-            return type.name().isPresent() && type.name().get().equals("LongDoubleComplex") ?
-                    COMPLEX_X87_CLASSES :
-                    classifyStructType((Group) type, named);
-        } else {
-            throw new IllegalArgumentException("Unhandled type " + type);
+    private ArrayList<ArgumentClass> classifyType(Layout type) {
+        try {
+            if (type instanceof Value) {
+                return classifyValueType((Value) type);
+            } else if (type instanceof Address) {
+                ArrayList<ArgumentClass> classes = new ArrayList<>();
+                classes.add(ArgumentClass.INTEGER);
+                return classes;
+            } else if (type instanceof Sequence) {
+                return classifyArrayType((Sequence) type);
+            } else if (type instanceof Group) {
+                return type.name().isPresent() && type.name().get().equals("LongDoubleComplex") ?
+                        COMPLEX_X87_CLASSES :
+                        classifyStructType((Group) type);
+            } else {
+                throw new IllegalArgumentException("Unhandled type " + type);
+            }
+        } catch (UnsupportedOperationException e) {
+            System.err.println("Failed to classify layout: " + type);
+            throw e;
         }
     }
 
@@ -314,8 +312,8 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         return classes;
     }
 
-    private ArgumentInfo examineArgument(boolean forArguments, Layout type, boolean named) {
-        ArrayList<ArgumentClass> classes = classifyType(type, named);
+    private ArgumentInfo examineArgument(boolean forArguments, Layout type) {
+        ArrayList<ArgumentClass> classes = classifyType(type);
         if (classes.isEmpty()) {
             return ArgumentInfo.EMPTY;
         }
@@ -372,7 +370,7 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
                     nVectorRegs + info.getVectorRegs() > (forArguments ? Constants.MAX_VECTOR_ARGUMENT_REGISTERS : Constants.MAX_VECTOR_RETURN_REGISTERS)) {
                 // stack
 
-                long alignment = Math.max(SystemABI.getInstance().alignment(arg.getType(), true), 8);
+                long alignment = Math.max(abi.alignment(arg.getType(), true), 8);
 
                 long newStackOffset = Util.alignUp(stackOffset, alignment);
 
@@ -467,32 +465,36 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
     }
 
     private void addBindings(ArrayList<Argument> members, StorageCalculator calculator) {
-        members.stream().forEach(arg -> calculator.addBindings(arg, examineArgument(calculator.forArguments, arg.getType(), arg.isNamed())));
+        members.stream().forEach(arg -> calculator.addBindings(arg, examineArgument(calculator.forArguments, arg.getType())));
     }
 
-    @Override
-    public CallingSequence build() {
+    public CallingSequence arrangeCall(LayoutType<?> ret, LayoutType<?>... params) {
+        return arrangeCall(ret == null ? null : ret.layout(),
+                Stream.of(params).map(LayoutType::layout).toArray(Layout[]::new));
+    }
+
+    public CallingSequence arrangeCall(Layout ret, Layout... params) {
         ArrayList<Argument> returns = new ArrayList<>();
-        ArrayList<Argument> args = this.arguments;
+        ArrayList<Argument> args = new ArrayList<>();
         boolean returnsInMemory = false;
 
-        if (returned != null) {
-            Layout returnType = returned.getType();
-
-            returnsInMemory = examineArgument(false, returnType, returned.isNamed()).inMemory();
+        if (ret != null) {
+            returnsInMemory = examineArgument(false, ret).inMemory();
 
             // In some cases the return is passed in as first implicit pointer argument, and a corresponding pointer type is returned
             if (returnsInMemory) {
                 args = new ArrayList<>();
 
-                Argument returnPointer = new Argument(-1, Address.ofLayout(64, returned.getType()), returned.getName());
+                Argument returnPointer = new Argument(-1, Address.ofLayout(64, ret), "__retval");
                 args.add(returnPointer);
-                args.addAll(this.arguments);
-
                 returns.add(returnPointer);
             } else {
-                returns.add(returned);
+                returns.add(new Argument(-1, ret, "__retval"));
             }
+        }
+
+        for (int i = 0; i < params.length; i++) {
+            args.add(new Argument(i, params[i], "arg" + i));
         }
 
         @SuppressWarnings("unchecked")
@@ -505,6 +507,6 @@ public class CallingSequenceBuilderImpl extends AbstractCallingSequenceBuilderIm
         addBindings(args, new StorageCalculator(bindings, true));
         addBindings(returns, new StorageCalculator(bindings, false));
 
-        return new CallingSequence(this.arguments.size(), bindings, returnsInMemory);
+        return new CallingSequence(params.length, bindings, returnsInMemory);
     }
 }
