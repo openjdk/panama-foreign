@@ -25,7 +25,6 @@ package com.sun.tools.jextract;
 import java.io.IOException;
 import java.foreign.layout.Layout;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,15 +33,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
+
 import jdk.internal.clang.SourceLocation;
 import jdk.internal.clang.Type;
-import jdk.internal.clang.TypeKind;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.TypeReference;
 import com.sun.tools.jextract.tree.EnumTree;
 import com.sun.tools.jextract.tree.FieldTree;
 import com.sun.tools.jextract.tree.FunctionTree;
@@ -55,7 +52,6 @@ import com.sun.tools.jextract.tree.VarTree;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_ABSTRACT;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_ANNOTATION;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_INTERFACE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
@@ -90,6 +86,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     private transient boolean built = false;
     protected final String headerClassName;
     protected final HeaderFile headerFile;
+    protected final TypeDictionary dict;
     protected final Map<String, byte[]> types;
     protected final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
@@ -100,6 +97,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         this.headerClassName = Utils.toInternalName(headerFile.pkgName, headerFile.clsName);
         this.global_cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         this.types = new HashMap<>();
+        this.dict = headerFile.dictionary();
         global_cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
                 headerClassName,
                 null, "java/lang/Object", null);
@@ -124,6 +122,8 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         }
         av.visit("declarations", String.join(" ", headerDeclarations));
         av.visitEnd();
+        //generate functional interfaces
+        dict.functionalInterfaces().forEach(fi -> createFunctionalInterface((JType.FunctionalInterfaceType)fi));
     }
 
     private void handleException(Exception ex) {
@@ -169,7 +169,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         String fieldName = tree.name();
         assert !fieldName.isEmpty();
         Type type = tree.type();
-        JType jt = headerFile.globalLookup(type);
+        JType jt = dict.lookup(type);
         assert (jt != null);
         if (cw == global_cw) {
             String uniqueName = fieldName + "." + jt.getDescriptor();
@@ -178,7 +178,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             }
         }
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$get",
-                "()" + jt.getDescriptor(), "()" + jt.getSignature(), null);
+                "()" + jt.getDescriptor(), "()" + jt.getSignature(false), null);
 
         if (! ctx.getNoNativeLocations()) {
             AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
@@ -194,12 +194,12 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         mv.visitEnd();
         mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
-                "(" + JType.getPointerVoidAsWildcard(jt) + ")V", null);
+                "(" + jt.getSignature(true) + ")V", null);
         mv.visitEnd();
         if (tree instanceof VarTree || !isBitField(tree)) {
-            JType ptrType = new PointerType(jt);
+            JType ptrType = JType.GenericType.ofPointer(jt);
             mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
-                    "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(), null);
+                    "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(false), null);
             mv.visitEnd();
         }
 
@@ -225,7 +225,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     private void addConstant(ClassWriter cw, FieldTree fieldTree) {
         assert (fieldTree.isEnumConstant());
         String name = fieldTree.name();
-        String desc = headerFile.globalLookup(fieldTree.type()).getDescriptor();
+        String desc = dict.lookup(fieldTree.type()).getDescriptor();
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, name, "()" + desc, null, null);
         mv.visitCode();
         if (desc.length() != 1) {
@@ -336,7 +336,6 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE | ACC_ANNOTATION,
                 name, null, "java/lang/Object", superAnno);
         annotateNativeLocation(cw, tree);
-        Type type = tree.type().canonicalType();
         AnnotationVisitor av = cw.visitAnnotation("Ljava/lang/annotation/Target;", true);
         av.visitEnum("value", "Ljava/lang/annotation/ElementType;", "TYPE_USE");
         av.visitEnd();
@@ -353,18 +352,13 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         }
     }
 
-    private void createFunctionalInterface(Tree tree, JType.FnIf fnif) {
+    private void createFunctionalInterface(JType.FunctionalInterfaceType fnif) {
         JType.Function fn = fnif.getFunction();
         String intf;
         String nativeName;
         String nDesc = fnif.getFunction().getNativeDescriptor();
-        if (tree == null) {
-            intf = ((JType.InnerType) fnif.type).getName();
-            nativeName = "anonymous function";
-        } else {
-            nativeName = tree.name();
-            intf = Utils.toClassName(nativeName);
-        }
+        intf = fnif.getSimpleName();
+        nativeName = "anonymous function";
         logger.fine(() -> "Create FunctionalInterface " + intf);
 
         final String name = headerClassName + "$" + intf;
@@ -375,9 +369,6 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
                 name, "Ljava/lang/Object;",
                 "java/lang/Object", new String[0]);
-        if (tree != null) {
-            annotateNativeLocation(cw, tree);
-        }
         AnnotationVisitor av = cw.visitAnnotation(
                 "Ljava/lang/FunctionalInterface;", true);
         av.visitEnd();
@@ -393,7 +384,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             flags |= ACC_VARARGS;
         }
         MethodVisitor mv = cw.visitMethod(flags, "fn",
-                fn.getDescriptor(), fn.getSignature(), null);
+                fn.getDescriptor(), fn.getSignature(false), null);
         mv.visitEnd();
         // Write class
         try {
@@ -405,19 +396,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
 
     @Override
     public Boolean visitTypedef(TypedefTree typedefTree, JType jt) {
-        // anonymous typedef struct {} xxx will not get TypeAlias
-        if (jt instanceof TypeAlias) {
-            TypeAlias alias = (TypeAlias) jt;
-            if (alias.getAnnotationDescriptor() != null) {
-                createAnnotationCls(typedefTree);
-            } else {
-                JType real = alias.canonicalType();
-                if (real instanceof JType.FnIf) {
-                    createFunctionalInterface(typedefTree, (JType.FnIf) real);
-                }
-                // Otherwise, type alias is a same named stuct
-            }
-        }
+        createAnnotationCls(typedefTree);
         return true;
     }
 
@@ -436,13 +415,13 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         if (! global_methods.add(uniqueName)) {
             return false; // added already
         }
-        logger.fine(() -> "Add method: " + fn.getSignature());
+        logger.fine(() -> "Add method: " + fn.getSignature(false));
         int flags = ACC_PUBLIC | ACC_ABSTRACT;
         if (fn.isVarArgs) {
             flags |= ACC_VARARGS;
         }
         MethodVisitor mv = global_cw.visitMethod(flags,
-                funcTree.name(), fn.getDescriptor(), fn.getSignature(), null);
+                funcTree.name(), fn.getDescriptor(), fn.getSignature(false), null);
         final int arg_cnt = funcTree.numParams();
         for (int i = 0; i < arg_cnt; i++) {
             String name = funcTree.paramName(i);
@@ -466,62 +445,11 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         final String descStr = Utils.getFunction(type).toString();
         addHeaderDecl(funcTree.name(), descStr);
 
-        int idx = 0;
-        for (JType arg: fn.args) {
-            if (arg instanceof TypeAlias) {
-                TypeAlias alias = (TypeAlias) arg;
-                final int tmp = idx;
-                logger.finest(() -> "  arg " + tmp + " is an alias " + alias);
-                if (alias.getAnnotationDescriptor() != null) {
-                    mv.visitTypeAnnotation(
-                            TypeReference.newFormalParameterReference(idx).getValue(),
-                            null, alias.getAnnotationDescriptor(), true)
-                      .visitEnd();
-                }
-            }
-            idx++;
-        }
-
-        if (fn.returnType instanceof TypeAlias) {
-            TypeAlias alias = (TypeAlias) fn.returnType;
-            logger.finest(() -> "  return type is an alias " + alias);
-            if (alias.getAnnotationDescriptor() != null) {
-                mv.visitTypeAnnotation(
-                        TypeReference.newTypeReference(TypeReference.METHOD_RETURN).getValue(),
-                        null, alias.getAnnotationDescriptor(), true)
-                  .visitEnd();
-            }
-        }
         mv.visitEnd();
         return true;
     }
 
     protected AsmCodeFactory addType(JType jt, Tree tree) {
-        JType2 jt2 = null;
-        if (jt instanceof JType2) {
-            jt2 = (JType2) jt;
-            jt = jt2.getDelegate();
-        } else {
-            logger.warning(() -> "Should have JType2 in addType");
-            if (Main.DEBUG) {
-                new Throwable().printStackTrace(ctx.err);
-            }
-        }
-        if (tree == null) {
-            assert (jt2 != null);
-            if (jt instanceof JType.FnIf) {
-                createFunctionalInterface(null, (JType.FnIf) jt);
-            }
-            return this;
-        }
-        /*
-        // FIXME: what is this?
-        boolean noDef = cursor.isInvalid();
-        if (noDef) {
-            cursor = jt2.getCursor();
-        }
-        */
-
         try {
             logger.fine(() -> "Process tree " + tree.name());
             tree.accept(this, jt);

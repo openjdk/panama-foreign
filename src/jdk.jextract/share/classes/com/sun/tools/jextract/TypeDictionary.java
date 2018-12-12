@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,16 +23,20 @@
 
 package com.sun.tools.jextract;
 
+import java.foreign.memory.DoubleComplex;
+import java.foreign.memory.FloatComplex;
+import java.foreign.memory.LongDoubleComplex;
 import java.math.BigInteger;
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.logging.Logger;
-import jdk.internal.clang.Cursor;
+import java.util.stream.Stream;
+
 import jdk.internal.clang.Type;
 import jdk.internal.clang.TypeKind;
-import com.sun.tools.jextract.tree.Printer;
 
 /**
  * A dictionary that find Java type for a given native type.
@@ -41,24 +45,49 @@ import com.sun.tools.jextract.tree.Printer;
 final class TypeDictionary {
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private Context ctx;
-    private final String pkgName;
-    // clang.Type.spelling() to java type
-    private final Map<String, JType> typeMap;
-    private final AtomicInteger serialNo;
+    private final HeaderFile headerFile;
+    private final Map<String, JType> functionalTypes;
+    private int serialNo;
 
-    private int serialNo() {
-        return serialNo.incrementAndGet();
-    }
-
-    TypeDictionary(Context ctx, String pkg) {
+    TypeDictionary(Context ctx, HeaderFile headerFile) {
         this.ctx = ctx;
-        this.pkgName = pkg;
-        this.typeMap = new HashMap<>();
-        this.serialNo = new AtomicInteger();
+        this.headerFile = headerFile;
+        functionalTypes = new HashMap<>();
+    }
+    
+    private int serialNo() {
+        return ++serialNo;
     }
 
-    private static JType checkPrimitive(Type t) {
-        switch (t.kind()) {
+    private String recordOwnerClass(Type t) {
+        try {
+            //try resolve globally
+            Path p = t.getDeclarationCursor().getSourceLocation().getFileLocation().path();
+            HeaderFile hf = ctx.headerFor(p);
+            return Utils.toInternalName(hf.pkgName, hf.clsName);
+        } catch (Throwable ex) {
+            //fallback: resolve locally. This can happen for two reasons: (i) the symbol to be resolved is a builtin
+            //symbol (e.g. no header file has its definition), or (ii) when the declaration cursor points to an header file
+            //not previously seen by Context.
+	        return headerClass();
+        }
+    }
+    
+    private String headerClass() {
+        return Utils.toInternalName(headerFile.pkgName, headerFile.clsName);
+    }
+
+    public Stream<JType> functionalInterfaces() {
+        return functionalTypes.entrySet().stream()
+                .map(Map.Entry::getValue);
+    }
+
+    /**
+     * @param t
+     * @return
+     */
+    private JType getInternal(Type t, Function<JType.Function, JType> funcResolver) {
+        switch(t.kind()) {
             case Void:
                 return JType.Void;
             // signed integer
@@ -100,127 +129,92 @@ final class TypeDictionary {
                 return JType.Double;
             case Float:
                 return JType.Float;
-        }
-        return null;
-    }
-
-    private JType exist(Type t) {
-        JType jt = checkPrimitive(t);
-        if (jt == null) {
-            jt = typeMap.get(t.spelling());
-        }
-        return jt;
-    }
-
-    /**
-     * @param t
-     * @return
-     */
-    final JType get(Type t) {
-        JType jt;
-
-        switch(t.kind()) {
             case Unexposed:
-                // Always look at canonical type
-                jt = get(t.canonicalType());
-                break;
+            case Elaborated:
+                return getInternal(t.canonicalType(), funcResolver);
             case ConstantArray:
-                // Array of element type
-                jt = get(t.getElementType());
-                if (jt != null) {
-                    jt = JType.ofArray(jt);
-                }
-                break;
             case IncompleteArray:
-                jt = get(t.getElementType());
-                if (jt != null) {
-                    jt = JType.ofArray(jt);
+                return new JType.ArrayType(getInternal(t.getElementType(), funcResolver));
+            case FunctionProto:
+            case FunctionNoProto:
+                JType[] args = new JType[t.numberOfArgs()];
+                for (int i = 0; i < args.length; i++) {
+                    // argument could be function pointer declared locally
+                    args[i] = getInternal(t.argType(i), funcResolver);
                 }
-                break;
-            case Pointer:
-                // Pointer type to non-primitive type need to be added to pointee dictionary explicitly
-                // Pointee type can be from other dictionary
-                jt = exist(t);
-                if (jt == null) {
-                    Type pointee = t.getPointeeType();
-                    jt = checkPrimitive(pointee);
-                    if (jt != null) {
-                        jt = new PointerType(jt);
-                    }
-                    // leave out non-primitive type for caller to define
+                return new JType.Function(Utils.getFunction(t), t.isVariadic(), getInternal(t.resultType(), funcResolver), args);
+            case Enum: {
+                return JType.Int;
+            }
+            case Invalid:
+                throw new IllegalArgumentException("Invalid type");
+            case Record: {
+                String name = Utils.toClassName(Utils.getName(t));
+                return new JType.ClassType(recordOwnerClass(t) + "$" + name);
+            }
+            case Pointer: {
+                JType jt = getInternal(t.getPointeeType().canonicalType(), funcResolver);
+                if (jt instanceof JType.Function) {
+                    jt = funcResolver.apply((JType.Function) jt);
+                    return JType.GenericType.ofCallback(jt);
+                } else {
+                    return JType.GenericType.ofPointer(jt);
                 }
-                break;
+            }
+            case Typedef: {
+                Type truetype = t.canonicalType();
+                logger.fine(() -> "Typedef " + t.spelling() + " as " + truetype.spelling());
+                return getInternal(truetype, funcResolver);
+            }
+            case BlockPointer:
+                // FIXME: what is BlockPointer? A FunctionalPointer as this is closure
+                JType jt = getInternal(t.getPointeeType(), funcResolver);
+                jt = funcResolver.apply((JType.Function)jt);
+                return JType.GenericType.ofCallback(jt);
+            case Complex:
+                TypeKind ek = t.getElementType().kind();
+                if (ek == TypeKind.Float) {
+                    return JType.of(FloatComplex.class);
+                } else if (ek == TypeKind.Double) {
+                    return JType.of(DoubleComplex.class);
+                } else if (ek == TypeKind.LongDouble) {
+                    return JType.of(LongDoubleComplex.class);
+                } else {
+                    throw new UnsupportedOperationException("_Complex kind " + ek + " not supported");
+                }
             case Vector:
                 switch ((int) t.size()) {
                     case 8:
-                        jt = JType.Long;
-                        break;
+                        return JType.Long;
                     case 16:
                     case 32:
                     case 64:
                     default:
                         throw new UnsupportedOperationException("Support for vector size: " + t.size());
                 }
-                break;
             default:
-                jt = exist(t);
+                throw new IllegalStateException("Unexpected type:" + t.kind());
         }
-
-        if (null == jt) {
-            logger.fine(() -> "Cannot find type for " + t.spelling());
-        } else {
-            final JType finalJt = jt;
-            logger.fine(() -> "Found type " + finalJt.getDescriptor() + " for " + t.spelling());
-            jt = (jt instanceof JType2) ? jt : JType2.bind(jt, t, t.getDeclarationCursor());
-        }
-        return jt;
     }
 
-    final JType computeIfAbsent(Type t, Function<Type, JType> fn) {
-        JType jt = get(t);
-        if (jt != null) {
-            return jt;
-        }
-
-        // avoid nested call of computeAbsent as fn is likely to define a type
-        jt = fn.apply(t);
-        JType rv = typeMap.putIfAbsent(t.spelling(), jt);
-        // should we be alert in this situation?
-        return (rv == null) ? jt : rv;
+    public JType enterIfAbsent(Type t) {
+        return getInternal(t, this::enterFunctionIfNeeded);
     }
 
-    /**
-     * Look up a type in this instance first, if cannot find it, try to
-     * look into the origin(declaring) TypeDictionary.
-     * @param t
-     * @return
-     * @throws com.sun.tools.jextract.TypeDictionary.NotDeclaredException
-     */
-    final JType lookup(Type t) throws NotDeclaredException {
-        JType jt = get(t);
-        if (jt == null && t.kind() != TypeKind.Pointer) {
-            // Pointer type need to check with pointee type, as the declaration
-            // might still be in same TypeDictionary
-            Cursor c = t.getDeclarationCursor();
-            if (c.isInvalid()) {
-                logger.info(() -> "Type " + t.spelling() + " has invalid declaration cursor.");
-                logger.fine(() -> Printer.Stringifier(p -> p.dumpType(t)));
-                throw new NotDeclaredException(t);
-            }
-            jt = ctx.getJType(t.getDeclarationCursor());
-        }
-        return jt;
+    //where
+    private JType enterFunctionIfNeeded(JType.Function f) {
+        return functionalTypes.computeIfAbsent(f.getNativeDescriptor(), _unused ->
+            new JType.FunctionalInterfaceType(headerClass() +
+                    "$FI" + serialNo(), f));
     }
 
-    static class NotDeclaredException extends RuntimeException {
-        private static final long serialVersionUID = -1L;
+    public JType lookup(Type t) {
+        return getInternal(t, this::lookupFunction);
+    }
 
-        private final Type type;
-
-        public NotDeclaredException(Type t) {
-            type = t;
-        }
-
-        public final Type getType() { return type; }
+    //where
+    private JType lookupFunction(JType.Function f) {
+        return Optional.ofNullable(functionalTypes.get(f.getNativeDescriptor()))
+                .orElseThrow(IllegalStateException::new);
     }
 }

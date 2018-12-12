@@ -136,7 +136,7 @@ public class TreeMaker {
     public TypedefTree createTypedef(Cursor c) {
         checkCursor(c, CursorKind.TypedefDecl);
         Cursor dcl = c.type().canonicalType().getDeclarationCursor();
-        Optional<Tree> def = Optional.ofNullable(dcl.isDefinition()? createTree(dcl) : null);
+        Optional<Tree> def = Optional.ofNullable((dcl.isDefinition() || dcl.isDeclaration()) ? createTree(dcl) : null);
         return checkCache(c, TypedefTree.class, ()->{
             return new TypedefTree(c, def);
         });
