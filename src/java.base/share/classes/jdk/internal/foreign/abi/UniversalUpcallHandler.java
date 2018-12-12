@@ -21,26 +21,17 @@
  * questions.
  */
 
-package jdk.internal.foreign.invokers;
-
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.ArgumentBinding;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.Storage;
-import jdk.internal.foreign.abi.sysv.x64.Constants;
-import jdk.internal.foreign.memory.BoundedMemoryRegion;
-import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.vm.annotation.Stable;
+package jdk.internal.foreign.abi;
 
 import java.foreign.NativeTypes;
-import java.foreign.layout.Function;
-import java.foreign.layout.Layout;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
-import java.util.List;
+import jdk.internal.foreign.Util;
+import jdk.internal.foreign.abi.x64.sysv.Constants;
+import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.vm.annotation.Stable;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
@@ -49,38 +40,40 @@ import static sun.security.action.GetPropertyAction.privilegedGetProperty;
  * takes an array of storage pointers, which describes the state of the CPU at the time of the upcall. This can be used
  * by the Java code to fetch the upcall arguments and to store the results to the desired location, as per system ABI.
  */
-public class UniversalUpcallHandler extends UpcallHandler {
+public class UniversalUpcallHandler implements UpcallStub {
 
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG"));
 
     @Stable
     private final MethodHandle mh;
-
     private final LayoutType<?> returnLayout;
     private final LayoutType<?>[] argLayouts;
+    private final CallingSequence callingSequence;
+    private final Pointer<?> entryPoint;
 
-    public UniversalUpcallHandler(CallingSequence callingSequence, Method fiMethod, Function function, Object receiver) {
-        super(callingSequence, fiMethod, function, receiver, UniversalUpcallHandler::allocateUpcallStub);
+    public UniversalUpcallHandler(MethodHandle target, CallingSequence callingSequence,
+                                  LayoutType<?> ret, LayoutType<?>... args) {
+        mh = target.asSpreader(Object[].class, args.length);
+        returnLayout = ret;
+        argLayouts = args;
+        this.callingSequence = callingSequence;
+        this.entryPoint = BoundedPointer.createNativeVoidPointer(allocateUpcallStub());
+    }
 
-        try {
-            MethodHandle mh = MethodHandles.publicLookup().unreflect(fiMethod);
-            Util.checkNoArrays(mh.type());
-            this.mh = mh.asSpreader(Object[].class, function.argumentLayouts().size());
-        } catch (Throwable ex) {
-            throw new IllegalStateException(ex);
-        }
+    @Override
+    public String getName() {
+        return toString();
+    }
 
-        if (function.returnLayout().isPresent()) {
-            returnLayout = Util.makeType(fiMethod.getGenericReturnType(), function.returnLayout().get());
-        } else {
-            returnLayout = null;
-        }
-        List<Layout> args = function.argumentLayouts();
-        argLayouts = new LayoutType<?>[args.size()];
-        for (int i = 0 ; i < args.size() ; i++) {
-            argLayouts[i] = Util.makeType(fiMethod.getGenericParameterTypes()[i], args.get(i));
-        }
+    @Override
+    public Pointer<?> getAddress() {
+        return entryPoint;
+    }
+
+    @Override
+    public MethodHandle methodHandle() {
+        return mh;
     }
 
     public static void invoke(UniversalUpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn, long x87Return) {
@@ -149,7 +142,7 @@ public class UniversalUpcallHandler extends UpcallHandler {
                 args[i] = UniversalNativeInvoker.boxValue(argLayouts[i], context::getPtr, callingSequence.getArgumentBindings(i));
             }
 
-            Object o = mh.invoke(receiver, args);
+            Object o = mh.invoke(args);
 
             if (mh.type().returnType() != void.class) {
                 if (!callingSequence.returnsInMemory()) {
@@ -164,7 +157,7 @@ public class UniversalUpcallHandler extends UpcallHandler {
         }
     }
 
-    static native long allocateUpcallStub(UpcallHandler handler);
+    public native long allocateUpcallStub();
 
     private static native void registerNatives();
     static {

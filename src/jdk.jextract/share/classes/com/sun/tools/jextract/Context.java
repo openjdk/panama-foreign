@@ -67,8 +67,6 @@ import static java.nio.file.StandardOpenOption.WRITE;
  * The setup for the tool execution
  */
 public final class Context {
-    // package name to TypeDictionary
-    private final Map<String, TypeDictionary> tdMap;
     // The folder path mapping to package name
     private final Map<Path, String> pkgMap;
     // The header file parsed
@@ -101,11 +99,10 @@ public final class Context {
 
     private final Parser parser;
 
-    private final static String defaultPkg = "jextract.dump";
+    final static String defaultPkg = "jextract.dump";
     final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     public Context(PrintWriter out, PrintWriter err) {
-        this.tdMap = new HashMap<>();
         this.pkgMap = new HashMap<>();
         this.headerMap = new HashMap<>();
         this.clangArgs = new ArrayList<>();
@@ -122,10 +119,6 @@ public final class Context {
 
     public Context() {
         this(new PrintWriter(System.out, true), new PrintWriter(System.err, true));
-    }
-
-    TypeDictionary typeDictionaryFor(String pkg) {
-        return tdMap.computeIfAbsent(pkg, p->new TypeDictionary(this, p));
     }
 
     void addClangArg(String arg) {
@@ -436,6 +429,10 @@ public final class Context {
          return true;
     }
 
+    public HeaderFile headerFor(Path p) {
+        return headerMap.get(p);
+    }
+
     public void parse(Function<HeaderFile, AsmCodeFactory> fn) {
         initSymChecker();
         initSymFilters();
@@ -453,7 +450,6 @@ public final class Context {
             HeaderFile hf = headerMap.computeIfAbsent(header.path(), p -> getHeaderFile(p, null));
             hf.useCodeFactory(fn.apply(hf));
             logger.info(() -> "Processing header file " + header.path());
-
             header.declarations().stream()
                     .peek(decl -> logger.finest(
                         () -> "Cursor: " + decl.name() + "@" + decl.USR() + "?" + decl.isDeclaration()))
@@ -581,47 +577,5 @@ public final class Context {
         } catch (UncheckedIOException uioe) {
             throw uioe.getCause();
         }
-    }
-
-    /**
-     * Perform a local lookup, any undefined type will cause a JType
-     * be defined within origin scope.
-     *
-     * @param type   The libclang type
-     * @param origin The path of the file where type is encountered
-     * @return The JType
-     */
-    JType getJType(final Type type, Path origin) {
-        Path p = origin.normalize().toAbsolutePath();
-
-        HeaderFile hf = headerMap.get(p);
-        // We should not encounter a type if the header file reference to it is not yet processed
-        assert(null != hf);
-        if (hf == null) {
-            throw new IllegalArgumentException("Failed to lookup header for " + p + " (origin: " + origin + ")");
-        }
-
-        return hf.localLookup(type);
-    }
-
-    /**
-     * Perform a global lookup
-     *
-     * @param c The cursor define or declare the type.
-     * @return
-     */
-    JType getJType(final Cursor c) {
-        if (c.isInvalid()) {
-            throw new IllegalArgumentException();
-        }
-        SourceLocation loc = c.getSourceLocation();
-        if (null == loc) {
-            return null;
-        }
-        Path p = loc.getFileLocation().path();
-        if (null == p) {
-            return null;
-        }
-        return getJType(c.type(), p);
     }
 }

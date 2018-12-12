@@ -22,20 +22,18 @@
  */
 package jdk.internal.foreign.memory;
 
-import jdk.internal.foreign.Util;
-
-import java.nio.ByteBuffer;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Unresolved;
-import java.foreign.memory.Pointer.AccessMode;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
+import java.nio.ByteBuffer;
 import java.security.AccessControlException;
 import java.util.Objects;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.foreign.Util;
 
 public class BoundedPointer<X> implements Pointer<X> {
 
@@ -218,5 +216,4 @@ public class BoundedPointer<X> implements Pointer<X> {
             return false;
         }
     }
-
 }

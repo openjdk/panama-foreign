@@ -26,25 +26,18 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 
-JVM_ENTRY(static jlong, DUH_AllocateSpecializedUpcallStub(JNIEnv *env, jobject _unused, jobject rec, jint nlongs, jint ndoubles, jint rettag))
-  Handle receiver(THREAD, JNIHandles::resolve(rec));
+JVM_ENTRY(jlong, DUH_AllocateSpecializedUpcallStub(JNIEnv *env, jobject obj, jint nlongs, jint ndoubles, jint rettag))
+  Handle receiver(THREAD, JNIHandles::resolve(obj));
   return (jlong)DirectUpcallHandler::generate_specialized_upcall_stub(receiver, nlongs, ndoubles, rettag);
-JVM_END
-
-JVM_ENTRY(static jlong, DUH_AllocateLinkToNativeUpcallStub(JNIEnv *env, jobject _unused, jobject rec))
-  Handle receiver(THREAD, JNIHandles::resolve(rec));
-  return (jlong)DirectUpcallHandler::generate_linkToNative_upcall_stub(receiver);
 JVM_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 #define LANG "Ljava/lang/"
-#define UPCALL "Ljdk/internal/foreign/invokers/UpcallHandler;"
 
-// These are the native methods on jdk.internal.foreign.invokers.DirectUpcallHandler.
+// These are the native methods on jdk.internal.foreign.abi.DirectUpcallHandler.
 static JNINativeMethod DUH_methods[] = {
-  {CC "allocateSpecializedUpcallStub", CC "(" UPCALL "III)J",      FN_PTR(DUH_AllocateSpecializedUpcallStub)},
-  {CC "allocateLinkToNativeUpcallStub", CC "(" UPCALL ")J",      FN_PTR(DUH_AllocateLinkToNativeUpcallStub)},
+  {CC "allocateSpecializedUpcallStub", CC "(III)J",      FN_PTR(DUH_AllocateSpecializedUpcallStub)},
 };
 
 /**
@@ -56,7 +49,7 @@ JVM_ENTRY(void, JVM_RegisterDirectUpcallHandlerMethods(JNIEnv *env, jclass DUH_c
 
     int status = env->RegisterNatives(DUH_class, DUH_methods, sizeof(DUH_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.invoker.DirectUpcallHandler natives");
+              "register jdk.internal.foreign.abi.DirectUpcallHandler natives");
   }
 }
 JVM_END

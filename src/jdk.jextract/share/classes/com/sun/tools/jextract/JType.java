@@ -22,34 +22,37 @@
  */
 package com.sun.tools.jextract;
 
+import java.foreign.memory.Callback;
+import java.foreign.memory.Pointer;
+
 /**
  * A Java Type descriptor
  */
-public interface JType {
+public abstract class JType {
 
     /**
      * The descriptor of this type
      *
      * @return The type descriptor as defined in JVMS 4.3
      */
-    public String getDescriptor();
+    public abstract String getDescriptor();
 
-    default public String getSignature() { return getDescriptor(); }
+    public String getSignature(boolean isArgument) { return getDescriptor(); }
 
-    public final static JType Void = () -> "V";
-    public final static JType Byte = () -> "B";
-    public final static JType Bool = () -> "Z";
-    public final static JType Char = () -> "C";
-    public final static JType Short = () -> "S";
-    public final static JType Int = () -> "I";
-    public final static JType Long = () -> "J";
-    public final static JType Float = () -> "F";
-    public final static JType Double = () -> "D";
-    public final static JType Object = new ObjectRef(java.lang.Object.class);
+    public final static JType Void = new PrimitiveType("V", of(Void.class));
+    public final static JType Byte = new PrimitiveType("B", of(Byte.class));
+    public final static JType Bool = new PrimitiveType("Z", of(Boolean.class));
+    public final static JType Char = new PrimitiveType("C", of(Character.class));
+    public final static JType Short = new PrimitiveType("S", of(Short.class));
+    public final static JType Int = new PrimitiveType("I", of(Integer.class));
+    public final static JType Long = new PrimitiveType("J", of(Long.class));
+    public final static JType Float = new PrimitiveType("F", of(Float.class));
+    public final static JType Double = new PrimitiveType("D", of(Double.class));
+    public final static JType Object = of(java.lang.Object.class);
 
     public static JType of(final Class<?> cls) {
         if (cls.isArray()) {
-            return ofArray(JType.of(cls.getComponentType()));
+            return new ArrayType(JType.of(cls.getComponentType()));
         }
         if (cls.isPrimitive()) {
             switch (cls.getTypeName()) {
@@ -77,75 +80,41 @@ public interface JType {
             return JType.Object;
         }
         // assuming reference
-        return new ObjectRef(cls);
+        return new ClassType(binaryName(cls));
     }
 
-    public static String boxing(JType t) {
-        if (t instanceof JType2) {
-            t = ((JType2) t).getDelegate();
-        }
-
-        if (t == JType.Bool) {
-            return "Ljava/lang/Boolean;";
-        } else if (t == JType.Char) {
-            return "Ljava/lang/Character;";
-        } else if (t == JType.Int) {
-            return "Ljava/lang/Integer;";
-        } else if (t == JType.Byte) {
-            return "Ljava/lang/Byte;";
-        } else if (t == JType.Double) {
-            return "Ljava/lang/Double;";
-        } else if (t == JType.Float) {
-            return "Ljava/lang/Float;";
-        } else if (t == JType.Long) {
-            return "Ljava/lang/Long;";
-        } else if (t == JType.Short) {
-            return "Ljava/lang/Short;";
-        } else if (t == JType.Void) {
-            return "Ljava/lang/Void;";
-        } else {
-            return t.getSignature();
-        }
+    private static String binaryName(Class<?> cls) {
+        return cls.getName().replace('.', '/');
     }
 
-    public static JType of(String clsName) {
-        return new ObjectRef(clsName);
+    public JType box() {
+        return this;
     }
-    public static JType ofArray(JType elementType) { return new ArrayType(elementType); }
 
-    /**
-     * Return Java type signature for JType. If JType is a Pointer&lt;Void&gt;, return as
-     * Pointer&lt;?&gt;
-     * @param jt The JType to get signature for
-     * @return The Java type signature
-     */
-    static String getPointerVoidAsWildcard(JType jt) {
-        // Return Pointer<?> instead of Pointer<Void>
-        if (jt instanceof JType2) {
-            jt = ((JType2) jt).getDelegate();
+    public static class PrimitiveType extends JType {
+        String desc;
+        JType boxed;
+
+        PrimitiveType(String desc, JType boxed) {
+            this.desc = desc;
+            this.boxed = boxed;
         }
-        if (jt instanceof TypeAlias) {
-            JType tmp = ((TypeAlias) jt).baseType;
-            // Respect alias signature, like FnIf has its own rule about signature
-            if (tmp instanceof PointerType) {
-                jt = tmp;
-            }
+
+        @Override
+        public JType box() {
+            return boxed;
         }
-        if (jt instanceof PointerType) {
-            return ((PointerType) jt).getSignature(true);
-        } else {
-            return jt.getSignature();
+
+        @Override
+        public String getDescriptor() {
+            return desc;
         }
     }
 
-    static class ObjectRef implements JType {
+    public static class ClassType extends JType {
         final String clsName;
 
-        ObjectRef(Class<?> cls) {
-            this.clsName = cls.getName().replace('.', '/');
-        }
-
-        ObjectRef(String clsName) {
+        ClassType(String clsName) {
             this.clsName = clsName;
         }
 
@@ -153,45 +122,25 @@ public interface JType {
         public String getDescriptor() {
             return "L" + clsName + ";";
         }
-    }
 
-    final static class InnerType implements JType {
-        final String outerName;
-        final String name;
-
-        InnerType(Class<?> outer, String name) {
-            outerName = outer.getName().replace('.', '/');
-            this.name = name;
-        }
-
-        InnerType(String outerName, String name) {
-            this.outerName = outerName;
-            this.name = name;
-        }
-
-        public String getOuterClassName() {
-            return outerName;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public String getDescriptor() {
-            return "L" + outerName + "$" + name + ";";
+        public String getSimpleName() {
+            int innerEnd = clsName.lastIndexOf('$');
+            int packageEnd = clsName.lastIndexOf('.');
+            if (innerEnd != -1) {
+                return clsName.substring(innerEnd + 1);
+            } else if (packageEnd != -1) {
+                return clsName.substring(packageEnd + 1);
+            } else {
+                return clsName;
+            }
         }
     }
 
-    final class ArrayType implements JType {
+    public final static class ArrayType extends JType {
         final JType elementType;
 
         ArrayType(JType type) {
             elementType = type;
-        }
-
-        PointerType asPointer() {
-            return new PointerType(elementType);
         }
 
         @Override
@@ -200,19 +149,13 @@ public interface JType {
         }
 
         @Override
-        public String getSignature() {
+        public String getSignature(boolean isArgument) {
             StringBuilder sb = new StringBuilder();
             sb.append("L");
             sb.append(java.foreign.memory.Array.class.getName().replace('.', '/'));
             sb.append("<");
             JType pt = elementType;
-            if (pt instanceof JType2) {
-                pt = ((JType2) pt).getDelegate();
-            }
-            if (pt instanceof TypeAlias) {
-                pt = ((TypeAlias) pt).canonicalType();
-            }
-            sb.append(JType.boxing(pt));
+            sb.append(pt.box().getSignature(isArgument));
             sb.append(">;");
             return sb.toString();
         }
@@ -222,7 +165,7 @@ public interface JType {
         }
     }
 
-    final static class Function implements JType {
+    public final static class Function extends JType {
         final JType returnType;
         final JType[] args;
         final boolean isVarArgs;
@@ -239,13 +182,9 @@ public interface JType {
         }
 
         private static JType arrayAsPointer(JType t) {
-            if (t instanceof JType2) {
-                t = ((JType2)t).getDelegate();
-            }
-            if (t instanceof TypeAlias) {
-                t = ((TypeAlias)t).canonicalType();
-            }
-            return t instanceof ArrayType? ((ArrayType)t).asPointer() : t;
+            return t instanceof ArrayType ?
+                    GenericType.ofPointer(((ArrayType)t).elementType) :
+                    t;
         }
 
         @Override
@@ -265,18 +204,18 @@ public interface JType {
         }
 
         @Override
-        public String getSignature() {
+        public String getSignature(boolean isArgument) {
             StringBuilder sb = new StringBuilder();
             sb.append('(');
             // ensure sequence
             for (int i = 0; i < args.length; i++) {
-                sb.append(getPointerVoidAsWildcard(args[i]));
+                sb.append(args[i].getSignature(true));
             }
             if (isVarArgs) {
                 sb.append("[Ljava/lang/Object;");
             }
             sb.append(')');
-            sb.append(returnType.getSignature());
+            sb.append(returnType.getSignature(false));
             return sb.toString();
         }
 
@@ -285,32 +224,55 @@ public interface JType {
         }
     }
 
-    final static class FnIf implements JType {
-        final JType type;
+    final static class FunctionalInterfaceType extends ClassType {
         final Function fn;
 
-        FnIf(JType type, Function fn) {
-            this.type = type;
+        FunctionalInterfaceType(String name, Function fn) {
+            super(name);
             this.fn = fn;
-        }
-
-        @Override
-        public String getDescriptor() {
-            return type.getDescriptor();
-        }
-
-        @Override
-        public String getSignature() {
-            return type.getSignature();
         }
 
         Function getFunction() {
             return fn;
         }
+    }
+
+    public static class GenericType extends ClassType {
+        JType targ;
+
+        GenericType(String base, JType targ) {
+            super(base);
+            this.targ = targ;
+        }
+
+        public JType getTypeArgument() {
+            return targ;
+        }
 
         @Override
-        public String toString() {
-            return "FunctionalInterface: " + getDescriptor() + " for " + fn.getSignature();
+        public String getSignature(boolean isArgument) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("L");
+            sb.append(clsName);
+            sb.append("<");
+            if (targ == JType.Void && isArgument) {
+                sb.append("*");
+            } else {
+                if (targ instanceof GenericType && isArgument) {
+                    sb.append("+");
+                }
+                sb.append(targ.box().getSignature(isArgument));
+            }
+            sb.append(">;");
+            return sb.toString();
+        }
+
+        public static GenericType ofPointer(JType targ) {
+            return new GenericType(JType.binaryName(Pointer.class), targ);
+        }
+
+        public static GenericType ofCallback(JType targ) {
+            return new GenericType(JType.binaryName(Callback.class), targ);
         }
     }
 }

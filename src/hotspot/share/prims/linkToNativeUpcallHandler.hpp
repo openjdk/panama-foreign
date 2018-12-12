@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi;
 
-import java.util.ArrayList;
+#ifndef SHARE_VM_PRIMS_LINKTONATIVEUPCALLHANDLER_HPP
+#define SHARE_VM_PRIMS_LINKTONATIVEUPCALLHANDLER_HPP
 
-public abstract class AbstractCallingSequenceBuilderImpl {
-    protected final Argument returned;
-    protected final ArrayList<Argument> arguments;
+#include "utilities/macros.hpp"
+#include CPU_HEADER(foreign_globals)
 
-    protected AbstractCallingSequenceBuilderImpl(Argument returned, ArrayList<Argument> arguments) {
-        this.returned = returned;
-        this.arguments = arguments;
-    }
+class LinkToNativeUpcallHandler: AllStatic {
+public:
+  static address generate_linkToNative_upcall_stub(Handle& rec);
+};
 
-    abstract public CallingSequence build();
-}
+
+
+#endif // SHARE_VM_PRIMS_LINKTONATIVEUPCALLHANDLER_HPP

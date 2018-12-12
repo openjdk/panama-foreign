@@ -22,26 +22,30 @@
  */
 package jdk.internal.foreign;
 
-import jdk.internal.foreign.invokers.NativeInvoker;
-import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.foreign.memory.DescriptorParser;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
-
-import java.foreign.memory.Pointer.AccessMode;
+import java.foreign.Library;
 import java.foreign.Scope;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.layout.Function;
+import java.foreign.layout.Layout;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
+import java.foreign.memory.Pointer.AccessMode;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.foreign.layout.Function;
-import java.foreign.layout.Layout;
-import java.foreign.annotations.*;
-import java.foreign.memory.LayoutType;
-import java.foreign.memory.Pointer;
 import java.util.HashMap;
 import java.util.Map;
+import java.foreign.NativeMethodType;
+import jdk.internal.foreign.abi.SystemABI;
+import jdk.internal.foreign.memory.BoundedPointer;
+import jdk.internal.foreign.memory.DescriptorParser;
+import jdk.internal.org.objectweb.asm.MethodVisitor;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.*;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
+import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
 
 class HeaderImplGenerator extends BinderClassGenerator {
 
@@ -129,9 +133,10 @@ class HeaderImplGenerator extends BinderClassGenerator {
         MethodType methodType = Util.methodTypeFor(method);
         Function function = info.descriptor;
         try {
-            long addr = lookup.lookup(info.symbolName).getAddress().addr();
-            NativeInvoker nativeInvoker = NativeInvoker.of(addr, layoutResolver.resolve(function), methodType, method);
-            addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(), nativeInvoker.getBoundMethodHandle());
+            Library.Symbol symbol = lookup.lookup(info.symbolName);
+            NativeMethodType nmt = NativeMethodType.of(layoutResolver.resolve(function), method);
+            addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(),
+                    SystemABI.getInstance().downcallHandle(symbol, nmt));
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }

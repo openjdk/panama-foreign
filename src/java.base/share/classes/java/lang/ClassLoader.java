@@ -25,48 +25,32 @@
 
 package java.lang;
 
-import java.foreign.memory.Pointer;
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.foreign.Library;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.foreign.Library;
-import java.security.AccessController;
 import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.Vector;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import jdk.internal.loader.BuiltinClassLoader;
+import jdk.internal.foreign.SimpleSymbol;
+import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.misc.VM;
-import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.perf.PerfCounter;
 import jdk.internal.ref.CleanerFactory;
 import jdk.internal.reflect.CallerSensitive;
@@ -2427,20 +2411,7 @@ public abstract class ClassLoader {
             if (0 == addr) {
                 throw new NoSuchMethodException("Cannot find symbol " + name + " in library " + this.name);
             }
-            return new Symbol() {
-
-                Pointer<?> addr = BoundedPointer.createNativeVoidPointer(findEntry(name));
-
-                @Override
-                public String getName() {
-                    return name;
-                }
-
-                @Override
-                public Pointer<?> getAddress() {
-                    return addr;
-                }
-            };
+            return new SimpleSymbol(BoundedPointer.createNativeVoidPointer(addr), name);
         }
 
         /*

@@ -55,7 +55,7 @@ public class BoundedMemoryRegion {
 
     // # Length = everything
     public static BoundedMemoryRegion ofEverything(Scope scope) {
-        return ofEverything(AccessMode.READ_WRITE, null);
+        return ofEverything(AccessMode.READ_WRITE, scope);
     }
 
     public static BoundedMemoryRegion ofEverything(AccessMode mode, Scope scope) {

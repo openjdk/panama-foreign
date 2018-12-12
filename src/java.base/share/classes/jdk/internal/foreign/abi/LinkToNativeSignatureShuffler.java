@@ -1,32 +1,29 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *  Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ *  This code is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License version 2 only, as
+ *  published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ *  This code is distributed in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ *  version 2 for more details (a copy is included in the LICENSE file that
+ *  accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *  You should have received a copy of the GNU General Public License version
+ *  2 along with this work; if not, write to the Free Software Foundation,
+ *  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ *  Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ *  or visit www.oracle.com if you need additional information or have any
+ *  questions.
  */
 
-package jdk.internal.foreign.invokers;
+package jdk.internal.foreign.abi;
 
 import jdk.internal.foreign.Util;
-import jdk.internal.foreign.abi.ArgumentBinding;
-import jdk.internal.foreign.abi.CallingSequence;
-import jdk.internal.foreign.abi.StorageClass;
 import jdk.internal.foreign.memory.LayoutTypeImpl;
 
 import java.foreign.layout.Function;
@@ -71,11 +68,11 @@ public class LinkToNativeSignatureShuffler extends DirectSignatureShuffler {
         return new LinkToNativeSignatureShuffler(callingSequence, javaMethodType, layoutTypeFactory, ShuffleDirection.NATIVE_TO_JAVA);
     }
 
-    private static boolean accept(Function function, CallingSequence callingSequence, ShuffleDirection direction) {
+    private static boolean accept(int arity, CallingSequence callingSequence, ShuffleDirection direction) {
         if (direction == ShuffleDirection.NATIVE_TO_JAVA) {
             //only support LL -> L for now
             return !callingSequence.returnsInMemory() &&
-                    function.argumentLayouts().size() == 2 &&
+                    arity == 2 &&
                     callingSequence.getArgumentBindings(0).size() == 1 &&
                     callingSequence.getArgumentBindings(0).get(0).getStorage().getStorageClass() == StorageClass.INTEGER_ARGUMENT_REGISTER &&
                     callingSequence.getArgumentBindings(1).size() == 1 &&
@@ -83,27 +80,28 @@ public class LinkToNativeSignatureShuffler extends DirectSignatureShuffler {
                     callingSequence.getReturnBindings().size() == 1 &&
                     callingSequence.getReturnBindings().get(0).getStorage().getStorageClass() == StorageClass.INTEGER_RETURN_REGISTER;
         }
-        for (int i = 0 ; i < function.argumentLayouts().size() ; i++) {
+        for (int i = 0 ; i < arity ; i++) {
             List<ArgumentBinding> argumentBindings = callingSequence.getArgumentBindings(i);
             if (argumentBindings.size() != 1 ||
                     argumentBindings.get(0).getStorage().getStorageClass() == StorageClass.STACK_ARGUMENT_SLOT) {
                 return false;
             }
         }
-        if (!function.returnLayout().isPresent()) {
+
+        List<ArgumentBinding> returnBindings = callingSequence.getReturnBindings();
+        if (returnBindings.isEmpty()) {
             return true;
         } else {
-            List<ArgumentBinding> returnBindings = callingSequence.getReturnBindings();
             return !callingSequence.returnsInMemory() &&
                     returnBindings.size() == 1;
         }
     }
 
-    static boolean acceptDowncall(Function function, CallingSequence callingSequence) {
-        return accept(function, callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
+    public static boolean acceptDowncall(int arity, CallingSequence callingSequence) {
+        return accept(arity, callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
     }
 
-    static boolean acceptUpcall(Function function, CallingSequence callingSequence) {
-        return accept(function, callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
+    public static boolean acceptUpcall(int arity, CallingSequence callingSequence) {
+        return accept(arity, callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
     }
 }

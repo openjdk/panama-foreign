@@ -139,7 +139,10 @@ public class StructTest extends JextractToolRunner {
         ParameterizedType ppVoid = (ParameterizedType) f.getGenericReturnType();
         assertEquals(ppVoid.getActualTypeArguments()[0], pVoid);
         f = findMethod(incomplete, "junk$set", java.foreign.memory.Pointer.class);
-        assertEquals(f.getGenericParameterTypes()[0], ppVoid);
+
+        ppVoid = (ParameterizedType) f.getGenericParameterTypes()[0];
+        assertTrue(ppVoid.getActualTypeArguments()[0] instanceof WildcardType);
+        assertEquals(((WildcardType)ppVoid.getActualTypeArguments()[0]).getUpperBounds()[0], pWildcard);
     }
 
     private void verifyFunctionWithVoidPointer(Class<?> cls) {
@@ -158,7 +161,8 @@ public class StructTest extends JextractToolRunner {
         assertVoidPointer(pWildcard, true);
 
         ParameterizedType ppVoid = (ParameterizedType) args[1];
-        assertEquals(ppVoid.getActualTypeArguments()[0], pVoid);
+        assertTrue(ppVoid.getActualTypeArguments()[0] instanceof WildcardType);
+        assertEquals(((WildcardType)ppVoid.getActualTypeArguments()[0]).getUpperBounds()[0], pWildcard);
     }
 
     private void verifyFunctionPointer(Class<?> cls) {
@@ -177,7 +181,8 @@ public class StructTest extends JextractToolRunner {
         assertVoidPointer(pWildcard, true);
 
         ParameterizedType ppVoid = (ParameterizedType) args[1];
-        assertEquals(ppVoid.getActualTypeArguments()[0], pVoid);
+        assertTrue(ppVoid.getActualTypeArguments()[0] instanceof WildcardType);
+        assertEquals(((WildcardType)ppVoid.getActualTypeArguments()[0]).getUpperBounds()[0], pWildcard);
     }
 
     private void verifyUndefinedStructFunctions(Class<?> header) {
