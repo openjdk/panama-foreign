@@ -175,30 +175,23 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
         Optional<Tree> def = tt.typeDefinition();
         if (def.isPresent()) {
             Tree defTree = def.get();
-            if (defTree instanceof StructTree) {
-                if (defTree.name().isEmpty()) {
-                    /**
-                     * typedef struct { int x; int y; } Point
-                     *
-                     * is mapped to two Cursors by clang. First one for anonymous struct decl.
-                     * and second one for typedef decl. We map it as a single named struct
-                     * declaration.
-                     */
-                    replacements.put(defTree.cursor(), ((StructTree)defTree).withName(tt.name()));
-                    return null;
-                } else if (defTree.name().equals(tt.name())) {
-                    /*
-                     * Remove redundant typedef like:
-                     *
-                     * typedef struct Point { int x; int y; } Point
-                     */
-                    return null;
-                }
-            } else if (defTree instanceof EnumTree && defTree.name().equals(tt.name())) {
+            if (defTree instanceof StructTree && defTree.name().isEmpty()) {
+                /*
+                 * typedef struct { int x; int y; } Point
+                 *
+                 * is mapped to two Cursors by clang. First one for anonymous struct decl.
+                 * and second one for typedef decl. We map it as a single named struct
+                 * declaration.
+                 */
+                replacements.put(defTree.cursor(), ((StructTree)defTree).withName(tt.name()));
+                return null;
+            } else if (defTree.name().equals(tt.name())) {
                 /*
                  * Remove redundant typedef like:
                  *
+                 * typedef struct Point { int x; int y; } Point
                  * typedef enum Color { R, G, B} Color
+                 * typedef struct Undef Undef
                  */
                 return null;
             }

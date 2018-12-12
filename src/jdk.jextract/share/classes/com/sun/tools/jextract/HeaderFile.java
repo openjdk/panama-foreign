@@ -22,18 +22,11 @@
  */
 package com.sun.tools.jextract;
 
-import java.foreign.memory.DoubleComplex;
-import java.foreign.memory.FloatComplex;
-import java.foreign.memory.LongDoubleComplex;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import jdk.internal.clang.Cursor;
-import jdk.internal.clang.Type;
-import jdk.internal.clang.TypeKind;
-import com.sun.tools.jextract.tree.MacroTree;
+
 import com.sun.tools.jextract.tree.StructTree;
 import com.sun.tools.jextract.tree.Tree;
 
@@ -52,8 +45,6 @@ public final class HeaderFile {
     List<String> libraries; // immutable
     List<String> libraryPaths; // immutable
 
-    private final AtomicInteger serialNo;
-
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     HeaderFile(Context ctx, Path path, String pkgName, String clsName, HeaderFile main) {
@@ -61,9 +52,8 @@ public final class HeaderFile {
         this.path = path;
         this.pkgName = pkgName;
         this.clsName = clsName;
-        dict = ctx.typeDictionaryFor(pkgName);
-        serialNo = new AtomicInteger();
         this.main = main == null ? this : main;
+        this.dict = new TypeDictionary(ctx, this);
     }
 
     void useLibraries(List<String> libraries, List<String> libraryPaths) {
@@ -73,6 +63,10 @@ public final class HeaderFile {
 
     AsmCodeFactory getCodeFactory() {
         return cf;
+    }
+
+    TypeDictionary dictionary() {
+        return dict;
     }
 
     /**
@@ -97,17 +91,10 @@ public final class HeaderFile {
         return "HeaderFile(path=" + path + ")";
     }
 
-    private int serialNo() {
-        return serialNo.incrementAndGet();
-    }
-
     void processTree(Tree tree, HeaderFile main, boolean isBuiltIn) {
         if (tree.isDeclaration()) {
-            JType jt = dict.computeIfAbsent(tree.type(), type -> {
-                 logger.fine(() -> "PH: Compute type for " + type.spelling());
-                 return define(type);
-            });
-            assert (jt instanceof JType2);
+            tree.accept(new TypeEnter(dictionary()), null);
+            JType jt = dictionary().lookup(tree.type());
 
             if (tree instanceof StructTree) {
                 ((StructTree)tree).nestedTypes().forEach(nt -> processTree(nt, main, isBuiltIn));
@@ -122,148 +109,5 @@ public final class HeaderFile {
                 tree.accept(cf, null);
             }
         }
-    }
-
-    JType globalLookup(Type type) {
-        JType jt;
-        try {
-            jt = dict.lookup(type);
-            if (null == jt) {
-                jt = dict.computeIfAbsent(type, this::define);
-            }
-        } catch (TypeDictionary.NotDeclaredException ex) {
-            // The type has no declaration, consider it local defined
-            jt = dict.computeIfAbsent(type, this::define);
-        }
-        return jt;
-    }
-
-    /**
-     * Local lookup, the type is assumed to be locally defined. Use
-     * TypeDictionary.lookup(Type) for a global lookup or Context.getJType(Cursor)
-     *
-     * @param type
-     * @return
-     * @see TypeDictionary#lookup(Type)
-     */
-    JType localLookup(Type type) {
-        return dict.computeIfAbsent(type, this::define);
-    }
-
-    private JType doRecord(Type t) {
-        assert(t.kind() == TypeKind.Record);
-        String name = Utils.toClassName(Utils.getName(t));
-        Cursor dcl = t.getDeclarationCursor();
-        // Define record locally but not declared in this file, likely a built-in type.
-        // __builtin_va_list is such a type.
-        boolean gen_code = (cf != null) && (dcl.getSourceLocation().getFileLocation().path() == null);
-        JType2 jt;
-        // case of #typedef struct Foo Bar, struct Foo is a Record type
-        // as no definition found, we consider it an annotation
-        Cursor defC = dcl.getDefinition();
-        jt = JType2.bind(
-                new JType.InnerType(Utils.toInternalName(pkgName, clsName), name),
-                t, defC.isInvalid() ? dcl : defC);
-        if (gen_code) {
-            // FIXME: what is this?
-            // cf.addType(jt, defC);
-        }
-        return jt;
-    }
-
-    // Use of dict.lookup() and lookup() is tricky, if a type should have being
-    // declared earlier, use dict.lookup(); otherwise use lookup() for potentially
-    // local declaration of a type.
-    JType define(Type t) {
-        JType jt;
-        JType2 jt2;
-        logger.fine("Define " + t.kind() + ":" + t.spelling() + " for TD " + pkgName);
-        switch (t.kind()) {
-            case Unexposed:
-            case Elaborated:
-                jt = define(t.canonicalType());
-                break;
-            case ConstantArray:
-                jt = JType.ofArray(globalLookup(t.getElementType()));
-                break;
-            case IncompleteArray:
-                jt = JType.ofArray(globalLookup(t.getElementType()));
-                break;
-            case FunctionProto:
-            case FunctionNoProto:
-                JType[] args = new JType[t.numberOfArgs()];
-                for (int i = 0; i < args.length; i++) {
-                    // argument could be function pointer declared locally
-                    args[i] = globalLookup(t.argType(i));
-                }
-                jt = new JType.Function(Utils.getFunction(t), t.isVariadic(), globalLookup(t.resultType()), args);
-                break;
-            case Enum:
-                String name = Utils.toInternalName(pkgName, clsName,
-                        Utils.toClassName(Utils.getName(t)));
-                jt = TypeAlias.of(name, JType.Int);
-                break;
-            case Invalid:
-                throw new IllegalArgumentException("Invalid type");
-            case Record:
-                jt = doRecord(t);
-                break;
-            case Pointer:
-                Type pointee = t.getPointeeType().canonicalType();
-                jt2 = (JType2) globalLookup(pointee);
-                jt = jt2.getDelegate();
-                if (jt instanceof JType.Function) {
-                    jt = new JType.FnIf(new JType.InnerType(
-                                Utils.toInternalName(pkgName, clsName),
-                                "FI" + serialNo()),
-                            (JType.Function) jt);
-                    if (cf != null) {
-                        cf.addType(JType2.bind(jt, t, null), null);
-                    }
-                    jt = new CallbackType(jt);
-                } else {
-                    jt = new PointerType(jt);
-                }
-                break;
-            case Typedef:
-                Type truetype = t.canonicalType();
-                logger.fine(() -> "Typedef " + t.spelling() + " as " + truetype.spelling());
-                name = Utils.toInternalName(pkgName, clsName,
-                        Utils.toClassName(t.spelling()));
-                jt = TypeAlias.of(name, globalLookup(truetype));
-                break;
-            case BlockPointer:
-                // FIXME: what is BlockPointer? A FunctionalPointer as this is closure
-                pointee = t.getPointeeType();
-                jt2 = (JType2) globalLookup(pointee);
-                jt = jt2.getDelegate();
-                jt = new JType.FnIf(new JType.InnerType(
-                            Utils.toInternalName(pkgName, clsName),
-                            "FI" + serialNo()),
-                        (JType.Function) jt);
-                if (cf != null) {
-                    cf.addType(JType2.bind(jt, t, null), null);
-                }
-                jt = new CallbackType(jt);
-                break;
-            case Complex:
-                TypeKind ek = t.getElementType().kind();
-                if (ek == TypeKind.Float) {
-                    jt = JType2.bind(JType.of(FloatComplex.class), t, t.getDeclarationCursor());
-                } else if (ek == TypeKind.Double) {
-                    jt = JType2.bind(JType.of(DoubleComplex.class), t, t.getDeclarationCursor());
-                } else if (ek == TypeKind.LongDouble) {
-                    jt = JType2.bind(JType.of(LongDoubleComplex.class), t, t.getDeclarationCursor());
-                } else {
-                    throw new UnsupportedOperationException("_Complex kind " + ek + " not supported");
-                }
-                break;
-            default:
-                throw new UnsupportedOperationException("Type kind not supported: " + t.kind());
-        }
-
-        final JType finalJt = jt;
-        logger.config(() -> "Type " + t.spelling() + " defined as " + finalJt.getSignature());
-        return (jt instanceof JType2) ? jt : JType2.bind(jt, t, t.getDeclarationCursor());
     }
 }

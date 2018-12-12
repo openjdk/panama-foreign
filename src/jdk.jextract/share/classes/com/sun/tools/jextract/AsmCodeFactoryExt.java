@@ -26,7 +26,7 @@ import java.foreign.Libraries;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Method;
-import java.util.logging.Logger;
+
 import jdk.internal.org.objectweb.asm.FieldVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
@@ -83,14 +83,14 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
             assert !fieldName.isEmpty();
 
             emitStaticForwarder(fieldName + "$get",
-                "()" + jt.getDescriptor(), "()" + jt.getSignature());
+                "()" + jt.getDescriptor(), "()" + jt.getSignature(false));
 
             emitStaticForwarder(fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
-                "(" + JType.getPointerVoidAsWildcard(jt) + ")V");
-            JType ptrType = new PointerType(jt);
+                "(" + jt.getSignature(true) + ")V");
+            JType ptrType = JType.GenericType.ofPointer(jt);
             emitStaticForwarder(fieldName + "$ptr",
-                "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature());
+                "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(false));
 
             return true;
         } else {
@@ -113,9 +113,8 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         if (super.visitFunction(funcTree, jt)) {
             assert (jt instanceof JType.Function);
             JType.Function fn = (JType.Function)jt;
-            String uniqueName = funcTree.name() + "." + fn.getDescriptor();
-            logger.fine(() -> "Add method: " + fn.getSignature());
-            emitStaticForwarder(funcTree.name(), fn.getDescriptor(), fn.getSignature());
+            logger.fine(() -> "Add method: " + fn.getSignature(false));
+            emitStaticForwarder(funcTree.name(), fn.getDescriptor(), fn.getSignature(false));
             return true;
         } else {
             return false;
@@ -164,7 +163,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     private void addEnumConstant(FieldTree fieldTree) {
         assert (fieldTree.isEnumConstant());
         String name = fieldTree.name();
-        String desc = headerFile.globalLookup(fieldTree.type()).getDescriptor();
+        String desc = dict.lookup(fieldTree.type()).getDescriptor();
         if (desc.length() != 1) {
             throw new AssertionError("expected single char descriptor: " + desc);
         }

@@ -72,7 +72,7 @@ public class JTypeTest {
         assertEquals(JType.of(Object.class), JType.Object);
         int[] ar = new int[0];
         assertTrue(JType.of(ar.getClass()) instanceof JType.ArrayType);
-        assertTrue(JType.of(getClass()) instanceof JType.ObjectRef);
+        assertTrue(JType.of(getClass()) instanceof JType.ClassType);
         // FIXME: the follwing cases fail.
         // assertTrue(JType.of(Alias.class) instanceof TypeAlias);
         // assertTrue(JType.of(Predicate.class) instanceof JType.FnIf);
