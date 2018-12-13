@@ -26,6 +26,7 @@
 /*
  * @test
  * @run testng FunctionAccessTest
+ * @run testng/othervm -Djdk.internal.foreign.UpcallHandler.FASTPATH=none -Djdk.internal.foreign.NativeInvoker.FASTPATH=none FunctionAccessTest
  */
 
 import java.foreign.memory.*;

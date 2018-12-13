@@ -23,6 +23,8 @@
 
 package jdk.internal.foreign.abi;
 
+import java.foreign.Library;
+import java.foreign.NativeMethodType;
 import java.foreign.NativeTypes;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
@@ -40,23 +42,20 @@ import static sun.security.action.GetPropertyAction.privilegedGetProperty;
  * takes an array of storage pointers, which describes the state of the CPU at the time of the upcall. This can be used
  * by the Java code to fetch the upcall arguments and to store the results to the desired location, as per system ABI.
  */
-public class UniversalUpcallHandler implements UpcallStub {
+public class UniversalUpcallHandler implements Library.Symbol {
 
     private static final boolean DEBUG = Boolean.parseBoolean(
         privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG"));
 
     @Stable
     private final MethodHandle mh;
-    private final LayoutType<?> returnLayout;
-    private final LayoutType<?>[] argLayouts;
+    private final NativeMethodType nmt;
     private final CallingSequence callingSequence;
     private final Pointer<?> entryPoint;
 
-    public UniversalUpcallHandler(MethodHandle target, CallingSequence callingSequence,
-                                  LayoutType<?> ret, LayoutType<?>... args) {
-        mh = target.asSpreader(Object[].class, args.length);
-        returnLayout = ret;
-        argLayouts = args;
+    public UniversalUpcallHandler(MethodHandle target, CallingSequence callingSequence, NativeMethodType nmt) {
+        mh = target.asSpreader(Object[].class, nmt.parameterCount());
+        this.nmt = nmt;
         this.callingSequence = callingSequence;
         this.entryPoint = BoundedPointer.createNativeVoidPointer(allocateUpcallStub());
     }
@@ -69,11 +68,6 @@ public class UniversalUpcallHandler implements UpcallStub {
     @Override
     public Pointer<?> getAddress() {
         return entryPoint;
-    }
-
-    @Override
-    public MethodHandle methodHandle() {
-        return mh;
     }
 
     public static void invoke(UniversalUpcallHandler handler, long integers, long vectors, long stack, long integerReturn, long vectorReturn, long x87Return) {
@@ -124,8 +118,8 @@ public class UniversalUpcallHandler implements UpcallStub {
             assert callingSequence.returnsInMemory();
             Pointer<Long> res = getPtr(callingSequence.getReturnBindings().get(0));
             long structAddr = res.get();
-            long size = Util.alignUp(returnLayout.bytesSize(), 8);
-            return new BoundedPointer<Object>((LayoutType)returnLayout, BoundedMemoryRegion.of(structAddr, size));
+            long size = Util.alignUp(nmt.returnType().bytesSize(), 8);
+            return new BoundedPointer<Object>((LayoutType)nmt.returnType(), BoundedMemoryRegion.of(structAddr, size));
         }
     }
 
@@ -137,16 +131,16 @@ public class UniversalUpcallHandler implements UpcallStub {
                 System.err.println(callingSequence.asString());
             }
 
-            Object[] args = new Object[argLayouts.length];
-            for (int i = 0 ; i < argLayouts.length ; i++) {
-                args[i] = UniversalNativeInvoker.boxValue(argLayouts[i], context::getPtr, callingSequence.getArgumentBindings(i));
+            Object[] args = new Object[nmt.parameterCount()];
+            for (int i = 0 ; i < nmt.parameterCount() ; i++) {
+                args[i] = UniversalNativeInvoker.boxValue(nmt.parameterType(i), context::getPtr, callingSequence.getArgumentBindings(i));
             }
 
             Object o = mh.invoke(args);
 
             if (mh.type().returnType() != void.class) {
                 if (!callingSequence.returnsInMemory()) {
-                    UniversalNativeInvoker.unboxValue(o, returnLayout, context::getPtr,
+                    UniversalNativeInvoker.unboxValue(o, nmt.returnType(), context::getPtr,
                             callingSequence.getReturnBindings());
                 } else {
                     context.inMemoryPtr().set(o);

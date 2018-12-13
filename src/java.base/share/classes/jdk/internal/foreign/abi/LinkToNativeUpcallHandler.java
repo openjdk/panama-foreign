@@ -27,6 +27,7 @@ import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.vm.annotation.Stable;
 
+import java.foreign.NativeMethodType;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
@@ -42,14 +43,11 @@ public class LinkToNativeUpcallHandler implements UpcallStub {
     private final MethodHandle mh;
     private final Pointer<?> entryPoint;
 
-    public LinkToNativeUpcallHandler(MethodHandle target, CallingSequence callingSequence,
-                        LayoutType<?> ret, LayoutType<?>... args) {
+    public LinkToNativeUpcallHandler(MethodHandle target, CallingSequence callingSequence, NativeMethodType nmt) {
         try {
             Util.checkNoArrays(target.type());
-            MethodType methodType = target.type();
             LinkToNativeSignatureShuffler shuffler =
-                    LinkToNativeSignatureShuffler.nativeToJavaShuffler(callingSequence, methodType,
-                            pos -> (pos == -1L) ? ret : args[pos]);
+                    LinkToNativeSignatureShuffler.nativeToJavaShuffler(callingSequence, nmt);
             this.mh = shuffler.adapt(target);
             this.entryPoint = BoundedPointer.createNativeVoidPointer(allocateLinkToNativeUpcallStub());
         } catch (Throwable ex) {

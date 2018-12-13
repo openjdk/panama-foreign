@@ -23,6 +23,7 @@
 package jdk.internal.foreign.abi;
 
 import java.foreign.Library;
+import java.foreign.NativeMethodType;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.LayoutType;
@@ -63,36 +64,32 @@ public class UniversalNativeInvoker {
     }
 
     private final ShuffleRecipe shuffleRecipe;
-    private final LayoutType<?> returnLayoutType;
-    private final LayoutType<?>[] argLayoutTypes;
+    private final NativeMethodType nmt;
     private final CallingSequence callingSequence;
     private final long addr;
     private final String methodName;
 
-    private UniversalNativeInvoker(long addr, String methodName, CallingSequence callingSequence, LayoutType<?> ret, LayoutType<?>... args) {
+    private UniversalNativeInvoker(long addr, String methodName, CallingSequence callingSequence, NativeMethodType nmt) {
         this.addr = addr;
         this.methodName = methodName;
         this.callingSequence = callingSequence;
-        this.returnLayoutType = ret;
-        this.argLayoutTypes = args;
+        this.nmt = nmt;
         this.shuffleRecipe = ShuffleRecipe.make(callingSequence);
     }
 
-    public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, LayoutType<?> ret, LayoutType<?>... args) {
+    public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, NativeMethodType nmt) {
         try {
-
             UniversalNativeInvoker invoker = new UniversalNativeInvoker(
-                    symbol.getAddress().addr(), symbol.getName(), callingSequence, ret, args);
-            return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, args.length)
-                    .asType(Util.methodType(ret, args));
+                    symbol.getAddress().addr(), symbol.getName(), callingSequence, nmt);
+            return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, nmt.parameterCount())
+                    .asType(nmt.methodType());
         } catch (IllegalAccessException iae) {
             throw new IllegalStateException(iae);
         }
     }
 
     Object invoke(Object[] args) throws Throwable {
-
-        boolean isVoid = returnLayoutType == null || returnLayoutType.carrier() == void.class;
+        boolean isVoid = nmt.returnType() == NativeTypes.VOID;
         int nValues = shuffleRecipe.getNoofArgumentPulls();
         long[] values = new long[nValues];
         Pointer<Long> argsPtr = nValues > 0 ?
@@ -101,7 +98,7 @@ public class UniversalNativeInvoker {
 
         for (int i = 0 ; i < args.length ; i++) {
             Object arg = args[i];
-            unboxValue(arg, argLayoutTypes[i], b -> argsPtr.offset(callingSequence.argumentStorageOffset(b)),
+            unboxValue(arg, nmt.parameterType(i), b -> argsPtr.offset(callingSequence.argumentStorageOffset(b)),
                     callingSequence.getArgumentBindings(i));
         }
 
@@ -111,7 +108,7 @@ public class UniversalNativeInvoker {
             // FIXME (STRUCT-LIFECYCLE):
             // Leak the allocated structs for now until the life cycle has been figured out
             Scope scope = Scope.newNativeScope();
-            retPtr = ((ScopeImpl)scope).allocate(returnLayoutType, 8);
+            retPtr = ((ScopeImpl)scope).allocate(nmt.returnType(), 8);
             unboxValue(retPtr, NativeTypes.UINT64.pointer(), b -> argsPtr.offset(callingSequence.argumentStorageOffset(b)),
                     callingSequence.getReturnBindings());
         } else if (!isVoid && returnValues.length != 0) {
@@ -140,7 +137,7 @@ public class UniversalNativeInvoker {
         if (isVoid) {
             return null;
         } else if (!callingSequence.returnsInMemory()) {
-            return boxValue(returnLayoutType, b -> retPtr.offset(callingSequence.returnStorageOffset(b)), callingSequence.getReturnBindings());
+            return boxValue(nmt.returnType(), b -> retPtr.offset(callingSequence.returnStorageOffset(b)), callingSequence.getReturnBindings());
         } else {
             return retPtr.get();
         }

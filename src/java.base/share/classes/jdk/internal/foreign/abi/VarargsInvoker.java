@@ -60,21 +60,21 @@ public class VarargsInvoker {
 
     private Object invoke(Object[] args) throws Throwable {
         // one trailing Object[]
-        int nNamedArgs = nativeMethodType.getArgsType().length;
+        int nNamedArgs = nativeMethodType.parameterArray().length;
         assert(args.length == nNamedArgs + 1);
         // The last argument is the array of vararg collector
         Object[] unnamedArgs = (Object[]) args[args.length - 1];
 
-        LayoutType<?> retLayoutType = nativeMethodType.getReturnType();
+        LayoutType<?> retLayoutType = nativeMethodType.returnType();
         LayoutType<?>[] argLayoutTypes = new LayoutType<?>[nNamedArgs + unnamedArgs.length];
-        System.arraycopy(nativeMethodType.getArgsType(), 0, argLayoutTypes, 0, nNamedArgs);
+        System.arraycopy(nativeMethodType.parameterArray(), 0, argLayoutTypes, 0, nNamedArgs);
         int pos = nNamedArgs;
         for (Object o: unnamedArgs) {
             Class<?> type = o.getClass();
             argLayoutTypes[pos++] = Util.makeType(computeClass(type), Util.variadicLayout(type));
         }
         MethodHandle delegate = SystemABI.getInstance().downcallHandle(symbol,
-                new NativeMethodType(false, retLayoutType, argLayoutTypes));
+                NativeMethodType.of(retLayoutType, argLayoutTypes));
 
         // flatten argument list so that it can be passed to an asSpreader MH
         Object[] allArgs = new Object[nNamedArgs + unnamedArgs.length];

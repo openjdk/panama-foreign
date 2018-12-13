@@ -23,7 +23,8 @@
 
 package jdk.internal.foreign.abi;
 
-import java.foreign.memory.LayoutType;
+import java.foreign.Library;
+import java.foreign.NativeMethodType;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -35,23 +36,15 @@ import jdk.internal.vm.annotation.Stable;
  * entry point is a Java method which takes a number N of long arguments followed by a number M of double arguments;
  * possible return types for the entry point are either long, double or void.
  */
-public class DirectUpcallHandler implements UpcallStub {
+public class DirectUpcallHandler implements Library.Symbol {
 
     @Stable
     private final MethodHandle mh;
-    private final LayoutType<?> ret;
-    private final LayoutType<?> args[];
     private final Pointer<?> entryPoint;
-    private final MethodHandle target;
 
-    public DirectUpcallHandler(MethodHandle target, CallingSequence callingSequence,
-                        LayoutType<?> ret, LayoutType<?>... args) {
-        this.ret = ret;
-        this.args = args;
-        this.target = target;
-        MethodType methodType = target.type();
+    public DirectUpcallHandler(MethodHandle target, CallingSequence callingSequence, NativeMethodType nmt) {
         DirectSignatureShuffler shuffler =
-                DirectSignatureShuffler.nativeToJavaShuffler(callingSequence, methodType, this::layoutFor);
+                DirectSignatureShuffler.nativeToJavaShuffler(callingSequence, nmt);
         this.mh = shuffler.adapt(target);
         this.entryPoint = BoundedPointer.createNativeVoidPointer(allocateUpcallStub());
     }
@@ -64,15 +57,6 @@ public class DirectUpcallHandler implements UpcallStub {
     @Override
     public Pointer<?> getAddress() {
         return entryPoint;
-    }
-
-    @Override
-    public MethodHandle methodHandle() {
-        return target;
-    }
-
-    private LayoutType<?> layoutFor(int pos) {
-        return pos == -1 ? ret : args[pos];
     }
 
     public long allocateUpcallStub() {

@@ -23,18 +23,15 @@
 
 package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.Util;
-
 import java.foreign.Library;
-import java.foreign.memory.LayoutType;
+import java.foreign.NativeMethodType;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
 public class LinkToNativeInvoker {
-    public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, LayoutType<?> ret, LayoutType<?>... args) {
+    public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, NativeMethodType nmt) {
         LinkToNativeSignatureShuffler shuffler =
-                LinkToNativeSignatureShuffler.javaToNativeShuffler(callingSequence, Util.methodType(ret, args),
-                        pos -> (pos == -1L) ? ret : args[pos]);
+                LinkToNativeSignatureShuffler.javaToNativeShuffler(callingSequence, nmt);
         MethodHandle mh;
         try {
             mh = MethodHandles.lookup().findNative(symbol, shuffler.nativeMethodType());

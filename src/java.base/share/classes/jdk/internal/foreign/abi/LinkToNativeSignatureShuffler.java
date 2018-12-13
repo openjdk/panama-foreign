@@ -26,6 +26,7 @@ package jdk.internal.foreign.abi;
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.LayoutTypeImpl;
 
+import java.foreign.NativeMethodType;
 import java.foreign.layout.Function;
 import java.foreign.memory.LayoutType;
 import java.lang.invoke.MethodType;
@@ -34,8 +35,8 @@ import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 
 public class LinkToNativeSignatureShuffler extends DirectSignatureShuffler {
-    public LinkToNativeSignatureShuffler(CallingSequence callingSequence, MethodType javaMethodType, IntFunction<LayoutType<?>> layoutTypeFactory, ShuffleDirection direction) {
-        super(callingSequence, javaMethodType, layoutTypeFactory, direction);
+    public LinkToNativeSignatureShuffler(CallingSequence callingSequence, NativeMethodType nmt, ShuffleDirection direction) {
+        super(callingSequence, nmt, direction);
     }
 
     @Override
@@ -58,17 +59,16 @@ public class LinkToNativeSignatureShuffler extends DirectSignatureShuffler {
         }
     }
 
-    static LinkToNativeSignatureShuffler javaToNativeShuffler(CallingSequence callingSequence, MethodType javaMethodType,
-                                                        IntFunction<LayoutType<?>> layoutTypeFactory) {
-        return new LinkToNativeSignatureShuffler(callingSequence, javaMethodType, layoutTypeFactory, ShuffleDirection.JAVA_TO_NATIVE);
+    static LinkToNativeSignatureShuffler javaToNativeShuffler(CallingSequence callingSequence, NativeMethodType nmt) {
+        return new LinkToNativeSignatureShuffler(callingSequence, nmt, ShuffleDirection.JAVA_TO_NATIVE);
     }
 
-    static LinkToNativeSignatureShuffler nativeToJavaShuffler(CallingSequence callingSequence, MethodType javaMethodType,
-                                                              IntFunction<LayoutType<?>> layoutTypeFactory) {
-        return new LinkToNativeSignatureShuffler(callingSequence, javaMethodType, layoutTypeFactory, ShuffleDirection.NATIVE_TO_JAVA);
+    static LinkToNativeSignatureShuffler nativeToJavaShuffler(CallingSequence callingSequence, NativeMethodType nmt) {
+        return new LinkToNativeSignatureShuffler(callingSequence, nmt, ShuffleDirection.NATIVE_TO_JAVA);
     }
 
-    private static boolean accept(int arity, CallingSequence callingSequence, ShuffleDirection direction) {
+    private static boolean accept(NativeMethodType nmt, CallingSequence callingSequence, ShuffleDirection direction) {
+        int arity = nmt.parameterCount();
         if (direction == ShuffleDirection.NATIVE_TO_JAVA) {
             //only support LL -> L for now
             return !callingSequence.returnsInMemory() &&
@@ -97,11 +97,11 @@ public class LinkToNativeSignatureShuffler extends DirectSignatureShuffler {
         }
     }
 
-    public static boolean acceptDowncall(int arity, CallingSequence callingSequence) {
-        return accept(arity, callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
+    public static boolean acceptDowncall(NativeMethodType nmt, CallingSequence callingSequence) {
+        return accept(nmt, callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
     }
 
-    public static boolean acceptUpcall(int arity, CallingSequence callingSequence) {
-        return accept(arity, callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
+    public static boolean acceptUpcall(NativeMethodType nmt, CallingSequence callingSequence) {
+        return accept(nmt, callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
     }
 }
