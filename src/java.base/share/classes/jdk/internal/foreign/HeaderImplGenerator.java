@@ -134,7 +134,7 @@ class HeaderImplGenerator extends BinderClassGenerator {
         Function function = info.descriptor;
         try {
             Library.Symbol symbol = lookup.lookup(info.symbolName);
-            NativeMethodType nmt = NativeMethodType.of(layoutResolver.resolve(function), method);
+            NativeMethodType nmt = Util.nativeMethodType(layoutResolver.resolve(function), method);
             addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(),
                     SystemABI.getInstance().downcallHandle(symbol, nmt));
         } catch (ReflectiveOperationException e) {

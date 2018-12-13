@@ -24,7 +24,6 @@
  */
 package jdk.internal.foreign;
 
-import java.foreign.NativeMethodType;
 import java.foreign.layout.Function;
 import java.foreign.memory.Pointer;
 import java.lang.annotation.ElementType;
@@ -179,7 +178,7 @@ class CallbackImplGenerator extends BinderClassGenerator {
         // Only native function pointer will get here
         // Java upcall stub will be detected by CallbackImpl
         return SystemABI.getInstance().downcallHandle(new SimpleSymbol(ptr, meth.getName()),
-                NativeMethodType.of(function, meth));
+                Util.nativeMethodType(function, meth));
     }
 
     @Target(ElementType.TYPE)

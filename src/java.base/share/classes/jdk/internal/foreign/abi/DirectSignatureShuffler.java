@@ -23,7 +23,7 @@
 
 package jdk.internal.foreign.abi;
 
-import java.foreign.layout.Function;
+import java.foreign.NativeMethodType;
 import java.foreign.memory.Callback;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
@@ -34,7 +34,6 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.IntFunction;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,25 +87,22 @@ public class DirectSignatureShuffler {
     private List<Integer> longPerms = new ArrayList<>();
     private List<Integer> doublePerms = new ArrayList<>();
 
-    private DirectSignatureShuffler(CallingSequence callingSequence, MethodType javaMethodType,
-                                    IntFunction<LayoutType<?>> layoutTypeFactory, ShuffleDirection direction) {
+    private DirectSignatureShuffler(CallingSequence callingSequence, NativeMethodType nmt, ShuffleDirection direction) {
         checkCallingSequence(callingSequence);
         this.direction = direction;
-        this.javaMethodType = javaMethodType;
-        processType(RET_POS, layoutTypeFactory.apply(RET_POS), callingSequence.getReturnBindings(), direction.flip());
+        this.javaMethodType = nmt.methodType();
+        processType(RET_POS, nmt.returnType(), callingSequence.getReturnBindings(), direction.flip());
         for (int i = 0 ; i < javaMethodType.parameterCount() ; i++) {
-            processType(i, layoutTypeFactory.apply(i), callingSequence.getArgumentBindings(i), direction);
+            processType(i, nmt.parameterType(i), callingSequence.getArgumentBindings(i), direction);
         }
     }
 
-    static DirectSignatureShuffler javaToNativeShuffler(CallingSequence callingSequence, MethodType javaMethodType,
-                                                        IntFunction<LayoutType<?>> layoutTypeFactory) {
-        return new DirectSignatureShuffler(callingSequence, javaMethodType, layoutTypeFactory, ShuffleDirection.JAVA_TO_NATIVE);
+    static DirectSignatureShuffler javaToNativeShuffler(CallingSequence callingSequence, NativeMethodType nmt) {
+        return new DirectSignatureShuffler(callingSequence, nmt, ShuffleDirection.JAVA_TO_NATIVE);
     }
 
-    static DirectSignatureShuffler nativeToJavaShuffler(CallingSequence callingSequence, MethodType javaMethodType,
-                                                        IntFunction<LayoutType<?>> layoutTypeFactory) {
-        return new DirectSignatureShuffler(callingSequence, javaMethodType, layoutTypeFactory, ShuffleDirection.NATIVE_TO_JAVA);
+    static DirectSignatureShuffler nativeToJavaShuffler(CallingSequence callingSequence, NativeMethodType nmt) {
+        return new DirectSignatureShuffler(callingSequence, nmt, ShuffleDirection.NATIVE_TO_JAVA);
     }
 
     MethodHandle adapt(MethodHandle mh) {
@@ -380,25 +376,17 @@ public class DirectSignatureShuffler {
 
     // predicate: is fast path applicable?
 
-    static boolean acceptDowncall(Function function, CallingSequence callingSequence) {
-        return accept(function.argumentLayouts().size(), callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
+    public static boolean acceptDowncall(NativeMethodType nmt, CallingSequence callingSequence) {
+        return accept(nmt, callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
     }
 
-    static boolean acceptUpcall(Function function, CallingSequence callingSequence) {
-        return accept(function.argumentLayouts().size(), callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
+    public static boolean acceptUpcall(NativeMethodType nmt, CallingSequence callingSequence) {
+        return accept(nmt, callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
     }
 
-    public static boolean acceptDowncall(int argCount, CallingSequence callingSequence) {
-        return accept(argCount, callingSequence, ShuffleDirection.JAVA_TO_NATIVE);
-    }
-
-    public static boolean acceptUpcall(int argCount, CallingSequence callingSequence) {
-        return accept(argCount, callingSequence, ShuffleDirection.NATIVE_TO_JAVA);
-    }
-
-    private static boolean accept(int arity, CallingSequence callingSequence, ShuffleDirection direction) {
-        if (arity > direction.maxArity) return false;
-        for (int i = 0 ; i < arity; i++) {
+    private static boolean accept(NativeMethodType nmt, CallingSequence callingSequence, ShuffleDirection direction) {
+        if (nmt.parameterCount() > direction.maxArity) return false;
+        for (int i = 0 ; i < nmt.parameterCount(); i++) {
             List<ArgumentBinding> argumentBindings = callingSequence.getArgumentBindings(i);
             if (argumentBindings.size() != 1 ||
                     !isDirectBinding(argumentBindings.get(0))) {

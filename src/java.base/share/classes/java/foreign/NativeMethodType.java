@@ -10,7 +10,7 @@
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * accompanied this code).Collecton
  *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
@@ -27,76 +27,130 @@ import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
 import java.foreign.memory.LayoutType;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Method;
 import java.util.Arrays;
-import jdk.internal.foreign.Util;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * Describe a native function and corresponding Java method.
- * @apiNote argsType only include the explicit argument for varargs function, i.e, without the implicit trailing
+ * A native method type represents the arguments and return native types (expressed as {@link LayoutType} objects)
+ * accepted and returned by a native function, or the arguments and return type passed and expected by native function
+ * caller.
+ *
+ * Native method types must be properly matched between a method handle and all its callers for the native function call to succeed.
+ * @apiNote parameterTypes only include the explicit argument for varargs function, i.e, without the implicit trailing
  * array as we see in Java MethodType
+ *
+ * @see LayoutType
+ * @see MethodType
+ * @see Function
  */
-public class NativeMethodType {
+public final class NativeMethodType {
     private final LayoutType<?> returnType;
-    private final LayoutType<?>[] argsType;
+    private final LayoutType<?>[] parameterTypes;
     private final boolean isVarArgs;
-    private MethodType methodType;
+    private volatile MethodType methodType;
+    private volatile Function function;
 
-    public NativeMethodType(boolean isVarArgs, LayoutType<?> returnType, LayoutType<?>... argsType) {
-        this.argsType = argsType;
+    private NativeMethodType(boolean isVarArgs, LayoutType<?> returnType, LayoutType<?>... parameterTypes) {
+        this.parameterTypes = parameterTypes;
         this.isVarArgs = isVarArgs;
         this.returnType = (returnType == null) ? NativeTypes.VOID : returnType;
     }
-
+    
     /**
-     * Get an instance of NativeMethodType
-     * @param function Tha native function
-     * @param method The Java method
-     * @return
+     * Obtain a new native method type given native return/parameter types.
+     * @param returnType the return native type.
+     * @param parameterTypes the native parameter types.
+     * @return the new native method type.
      */
-    public static NativeMethodType of(Function function, Method method) {
-        Util.checkCompatible(method, function);
-
-        LayoutType<?> ret = function.returnLayout()
-                .<LayoutType<?>>map(l -> Util.makeType(method.getGenericReturnType(), l))
-                .orElse(NativeTypes.VOID);
-
-        // Use function argument size and ignore last argument from method for vararg function
-        LayoutType<?>[] args = new LayoutType<?>[function.argumentLayouts().size()];
-        for (int i = 0; i < args.length; i++) {
-            args[i] = Util.makeType(method.getGenericParameterTypes()[i], function.argumentLayouts().get(i));
-        }
-
-        return new NativeMethodType(function.isVariadic(), ret, args);
+    public static NativeMethodType of(LayoutType<?> returnType, LayoutType<?>... parameterTypes) {
+        return of(false, returnType, parameterTypes);
     }
 
-    public boolean isVarArgs() { return isVarArgs; }
-    public LayoutType<?> getReturnType() { return returnType; }
-    public LayoutType<?>[] getArgsType() { return argsType; }
+    /**
+     * Obtain a new native method type given variable arity statis, native return/parameter types.
+     * @param isVarargs true, if the native method type models a variable arity native function.
+     * @param returnType the return native type.
+     * @param parameterTypes the native parameter types.
+     * @return the new native method type.
+     */
+    public static NativeMethodType of(boolean isVarargs, LayoutType<?> returnType, LayoutType<?>... parameterTypes) {
+        Objects.requireNonNull(returnType);
+        Objects.requireNonNull(parameterTypes);
+        return new NativeMethodType(isVarargs, returnType, parameterTypes);
+    }
 
+    /**
+     * Does this native method type describe a variable-arity native function?
+     * @return true, if this native method type models a variable-arity native function.
+     */
+    public boolean isVarArgs() { return isVarArgs; }
+
+    /**
+     * Retrieves the return type of this native method type.
+     * @return the return type.
+     */
+    public LayoutType<?> returnType() { return returnType; }
+
+    /**
+     * Retrieves the i-th parameter type of this native method type.
+     * @return the parameter type at position {@code pos}.
+     * @throws IndexOutOfBoundsException if {@code num} is not a valid index into {@link #parameterArray()}.
+     */
+    public LayoutType<?> parameterType(int pos) {
+        return parameterTypes[pos];
+    }
+
+    /**
+     * Retrieves the array of parameter types of this native method type.
+     * @return the parameter type array.
+     */
+    public LayoutType<?>[] parameterArray() { return parameterTypes; }
+
+    /**
+     * Retrieves a list of parameter types of this native method type.
+     * @return the parameter type array.
+     */
+    public List<LayoutType<?>> parameterList() { return Arrays.asList(parameterTypes); }
+
+    /**
+     * Retrieves the arity of this native method type.
+     * @return the native method type arity (excluding trailing variable-arity parameters).
+     */
+    public int parameterCount() { return parameterTypes.length; }
+
+    /**
+     * Retrieves the {@link MethodType} instance associated with this native method type.
+     * @return a {@link MethodType} instance.
+     */
     public MethodType methodType() {
         if (methodType == null) {
             Class<?> r = returnType.carrier();
-            int argsCount = argsType.length;
+            int argsCount = parameterTypes.length;
             if (isVarArgs()) argsCount += 1;
             Class<?>[] a = new Class<?>[argsCount];
-            for (int i = 0; i < argsType.length; i++) {
-                a[i] = argsType[i].carrier();
+            for (int i = 0; i < parameterTypes.length; i++) {
+                a[i] = parameterTypes[i].carrier();
             }
             if (isVarArgs()) {
-                a[argsType.length] = Object[].class;
+                a[parameterTypes.length] = Object[].class;
             }
             methodType = MethodType.methodType(r, a);
         }
         return methodType;
     }
 
+    /**
+     * Retrieves the {@link Function} instance associated with this native method type.
+     * @return a {@link Function} instance.
+     */
     public Function function() {
-        Layout[] argsLayout = Arrays.stream(argsType).map(LayoutType::layout).toArray(Layout[]::new);
-        if (returnType == NativeTypes.VOID) {
-            return Function.ofVoid(isVarArgs(), argsLayout);
-        } else {
-            return Function.of(returnType.layout(), isVarArgs(), argsLayout);
+        if (function == null) {
+            Layout[] argsLayout = Arrays.stream(parameterTypes).map(LayoutType::layout).toArray(Layout[]::new);
+            function = (returnType == NativeTypes.VOID) ?
+                Function.ofVoid(isVarArgs(), argsLayout) :
+                Function.of(returnType.layout(), isVarArgs(), argsLayout);
         }
+        return function;
     }
 }
