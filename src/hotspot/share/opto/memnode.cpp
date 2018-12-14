@@ -1062,7 +1062,12 @@ Node* MemNode::can_see_stored_value(Node* st, PhaseTransform* phase) const {
       // (This is one of the few places where a generic PhaseTransform
       // can create new nodes.  Think of it as lazily manifesting
       // virtually pre-existing constants.)
-      return phase->zerocon(memory_type());
+      if (memory_type() != T_VOID) {
+        return phase->zerocon(memory_type());
+      } else {
+        // TODO: materialize all-zero vector constant
+        assert(!isa_Load() || as_Load()->type()->isa_vect(), "");
+      }
     }
 
     // A load from an initialization barrier can match a captured store.
