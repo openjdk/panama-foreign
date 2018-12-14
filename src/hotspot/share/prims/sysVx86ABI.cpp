@@ -55,12 +55,12 @@ JVM_ENTRY(static jobject, UH_GetUpcallStub(JNIEnv *env, jobject _unused, jlong a
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 #define LANG "Ljava/lang/"
-#define UPCALL "Ljdk/internal/foreign/abi/UpcallStub;"
+#define SYM "Ljava/foreign/Library$Symbol;"
 
 // These are the native methods on jdk.internal.foreign.NativeInvoker.
 static JNINativeMethod UH_methods[] = {
   {CC "freeUpcallStub",     CC "(J)V",                FN_PTR(UH_FreeUpcallStub)},
-  {CC "getUpcallStub",  CC "(J)" UPCALL,   FN_PTR(UH_GetUpcallStub)},
+  {CC "getUpcallStub",  CC "(J)" SYM,   FN_PTR(UH_GetUpcallStub)},
 };
 
 /**

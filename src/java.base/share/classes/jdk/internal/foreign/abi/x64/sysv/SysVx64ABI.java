@@ -33,8 +33,8 @@ import java.foreign.layout.Padding;
 import java.foreign.layout.Sequence;
 import java.foreign.layout.Value;
 import java.foreign.memory.LayoutType;
-import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.WrongMethodTypeException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,7 +46,6 @@ import jdk.internal.foreign.abi.DirectSignatureShuffler;
 import jdk.internal.foreign.abi.DirectUpcallHandler;
 import jdk.internal.foreign.abi.UniversalNativeInvoker;
 import jdk.internal.foreign.abi.UniversalUpcallHandler;
-import jdk.internal.foreign.abi.UpcallStub;
 import jdk.internal.foreign.abi.VarargsInvoker;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
@@ -104,55 +103,40 @@ public class SysVx64ABI implements SystemABI {
 
     @Override
     public MethodHandle downcallHandle(CallingConvention cc, Library.Symbol symbol, NativeMethodType nmt) {
-        if (symbol instanceof UpcallStub) {
-            return ((UpcallStub) symbol).methodHandle();
-        }
-
-        try {
-            UpcallStub stub = getUpcallStub(symbol.getAddress().addr());
-            if (null != stub) {
-                return stub.methodHandle();
-            }
-        } catch (IllegalAccessException iae) {
-            throw new IllegalStateException(iae);
-        }
-
         if (nmt.isVarArgs()) {
             return VarargsInvoker.make(symbol, nmt);
         }
 
         StandardCall sc = new StandardCall();
-        LayoutType<?> ret = nmt.getReturnType();
-        LayoutType<?>[] args = nmt.getArgsType();
-        CallingSequence callingSequence = sc.arrangeCall(ret, args);
+        CallingSequence callingSequence = sc.arrangeCall(nmt);
 
         if (fastPath == null || !fastPath.equals("none")) {
-            if (DirectSignatureShuffler.acceptDowncall(args.length, callingSequence)) {
-                return DirectNativeInvoker.make(symbol, callingSequence, ret, args);
+            if (DirectSignatureShuffler.acceptDowncall(nmt, callingSequence)) {
+                return DirectNativeInvoker.make(symbol, callingSequence, nmt);
             } else if (fastPath != null && fastPath.equals("direct")) {
                 throw new IllegalStateException(
                         String.format("No fast path for: %s", symbol.getName()));
             }
         }
-        return UniversalNativeInvoker.make(symbol, callingSequence, ret, args);
+        return UniversalNativeInvoker.make(symbol, callingSequence, nmt);
     }
 
     @Override
     public Library.Symbol upcallStub(CallingConvention cc, MethodHandle target, NativeMethodType nmt) {
+        if (!target.type().equals(nmt.methodType())) {
+            throw new WrongMethodTypeException("Native method type has wrong type: " + nmt.methodType());
+        }
         StandardCall sc = new StandardCall();
-        LayoutType<?> ret = nmt.getReturnType();
-        LayoutType<?>[] args = nmt.getArgsType();
-        CallingSequence callingSequence = sc.arrangeCall(ret, args);
-        Pointer<?> ptr;
+        CallingSequence callingSequence = sc.arrangeCall(nmt);
         if (fastPath == null || !fastPath.equals("none")) {
-            if (DirectSignatureShuffler.acceptUpcall(args.length, callingSequence)) {
-                return new DirectUpcallHandler(target, callingSequence, ret, args);
+            if (DirectSignatureShuffler.acceptUpcall(nmt, callingSequence)) {
+                return new DirectUpcallHandler(target, callingSequence, nmt);
             } else if (fastPath != null && fastPath.equals("direct")) {
                 throw new IllegalStateException(
                         String.format("No fast path for function type %s", nmt.function()));
             }
         }
-        return new UniversalUpcallHandler(target, callingSequence, ret, args);
+        return new UniversalUpcallHandler(target, callingSequence, nmt);
     }
 
     @Override
@@ -332,7 +316,7 @@ public class SysVx64ABI implements SystemABI {
     }
 
     // natives
-    private static native UpcallStub getUpcallStub(long addr);
+    private static native Library.Symbol getUpcallStub(long addr);
     private static native void freeUpcallStub(long addr);
 
     private static native void registerNatives();

@@ -24,10 +24,9 @@
 package jdk.internal.foreign.abi;
 
 import java.foreign.Library;
-import java.foreign.memory.LayoutType;
+import java.foreign.NativeMethodType;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import jdk.internal.foreign.Util;
 
 /**
  *  This class implements native call invocation through specialized adapters. A specialized adapter is a native method
@@ -35,10 +34,9 @@ import jdk.internal.foreign.Util;
  *  adapter are either long, double or void.
  */
 public class DirectNativeInvoker {
-    public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, LayoutType<?> ret, LayoutType<?>... args) {
+    public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, NativeMethodType nmt) {
         DirectSignatureShuffler shuffler =
-                DirectSignatureShuffler.javaToNativeShuffler(callingSequence, Util.methodType(ret, args),
-                        pos -> (pos == -1L) ? ret : args[pos]);
+                DirectSignatureShuffler.javaToNativeShuffler(callingSequence, nmt);
         MethodHandle mh;
         try {
             mh = MethodHandles.lookup().findStatic(DirectNativeInvoker.class,

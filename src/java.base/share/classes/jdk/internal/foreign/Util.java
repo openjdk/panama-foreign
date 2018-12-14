@@ -22,6 +22,7 @@
  */
 package jdk.internal.foreign;
 
+import java.foreign.NativeMethodType;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.annotations.NativeCallback;
@@ -271,6 +272,7 @@ public final class Util {
         } else if (isCStruct(erasure(carrier))) {
             LayoutType lt = LayoutType.ofStruct((Class) carrier);
             if (lt.layout().isPartial()) {
+                //FIXME: this is needed because LayoutType::ofStruct does not resolve layouts!!
                 lt = LayoutTypeImpl.of((Class) carrier, layout, References.ofStruct);
             }
             return lt;
@@ -378,15 +380,6 @@ public final class Util {
         }
     }
 
-    public static MethodType methodType(LayoutType<?> ret, LayoutType<?>... args) {
-        Class<?> r = (ret == null || ret == NativeTypes.VOID) ? void.class : ret.carrier();
-        Class<?>[] a = new Class<?>[args.length];
-        for (int i = 0; i < args.length; i++) {
-            a[i] = args[i].carrier();
-        }
-        return MethodType.methodType(r, a);
-    }
-
     public static MethodHandle getCallbackMH(Method m) {
         try {
             MethodHandle mh = MethodHandles.publicLookup().unreflect(m);
@@ -401,5 +394,21 @@ public final class Util {
         LayoutResolver resolver = LayoutResolver.get(nativeCallback);
         resolver.scanMethod(m);
         return resolver.resolve(Util.functionof(nativeCallback));
+    }
+
+    public static NativeMethodType nativeMethodType(Function function, Method method) {
+        checkCompatible(method, function);
+
+        LayoutType<?> ret = function.returnLayout()
+                .<LayoutType<?>>map(l -> makeType(method.getGenericReturnType(), l))
+                .orElse(NativeTypes.VOID);
+
+        // Use function argument size and ignore last argument from method for vararg function
+        LayoutType<?>[] args = new LayoutType<?>[function.argumentLayouts().size()];
+        for (int i = 0; i < args.length; i++) {
+            args[i] = makeType(method.getGenericParameterTypes()[i], function.argumentLayouts().get(i));
+        }
+
+        return NativeMethodType.of(function.isVariadic(), ret, args);
     }
 }

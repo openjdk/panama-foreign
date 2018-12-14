@@ -22,6 +22,8 @@
  */
 package jdk.internal.foreign.abi.x64.sysv;
 
+import java.foreign.NativeMethodType;
+import java.foreign.NativeTypes;
 import java.foreign.layout.Address;
 import java.foreign.layout.Group;
 import java.foreign.layout.Group.Kind;
@@ -468,9 +470,9 @@ public class StandardCall {
         members.stream().forEach(arg -> calculator.addBindings(arg, examineArgument(calculator.forArguments, arg.getType())));
     }
 
-    public CallingSequence arrangeCall(LayoutType<?> ret, LayoutType<?>... params) {
-        return arrangeCall(ret == null ? null : ret.layout(),
-                Stream.of(params).map(LayoutType::layout).toArray(Layout[]::new));
+    public CallingSequence arrangeCall(NativeMethodType nmt) {
+        return arrangeCall(nmt.returnType() == NativeTypes.VOID ? null : nmt.returnType().layout(),
+                Stream.of(nmt.parameterArray()).map(LayoutType::layout).toArray(Layout[]::new));
     }
 
     public CallingSequence arrangeCall(Layout ret, Layout... params) {

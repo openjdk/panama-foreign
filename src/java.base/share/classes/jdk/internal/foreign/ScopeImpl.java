@@ -230,7 +230,7 @@ public abstract class ScopeImpl implements Scope {
                     Method m = Util.findFunctionalInterfaceMethod(funcIntfClass);
                     MethodHandle mh = Util.getCallbackMH(m).bindTo(funcIntfInstance);
                     Function function = Util.getResolvedFunction(funcIntfClass, m);
-                    NativeMethodType nmt = NativeMethodType.of(function, m);
+                    NativeMethodType nmt = Util.nativeMethodType(function, m);
                     Library.Symbol stub = SystemABI.getInstance().upcallStub(mh, nmt);
                     ptr = BoundedPointer.createNativeVoidPointer(this, stub.getAddress().addr());
                     stubs.add(stub);

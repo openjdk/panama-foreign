@@ -32,6 +32,8 @@ import java.foreign.layout.Layout;
 import java.foreign.memory.LayoutType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
+
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.StorageClass;
 import jdk.internal.foreign.abi.x64.sysv.Constants;
@@ -51,7 +53,8 @@ public class StandardCallTest {
             args[i] = NativeTypes.INT64;
         }
 
-        CallingSequence recipe = sc.arrangeCall(NativeTypes.VOID, args);
+        CallingSequence recipe = sc.arrangeCall(null,
+                Stream.of(args).map(LayoutType::layout).toArray(Layout[]::new));
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(Constants.MAX_INTEGER_ARGUMENT_REGISTERS, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -79,7 +82,8 @@ public class StandardCallTest {
             args[i] = NativeTypes.FLOAT;
         }
 
-        CallingSequence recipe = sc.arrangeCall(null, args);
+        CallingSequence recipe = sc.arrangeCall(null,
+                Stream.of(args).map(LayoutType::layout).toArray(Layout[]::new));
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(0, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
@@ -112,7 +116,8 @@ public class StandardCallTest {
             args.add(NativeTypes.FLOAT);
         }
 
-        CallingSequence recipe = sc.arrangeCall(null, args.toArray(LayoutType<?>[]::new));
+        CallingSequence recipe = sc.arrangeCall(null,
+                args.stream().map(LayoutType::layout).toArray(Layout[]::new));
 
         assertEquals(false, recipe.returnsInMemory());
         assertEquals(Constants.MAX_INTEGER_ARGUMENT_REGISTERS, recipe.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
