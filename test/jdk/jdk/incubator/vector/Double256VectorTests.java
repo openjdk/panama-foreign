@@ -1018,7 +1018,7 @@ public class Double256VectorTests extends AbstractVectorTest {
     static void RearrangeDouble256VectorTests(IntFunction<double[]> fa,
                                            BiFunction<Integer,Integer,int[]> fs) {
         double[] a = fa.apply(SPECIES.length());
-        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        int[] order = fs.apply(a.length, SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -1810,6 +1810,7 @@ public class Double256VectorTests extends AbstractVectorTest {
 
 
 
+
     static double[] gather(double a[], int ix, int[] b, int iy) {
       double[] res = new double[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1838,6 +1839,8 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Double256VectorTests::gather);
     }
+
+
     static double[] scatter(double a[], int ix, int[] b, int iy) {
       double[] res = new double[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1866,5 +1869,6 @@ public class Double256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Double256VectorTests::scatter);
     }
+
 }
 

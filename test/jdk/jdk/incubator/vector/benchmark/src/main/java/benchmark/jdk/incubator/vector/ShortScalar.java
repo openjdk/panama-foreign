@@ -792,3 +792,5 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
 
+}
+

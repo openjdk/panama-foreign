@@ -900,3 +900,5 @@ public class LongScalar extends AbstractVectorBenchmark {
 
 
 
+}
+

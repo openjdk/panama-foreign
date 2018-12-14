@@ -23,13 +23,9 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.$Type$Vector;
-#if[MaxBit]
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-#end[MaxBit]
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -42,18 +38,9 @@ import org.openjdk.jmh.annotations.*;
 @State(Scope.Benchmark)
 @Warmup(iterations = 3, time = 1)
 @Measurement(iterations = 5, time = 1)
-#if[MaxBit]
-@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector", "--add-opens=jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED"})
-#else[MaxBit]
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
-#end[MaxBit]
 public class $vectorbenchtype$ extends AbstractVectorBenchmark {
-    static final $abstractvectortype$.$Type$Species<Vector.Shape> SPECIES =
-#if[MaxBit]
-                $Type$Vector.species(getMaxBitShape());
-#else[MaxBit]
-                $Type$Vector.species(Shapes.S_$bits$_BIT);
-#end[MaxBit]
+    static final $abstractvectortype$.$Type$Species SPECIES = $Type$Vector.species(Shape.S_$bits$_BIT);
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 

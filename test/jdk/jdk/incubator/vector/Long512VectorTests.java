@@ -1359,7 +1359,7 @@ public class Long512VectorTests extends AbstractVectorTest {
     static void RearrangeLong512VectorTests(IntFunction<long[]> fa,
                                            BiFunction<Integer,Integer,int[]> fs) {
         long[] a = fa.apply(SPECIES.length());
-        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        int[] order = fs.apply(a.length, SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -1683,6 +1683,7 @@ public class Long512VectorTests extends AbstractVectorTest {
 
 
 
+
     static long[] gather(long a[], int ix, int[] b, int iy) {
       long[] res = new long[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1711,6 +1712,8 @@ public class Long512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Long512VectorTests::gather);
     }
+
+
     static long[] scatter(long a[], int ix, int[] b, int iy) {
       long[] res = new long[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1739,5 +1742,6 @@ public class Long512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Long512VectorTests::scatter);
     }
+
 }
 

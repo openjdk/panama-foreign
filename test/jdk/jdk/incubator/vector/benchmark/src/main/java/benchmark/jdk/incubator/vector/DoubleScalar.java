@@ -862,3 +862,5 @@ public class DoubleScalar extends AbstractVectorBenchmark {
         return rs;
     }
 
+}
+

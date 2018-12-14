@@ -1018,7 +1018,7 @@ public class Float64VectorTests extends AbstractVectorTest {
     static void RearrangeFloat64VectorTests(IntFunction<float[]> fa,
                                            BiFunction<Integer,Integer,int[]> fs) {
         float[] a = fa.apply(SPECIES.length());
-        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        int[] order = fs.apply(a.length, SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
@@ -1810,6 +1810,7 @@ public class Float64VectorTests extends AbstractVectorTest {
 
 
 
+
     static float[] gather(float a[], int ix, int[] b, int iy) {
       float[] res = new float[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1838,6 +1839,8 @@ public class Float64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Float64VectorTests::gather);
     }
+
+
     static float[] scatter(float a[], int ix, int[] b, int iy) {
       float[] res = new float[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1866,5 +1869,6 @@ public class Float64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Float64VectorTests::scatter);
     }
+
 }
 
