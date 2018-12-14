@@ -98,6 +98,8 @@ class VectorUnboxNode;
 enum LoopOptsMode {
   LoopOptsDefault,
   LoopOptsNone,
+  LoopOptsShenandoahExpand,
+  LoopOptsShenandoahPostExpand,
   LoopOptsSkipSplitIf,
   LoopOptsVerify,
   LoopOptsLastRound
