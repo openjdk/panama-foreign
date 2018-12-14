@@ -1218,7 +1218,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static void RearrangeShortMaxVectorTests(IntFunction<short[]> fa,
                                            BiFunction<Integer,Integer,int[]> fs) {
         short[] a = fa.apply(SPECIES.length());
-        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        int[] order = fs.apply(a.length, SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {

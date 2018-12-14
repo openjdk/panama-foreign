@@ -898,7 +898,7 @@ public class Int256Vector extends AbstractVectorBenchmark {
     @Benchmark
     public Object rearrange() {
         int[] a = fa.apply(SPECIES.length());
-        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        int[] order = fs.apply(a.length, SPECIES.length());
         int[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {

@@ -1018,7 +1018,7 @@ public class Double512VectorTests extends AbstractVectorTest {
     static void RearrangeDouble512VectorTests(IntFunction<double[]> fa,
                                            BiFunction<Integer,Integer,int[]> fs) {
         double[] a = fa.apply(SPECIES.length());
-        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        int[] order = fs.apply(a.length, SPECIES.length());
         double[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {

@@ -1018,7 +1018,7 @@ public class Float256VectorTests extends AbstractVectorTest {
     static void RearrangeFloat256VectorTests(IntFunction<float[]> fa,
                                            BiFunction<Integer,Integer,int[]> fs) {
         float[] a = fa.apply(SPECIES.length());
-        int[] order = fs.apply(Integer.valueOf(a.length), Integer.valueOf(SPECIES.length()));
+        int[] order = fs.apply(a.length, SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
