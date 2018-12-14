@@ -268,11 +268,9 @@ class CodeCache : AllStatic {
 
   // Returns the CodeBlobType for the given compilation level
   static int get_code_blob_type(int comp_level) {
-    if (comp_level == CompLevel_none) {
-      // FIXME: put native methods in non-nmethod segment to make MH::linkToNative work in -Xint mode.
-      return CodeBlobType::NonNMethod;
-    } else if (comp_level == CompLevel_simple ||
-               comp_level == CompLevel_full_optimization) {
+    if (comp_level == CompLevel_none ||
+        comp_level == CompLevel_simple ||
+        comp_level == CompLevel_full_optimization) {
       // Non profiled methods
       return CodeBlobType::MethodNonProfiled;
     } else if (comp_level == CompLevel_limited_profile ||
