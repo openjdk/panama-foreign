@@ -192,6 +192,10 @@ public interface Pointer<X> extends Resource {
      * @return the created pointer
      */
     static Pointer<Byte> fromByteBuffer(ByteBuffer bb) {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.foreign.Pointer.fromByteBuffer"));
+        }
         return new BoundedPointer<>(NativeTypes.UINT8, BoundedMemoryRegion.ofByteBuffer(bb));
     }
 
