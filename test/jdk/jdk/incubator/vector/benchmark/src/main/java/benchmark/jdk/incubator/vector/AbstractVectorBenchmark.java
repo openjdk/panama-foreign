@@ -23,16 +23,97 @@
 
 package benchmark.jdk.incubator.vector;
 
+import jdk.incubator.vector.ByteVector;
+import jdk.incubator.vector.ByteVector.ByteSpecies;
+import jdk.incubator.vector.IntVector;
+import jdk.incubator.vector.IntVector.IntSpecies;
+import jdk.incubator.vector.ShortVector;
+import jdk.incubator.vector.ShortVector.ShortSpecies;
+import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.Vector.Shape;
+import jdk.incubator.vector.Vector.Species;
+
 import java.util.Random;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 
-public class AbstractVectorBenchmark {
+import static jdk.incubator.vector.Vector.Shape.*;
 
+public class AbstractVectorBenchmark {
     static final Random RANDOM = new Random(Integer.getInteger("jdk.incubator.vector.random-seed", 1337));
+
+    static final ByteSpecies B64  = ByteVector.species(Shape.S_64_BIT);
+    static final ByteSpecies B128 = ByteVector.species(Shape.S_128_BIT);
+    static final ByteSpecies B256 = ByteVector.species(Shape.S_256_BIT);
+    static final ByteSpecies B512 = ByteVector.species(Shape.S_512_BIT);
+
+    static final ShortSpecies S64  = ShortVector.species(Shape.S_64_BIT);
+    static final ShortSpecies S128 = ShortVector.species(Shape.S_128_BIT);
+    static final ShortSpecies S256 = ShortVector.species(Shape.S_256_BIT);
+    static final ShortSpecies S512 = ShortVector.species(Shape.S_512_BIT);
+
+    static final IntSpecies I64  = IntVector.species(Vector.Shape.S_64_BIT);
+    static final IntSpecies I128 = IntVector.species(Vector.Shape.S_128_BIT);
+    static final IntSpecies I256 = IntVector.species(Vector.Shape.S_256_BIT);
+    static final IntSpecies I512 = IntVector.species(Vector.Shape.S_512_BIT);
+
+    static Shape widen(Shape s) {
+        switch (s) {
+            case S_64_BIT:  return Shape.S_128_BIT;
+            case S_128_BIT: return Shape.S_256_BIT;
+            case S_256_BIT: return Shape.S_512_BIT;
+            default: throw new IllegalArgumentException("" + s);
+        }
+    }
+
+    static Shape narrow(Shape s) {
+        switch (s) {
+            case S_512_BIT: return Shape.S_256_BIT;
+            case S_256_BIT: return Shape.S_128_BIT;
+            case S_128_BIT: return Shape.S_64_BIT;
+            default: throw new IllegalArgumentException("" + s);
+        }
+    }
+
+    static <E> Species<E> widen(Species<E> s) {
+        return Vector.species(s.elementType(), widen(s.shape()));
+    }
+
+    static <E> Species<E> narrow(Species<E> s) {
+        return Vector.species(s.elementType(), narrow(s.shape()));
+    }
+
+    static IntVector join(IntVector.IntSpecies from, IntVector.IntSpecies to, IntVector lo, IntVector hi) {
+        assert 2 * from.length() == to.length();
+
+        int vlen = from.length();
+        var lo_mask = mask(from, to, 0);
+
+        var v1 = lo.resize(to);
+        var v2 = hi.resize(to).shiftER(vlen);
+        var r = v2.blend(v1, lo_mask);
+        return r;
+    }
+
+    static Vector.Mask<Integer> mask(IntVector.IntSpecies from, IntVector.IntSpecies to, int i) {
+        int vlen = from.length();
+        var v1 = from.broadcast(1);    //                         [1 1 ... 1]
+        var v2 = v1.resize(to);        // [0 0 ... 0 |   ...     | 1 1 ... 1]
+        var v3 = v2.shiftER(i * vlen); // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
+        return v3.notEqual(0);         // [F F ... F | T T ... T | F F ... F]
+    }
 
     boolean[] fillMask(int size, IntFunction<Boolean> f) {
         boolean[] array = new boolean[size];
         for (int i = 0; i < array.length; i++) {
+            array[i] = f.apply(i);
+        }
+        return array;
+    }
+
+    byte[] fillByte(int size, Function<Integer, Byte> f) {
+        byte[] array = new byte[size];
+        for (int i = 0; i < size; i++) {
             array[i] = f.apply(i);
         }
         return array;

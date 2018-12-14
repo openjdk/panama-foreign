@@ -40,105 +40,103 @@ public final class IntVectorHelper {
         int apply(int i, int a);
     }
 
-    public static 
+    public static
     IntVector map(IntVector va, IntVector vb, BinaryOp op) {
         return va.bOp(vb, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static 
+    public static
     IntVector map(IntVector va, IntVector vb, Vector.Mask<Integer> m, BinaryOp op) {
         return va.bOp(vb, m, (i, a, b) -> op.apply(i, a, b));
     }
 
-    public static 
+    public static
     IntVector map(IntVector va, UnaryOp op) {
         return va.uOp((i, a) -> op.apply(i, a));
     }
 
-    public static 
+    public static
     IntVector map(IntVector va, Vector.Mask<Integer> m, UnaryOp op) {
         return va.uOp(m, (i, a) -> op.apply(i, a));
     }
 
-    public static 
+    public static
     IntVector div(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> (int) (a / b));
     }
 
-    public static 
+    public static
     IntVector div(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> (int) (a / b));
     }
 
-    public static 
+    public static
     IntVector mod(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> (int) (a % b));
     }
 
-    public static 
+    public static
     IntVector mod(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> (int) (a % b));
     }
 
-    public static 
+    public static
     IntVector addExact(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> Math.addExact(a, b));
     }
 
-    public static 
+    public static
     IntVector addExact(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.addExact(a, b));
     }
 
-    public static 
+    public static
     IntVector decrementExact(IntVector va) {
         return va.uOp((i, a) -> Math.decrementExact(a));
     }
 
-    public static 
+    public static
     IntVector decrementExact(IntVector va, Vector.Mask<Integer> m) {
         return va.uOp(m, (i, a) -> Math.decrementExact(a));
     }
 
-    public static 
+    public static
     IntVector incrementExact(IntVector va) {
         return va.uOp((i, a) -> Math.incrementExact(a));
     }
 
-    public static 
+    public static
     IntVector incrementExact(IntVector va, Vector.Mask<Integer> m) {
         return va.uOp(m, (i, a) -> Math.incrementExact(a));
     }
 
-    public static 
+    public static
     IntVector multiplyExact(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> Math.multiplyExact(a, b));
     }
 
-    public static 
+    public static
     IntVector multiplyExact(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.multiplyExact(a, b));
     }
 
-    public static 
+    public static
     IntVector negateExact(IntVector va) {
         return va.uOp((i, a) -> Math.negateExact(a));
     }
 
-    public static 
+    public static
     IntVector negateExact(IntVector va, Vector.Mask<Integer> m) {
         return va.uOp(m, (i, a) -> Math.negateExact(a));
     }
 
-    public static 
+    public static
     IntVector subtractExtract(IntVector va, IntVector vb) {
         return va.bOp(vb, (i, a, b) -> Math.subtractExact(a, b));
     }
 
-    public static 
+    public static
     IntVector subtractExtract(IntVector va, IntVector vb, Vector.Mask<Integer> m) {
         return va.bOp(vb, m, (i, a, b) -> Math.subtractExact(a, b));
     }
-
-
 }

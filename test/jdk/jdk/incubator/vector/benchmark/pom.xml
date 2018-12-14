@@ -51,6 +51,11 @@
             <version>${jmh.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.3.2</version>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -83,6 +88,7 @@
                     <source>${javac.target}</source>
                     <target>${javac.target}</target>
                     <compilerArgs>
+                        <arg>-Xlint:unchecked</arg>
                         <arg>--add-modules</arg><arg>jdk.incubator.vector</arg>
                     </compilerArgs>
                 </configuration>
