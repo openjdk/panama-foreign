@@ -128,10 +128,6 @@ public abstract class ScopeImpl implements Scope {
         private final ArrayList<Long> used_blocks;
 
         public NativeScope() {
-            SecurityManager security = System.getSecurityManager();
-            if (security != null) {
-                security.checkPermission(new RuntimePermission("java.foreign.NativeScope", "create"));
-            }
             block = U.allocateMemory(UNIT_SIZE);
             free_offset = 0;
             transaction_origin = -1;
@@ -258,10 +254,6 @@ public abstract class ScopeImpl implements Scope {
     public static class HeapScope extends ScopeImpl {
 
         public HeapScope() {
-            SecurityManager security = System.getSecurityManager();
-            if (security != null) {
-                security.checkPermission(new RuntimePermission("java.foreign.HeapScope", "create"));
-            }
         }
 
         BoundedMemoryRegion allocateRegion(long size) {

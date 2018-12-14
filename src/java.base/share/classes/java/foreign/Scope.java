@@ -180,6 +180,10 @@ public interface Scope extends AutoCloseable {
      * @return the new native scope.
      */
     static Scope newNativeScope() {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.foreign.NativeScope", "create"));
+        }
         return new ScopeImpl.NativeScope();
     }
 
@@ -188,6 +192,10 @@ public interface Scope extends AutoCloseable {
      * @return the new native scope.
      */
     static Scope newHeapScope() {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.foreign.HeapScope", "create"));
+        }
         return new ScopeImpl.HeapScope();
     }
 }
