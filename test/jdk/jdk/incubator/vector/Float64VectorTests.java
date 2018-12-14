@@ -1810,6 +1810,7 @@ public class Float64VectorTests extends AbstractVectorTest {
 
 
 
+
     static float[] gather(float a[], int ix, int[] b, int iy) {
       float[] res = new float[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1838,6 +1839,8 @@ public class Float64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Float64VectorTests::gather);
     }
+
+
     static float[] scatter(float a[], int ix, int[] b, int iy) {
       float[] res = new float[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1866,5 +1869,6 @@ public class Float64VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Float64VectorTests::scatter);
     }
+
 }
 

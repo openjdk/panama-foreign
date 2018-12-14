@@ -1683,6 +1683,7 @@ public class Int256VectorTests extends AbstractVectorTest {
 
 
 
+
     static int[] gather(int a[], int ix, int[] b, int iy) {
       int[] res = new int[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1711,6 +1712,8 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Int256VectorTests::gather);
     }
+
+
     static int[] scatter(int a[], int ix, int[] b, int iy) {
       int[] res = new int[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1739,5 +1742,6 @@ public class Int256VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Int256VectorTests::scatter);
     }
+
 }
 

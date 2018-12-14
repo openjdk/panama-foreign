@@ -23,8 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.DoubleVector;
 
 import java.util.concurrent.TimeUnit;
@@ -40,8 +40,7 @@ import org.openjdk.jmh.annotations.*;
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class Double128Vector extends AbstractVectorBenchmark {
-    static final DoubleVector.DoubleSpecies<Vector.Shape> SPECIES =
-                DoubleVector.species(Shapes.S_128_BIT);
+    static final DoubleVector.DoubleSpecies SPECIES = DoubleVector.species(Shape.S_128_BIT);
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 
@@ -381,16 +380,16 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThan() {
-        double[] as = fa.apply(size);
-        double[] bs = fb.apply(size);
+        double[] a = fa.apply(size);
+        double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Double, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Double> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Vector.Shape> mv = av.lessThan(bv);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double> mv = av.lessThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -401,16 +400,16 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThan() {
-        double[] as = fa.apply(size);
-        double[] bs = fb.apply(size);
+        double[] a = fa.apply(size);
+        double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Double, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Double> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Vector.Shape> mv = av.greaterThan(bv);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double> mv = av.greaterThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -421,16 +420,16 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object equal() {
-        double[] as = fa.apply(size);
-        double[] bs = fb.apply(size);
+        double[] a = fa.apply(size);
+        double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Double, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Double> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Vector.Shape> mv = av.equal(bv);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double> mv = av.equal(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -441,16 +440,16 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object notEqual() {
-        double[] as = fa.apply(size);
-        double[] bs = fb.apply(size);
+        double[] a = fa.apply(size);
+        double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Double, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Double> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Vector.Shape> mv = av.notEqual(bv);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double> mv = av.notEqual(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -461,16 +460,16 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThanEq() {
-        double[] as = fa.apply(size);
-        double[] bs = fb.apply(size);
+        double[] a = fa.apply(size);
+        double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Double, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Double> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Vector.Shape> mv = av.lessThanEq(bv);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double> mv = av.lessThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -481,16 +480,16 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThanEq() {
-        double[] as = fa.apply(size);
-        double[] bs = fb.apply(size);
+        double[] a = fa.apply(size);
+        double[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Double, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Double> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                DoubleVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                DoubleVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Double, Vector.Shape> mv = av.greaterThanEq(bv);
+                DoubleVector av = SPECIES.fromArray(a, i);
+                DoubleVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Double> mv = av.greaterThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1148,6 +1147,7 @@ public class Double128Vector extends AbstractVectorBenchmark {
     }
 
 
+
     @Benchmark
     public Object gather() {
         double[] a = fa.apply(SPECIES.length()); 
@@ -1168,6 +1168,8 @@ public class Double128Vector extends AbstractVectorBenchmark {
         return r;
     }
 
+
+
     @Benchmark
     public Object scatter() {
         double[] a = fa.apply(SPECIES.length()); 
@@ -1187,5 +1189,6 @@ public class Double128Vector extends AbstractVectorBenchmark {
 
         return r;
     }
+
 }
 

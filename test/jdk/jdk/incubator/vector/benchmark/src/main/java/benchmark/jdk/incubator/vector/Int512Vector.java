@@ -23,8 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.IntVector;
 
 import java.util.concurrent.TimeUnit;
@@ -40,8 +40,7 @@ import org.openjdk.jmh.annotations.*;
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class Int512Vector extends AbstractVectorBenchmark {
-    static final IntVector.IntSpecies<Vector.Shape> SPECIES =
-                IntVector.species(Shapes.S_512_BIT);
+    static final IntVector.IntSpecies SPECIES = IntVector.species(Shape.S_512_BIT);
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 
@@ -759,16 +758,16 @@ public class Int512Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThan() {
-        int[] as = fa.apply(size);
-        int[] bs = fb.apply(size);
+        int[] a = fa.apply(size);
+        int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Vector.Shape> mv = av.lessThan(bv);
+                IntVector av = SPECIES.fromArray(a, i);
+                IntVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer> mv = av.lessThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -779,16 +778,16 @@ public class Int512Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThan() {
-        int[] as = fa.apply(size);
-        int[] bs = fb.apply(size);
+        int[] a = fa.apply(size);
+        int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Vector.Shape> mv = av.greaterThan(bv);
+                IntVector av = SPECIES.fromArray(a, i);
+                IntVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer> mv = av.greaterThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -799,16 +798,16 @@ public class Int512Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object equal() {
-        int[] as = fa.apply(size);
-        int[] bs = fb.apply(size);
+        int[] a = fa.apply(size);
+        int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Vector.Shape> mv = av.equal(bv);
+                IntVector av = SPECIES.fromArray(a, i);
+                IntVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer> mv = av.equal(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -819,16 +818,16 @@ public class Int512Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object notEqual() {
-        int[] as = fa.apply(size);
-        int[] bs = fb.apply(size);
+        int[] a = fa.apply(size);
+        int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Vector.Shape> mv = av.notEqual(bv);
+                IntVector av = SPECIES.fromArray(a, i);
+                IntVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer> mv = av.notEqual(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -839,16 +838,16 @@ public class Int512Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThanEq() {
-        int[] as = fa.apply(size);
-        int[] bs = fb.apply(size);
+        int[] a = fa.apply(size);
+        int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Vector.Shape> mv = av.lessThanEq(bv);
+                IntVector av = SPECIES.fromArray(a, i);
+                IntVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer> mv = av.lessThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -859,16 +858,16 @@ public class Int512Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThanEq() {
-        int[] as = fa.apply(size);
-        int[] bs = fb.apply(size);
+        int[] a = fa.apply(size);
+        int[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Integer, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Integer> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                IntVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                IntVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Integer, Vector.Shape> mv = av.greaterThanEq(bv);
+                IntVector av = SPECIES.fromArray(a, i);
+                IntVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Integer> mv = av.greaterThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1190,6 +1189,7 @@ public class Int512Vector extends AbstractVectorBenchmark {
 
 
 
+
     @Benchmark
     public Object gather() {
         int[] a = fa.apply(SPECIES.length()); 
@@ -1210,6 +1210,8 @@ public class Int512Vector extends AbstractVectorBenchmark {
         return r;
     }
 
+
+
     @Benchmark
     public Object scatter() {
         int[] a = fa.apply(SPECIES.length()); 
@@ -1229,5 +1231,6 @@ public class Int512Vector extends AbstractVectorBenchmark {
 
         return r;
     }
+
 }
 

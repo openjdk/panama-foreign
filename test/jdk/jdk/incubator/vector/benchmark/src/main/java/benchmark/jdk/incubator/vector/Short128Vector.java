@@ -23,8 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.ShortVector;
 
 import java.util.concurrent.TimeUnit;
@@ -40,8 +40,7 @@ import org.openjdk.jmh.annotations.*;
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class Short128Vector extends AbstractVectorBenchmark {
-    static final ShortVector.ShortSpecies<Vector.Shape> SPECIES =
-                ShortVector.species(Shapes.S_128_BIT);
+    static final ShortVector.ShortSpecies SPECIES = ShortVector.species(Shape.S_128_BIT);
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 
@@ -645,16 +644,16 @@ public class Short128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThan() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
+        short[] a = fa.apply(size);
+        short[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Short, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Short> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Vector.Shape> mv = av.lessThan(bv);
+                ShortVector av = SPECIES.fromArray(a, i);
+                ShortVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short> mv = av.lessThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -665,16 +664,16 @@ public class Short128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThan() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
+        short[] a = fa.apply(size);
+        short[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Short, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Short> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Vector.Shape> mv = av.greaterThan(bv);
+                ShortVector av = SPECIES.fromArray(a, i);
+                ShortVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short> mv = av.greaterThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -685,16 +684,16 @@ public class Short128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object equal() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
+        short[] a = fa.apply(size);
+        short[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Short, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Short> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Vector.Shape> mv = av.equal(bv);
+                ShortVector av = SPECIES.fromArray(a, i);
+                ShortVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short> mv = av.equal(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -705,16 +704,16 @@ public class Short128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object notEqual() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
+        short[] a = fa.apply(size);
+        short[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Short, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Short> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Vector.Shape> mv = av.notEqual(bv);
+                ShortVector av = SPECIES.fromArray(a, i);
+                ShortVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short> mv = av.notEqual(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -725,16 +724,16 @@ public class Short128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThanEq() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
+        short[] a = fa.apply(size);
+        short[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Short, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Short> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Vector.Shape> mv = av.lessThanEq(bv);
+                ShortVector av = SPECIES.fromArray(a, i);
+                ShortVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short> mv = av.lessThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -745,16 +744,16 @@ public class Short128Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThanEq() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
+        short[] a = fa.apply(size);
+        short[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Short, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Short> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ShortVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Short, Vector.Shape> mv = av.greaterThanEq(bv);
+                ShortVector av = SPECIES.fromArray(a, i);
+                ShortVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Short> mv = av.greaterThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1076,44 +1075,6 @@ public class Short128Vector extends AbstractVectorBenchmark {
 
 
 
-    @Benchmark
-    public Object gather() {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        short[] r = new short[a.length];       
 
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = SPECIES.fromArray(a, i, b, i);
-                av.intoArray(r, i);
-            }
-        }
-
-        return r;
-    }
-
-    @Benchmark
-    public Object scatter() {
-        short[] a = fa.apply(SPECIES.length()); 
-        short[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        short[] r = new short[a.length];       
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = SPECIES.fromArray(a, i);
-                av.intoArray(r, i, b, i);
-            }
-        }
-
-        return r;
-    }
 }
 

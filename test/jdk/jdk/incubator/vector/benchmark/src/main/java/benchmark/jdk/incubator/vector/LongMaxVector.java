@@ -23,11 +23,9 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.LongVector;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -40,10 +38,9 @@ import org.openjdk.jmh.annotations.*;
 @State(Scope.Benchmark)
 @Warmup(iterations = 3, time = 1)
 @Measurement(iterations = 5, time = 1)
-@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector", "--add-opens=jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED"})
+@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class LongMaxVector extends AbstractVectorBenchmark {
-    static final LongVector.LongSpecies<Vector.Shape> SPECIES =
-                LongVector.species(getMaxBitShape());
+    static final LongVector.LongSpecies SPECIES = LongVector.species(Shape.S_Max_BIT);
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 
@@ -761,16 +758,16 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThan() {
-        long[] as = fa.apply(size);
-        long[] bs = fb.apply(size);
+        long[] a = fa.apply(size);
+        long[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Long, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Long> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Long, Vector.Shape> mv = av.lessThan(bv);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Long> mv = av.lessThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -781,16 +778,16 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThan() {
-        long[] as = fa.apply(size);
-        long[] bs = fb.apply(size);
+        long[] a = fa.apply(size);
+        long[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Long, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Long> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Long, Vector.Shape> mv = av.greaterThan(bv);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Long> mv = av.greaterThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -801,16 +798,16 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object equal() {
-        long[] as = fa.apply(size);
-        long[] bs = fb.apply(size);
+        long[] a = fa.apply(size);
+        long[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Long, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Long> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Long, Vector.Shape> mv = av.equal(bv);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Long> mv = av.equal(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -821,16 +818,16 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object notEqual() {
-        long[] as = fa.apply(size);
-        long[] bs = fb.apply(size);
+        long[] a = fa.apply(size);
+        long[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Long, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Long> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Long, Vector.Shape> mv = av.notEqual(bv);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Long> mv = av.notEqual(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -841,16 +838,16 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThanEq() {
-        long[] as = fa.apply(size);
-        long[] bs = fb.apply(size);
+        long[] a = fa.apply(size);
+        long[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Long, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Long> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Long, Vector.Shape> mv = av.lessThanEq(bv);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Long> mv = av.lessThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -861,16 +858,16 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThanEq() {
-        long[] as = fa.apply(size);
-        long[] bs = fb.apply(size);
+        long[] a = fa.apply(size);
+        long[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Long, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Long> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                LongVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                LongVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Long, Vector.Shape> mv = av.greaterThanEq(bv);
+                LongVector av = SPECIES.fromArray(a, i);
+                LongVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Long> mv = av.greaterThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1192,6 +1189,7 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
 
 
+
     @Benchmark
     public Object gather() {
         long[] a = fa.apply(SPECIES.length()); 
@@ -1212,6 +1210,8 @@ public class LongMaxVector extends AbstractVectorBenchmark {
         return r;
     }
 
+
+
     @Benchmark
     public Object scatter() {
         long[] a = fa.apply(SPECIES.length()); 
@@ -1231,5 +1231,6 @@ public class LongMaxVector extends AbstractVectorBenchmark {
 
         return r;
     }
+
 }
 

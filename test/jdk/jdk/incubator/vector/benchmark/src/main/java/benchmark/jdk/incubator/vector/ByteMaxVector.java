@@ -23,11 +23,9 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.ByteVector;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -40,10 +38,9 @@ import org.openjdk.jmh.annotations.*;
 @State(Scope.Benchmark)
 @Warmup(iterations = 3, time = 1)
 @Measurement(iterations = 5, time = 1)
-@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector", "--add-opens=jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED"})
+@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class ByteMaxVector extends AbstractVectorBenchmark {
-    static final ByteVector.ByteSpecies<Vector.Shape> SPECIES =
-                ByteVector.species(getMaxBitShape());
+    static final ByteVector.ByteSpecies SPECIES = ByteVector.species(Shape.S_Max_BIT);
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 
@@ -647,16 +644,16 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThan() {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
+        byte[] a = fa.apply(size);
+        byte[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Byte, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Byte> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ByteVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Byte, Vector.Shape> mv = av.lessThan(bv);
+                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte> mv = av.lessThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -667,16 +664,16 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThan() {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
+        byte[] a = fa.apply(size);
+        byte[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Byte, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Byte> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ByteVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Byte, Vector.Shape> mv = av.greaterThan(bv);
+                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte> mv = av.greaterThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -687,16 +684,16 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object equal() {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
+        byte[] a = fa.apply(size);
+        byte[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Byte, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Byte> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ByteVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Byte, Vector.Shape> mv = av.equal(bv);
+                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte> mv = av.equal(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -707,16 +704,16 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object notEqual() {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
+        byte[] a = fa.apply(size);
+        byte[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Byte, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Byte> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ByteVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Byte, Vector.Shape> mv = av.notEqual(bv);
+                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte> mv = av.notEqual(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -727,16 +724,16 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThanEq() {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
+        byte[] a = fa.apply(size);
+        byte[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Byte, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Byte> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ByteVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Byte, Vector.Shape> mv = av.lessThanEq(bv);
+                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte> mv = av.lessThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -747,16 +744,16 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThanEq() {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
+        byte[] a = fa.apply(size);
+        byte[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Byte, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Byte> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                ByteVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Byte, Vector.Shape> mv = av.greaterThanEq(bv);
+                ByteVector av = SPECIES.fromArray(a, i);
+                ByteVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Byte> mv = av.greaterThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1078,44 +1075,6 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
 
 
-    @Benchmark
-    public Object gather() {
-        byte[] a = fa.apply(SPECIES.length()); 
-        byte[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        byte[] r = new byte[a.length];       
 
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i, b, i);
-                av.intoArray(r, i);
-            }
-        }
-
-        return r;
-    }
-
-    @Benchmark
-    public Object scatter() {
-        byte[] a = fa.apply(SPECIES.length()); 
-        byte[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        byte[] r = new byte[a.length];       
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                av.intoArray(r, i, b, i);
-            }
-        }
-
-        return r;
-    }
 }
 

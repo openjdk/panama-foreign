@@ -23,11 +23,9 @@
 
 package benchmark.jdk.incubator.vector;
 
-import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector;
+import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.FloatVector;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -40,10 +38,9 @@ import org.openjdk.jmh.annotations.*;
 @State(Scope.Benchmark)
 @Warmup(iterations = 3, time = 1)
 @Measurement(iterations = 5, time = 1)
-@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector", "--add-opens=jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED"})
+@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
 public class FloatMaxVector extends AbstractVectorBenchmark {
-    static final FloatVector.FloatSpecies<Vector.Shape> SPECIES =
-                FloatVector.species(getMaxBitShape());
+    static final FloatVector.FloatSpecies SPECIES = FloatVector.species(Shape.S_Max_BIT);
 
     static final int INVOC_COUNT = 1; // get rid of outer loop
 
@@ -383,16 +380,16 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThan() {
-        float[] as = fa.apply(size);
-        float[] bs = fb.apply(size);
+        float[] a = fa.apply(size);
+        float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Float, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Float> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                FloatVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Float, Vector.Shape> mv = av.lessThan(bv);
+                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Float> mv = av.lessThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -403,16 +400,16 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThan() {
-        float[] as = fa.apply(size);
-        float[] bs = fb.apply(size);
+        float[] a = fa.apply(size);
+        float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Float, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Float> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                FloatVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Float, Vector.Shape> mv = av.greaterThan(bv);
+                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Float> mv = av.greaterThan(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -423,16 +420,16 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object equal() {
-        float[] as = fa.apply(size);
-        float[] bs = fb.apply(size);
+        float[] a = fa.apply(size);
+        float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Float, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Float> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                FloatVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Float, Vector.Shape> mv = av.equal(bv);
+                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Float> mv = av.equal(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -443,16 +440,16 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object notEqual() {
-        float[] as = fa.apply(size);
-        float[] bs = fb.apply(size);
+        float[] a = fa.apply(size);
+        float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Float, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Float> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                FloatVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Float, Vector.Shape> mv = av.notEqual(bv);
+                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Float> mv = av.notEqual(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -463,16 +460,16 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object lessThanEq() {
-        float[] as = fa.apply(size);
-        float[] bs = fb.apply(size);
+        float[] a = fa.apply(size);
+        float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Float, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Float> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                FloatVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Float, Vector.Shape> mv = av.lessThanEq(bv);
+                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Float> mv = av.lessThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -483,16 +480,16 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object greaterThanEq() {
-        float[] as = fa.apply(size);
-        float[] bs = fb.apply(size);
+        float[] a = fa.apply(size);
+        float[] b = fb.apply(size);
         boolean[] ms = fm.apply(size);
-        Vector.Mask<Float, Vector.Shape> m = SPECIES.maskFromArray(ms, 0);
+        Vector.Mask<Float> m = SPECIES.maskFromArray(ms, 0);
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-                FloatVector<Vector.Shape> av = SPECIES.fromArray(a, i);
-                FloatVector<Vector.Shape> bv = SPECIES.fromArray(b, i);
-                Vector.Mask<Float, Vector.Shape> mv = av.greaterThanEq(bv);
+                FloatVector av = SPECIES.fromArray(a, i);
+                FloatVector bv = SPECIES.fromArray(b, i);
+                Vector.Mask<Float> mv = av.greaterThanEq(bv);
 
                 m = m.and(mv); // accumulate results, so JIT can't eliminate relevant computations
             }
@@ -1150,6 +1147,7 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
     }
 
 
+
     @Benchmark
     public Object gather() {
         float[] a = fa.apply(SPECIES.length()); 
@@ -1170,6 +1168,8 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
         return r;
     }
 
+
+
     @Benchmark
     public Object scatter() {
         float[] a = fa.apply(SPECIES.length()); 
@@ -1189,5 +1189,6 @@ public class FloatMaxVector extends AbstractVectorBenchmark {
 
         return r;
     }
+
 }
 

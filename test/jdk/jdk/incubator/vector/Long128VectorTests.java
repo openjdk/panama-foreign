@@ -1683,6 +1683,7 @@ public class Long128VectorTests extends AbstractVectorTest {
 
 
 
+
     static long[] gather(long a[], int ix, int[] b, int iy) {
       long[] res = new long[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1711,6 +1712,8 @@ public class Long128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Long128VectorTests::gather);
     }
+
+
     static long[] scatter(long a[], int ix, int[] b, int iy) {
       long[] res = new long[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1739,5 +1742,6 @@ public class Long128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Long128VectorTests::scatter);
     }
+
 }
 

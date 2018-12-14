@@ -1692,6 +1692,7 @@ public class LongMaxVectorTests extends AbstractVectorTest {
 
 
 
+
     static long[] gather(long a[], int ix, int[] b, int iy) {
       long[] res = new long[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1720,6 +1721,8 @@ public class LongMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, LongMaxVectorTests::gather);
     }
+
+
     static long[] scatter(long a[], int ix, int[] b, int iy) {
       long[] res = new long[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1748,5 +1751,6 @@ public class LongMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, LongMaxVectorTests::scatter);
     }
+
 }
 

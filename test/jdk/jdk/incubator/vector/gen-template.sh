@@ -328,9 +328,10 @@ gen_unary_alu_op "neg" "-((\$type\$)a)" $unit_output $perf_output $perf_scalar_o
 gen_unary_alu_op "abs" "Math.abs((\$type\$)a)" $unit_output $perf_output $perf_scalar_output
 gen_unary_alu_op "not" "~((\$type\$)a)" $unit_output $perf_output $perf_scalar_output "BITWISE"
 gen_unary_alu_op "sqrt" "Math.sqrt((double)a)" $unit_output $perf_output $perf_scalar_output "FP"
+
 # Gather Scatter operations.
-gen_op_tmpl $gather_template "gather" "" $unit_output $perf_output "intOrLongOrFP"
-gen_op_tmpl $scatter_template "scatter" "" $unit_output $perf_output "intOrLongOrFP"
+gen_op_tmpl $gather_template "gather" "" $unit_output $perf_output $perf_scalar_output "intOrLongOrFP"
+gen_op_tmpl $scatter_template "scatter" "" $unit_output $perf_output $perf_scalar_output "intOrLongOrFP"
 
 gen_unit_footer $unit_output
 gen_perf_footer $perf_output

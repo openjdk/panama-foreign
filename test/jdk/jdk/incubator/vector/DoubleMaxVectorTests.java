@@ -1819,6 +1819,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
 
 
+
     static double[] gather(double a[], int ix, int[] b, int iy) {
       double[] res = new double[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1847,6 +1848,8 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, DoubleMaxVectorTests::gather);
     }
+
+
     static double[] scatter(double a[], int ix, int[] b, int iy) {
       double[] res = new double[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1875,5 +1878,6 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, DoubleMaxVectorTests::scatter);
     }
+
 }
 

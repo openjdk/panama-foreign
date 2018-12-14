@@ -1819,6 +1819,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
 
 
+
     static float[] gather(float a[], int ix, int[] b, int iy) {
       float[] res = new float[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1847,6 +1848,8 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, FloatMaxVectorTests::gather);
     }
+
+
     static float[] scatter(float a[], int ix, int[] b, int iy) {
       float[] res = new float[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1875,5 +1878,6 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, FloatMaxVectorTests::scatter);
     }
+
 }
 

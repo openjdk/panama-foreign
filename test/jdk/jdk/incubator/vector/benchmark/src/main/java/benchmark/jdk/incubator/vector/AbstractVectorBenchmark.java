@@ -23,13 +23,8 @@
 
 package benchmark.jdk.incubator.vector;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.Random;
 import java.util.function.IntFunction;
-
-import jdk.incubator.vector.Shapes;
-import jdk.incubator.vector.Vector;
 
 public class AbstractVectorBenchmark {
 
@@ -49,16 +44,5 @@ public class AbstractVectorBenchmark {
             array[i] = f.apply(i);
         }
         return array;
-    }
-
-    static Vector.Shape getMaxBitShape() {
-        try {
-            Class<?> clazz = Class.forName("jdk.incubator.vector.Shapes$SMaxBit");
-            VarHandle privateHandle = MethodHandles.privateLookupIn(Shapes.class, MethodHandles.lookup())
-                    .findStaticVarHandle(Shapes.class, "S_Max_BIT", clazz);
-            return (Vector.Shape)(privateHandle.get());
-        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
-            throw new Error(e);
-        }
     }
 }

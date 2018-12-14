@@ -1810,6 +1810,7 @@ public class Double512VectorTests extends AbstractVectorTest {
 
 
 
+
     static double[] gather(double a[], int ix, int[] b, int iy) {
       double[] res = new double[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1838,6 +1839,8 @@ public class Double512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Double512VectorTests::gather);
     }
+
+
     static double[] scatter(double a[], int ix, int[] b, int iy) {
       double[] res = new double[SPECIES.length()];
       for (int i = 0; i < SPECIES.length(); i++) {
@@ -1866,5 +1869,6 @@ public class Double512VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, b, r, Double512VectorTests::scatter);
     }
+
 }
 
