@@ -681,9 +681,6 @@ final class Long64Vector extends LongVector {
     @Override
     @ForceInline
     public void intoArray(long[] a, int ix, int[] b, int iy) {
-        Objects.requireNonNull(a);
-        Objects.requireNonNull(b);
-
         this.intoArray(a, ix + b[iy]);
     }
 
@@ -1360,9 +1357,6 @@ final class Long64Vector extends LongVector {
         @Override
         @ForceInline
         public Long64Vector fromArray(long[] a, int ix, int[] b, int iy) {
-            Objects.requireNonNull(a);
-            Objects.requireNonNull(b);
-
             return SPECIES.fromArray(a, ix + b[iy]);
        }
 

@@ -38,8 +38,6 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.lang.Integer;
 import java.util.List;
 import java.util.Arrays;
@@ -392,6 +390,12 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     }
 
     @DataProvider
+    public Object[][] floatIndexedOpProvider() {
+        return FLOAT_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
     public Object[][] floatBinaryOpMaskProvider() {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> FLOAT_GENERATOR_PAIRS.stream().map(lfa -> {
@@ -439,6 +443,16 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
+    @DataProvider
+    public Object[][] floatUnaryOpIndexProvider() {
+        return INT_INDEX_GENERATORS.stream().
+                flatMap(fs -> FLOAT_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
+                })).
+                toArray(Object[][]::new);
+    }
+
 
     static final List<IntFunction<float[]>> FLOAT_COMPARE_GENERATORS = List.of(
             withToString("float[i]", (int s) -> {
@@ -1829,15 +1843,11 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "floatBinaryOpProvider")
-    static void gatherFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
-        float[] a = fa.apply(SPECIES.length()); 
-        float[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        float[] r = new float[a.length];       
+    @Test(dataProvider = "floatUnaryOpIndexProvider")
+    static void gatherFloatMaxVectorTests(IntFunction<float[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        float[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        float[] r = new float[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1859,15 +1869,11 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "floatBinaryOpProvider")
-    static void scatterFloatMaxVectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
-        float[] a = fa.apply(SPECIES.length()); 
-        float[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        float[] r = new float[a.length];       
+    @Test(dataProvider = "floatUnaryOpIndexProvider")
+    static void scatterFloatMaxVectorTests(IntFunction<float[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        float[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        float[] r = new float[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

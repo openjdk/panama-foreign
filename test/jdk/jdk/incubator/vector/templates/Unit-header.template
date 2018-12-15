@@ -59,15 +59,11 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-#if[MaxBit]
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-#end[MaxBit]
 import java.lang.Integer;
 import java.util.List;
-#if[intOrLongOrFP]
+#if[!byteOrShort]
 import java.util.Arrays;
-#end[intOrLongOrFP]
+#end[!byteOrShort]
 import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -357,7 +353,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
             Assert.assertEquals(f.apply(a,i), r[i], "at index #" + i);
         }
     }
-#if[intOrLongOrFP]
+#if[!byteOrShort]
     interface FGatherScatterOp {
         $type$[] apply($type$[] a, int ix, int[] b, int iy);
     }
@@ -381,7 +377,7 @@ public class $vectorteststype$ extends AbstractVectorTest {
         }
     }
 
-#end[intOrLongOrFP]
+#end[!byteOrShort]
 
     static final List<IntFunction<$type$[]>> $TYPE$_GENERATORS = List.of(
             withToString("$type$[-i * 5]", (int s) -> {
@@ -425,6 +421,12 @@ public class $vectorteststype$ extends AbstractVectorTest {
 
     @DataProvider
     public Object[][] $type$BinaryOpProvider() {
+        return $TYPE$_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
+    public Object[][] $type$IndexedOpProvider() {
         return $TYPE$_GENERATOR_PAIRS.stream().map(List::toArray).
                 toArray(Object[][]::new);
     }
@@ -479,6 +481,16 @@ public class $vectorteststype$ extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
+    @DataProvider
+    public Object[][] $type$UnaryOpIndexProvider() {
+        return INT_INDEX_GENERATORS.stream().
+                flatMap(fs -> $TYPE$_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
+                })).
+                toArray(Object[][]::new);
+    }
+
 
     static final List<IntFunction<$type$[]>> $TYPE$_COMPARE_GENERATORS = List.of(
             withToString("$type$[i]", (int s) -> {

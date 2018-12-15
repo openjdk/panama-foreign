@@ -38,8 +38,6 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.lang.Integer;
 import java.util.List;
 import java.util.Arrays;
@@ -301,6 +299,12 @@ public class LongMaxVectorTests extends AbstractVectorTest {
     }
 
     @DataProvider
+    public Object[][] longIndexedOpProvider() {
+        return LONG_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
     public Object[][] longBinaryOpMaskProvider() {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> LONG_GENERATOR_PAIRS.stream().map(lfa -> {
@@ -334,6 +338,16 @@ public class LongMaxVectorTests extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
+    @DataProvider
+    public Object[][] longUnaryOpIndexProvider() {
+        return INT_INDEX_GENERATORS.stream().
+                flatMap(fs -> LONG_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
+                })).
+                toArray(Object[][]::new);
+    }
+
 
     static final List<IntFunction<long[]>> LONG_COMPARE_GENERATORS = List.of(
             withToString("long[i]", (int s) -> {
@@ -1702,15 +1716,11 @@ public class LongMaxVectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "longBinaryOpProvider")
-    static void gatherLongMaxVectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
-        long[] a = fa.apply(SPECIES.length()); 
-        long[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        long[] r = new long[a.length];       
+    @Test(dataProvider = "longUnaryOpIndexProvider")
+    static void gatherLongMaxVectorTests(IntFunction<long[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        long[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        long[] r = new long[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1732,15 +1742,11 @@ public class LongMaxVectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "longBinaryOpProvider")
-    static void scatterLongMaxVectorTests(IntFunction<long[]> fa, IntFunction<long[]> fb) {
-        long[] a = fa.apply(SPECIES.length()); 
-        long[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        long[] r = new long[a.length];       
+    @Test(dataProvider = "longUnaryOpIndexProvider")
+    static void scatterLongMaxVectorTests(IntFunction<long[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        long[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        long[] r = new long[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

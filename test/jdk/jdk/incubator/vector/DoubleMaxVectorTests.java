@@ -38,8 +38,6 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.lang.Integer;
 import java.util.List;
 import java.util.Arrays;
@@ -392,6 +390,12 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     }
 
     @DataProvider
+    public Object[][] doubleIndexedOpProvider() {
+        return DOUBLE_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
     public Object[][] doubleBinaryOpMaskProvider() {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> DOUBLE_GENERATOR_PAIRS.stream().map(lfa -> {
@@ -439,6 +443,16 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
+    @DataProvider
+    public Object[][] doubleUnaryOpIndexProvider() {
+        return INT_INDEX_GENERATORS.stream().
+                flatMap(fs -> DOUBLE_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
+                })).
+                toArray(Object[][]::new);
+    }
+
 
     static final List<IntFunction<double[]>> DOUBLE_COMPARE_GENERATORS = List.of(
             withToString("double[i]", (int s) -> {
@@ -1829,15 +1843,11 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "doubleBinaryOpProvider")
-    static void gatherDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length()); 
-        double[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        double[] r = new double[a.length];       
+    @Test(dataProvider = "doubleUnaryOpIndexProvider")
+    static void gatherDoubleMaxVectorTests(IntFunction<double[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        double[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        double[] r = new double[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1859,15 +1869,11 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "doubleBinaryOpProvider")
-    static void scatterDoubleMaxVectorTests(IntFunction<double[]> fa, IntFunction<double[]> fb) {
-        double[] a = fa.apply(SPECIES.length()); 
-        double[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        double[] r = new double[a.length];       
+    @Test(dataProvider = "doubleUnaryOpIndexProvider")
+    static void scatterDoubleMaxVectorTests(IntFunction<double[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        double[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        double[] r = new double[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

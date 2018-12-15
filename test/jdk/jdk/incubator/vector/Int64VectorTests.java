@@ -292,6 +292,12 @@ public class Int64VectorTests extends AbstractVectorTest {
     }
 
     @DataProvider
+    public Object[][] intIndexedOpProvider() {
+        return INT_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
     public Object[][] intBinaryOpMaskProvider() {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> INT_GENERATOR_PAIRS.stream().map(lfa -> {
@@ -325,6 +331,16 @@ public class Int64VectorTests extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
+    @DataProvider
+    public Object[][] intUnaryOpIndexProvider() {
+        return INT_INDEX_GENERATORS.stream().
+                flatMap(fs -> INT_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
+                })).
+                toArray(Object[][]::new);
+    }
+
 
     static final List<IntFunction<int[]>> INT_COMPARE_GENERATORS = List.of(
             withToString("int[i]", (int s) -> {
@@ -1693,15 +1709,11 @@ public class Int64VectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "intBinaryOpProvider")
-    static void gatherInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        int[] r = new int[a.length];       
+    @Test(dataProvider = "intUnaryOpIndexProvider")
+    static void gatherInt64VectorTests(IntFunction<int[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1723,15 +1735,11 @@ public class Int64VectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "intBinaryOpProvider")
-    static void scatterInt64VectorTests(IntFunction<int[]> fa, IntFunction<int[]> fb) {
-        int[] a = fa.apply(SPECIES.length()); 
-        int[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        int[] r = new int[a.length];       
+    @Test(dataProvider = "intUnaryOpIndexProvider")
+    static void scatterInt64VectorTests(IntFunction<int[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        int[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        int[] r = new int[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

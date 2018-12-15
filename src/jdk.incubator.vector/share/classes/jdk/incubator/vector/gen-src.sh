@@ -28,10 +28,12 @@ do
   case $type in
     byte)
       Wideboxtype=Integer
+      sizeInBytes=1
       args="$args -KbyteOrShort"
       ;;
     short)
       Wideboxtype=Integer
+      sizeInBytes=2
       args="$args -KbyteOrShort"
       ;;
     int)
@@ -40,27 +42,31 @@ do
       fptype=float
       Fptype=Float
       Boxfptype=Float
-      args="$args -KintOrLong -KintOrFP -KintOrFloat -KintOrLongOrFP"
+      sizeInBytes=4
+      args="$args -KintOrLong -KintOrFP -KintOrFloat"
       ;;
     long)
       fptype=double
       Fptype=Double
       Boxfptype=Double
-      args="$args -KintOrLong -KintOrLongOrFP -KlongOrDouble"
+      sizeInBytes=8
+      args="$args -KintOrLong -KlongOrDouble"
       ;;
     float)
       kind=FP
       bitstype=int
       Bitstype=Int
       Boxbitstype=Integer
-      args="$args -KintOrFP -KintOrFloat  -KintOrLongOrFP"
+      sizeInBytes=4
+      args="$args -KintOrFP -KintOrFloat"
       ;;
     double)
       kind=FP
       bitstype=long
       Bitstype=Long
       Boxbitstype=Long
-      args="$args -KintOrFP -KintOrLongOrFP -KlongOrDouble"
+      sizeInBytes=8
+      args="$args -KintOrFP -KlongOrDouble"
       ;;
   esac
 
@@ -86,7 +92,7 @@ do
     < X-VectorHelper.java.template \
     > ${abstractvectortype}Helper.java
 
-  if [ VAR_OS_ENV==windows.cygwin ]; then
+  if [[ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]]; then
     tr -d '\r' < ${abstractvectortype}Helper.java > temp
     mv temp ${abstractvectortype}Helper.java
   fi
@@ -99,20 +105,27 @@ do
     shuffletype=${typeprefix}${Type}${bits}Shuffle
     bitsvectortype=${typeprefix}${Bitstype}${bits}Vector
     fpvectortype=${typeprefix}${Fptype}${bits}Vector
+    vectorindexbits=$((bits * 4 / sizeInBytes))
+    if [[ "${bits}" == "Max" ]]; then
+        vectorindextype="vix.getClass()"
+    else
+        vectorindextype="Int${vectorindexbits}Vector.class"
+    fi;
+
     shape=S${bits}Bit
     Shape=S_${bits}_BIT
     args="$old_args"
-    if [[ "${fpvectortype}" = "Double64Vector" ]];then
+    if [[ "${vectortype}" == "Long64Vector" || "${vectortype}" == "Double64Vector" ]]; then
       args="$args -KlongOrDouble64"
     fi
-    bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dmasktype=$masktype -Dshuffletype=$shuffletype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dshape=$shape -DShape=$Shape"
+    bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dmasktype=$masktype -Dshuffletype=$shuffletype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dvectorindextype=$vectorindextype -Dshape=$shape -DShape=$Shape"
 
     echo $bitargs
     java $SPP -nel $bitargs \
       < X-VectorBits.java.template \
       > $vectortype.java
 
-    if [ VAR_OS_ENV==windows.cygwin ]; then
+    if [[ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]]; then
       tr -d  '\r' < $vectortype.java > temp
       mv temp $vectortype.java
     fi

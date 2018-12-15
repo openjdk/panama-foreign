@@ -1150,13 +1150,9 @@ public class Float256Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object gather() {
-        float[] a = fa.apply(SPECIES.length()); 
-        float[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        float[] r = new float[a.length];       
+        float[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        float[] r = new float[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1172,13 +1168,9 @@ public class Float256Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object scatter() {
-        float[] a = fa.apply(SPECIES.length()); 
-        float[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        float[] r = new float[a.length];       
+        float[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        float[] r = new float[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

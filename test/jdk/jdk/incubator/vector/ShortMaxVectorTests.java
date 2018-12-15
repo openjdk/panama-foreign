@@ -38,8 +38,6 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.lang.Integer;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -277,6 +275,12 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     }
 
     @DataProvider
+    public Object[][] shortIndexedOpProvider() {
+        return SHORT_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
     public Object[][] shortBinaryOpMaskProvider() {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> SHORT_GENERATOR_PAIRS.stream().map(lfa -> {
@@ -310,6 +314,16 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
+    @DataProvider
+    public Object[][] shortUnaryOpIndexProvider() {
+        return INT_INDEX_GENERATORS.stream().
+                flatMap(fs -> SHORT_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
+                })).
+                toArray(Object[][]::new);
+    }
+
 
     static final List<IntFunction<short[]>> SHORT_COMPARE_GENERATORS = List.of(
             withToString("short[i]", (int s) -> {

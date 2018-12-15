@@ -496,20 +496,20 @@ void Assembler::emit_operand(Register reg, Register base, Register index,
           base != rbp LP64_ONLY(&& base != r13)) {
         // [base + index*scale]
         // [00 reg 100][ss index base]
-        assert((xmmindexVal || (index != rsp)), "illegal addressing mode");
+        assert(xmmindexVal || (index != rsp), "illegal addressing mode");
         emit_int8(0x04 | regenc);
         emit_int8(scale << 6 | indexenc | baseenc);
       } else if (emit_compressed_disp_byte(disp) && rtype == relocInfo::none) {
         // [base + index*scale + imm8]
         // [01 reg 100][ss index base] imm8
-        assert((xmmindexVal || (index != rsp)), "illegal addressing mode");
+        assert(xmmindexVal || (index != rsp), "illegal addressing mode");
         emit_int8(0x44 | regenc);
         emit_int8(scale << 6 | indexenc | baseenc);
         emit_int8(disp & 0xFF);
       } else {
         // [base + index*scale + disp32]
         // [10 reg 100][ss index base] disp32
-        assert((xmmindexVal || (index != rsp)), "illegal addressing mode");
+        assert(xmmindexVal || (index != rsp), "illegal addressing mode");
         emit_int8(0x84 | regenc);
         emit_int8(scale << 6 | indexenc | baseenc);
         emit_data(disp, rspec, disp32_operand);
@@ -2839,7 +2839,7 @@ void Assembler::evmovdquw(Address dst, KRegister mask, XMMRegister src, bool mer
 }
 
 void Assembler::evmovdqul(XMMRegister dst, XMMRegister src, int vector_len) {
-  // Unmasked instruction 
+  // Unmasked instruction
   evmovdqul(dst, k0, src, /*merge*/ false, vector_len);
 }
 
@@ -2857,7 +2857,7 @@ void Assembler::evmovdqul(XMMRegister dst, KRegister mask, XMMRegister src, bool
 }
 
 void Assembler::evmovdqul(XMMRegister dst, Address src, int vector_len) {
-  // Unmasked instruction 
+  // Unmasked instruction
   evmovdqul(dst, k0, src, /*merge*/ false, vector_len);
 }
 
@@ -4730,7 +4730,7 @@ void Assembler::vpshufpd(XMMRegister dst, XMMRegister nds, XMMRegister src, int 
   emit_int8((unsigned char)0xC6);
   emit_int8((unsigned char)(0xC0 | encode));
   emit_int8(imm8 & 0xFF);
-} 
+}
 
 void Assembler::pshufps(XMMRegister dst, XMMRegister src, int imm8) {
   assert(isByte(imm8), "invalid value");
@@ -8684,7 +8684,7 @@ void Assembler::evex_prefix(bool vex_r, bool vex_b, bool vex_x, bool evex_r, boo
   emit_int8(byte3);
 
   // P2: byte 4 as zL'Lbv'aaa
-  // kregs are implemented in the low 3 bits as aaa 
+  // kregs are implemented in the low 3 bits as aaa
   int byte4 = (_attributes->is_no_reg_mask()) ?
               0 :
               _attributes->get_embedded_opmask_register_specifier();
@@ -8695,7 +8695,7 @@ void Assembler::evex_prefix(bool vex_r, bool vex_b, bool vex_x, bool evex_r, boo
   // fourth EVEX.L'L for vector length : 0 is 128, 1 is 256, 2 is 512, currently we do not support 1024
   byte4 |= ((_attributes->get_vector_len())& 0x3) << 5;
   // last is EVEX.z for zero/merge actions
-  if (_attributes->is_no_reg_mask() == false && 
+  if (_attributes->is_no_reg_mask() == false &&
       _attributes->get_embedded_opmask_register_specifier() != 0) {
     byte4 |= (_attributes->is_clear_context() ? EVEX_Z : 0);
   }
@@ -8715,7 +8715,7 @@ void Assembler::vex_prefix(Address adr, int nds_enc, int xreg_enc, VexSimdPrefix
   attributes->set_current_assembler(this);
 
   // For EVEX instruction (which is not marked as pure EVEX instruction) check and see if this instruction
-  // is allowed in legacy mode and has resources which will fit in it.  
+  // is allowed in legacy mode and has resources which will fit in it.
   // Pure EVEX instructions will have is_evex_instruction set in their definition.
   if (!attributes->is_legacy_mode()) {
     if (UseAVX > 2 && !attributes->is_evex_instruction() && !_is_managed) {
@@ -8726,11 +8726,11 @@ void Assembler::vex_prefix(Address adr, int nds_enc, int xreg_enc, VexSimdPrefix
   }
 
   if (UseAVX > 2) {
-    assert(((!attributes->uses_vl()) ||  
-            (attributes->get_vector_len() == AVX_512bit) || 
-            (!_legacy_mode_vl) || 
-            (attributes->is_legacy_mode())),"XMM register should be 0-15");     
-    assert(((nds_enc < 16 && xreg_enc < 16) || (!attributes->is_legacy_mode())),"XMM register should be 0-15"); 
+    assert(((!attributes->uses_vl()) ||
+            (attributes->get_vector_len() == AVX_512bit) ||
+            (!_legacy_mode_vl) ||
+            (attributes->is_legacy_mode())),"XMM register should be 0-15");
+    assert(((nds_enc < 16 && xreg_enc < 16) || (!attributes->is_legacy_mode())),"XMM register should be 0-15");
   }
 
   _is_managed = false;
@@ -8762,11 +8762,11 @@ int Assembler::vex_prefix_and_encode(int dst_enc, int nds_enc, int src_enc, VexS
   attributes->set_current_assembler(this);
 
   // For EVEX instruction (which is not marked as pure EVEX instruction) check and see if this instruction
-  // is allowed in legacy mode and has resources which will fit in it.  
+  // is allowed in legacy mode and has resources which will fit in it.
   // Pure EVEX instructions will have is_evex_instruction set in their definition.
   if (!attributes->is_legacy_mode()) {
     if (UseAVX > 2 && !attributes->is_evex_instruction() && !_is_managed) {
-      if ((!attributes->uses_vl() || (attributes->get_vector_len() != AVX_512bit)) && 
+      if ((!attributes->uses_vl() || (attributes->get_vector_len() != AVX_512bit)) &&
           (dst_enc < 16) && (nds_enc < 16) && (src_enc < 16)) {
           attributes->set_is_legacy_mode();
       }
@@ -8779,12 +8779,12 @@ int Assembler::vex_prefix_and_encode(int dst_enc, int nds_enc, int src_enc, VexS
     // All the vector instructions with AVX_512bit length can have legacy_mode as false
     // All the vector instructions with < AVX_512bit length can have legacy_mode as false if AVX512vl() is supported
     // Rest all should have legacy_mode set as true
-    assert(((!attributes->uses_vl()) ||  
-            (attributes->get_vector_len() == AVX_512bit) || 
-            (!_legacy_mode_vl) || 
-            (attributes->is_legacy_mode())),"XMM register should be 0-15");     
+    assert(((!attributes->uses_vl()) ||
+            (attributes->get_vector_len() == AVX_512bit) ||
+            (!_legacy_mode_vl) ||
+            (attributes->is_legacy_mode())),"XMM register should be 0-15");
     // Instruction with legacy_mode true should have dst, nds and src < 15
-    assert(((dst_enc < 16 && nds_enc < 16 && src_enc < 16) || (!attributes->is_legacy_mode())),"XMM register should be 0-15"); 
+    assert(((dst_enc < 16 && nds_enc < 16 && src_enc < 16) || (!attributes->is_legacy_mode())),"XMM register should be 0-15");
   }
 
   _is_managed = false;
@@ -9156,7 +9156,7 @@ void Assembler::evpblendmb (XMMRegister dst, KRegister mask, XMMRegister nds, XM
   if (merge) {
     attributes.reset_is_clear_context();
   }
-  int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);	
+  int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
   emit_int8((unsigned char)0x66);
   emit_int8((unsigned char)(0xC0 | encode));
 }
@@ -9171,9 +9171,9 @@ void Assembler::evpblendmw (XMMRegister dst, KRegister mask, XMMRegister nds, XM
   if (merge) {
     attributes.reset_is_clear_context();
   }
-  int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);	
+  int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
   emit_int8((unsigned char)0x66);
-  emit_int8((unsigned char)(0xC0 | encode));	
+  emit_int8((unsigned char)(0xC0 | encode));
 }
 
 void Assembler::evpblendmd (XMMRegister dst, KRegister mask, XMMRegister nds, XMMRegister src, bool merge, int vector_len) {
@@ -9185,23 +9185,23 @@ void Assembler::evpblendmd (XMMRegister dst, KRegister mask, XMMRegister nds, XM
   if (merge) {
     attributes.reset_is_clear_context();
   }
-  int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);	
+  int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
   emit_int8((unsigned char)0x64);
   emit_int8((unsigned char)(0xC0 | encode));
 }
 
 void Assembler::evpblendmq (XMMRegister dst, KRegister mask, XMMRegister nds, XMMRegister src, bool merge, int vector_len) {
-  assert(VM_Version::supports_evex(), "");	
+  assert(VM_Version::supports_evex(), "");
   //Encoding: EVEX.NDS.512.66.0F38.W1 64 /r
   InstructionAttr attributes(vector_len, /* vex_w */ true, /* legacy_mode */ false, /* no_mask_reg */ false, /* uses_vl */ true);
   attributes.set_is_evex_instruction();
   attributes.set_embedded_opmask_register_specifier(mask);
   if (merge) {
     attributes.reset_is_clear_context();
-  }	
-  int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);	
+  }
+  int encode = vex_prefix_and_encode(dst->encoding(), nds->encoding(), src->encoding(), VEX_SIMD_66, VEX_OPCODE_0F_38, &attributes);
   emit_int8((unsigned char)0x64);
-  emit_int8((unsigned char)(0xC0 | encode));	
+  emit_int8((unsigned char)(0xC0 | encode));
 }
 
 void Assembler::shlxl(Register dst, Register src1, Register src2) {

@@ -38,8 +38,6 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.lang.Integer;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -277,6 +275,12 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     }
 
     @DataProvider
+    public Object[][] byteIndexedOpProvider() {
+        return BYTE_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
     public Object[][] byteBinaryOpMaskProvider() {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> BYTE_GENERATOR_PAIRS.stream().map(lfa -> {
@@ -310,6 +314,16 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
+    @DataProvider
+    public Object[][] byteUnaryOpIndexProvider() {
+        return INT_INDEX_GENERATORS.stream().
+                flatMap(fs -> BYTE_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
+                })).
+                toArray(Object[][]::new);
+    }
+
 
     static final List<IntFunction<byte[]>> BYTE_COMPARE_GENERATORS = List.of(
             withToString("byte[i]", (int s) -> {

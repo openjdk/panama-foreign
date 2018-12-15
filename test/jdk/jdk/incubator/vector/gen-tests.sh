@@ -60,9 +60,11 @@ do
   case $type in
     byte)
       Wideboxtype=Byte
+      args="$args -KbyteOrShort"
       ;;
     short)
       Wideboxtype=Short
+      args="$args -KbyteOrShort"
       ;;
     int)
       Boxtype=Integer
@@ -70,28 +72,26 @@ do
       fptype=float
       Fptype=Float
       Boxfptype=Float
-      args="$args -KintOrLong -KintOrLongOrFP"
+      args="$args -KintOrLong"
       ;;
     long)
       Wideboxtype=Long
       fptype=double
       Fptype=Double
       Boxfptype=Double
-      args="$args -KintOrLong -KintOrLongOrFP"
+      args="$args -KintOrLong"
       ;;
     float)
       kind=FP
       bitstype=int
       Bitstype=Int
       Boxbitstype=Integer
-      args="$args -KintOrLongOrFP"
       ;;
     double)
       kind=FP
       bitstype=long
       Bitstype=Long
       Boxbitstype=Long
-      args="$args -KintOrLongOrFP"
       ;;
   esac
 
