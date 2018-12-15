@@ -868,6 +868,7 @@
               <in>crc32c.h</in>
               <in>depChecker_x86.cpp</in>
               <in>depChecker_x86.hpp</in>
+              <in>directUpcallHandler_x86.cpp</in>
               <in>disassembler_x86.hpp</in>
               <in>frame_x86.cpp</in>
               <in>frame_x86.hpp</in>
@@ -6152,12 +6153,6 @@
                 <df name="IsModifiableModule">
                   <in>libIsModifiableModuleTest.c</in>
                 </df>
-                <df name="HeapMonitorModule">
-                  <in>libHeapMonitorTest.c</in>
-                </df>
-                <df name="VMEvent">
-                  <in>libVMEventTest.c</in>
-                </df>
                 <df name="ModuleAwareAgents">
                   <df name="ClassFileLoadHook">
                     <in>libMAAClassFileLoadHook.c</in>
@@ -6173,6 +6168,9 @@
                   <df name="AllowedFunctions">
                     <in>libAllowedFunctions.c</in>
                   </df>
+                </df>
+                <df name="VMEvent">
+                  <in>libVMEventTest.c</in>
                 </df>
               </df>
             </df>
@@ -7378,6 +7376,11 @@
       <item path="../../src/hotspot/cpu/x86/depChecker_x86.hpp"
             ex="false"
             tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../src/hotspot/cpu/x86/directUpcallHandler_x86.cpp"
+            ex="false"
+            tool="1"
             flavor2="0">
       </item>
       <item path="../../src/hotspot/cpu/x86/disassembler_x86.hpp"
@@ -40144,16 +40147,6 @@
             tool="0"
             flavor2="0">
       </item>
-      <item path="../../test/hotspot/jtreg/serviceability/jvmti/HeapMonitor/libHeapMonitorTest.c"
-            ex="false"
-            tool="0"
-            flavor2="0">
-      </item>
-      <item path="../../test/hotspot/jtreg/serviceability/jvmti/VMEvent/libVMEventTest.c"
-            ex="false"
-            tool="0"
-            flavor2="0">
-      </item>
       <item path="../../test/hotspot/jtreg/serviceability/jvmti/ModuleAwareAgents/ClassFileLoadHook/libMAAClassFileLoadHook.c"
             ex="false"
             tool="0"
@@ -40170,6 +40163,11 @@
             flavor2="0">
       </item>
       <item path="../../test/hotspot/jtreg/serviceability/jvmti/StartPhase/AllowedFunctions/libAllowedFunctions.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../../test/hotspot/jtreg/serviceability/jvmti/VMEvent/libVMEventTest.c"
             ex="false"
             tool="0"
             flavor2="0">

@@ -9738,6 +9738,7 @@ SkipIfEqual::~SkipIfEqual() {
 
 // This is simply a call to Thread::current()
 void MacroAssembler::get_thread(Register thread) {
+  block_comment("{ get_thread");
   if (thread != rax) {
     push(rax);
   }
@@ -9768,6 +9769,7 @@ void MacroAssembler::get_thread(Register thread) {
     mov(thread, rax);
     pop(rax);
   }
+  block_comment("} get_thread");
 }
 
 #endif

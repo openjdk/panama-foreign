@@ -192,7 +192,7 @@ inline bool vframeStreamCommon::fill_from_frame() {
   }
 
   // End of stack?
-  if (_frame.is_first_frame() || (_stop_at_java_call_stub && _frame.is_entry_frame())) {
+  if (_frame.is_first_frame() || (_stop_at_java_call_stub && (_frame.is_entry_frame() /*|| _frame.is_entry_blob()*/))) {
     _mode = at_end_mode;
     return true;
   }

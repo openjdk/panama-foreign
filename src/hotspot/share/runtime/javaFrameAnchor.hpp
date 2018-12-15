@@ -52,6 +52,7 @@ friend class VMStructs;
 friend class JVMCIVMStructs;
 friend class BytecodeInterpreter;
 friend class JavaCallWrapper;
+friend class DirectUpcallHandler;
 
  private:
   //

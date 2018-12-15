@@ -28,9 +28,13 @@
 #include CPU_HEADER(foreign_globals)
 
 class DirectUpcallHandler: AllStatic {
-public:
-  static address generate_specialized_upcall_stub(Handle& rec, int nlongs, int ndoubles, int rettag);
-  static address generate_linkToNative_upcall_stub(Handle& rec);
+ private:
+  static void save_java_frame_anchor(MacroAssembler* _masm, Register thread);
+  static void restore_java_frame_anchor(MacroAssembler* _masm, Register thread);
+
+ public:
+  static address generate_specialized_upcall_stub(jobject receiver, int nlongs, int ndoubles, int rettag);
+  static address generate_linkToNative_upcall_stub(jobject receiver, int nlongs, int ndoubles, int rettag);
 };
 
 

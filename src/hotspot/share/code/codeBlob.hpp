@@ -60,6 +60,7 @@ struct CodeBlobType {
 //    AdapterBlob        : Used to hold C2I/I2C adapters
 //    VtableBlob         : Used for holding vtable chunks
 //    MethodHandlesAdapterBlob : Used to hold MethodHandles adapters
+//    EntryBlob          : Used for upcalls from native code
 //   RuntimeStub         : Call to VM runtime methods
 //   SingletonBlob       : Super-class for all blobs that exist in only one instance
 //    DeoptimizationBlob : Used for deoptimization
@@ -142,6 +143,7 @@ public:
   virtual bool is_method_handles_adapter_blob() const { return false; }
   virtual bool is_aot() const                         { return false; }
   virtual bool is_compiled() const                    { return false; }
+  virtual bool is_entry_blob() const                  { return false; }
 
   inline bool is_compiled_by_c1() const    { return _type == compiler_c1; };
   inline bool is_compiled_by_c2() const    { return _type == compiler_c2; };
@@ -391,6 +393,7 @@ class BufferBlob: public RuntimeBlob {
   friend class AdapterBlob;
   friend class VtableBlob;
   friend class MethodHandlesAdapterBlob;
+  friend class EntryBlob;
   friend class WhiteBox;
 
  private:
@@ -467,6 +470,26 @@ public:
   virtual bool is_method_handles_adapter_blob() const { return true; }
 };
 
+//----------------------------------------------------------------------------------------------------
+
+class EntryBlob: public BufferBlob {
+ private:
+  intptr_t _exception_handler_offset;
+  jobject _receiver;
+
+  EntryBlob(const char* name, int size, CodeBuffer* cb, intptr_t exception_handler_offset, jobject receiver);
+
+ public:
+  // Creation
+  static EntryBlob* create(const char* name, CodeBuffer* cb,
+                           intptr_t exception_handler_offset, jobject receiver);
+
+  address exception_handler() { return code_begin() + _exception_handler_offset; }
+  jobject receiver() { return _receiver; }
+
+  // Typing
+  virtual bool is_entry_blob() const { return true; }
+};
 
 //----------------------------------------------------------------------------------------------------
 // RuntimeStub: describes stubs used by compiled code to call a (static) C++ runtime routine

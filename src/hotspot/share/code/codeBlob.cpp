@@ -344,6 +344,31 @@ MethodHandlesAdapterBlob* MethodHandlesAdapterBlob::create(int buffer_size) {
 }
 
 //----------------------------------------------------------------------------------------------------
+// Implementation of EntryBlob
+
+EntryBlob::EntryBlob(const char* name, int size, CodeBuffer* cb, intptr_t exception_handler_offset, jobject receiver) :
+  BufferBlob(name, size, cb),
+  _exception_handler_offset(exception_handler_offset),
+  _receiver(receiver) {
+  CodeCache::commit(this);
+}
+
+EntryBlob* EntryBlob::create(const char* name, CodeBuffer* cb, intptr_t exception_handler_offset, jobject receiver) {
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
+
+  EntryBlob* blob = NULL;
+  unsigned int size = CodeBlob::allocation_size(cb, sizeof(EntryBlob));
+  {
+    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    blob = new (size) EntryBlob(name, size, cb, exception_handler_offset, receiver);
+  }
+  // Track memory usage statistic after releasing CodeCache_lock
+  MemoryService::track_code_cache_memory_usage();
+
+  return blob;
+}
+
+//----------------------------------------------------------------------------------------------------
 // Implementation of RuntimeStub
 
 RuntimeStub::RuntimeStub(

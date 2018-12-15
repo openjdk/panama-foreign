@@ -22,31 +22,43 @@
  */
 
 #include "precompiled.hpp"
+#include "code/codeBlob.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 
-JVM_ENTRY(static void, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
+JVM_ENTRY(void, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
   //acquire code cache lock
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
   CodeBlob* cb = CodeCache::find_blob((char*)addr);
   assert(cb != NULL, "Attempting to free non-existent stub");
   //free global JNI handle
-  jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
-  JNIHandles::destroy_global(*rec_ptr);
+  jobject handle = NULL;
+  if (cb->is_entry_blob()) {
+    handle = ((EntryBlob*)cb)->receiver();
+  } else {
+    jobject* handle_ptr = (jobject*)(void*)cb->content_begin();
+    handle = *handle_ptr;
+  }
+  JNIHandles::destroy_global(handle);
   //free code blob
   CodeCache::free(cb);
 JVM_END
 
-JVM_ENTRY(static jobject, UH_GetUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
+JVM_ENTRY(jobject, UH_GetUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
   //acquire code cache lock
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   //find code blob
   CodeBlob* cb = CodeCache::find_blob((char*)addr);
   if (cb != NULL) {
-    //free global JNI handle
-    jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
-    return *rec_ptr;
+    jobject handle = NULL;
+    if (cb->is_entry_blob()) {
+      jobject handle = ((EntryBlob*)cb)->receiver();
+    } else {
+      jobject* handle_ptr = (jobject*)(void*)cb->content_begin();
+      handle = *handle_ptr;
+    }
+    return handle;
   } else {
     return NULL;
   }
@@ -59,8 +71,8 @@ JVM_ENTRY(static jobject, UH_GetUpcallStub(JNIEnv *env, jobject _unused, jlong a
 
 // These are the native methods on jdk.internal.foreign.NativeInvoker.
 static JNINativeMethod UH_methods[] = {
-  {CC "freeUpcallStub",     CC "(J)V",                FN_PTR(UH_FreeUpcallStub)},
-  {CC "getUpcallStub",  CC "(J)" SYM,   FN_PTR(UH_GetUpcallStub)},
+  {CC "freeUpcallStub", CC "(J)V",    FN_PTR(UH_FreeUpcallStub)},
+  {CC "getUpcallStub",  CC "(J)" SYM, FN_PTR(UH_GetUpcallStub)},
 };
 
 /**

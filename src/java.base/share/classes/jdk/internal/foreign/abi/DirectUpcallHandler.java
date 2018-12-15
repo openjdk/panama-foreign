@@ -62,13 +62,14 @@ public class DirectUpcallHandler implements Library.Symbol {
     public long allocateUpcallStub() {
         MethodType mt = mh.type();
         Class<?> retClass = mt.returnType();
-        return allocateSpecializedUpcallStub(
+        return allocateUpcallStub(
                 (int) mt.parameterList().stream().filter(p -> p == long.class).count(),
                 (int) mt.parameterList().stream().filter(p -> p == double.class).count(),
                 encode(retClass));
     }
 
-    private static int encode(Class<?> ret) {
+    /*non-public*/
+    static int encode(Class<?> ret) {
         if (ret == double.class) {
             return 2;
         } else if (ret == void.class) {
@@ -278,7 +279,7 @@ public class DirectUpcallHandler implements Library.Symbol {
 
     // natives
 
-    native long allocateSpecializedUpcallStub(int nlongs, int ndoubles, int rettag);
+    native long allocateUpcallStub(int nlongs, int ndoubles, int rettag);
 
     static native void registerNatives();
     static {

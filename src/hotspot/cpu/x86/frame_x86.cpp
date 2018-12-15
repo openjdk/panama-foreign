@@ -109,6 +109,8 @@ bool frame::safe_for_sender(JavaThread *thread) {
     if (is_entry_frame()) {
       // an entry frame must have a valid fp.
       return fp_safe && is_entry_frame_valid(thread);
+    } else if (is_upcall_frame()) {
+      return fp_safe; // && is_entry_frame_valid(thread);
     }
 
     intptr_t* sender_sp = NULL;
@@ -212,6 +214,8 @@ bool frame::safe_for_sender(JavaThread *thread) {
       bool jcw_safe = (jcw < thread->stack_base()) && (jcw > (address)sender.fp());
 
       return jcw_safe;
+    } else if (sender_blob->is_entry_blob()) {
+      return false; // FIXME
     }
 
     CompiledMethod* nm = sender_blob->as_compiled_method_or_null();
@@ -361,6 +365,25 @@ frame frame::sender_for_entry_frame(RegisterMap* map) const {
   return fr;
 }
 
+frame frame::sender_for_upcall_frame(RegisterMap* map) const {
+  assert(map != NULL, "map must be set");
+  // Java frame called from C; skip all C frames and return top C
+  // frame of that chunk as the sender
+  JavaFrameAnchor* jfa = (JavaFrameAnchor*)&fp()[-5]; // upcall_handler.jfa FIXME: compute automatically / verify
+  assert(jfa->last_Java_sp() > sp(), "must be above this frame on stack");
+  // Since we are walking the stack now this nested anchor is obviously walkable
+  // even if it wasn't when it was stacked.
+  if (!jfa->walkable()) {
+    // Capture _last_Java_pc (if needed) and mark anchor walkable.
+    jfa->capture_last_Java_pc();
+  }
+  map->clear();
+  assert(map->include_argument_oops(), "should be set by clear");
+  vmassert(jfa->last_Java_pc() != NULL, "not walkable");
+  frame fr(jfa->last_Java_sp(), jfa->last_Java_fp(), jfa->last_Java_pc());
+  return fr;
+}
+
 //------------------------------------------------------------------------------
 // frame::verify_deopt_original_pc
 //
@@ -491,6 +514,7 @@ frame frame::sender(RegisterMap* map) const {
   map->set_include_argument_oops(false);
 
   if (is_entry_frame())       return sender_for_entry_frame(map);
+  if (is_upcall_frame())      return sender_for_upcall_frame(map);
   if (is_interpreted_frame()) return sender_for_interpreter_frame(map);
   assert(_cb == CodeCache::find_blob(pc()),"Must be the same");
 

@@ -67,18 +67,36 @@ public class LinkToNativeSignatureShuffler extends DirectSignatureShuffler {
         return new LinkToNativeSignatureShuffler(callingSequence, nmt, ShuffleDirection.NATIVE_TO_JAVA);
     }
 
+    private static boolean accept(List<ArgumentBinding> bindings) {
+        if (bindings.size() != 1) {
+            return false;
+        }
+        ArgumentBinding binding = bindings.get(0);
+        switch (binding.getStorage().getStorageClass()) {
+            case INTEGER_ARGUMENT_REGISTER:
+            case VECTOR_ARGUMENT_REGISTER:
+            case STACK_ARGUMENT_SLOT:
+            case INTEGER_RETURN_REGISTER:
+            case VECTOR_RETURN_REGISTER:
+                return true;
+            case X87_RETURN_REGISTER:
+                return false;
+            default:
+                throw new InternalError();
+        }
+    }
+
     private static boolean accept(NativeMethodType nmt, CallingSequence callingSequence, ShuffleDirection direction) {
         int arity = nmt.parameterCount();
         if (direction == ShuffleDirection.NATIVE_TO_JAVA) {
-            //only support LL -> L for now
-            return !callingSequence.returnsInMemory() &&
-                    arity == 2 &&
-                    callingSequence.getArgumentBindings(0).size() == 1 &&
-                    callingSequence.getArgumentBindings(0).get(0).getStorage().getStorageClass() == StorageClass.INTEGER_ARGUMENT_REGISTER &&
-                    callingSequence.getArgumentBindings(1).size() == 1 &&
-                    callingSequence.getArgumentBindings(1).get(0).getStorage().getStorageClass() == StorageClass.INTEGER_ARGUMENT_REGISTER &&
-                    callingSequence.getReturnBindings().size() == 1 &&
-                    callingSequence.getReturnBindings().get(0).getStorage().getStorageClass() == StorageClass.INTEGER_RETURN_REGISTER;
+            for (int i = 0; i < nmt.parameterCount(); i++) {
+                List<ArgumentBinding> bindings = callingSequence.getArgumentBindings(i);
+                if (!accept(bindings)) {
+                    return false;
+                }
+            }
+            List<ArgumentBinding> retBindings = callingSequence.getReturnBindings();
+            return accept(retBindings);
         }
         for (int i = 0 ; i < arity ; i++) {
             List<ArgumentBinding> argumentBindings = callingSequence.getArgumentBindings(i);
