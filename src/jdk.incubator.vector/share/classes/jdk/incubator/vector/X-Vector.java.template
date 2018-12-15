@@ -1971,13 +1971,13 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * or for any vector lane index {@code N} the result of
      * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
      */
-#if[intOrLongOrFP]
-    public abstract void intoArray($type$[] a, int i, int[] indexMap, int j);
-#else[intOrLongOrFP]
+#if[byteOrShort]
     public void intoArray($type$[] a, int i, int[] indexMap, int j) {
         forEach((n, e) -> a[i + indexMap[j + n]] = e);
     }
-#end[intOrLongOrFP]
+#else[byteOrShort]
+    public abstract void intoArray($type$[] a, int i, int[] indexMap, int j);
+#end[byteOrShort]
 
     /**
      * Stores this vector into an array using indexes obtained from an index
@@ -2001,13 +2001,13 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * {@code N} is set the result of {@code i + indexMap[j + N]} is
      * {@code < 0} or {@code >= a.length}
      */
-#if[intOrLongOrFP]
-    public abstract void intoArray($type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j);
-#else[intOrLongOrFP]
+#if[byteOrShort]
     public void intoArray($type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j) {
         forEach(m, (n, e) -> a[i + indexMap[j + n]] = e);
     }
-#end[intOrLongOrFP]
+#else[byteOrShort]
+    public abstract void intoArray($type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j);
+#end[byteOrShort]
     // Species
 
     @Override
@@ -2160,13 +2160,13 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
          * or for any vector lane index {@code N} the result of
          * {@code i + indexMap[j + N]} is {@code < 0} or {@code >= a.length}
          */
-#if[intOrLongOrFP]
-        public abstract $abstractvectortype$ fromArray($type$[] a, int i, int[] indexMap, int j);
-#else[intOrLongOrFP]
+#if[byteOrShort]
         public $abstractvectortype$ fromArray($type$[] a, int i, int[] indexMap, int j) {
             return op(n -> a[i + indexMap[j + n]]);
         }
-#end[intOrLongOrFP]
+#else[byteOrShort]
+        public abstract $abstractvectortype$ fromArray($type$[] a, int i, int[] indexMap, int j);
+#end[byteOrShort]
         /**
          * Loads a vector from an array using indexes obtained from an index
          * map and using a mask.
@@ -2189,13 +2189,13 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
          * {@code N} is set the result of {@code i + indexMap[j + N]} is
          * {@code < 0} or {@code >= a.length}
          */
-#if[intOrLongOrFP]
-        public abstract $abstractvectortype$ fromArray($type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j);
-#else[intOrLongOrFP]
+#if[byteOrShort]
         public $abstractvectortype$ fromArray($type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j) {
             return op(m, n -> a[i + indexMap[j + n]]);
         }
-#end[intOrLongOrFP]
+#else[byteOrShort]
+        public abstract $abstractvectortype$ fromArray($type$[] a, int i, Mask<$Boxtype$> m, int[] indexMap, int j);
+#end[byteOrShort]
 
         @Override
         public abstract $abstractvectortype$ fromByteArray(byte[] a, int ix);

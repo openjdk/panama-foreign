@@ -1192,13 +1192,9 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object gather() {
-        long[] a = fa.apply(SPECIES.length()); 
-        long[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        long[] r = new long[a.length];       
+        long[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        long[] r = new long[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1214,13 +1210,9 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
     @Benchmark
     public Object scatter() {
-        long[] a = fa.apply(SPECIES.length()); 
-        long[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        long[] r = new long[a.length];       
+        long[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        long[] r = new long[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

@@ -383,6 +383,12 @@ public class Float64VectorTests extends AbstractVectorTest {
     }
 
     @DataProvider
+    public Object[][] floatIndexedOpProvider() {
+        return FLOAT_GENERATOR_PAIRS.stream().map(List::toArray).
+                toArray(Object[][]::new);
+    }
+
+    @DataProvider
     public Object[][] floatBinaryOpMaskProvider() {
         return BOOLEAN_MASK_GENERATORS.stream().
                 flatMap(fm -> FLOAT_GENERATOR_PAIRS.stream().map(lfa -> {
@@ -430,6 +436,16 @@ public class Float64VectorTests extends AbstractVectorTest {
                 })).
                 toArray(Object[][]::new);
     }
+
+    @DataProvider
+    public Object[][] floatUnaryOpIndexProvider() {
+        return INT_INDEX_GENERATORS.stream().
+                flatMap(fs -> FLOAT_GENERATORS.stream().map(fa -> {
+                    return new Object[] {fa, fs};
+                })).
+                toArray(Object[][]::new);
+    }
+
 
     static final List<IntFunction<float[]>> FLOAT_COMPARE_GENERATORS = List.of(
             withToString("float[i]", (int s) -> {
@@ -1820,15 +1836,11 @@ public class Float64VectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "floatBinaryOpProvider")
-    static void gatherFloat64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
-        float[] a = fa.apply(SPECIES.length()); 
-        float[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        float[] r = new float[a.length];       
+    @Test(dataProvider = "floatUnaryOpIndexProvider")
+    static void gatherFloat64VectorTests(IntFunction<float[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        float[] a = fa.apply(SPECIES.length());
+        int[] b    = fs.apply(a.length, SPECIES.length());
+        float[] r = new float[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
@@ -1850,15 +1862,11 @@ public class Float64VectorTests extends AbstractVectorTest {
       return res;
     }
 
-    @Test(dataProvider = "floatBinaryOpProvider")
-    static void scatterFloat64VectorTests(IntFunction<float[]> fa, IntFunction<float[]> fb) {
-        float[] a = fa.apply(SPECIES.length()); 
-        float[] bb = fb.apply(SPECIES.length());
-        int[] b = new int[bb.length];
-        for (int i = 0; i < bb.length; i++) {
-          b[i] = (int)(bb[i]%SPECIES.length());
-        }
-        float[] r = new float[a.length];       
+    @Test(dataProvider = "floatUnaryOpIndexProvider")
+    static void scatterFloat64VectorTests(IntFunction<float[]> fa, BiFunction<Integer,Integer,int[]> fs) {
+        float[] a = fa.apply(SPECIES.length());
+        int[] b = fs.apply(a.length, SPECIES.length());
+        float[] r = new float[a.length];
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {

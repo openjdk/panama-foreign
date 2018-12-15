@@ -900,5 +900,115 @@ public class LongScalar extends AbstractVectorBenchmark {
 
 
 
+
+    @Benchmark
+    public Object gatherBase0() {
+        long[] as = fa.apply(size);
+        int[] is    = fs.apply(size);
+        long[] rs = fr.apply(size);
+
+        for (int i = 0; i < as.length; i++) {
+            int ix = 0 + is[i];
+            rs[i] = as[ix];
+        }
+
+        return rs;
+    }
+
+
+    Object gather(int window) {
+        long[] as = fa.apply(size);
+        int[] is    = fs.apply(size);
+        long[] rs = fr.apply(size);
+
+        for (int i = 0; i < as.length; i += window) {
+            for (int j = 0; j < window; j++) {
+                int ix = i + is[i + j];
+                rs[i + j] = as[ix];
+            }
+        }
+
+        return rs;
+    }
+
+    @Benchmark
+    public Object gather064() {
+        int window = 64 / Long.SIZE;
+        return gather(window);
+    }
+
+    @Benchmark
+    public Object gather128() {
+        int window = 128 / Long.SIZE;
+        return gather(window);
+    }
+
+    @Benchmark
+    public Object gather256() {
+        int window = 256 / Long.SIZE;
+        return gather(window);
+    }
+
+    @Benchmark
+    public Object gather512() {
+        int window = 512 / Long.SIZE;
+        return gather(window);
+    }
+
+
+
+    @Benchmark
+    public Object scatterBase0() {
+        long[] as = fa.apply(size);
+        int[] is    = fs.apply(size);
+        long[] rs = fr.apply(size);
+
+        for (int i = 0; i < as.length; i++) {
+            int ix = 0 + is[i];
+            rs[ix] = as[i];
+        }
+
+        return rs;
+    }
+
+    Object scatter(int window) {
+        long[] as = fa.apply(size);
+        int[] is    = fs.apply(size);
+        long[] rs = fr.apply(size);
+
+        for (int i = 0; i < as.length; i += window) {
+            for (int j = 0; j < window; j++) {
+                int ix = i + is[i + j];
+                rs[ix] = as[i + j];
+            }
+        }
+
+        return rs;
+    }
+
+    @Benchmark
+    public Object scatter064() {
+        int window = 64 / Long.SIZE;
+        return scatter(window);
+    }
+
+    @Benchmark
+    public Object scatter128() {
+        int window = 128 / Long.SIZE;
+        return scatter(window);
+    }
+
+    @Benchmark
+    public Object scatter256() {
+        int window = 256 / Long.SIZE;
+        return scatter(window);
+    }
+
+    @Benchmark
+    public Object scatter512() {
+        int window = 512 / Long.SIZE;
+        return scatter(window);
+    }
+
 }
 

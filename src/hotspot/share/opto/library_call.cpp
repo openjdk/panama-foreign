@@ -7118,11 +7118,18 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
   return true;
 }
 
+//    <C, V extends Vector<?>, W extends IntVector>
+//    void storeWithMap(Class<?> vectorClass, Class<?> elementType, int length, Class<?> vectorIndexClass,
+//                      Object base, long offset,    // Unsafe addressing
+//                      W index_vector, V v,
+//                      C container, int index, int[] indexMap, int indexM, // Arguments for default implementation
+//                      StoreVectorOperationWithMap<C, V> defaultImpl) {
+//
 bool LibraryCallKit::inline_vector_gather_scatter(bool is_scatter) {
-  const TypeInstPtr* vector_klass = gvn().type(argument(0))->is_instptr();
-  const TypeInstPtr* elem_klass   = gvn().type(argument(1))->is_instptr();
-  const TypeInt* vlen             = gvn().type(argument(2))->is_int();
-  const TypeInstPtr* vector_idx_klass = gvn().type(argument(7))->is_instptr();
+  const TypeInstPtr* vector_klass     = gvn().type(argument(0))->is_instptr();
+  const TypeInstPtr* elem_klass       = gvn().type(argument(1))->is_instptr();
+  const TypeInt* vlen                 = gvn().type(argument(2))->is_int();
+  const TypeInstPtr* vector_idx_klass = gvn().type(argument(3))->is_instptr();
 
   if (vector_klass->const_oop() == NULL || elem_klass->const_oop() == NULL || vector_idx_klass->const_oop() == NULL || !vlen->is_con()) {
     return false; // not enough info for intrinsification
@@ -7144,8 +7151,8 @@ bool LibraryCallKit::inline_vector_gather_scatter(bool is_scatter) {
       return false; // not supported
     }
 
-  Node* base = argument(3);
-  Node* offset = ConvL2X(argument(4));
+  Node* base = argument(4);
+  Node* offset = ConvL2X(argument(5));
   Node* addr = make_unsafe_address(base, offset, C2_UNSAFE_ACCESS, elem_bt, true);
 
   const TypePtr *addr_type = gvn().type(addr)->isa_ptr();
@@ -7172,7 +7179,7 @@ bool LibraryCallKit::inline_vector_gather_scatter(bool is_scatter) {
   }
   const TypeVect* vector_type = TypeVect::make(elem_bt, num_elem);
   if (is_scatter) {
-    Node* val = unbox_vector(argument(8), vbox_type, elem_bt, num_elem);
+    Node* val = unbox_vector(argument(7), vbox_type, elem_bt, num_elem);
     if (val == NULL) {
       return false; // operand unboxing failed
     }

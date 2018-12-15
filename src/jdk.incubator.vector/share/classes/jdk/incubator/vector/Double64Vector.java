@@ -763,9 +763,6 @@ final class Double64Vector extends DoubleVector {
     @Override
     @ForceInline
     public void intoArray(double[] a, int ix, int[] b, int iy) {
-        Objects.requireNonNull(a);
-        Objects.requireNonNull(b);
-
         this.intoArray(a, ix + b[iy]);
     }
 
@@ -1443,9 +1440,6 @@ final class Double64Vector extends DoubleVector {
         @Override
         @ForceInline
         public Double64Vector fromArray(double[] a, int ix, int[] b, int iy) {
-            Objects.requireNonNull(a);
-            Objects.requireNonNull(b);
-
             return SPECIES.fromArray(a, ix + b[iy]);
        }
 

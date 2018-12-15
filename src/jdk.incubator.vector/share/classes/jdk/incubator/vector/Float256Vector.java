@@ -44,11 +44,14 @@ final class Float256Vector extends FloatVector {
 
     static final int LENGTH = SPECIES.length();
 
-    static final int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
-    static final Vector.Shape shape = Vector.shapeForVectorBitSize(bitSize);
+    // Index vector species
+    private static final IntVector.IntSpecies INDEX_SPEC;
+    static {
+        int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
+        Vector.Shape shape = Vector.shapeForVectorBitSize(bitSize);
+        INDEX_SPEC = (IntVector.IntSpecies) Vector.species(int.class, shape);
+    }
 
-    // Obtain appropriate species to create vectors of the integer indices
-    static final IntVector.IntSpecies intSpec = (IntVector.IntSpecies) Vector.species(int.class, shape);
     private final float[] vec; // Don't access directly, use getElements() instead.
 
     private float[] getElements() {
@@ -771,17 +774,13 @@ final class Float256Vector extends FloatVector {
         Objects.requireNonNull(a);
         Objects.requireNonNull(b);
 
+        // Index vector: vix[0:n] = i -> ix + indexMap[iy + i]
+        IntVector vix = INDEX_SPEC.fromArray(b, iy).add(ix);
 
-       // Load index map into a vector
-        IntVector vecInd = intSpec.fromArray(b, iy);
+        vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-        // Compute actual indices into the array taking into account initial index.
-        vecInd = vecInd.add(intSpec.broadcast(ix));
-
-        vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
-
-        VectorIntrinsics.storeWithMap(Float256Vector.class, float.class, LENGTH,
-                               a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vecInd, vecInd.getClass(),
+        VectorIntrinsics.storeWithMap(Float256Vector.class, float.class, LENGTH, Int256Vector.class,
+                               a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
                                this,
                                a, ix, b, iy,
                                (arr, idx, v, indexMap, idy) -> v.forEach((i, e) -> arr[idx+indexMap[idy+i]] = e));
@@ -1464,15 +1463,13 @@ final class Float256Vector extends FloatVector {
             Objects.requireNonNull(a);
             Objects.requireNonNull(b);
 
-            // Load index map into a vector
-            IntVector vecInd = intSpec.fromArray(b, iy);
+            // Index vector: vix[0:n] = i -> ix + indexMap[iy + i]
+            IntVector vix = INDEX_SPEC.fromArray(b, iy).add(ix);
 
-            // Compute actual indices into the array taking into account initial index.
-            vecInd = vecInd.add(intSpec.broadcast(ix));
-            vecInd = VectorIntrinsics.checkIndex(vecInd, a.length);
+            vix = VectorIntrinsics.checkIndex(vix, a.length);
 
-            return VectorIntrinsics.loadWithMap(Float256Vector.class, float.class, LENGTH,
-                                        a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vecInd, vecInd.getClass(),
+            return VectorIntrinsics.loadWithMap(Float256Vector.class, float.class, LENGTH, Int256Vector.class,
+                                        a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
                                         a, ix, b, iy,
                                        (c, idx, indexMap, idy) -> op(n -> c[idx + indexMap[idy+n]]));
        }

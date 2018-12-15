@@ -164,7 +164,13 @@ public class AbstractVectorTest {
 
     static final List<BiFunction<Integer,Integer,int[]>> INT_SHUFFLE_GENERATORS = List.of(
             withToStringBi("shuffle[random]", (Integer l, Integer m) -> {
-                return RAND.ints(l.intValue(), 0, m.intValue()).toArray();
+                return RAND.ints(l, 0, m).toArray();
+            })
+    );
+
+    static final List<BiFunction<Integer,Integer,int[]>> INT_INDEX_GENERATORS = List.of(
+            withToStringBi("index[random]", (Integer l, Integer m) -> {
+                return RAND.ints(l, 0, m).toArray();
             })
     );
 
