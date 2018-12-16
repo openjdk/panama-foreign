@@ -25,6 +25,11 @@ package java.foreign.memory;
 import jdk.internal.foreign.Util;
 
 import java.foreign.Scope;
+import java.foreign.annotations.NativeStruct;
+import java.foreign.layout.Group;
+import java.foreign.layout.Layout;
+import java.lang.reflect.Method;
+import java.util.StringJoiner;
 
 /**
  * This interface acts as the root type for all native types handled by the binder. A native type must be annotated
@@ -72,5 +77,40 @@ public interface Struct<T extends Struct<T>> extends Resource {
         } catch (IllegalAccessException ex) {
             throw new IllegalArgumentException(ex);
         }
+    }
+
+    /**
+     * Returns a string representation of a struct object.
+     *
+     * Since accessing inactive fields of unions is undefined behaviour,
+     * this method will throw an {@link IllegalArgumentException} if a union is passed as an argument.
+     *
+     * @param struct The struct object
+     * @return a string representation of the passed struct
+     * @throws IllegalArgumentException if the struct is a union
+     * @throws ReflectiveOperationException if an exception occurs while calling the struct's getters
+     */
+    static String toString(Struct<?> struct) throws IllegalArgumentException, ReflectiveOperationException {
+        Class<?> structClass = Util.findStructInterface(struct);
+        NativeStruct ns = structClass.getAnnotation(NativeStruct.class);
+
+        Group layout = (Group) Layout.of(ns.value());
+        if(layout.kind() == Group.Kind.UNION) {
+            throw new IllegalArgumentException("Can not safely toString unions.");
+        }
+
+        String name = layout.name().orElse(structClass.getName());
+        StringJoiner sj = new StringJoiner(", ", name + "{ ", " }");
+        for(Layout e : layout.elements()) {
+            String getter = e.annotations().get("get");
+            if(getter == null) continue;
+
+            Method mGetter = Util.getterByName(structClass, getter);
+            if(mGetter == null) continue;
+
+            sj.add(getter + "=" + mGetter.invoke(struct).toString());
+        }
+
+        return sj.toString();
     }
 }

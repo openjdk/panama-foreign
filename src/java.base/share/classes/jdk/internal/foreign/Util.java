@@ -411,4 +411,25 @@ public final class Util {
 
         return NativeMethodType.of(function.isVariadic(), ret, args);
     }
+
+    @SuppressWarnings("unchecked")
+    public static Class<?> findStructInterface(Struct<?> struct) {
+        for (Class<?> intf : struct.getClass().getInterfaces()) {
+            if (intf.isAnnotationPresent(NativeStruct.class)) {
+                return intf;
+            }
+        }
+        throw new IllegalStateException("Can not find struct interface");
+    }
+
+    public static Method getterByName(Class<?> cls, String getter) {
+        for (Method m : cls.getDeclaredMethods()) {
+            if (m.getName().equals(getter)
+                    && m.getParameterCount() == 0
+                    && m.getReturnType() != void.class) {
+                return m;
+            }
+        }
+        return null;
+    }
 }
