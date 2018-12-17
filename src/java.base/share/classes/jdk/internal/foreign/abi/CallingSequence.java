@@ -107,15 +107,13 @@ public class CallingSequence {
         StringBuilder sb = new StringBuilder();
 
         sb.append("CallingSequence: {\n");
-        sb.append("  Flags:\n");
-        if (returnsInMemory) {
-            sb.append("    returnsInMemory\n");
-        }
+        sb.append("  returnsInMemory: " + returnsInMemory + "\n");
+        sb.append("  Classes:\n");
         for (StorageClass c : StorageClass.values()) {
-            sb.append("  ").append(c).append("\n");
+            sb.append("    ").append(c).append("\n");
             for (ArgumentBinding binding : getBindings(c)) {
                 if (binding != null) {
-                    sb.append("    ").append(binding.toString()).append("\n");
+                    sb.append("      ").append(binding.toString()).append("\n");
                 }
             }
         }

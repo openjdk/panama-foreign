@@ -99,4 +99,19 @@ class ShuffleRecipeBuilder {
     ShuffleRecipe build() {
         return new ShuffleRecipe(recipeToLongArray(), getArgumentsCollector().getNoofPulls(), getReturnsCollector().getNoofPulls());
     }
+
+    public String asString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("ShuffleRecipe: {\n");
+        sb.append("  Arguments: {\n");
+        sb.append(arguments.asString().indent(4));
+        sb.append("  }\n");
+        sb.append("  Returns: {\n");
+        sb.append(returns.asString().indent(4));
+        sb.append("  }\n");
+        sb.append("}\n");
+
+        return sb.toString();
+    }
 }
