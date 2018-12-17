@@ -23,6 +23,7 @@
 package jdk.internal.foreign.abi;
 
 public class ShuffleRecipe {
+    private static final boolean DEBUG = Boolean.getBoolean("jdk.internal.foreign.abi.ShuffleRecipe.DEBUG");
 
     private final long[] recipe;
 
@@ -64,6 +65,13 @@ public class ShuffleRecipe {
         callingSequence.getBindings(StorageClass.X87_RETURN_REGISTER).stream().forEach(binding -> {
             builder.getReturnsCollector().addPulls(ShuffleRecipeClass.X87, binding.getStorage().getSize() / 8);
         });
+
+        if(DEBUG) {
+            System.out.println("Translating CallingSequence:");
+            System.out.println(callingSequence.asString().indent(2));
+            System.out.println("into:");
+            System.out.println(builder.asString().indent(2));
+        }
 
         return builder.build();
     }

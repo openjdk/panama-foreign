@@ -82,4 +82,12 @@ class ShuffleRecipeOperationCollector {
             add(c, ShuffleRecipeOperation.SKIP);
         }
     }
+
+    public String asString() {
+        StringBuilder sb = new StringBuilder();
+        for(ShuffleRecipeClass cls : ShuffleRecipeClass.values()) {
+            sb.append(cls.name()).append(": ").append(ops[cls.ordinal()]).append("\n");
+        }
+        return sb.toString();
+    }
 }
