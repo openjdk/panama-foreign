@@ -29,6 +29,8 @@ import java.foreign.NativeTypes;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
+import java.util.Arrays;
+
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.abi.x64.sysv.Constants;
 import jdk.internal.foreign.memory.BoundedMemoryRegion;
@@ -121,6 +123,23 @@ public class UniversalUpcallHandler implements Library.Symbol {
             long size = Util.alignUp(nmt.returnType().bytesSize(), 8);
             return new BoundedPointer<Object>((LayoutType)nmt.returnType(), BoundedMemoryRegion.of(structAddr, size));
         }
+
+        public String asString() {
+            StringBuilder result = new StringBuilder();
+            result.append("UpcallContext:\n");
+            if (callingSequence.returnsInMemory()) {
+                result.append("In memory pointer:\n".indent(2));
+                result.append(inMemoryPtr().toString().indent(4));
+            }
+            for (StorageClass cls : StorageClass.values()) {
+                result.append((cls + "\n").indent(2));
+                for (ArgumentBinding binding : callingSequence.getBindings(cls)) {
+                    BoundedPointer<?> argPtr = (BoundedPointer<?>) getPtr(binding);
+                    result.append(argPtr.dump((int) binding.getStorage().getSize()).indent(4));
+                }
+            }
+            return result.toString();
+        }
     }
 
     private void invoke(UpcallContext context) {
@@ -129,6 +148,7 @@ public class UniversalUpcallHandler implements Library.Symbol {
             if (DEBUG) {
                 System.err.println("=== UpcallHandler.invoke ===");
                 System.err.println(callingSequence.asString());
+                System.err.println(context.asString());
             }
 
             Object[] args = new Object[nmt.parameterCount()];
@@ -136,7 +156,17 @@ public class UniversalUpcallHandler implements Library.Symbol {
                 args[i] = UniversalNativeInvoker.boxValue(nmt.parameterType(i), context::getPtr, callingSequence.getArgumentBindings(i));
             }
 
+            if (DEBUG) {
+                System.err.println("Java arguments:");
+                System.err.println(Arrays.toString(args).indent(2));
+            }
+
             Object o = mh.invoke(args);
+
+            if (DEBUG) {
+                System.err.println("Java return:");
+                System.err.println(o.toString().indent(2));
+            }
 
             if (mh.type().returnType() != void.class) {
                 if (!callingSequence.returnsInMemory()) {
@@ -145,6 +175,11 @@ public class UniversalUpcallHandler implements Library.Symbol {
                 } else {
                     context.inMemoryPtr().set(o);
                 }
+            }
+
+            if (DEBUG) {
+                System.err.println("Returning:");
+                System.err.println(context.asString().indent(2));
             }
         } catch (Throwable t) {
             throw new IllegalStateException(t);
