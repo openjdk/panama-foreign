@@ -41,11 +41,11 @@ import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.Storage;
 import jdk.internal.foreign.abi.StorageClass;
 
-import static sun.security.action.GetPropertyAction.privilegedGetProperty;
+import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 public class StandardCall {
-    private static final boolean DEBUG = Boolean.parseBoolean(
-        privilegedGetProperty("jdk.internal.foreign.abi.x64.sysv.DEBUG"));
+    private static final boolean DEBUG =
+        privilegedGetProperty("jdk.internal.foreign.abi.x64.sysv.DEBUG");
 
     // The AVX 512 enlightened ABI says "eight eightbytes"
     // Although AMD64 0.99.6 states 4 eightbytes

@@ -35,7 +35,7 @@ import jdk.internal.foreign.memory.BoundedMemoryRegion;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.vm.annotation.Stable;
 
-import static sun.security.action.GetPropertyAction.privilegedGetProperty;
+import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 /**
  * This class implements upcall invocation from native code through a so called 'universal adapter'. A universal upcall adapter
@@ -44,8 +44,8 @@ import static sun.security.action.GetPropertyAction.privilegedGetProperty;
  */
 public class UniversalUpcallHandler implements Library.Symbol {
 
-    private static final boolean DEBUG = Boolean.parseBoolean(
-        privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG"));
+    private static final boolean DEBUG =
+        privilegedGetProperty("jdk.internal.foreign.UpcallHandler.DEBUG");
 
     @Stable
     private final MethodHandle mh;

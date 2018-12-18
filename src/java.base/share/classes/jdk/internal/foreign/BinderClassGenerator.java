@@ -27,6 +27,8 @@ import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
 import jdk.internal.org.objectweb.asm.util.TraceClassVisitor;
+import sun.security.action.GetBooleanAction;
+import sun.security.action.GetPropertyAction;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,19 +47,18 @@ import java.util.stream.Stream;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
 abstract class BinderClassGenerator {
 
     private static final String DEBUG_DUMP_CLASSES_DIR_PROPERTY = "jdk.internal.foreign.ClassGenerator.DEBUG_DUMP_CLASSES_DIR";
 
-    private static final boolean DEBUG = Boolean.parseBoolean(
-        privilegedGetProperty("jdk.internal.foreign.ClassGenerator.DEBUG"));
+    private static final boolean DEBUG =
+        GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.ClassGenerator.DEBUG");
 
     private static final File DEBUG_DUMP_CLASSES_DIR;
 
     static {
-        String path = privilegedGetProperty(DEBUG_DUMP_CLASSES_DIR_PROPERTY);
+        String path = GetPropertyAction.privilegedGetProperty(DEBUG_DUMP_CLASSES_DIR_PROPERTY);
         if (path == null) {
             DEBUG_DUMP_CLASSES_DIR = null;
         } else {

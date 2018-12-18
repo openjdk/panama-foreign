@@ -38,7 +38,7 @@ import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.LayoutTypeImpl;
 
-import static sun.security.action.GetPropertyAction.privilegedGetProperty;
+import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
 /**
  * This class implements native call invocation through a so called 'universal adapter'. A universal adapter takes
@@ -46,8 +46,8 @@ import static sun.security.action.GetPropertyAction.privilegedGetProperty;
  * expected by the system ABI.
  */
 public class UniversalNativeInvoker {
-    private static final boolean DEBUG = Boolean.parseBoolean(
-        privilegedGetProperty("jdk.internal.foreign.NativeInvoker.DEBUG"));
+    private static final boolean DEBUG =
+        privilegedGetProperty("jdk.internal.foreign.NativeInvoker.DEBUG");
 
     // Unbound MH for the invoke() method
     private static final MethodHandle INVOKE_MH;
