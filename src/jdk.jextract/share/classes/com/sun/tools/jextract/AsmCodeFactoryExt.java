@@ -26,7 +26,12 @@ import java.foreign.Libraries;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import com.sun.tools.jextract.tree.Tree;
 import jdk.internal.org.objectweb.asm.FieldVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
@@ -138,16 +143,14 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     }
 
     @Override
-    protected synchronized void produce() {
-        super.produce();
-        types.put(getSimpleClassName(), getClassBytes());
+    public Map<String, byte[]> generateNativeHeader(List<Tree> decls) {
+        Map<String, byte[]> results = new HashMap<>();
+        results.putAll(super.generateNativeHeader(decls));
+        results.put(getClassName(), getClassBytes());
+        return Collections.unmodifiableMap(results);
     }
 
     // Internals only below this point
-    // not fully qualified
-    private String getSimpleClassName() {
-        return headerFile.clsName + STATICS_CLASS_NAME_SUFFIX;
-    }
 
     private String getClassName() {
         return headerClassName + STATICS_CLASS_NAME_SUFFIX;
@@ -163,7 +166,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     private void addEnumConstant(FieldTree fieldTree) {
         assert (fieldTree.isEnumConstant());
         String name = fieldTree.name();
-        String desc = dict.lookup(fieldTree.type()).getDescriptor();
+        String desc = headerFile.dictionary().lookup(fieldTree.type()).getDescriptor();
         if (desc.length() != 1) {
             throw new AssertionError("expected single char descriptor: " + desc);
         }

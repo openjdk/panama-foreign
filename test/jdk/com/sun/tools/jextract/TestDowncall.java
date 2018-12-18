@@ -90,9 +90,9 @@ public class TestDowncall extends JextractToolRunner {
         List<DowncallTest> res = new ArrayList<>();
         for (int i = 0 ; i < MAX_CODE ; i++) {
             Path clzPath = getOutputFilePath("libTestDowncall.jar");
-            checkSuccess(null,"-o", clzPath.toString(),
+            run("-o", clzPath.toString(),
                     "--exclude-symbols", filterFor(i),
-                    getInputFilePath("libTestDowncall.h").toString());
+                    getInputFilePath("libTestDowncall.h").toString()).checkSuccess();
             Class<?> headerCls = loadClass("libTestDowncall", clzPath);
             Object lib = Libraries.bind(headerCls, Libraries.loadLibrary(MethodHandles.lookup(), "TestDowncall"));
             res.add(new DowncallTest(headerCls, lib));

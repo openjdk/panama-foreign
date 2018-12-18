@@ -59,26 +59,21 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
 
     // Potential Tree instances that will go into transformed HeaderTree
     // are collected in this list.
-    private final List<Tree> decls = new ArrayList<>();
+    private List<Tree> decls = new ArrayList<>();
 
     // Tree instances that are to be replaced from "decls" list are
     // saved in the following Map.
     private final Map<Cursor, Tree> replacements = new HashMap<>();
 
-    private Path headerPath;
-
-    private static boolean isFromPath(Tree tree, Path path) {
-        SourceLocation loc = tree.location();
-        return loc != null? Objects.equals(path, loc.getFileLocation().path()) : false;
-    }
-
-    private boolean isFromThisHeader(Tree tree) {
-        return isFromPath(tree, headerPath);
+    private boolean isFromSameHeader(Tree def, Tree decl) {
+        SourceLocation locDef = def.location();
+        SourceLocation locDecl = decl.location();
+        return locDef != null && locDecl != null &&
+                Objects.equals(locDecl.getFileLocation().path(), locDef.getFileLocation().path());
     }
 
     @Override
     public HeaderTree transform(HeaderTree ht) {
-        this.headerPath = ht.path();
         // Process all header declarations are collect potential
         // declarations that will go into transformed HeaderTree
         // into the this.decls field.
@@ -127,7 +122,7 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
             decls.add(e);
         } else {
             Optional<Tree> def = e.definition();
-            if (!def.isPresent() || !isFromThisHeader(def.get())) {
+            if (!def.isPresent() || !isFromSameHeader(def.get(), e)) {
                 decls.add(e);
             }
         }
@@ -142,6 +137,15 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
 
     @Override
     public Void visitStruct(StructTree s, Void v) {
+        List<Tree> oldDecls = decls;
+        List<Tree> structDecls = new ArrayList<>();
+        try {
+            decls = structDecls;
+            s.declarations().forEach(t -> t.accept(this, null));
+        } finally {
+            decls = oldDecls;
+        }
+
         /*
          * If we're seeing a forward/backward declaration of
          * a struct which is definied elsewhere in this compilation
@@ -160,11 +164,11 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
         // include this only if this is a definition or a declaration
         // for which no definition is found elsewhere in this header.
         if (s.isDefinition()) {
-            decls.add(s);
+            decls.add(s.withNameAndDecls(s.name(), structDecls));
         } else {
             Optional<Tree> def = s.definition();
-            if (!def.isPresent() || !isFromThisHeader(def.get())) {
-                decls.add(s);
+            if (!def.isPresent() || !isFromSameHeader(def.get(), s)) {
+                decls.add(s.withNameAndDecls(s.name(), structDecls));
             }
         }
         return null;
@@ -208,7 +212,8 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
             return;
         }
 
-        Parser p = new Parser(true);
+        Context context = new Context();
+        Parser p = new Parser(context, true);
         List<Path> paths = Arrays.stream(args).map(Paths::get).collect(Collectors.toList());
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);

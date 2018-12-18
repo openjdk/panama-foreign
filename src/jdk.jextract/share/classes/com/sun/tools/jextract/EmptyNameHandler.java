@@ -76,52 +76,29 @@ final class EmptyNameHandler extends SimpleTreeVisitor<Tree, Void>
     }
 
     @Override
-    public Tree visitStruct(StructTree s, Void v) {
-        // Common simple case. No nested names and no anonymous field names.
-        // We just need to check struct name itself is empty or not.
-        if (s.nestedTypes().isEmpty() && !hasAnonymousFields(s)) {
+    public Tree visitField(FieldTree t, Void aVoid) {
+        if (t.name().isEmpty()) {
             /*
-             * Examples:
+             * Skip anonymous fields. This happens in the following case:
              *
-             *   struct { int i } x; // global variable of anon. struct type
-             *   void func(struct { int x; } p); // param of anon. struct type
+             * struct {
+             *    int  :23; // anonymous bit field
+             *    int x:9;
+             * }
              */
-            if (s.name().isEmpty()) {
-                return s.withName(generateName(s));
-            } else {
-                // all fine with this struct
-                return s;
-            }
+
+            return null;
         } else {
-            // handle all nested types
-            return renameRecursively(s);
+            return t;
         }
     }
 
-    // does the given struct has any anonymous (bit) field?
-    private boolean hasAnonymousFields(StructTree s) {
-        return s.fields().stream().map(f -> f.name().isEmpty()).findFirst().isPresent();
-    }
-
-    private StructTree renameRecursively(StructTree s) {
-        List<Tree> newDecls = s.declarations().stream().map(decl -> {
-            if (decl instanceof StructTree) {
-                return renameRecursively((StructTree)decl);
-            } else if (decl instanceof FieldTree && decl.name().isEmpty()) {
-                /*
-                 * Skip anonymous fields. This happens in the following case:
-                 *
-                 * struct {
-                 *    int  :23; // anonymous bit field
-                 *    int x:9;
-                 * }
-                 */
-
-                return null;
-            } else {
-                return decl;
-            }
-        }).filter(d -> d != null).collect(Collectors.toList());
+    @Override
+    public Tree visitStruct(StructTree s, Void v) {
+        List<Tree> newDecls = s.declarations().stream()
+                .map(decl -> decl.accept(this, null))
+                .filter(d -> d != null)
+                .collect(Collectors.toList());
 
         return s.withNameAndDecls(generateName(s), newDecls);
     }
@@ -133,7 +110,8 @@ final class EmptyNameHandler extends SimpleTreeVisitor<Tree, Void>
             return;
         }
 
-        Parser p = new Parser(true);
+        Context context = new Context();
+        Parser p = new Parser(context,true);
         List<Path> paths = Arrays.stream(args).map(Paths::get).collect(Collectors.toList());
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);

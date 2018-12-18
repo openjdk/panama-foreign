@@ -23,6 +23,7 @@
 
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeLocation;
@@ -31,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -47,17 +49,18 @@ import static org.testng.Assert.assertTrue;
 public class JextractToolProviderTest extends JextractToolRunner {
     @Test
     public void testHelp() {
-        checkFailure(null); // no options
-        checkSuccess(null, "--help");
-        checkSuccess(null, "-h");
-        checkSuccess(null, "-?");
+        run().checkFailure(); // no options
+        run("--help").checkSuccess();
+        run("-h").checkSuccess();
+        run("-?").checkSuccess();
     }
 
     // error for non-existent header file
     @Test
     public void testNonExistentHeader() {
-        checkFailure("Cannot open header file", "--dry-run",
-            getInputFilePath("non_existent.h").toString());
+        run("--dry-run", getInputFilePath("non_existent.h").toString())
+            .checkFailure()
+            .checkContainsOutput("Cannot open header file");
     }
 
     @Test
@@ -65,7 +68,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         // only dry-run, don't produce any output
         Path simpleJar = getOutputFilePath("simple.jar");
         deleteFile(simpleJar);
-        checkSuccess(null, "--dry-run", getInputFilePath("simple.h").toString());
+        run("--dry-run", getInputFilePath("simple.h").toString()).checkSuccess();
         try {
             assertFalse(Files.isRegularFile(simpleJar));
         } finally {
@@ -78,8 +81,8 @@ public class JextractToolProviderTest extends JextractToolRunner {
         // simple output file check
         Path simpleJar = getOutputFilePath("simple.jar");
         deleteFile(simpleJar);
-        checkSuccess(null, "-o", simpleJar.toString(),
-            getInputFilePath("simple.h").toString());
+        run("-o", simpleJar.toString(),
+            getInputFilePath("simple.h").toString()).checkSuccess();
         try {
             assertTrue(Files.isRegularFile(simpleJar));
         } finally {
@@ -92,7 +95,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
+        run("-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check NativeHeader annotation
@@ -112,7 +115,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        checkSuccess(null, targetPkgOption, "com.acme", "-o", helloJar.toString(), helloH.toString());
+        run(targetPkgOption, "com.acme", "-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try {
             Class<?> cls = loadClass("com.acme.hello", helloJar);
             // check NativeHeader annotation
@@ -140,25 +143,18 @@ public class JextractToolProviderTest extends JextractToolRunner {
     private void testPackageMapping(String pkgMapOption) {
         Path worldJar = getOutputFilePath("world.jar");
         deleteFile(worldJar);
-        Path mytypesJar = getOutputFilePath("mytypes.jar");
-        deleteFile(mytypesJar);
-
         Path worldH = getInputFilePath("world.h");
         Path include = getInputFilePath("include");
-        // generate jar for mytypes.h
-        checkSuccess(null, "-t", "com.acme", "-o", mytypesJar.toString(),
-            include.resolve("mytypes.h").toString());
         // world.h include mytypes.h, use appropriate package for stuff from mytypes.h
-        checkSuccess(null, "-I", include.toString(), pkgMapOption, include.toString() + "=com.acme",
-            "-o", worldJar.toString(), worldH.toString());
+        run("-I", include.toString(), pkgMapOption, include.toString() + "=com.acme",
+            "-o", worldJar.toString(), worldH.toString()).checkSuccess();
         try {
-            Class<?> cls = loadClass("world", worldJar, mytypesJar);
+            Class<?> cls = loadClass("world", worldJar);
             Method m = findFirstMethod(cls, "distance");
             Class<?>[] params = m.getParameterTypes();
             assertEquals(params[0].getName(), "com.acme.mytypes$Point");
         } finally {
             deleteFile(worldJar);
-            deleteFile(mytypesJar);
         }
     }
 
@@ -174,8 +170,9 @@ public class JextractToolProviderTest extends JextractToolRunner {
 
     @Test
     public void test_no_input_files() {
-        String err = "No input files";
-        checkFailure(err, "-L", "foo");
+        run("-L", "foo")
+                .checkContainsOutput("No input files")
+                .checkFailure();
     }
 
     @Test
@@ -185,7 +182,9 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path helloH = getInputFilePath("hello.h");
         Path linkDir = getInputFilePath("libs");
         String warning = "WARNING: -L option specified without any -l option";
-        checkSuccess(warning, "-L", linkDir.toString(), "-o", helloJar.toString(), helloH.toString());
+        run("-L", linkDir.toString(), "-o", helloJar.toString(), helloH.toString())
+                .checkContainsOutput(warning)
+                .checkSuccess();
     }
 
     @Test
@@ -196,7 +195,9 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path rpathDir = getInputFilePath("libs");
         String warning = "WARNING: -rpath option specified without any -l option";
         try {
-            checkSuccess(warning, "-rpath", rpathDir.toString(), "-o", helloJar.toString(), helloH.toString());
+            run("-rpath", rpathDir.toString(), "-o", helloJar.toString(), helloH.toString())
+                    .checkContainsOutput(warning)
+                    .checkSuccess();
         } finally {
             deleteFile(helloJar);
         }
@@ -210,9 +211,11 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path rpathDir = getInputFilePath("libs");
         String warning = "WARNING: -infer-rpath used in conjunction with explicit -rpath paths";
         try {
-            checkSuccess(warning, "-rpath", rpathDir.toString(),
+            run("-rpath", rpathDir.toString(),
                     "-infer-rpath",
-                    "-o", helloJar.toString(), helloH.toString());
+                    "-o", helloJar.toString(), helloH.toString())
+                    .checkContainsOutput(warning)
+                    .checkSuccess();
         } finally {
             deleteFile(helloJar);
         }
@@ -225,9 +228,10 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path helloH = getInputFilePath("hello.h");
         String warning = "WARNING: -infer-rpath option specified without any -L option";
         try {
-            checkSuccess(warning,
-                    "-infer-rpath",
-                    "-o", helloJar.toString(), helloH.toString());
+            run("-infer-rpath",
+                    "-o", helloJar.toString(), helloH.toString())
+                .checkContainsOutput(warning)
+                .checkSuccess();
         } finally {
             deleteFile(helloJar);
         }
@@ -240,10 +244,11 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path helloH = getInputFilePath("hello.h");
         String warning = "WARNING: Some library names could not be resolved";
         try {
-            checkSuccess(warning,
-                    "-L", "nonExistent",
+            run("-L", "nonExistent",
                     "-l", "nonExistent",
-                    "-o", helloJar.toString(), helloH.toString());
+                    "-o", helloJar.toString(), helloH.toString())
+                    .checkContainsOutput(warning)
+                    .checkSuccess();
         } finally {
             deleteFile(helloJar);
         }
@@ -254,7 +259,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        checkSuccess(null, "-l", "hello", "-o", helloJar.toString(), helloH.toString());
+        run("-l", "hello", "-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check that NativeHeader annotation captures -l value
@@ -275,8 +280,8 @@ public class JextractToolProviderTest extends JextractToolRunner {
         deleteFile(helloJar);
     Path helloH = getInputFilePath("hello.h");
         Path rpathDir = getInputFilePath("libs");
-        checkSuccess(null, "-l", "hello", "-rpath", rpathDir.toString(),
-             "-o", helloJar.toString(), helloH.toString());
+        run("-l", "hello", "-rpath", rpathDir.toString(),
+             "-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check that NativeHeader annotation captures -l and -rpath values
@@ -297,7 +302,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         deleteFile(uniondeclJar);
         Path uniondeclH = getInputFilePath("uniondecl.h");
         try {
-            checkSuccess(null, "-o", uniondeclJar.toString(), uniondeclH.toString());
+            run("-o", uniondeclJar.toString(), uniondeclH.toString()).checkSuccess();
             Class<?> unionCls = loadClass("uniondecl", uniondeclJar);
             assertNotNull(unionCls);
             boolean found = Arrays.stream(unionCls.getClasses()).
@@ -324,7 +329,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         deleteFile(anonenumJar);
         Path anonenumH = getInputFilePath("anonenum.h");
         try {
-            checkSuccess(null, "-o", anonenumJar.toString(), anonenumH.toString());
+            run("-o", anonenumJar.toString(), anonenumH.toString()).checkSuccess();
             Class<?> anonenumCls = loadClass("anonenum", anonenumJar);
             assertNotNull(anonenumCls);
             testEnumConstGetters(anonenumCls, List.of("RED", "GREEN", "BLUE"));
@@ -359,7 +364,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
+        run("-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
@@ -375,7 +380,8 @@ public class JextractToolProviderTest extends JextractToolRunner {
         }
 
         // try with --exclude-symbols" this time.
-        checkSuccess(null, "--exclude-symbols", "junk.*", "-o", helloJar.toString(), helloH.toString());
+        run("--exclude-symbols", "junk.*", "-o", helloJar.toString(), helloH.toString())
+                .checkSuccess();
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
@@ -396,7 +402,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
+        run("-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
@@ -412,7 +418,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         }
 
         // try with --include-symbols" this time.
-        checkSuccess(null, "--include-symbols", "junk.*", "-o", helloJar.toString(), helloH.toString());
+        run("--include-symbols", "junk.*", "-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void junk()"
@@ -433,7 +439,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path simpleJar = getOutputFilePath("simple.jar");
         deleteFile(simpleJar);
         Path simpleH = getInputFilePath("simple.h");
-        checkSuccess(null, "--no-locations", "-o", simpleJar.toString(), simpleH.toString());
+        run("--no-locations", "-o", simpleJar.toString(), simpleH.toString()).checkSuccess();
         try {
             Class<?> simpleCls = loadClass("simple", simpleJar);
             Method func = findFirstMethod(simpleCls, "func");
@@ -450,7 +456,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        checkSuccess(null, "-o", helloJar.toString(), helloH.toString());
+        run("-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void func()"
@@ -466,8 +472,8 @@ public class JextractToolProviderTest extends JextractToolRunner {
         }
 
         // try with --include-symbols" this time.
-        checkSuccess(null, "--include-symbols", "junk.*", "--exclude-symbols", "junk3",
-             "-o", helloJar.toString(), helloH.toString());
+        run("--include-symbols", "junk.*", "--exclude-symbols", "junk3",
+             "-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try {
             Class<?> cls = loadClass("hello", helloJar);
             // check a method for "void junk()"
@@ -490,7 +496,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         deleteFile(nestedJar);
         Path nestedH = getInputFilePath("nested.h");
         try {
-            checkSuccess(null, "-o", nestedJar.toString(), nestedH.toString());
+            run("-o", nestedJar.toString(), nestedH.toString()).checkSuccess();
             Class<?> headerCls = loadClass("nested", nestedJar);
             assertNotNull(headerCls);
 
@@ -577,7 +583,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         deleteFile(elaboratedTypeJar);
         Path elaboratedTypeH = getInputFilePath("elaboratedtype.h");
         try {
-            checkSuccess(null, "-o", elaboratedTypeJar.toString(), elaboratedTypeH.toString());
+            run("-o", elaboratedTypeJar.toString(), elaboratedTypeH.toString()).checkSuccess();
             Class<?> headerCls = loadClass("elaboratedtype", elaboratedTypeJar);
             assertNotNull(findGlobalVariableGet(headerCls, "point"));
             assertNotNull(findGlobalVariableGet(headerCls, "long_or_int"));
@@ -591,7 +597,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path fileJar = getOutputFilePath(name + "inc.jar");
         deleteFile(fileJar);
         Path fileH = getInputFilePath(name + "inc.h");
-        checkSuccess(null, "-o", fileJar.toString(), fileH.toString());
+        run("-o", fileJar.toString(), fileH.toString()).checkSuccess();
         deleteFile(fileJar);
     }
 
@@ -606,7 +612,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path globalFuncPointerJar = getOutputFilePath("globalFuncPointer.jar");
         deleteFile(globalFuncPointerJar);
         Path globalFuncPointerH = getInputFilePath("globalFuncPointer.h");
-        checkSuccess(null, "-o", globalFuncPointerJar.toString(), globalFuncPointerH.toString());
+        run("-o", globalFuncPointerJar.toString(), globalFuncPointerH.toString()).checkSuccess();
         Class<?> callbackCls = loadClass("globalFuncPointer$FI1", globalFuncPointerJar);
         Method callback = findFirstMethod(callbackCls, "fn");
         assertNotNull(callback);
@@ -619,7 +625,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path funcPtrTypedefJar = getOutputFilePath("funcPtrTypedef.jar");
         deleteFile(funcPtrTypedefJar);
         Path funcPtrTypedefH = getInputFilePath("funcPtrTypedef.h");
-        checkSuccess(null, "-o", funcPtrTypedefJar.toString(), funcPtrTypedefH.toString());
+        run("-o", funcPtrTypedefJar.toString(), funcPtrTypedefH.toString()).checkSuccess();
         // force parsing of class, method
         Class<?> headerCls = loadClass("funcPtrTypedef", funcPtrTypedefJar);
         Method getter = findFirstMethod(headerCls, "my_function$get");
@@ -633,7 +639,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
         Path duplicatedeclsJar = getOutputFilePath("duplicatedecls.jar");
         deleteFile(duplicatedeclsJar);
         Path duplicatedeclsH = getInputFilePath("duplicatedecls.h");
-        checkSuccess(null, "-o", duplicatedeclsJar.toString(), duplicatedeclsH.toString());
+        run("-o", duplicatedeclsJar.toString(), duplicatedeclsH.toString()).checkSuccess();
         // load the class to make sure no duplicate methods generated in it
         Class<?> headerCls = loadClass("duplicatedecls", duplicatedeclsJar);
         assertNotNull(headerCls);

@@ -85,17 +85,7 @@ public final class Main {
         }
 
         Utils.validPackageName(pkgName);
-        ctx.usePackageForFolder(p, pkgName);
-    }
-
-    private void processHeader(Object header) {
-        Path p = Paths.get((String) header);
-        if (!Files.isReadable(p)) {
-            throw new IllegalArgumentException(format("cannot.read.header.file", header));
-        }
-        p = p.toAbsolutePath();
-        ctx.usePackageForFolder(p.getParent(), targetPackage);
-        ctx.addSource(p);
+        ctx.addPackageMapping(p, pkgName);
     }
 
     private void setupLogging(Level level) {
@@ -251,18 +241,27 @@ public final class Main {
             ctx.err.println(format("warn.rpath.auto.without.L"));
         }
 
-        targetPackage = options.has("t") ? (String) options.valueOf("t") : "";
-        if (!targetPackage.isEmpty()) {
-            Utils.validPackageName(targetPackage);
-        }
-
         if (options.has("m")) {
             options.valuesOf("m").forEach(this::processPackageMapping);
         }
 
+        final Writer writer;
+
         try {
-            options.nonOptionArguments().stream().forEach(this::processHeader);
-            ctx.parse();
+            for (Object header : options.nonOptionArguments()) {
+                Path p = Paths.get((String)header);
+                if (!Files.isReadable(p)) {
+                    throw new IllegalArgumentException(format("cannot.read.header.file", header));
+                }
+                p = p.normalize().toAbsolutePath();
+                ctx.addSource(p);
+            }
+            targetPackage = options.has("t") ? (String) options.valueOf("t") : "";
+            if (!targetPackage.isEmpty()) {
+                Utils.validPackageName(targetPackage);
+            }
+            ctx.setTargetPackage(targetPackage);
+            writer = new JextractTool(ctx).processHeaders();
         } catch (RuntimeException re) {
             ctx.err.println(re.getMessage());
             if (Main.DEBUG) {
@@ -288,7 +287,7 @@ public final class Main {
                     ctx.err.println(format("not.a.directory", dest));
                     return 4;
                 }
-                ctx.collectClassFiles(dest, args, targetPackage);
+                writer.writeClassFiles(dest, args);
             } catch (IOException ex) {
                 ctx.err.println(format("cannot.write.class.file", dest, ex));
                 if (Main.DEBUG) {
@@ -308,7 +307,7 @@ public final class Main {
         }
 
         try {
-            ctx.collectJarFile(Paths.get(outputName), args, targetPackage);
+            writer.writeJarFile(Paths.get(outputName), args);
         } catch (IOException ex) {
             ctx.err.println(format("cannot.write.jar.file", outputName, ex));
             if (Main.DEBUG) {
@@ -320,7 +319,7 @@ public final class Main {
         return 0;
     }
 
-    private static Path getBuiltinHeadersDir() {
+    static Path getBuiltinHeadersDir() {
         return Paths.get(System.getProperty("java.home"), "conf", "jextract");
     }
 

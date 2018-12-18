@@ -40,7 +40,7 @@ public class TestDefaultOutput extends JextractToolRunner {
 
     @Test
     public void testDefaultOutputForJar() {
-        checkSuccess(null, getInputFilePath("foo/foo.h").toString());
+        run(getInputFilePath("foo/foo.h").toString()).checkSuccess();
         assertTrue(Files.exists(Paths.get(System.getProperty("user.dir"), "foo.h.jar")));
     }
 }

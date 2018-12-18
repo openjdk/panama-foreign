@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import com.sun.tools.jextract.Context;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Diagnostic;
@@ -57,16 +59,11 @@ public class Parser {
     private final boolean supportMacros;
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
-    public Parser(PrintWriter out, PrintWriter err, boolean supportMacros) {
-        this.out = out;
-        this.err = err;
+    public Parser(Context context, boolean supportMacros) {
+        this.out = context.out;
+        this.err = context.err;
         this.treeMaker = new TreeMaker();
         this.supportMacros = supportMacros;
-    }
-
-    public Parser(boolean supportMacros) {
-        this(new PrintWriter(System.out, true),
-            new PrintWriter(System.err, true), supportMacros);
     }
 
     public List<HeaderTree> parse(Collection<Path> paths, Collection<String> args) {
@@ -180,7 +177,8 @@ public class Parser {
             return;
         }
 
-        Parser p = new Parser(true);
+        Context context = new Context();
+        Parser p = new Parser(context,true);
         List<Path> paths = Arrays.stream(args).map(Paths::get).collect(Collectors.toList());
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);
