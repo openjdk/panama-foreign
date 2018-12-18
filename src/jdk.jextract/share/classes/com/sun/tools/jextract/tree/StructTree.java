@@ -92,10 +92,7 @@ public class StructTree extends Tree {
                 nested.add(decl);
             } else if (decl instanceof StructTree) {
                 StructTree s = (StructTree)decl;
-                if (!s.isAnonymous()) {
-                    nested.add(s);
-                }
-                nested.addAll(s.nestedTypes());
+                nested.add(s);
             }
         }
         return Collections.unmodifiableList(nested);

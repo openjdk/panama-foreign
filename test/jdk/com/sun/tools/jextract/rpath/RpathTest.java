@@ -42,9 +42,9 @@ public class RpathTest extends JextractToolRunner {
     @Test
     public void testExplicit() throws ReflectiveOperationException {
         Path clzPath = getOutputFilePath("libTestRpath.jar");
-        checkSuccess(null,"-o", clzPath.toString(),
+        run("-o", clzPath.toString(),
                 "-l", "b", "-rpath", "foo/bar",
-                getInputFilePath("foo.h").toString());
+                getInputFilePath("foo.h").toString()).checkSuccess();
         for (String name : new String[] { "foo", "bar"}) {
             Class<?> headerCls = loadClass(name, clzPath);
             NativeHeader nativeHeader = headerCls.getAnnotation(NativeHeader.class);
@@ -57,9 +57,9 @@ public class RpathTest extends JextractToolRunner {
     @Test
     public void testAuto() throws ReflectiveOperationException {
         Path clzPath = getOutputFilePath("libTestRpath.jar");
-        checkSuccess(null,"-o", clzPath.toString(),
+        run("-o", clzPath.toString(),
                 "-l", "b", "-L", "foo/bar", "-infer-rpath",
-                getInputFilePath("foo.h").toString());
+                getInputFilePath("foo.h").toString()).checkSuccess();
         for (String name : new String[] { "foo", "bar"}) {
             Class<?> headerCls = loadClass(name, clzPath);
             NativeHeader nativeHeader = headerCls.getAnnotation(NativeHeader.class);

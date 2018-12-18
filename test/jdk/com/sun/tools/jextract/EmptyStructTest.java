@@ -41,8 +41,8 @@ public class EmptyStructTest extends JextractToolRunner {
     @Test
     public void emptyStruct() {
         Path clzPath = getOutputFilePath("EmptyStructTest.jar");
-        checkSuccess(null,"-o", clzPath.toString(),
-                getInputFilePath("emptyStruct.h").toString());
+        run("-o", clzPath.toString(),
+                getInputFilePath("emptyStruct.h").toString()).checkSuccess();
         Class<?> cls = loadClass("emptyStruct", clzPath);
         Class<?>[] inners = cls.getDeclaredClasses();
         assertEquals(inners.length, 3);

@@ -43,9 +43,13 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
+
+import com.sun.tools.jextract.JextractTool;
+import com.sun.tools.jextract.Writer;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
 import jdk.internal.org.objectweb.asm.util.ASMifier;
@@ -82,6 +86,7 @@ public class Runner {
     private ClassLoader expectedCL;
     private Map<String, byte[]> actualClz;
     private ClassLoader actualCL;
+    private Writer writer;
     private Object[][] clz_data;
 
     public Runner(Path nativeSrc, String pkg, Path[] javaSrcFiles) {
@@ -91,15 +96,14 @@ public class Runner {
         this.javaSrcFiles = javaSrcFiles;
     }
 
-    private Map<String, byte[]> extract(String pkg) throws IOException {
+    private Writer extract() throws IOException {
         if (!Files.isReadable(nativeSrc)) {
             throw new IllegalArgumentException("Cannot read the file: " + nativeSrc);
         }
         Path p = nativeSrc.toAbsolutePath();
-        ctx.usePackageForFolder(p.getParent(), pkg);
+        ctx.setTargetPackage(pkg);
         ctx.addSource(p);
-        ctx.parse();
-        return ctx.collectClasses(pkg);
+        return new JextractTool(ctx).processHeaders();
     }
 
     private InMemoryFileManager<StandardJavaFileManager> compileJavaCode() {
@@ -116,7 +120,7 @@ public class Runner {
     public void testJarManifest() throws IOException {
         // Get the jar
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ctx.collectJarFile(new JarOutputStream(bos), new String[0], pkg);
+        writer.writeJarFile(new JarOutputStream(bos), new String[0]);
 
         System.out.println("Jar built, verifying...");
         JarInputStream jis = new JarInputStream(new ByteArrayInputStream(bos.toByteArray()));
@@ -284,19 +288,31 @@ public class Runner {
     public void compile() throws IOException {
         System.out.println("Compiling...");
         mfm = compileJavaCode();
-        actualClz = extract(pkg);
+        writer = extract();
+        actualClz = writer.results();
         expectedCL = mfm.getTheClassLoader();
         actualCL = new ClassLoader() {
             @Override
             protected Class<?> findClass(String name) throws ClassNotFoundException {
-                byte[] byteCode = actualClz.get(name);
+                byte[] byteCode = actualClz.get(canonicalize(name));
                 if (byteCode == null) throw new ClassNotFoundException(name);
                 return defineClass(name, byteCode, 0, byteCode.length);
             }
         };
         System.out.println("Done compile, ready for test");
-        assertEquals(actualClz.keySet(), mfm.listClasses());
+        assertEquals(actualClz.keySet().stream()
+                        .map(Runner::normalize)
+                        .collect(Collectors.toSet()),
+                mfm.listClasses());
         System.out.println("Compile result validated.");
+    }
+
+    private static String normalize(String classname) {
+        return classname.replace(File.separatorChar, '.');
+    }
+
+    private static String canonicalize(String classname) {
+        return classname.replace('.', File.separatorChar);
     }
 
     private static Path[] paths(String testDir, String[] files) {

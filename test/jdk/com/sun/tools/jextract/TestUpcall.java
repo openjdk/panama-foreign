@@ -93,9 +93,9 @@ public class TestUpcall extends JextractToolRunner {
         List<UpcallTest> res = new ArrayList<>();
         for (int i = 0 ; i < MAX_CODE ; i++) {
             Path clzPath = getOutputFilePath("libTestUpcall.jar");
-            checkSuccess(null,"-o", clzPath.toString(),
+            run("-o", clzPath.toString(),
                     "--exclude-symbols", filterFor(i),
-                    getInputFilePath("libTestUpcall.h").toString());
+                    getInputFilePath("libTestUpcall.h").toString()).checkSuccess();
             Class<?> headerCls = loadClass("libTestUpcall", clzPath);
             Object lib = Libraries.bind(headerCls, Libraries.loadLibrary(MethodHandles.lookup(), "TestUpcall"));
             res.add(new UpcallTest(headerCls, lib));

@@ -39,8 +39,8 @@ public class ArrayTest extends JextractToolRunner {
     @Test
     public void arrayInStruct() {
         Path clzPath = getOutputFilePath("tmp.jar");
-        checkSuccess(null,"-o", clzPath.toString(),
-                getInputFilePath("arrayTest.h").toString());
+        run("-o", clzPath.toString(),
+                getInputFilePath("arrayTest.h").toString()).checkSuccess();
         Class<?> cls = loadClass("arrayTest", clzPath);
 
         Class<?>[] inners = cls.getDeclaredClasses();

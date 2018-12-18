@@ -43,17 +43,12 @@ import com.sun.tools.jextract.tree.TreePrinter;
  * This visitor filters variable, function, macro trees
  * based on a Tree Predicate initialized.
  */
-final class TreeFilter extends SimpleTreeVisitor<Tree, Void>
+abstract class TreeFilter extends SimpleTreeVisitor<Tree, Void>
         implements TreePhase {
     private final TreeMaker treeMaker = new TreeMaker();
-    private final Predicate<Tree> filter;
-
-    TreeFilter(Predicate<Tree> filter) {
-        this.filter = filter;
-    }
 
     private Tree filterTree(Tree tree) {
-        return filter.test(tree)? tree : null;
+        return filter(tree)? tree : null;
     }
 
     @Override
@@ -90,6 +85,8 @@ final class TreeFilter extends SimpleTreeVisitor<Tree, Void>
         return filterTree(vt);
     }
 
+    abstract boolean filter(Tree tree);
+
     // test main to manually check this visitor
     // Usage: <header-file> [<regex-for-symbols-to-include>]
     public static void main(String[] args) {
@@ -98,14 +95,20 @@ final class TreeFilter extends SimpleTreeVisitor<Tree, Void>
             return;
         }
 
-        Parser p = new Parser(true);
+        Context context = new Context();
+        Parser p = new Parser(context, true);
         List<Path> paths = List.of(Paths.get(args[0]));
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);
         List<HeaderTree> headers = p.parse(paths, clangArgs);
         TreePrinter printer = new TreePrinter();
         Predicate<Tree> nameFilter =  args.length > 1? t->t.name().matches(args[1]) : t->true;
-        TreeFilter filter = new TreeFilter(nameFilter);
+        TreeFilter filter = new TreeFilter() {
+            @Override
+            boolean filter(Tree tree) {
+                return nameFilter.test(tree);
+            }
+        };
         for (HeaderTree ht : headers) {
             filter.transform(ht).accept(printer, null);
         }
