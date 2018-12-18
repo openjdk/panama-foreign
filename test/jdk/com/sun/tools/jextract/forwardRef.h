@@ -21,31 +21,12 @@
  * questions.
  */
 
-/*
- * @test
- * @library ..
- * @modules jdk.jextract
- * @build SystemHeadersTest
- *
- * @run testng/othervm SystemHeadersTest
- */
+struct S {
+  struct B* p;
+};
 
-import org.testng.annotations.*;
+struct B {
+  int x, y;
+};
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import static org.testng.Assert.*;
-
-public class SystemHeadersTest extends JextractToolRunner {
-
-    @Test
-    public void testNoFollowSystemHeaders() throws IOException {
-        Path clzPath = getOutputFilePath("out");
-        run("-d", clzPath.toString(),
-                getInputFilePath("foo.h").toString()).checkSuccess();
-        assertEquals(Files.list(clzPath).
-                filter(p -> p.toString().endsWith("class")).count(), 1);
-    }
-}
+struct S s;

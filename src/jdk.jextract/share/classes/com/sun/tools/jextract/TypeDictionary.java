@@ -44,13 +44,13 @@ import jdk.internal.clang.TypeKind;
  */
 final class TypeDictionary {
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
-    private Context ctx;
+    private HeaderResolver resolver;
     private final HeaderFile headerFile;
     private final Map<String, JType> functionalTypes;
     private int serialNo;
 
-    TypeDictionary(Context ctx, HeaderFile headerFile) {
-        this.ctx = ctx;
+    TypeDictionary(HeaderResolver resolver, HeaderFile headerFile) {
+        this.resolver = resolver;
         this.headerFile = headerFile;
         functionalTypes = new HashMap<>();
     }
@@ -63,7 +63,7 @@ final class TypeDictionary {
         try {
             //try resolve globally
             Path p = t.getDeclarationCursor().getSourceLocation().getFileLocation().path();
-            HeaderFile hf = ctx.headerFor(p);
+            HeaderFile hf = resolver.headerFor(p);
             return Utils.toInternalName(hf.pkgName, hf.clsName);
         } catch (Throwable ex) {
             //fallback: resolve locally. This can happen for two reasons: (i) the symbol to be resolved is a builtin

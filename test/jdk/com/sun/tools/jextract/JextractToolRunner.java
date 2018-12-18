@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Objects;
 import java.util.spi.ToolProvider;
 
 import static org.testng.Assert.assertEquals;
@@ -70,30 +71,46 @@ class JextractToolRunner {
         return outputDir.resolve(fileName).toAbsolutePath();
     }
 
-    protected static int checkJextract(String expected, String... options) {
+    protected static class JextractResult {
+        private int exitCode;
+        private String output;
+
+        JextractResult(int exitCode, String output) {
+            this.exitCode = exitCode;
+            this.output = output;
+        }
+
+        protected JextractResult checkSuccess() {
+            assertEquals(exitCode, 0, "Sucess excepted, failed: " + exitCode);
+            return this;
+        }
+
+        protected JextractResult checkFailure() {
+            assertNotEquals(exitCode, 0, "Failure excepted, succeeded!");
+            return this;
+        }
+
+        protected JextractResult checkContainsOutput(String expected) {
+            Objects.requireNonNull(expected);
+            assertTrue(output.contains(expected), "Output does not contain string: " + expected);
+            return this;
+        }
+
+        protected JextractResult checkMatchesOutput(String regex) {
+            Objects.requireNonNull(regex);
+            assertTrue(output.matches(regex), "Output does not match regex: " + regex);
+            return this;
+        }
+    }
+
+    protected static JextractResult run(String... options) {
         StringWriter writer = new StringWriter();
         PrintWriter pw = new PrintWriter(writer);
 
         int result = JEXTRACT_TOOL.run(pw, pw, options);
         String output = writer.toString();
         System.err.println(output);
-        if (expected != null) {
-            if (!output.contains(expected)) {
-                throw new AssertionError("Output does not contain " + expected);
-            }
-        }
-
-        return result;
-    }
-
-    protected static void checkSuccess(String expected, String... options) {
-        int result = checkJextract(expected, options);
-        assertEquals(result, 0, "Sucess excepted, failed: " + result);
-    }
-
-    protected static void checkFailure(String expected, String... options) {
-        int result = checkJextract(expected, options);
-        assertNotEquals(result, 0, "Failure excepted, succeeded!");
+        return new JextractResult(result, output);
     }
 
     protected static void deleteFile(Path path) {

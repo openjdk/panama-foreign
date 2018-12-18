@@ -275,9 +275,9 @@ public class StructTest extends JextractToolRunner {
     @Test
     public void testCppMode() {
         Path clzPath = getOutputFilePath("StructTest.cpp.jar");
-        checkSuccess(null, "-C", "-x", "-C", "c++",
+        run("-C", "-x", "-C", "c++",
                 "-o", clzPath.toString(),
-                getInputFilePath("struct.h").toString());
+                getInputFilePath("struct.h").toString()).checkSuccess();
         Class<?> cls = loadClass("struct", clzPath);
         verifyAsCpp(cls);
         deleteFile(clzPath);
@@ -286,8 +286,8 @@ public class StructTest extends JextractToolRunner {
     @Test
     public void testCMode() {
         Path clzPath = getOutputFilePath("StructTest.c.jar");
-        checkSuccess(null,"-o", clzPath.toString(),
-                getInputFilePath("struct.h").toString());
+        run("-o", clzPath.toString(),
+                getInputFilePath("struct.h").toString()).checkSuccess();
         Class<?> cls = loadClass("struct", clzPath);
         verifyAsC(cls);
         deleteFile(clzPath);

@@ -23,7 +23,7 @@ jextract -l python2.7 \
   -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \
   --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
   -t org.python \
-  /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \
+  /usr/include/python2.7/Python.h \
   -o python.jar
 
 ```
@@ -75,7 +75,7 @@ jextract -l python2.7 \
   -rpath /usr/lib/python2.7/config-x86_64-linux-gnu \
   --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
   -t org.python \
-  /usr/include/stdio.h /usr/include/stdlib.h /usr/include/python2.7/Python.h \
+  /usr/include/python2.7/Python.h \
   -o python.jar
 
 ```
@@ -462,13 +462,15 @@ java -cp libproc.jar:. LibprocMain
 
 ## Using readline library from Java code (Mac OS)
 
+### Note: This sample fails because of too big UTF-8 String in NativeHeader annotation
+
 ### jextract a jar file for readline.h
 
 ```sh
 
 jextract -l readline -rpath /usr/local/opt/readline/lib/ \
     -t org.unix \
-    /usr/include/readline/readline.h /usr/include/_stdio.h \
+    /usr/include/readline/readline.h \
     --exclude-symbol readline_echoing_p -o readline.jar
 
 ```

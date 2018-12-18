@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Collection;
 import java.util.function.Predicate;
+
+import com.sun.tools.jextract.Context;
 import com.sun.tools.jextract.tree.Tree;
 import com.sun.tools.jextract.tree.HeaderTree;
 import com.sun.tools.jextract.tree.Printer;
@@ -45,7 +47,8 @@ public class FindSymbol {
         final Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         final List<String> clangArgs = List.of("-I" + builtinInc);
 
-        final Parser parser = new Parser(true);
+        Context context = new Context();
+        final Parser parser = new Parser(context, true);
         final List<HeaderTree> headers = parser.parse(paths, clangArgs);
         final Printer p = new Printer();
         final HeaderTree tu = headers.get(0);

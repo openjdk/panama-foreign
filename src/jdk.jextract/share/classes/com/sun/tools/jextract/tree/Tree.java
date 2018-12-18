@@ -100,12 +100,12 @@ public class Tree {
         }
 
         Tree t = (Tree)obj;
-        return name.equals(t.name()) && c.equals(t.cursor());
+        return name.equals(t.name()) && location().equals(t.location());
     }
 
     @Override
     public final int hashCode() {
-        return name.hashCode() ^ c.hashCode();
+        return name.hashCode() ^ location().hashCode();
     }
 
     @Override

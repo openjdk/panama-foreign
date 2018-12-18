@@ -40,8 +40,8 @@ public class RedundantDeclsTest extends JextractToolRunner {
     @Test
     public void redundantDecls() {
         Path clzPath = getOutputFilePath("RedundentDecls.jar");
-        checkSuccess(null,"-o", clzPath.toString(),
-                getInputFilePath("redundantDecls.h").toString());
+        run("-o", clzPath.toString(),
+                getInputFilePath("redundantDecls.h").toString()).checkSuccess();
         Class<?> headerCls = loadClass("redundantDecls", clzPath);
         Class<?>[] inners = headerCls.getDeclaredClasses();
         assertEquals(inners.length, 4);

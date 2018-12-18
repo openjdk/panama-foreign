@@ -51,8 +51,8 @@ public class ConstantsTest extends JextractToolRunner {
     public void setup() {
         clzPath = getOutputFilePath("ConstantsTest.c.jar");
         dirPath = getOutputFilePath("ConstantsTest.c.dir");
-        checkSuccess(null,"-o", clzPath.toString(), "-d", dirPath.toString(),
-                getInputFilePath("constants.h").toString());
+        run("-o", clzPath.toString(), "-d", dirPath.toString(),
+                getInputFilePath("constants.h").toString()).checkSuccess();
         Class<?>[] cls = {
                 loadClass("constants", clzPath),
                 loadClass("constants", dirPath)
