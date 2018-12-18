@@ -22,8 +22,10 @@
  */
 package jdk.internal.foreign.abi;
 
+import static sun.security.action.GetBooleanAction.privilegedGetProperty;
+
 public class ShuffleRecipe {
-    private static final boolean DEBUG = Boolean.getBoolean("jdk.internal.foreign.abi.ShuffleRecipe.DEBUG");
+    private static final boolean DEBUG = privilegedGetProperty("jdk.internal.foreign.abi.ShuffleRecipe.DEBUG");
 
     private final long[] recipe;
 
