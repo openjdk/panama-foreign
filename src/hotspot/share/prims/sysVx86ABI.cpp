@@ -33,7 +33,7 @@ JVM_ENTRY(static void, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong add
   assert(cb != NULL, "Attempting to free non-existent stub");
   //free global JNI handle
   jobject* rec_ptr = (jobject*)(void*)cb -> content_begin();
-  JNIHandles::destroy_global(*rec_ptr);
+  JNIHandles::destroy_weak_global(*rec_ptr);
   //free code blob
   CodeCache::free(cb);
 JVM_END

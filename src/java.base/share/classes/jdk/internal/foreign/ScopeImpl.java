@@ -240,14 +240,13 @@ public abstract class ScopeImpl implements Scope {
         @Override
         public void close() {
             // Need to free stub first as the Pointer::addr will check scope is still alive
-            stubs.forEach(SystemABI.getInstance()::freeUpcallStub);
+            stubs = null;
             super.close();
             for (Long addr: used_blocks) {
                 U.freeMemory(addr);
             }
             used_blocks.clear();
             U.freeMemory(block);
-            stubs = null;
         }
     }
 

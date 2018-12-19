@@ -99,11 +99,6 @@ public interface SystemABI {
     Library.Symbol upcallStub(CallingConvention cc, MethodHandle target, NativeMethodType nmt);
 
     /**
-     * Release the native stub.
-     */
-    void freeUpcallStub(Library.Symbol stub);
-
-    /**
      * Query standard calling convention used by this platform ABI.
      */
     CallingConvention defaultCallingConvention();
