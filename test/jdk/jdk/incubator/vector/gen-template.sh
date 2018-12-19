@@ -55,18 +55,18 @@ get_template="Get-op"
 rearrange_template="Rearrange"
 
 function replace_variables {
-  filename=$1
-  output=$2
-  kernel=$3
-  test=$4
-  op=$5
-  init=$6
-  guard=$7
-  masked=$8
-  op_name=$9
+  local filename=$1
+  local output=$2
+  local kernel=$3
+  local test=$4
+  local op=$5
+  local init=$6
+  local guard=$7
+  local masked=$8
+  local op_name=$9
 
   if [ "x${kernel}" != "x" ]; then
-    kernel_escaped=$(echo -e "$kernel" | tr '\n' '|')
+    local kernel_escaped=$(echo -e "$kernel" | tr '\n' '|')
     sed "s/\[\[KERNEL\]\]/${kernel_escaped}/g" $filename > ${filename}.current1
     cat ${filename}.current1 | tr '|' "\n" > ${filename}.current
     rm "${filename}.current1"
@@ -93,14 +93,14 @@ function replace_variables {
 }
 
 function gen_op_tmpl {
-  template=$1
-  test=$2
-  op=$3
-  unit_output=$4
-  perf_output=$5
-  perf_scalar_output=$6
-  guard=""
-  init=""
+  local template=$1
+  local test=$2
+  local op=$3
+  local unit_output=$4
+  local perf_output=$5
+  local perf_scalar_output=$6
+  local guard=""
+  local init=""
   if [ $# -gt 6 ]; then
     guard=$7
   fi
@@ -108,25 +108,25 @@ function gen_op_tmpl {
     init=$8
   fi
 
-  masked=""
+  local masked=""
   if [[ $template == *"Masked"* ]]; then
     masked="Masked"
   fi
 
-  op_name=""
+  local op_name=""
   if [[ $template == *"Shift"* ]]; then
     op_name="Shift"
   elif [[ $template == *"Get"* ]]; then
     op_name="extract"
   fi
 
-  unit_filename="${TEMPLATE_FOLDER}/Unit-${template}.template"
-  kernel_filename="${TEMPLATE_FOLDER}/Kernel-${template}.template"
-  perf_wrapper_filename="${TEMPLATE_FOLDER}/Perf-wrapper.template"
-  perf_vector_filename="${TEMPLATE_FOLDER}/Perf-${template}.template"
-  perf_scalar_filename="${TEMPLATE_FOLDER}/Perf-Scalar-${template}.template"
+  local unit_filename="${TEMPLATE_FOLDER}/Unit-${template}.template"
+  local kernel_filename="${TEMPLATE_FOLDER}/Kernel-${template}.template"
+  local perf_wrapper_filename="${TEMPLATE_FOLDER}/Perf-wrapper.template"
+  local perf_vector_filename="${TEMPLATE_FOLDER}/Perf-${template}.template"
+  local perf_scalar_filename="${TEMPLATE_FOLDER}/Perf-Scalar-${template}.template"
 
-  kernel=""
+  local kernel=""
   if [ -f $kernel_filename ]; then
     kernel="$(cat $kernel_filename)"
   fi
