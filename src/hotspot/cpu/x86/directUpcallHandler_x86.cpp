@@ -171,7 +171,7 @@ address DirectUpcallHandler::generate_specialized_upcall_stub(Handle& rec_handle
 
   MacroAssembler* _masm = new MacroAssembler(&buffer);
 
-  jobject rec = JNIHandles::make_global(rec_handle);
+  jobject rec = JNIHandles::make_weak_global(rec_handle);
 
 #if 0
   fprintf(stderr, "generate_upcall_stub(%p)\n", rec);
