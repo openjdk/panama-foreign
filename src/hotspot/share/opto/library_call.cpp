@@ -7173,13 +7173,13 @@ bool LibraryCallKit::inline_vector_gather_scatter(bool is_scatter) {
 
   const TypeInstPtr* vbox_idx_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_idx_klass);
 
-  Node* index_vect = unbox_vector(argument(6), vbox_idx_type, T_INT, num_elem);
+  Node* index_vect = unbox_vector(argument(7), vbox_idx_type, T_INT, num_elem);
   if (index_vect == NULL) {
     return false;
   }
   const TypeVect* vector_type = TypeVect::make(elem_bt, num_elem);
   if (is_scatter) {
-    Node* val = unbox_vector(argument(7), vbox_type, elem_bt, num_elem);
+    Node* val = unbox_vector(argument(8), vbox_type, elem_bt, num_elem);
     if (val == NULL) {
       return false; // operand unboxing failed
     }
