@@ -29,15 +29,14 @@ import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.IntVector.IntSpecies;
 import jdk.incubator.vector.ShortVector;
 import jdk.incubator.vector.ShortVector.ShortSpecies;
+import jdk.incubator.vector.LongVector;
+import jdk.incubator.vector.LongVector.LongSpecies;
 import jdk.incubator.vector.Vector;
 import jdk.incubator.vector.Vector.Shape;
 import jdk.incubator.vector.Vector.Species;
 
 import java.util.Random;
-import java.util.function.Function;
 import java.util.function.IntFunction;
-
-import static jdk.incubator.vector.Vector.Shape.*;
 
 public class AbstractVectorBenchmark {
     static final Random RANDOM = new Random(Integer.getInteger("jdk.incubator.vector.random-seed", 1337));
@@ -56,6 +55,11 @@ public class AbstractVectorBenchmark {
     static final IntSpecies I128 = IntVector.species(Vector.Shape.S_128_BIT);
     static final IntSpecies I256 = IntVector.species(Vector.Shape.S_256_BIT);
     static final IntSpecies I512 = IntVector.species(Vector.Shape.S_512_BIT);
+
+    static final LongSpecies L64  = LongVector.species(Vector.Shape.S_64_BIT);
+    static final LongSpecies L128 = LongVector.species(Vector.Shape.S_128_BIT);
+    static final LongSpecies L256 = LongVector.species(Vector.Shape.S_256_BIT);
+    static final LongSpecies L512 = LongVector.species(Vector.Shape.S_512_BIT);
 
     static Shape widen(Shape s) {
         switch (s) {
@@ -103,6 +107,19 @@ public class AbstractVectorBenchmark {
         return v3.notEqual(0);         // [F F ... F | T T ... T | F F ... F]
     }
 
+    static <E> IntVector sum(ByteVector va) {
+        IntSpecies species = IntVector.species(va.shape());
+        var acc = species.zero();
+        int limit = va.length() / species.length();
+        for (int k = 0; k < limit; k++) {
+            var vb = species.cast(va.shiftEL(k * B64.length()).resize(B64)).and(0xFF);
+            acc = acc.add(vb);
+        }
+        return acc;
+    }
+
+    /* ============================================================================================================== */
+
     boolean[] fillMask(int size, IntFunction<Boolean> f) {
         boolean[] array = new boolean[size];
         for (int i = 0; i < array.length; i++) {
@@ -111,7 +128,7 @@ public class AbstractVectorBenchmark {
         return array;
     }
 
-    byte[] fillByte(int size, Function<Integer, Byte> f) {
+    byte[] fillByte(int size, IntFunction<Byte> f) {
         byte[] array = new byte[size];
         for (int i = 0; i < size; i++) {
             array[i] = f.apply(i);
@@ -121,6 +138,14 @@ public class AbstractVectorBenchmark {
 
     int[] fillInt(int size, IntFunction<Integer> f) {
         int[] array = new int[size];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = f.apply(i);
+        }
+        return array;
+    }
+
+    long[] fillLong(int size, IntFunction<Long> f) {
+        long[] array = new long[size];
         for (int i = 0; i < array.length; i++) {
             array[i] = f.apply(i);
         }

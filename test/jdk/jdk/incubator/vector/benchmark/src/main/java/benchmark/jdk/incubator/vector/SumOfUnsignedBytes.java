@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 @Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector"})
-public class SumOfUBytes extends AbstractVectorBenchmark {
+public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
 
     @Param({"64", "1024", "65536"})
     int size;
@@ -128,9 +128,9 @@ public class SumOfUBytes extends AbstractVectorBenchmark {
                 acc8_lo = t0;
                 acc8_hi = acc8_hi.add((byte) 1, overflow);
             }
-            acc_hi = acc_hi.add(sumUB256(acc8_hi));
+            acc_hi = acc_hi.add(sum(acc8_hi));
         }
-        return sumUB256(acc8_lo)
+        return sum(acc8_lo)
                 .add(acc_hi.mul(256)) // overflow
                 .addAll();
     }
@@ -147,16 +147,6 @@ public class SumOfUBytes extends AbstractVectorBenchmark {
     }
 
     // Helpers
-
-    static IntVector sumUB256(ByteVector va) {
-        var acc = I256.zero();
-        int limit = va.length() / I256.length();
-        for (int k = 0; k < limit; k++) {
-            var vb = I256.cast(va.shiftEL(k * B64.length()).resize(B64)).and(0xFF);
-            acc = acc.add(vb);
-        }
-        return acc;
-    }
 
     static ByteVector addSaturated(ByteVector va, ByteVector vb) {
         return ByteVectorHelper.map(va, vb, (i, a, b) -> {
@@ -176,6 +166,6 @@ public class SumOfUBytes extends AbstractVectorBenchmark {
                 return (byte)(b - a);
             }
         });
-        return sumUB256(vc);
+        return sum(vc);
     }
 }
