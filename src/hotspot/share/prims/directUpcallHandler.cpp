@@ -45,7 +45,7 @@ JVM_ENTRY(jlong, AllocateUpcallStub_LinkToNative(JNIEnv *env, jobject _unused, j
 
 // These are the native methods on jdk.internal.foreign.abi.DirectUpcallHandler.
 static JNINativeMethod DUH_methods[] = {
-  {CC "allocateSpecializedUpcallStub", CC "(III)J",      FN_PTR(AllocateUpcallStub_Specialized)},
+  {CC "allocateUpcallStub", CC "(III)J",      FN_PTR(AllocateUpcallStub_Specialized)},
 };
 
 // Native methods on jdk.internal.foreign.invokers.LinkToNativeUpcallHandler.

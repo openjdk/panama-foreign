@@ -27,6 +27,7 @@ import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.vm.annotation.Stable;
 
+import java.foreign.Library;
 import java.foreign.NativeMethodType;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
@@ -38,7 +39,7 @@ import java.lang.invoke.MethodType;
  * entry point is a Java method which takes a number N of long arguments followed by a number M of double arguments;
  * possible return types for the entry point are either long, double or void.
  */
-public class LinkToNativeUpcallHandler implements UpcallStub {
+public class LinkToNativeUpcallHandler implements Library.Symbol {
     @Stable
     private final MethodHandle mh;
     private final Pointer<?> entryPoint;
@@ -71,11 +72,6 @@ public class LinkToNativeUpcallHandler implements UpcallStub {
         } else {
             throw new IllegalStateException("Unexpected carrier: " + ret.getName());
         }
-    }
-
-    @Override
-    public MethodHandle methodHandle() {
-        return mh;
     }
 
     @Override

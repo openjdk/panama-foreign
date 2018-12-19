@@ -25,6 +25,7 @@ package jdk.internal.foreign;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.org.objectweb.asm.Type;
+import jdk.internal.ref.CleanerFactory;
 
 import java.foreign.Scope;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -118,7 +119,7 @@ public final class LibrariesHelper {
     private static final ThreadLocal<SymbolLookup> curSymLookup = new ThreadLocal<>();
 
     // This is used to clear global scopes when libraries are unloaded
-    private static final Cleaner cleaner = Cleaner.create();
+    private static final Cleaner cleaner = CleanerFactory.cleaner();
 
     // Cache: Header interface Class -> Impl Class.
     private static final ClassValue<Class<?>> HEADER_IMPLEMENTATIONS = new ClassValue<>() {

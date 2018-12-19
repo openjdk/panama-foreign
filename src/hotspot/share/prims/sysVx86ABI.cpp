@@ -40,7 +40,7 @@ JVM_ENTRY(void, UH_FreeUpcallStub(JNIEnv *env, jobject _unused, jlong addr))
     jobject* handle_ptr = (jobject*)(void*)cb->content_begin();
     handle = *handle_ptr;
   }
-  JNIHandles::destroy_global(handle);
+  JNIHandles::destroy_weak_global(handle);
   //free code blob
   CodeCache::free(cb);
 JVM_END

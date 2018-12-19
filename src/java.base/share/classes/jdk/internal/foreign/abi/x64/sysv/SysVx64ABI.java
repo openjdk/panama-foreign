@@ -33,12 +33,16 @@ import java.foreign.layout.Padding;
 import java.foreign.layout.Sequence;
 import java.foreign.layout.Value;
 import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.WrongMethodTypeException;
+import java.lang.ref.Cleaner;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
+
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.abi.DirectNativeInvoker;
@@ -50,6 +54,7 @@ import jdk.internal.foreign.abi.LinkToNativeUpcallHandler;
 import jdk.internal.foreign.abi.UniversalNativeInvoker;
 import jdk.internal.foreign.abi.UniversalUpcallHandler;
 import jdk.internal.foreign.abi.VarargsInvoker;
+import jdk.internal.ref.CleanerFactory;
 
 import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 
@@ -59,6 +64,9 @@ import static sun.security.action.GetPropertyAction.privilegedGetProperty;
 public class SysVx64ABI implements SystemABI {
     private static final String fastPath = privilegedGetProperty("jdk.internal.foreign.NativeInvoker.FASTPATH");
     private static SysVx64ABI instance;
+
+    // This is used to clear upcall stub symbols when no longer retained in scopes
+    private static final Cleaner cleaner = CleanerFactory.cleaner();
 
     public static SysVx64ABI getInstance() {
         if (instance == null) {
@@ -132,20 +140,25 @@ public class SysVx64ABI implements SystemABI {
         StandardCall sc = new StandardCall();
         CallingSequence callingSequence = sc.arrangeCall(nmt);
         if (fastPath == null || !fastPath.equals("none")) {
-            if (LinkToNativeSignatureShuffler.acceptUpcall(nmt, callingSequence)) {
-                return new LinkToNativeUpcallHandler(target, callingSequence, nmt);
+            if (DirectSignatureShuffler.acceptUpcall(nmt, callingSequence)) {
+                return registerUpcallStub(new DirectUpcallHandler(target, callingSequence, nmt));
             } else if (fastPath != null && fastPath.equals("direct")) {
                 throw new IllegalStateException(
                         String.format("No fast path for function type %s", nmt.function()));
             }
         }
-        return new UniversalUpcallHandler(target, callingSequence, nmt);
+        return registerUpcallStub(new UniversalUpcallHandler(target, callingSequence, nmt));
     }
 
-    @Override
-    public void freeUpcallStub(Library.Symbol stub) {
+    private <S extends Library.Symbol> S registerUpcallStub(S up) {
+        Pointer<?> ptr = up.getAddress();
+        cleaner.register(up, () -> freeUpcallStub(ptr));
+        return up;
+    }
+
+    private static void freeUpcallStub(Pointer<?> ptr) {
         try {
-            freeUpcallStub(stub.getAddress().addr());
+            freeUpcallStub(ptr.addr());
         } catch (IllegalAccessException iae) {
             throw new IllegalStateException(iae);
         }
