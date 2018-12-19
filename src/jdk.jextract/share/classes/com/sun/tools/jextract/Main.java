@@ -274,6 +274,11 @@ public final class Main {
             return 0;
         }
 
+        if (writer.isEmpty()) {
+            ctx.err.println(format("warn.no.output"));
+            return 0;
+        }
+
         boolean hasOutput = false;
 
         if (options.has("d")) {

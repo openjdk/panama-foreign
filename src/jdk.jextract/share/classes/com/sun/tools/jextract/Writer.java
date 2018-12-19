@@ -46,6 +46,10 @@ public class Writer {
 
     private static final String JEXTRACT_MANIFEST = "META-INF" + File.separatorChar + "jextract.properties";
 
+    public boolean isEmpty() {
+        return results.isEmpty();
+    }
+
     @SuppressWarnings("deprecation")
     private byte[] getJextractProperties(String[] args) {
         Properties props = new Properties();
