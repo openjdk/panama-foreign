@@ -1572,6 +1572,29 @@ assertEquals(""+l, (String) MH_this.invokeExact(subl)); // Listie method
             return getDirectField(REF_putStatic, refc, field);
         }
 
+        /** TODO */
+        public MethodHandle findNative(Object dll, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
+            // FIXME: take dll into account during symbol lookup
+            return findNative(name, type);
+        }
+
+        public MethodHandle findNative(String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
+            long addr = findNativeAddress(name);
+            if (addr == 0) {
+                throw new NoSuchMethodException("Failed to look up " + name);
+            }
+            NativeEntryPoint nativeFunc = NativeEntryPoint.make(addr, name, type);
+            MethodHandle mh = NativeMethodHandle.make(type, nativeFunc);
+            return mh;
+        }
+
+        private static Unsafe UNSAFE = Unsafe.getUnsafe();
+
+        /** TODO */
+        private long findNativeAddress(String name) {
+            return UNSAFE.findNativeAddress(name);
+        }
+
         public MethodHandle findNative(Library.Symbol symbol, MethodType type) throws IllegalAccessException {
             return findNative(symbol.getAddress().addr(), symbol.getName(), type);
         }
