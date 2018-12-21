@@ -23,19 +23,27 @@
 
 #include "precompiled.hpp"
 #include "prims/directUpcallHandler.hpp"
+#include "runtime/compilationPolicy.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 
 JVM_ENTRY(jlong, AllocateUpcallStub_Specialized(JNIEnv *env, jobject obj, jint nlongs, jint ndoubles, jint rettag))
-  Handle rec_h(THREAD, JNIHandles::resolve(obj));
-  jobject receiver = JNIHandles::make_global(rec_h);
-  return (jlong)DirectUpcallHandler::generate_specialized_upcall_stub(receiver, nlongs, ndoubles, rettag);
+  ShouldNotReachHere();
+  return 0; // removed
 JVM_END
 
-JVM_ENTRY(jlong, AllocateUpcallStub_LinkToNative(JNIEnv *env, jobject _unused, jobject mh, jint nlongs, jint ndoubles, jint rettag))
+JVM_ENTRY(jlong, AllocateUpcallStub_LinkToNative(JNIEnv *env, jobject _unused, jobject mh))
   Handle mh_h(THREAD, JNIHandles::resolve(mh));
-  jobject mh_j = JNIHandles::make_global(mh_h);
-  return (jlong)DirectUpcallHandler::generate_linkToNative_upcall_stub(mh_j, nlongs, ndoubles, rettag);
+  jobject mh_j = JNIHandles::make_weak_global(mh_h);
+
+  oop lform = java_lang_invoke_MethodHandle::form(mh_h());
+  oop vmentry = java_lang_invoke_LambdaForm::vmentry(lform);
+  Method* entry = java_lang_invoke_MemberName::vmtarget(vmentry);
+
+  assert(entry->method_holder()->is_initialized(), "no clinit barrier");
+  CompilationPolicy::compile_if_required(entry, CHECK_0);
+
+  return (jlong)DirectUpcallHandler::generate_linkToNative_upcall_stub(mh_j, entry, CHECK_0);
  JVM_END
 
 #define CC (char*)  /*cast a literal from (const char*)*/
@@ -50,7 +58,7 @@ static JNINativeMethod DUH_methods[] = {
 
 // Native methods on jdk.internal.foreign.invokers.LinkToNativeUpcallHandler.
 static JNINativeMethod L2NUH_methods[] = {
-  {CC "allocateUpcallStub",  CC "(" MH "III)J", FN_PTR(AllocateUpcallStub_LinkToNative)},
+  {CC "allocateUpcallStub",  CC "(" MH ")J", FN_PTR(AllocateUpcallStub_LinkToNative)},
 };
 /**
  * This one function is exported, used by NativeLookup.

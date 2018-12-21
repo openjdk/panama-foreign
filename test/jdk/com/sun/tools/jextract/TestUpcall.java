@@ -67,16 +67,22 @@ public class TestUpcall extends JextractToolRunner {
         }
     
         @Test(dataProvider = "getArgs")
-        public void testUpCall(String mName, @NoInjection Method m)  throws ReflectiveOperationException {
-            System.err.print("Calling " + mName + "...");
-            try(Scope scope = Scope.newNativeScope()) {
-                List<Consumer<Object>> checks = new ArrayList<>();
-                Object res = m.invoke(lib, makeArgs(scope, m, checks));
-                if (m.getReturnType() != void.class) {
-                    checks.forEach(c -> c.accept(res));
+        public void testUpCall(String mName, @NoInjection Method m)  throws Throwable {
+            try {
+                System.err.print("Calling " + mName + "...");
+                try (Scope scope = Scope.newNativeScope()) {
+                    List<Consumer<Object>> checks = new ArrayList<>();
+                    Object res = m.invoke(lib, makeArgs(scope, m, checks));
+                    if (m.getReturnType() != void.class) {
+                        checks.forEach(c -> c.accept(res));
+                    }
                 }
+                System.err.println("PASS");
+            } catch (Throwable e) {
+                System.err.println("FAIL " + e.getMessage());
+                e.printStackTrace();
+                throw e;
             }
-            System.err.println("...done");
         }
     
         @DataProvider
@@ -92,6 +98,7 @@ public class TestUpcall extends JextractToolRunner {
     public Object[] getTests() throws ReflectiveOperationException {
         List<UpcallTest> res = new ArrayList<>();
         for (int i = 0 ; i < MAX_CODE ; i++) {
+            System.err.println("Running jextract ... --exclude-symbols " + filterFor(i) + " ...");
             Path clzPath = getOutputFilePath("libTestUpcall.jar");
             run("-o", clzPath.toString(),
                     "--exclude-symbols", filterFor(i),
@@ -200,5 +207,20 @@ public class TestUpcall extends JextractToolRunner {
             }
         }
         return String.format("(%s).*", String.join("|", patterns));
+    }
+
+    public static void main(String[] args) throws Throwable {
+        TestUpcall t = new TestUpcall();
+        Object[] tests = t.getTests();
+        for (Object o : tests) {
+            UpcallTest test = (UpcallTest)o;
+            for(Object[] testArgs : test.getArgs()) {
+                String name = (String)testArgs[0];
+                Method m = (Method)testArgs[1];
+
+                test.testUpCall(name, m);
+            }
+        }
+
     }
 }

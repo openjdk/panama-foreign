@@ -38,58 +38,7 @@
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "oops/arrayOop.inline.hpp"
-
-static struct SpecializedUpcallInfo {
-  bool inited;
-  Method* meth;
-} specialized_upcall_info[5][5][3];
-
-#define LONGS "JJJJJ"
-#define DOUBLES "DDDDD"
-
-static char decode_ret(int tag) {
-   switch (tag) {
-      case 0: return 'V';
-      case 1: return 'J';
-      case 2: return 'D';
-   }
-   return '\0';
-}
-
-#include "classfile/symbolTable.hpp"
-// FIXME: This should be initialized explicitly instead of lazily/racily
-static Method* specialized_upcall_init(const char* prefix, int nlongs, int ndoubles, int rettag) {
-  SpecializedUpcallInfo* info = &specialized_upcall_info[nlongs][ndoubles][rettag];
-  if (info->inited) {
-    return info->meth;
-  }
-  TRAPS = Thread::current();
-  ResourceMark rm;
-  stringStream desc, cname, mname;
-
-  char ret = decode_ret(rettag);
-
-  desc.print("(Ljdk/internal/foreign/abi/%sUpcallHandler;%.*s%.*s)%c", prefix, nlongs, LONGS, ndoubles, DOUBLES, ret);
-  if (nlongs + ndoubles == 0) {
-    mname.print("invoke_%c_V", ret);
-  } else {
-    mname.print("invoke_%c_%.*s%.*s", ret, nlongs, LONGS, ndoubles, DOUBLES);
-  }
-  cname.print("jdk/internal/foreign/abi/%sUpcallHandler", prefix);
-
-  Symbol* cname_sym = SymbolTable::lookup(cname.as_string(), (int) cname.size(), THREAD);
-  Symbol* mname_sym = SymbolTable::lookup(mname.as_string(), (int) mname.size(), THREAD);
-  Symbol* mdesc_sym = SymbolTable::lookup(desc.as_string(), (int) desc.size(), THREAD);
-
-  Klass* k = SystemDictionary::resolve_or_null(cname_sym, THREAD);
-  Method* method = k->lookup_method(mname_sym, mdesc_sym);
-  method->link_method(method, THREAD);
-
-  info->meth = method;
-  info->inited = true;
-
-  return method;
-}
+#include "vmreg_x86.inline.hpp"
 
 struct upcall_context {
   struct {
@@ -99,35 +48,99 @@ struct upcall_context {
     uintptr_t r13;
     uintptr_t r14;
     uintptr_t r15;
+    uintptr_t mxcsr;
+#ifdef _WIN64
+    uintptr_t rsi;
+    uintptr_t rdi;
+ #endif
 #endif
     JavaFrameAnchor jfa;
     uintptr_t thread;
   } preserved;
 };
 
-void save_upcall_context(MacroAssembler* _masm) {
-  __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.rbx)), rbx);
+void save_upcall_context(MacroAssembler* _masm, int upcall_context_offset) {
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rbx)), rbx);
 #ifdef _LP64
-  __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r12)), r12);
-  __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r13)), r13);
-  __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r14)), r14);
-  __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r15)), r15);
-#endif
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r12)), r12);
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r13)), r13);
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r14)), r14);
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r15)), r15);
+#ifndef _WIN64
+  const Address mxcsr_save(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.mxcsr));
+  const int MXCSR_MASK = 0xFFC0;  // Mask out any pending exceptions
+
+  Label skip_ldmx;
+  __ stmxcsr(mxcsr_save);
+  __ movl(rax, mxcsr_save);
+  __ andl(rax, MXCSR_MASK);    // Only check control and mask bits
+  ExternalAddress mxcsr_std(StubRoutines::addr_mxcsr_std());
+  __ cmp32(rax, mxcsr_std);
+  __ jcc(Assembler::equal, skip_ldmx);
+  __ ldmxcsr(mxcsr_std);
+  __ bind(skip_ldmx);
+#else // _WIN64
+#error "NYI WIN64"
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rsi)), rsi);
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rdi)), rdi);
+//    int last_reg = (UseAVX > 2 ? 31 : 15);
+//
+//    if (VM_Version::supports_evex()) {
+//      for (int i = xmm_save_first; i <= last_reg; i++) {
+//        __ vextractf32x4(xmm_save(i), as_XMMRegister(i), 0);
+//      }
+//    } else {
+//      for (int i = xmm_save_first; i <= last_reg; i++) {
+//        __ movdqu(xmm_save(i), as_XMMRegister(i));
+//      }
+//    }
+//
+//    const Address rdi_save(rbp, rdi_off * wordSize);
+//    const Address rsi_save(rbp, rsi_off * wordSize);
+//
+#endif // _WIN64
+#else // _LP64
+#error "NYI 32-bit"
+#endif // _LP64
+
+#ifdef _WIN64
+#else
+#endif // _WIN64
 }
 
-static void restore_upcall_context(MacroAssembler* _masm) {
-  __ movptr(rbx, Address(rsp, offsetof(struct upcall_context, preserved.rbx)));
+static void restore_upcall_context(MacroAssembler* _masm, int upcall_context_offset) {
+  __ movptr(rbx, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rbx)));
 #ifdef _LP64
-  __ movptr(r12, Address(rsp, offsetof(struct upcall_context, preserved.r12)));
-  __ movptr(r13, Address(rsp, offsetof(struct upcall_context, preserved.r13)));
-  __ movptr(r14, Address(rsp, offsetof(struct upcall_context, preserved.r14)));
-  __ movptr(r15, Address(rsp, offsetof(struct upcall_context, preserved.r15)));
-#endif
+  __ movptr(r12, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r12)));
+  __ movptr(r13, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r13)));
+  __ movptr(r14, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r14)));
+  __ movptr(r15, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r15)));
+#ifndef _WIN64
+  const Address mxcsr_save(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.mxcsr));
+  __ ldmxcsr(mxcsr_save);
+#else // _WIN64
+#error "NYI WIN64"
+  __ movptr(rsi, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rsi)));
+  __ movptr(rdi, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rdi)));
+    // emit the restores for xmm regs
+//    if (VM_Version::supports_evex()) {
+//      for (int i = xmm_save_first; i <= last_reg; i++) {
+//        __ vinsertf32x4(as_XMMRegister(i), as_XMMRegister(i), xmm_save(i), 0);
+//      }
+//    } else {
+//      for (int i = xmm_save_first; i <= last_reg; i++) {
+//        __ movdqu(as_XMMRegister(i), xmm_save(i));
+//      }
+//    }
+//    __ movptr(rdi, rdi_save);
+//    __ movptr(rsi, rsi_save);
+#endif // _WIN64
+#endif // _LP64
 }
 
-void DirectUpcallHandler::save_java_frame_anchor(MacroAssembler* _masm, Register thread) {
+void DirectUpcallHandler::save_java_frame_anchor(MacroAssembler* _masm, int upcall_context_offset, Register thread) {
   int thread_base_offset = offsetof(JavaThread, _anchor);
-  int upcall_base_offset = offsetof(struct upcall_context, preserved.jfa);
+  int upcall_base_offset = upcall_context_offset + offsetof(struct upcall_context, preserved.jfa);
 
   int last_Java_fp_offset = offsetof(JavaFrameAnchor, _last_Java_fp);
   int last_Java_pc_offset = offsetof(JavaFrameAnchor, _last_Java_pc);
@@ -146,9 +159,9 @@ void DirectUpcallHandler::save_java_frame_anchor(MacroAssembler* _masm, Register
   __ movptr(Address(rsp, upcall_base_offset + last_Java_sp_offset), rscratch1);
 }
 
-void DirectUpcallHandler::restore_java_frame_anchor(MacroAssembler* _masm, Register thread) {
+void DirectUpcallHandler::restore_java_frame_anchor(MacroAssembler* _masm, int upcall_context_offset, Register thread) {
   int thread_base_offset = offsetof(JavaThread, _anchor);
-  int upcall_base_offset = offsetof(struct upcall_context, preserved.jfa);
+  int upcall_base_offset = upcall_context_offset + offsetof(struct upcall_context, preserved.jfa);
 
   int last_Java_fp_offset = offsetof(JavaFrameAnchor, _last_Java_fp);
   int last_Java_pc_offset = offsetof(JavaFrameAnchor, _last_Java_pc);
@@ -176,128 +189,6 @@ void DirectUpcallHandler::restore_java_frame_anchor(MacroAssembler* _masm, Regis
   __ movptr(Address(thread, thread_base_offset + last_Java_sp_offset), rscratch1);
 }
 
-#define ARG_MASK 0x000F
-#define ARG_SHIFT 4
-
-#define SPECIALIZED_HELPER_BODY(RES_T, RES_TAG) \
-  int nlongs = (mask & ARG_MASK); \
-  int ndoubles = ((mask >> ARG_SHIFT) & ARG_MASK); \
-  int rettag = RES_TAG; \
-\
-  JavaCallArguments args((1 + nlongs + ndoubles) * 2); \
-\
-  args.push_jobject(rec); \
-\
-  long largs[] = { l0, l1, l2, l3 }; \
-  double dargs[] = { d0, d1, d2, d3 }; \
-\
-  int i; \
-  for (i = 0 ; i < nlongs ; i++) { \
-    args.push_long(largs[i]); \
-  } \
-  for (int i = 0 ; i < ndoubles ; i++) { \
-    args.push_double(dargs[i]); \
-  } \
-\
-  Method* meth = specialized_upcall_info[nlongs][ndoubles][rettag].meth; \
-\
-  JavaThread* thread = JavaThread::current(); \
-  ThreadInVMfromNative __tiv(thread); \
-  JavaValue result(RES_T); \
-  JavaCalls::call(&result, meth, &args, thread);
-
-
-static long specialized_upcall_helper_J(long l0, long l1, long l2, long l3,
-                                      double d0, double d1, double d2, double d3,
-                                      unsigned int mask, jobject rec) {
-  SPECIALIZED_HELPER_BODY(T_LONG, 1)
-  return result.get_jlong();
-}
-
-static double specialized_upcall_helper_D(long l0, long l1, long l2, long l3,
-                                      double d0, double d1, double d2, double d3,
-                                      unsigned int mask, jobject rec) {
-  SPECIALIZED_HELPER_BODY(T_DOUBLE, 2)
-  return result.get_jdouble();
-}
-
-static void specialized_upcall_helper_V(long l0, long l1, long l2, long l3,
-                                      double d0, double d1, double d2, double d3,
-                                      unsigned int mask, jobject rec) {
-  SPECIALIZED_HELPER_BODY(T_VOID, 0)
-}
-
-address DirectUpcallHandler::generate_specialized_upcall_stub(jobject rec_handle, int nlongs, int ndoubles, int rettag) {
-  ResourceMark rm;
-  CodeBuffer buffer("upcall_stub_specialized", 1024, 1024);
-
-  MacroAssembler* _masm = new MacroAssembler(&buffer);
-
-  // stub code
-  __ enter();
-
-  // save pointer to JNI receiver handle into constant segment
-  Address rec_adr = __ as_Address(InternalAddress(__ address_constant((address)rec_handle)));
-
-  //just save registers
-
-  __ subptr(rsp, sizeof(struct upcall_context));
-  __ andptr(rsp, -64);
-
-  save_upcall_context(_masm);
-
-  specialized_upcall_init("Direct", nlongs, ndoubles, rettag);
-
-  int mask = (nlongs & ARG_MASK) |
-              ((ndoubles & ARG_MASK) << ARG_SHIFT);
-
-  // Call upcall helper
-#ifdef _LP64
-#ifdef _WIN64
-  // FIXME: Windows only allow 4 argument registers
-#else
-  __ movptr(c_rarg4, mask);
-  __ movptr(c_rarg5, rec_adr);
-#endif // _WIN64
-#else
-  //non LP64 cannot get to this stub
-#endif
-
- address helper_addr = NULL;
- switch (rettag) {
-    case 0: helper_addr = CAST_FROM_FN_PTR(address, specialized_upcall_helper_V); break;
-    case 1: helper_addr = CAST_FROM_FN_PTR(address, specialized_upcall_helper_J); break;
-    case 2: helper_addr = CAST_FROM_FN_PTR(address, specialized_upcall_helper_D); break;
- }
- __ call(RuntimeAddress(helper_addr));
-#ifndef _LP64
-  __ addptr(rsp, 8);
-#endif
-
-  // FIXME: More stuff stripped here
-
-  restore_upcall_context(_masm);
-
-  // FIXME: More stuff stripped here
-
-  __ leave();
-  __ ret(0);
-
-  _masm->flush();
-
-  stringStream ss;
-  ss.print("upcall_stub_specialized_J%d_D%d_R%d", nlongs, ndoubles, rettag);
-  const char* name = _masm->code_string(ss.as_string());
-  BufferBlob* blob = BufferBlob::create(name, &buffer);
-
-  if (UseNewCode) {
-    blob->print_on(tty);
-    Disassembler::decode(blob, tty);
-  }
-
-  return blob->code_begin();
-}
-
 static void save_native_arguments(MacroAssembler* _masm) {
   __ push(c_rarg0);
   __ push(c_rarg1);
@@ -320,8 +211,204 @@ static void restore_native_arguments(MacroAssembler* _masm) {
   __ pop(c_rarg0);
 }
 
-address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver, int nlongs, int ndoubles, int rettag) {
+struct ArgMove {
+  BasicType bt;
+  VMRegPair from;
+  VMRegPair to;
+};
+
+static GrowableArray<ArgMove>* compute_argument_shuffle(Method* entry, int& frame_size) {
+  assert(entry->is_static(), "");
+
+  // Fill in the signature array, for the calling-convention call.
+  const int total_out_args = entry->size_of_parameters();
+  assert(total_out_args > 0, "receiver arg ");
+
+  BasicType* out_sig_bt = NEW_RESOURCE_ARRAY(BasicType, total_out_args);
+  VMRegPair* out_regs = NEW_RESOURCE_ARRAY(VMRegPair, total_out_args);
+
+  {
+    int i = 0;
+    SignatureStream ss(entry->signature());
+    for (; !ss.at_return_type(); ss.next()) {
+      out_sig_bt[i++] = ss.type();  // Collect remaining bits of signature
+      if (ss.type() == T_LONG || ss.type() == T_DOUBLE)
+        out_sig_bt[i++] = T_VOID;   // Longs & doubles take 2 Java slots
+    }
+    assert(i == total_out_args, "");
+    BasicType ret_type = ss.type();
+  }
+
+  const bool is_outgoing = false; // method->is_method_handle_intrinsic();
+  int out_arg_slots = SharedRuntime::java_calling_convention(out_sig_bt, out_regs, total_out_args, is_outgoing);
+
+  const int total_in_args = total_out_args - 1;
+  BasicType* in_sig_bt  = NEW_RESOURCE_ARRAY(BasicType, total_in_args);
+  VMRegPair* in_regs    = NEW_RESOURCE_ARRAY(VMRegPair, total_in_args);
+
+  for (int i = 0; i < total_in_args ; i++ ) {
+    in_sig_bt[i] = out_sig_bt[i+1];
+  }
+
+  // Now figure out where the args must be stored and how much stack space they require.
+  int in_arg_slots = SharedRuntime::c_calling_convention(in_sig_bt, in_regs, NULL, total_in_args);
+
+  GrowableArray<int> arg_order(2 * total_in_args);
+
+  VMRegPair tmp_vmreg;
+  tmp_vmreg.set2(rbx->as_VMReg());
+
+  // Compute a valid move order, using tmp_vmreg to break any cycles
+  SharedRuntime::compute_move_order(in_sig_bt,
+                                    total_in_args, in_regs,
+                                    total_out_args, out_regs,
+                                    arg_order,
+                                    tmp_vmreg);
+
+  GrowableArray<ArgMove>* arg_order_vmreg = new GrowableArray<ArgMove>(total_in_args); // conservative
+
+#ifdef ASSERT
+  bool reg_destroyed[RegisterImpl::number_of_registers];
+  bool freg_destroyed[XMMRegisterImpl::number_of_registers];
+  for ( int r = 0 ; r < RegisterImpl::number_of_registers ; r++ ) {
+    reg_destroyed[r] = false;
+  }
+  for ( int f = 0 ; f < XMMRegisterImpl::number_of_registers ; f++ ) {
+    freg_destroyed[f] = false;
+  }
+#endif // ASSERT
+
+  for (int i = 0; i < arg_order.length(); i += 2) {
+    int in_arg  = arg_order.at(i);
+    int out_arg = arg_order.at(i + 1);
+
+    assert(in_arg != -1 || out_arg != -1, "");
+    BasicType arg_bt = (in_arg != -1 ? in_sig_bt[in_arg] : out_sig_bt[out_arg]);
+    switch (arg_bt) {
+      case T_BOOLEAN:
+      case T_BYTE:
+      case T_SHORT:
+      case T_CHAR:
+      case T_INT:
+      case T_FLOAT:
+        break; // process
+
+      case T_LONG:
+      case T_DOUBLE:
+        assert(in_arg  == -1 || (in_arg  + 1 < total_in_args  &&  in_sig_bt[in_arg  + 1] == T_VOID), "bad arg list: %d", in_arg);
+        assert(out_arg == -1 || (out_arg + 1 < total_out_args && out_sig_bt[out_arg + 1] == T_VOID), "bad arg list: %d", out_arg);
+        break; // process
+
+      case T_VOID:
+        continue; // skip
+
+      default:
+        fatal("found in upcall args: %s", type2name(arg_bt));
+    }
+
+    ArgMove move;
+    move.bt   = arg_bt;
+    move.from = (in_arg != -1 ? in_regs[in_arg] : tmp_vmreg);
+    move.to   = (out_arg != -1 ? out_regs[out_arg] : tmp_vmreg);
+
+#ifdef ASSERT
+    if (in_regs[in_arg].first()->is_Register()) {
+      assert(!reg_destroyed[in_regs[in_arg].first()->as_Register()->encoding()], "destroyed reg!");
+    } else if (in_regs[in_arg].first()->is_XMMRegister()) {
+      assert(!freg_destroyed[in_regs[in_arg].first()->as_XMMRegister()->encoding()], "destroyed reg!");
+    }
+    if (out_arg != -1) {
+      if (out_regs[out_arg].first()->is_Register()) {
+        reg_destroyed[out_regs[out_arg].first()->as_Register()->encoding()] = true;
+      } else if (out_regs[out_arg].first()->is_XMMRegister()) {
+        freg_destroyed[out_regs[out_arg].first()->as_XMMRegister()->encoding()] = true;
+      }
+    }
+#endif /* ASSERT */
+
+    arg_order_vmreg->push(move);
+  }
+
+  // Calculate the total number of stack slots we will need.
+
+  // First count the abi requirement plus all of the outgoing args
+  int stack_slots = SharedRuntime::out_preserve_stack_slots() + out_arg_slots;
+
+  // Now a place (+2) to save return values or temp during shuffling
+  // + 4 for return address (which we own) and saved rbp
+//  stack_slots += 6;
+
+  // Ok The space we have allocated will look like:
+  //
+  //
+  // FP-> |                     |
+  //      |---------------------|
+  //      | 2 slots for moves   |
+  //      |---------------------|
+  //      | outbound memory     |
+  //      | based arguments     |
+  //      |                     |
+  //      |---------------------|
+  //      |                     |
+  // SP-> | out_preserved_slots |
+  //
+  //
+
+  // Now compute actual number of stack words we need rounding to make
+  // stack properly aligned.
+
+  frame_size = align_up(stack_slots * VMRegImpl::stack_slot_size, StackAlignmentInBytes);
+
+  return arg_order_vmreg;
+}
+
+static void shuffle_arguments(MacroAssembler* _masm, GrowableArray<ArgMove>* arg_moves) {
+  for (int i = 0; i < arg_moves->length(); i++) {
+    ArgMove arg_mv = arg_moves->at(i);
+    BasicType arg_bt     = arg_mv.bt;
+    VMRegPair from_vmreg = arg_mv.from;
+    VMRegPair   to_vmreg = arg_mv.to;
+
+    __ block_comment(err_msg("bt=%s", type2name(arg_bt)));
+    switch (arg_bt) {
+      case T_BOOLEAN:
+      case T_BYTE:
+      case T_SHORT:
+      case T_CHAR:
+      case T_INT:
+       SharedRuntime::move32_64(_masm, from_vmreg, to_vmreg);
+       break;
+
+      case T_FLOAT:
+        SharedRuntime::float_move(_masm, from_vmreg, to_vmreg);
+        break;
+
+      case T_DOUBLE:
+        SharedRuntime::double_move(_masm, from_vmreg, to_vmreg);
+        break;
+
+      case T_LONG :
+        SharedRuntime::long_move(_masm, from_vmreg, to_vmreg);
+        break;
+
+      default:
+        fatal("found in upcall args: %s", type2name(arg_bt));
+    }
+  }
+}
+
+address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver, Method* entry, TRAPS) {
   CodeBuffer buffer("upcall_stub_linkToNative", 1024, 1024);
+
+  int frame_size = -1;
+  GrowableArray<ArgMove>* arg_moves = compute_argument_shuffle(entry, frame_size);
+
+  int upcall_context_offset = frame_size;
+
+  frame_size = align_up(frame_size + sizeof(struct upcall_context), StackAlignmentInBytes);
+
+  //////////////////////////////////////////////////////////////////////////////
+
   MacroAssembler* _masm = new MacroAssembler(&buffer);
 
   Label call_return;
@@ -329,15 +416,20 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
 
   __ enter(); // set up frame
 
-  __ subptr(rsp, align_up(sizeof(struct upcall_context), 16));
+  __ subptr(rsp, frame_size);
 
-  save_upcall_context(_masm);
+  save_upcall_context(_masm, upcall_context_offset);
 
   __ get_thread(r15_thread);
 
-  __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.thread)), r15_thread);
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.thread)), r15_thread);
 
-  //////////////////////////////////////////////////////////////////////////////
+  // FIXME: is it needed?
+//  JNIHandleBlock* new_handles = JNIHandleBlock::allocate_block(thread);
+//  _handles      = _thread->active_handles();    // save previous handle block & Java frame linkage
+//  _thread->set_active_handles(new_handles);     // install new handle block and reset Java frame linkage
+
+  // FIXME: pending exceptions?
 
   __ block_comment("safepoint poll");
   __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native_trans);
@@ -367,53 +459,9 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
   __ jcc(Assembler::equal, L_reguard);
   __ bind(L_after_reguard);
 
-  //////////////////////////////////////////////////////////////////////////////
-
-  // shuffle (need to add receiver in front)
-  //  j_rarg0 = c_rarg1 = rsi
-  //  j_rarg1 = c_rarg2 = rdx
-  //  j_rarg2 = c_rarg3 = rcx
-  //  j_rarg3 = c_rarg4 = r8
-  //  j_rarg4 = c_rarg5 = r9
-  //  j_rarg5 = c_rarg0 = rdi
-
-  // (c_rarg0, c_rarg1, c_rarg2, c_rarg3, c_rarg4, c_rarg5)
-  // (j_rarg5, j_rarg0, j_rarg1, j_rarg2, j_rarg3, j_rarg4)
-  //   ==>
-  // (j_rarg0, j_rarg1, j_rarg2, j_rarg3, j_rarg4, j_rarg5)
-  // (      _, c_rarg2, c_rarg3, c_rarg4, c_rarg5, c_rarg0) c_rarg1
-  //
-  //   0    1    2    3    4   5            0    1    2   3   4    5
-  // (rdi, rsi, rdx, rcx, r8, r9) => (rsi, rdx, rcx, r8, r9, rdi)  _
-
-  // r9  => stack
-
-  // rcx => r9
-  // rsi => rcx
-
-  // rdi => rdx
-  // r8  => rdi
-  // rdx => r8
-
-#ifndef _WIN64
-  __ block_comment("argument shuffle");
-
-  // FIXME: remove redundant shuffles
-  // on stack: r9 => stack
-
-  // rcx => r9, rsi => rcx
-  __ movptr(j_rarg4, c_rarg3); // r9 <= rcx;
-  __ movptr(j_rarg2, c_rarg1); // rcx <= rsi
-
-  __ movptr(rscratch1, c_rarg2); // temp: r10 <= rdx
-
-  // rdi => rdx, r8 => rdi, rdx/r10 => r8
-  __ movptr(j_rarg1, c_rarg0); // rdx <= rdi
-  __ movptr(j_rarg5, c_rarg4); // rdi <= r8
-  __ movptr(j_rarg3, rscratch1); // r8 <= r10 (contains c_rarg2)
-#else
-#error "Not supported"
-#endif // _WIN64
+  __ block_comment("{ argument shuffle");
+  shuffle_arguments(_masm, arg_moves);
+  __ block_comment("} argument shuffle");
 
   __ block_comment("{ receiver ");
   __ movptr(rscratch1, (intptr_t)receiver);
@@ -422,41 +470,27 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
   __ movptr(j_rarg0, rscratch1);
   __ block_comment("} receiver ");
 
-  // FIXME: should go through an invoker?
-  Method* meth = NULL;
-  {
-    oop recv = JNIHandles::resolve(receiver);
-    oop lform = java_lang_invoke_MethodHandle::form(recv);
-    oop vmentry = java_lang_invoke_LambdaForm::vmentry(lform);
-    meth = java_lang_invoke_MemberName::vmtarget(vmentry);
-  }
-
-  __ mov_metadata(rbx, meth);
+  __ mov_metadata(rbx, entry);
 
   __ movptr(Address(r15_thread, JavaThread::callee_target_offset()), rbx); // just in case callee is deoptimized
 
   __ reinit_heapbase();
 
-  //__ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_Java);
-
-  save_java_frame_anchor(_masm, r15_thread);
+  save_java_frame_anchor(_masm, upcall_context_offset, r15_thread);
 
   __ reset_last_Java_frame(r15_thread, true);
 
   __ call(Address(rbx, Method::from_compiled_offset()));
 
+  // FIXME: return value post-processing?
+
   __ bind(call_return);
 
-  restore_java_frame_anchor(_masm, r15_thread);
+  restore_java_frame_anchor(_masm, upcall_context_offset, r15_thread);
 
-  //__ set_last_Java_frame(rsp, noreg, (address)the_pc);
+  restore_upcall_context(_masm, upcall_context_offset);
 
-  // FIXME: More stuff stripped here
-
-   restore_upcall_context(_masm);
-
-  // FIXME: More stuff stripped here
-
+//  __ vzeroupper()
   __ leave();
   __ ret(0);
 
@@ -476,6 +510,8 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
   restore_native_arguments(_masm);
   __ jmp(L_after_safepoint_poll);
 
+  __ block_comment("} L_safepoint_poll_slow_path");
+
   //////////////////////////////////////////////////////////////////////////////
 
   __ block_comment("{ L_reguard");
@@ -490,6 +526,8 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
   __ reinit_heapbase();
   restore_native_arguments(_masm);
   __ jmp(L_after_reguard);
+
+  __ block_comment("} L_reguard");
 
   //////////////////////////////////////////////////////////////////////////////
 
@@ -530,16 +568,18 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
   __ movptr(Address(r15_thread, Thread::exception_file_offset()), rscratch1);
   __ movl(Address(r15_thread, Thread::exception_line_offset()), (int)  __LINE__);
 
+  // TODO: return value?
+
   __ jmp(call_return);
   __ block_comment("} exception handler");
 
   _masm->flush();
 
   stringStream ss;
-  ss.print("upcall_stub_specialized_J%d_D%d_R%d", nlongs, ndoubles, rettag);
+  ss.print("upcall_stub_linkToNative_J%s", entry->signature()->as_C_string());
   const char* name = _masm->code_string(ss.as_string());
 
-  EntryBlob* blob = EntryBlob::create("upcall_stub_linkToNative", &buffer, exception_handler_offset, receiver);
+  EntryBlob* blob = EntryBlob::create(name, &buffer, exception_handler_offset, receiver);
 
   if (UseNewCode) {
     blob->print_on(tty);

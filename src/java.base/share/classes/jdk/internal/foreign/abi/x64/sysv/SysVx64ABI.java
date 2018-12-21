@@ -140,8 +140,8 @@ public class SysVx64ABI implements SystemABI {
         StandardCall sc = new StandardCall();
         CallingSequence callingSequence = sc.arrangeCall(nmt);
         if (fastPath == null || !fastPath.equals("none")) {
-            if (DirectSignatureShuffler.acceptUpcall(nmt, callingSequence)) {
-                return registerUpcallStub(new DirectUpcallHandler(target, callingSequence, nmt));
+            if (LinkToNativeSignatureShuffler.acceptUpcall(nmt, callingSequence)) {
+                return registerUpcallStub(new LinkToNativeUpcallHandler(target, callingSequence, nmt));
             } else if (fastPath != null && fastPath.equals("direct")) {
                 throw new IllegalStateException(
                         String.format("No fast path for function type %s", nmt.function()));

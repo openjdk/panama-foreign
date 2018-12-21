@@ -29,12 +29,11 @@
 
 class DirectUpcallHandler: AllStatic {
  private:
-  static void save_java_frame_anchor(MacroAssembler* _masm, Register thread);
-  static void restore_java_frame_anchor(MacroAssembler* _masm, Register thread);
+  static void save_java_frame_anchor(MacroAssembler* _masm, int upcall_context_offset, Register thread);
+  static void restore_java_frame_anchor(MacroAssembler* _masm, int upcall_context_offset, Register thread);
 
  public:
-  static address generate_specialized_upcall_stub(jobject receiver, int nlongs, int ndoubles, int rettag);
-  static address generate_linkToNative_upcall_stub(jobject receiver, int nlongs, int ndoubles, int rettag);
+  static address generate_linkToNative_upcall_stub(jobject receiver, Method* entry, TRAPS);
 };
 
 

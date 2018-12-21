@@ -50,27 +50,10 @@ public class LinkToNativeUpcallHandler implements Library.Symbol {
             LinkToNativeSignatureShuffler shuffler =
                     LinkToNativeSignatureShuffler.nativeToJavaShuffler(callingSequence, nmt);
             this.mh = shuffler.adapt(target);
-            MethodType mt = this.mh.type();
-            Class<?> retClass = mt.returnType();
-            int nlongs = (int)mt.parameterList().stream().filter(p -> p == long.class).count();
-            int ndoubles = (int)mt.parameterList().stream().filter(p -> p == double.class).count();
-            long addr = allocateUpcallStub(mh, nlongs, ndoubles, encode(retClass));
+            long addr = allocateUpcallStub(mh);
             this.entryPoint = BoundedPointer.createNativeVoidPointer(addr);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
-        }
-    }
-
-    /*non-public*/
-    static int encode(Class<?> ret) {
-        if (ret == double.class) {
-            return 2;
-        } else if (ret == void.class) {
-            return 0;
-        } else if (ret == long.class) {
-            return 1;
-        } else {
-            throw new IllegalStateException("Unexpected carrier: " + ret.getName());
         }
     }
 
@@ -84,15 +67,9 @@ public class LinkToNativeUpcallHandler implements Library.Symbol {
         return entryPoint;
     }
 
-    /*** direct entry points ***/
-
-    public static long invoke_J_JJ(LinkToNativeUpcallHandler handler, long arg0, long arg1) throws Throwable {
-        return (long)handler.mh.invokeExact(arg0, arg1);
-    }
-
     // natives
 
-    native long allocateUpcallStub(MethodHandle handler, int nlongs, int ndoubles, int rettag);
+    native long allocateUpcallStub(MethodHandle handler);
 
     private static native void registerNatives();
     static {

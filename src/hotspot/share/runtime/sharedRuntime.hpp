@@ -394,6 +394,12 @@ class SharedRuntime: AllStatic {
   static int c_calling_convention(const BasicType *sig_bt, VMRegPair *regs, VMRegPair *regs2,
                                   int total_args_passed);
 
+  static void compute_move_order(const BasicType* in_sig_bt,
+                                 int total_in_args, const VMRegPair* in_regs,
+                                 int total_out_args, VMRegPair* out_regs,
+                                 GrowableArray<int>& arg_order, // result
+                                 VMRegPair tmp_vmreg);
+
   static size_t trampoline_size();
 
   static void generate_trampoline(MacroAssembler *masm, address destination);
@@ -471,8 +477,15 @@ class SharedRuntime: AllStatic {
   static bool is_wide_vector(int size);
 
   // Save and restore a native result
-  static void    save_native_result(MacroAssembler *_masm, BasicType ret_type, int frame_slots);
-  static void restore_native_result(MacroAssembler *_masm, BasicType ret_type, int frame_slots);
+  static void    save_native_result(MacroAssembler* masm, BasicType ret_type, int frame_slots);
+  static void restore_native_result(MacroAssembler* masm, BasicType ret_type, int frame_slots);
+
+  static void unpack_array_argument(MacroAssembler* masm, VMRegPair reg, BasicType in_elem_type, VMRegPair body_arg, VMRegPair length_arg);
+
+  static void   move32_64(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
+  static void   long_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
+  static void  float_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
+  static void double_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst);
 
   // Generate a native wrapper for a given method.  The method takes arguments
   // in the Java compiled code convention, marshals them to the native

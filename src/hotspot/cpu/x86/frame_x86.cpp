@@ -369,7 +369,7 @@ frame frame::sender_for_upcall_frame(RegisterMap* map) const {
   assert(map != NULL, "map must be set");
   // Java frame called from C; skip all C frames and return top C
   // frame of that chunk as the sender
-  JavaFrameAnchor* jfa = (JavaFrameAnchor*)&fp()[-5]; // upcall_handler.jfa FIXME: compute automatically / verify
+  JavaFrameAnchor* jfa = (JavaFrameAnchor*)&fp()[-4]; // upcall_handler.jfa FIXME: compute automatically / verify
   assert(jfa->last_Java_sp() > sp(), "must be above this frame on stack");
   // Since we are walking the stack now this nested anchor is obviously walkable
   // even if it wasn't when it was stacked.

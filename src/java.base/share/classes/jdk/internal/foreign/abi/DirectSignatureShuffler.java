@@ -143,8 +143,7 @@ public class DirectSignatureShuffler {
     }
 
     private static void checkCallingSequence(CallingSequence callingSequence) {
-        if (callingSequence.returnsInMemory() ||
-                !callingSequence.getBindings(StorageClass.STACK_ARGUMENT_SLOT).isEmpty()) {
+        if (callingSequence.returnsInMemory()) {
             throw new IllegalArgumentException("Unsupported non-scalarized calling sequence!");
         }
     }
