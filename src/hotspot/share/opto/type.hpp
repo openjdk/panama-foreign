@@ -485,6 +485,8 @@ public:
   static const TypeF *MIN;
   static const TypeF *ZERO; // positive zero only
   static const TypeF *ONE;
+  static const TypeF *POS_INF;
+  static const TypeF *NEG_INF;
 #ifndef PRODUCT
   virtual void dump2( Dict &d, uint depth, outputStream *st ) const;
 #endif
@@ -514,6 +516,8 @@ public:
   static const TypeD *MIN;
   static const TypeD *ZERO; // positive zero only
   static const TypeD *ONE;
+  static const TypeD *POS_INF;
+  static const TypeD *NEG_INF;
 #ifndef PRODUCT
   virtual void dump2( Dict &d, uint depth, outputStream *st ) const;
 #endif
