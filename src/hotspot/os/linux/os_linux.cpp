@@ -705,6 +705,8 @@ static void *thread_native_entry(Thread *thread) {
     }
   }
 
+  assert(osthread->pthread_id() != 0, "pthread_id was not set as expected");
+
   // call one more level start routine
   thread->call_run();
 
@@ -5056,7 +5058,7 @@ jint os::init_2(void) {
   // initialize thread priority policy
   prio_init();
 
-  if (!FLAG_IS_DEFAULT(AllocateHeapAt)) {
+  if (!FLAG_IS_DEFAULT(AllocateHeapAt) || !FLAG_IS_DEFAULT(AllocateOldGenAt)) {
     set_coredump_filter(DAX_SHARED_BIT);
   }
 
