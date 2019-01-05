@@ -69,7 +69,7 @@ function replace_variables {
     local kernel_escaped=$(echo -e "$kernel" | tr '\n' '|')
     sed "s/\[\[KERNEL\]\]/${kernel_escaped}/g" $filename > ${filename}.current1
     cat ${filename}.current1 | tr '|' "\n" > ${filename}.current
-    rm "${filename}.current1"
+    rm -f "${filename}.current1"
   else
     cp $filename ${filename}.current
   fi
@@ -89,7 +89,7 @@ function replace_variables {
     echo -e "#end[${guard}]\n" >> $output
   fi
 
-  rm ${filename}.current
+  rm -f ${filename}.current
 }
 
 function gen_op_tmpl {
@@ -337,4 +337,4 @@ gen_unit_footer $unit_output
 gen_perf_footer $perf_output
 gen_perf_scalar_footer $perf_scalar_output
 
-rm templates/*.current*
+rm -f templates/*.current*

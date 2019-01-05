@@ -127,11 +127,12 @@ do
 
     # Generate jtreg tests
     Log true " ${bits}_jtreg"
-    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${TEMPLATE_FILE} > $vectorteststype.java "
+    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs -i${TEMPLATE_FILE} -o$vectorteststype.java "
     TEST_DEST_FILE="${vectorteststype}.java"
+    rm -f ${TEST_DEST_FILE}
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
-      < ${TEMPLATE_FILE} \
-      > ${TEST_DEST_FILE}
+      -i${TEMPLATE_FILE} \
+      -o${TEST_DEST_FILE}
     if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
       tr -d  '\r' < ${TEST_DEST_FILE} > temp
       mv temp ${TEST_DEST_FILE}
@@ -139,11 +140,12 @@ do
 
     # Generate jmh performance tests
     Log true " ${bits}_jmh"
-    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < ${PERF_TEMPLATE_FILE} > ${vectorteststype}Perf.java "
+    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs -i${PERF_TEMPLATE_FILE} -o${vectorteststype}Perf.java "
     PERF_DEST_FILE="${PERF_DEST}/${vectorbenchtype}.java"
+    rm -f ${PERF_DEST_FILE}
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
-      < ${PERF_TEMPLATE_FILE} \
-      > ${PERF_DEST_FILE}
+      -i${PERF_TEMPLATE_FILE} \
+      -o${PERF_DEST_FILE}
     if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
       tr -d  '\r' < ${PERF_DEST_FILE} > temp
       mv temp ${PERF_DEST_FILE}
@@ -153,9 +155,10 @@ do
   # Generate jmh performance tests
   Log true " scalar"
   PERF_DEST_FILE="${PERF_DEST}/${Type}Scalar.java"
+  rm -f ${PERF_DEST_FILE}
   ${JAVA} -cp . ${SPP_CLASSNAME} -nel $args \
-    < ${PERF_SCALAR_TEMPLATE_FILE} \
-    > ${PERF_DEST_FILE}
+    -i${PERF_SCALAR_TEMPLATE_FILE} \
+    -o${PERF_DEST_FILE}
   if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
     tr -d  '\r' < ${PERF_DEST_FILE} > temp
     mv temp ${PERF_DEST_FILE}
@@ -181,11 +184,12 @@ do
 
     # Generate
     Log true " ${bits}_ls"
-    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs < templates/X-LoadStoreTest.java.template > $vectorteststype.java "
+    Log false "${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs -itemplates/X-LoadStoreTest.java.template -o$vectorteststype.java "
     TEST_DEST_FILE="${vectorteststype}.java"
+    rm -f ${TEST_DEST_FILE}
     ${JAVA} -cp . ${SPP_CLASSNAME} -nel $bitargs \
-      < templates/X-LoadStoreTest.java.template \
-      > ${TEST_DEST_FILE}
+      -itemplates/X-LoadStoreTest.java.template \
+      -o${TEST_DEST_FILE}
     if [ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]; then
       tr -d  '\r' < ${TEST_DEST_FILE} > temp
       mv temp ${TEST_DEST_FILE}
