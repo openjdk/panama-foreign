@@ -79,18 +79,20 @@ do
   abstractfpvectortype=${typeprefix}${Fptype}Vector
   args="$args -Dabstractvectortype=$abstractvectortype -Dabstractbitsvectortype=$abstractbitsvectortype -Dabstractfpvectortype=$abstractfpvectortype"
   echo $args
+  rm -f $abstractvectortype.java
   java $SPP -nel $args \
-    < X-Vector.java.template \
-    > $abstractvectortype.java
+     -iX-Vector.java.template \
+     -o$abstractvectortype.java
 
   if [ VAR_OS_ENV==windows.cygwin ]; then
     tr -d '\r' < $abstractvectortype.java > temp
     mv temp $abstractvectortype.java
   fi
 
+  rm -f ${abstractvectortype}Helper.java
   java $SPP -nel $args \
-    < X-VectorHelper.java.template \
-    > ${abstractvectortype}Helper.java
+     -iX-VectorHelper.java.template \
+     -o${abstractvectortype}Helper.java
 
   if [[ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]]; then
     tr -d '\r' < ${abstractvectortype}Helper.java > temp
@@ -121,9 +123,10 @@ do
     bitargs="$args -Dbits=$bits -Dvectortype=$vectortype -Dmasktype=$masktype -Dshuffletype=$shuffletype -Dbitsvectortype=$bitsvectortype -Dfpvectortype=$fpvectortype -Dvectorindextype=$vectorindextype -Dshape=$shape -DShape=$Shape"
 
     echo $bitargs
+    rm -f $vectortype.java
     java $SPP -nel $bitargs \
-      < X-VectorBits.java.template \
-      > $vectortype.java
+       -iX-VectorBits.java.template \
+       -o$vectortype.java
 
     if [[ "x${VAR_OS_ENV}" == "xwindows.cygwin" ]]; then
       tr -d  '\r' < $vectortype.java > temp
