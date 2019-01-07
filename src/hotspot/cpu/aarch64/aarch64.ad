@@ -16134,6 +16134,362 @@ instruct reduce_mul2D(vRegD dst, vRegD src1, vecX src2, vecX tmp)
   ins_pipe(pipe_class_default);
 %}
 
+instruct reduce_max8B(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "smaxv $tmp, T8B, $src2\n\t"
+            "smov  $dst, $tmp, B, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 gt\t max reduction8B" %}
+  ins_encode %{
+    __ smaxv(as_FloatRegister($tmp$$reg), __ T8B, as_FloatRegister($src2$$reg));
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::GT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_max16B(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "smaxv $tmp, T16B, $src2\n\t"
+            "smov  $dst, $tmp, B, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 gt\t max reduction16B" %}
+  ins_encode %{
+    __ smaxv(as_FloatRegister($tmp$$reg), __ T16B, as_FloatRegister($src2$$reg));
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::GT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_max4S(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "smaxv $tmp, T4H, $src2\n\t"
+            "smov  $dst, $tmp, H, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 gt\t max reduction4S" %}
+  ins_encode %{
+    __ smaxv(as_FloatRegister($tmp$$reg), __ T4H, as_FloatRegister($src2$$reg));
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::GT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_max8S(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "smaxv  $tmp, T8H, $src2\n\t"
+            "smov  $dst, $tmp, H, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 gt\t max reduction8S" %}
+  ins_encode %{
+    __ smaxv(as_FloatRegister($tmp$$reg), __ T8H, as_FloatRegister($src2$$reg));
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::GT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_max2I(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecX tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "dup   $tmp, T2D, $src2\n\t"
+            "smaxv $tmp, T4S, $tmp\n\t"
+            "umov  $dst, $tmp, S, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 gt\t max reduction2I" %}
+  ins_encode %{
+    __ dup(as_FloatRegister($tmp$$reg), __ T2D, as_FloatRegister($src2$$reg));
+    __ smaxv(as_FloatRegister($tmp$$reg), __ T4S, as_FloatRegister($tmp$$reg));
+    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ S, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::GT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_max4I(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "smaxv $tmp, T4S, $src2\n\t"
+            "umov  $dst, $tmp, S, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 gt\t max reduction4I" %}
+  ins_encode %{
+    __ smaxv(as_FloatRegister($tmp$$reg), __ T4S, as_FloatRegister($src2$$reg));
+    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ S, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::GT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_max2L(iRegLNoSp dst, iRegL src1, vecX src2, iRegLNoSp tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "umov  $tmp, $src2, D, 0\n\t"
+            "cmp   $src1,$tmp\n\t"
+            "csel  $dst, $src1, $tmp gt\n\t"
+            "umov  $tmp, $src2, D, 1\n\t"
+            "cmp   $dst, $tmp\n\t"
+            "csel  $dst, $dst, $tmp gt\t max reduction2L" %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ cmp(as_Register($src1$$reg), as_Register($tmp$$reg));
+    __ csel(as_Register($dst$$reg), as_Register($src1$$reg), as_Register($tmp$$reg), Assembler::GT);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ cmp(as_Register($dst$$reg), as_Register($tmp$$reg));
+    __ csel(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($tmp$$reg), Assembler::GT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_max2F(vRegF dst, vRegF src1, vecD src2, vecD tmp) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "fmaxs $dst, $src1, $src2\n\t"
+            "ins   $tmp, S, $src2, 0, 1\n\t"
+            "fmaxs $dst, $dst, $tmp\t max reduction2F" %}
+  ins_encode %{
+    __ fmaxs(as_FloatRegister($dst$$reg), as_FloatRegister($src1$$reg), as_FloatRegister($src2$$reg));
+    __ ins(as_FloatRegister($tmp$$reg), __ S, as_FloatRegister($src2$$reg), 0, 1);
+    __ fmaxs(as_FloatRegister($dst$$reg), as_FloatRegister($dst$$reg), as_FloatRegister($tmp$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_max4F(vRegF dst, vRegF src1, vecX src2) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst);
+  format %{ "fmaxv $dst, T4S, $src2\n\t"
+            "fmaxs $dst, $dst, $src1\t max reduction4F" %}
+  ins_encode %{
+    __ fmaxv(as_FloatRegister($dst$$reg), __ T4S, as_FloatRegister($src2$$reg));
+    __ fmaxs(as_FloatRegister($dst$$reg), as_FloatRegister($dst$$reg), as_FloatRegister($src1$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_max2D(vRegD dst, vRegD src1, vecX src2, vecX tmp) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MaxReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "fmaxd $dst, $src1, $src2\n\t"
+            "ins   $tmp, D, $src2, 0, 1\n\t"
+            "fmaxd $dst, $dst, $tmp\t max reduction2D" %}
+  ins_encode %{
+    __ fmaxd(as_FloatRegister($dst$$reg), as_FloatRegister($src1$$reg), as_FloatRegister($src2$$reg));
+    __ ins(as_FloatRegister($tmp$$reg), __ D, as_FloatRegister($src2$$reg), 0, 1);
+    __ fmaxd(as_FloatRegister($dst$$reg), as_FloatRegister($dst$$reg), as_FloatRegister($tmp$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min8B(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "sminv $tmp, T8B, $src2\n\t"
+            "smov  $dst, $tmp, B, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 lt\t min reduction8B" %}
+  ins_encode %{
+    __ sminv(as_FloatRegister($tmp$$reg), __ T8B, as_FloatRegister($src2$$reg));
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::LT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min16B(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "sminv $tmp, T16B, $src2\n\t"
+            "smov  $dst, $tmp, B, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 lt\t min reduction16B" %}
+  ins_encode %{
+    __ sminv(as_FloatRegister($tmp$$reg), __ T16B, as_FloatRegister($src2$$reg));
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ B, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::LT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min4S(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecD tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "sminv $tmp, T4H, $src2\n\t"
+            "smov  $dst, $tmp, H, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 lt\t min reduction4S" %}
+  ins_encode %{
+    __ sminv(as_FloatRegister($tmp$$reg), __ T4H, as_FloatRegister($src2$$reg));
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::LT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min8S(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "sminv $tmp, T8H, $src2\n\t"
+            "smov  $dst, $tmp, H, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 lt\t min reduction8S" %}
+  ins_encode %{
+    __ sminv(as_FloatRegister($tmp$$reg), __ T8H, as_FloatRegister($src2$$reg));
+    __ smov($dst$$Register, as_FloatRegister($tmp$$reg), __ H, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::LT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min2I(iRegINoSp dst, iRegIorL2I src1, vecD src2, vecX tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "dup   $tmp, T2D, $src2\n\t"
+            "sminv $tmp, T2S, $tmp\n\t"
+            "umov  $dst, $tmp, S, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 lt\t min reduction2I" %}
+  ins_encode %{
+    __ dup(as_FloatRegister($tmp$$reg), __ T2D, as_FloatRegister($src2$$reg));
+    __ sminv(as_FloatRegister($tmp$$reg), __ T4S, as_FloatRegister($tmp$$reg));
+    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ S, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::LT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min4I(iRegINoSp dst, iRegIorL2I src1, vecX src2, vecX tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "sminv $tmp, T4S, $src2\n\t"
+            "umov  $dst, $tmp, S, 0\n\t"
+            "cmpw  $dst, $src1\n\t"
+            "cselw $dst, $dst, $src1 lt\t min reduction4I" %}
+  ins_encode %{
+    __ sminv(as_FloatRegister($tmp$$reg), __ T4S, as_FloatRegister($src2$$reg));
+    __ umov($dst$$Register, as_FloatRegister($tmp$$reg), __ S, 0);
+    __ cmpw(as_Register($dst$$reg), as_Register($src1$$reg));
+    __ cselw(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($src1$$reg), Assembler::LT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min2L(iRegLNoSp dst, iRegL src1, vecX src2, iRegLNoSp tmp, rFlagsReg cr) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp, KILL cr);
+  format %{ "umov  $tmp, $src2, D, 0\n\t"
+            "cmp   $src1,$tmp\n\t"
+            "csel  $dst, $src1, $tmp lt\n\t"
+            "umov  $tmp, $src2, D, 1\n\t"
+            "cmp   $dst, $tmp\n\t"
+            "csel  $dst, $dst, $tmp lt\t min reduction2L" %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ cmp(as_Register($src1$$reg), as_Register($tmp$$reg));
+    __ csel(as_Register($dst$$reg), as_Register($src1$$reg), as_Register($tmp$$reg), Assembler::LT);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ cmp(as_Register($dst$$reg), as_Register($tmp$$reg));
+    __ csel(as_Register($dst$$reg), as_Register($dst$$reg), as_Register($tmp$$reg), Assembler::LT);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min2F(vRegF dst, vRegF src1, vecD src2, vecD tmp) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "fmins $dst, $src1, $src2\n\t"
+            "ins   $tmp, S, $src2, 0, 1\n\t"
+            "fmins $dst, $dst, $tmp\t min reduction2F" %}
+  ins_encode %{
+    __ fmins(as_FloatRegister($dst$$reg), as_FloatRegister($src1$$reg), as_FloatRegister($src2$$reg));
+    __ ins(as_FloatRegister($tmp$$reg), __ S, as_FloatRegister($src2$$reg), 0, 1);
+    __ fmins(as_FloatRegister($dst$$reg), as_FloatRegister($dst$$reg), as_FloatRegister($tmp$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min4F(vRegF dst, vRegF src1, vecX src2) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_FLOAT);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst);
+  format %{ "fminv $dst, T4S, $src2\n\t"
+            "fmins $dst, $dst, $src1\t min reduction4F" %}
+  ins_encode %{
+    __ fminv(as_FloatRegister($dst$$reg), __ T4S, as_FloatRegister($src2$$reg));
+    __ fmins(as_FloatRegister($dst$$reg), as_FloatRegister($dst$$reg), as_FloatRegister($src1$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_min2D(vRegD dst, vRegD src1, vecX src2, vecX tmp) %{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_DOUBLE);
+  match(Set dst (MinReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "fmind $dst, $src1, $src2\n\t"
+            "ins   $tmp, D, $src2, 0, 1\n\t"
+            "fmind $dst, $dst, $tmp\t min reduction2D" %}
+  ins_encode %{
+    __ fmind(as_FloatRegister($dst$$reg), as_FloatRegister($src1$$reg), as_FloatRegister($src2$$reg));
+    __ ins(as_FloatRegister($tmp$$reg), __ D, as_FloatRegister($src2$$reg), 0, 1);
+    __ fmind(as_FloatRegister($dst$$reg), as_FloatRegister($dst$$reg), as_FloatRegister($tmp$$reg));
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
 // ====================VECTOR ARITHMETIC=======================================
 
 // --------------------------------- ADD --------------------------------------
