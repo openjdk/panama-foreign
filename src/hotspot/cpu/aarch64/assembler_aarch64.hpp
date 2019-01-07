@@ -2236,9 +2236,24 @@ public:
   INSN(negr,  1, 0b100000101110);
   INSN(notr,  1, 0b100000010110);
   INSN(addv,  0, 0b110001101110);
+  INSN(smaxv, 0, 0b110000101010);
+  INSN(sminv, 0, 0b110001101010);
   INSN(cls,   0, 0b100000010010);
   INSN(clz,   1, 0b100000010010);
   INSN(cnt,   0, 0b100000010110);
+
+#undef INSN
+
+#define INSN(NAME, opc) \
+  void NAME(FloatRegister Vd, SIMD_Arrangement T, FloatRegister Vn) {                  \
+    starti;                                                                            \
+    assert(T == T4S, "arrangement must be T4S");                                       \
+    f(0b01101110, 31, 24), f(opc, 23), f(0b0110000111110, 22, 10);                     \
+    rf(Vn, 5), rf(Vd, 0);                                                              \
+  }
+
+  INSN(fmaxv, 0);
+  INSN(fminv, 1);
 
 #undef INSN
 
@@ -2383,6 +2398,14 @@ public:
     f(((idx<<1)|1)<<(int)T, 20, 16), f(0b001111, 15, 10);
     rf(Vn, 5), rf(Rd, 0);
   }
+
+  void smov(Register Rd, FloatRegister Vn, SIMD_RegVariant T, int idx) {
+    starti;
+    f(0, 31), f(T==D ? 1:0, 30), f(0b001110000, 29, 21);
+    f(((idx<<1)|1)<<(int)T, 20, 16), f(0b001011, 15, 10);
+    rf(Vn, 5), rf(Rd, 0);
+  }
+
 
 #define INSN(NAME, opc, opc2, isSHR)                                    \
   void NAME(FloatRegister Vd, SIMD_Arrangement T, FloatRegister Vn, int shift){ \
