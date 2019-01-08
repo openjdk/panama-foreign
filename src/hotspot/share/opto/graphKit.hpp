@@ -785,6 +785,9 @@ class GraphKit : public Phase {
 
   Node* make_native_call(const TypeFunc* call_type, uint nargs, address call_addr);
 
+  Node* make_thread_state_transition_java_to_native();
+  Node* make_thread_state_transition_native_to_java();
+
   enum {  // flag values for make_runtime_call
     RC_NO_FP = 1,               // CallLeafNoFPNode
     RC_NO_IO = 2,               // do not hook IO edges

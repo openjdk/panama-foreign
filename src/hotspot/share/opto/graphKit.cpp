@@ -2524,6 +2524,37 @@ Node* GraphKit::make_runtime_call(int flags,
 
 }
 
+Node* GraphKit::make_thread_state_transition_java_to_native() {
+//  Node* GraphKit::make_runtime_call(int flags,
+//                                  const TypeFunc* call_type, address call_addr,
+//                                  const char* call_name,
+//                                  const TypePtr* adr_type,
+//                                  // The following parms are all optional.
+//                                  // The first NULL ends the list.
+//                                  Node* parm0, Node* parm1,
+//                                  Node* parm2, Node* parm3,
+//                                  Node* parm4, Node* parm5,
+//                                  Node* parm6, Node* parm7) {
+
+  Node* call = make_runtime_call(RC_NO_LEAF|RC_NO_FP,
+                    OptoRuntime::thread_state_transition_Type(),
+                    StubRoutines::thread_state_transition_java_to_native() ,
+                    "transition_java_to_native",
+                    TypePtr::BOTTOM);
+
+  return call;
+}
+
+Node* GraphKit::make_thread_state_transition_native_to_java() {
+  // FIXME: is it still a leaf considering there's a safepoint check?
+  Node* call = make_runtime_call(RC_NO_LEAF|RC_NO_FP,
+                    OptoRuntime::thread_state_transition_Type(),
+                    StubRoutines::thread_state_transition_native_to_java(),
+                    "transition_native_to_java",
+                    TypePtr::BOTTOM);
+  return call;
+}
+
 //-----------------------------make_runtime_call-------------------------------
 Node* GraphKit::make_native_call(const TypeFunc* call_type, uint nargs, address call_addr) {
   CallNode* call = new CallLeafNode(call_type, call_addr, "native_call", TypePtr::BOTTOM);

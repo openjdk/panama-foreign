@@ -175,6 +175,9 @@ address StubRoutines::_safefetchN_entry                  = NULL;
 address StubRoutines::_safefetchN_fault_pc               = NULL;
 address StubRoutines::_safefetchN_continuation_pc        = NULL;
 
+address StubRoutines::_thread_state_transition_java_to_native = NULL;
+address StubRoutines::_thread_state_transition_native_to_java = NULL;
+
 // Initialization
 //
 // Note: to break cycle with universe initialization, stubs are generated in two phases.

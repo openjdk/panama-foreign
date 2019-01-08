@@ -1215,6 +1215,20 @@ JRT_LEAF(void, OptoRuntime::profile_receiver_type_C(DataLayout* data, oopDesc* r
 JRT_END
 
 //-------------------------------------------------------------------------------------
+
+const TypeFunc* OptoRuntime::thread_state_transition_Type() {
+  // create input type (domain)
+  const Type **fields = TypeTuple::fields(0);
+  const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms, fields);
+
+  // create result type
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms+0] = NULL; // void
+  const TypeTuple *range = TypeTuple::make(TypeFunc::Parms, fields);
+  return TypeFunc::make(domain,range);
+}
+
+//-------------------------------------------------------------------------------------
 // register policy
 
 bool OptoRuntime::is_callee_saved_register(MachRegisterNumbers reg) {

@@ -227,6 +227,9 @@ class StubRoutines: AllStatic {
   static address _safefetchN_fault_pc;
   static address _safefetchN_continuation_pc;
 
+  static address _thread_state_transition_java_to_native;
+  static address _thread_state_transition_native_to_java;
+
  public:
   // Initialization/Testing
   static void    initialize1();                            // must happen before universe::genesis
@@ -385,6 +388,9 @@ class StubRoutines: AllStatic {
   static address select_fill_function(BasicType t, bool aligned, const char* &name);
 
   static address zero_aligned_words()  { return _zero_aligned_words; }
+
+  static address thread_state_transition_java_to_native() { return _thread_state_transition_java_to_native; }
+  static address thread_state_transition_native_to_java() { return _thread_state_transition_native_to_java; }
 
   static double  intrinsic_log10(double d) {
     assert(_intrinsic_log10 != NULL, "must be defined");

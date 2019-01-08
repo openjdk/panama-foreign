@@ -5605,7 +5605,118 @@ address generate_avx_ghash_processBlocks() {
     __ ret(0);
 
     return start;
+  }
 
+  address generate_thread_state_transition_native_to_java() {
+    StubCodeMark mark(this, "StubRoutines", "thread_state_transition_native_to_java");
+
+    address start = __ pc();
+
+    __ enter(); // required for proper stackwalking of RuntimeStub frame
+
+    __ restore_cpu_control_state_after_jni();
+
+    // Unpack native results.
+    // FIXME: not used right now since all small integral primitives are erased to int.
+
+    __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native_trans);
+
+    if (os::is_MP()) {
+      // Force this write out before the read below
+      __ membar(Assembler::Membar_mask_bits(
+             Assembler::LoadLoad | Assembler::LoadStore |
+             Assembler::StoreLoad | Assembler::StoreStore));
+    }
+
+    Label L_after_safepoint_poll;
+    Label L_safepoint_poll_slow_path;
+
+    __ safepoint_poll(L_safepoint_poll_slow_path, r15_thread, rscratch1);
+    __ cmpl(Address(r15_thread, JavaThread::suspend_flags_offset()), 0);
+    __ jcc(Assembler::notEqual, L_safepoint_poll_slow_path);
+    // change thread state
+    __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_Java);
+
+    __ bind(L_after_safepoint_poll);
+
+    __ block_comment("reguard stack check");
+    Label L_reguard;
+    Label L_after_reguard;
+    __ cmpl(Address(r15_thread, JavaThread::stack_guard_state_offset()), JavaThread::stack_guard_yellow_reserved_disabled);
+    __ jcc(Assembler::equal, L_reguard);
+    __ bind(L_after_reguard);
+
+    __ reset_last_Java_frame(r15_thread, true);
+
+    __ leave(); // required for proper stackwalking of RuntimeStub frame
+    __ ret(0);
+
+    //////////////////////////////////////////////////////////////////////////////
+
+    __ block_comment("{ L_safepoint_poll_slow_path");
+    __ bind(L_safepoint_poll_slow_path);
+    __ vzeroupper();
+    __ push(rax); // FIXME: FP // __ movdqu(xmm_save(i), xmm0);
+    __ mov(c_rarg0, r15_thread);
+    __ mov(r12, rsp); // remember sp
+    __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
+    __ andptr(rsp, -16); // align stack as required by ABI
+    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, JavaThread::check_special_condition_for_native_trans)));
+    __ mov(rsp, r12); // restore sp
+    __ reinit_heapbase();
+    __ pop(rax); // FIXME: FP // __ movdqu(xmm0, xmm_save(i));
+    __ jmp(L_after_safepoint_poll);
+    __ block_comment("} L_safepoint_poll_slow_path");
+
+    //////////////////////////////////////////////////////////////////////////////
+
+    __ block_comment("{ L_reguard");
+    __ bind(L_reguard);
+    __ vzeroupper();
+    __ push(rax); // FIXME: FP // __ movdqu(xmm_save(i), xmm0);
+    __ mov(r12, rsp); // remember sp
+    __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
+    __ andptr(rsp, -16); // align stack as required by ABI
+    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::reguard_yellow_pages)));
+    __ mov(rsp, r12); // restore sp
+    __ reinit_heapbase();
+    __ pop(rax); // FIXME: FP // __ movdqu(xmm0, xmm_save(i));
+    __ jmp(L_after_reguard);
+
+    __ block_comment("} L_reguard");
+
+    return start;
+
+  }
+
+address generate_thread_state_transition_java_to_native() {
+    StubCodeMark mark(this, "StubRoutines", "thread_state_transition_java_to_native");
+
+    address start = __ pc();
+
+    __ enter(); // required for proper stackwalking of RuntimeStub frame
+
+    // last_Java_fp
+    //__ movptr(Address(r15_thread, JavaThread::last_Java_fp_offset()), rbp);
+
+    // last_Java_pc: Compute pc
+    Address java_pc(r15_thread,
+                    JavaThread::frame_anchor_offset() + JavaFrameAnchor::last_Java_pc_offset());
+    __ movptr(rscratch1, Address(rsp, 8)); // read return address from stack
+    __ movptr(java_pc, rscratch1);
+
+    // last_Java_sp
+    __ movptr(rscratch1, rsp);
+    __ addptr(rscratch1, 16);
+    __ movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), rscratch1);
+
+    // State transition
+    __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native);
+
+    __ leave(); // required for proper stackwalking of RuntimeStub frame
+    __ ret(0);
+
+    return start;
   }
 
 #undef __
@@ -5984,6 +6095,9 @@ address generate_avx_ghash_processBlocks() {
     if (UseVectorizedMismatchIntrinsic) {
       StubRoutines::_vectorizedMismatch = generate_vectorizedMismatch();
     }
+
+    StubRoutines::_thread_state_transition_java_to_native = generate_thread_state_transition_java_to_native();
+    StubRoutines::_thread_state_transition_native_to_java = generate_thread_state_transition_native_to_java();
   }
 
  public:

@@ -434,9 +434,11 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
   __ block_comment("safepoint poll");
   __ movl(Address(r15_thread, JavaThread::thread_state_offset()), _thread_in_native_trans);
 
-  __ membar(Assembler::Membar_mask_bits(
-              Assembler::LoadLoad  | Assembler::StoreLoad |
-              Assembler::LoadStore | Assembler::StoreStore));
+  if (os::is_MP()) {
+    __ membar(Assembler::Membar_mask_bits(
+                Assembler::LoadLoad  | Assembler::StoreLoad |
+                Assembler::LoadStore | Assembler::StoreStore));
+  }
 
   // check for safepoint operation in progress and/or pending suspend requests
   Label L_after_safepoint_poll;

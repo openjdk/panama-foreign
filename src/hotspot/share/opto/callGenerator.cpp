@@ -838,13 +838,22 @@ JVMState* NativeCallGenerator::generate(JVMState* jvms) {
   GraphKit kit(jvms);
   kit.C->print_inlining_update(this);
 
-  const TypeFunc *t = TypeFunc::make(tf(), tf()->domain()->cnt()-1);
-  Node* call = NULL;
-  address addr = _nep->get_entry_point();
-  if (kit.C->log() != NULL) {
-    kit.C->log()->elem("native_call bci='%d' entry_point='" INTPTR_FORMAT "'", jvms->bci(), p2i(addr));
+  if (_nep != NULL) {
+    Node* call = NULL;
+    const TypeFunc *t = TypeFunc::make(tf(), tf()->domain()->cnt()-1);
+    address addr = _nep->get_entry_point();
+    if (kit.C->log() != NULL) {
+      kit.C->log()->elem("native_call bci='%d' entry_point='" INTPTR_FORMAT "'", jvms->bci(), p2i(addr));
+    }
+
+    kit.make_thread_state_transition_java_to_native();
+
+    call = kit.make_native_call(t, method()->arg_size()-1, addr);
+
+    kit.make_thread_state_transition_native_to_java();
+  } else {
+    fatal("NYI: indirect call");
   }
-  call = kit.make_native_call(t, method()->arg_size()-1, addr);
 
   return kit.transfer_exceptions_into_jvms();
 }
@@ -971,17 +980,19 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
   case vmIntrinsics::_linkToNative:
     {
       Node* member_name = kit.argument(callee->arg_size() - 1);
-//      if (member_name->Opcode() == Op_ConP) {
-//        const TypeOopPtr* oop_ptr = member_name->bottom_type()->is_oopptr();
-//        ciNativeEntryPoint* nep = oop_ptr->const_oop()->as_native_entry_point();
-//        address addr = nep->get_entry_point();
-//        if (PrintInlining)  C->print_inlining(callee, jvms->depth() - 1, jvms->bci(), "direct native call");
-//        return new NativeCallGenerator(callee, nep);
-//      } else {
+      if (member_name->Opcode() == Op_ConP) {
+        const TypeOopPtr* oop_ptr = member_name->bottom_type()->is_oopptr();
+        ciNativeEntryPoint* nep = oop_ptr->const_oop()->as_native_entry_point();
+        address addr = nep->get_entry_point();
+        if (PrintInlining)  C->print_inlining(callee, jvms->depth() - 1, jvms->bci(), "direct native call");
+        return new NativeCallGenerator(callee, nep);
+      } else {
+        // TODO: indirect native call?
+
         const char* msg = "member_name not constant";
         if (PrintInlining)  C->print_inlining(callee, jvms->depth() - 1, jvms->bci(), msg);
         C->log_inline_failure(msg);
-//      }
+      }
     }
     break;
   default:
