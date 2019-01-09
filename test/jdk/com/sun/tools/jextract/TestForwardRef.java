@@ -32,7 +32,6 @@
 
 import org.testng.annotations.*;
 
-import java.foreign.annotations.NativeHeader;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 
@@ -49,8 +48,8 @@ public class TestForwardRef extends JextractToolRunner {
         run("-o", forwardRefJar.toString(), forwardRefH.toString())
                 .checkMatchesOutput("^$")
                 .checkSuccess();
-        try {
-            Class<?> cls = loadClass("forwardRef", forwardRefJar);
+        try (Loader loader = classLoader(forwardRefJar)) {
+            Class<?> cls = loader.loadClass("forwardRef");
             Method getterS = findGlobalVariableGet(cls, "s"); //check that we can load the globals's type correctly
             Class<?> structS = getterS.getReturnType();
             assertEquals(structS.getDeclaredClasses().length, 0); //check no spurious decl in forward ref

@@ -52,6 +52,7 @@ import java.util.stream.Stream;
 public class TestDowncall extends JextractToolRunner {
 
     final static int MAX_CODE = 20;
+    List<Runnable> cleanups = new ArrayList<>();
 
     public static class DowncallTest {
 
@@ -89,17 +90,27 @@ public class TestDowncall extends JextractToolRunner {
     public Object[] getTests() throws ReflectiveOperationException {
         List<DowncallTest> res = new ArrayList<>();
         for (int i = 0 ; i < MAX_CODE ; i++) {
-            Path clzPath = getOutputFilePath("libTestDowncall.jar");
+            Path clzPath = getOutputFilePath("libTestDowncall" + i + ".jar");
             run("-o", clzPath.toString(),
                     "--exclude-symbols", filterFor(i),
                     getInputFilePath("libTestDowncall.h").toString()).checkSuccess();
-            Class<?> headerCls = loadClass("libTestDowncall", clzPath);
+            Loader loader = classLoader(clzPath);
+            Class<?> headerCls = loader.loadClass("libTestDowncall");
             Object lib = Libraries.bind(headerCls, Libraries.loadLibrary(MethodHandles.lookup(), "TestDowncall"));
             res.add(new DowncallTest(headerCls, lib));
+            cleanups.add(() -> {
+                loader.close();
+                deleteFile(clzPath);
+            });
         }
         if(res.isEmpty())
             throw new RuntimeException("Could not generate any tests");
         return res.toArray();
+    }
+
+    @AfterSuite
+    public void after() {
+        cleanups.forEach(Runnable::run);
     }
 
     static Object[] makeArgs(Scope sc, Method m, List<Consumer<Object>> checks) throws ReflectiveOperationException {

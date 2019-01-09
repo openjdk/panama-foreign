@@ -58,9 +58,9 @@ class JextractToolRunner {
 
     protected JextractToolRunner(Path input, Path output) {
         inputDir = (input != null) ? input :
-            Paths.get(System.getProperty("test.src", "."));
+                Paths.get(System.getProperty("test.src", "."));
         outputDir = (output != null) ? output :
-            Paths.get(System.getProperty("test.classes", "."));
+                Paths.get(System.getProperty("test.classes", "."));
     }
 
     protected Path getInputFilePath(String fileName) {
@@ -115,9 +115,9 @@ class JextractToolRunner {
 
     protected static void deleteFile(Path path) {
         try {
-            Files.delete(path);
+            Files.deleteIfExists(path);
         } catch (IOException ioExp) {
-            System.err.println(ioExp);
+            throw new RuntimeException(ioExp);
         }
     }
 
@@ -126,29 +126,29 @@ class JextractToolRunner {
             Files.walkFileTree(path, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                   deleteFile(file);
-                   return FileVisitResult.CONTINUE;
+                    deleteFile(file);
+                    return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                   deleteFile(dir);
-                   return FileVisitResult.CONTINUE;
+                    deleteFile(dir);
+                    return FileVisitResult.CONTINUE;
                 }
             });
         } catch (IOException ioExp) {
-            System.err.println(ioExp);
+            throw new RuntimeException(ioExp);
         }
     }
 
-    protected static Class<?> loadClass(String className, Path...paths) {
+    protected static Loader classLoader(Path... paths) {
         try {
             URL[] urls = new URL[paths.length];
             for (int i = 0; i < paths.length; i++) {
                 urls[i] = paths[i].toUri().toURL();
             }
             URLClassLoader ucl = new URLClassLoader(urls, null);
-            return Class.forName(className, false, ucl);
+            return new Loader(ucl);
         } catch (RuntimeException re) {
             throw re;
         } catch (Exception e) {
@@ -231,5 +231,31 @@ class JextractToolRunner {
             fail("Expect method " + name);
         }
         return null;
+    }
+
+    protected static class Loader implements AutoCloseable {
+
+        private final URLClassLoader loader;
+
+        public Loader(URLClassLoader loader) {
+            this.loader = loader;
+        }
+
+        public Class<?> loadClass(String className) {
+            try {
+                return Class.forName(className, false, loader);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void close() {
+            try {
+                loader.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

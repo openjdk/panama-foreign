@@ -42,35 +42,37 @@ public class RedundantDeclsTest extends JextractToolRunner {
         Path clzPath = getOutputFilePath("RedundentDecls.jar");
         run("-o", clzPath.toString(),
                 getInputFilePath("redundantDecls.h").toString()).checkSuccess();
-        Class<?> headerCls = loadClass("redundantDecls", clzPath);
-        Class<?>[] inners = headerCls.getDeclaredClasses();
-        assertEquals(inners.length, 4);
+        try(Loader loader = classLoader(clzPath)) {
+            Class<?> headerCls = loader.loadClass("redundantDecls");
+            Class<?>[] inners = headerCls.getDeclaredClasses();
+            assertEquals(inners.length, 4);
 
-        Class<?> pointStruct = findClass(inners, "Point");
-        assertNotNull(findStructFieldGet(pointStruct, "i"));
-        assertNotNull(findStructFieldGet(pointStruct, "j"));
+            Class<?> pointStruct = findClass(inners, "Point");
+            assertNotNull(findStructFieldGet(pointStruct, "i"));
+            assertNotNull(findStructFieldGet(pointStruct, "j"));
 
-        Class<?> point3DStruct = findClass(inners, "Point3D");
-        assertNotNull(findStructFieldGet(point3DStruct, "i"));
-        assertNotNull(findStructFieldGet(point3DStruct, "j"));
-        assertNotNull(findStructFieldGet(point3DStruct, "k"));
+            Class<?> point3DStruct = findClass(inners, "Point3D");
+            assertNotNull(findStructFieldGet(point3DStruct, "i"));
+            assertNotNull(findStructFieldGet(point3DStruct, "j"));
+            assertNotNull(findStructFieldGet(point3DStruct, "k"));
 
-        assertNotNull(findEnumConstGet(headerCls, "R"));
-        assertNotNull(findEnumConstGet(headerCls, "G"));
-        assertNotNull(findEnumConstGet(headerCls, "B"));
+            assertNotNull(findEnumConstGet(headerCls, "R"));
+            assertNotNull(findEnumConstGet(headerCls, "G"));
+            assertNotNull(findEnumConstGet(headerCls, "B"));
 
-        assertNotNull(findEnumConstGet(headerCls, "C"));
-        assertNotNull(findEnumConstGet(headerCls, "M"));
-        assertNotNull(findEnumConstGet(headerCls, "Y"));
+            assertNotNull(findEnumConstGet(headerCls, "C"));
+            assertNotNull(findEnumConstGet(headerCls, "M"));
+            assertNotNull(findEnumConstGet(headerCls, "Y"));
 
-        Class<?> rgbColor = findClass(inners, "RGBColor");
-        assertNotNull(rgbColor);
-        assertTrue(rgbColor.isAnnotation());
+            Class<?> rgbColor = findClass(inners, "RGBColor");
+            assertNotNull(rgbColor);
+            assertTrue(rgbColor.isAnnotation());
 
-        Class<?> cmyColor = findClass(inners, "CMYColor");
-        assertNotNull(cmyColor);
-        assertTrue(cmyColor.isAnnotation());
-
-        deleteFile(clzPath);
+            Class<?> cmyColor = findClass(inners, "CMYColor");
+            assertNotNull(cmyColor);
+            assertTrue(cmyColor.isAnnotation());
+        } finally {
+            deleteFile(clzPath);
+        }
     }
 }

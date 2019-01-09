@@ -24,6 +24,7 @@
 import java.lang.reflect.Method;
 import java.foreign.annotations.NativeStruct;
 import java.nio.file.Path;
+
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -39,21 +40,24 @@ public class ArrayTest extends JextractToolRunner {
     @Test
     public void arrayInStruct() {
         Path clzPath = getOutputFilePath("tmp.jar");
+        deleteFile(clzPath);
         run("-o", clzPath.toString(),
                 getInputFilePath("arrayTest.h").toString()).checkSuccess();
-        Class<?> cls = loadClass("arrayTest", clzPath);
+        try(Loader loader = classLoader(clzPath)) {
+            Class<?> cls = loader.loadClass("arrayTest");
 
-        Class<?>[] inners = cls.getDeclaredClasses();
-        // FIXME: should really be two without duplicate callback
-        assertEquals(inners.length, 3);
+            Class<?>[] inners = cls.getDeclaredClasses();
+            // FIXME: should really be two without duplicate callback
+            assertEquals(inners.length, 3);
 
-        Class<?> struct = findClass(inners, "EndWithArray");
-        NativeStruct ns = struct.getAnnotation(NativeStruct.class);
-        assertNotNull(ns);
+            Class<?> struct = findClass(inners, "EndWithArray");
+            NativeStruct ns = struct.getAnnotation(NativeStruct.class);
+            assertNotNull(ns);
 
-        Method m = findMethod(cls, "construct", int.class, int.class, java.foreign.memory.Pointer.class);
-        assertNotNull(m);
-
-        deleteFile(clzPath);
+            Method m = findMethod(cls, "construct", int.class, int.class, java.foreign.memory.Pointer.class);
+            assertNotNull(m);
+        } finally {
+            deleteFile(clzPath);
+        }
     }
 }
