@@ -45,12 +45,16 @@ public class RpathTest extends JextractToolRunner {
         run("-o", clzPath.toString(),
                 "-l", "b", "-rpath", "foo/bar",
                 getInputFilePath("foo.h").toString()).checkSuccess();
-        for (String name : new String[] { "foo", "bar"}) {
-            Class<?> headerCls = loadClass(name, clzPath);
-            NativeHeader nativeHeader = headerCls.getAnnotation(NativeHeader.class);
-            assertNotNull(nativeHeader);
-            assertTrue(nativeHeader.libraryPaths().length == 1);
-            assertEquals(nativeHeader.libraryPaths()[0], "foo/bar");
+        try(Loader loader = classLoader(clzPath)) {
+            for (String name : new String[] { "foo", "bar"}) {
+                Class<?> headerCls = loader.loadClass(name);
+                NativeHeader nativeHeader = headerCls.getAnnotation(NativeHeader.class);
+                assertNotNull(nativeHeader);
+                assertTrue(nativeHeader.libraryPaths().length == 1);
+                assertEquals(nativeHeader.libraryPaths()[0], "foo/bar");
+            }
+        } finally {
+            deleteFile(clzPath);
         }
     }
 
@@ -60,12 +64,16 @@ public class RpathTest extends JextractToolRunner {
         run("-o", clzPath.toString(),
                 "-l", "b", "-L", "foo/bar", "-infer-rpath",
                 getInputFilePath("foo.h").toString()).checkSuccess();
-        for (String name : new String[] { "foo", "bar"}) {
-            Class<?> headerCls = loadClass(name, clzPath);
-            NativeHeader nativeHeader = headerCls.getAnnotation(NativeHeader.class);
-            assertNotNull(nativeHeader);
-            assertTrue(nativeHeader.libraryPaths().length == 1);
-            assertEquals(nativeHeader.libraryPaths()[0], "foo/bar");
+        try(Loader loader = classLoader(clzPath)) {
+            for (String name : new String[] { "foo", "bar"}) {
+                Class<?> headerCls = loader.loadClass(name);
+                NativeHeader nativeHeader = headerCls.getAnnotation(NativeHeader.class);
+                assertNotNull(nativeHeader);
+                assertTrue(nativeHeader.libraryPaths().length == 1);
+                assertEquals(nativeHeader.libraryPaths()[0], "foo/bar");
+            }
+        } finally {
+            deleteFile(clzPath);
         }
     }
 }
