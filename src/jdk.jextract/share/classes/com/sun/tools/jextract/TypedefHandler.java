@@ -33,7 +33,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.sun.tools.jextract.parser.Parser;
-import com.sun.tools.jextract.tree.EnumTree;
 import com.sun.tools.jextract.tree.HeaderTree;
 import com.sun.tools.jextract.tree.SimpleTreeVisitor;
 import com.sun.tools.jextract.tree.StructTree;
@@ -43,7 +42,6 @@ import com.sun.tools.jextract.tree.TreePhase;
 import com.sun.tools.jextract.tree.TreePrinter;
 import com.sun.tools.jextract.tree.TypedefTree;
 import jdk.internal.clang.Cursor;
-import jdk.internal.clang.SourceLocation;
 
 /**
  * This visitor handles certain typedef declarations.
@@ -51,7 +49,6 @@ import jdk.internal.clang.SourceLocation;
  * 1. Remove redundant typedefs.
  * 2. Rename typedef'ed anonymous type definitions like
  *        typedef struct { int x; int y; } Point;
- * 3. Remove redundant struct/union/enum forward/backward declarations
  */
 final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
         implements TreePhase {
@@ -64,13 +61,6 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
     // Tree instances that are to be replaced from "decls" list are
     // saved in the following Map.
     private final Map<Cursor, Tree> replacements = new HashMap<>();
-
-    private boolean isFromSameHeader(Tree def, Tree decl) {
-        SourceLocation locDef = def.location();
-        SourceLocation locDecl = decl.location();
-        return locDef != null && locDecl != null &&
-                Objects.equals(locDecl.getFileLocation().path(), locDef.getFileLocation().path());
-    }
 
     @Override
     public HeaderTree transform(HeaderTree ht) {
@@ -100,77 +90,8 @@ final class TypedefHandler extends SimpleTreeVisitor<Void, Void>
     }
 
     @Override
-    public Void visitEnum(EnumTree e, Void v) {
-        /*
-         * If we're seeing a forward/backward declaration of an
-         * enum which is definied elsewhere in this compilation
-         * unit, ignore it. If no definition is found, we want to
-         * leave the declaration so that dummy definition will be
-         * generated.
-         *
-         * Example:
-         *
-         *  enum Color ; // <-- forward declaration
-         *  struct Point { int i; int j; };
-         *  struct Point3D { int i; int j; int k; };
-         *  struct Point3D; // <-- backward declaration
-         */
-
-        // include this only if this is a definition or a declaration
-        // for which no definition is found elsewhere in this header.
-        if (e.isDefinition()) {
-            decls.add(e);
-        } else {
-            Optional<Tree> def = e.definition();
-            if (!def.isPresent() || !isFromSameHeader(def.get(), e)) {
-                decls.add(e);
-            }
-        }
-        return null;
-    }
-
-    @Override
     public Void visitHeader(HeaderTree ht, Void v) {
         ht.declarations().forEach(decl -> decl.accept(this, null));
-        return null;
-    }
-
-    @Override
-    public Void visitStruct(StructTree s, Void v) {
-        List<Tree> oldDecls = decls;
-        List<Tree> structDecls = new ArrayList<>();
-        try {
-            decls = structDecls;
-            s.declarations().forEach(t -> t.accept(this, null));
-        } finally {
-            decls = oldDecls;
-        }
-
-        /*
-         * If we're seeing a forward/backward declaration of
-         * a struct which is definied elsewhere in this compilation
-         * unit, ignore it. If no definition is found, we want to
-         * leave the declaration so that dummy definition will be
-         * generated.
-         *
-         * Example:
-         *
-         *  struct Point; // <-- forward declaration
-         *  struct Point { int i; int j; };
-         *  struct Point3D { int i; int j; int k; };
-         *  struct Point3D; // <-- backward declaration
-         */
-
-        // include this only if this is a definition or a declaration
-        // for which no definition is found elsewhere in this header.
-        if (s.isDefinition()) {
-            decls.add(s.withNameAndDecls(s.name(), structDecls));
-        } else {
-            Optional<Tree> def = s.definition();
-            if (!def.isPresent() || !isFromSameHeader(def.get(), s)) {
-                decls.add(s.withNameAndDecls(s.name(), structDecls));
-            }
-        }
         return null;
     }
 

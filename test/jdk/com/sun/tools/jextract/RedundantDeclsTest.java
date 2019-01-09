@@ -23,6 +23,7 @@
 
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -31,6 +32,7 @@ import static org.testng.Assert.assertTrue;
 /*
  * @test
  * @bug 8210911
+ * @bug 8216268
  * @summary jextract does not handle redundant forward, backward declarations of struct, union, enum properly
  * @modules jdk.jextract
  * @build JextractToolRunner
@@ -71,6 +73,24 @@ public class RedundantDeclsTest extends JextractToolRunner {
             Class<?> cmyColor = findClass(inners, "CMYColor");
             assertNotNull(cmyColor);
             assertTrue(cmyColor.isAnnotation());
+        } finally {
+            deleteFile(clzPath);
+        }
+    }
+
+    @Test
+    public void repeatedDecls() {
+        Path clzPath = getOutputFilePath("RepeatedDecls.jar");
+        try(Loader loader = classLoader(clzPath)) {
+            run("-o", clzPath.toString(),
+                getInputFilePath("repeatedDecls.h").toString()).checkSuccess();
+            Class<?> headerCls = loader.loadClass("repeatedDecls");
+            Class<?>[] inners = headerCls.getDeclaredClasses();
+            assertEquals(inners.length, 1);
+            Method funcMethod = findMethod(headerCls, "func", int.class);
+            assertNotNull(funcMethod);
+            Method iGetMethod = findMethod(headerCls, "i$get");
+            assertNotNull(iGetMethod);
         } finally {
             deleteFile(clzPath);
         }

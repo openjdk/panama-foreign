@@ -59,6 +59,7 @@ public class JextractTool {
                 .map(symbolFilter)
                 .map(new TypedefHandler())
                 .map(new EmptyNameHandler())
+                .map(new DuplicateDeclarationHandler())
                 .flatMap(h -> h.declarations().stream())
                 .distinct()
                 .collect(Collectors.groupingBy(this::headerFromDecl));
