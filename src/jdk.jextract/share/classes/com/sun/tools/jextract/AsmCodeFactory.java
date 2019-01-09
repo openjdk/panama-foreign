@@ -77,10 +77,6 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     private static final String NATIVE_STRUCT = ANNOTATION_PKG_PREFIX + "NativeStruct;";
 
     private final ClassWriter global_cw;
-    // to avoid duplicate generation of methods, field accessors, macros
-    private final Set<String> global_methods = new HashSet<>();
-    private final Set<String> global_fields = new HashSet<>();
-    private final Set<String> global_macros = new HashSet<>();
     private final List<String> headerDeclarations = new ArrayList<>();
     protected final String headerClassName;
     protected final HeaderFile headerFile;
@@ -179,12 +175,6 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         Type type = tree.type();
         JType jt = headerFile.dictionary().lookup(type);
         assert (jt != null);
-        if (cw == global_cw) {
-            String uniqueName = fieldName + "." + jt.getDescriptor();
-            if (! global_fields.add(uniqueName)) {
-                return false; // added already
-            }
-        }
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$get",
                 "()" + jt.getDescriptor(), "()" + jt.getSignature(false), null);
 
@@ -417,10 +407,6 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     public Boolean visitFunction(FunctionTree funcTree, JType jt) {
         assert (jt instanceof JType.Function);
         JType.Function fn = (JType.Function)jt;
-        String uniqueName = funcTree.name() + "." + fn.getDescriptor();
-        if (! global_methods.add(uniqueName)) {
-            return false; // added already
-        }
         logger.fine(() -> "Add method: " + fn.getSignature(false));
         int flags = ACC_PUBLIC | ACC_ABSTRACT;
         if (fn.isVarArgs) {
@@ -475,9 +461,6 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         }
         String name = macroTree.name();
         Object value = macroTree.value().get();
-        if (! global_macros.add(name)) {
-            return false; // added already
-        }
         logger.fine(() -> "Adding macro " + name);
         Class<?> macroType = Utils.unboxIfNeeded(value.getClass());
 
