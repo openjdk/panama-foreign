@@ -46,6 +46,7 @@ public class ConstantsTest extends JextractToolRunner {
     Object[] constants;
     Path clzPath;
     Path dirPath;
+    Loader loader;
 
     @BeforeTest
     public void setup() {
@@ -53,9 +54,10 @@ public class ConstantsTest extends JextractToolRunner {
         dirPath = getOutputFilePath("ConstantsTest.c.dir");
         run("-o", clzPath.toString(), "-d", dirPath.toString(),
                 getInputFilePath("constants.h").toString()).checkSuccess();
+        loader = classLoader(clzPath);
         Class<?>[] cls = {
-                loadClass("constants", clzPath),
-                loadClass("constants", dirPath)
+                loader.loadClass("constants"),
+                loader.loadClass("constants")
         };
         constants = new Object[cls.length];
         for (int i = 0 ; i < cls.length ; i++) {
@@ -63,14 +65,15 @@ public class ConstantsTest extends JextractToolRunner {
             constants[i] = Proxy.newProxyInstance(cl.getClassLoader(),
                     new Class<?>[]{ cl },
                     (proxy, method, args) -> MethodHandles.privateLookupIn(cl, MethodHandles.lookup())
-                                .unreflectSpecial(method, cl)
-                                .bindTo(proxy)
-                                .invokeWithArguments(args));
+                            .unreflectSpecial(method, cl)
+                            .bindTo(proxy)
+                            .invokeWithArguments(args));
         }
     }
 
     @AfterTest
     public void cleanup() {
+        loader.close();
         deleteFile(clzPath);
         deleteDir(dirPath);
     }

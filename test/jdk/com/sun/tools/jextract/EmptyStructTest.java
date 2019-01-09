@@ -41,18 +41,22 @@ public class EmptyStructTest extends JextractToolRunner {
     @Test
     public void emptyStruct() {
         Path clzPath = getOutputFilePath("EmptyStructTest.jar");
+        deleteFile(clzPath);
         run("-o", clzPath.toString(),
                 getInputFilePath("emptyStruct.h").toString()).checkSuccess();
-        Class<?> cls = loadClass("emptyStruct", clzPath);
-        Class<?>[] inners = cls.getDeclaredClasses();
-        assertEquals(inners.length, 3);
-        Class<?> emptyStruct = findClass(inners, "EmptyStruct");
-        Class<?> nothing = findClass(inners, "Nothing");
-        assertTrue(nothing.isAnnotation());
-        NativeStruct ns = emptyStruct.getAnnotation(NativeStruct.class);
-        assertNotNull(ns);
-        Layout layout = Layout.of(ns.value());
-        assertEquals(layout.bitsSize(), 0);
-        deleteFile(clzPath);
+        try(Loader loader = classLoader(clzPath)) {
+            Class<?> cls = loader.loadClass("emptyStruct");
+            Class<?>[] inners = cls.getDeclaredClasses();
+            assertEquals(inners.length, 3);
+            Class<?> emptyStruct = findClass(inners, "EmptyStruct");
+            Class<?> nothing = findClass(inners, "Nothing");
+            assertTrue(nothing.isAnnotation());
+            NativeStruct ns = emptyStruct.getAnnotation(NativeStruct.class);
+            assertNotNull(ns);
+            Layout layout = Layout.of(ns.value());
+            assertEquals(layout.bitsSize(), 0);
+        } finally {
+            deleteFile(clzPath);
+        }
     }
 }

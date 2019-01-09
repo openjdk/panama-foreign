@@ -55,6 +55,7 @@ import static org.testng.Assert.*;
 public class TestUpcall extends JextractToolRunner {
 
     final static int MAX_CODE = 20;
+    final List<Runnable> cleanups = new ArrayList<>();
 
     public static class UpcallTest {
 
@@ -92,17 +93,27 @@ public class TestUpcall extends JextractToolRunner {
     public Object[] getTests() throws ReflectiveOperationException {
         List<UpcallTest> res = new ArrayList<>();
         for (int i = 0 ; i < MAX_CODE ; i++) {
-            Path clzPath = getOutputFilePath("libTestUpcall.jar");
+            Path clzPath = getOutputFilePath("libTestUpcall" + i + ".jar");
             run("-o", clzPath.toString(),
                     "--exclude-symbols", filterFor(i),
                     getInputFilePath("libTestUpcall.h").toString()).checkSuccess();
-            Class<?> headerCls = loadClass("libTestUpcall", clzPath);
+            Loader loader = classLoader(clzPath);
+            Class<?> headerCls = loader.loadClass("libTestUpcall");
             Object lib = Libraries.bind(headerCls, Libraries.loadLibrary(MethodHandles.lookup(), "TestUpcall"));
             res.add(new UpcallTest(headerCls, lib));
+            cleanups.add(() -> {
+               loader.close();
+               deleteFile(clzPath);
+            });
         }
         if(res.isEmpty())
             throw new RuntimeException("Could not generate any tests");
         return res.toArray();
+    }
+
+    @AfterSuite
+    public void after() {
+        cleanups.forEach(Runnable::run);
     }
 
     static Object[] makeArgs(Scope sc, Method m, List<Consumer<Object>> checks) throws ReflectiveOperationException {
