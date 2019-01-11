@@ -21,17 +21,23 @@
  * questions.
  */
 
-int f(int x[], int len);
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
+EXPORT int f(int x[], int len);
 
 typedef int IA[];
-int g(IA x, int len);
+EXPORT int g(IA x, int len);
 
-int k(int x[4], int len);
+EXPORT int k(int x[4], int len);
 
-int map_sum(int arr[], int len, int (*f)(int arr[], int idx, int val));
+EXPORT int map_sum(int arr[], int len, int (*f)(int arr[], int idx, int val));
 
 struct FPPtrFieldStruct {
     int (*map)(int arr[], int idx, int len);
 };
 
-int map_sum2(int arr[], int len, struct FPPtrFieldStruct s);
+EXPORT int map_sum2(int arr[], int len, struct FPPtrFieldStruct s);

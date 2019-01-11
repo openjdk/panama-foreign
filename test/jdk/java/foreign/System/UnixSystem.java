@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @requires os.family != "windows"
  * @modules java.base/jdk.internal.misc
  */
 

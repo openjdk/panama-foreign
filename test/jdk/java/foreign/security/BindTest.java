@@ -34,10 +34,10 @@ import java.foreign.annotations.*;
  * @summary Tests for bind method(s) security checks
  */
 public class BindTest {
-    @NativeHeader(declarations = "getpid=()i32")
+    @NativeHeader(declarations = "exit=(i32)v")
     static interface system {
         @NativeLocation(file="dummy", line=1, column=1)
-        public abstract int getpid();
+        public abstract void exit(int i);
     }
 
     @Test

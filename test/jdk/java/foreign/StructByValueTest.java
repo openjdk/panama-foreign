@@ -39,6 +39,9 @@ import static org.testng.Assert.*;
 public class StructByValueTest {
 
     @NativeHeader(declarations =
+            "small_make=()$(small_tuple)" +
+            "small_id=($(small_tuple))$(small_tuple)" +
+            "small_zero=($(small_tuple))$(small_tuple)" +
             "make=()$(tuple)" +
             "id=($(tuple))$(tuple)" +
             "zero=($(tuple))$(tuple)" +
@@ -48,6 +51,10 @@ public class StructByValueTest {
     )
     interface structbyvalue {
 
+        small_tuple small_make();
+        small_tuple small_id(small_tuple t);
+        small_tuple small_zero(small_tuple t);
+
         tuple make();
         tuple id(tuple t);
         tuple zero(tuple t);
@@ -55,6 +62,12 @@ public class StructByValueTest {
         big_tuple big_make();
         big_tuple big_id(big_tuple t);
         big_tuple big_zero(big_tuple t);
+
+        @NativeStruct("[i32(get=one) i32(get=two)](small_tuple)")
+        interface small_tuple extends Struct<small_tuple> {
+            int one();
+            int two();
+        }
 
         @NativeStruct("[i32(get=one) i32(get=two) i32(get=three) i32(get=four)](tuple)")
         interface tuple extends Struct<tuple> {
@@ -77,6 +90,14 @@ public class StructByValueTest {
     static structbyvalue lib =
             Libraries.bind(structbyvalue.class,
                     Libraries.loadLibrary(MethodHandles.lookup(), "structbyvalue"));
+
+    public void testSmallTuple() {
+        structbyvalue.small_tuple t = lib.small_make();
+        checkSmallTuple(t, 1, 2);
+        checkSmallTuple(lib.small_id(t), 1, 2);
+        checkSmallTuple(lib.small_zero(t), 0, 0);
+        checkSmallTuple(t, 1, 2);
+    }
 
     @Test
     public void testTuple() {
@@ -109,5 +130,10 @@ public class StructByValueTest {
         assertEquals(t.three(), three);
         assertEquals(t.four(), four);
         assertEquals(t.five(), five);
+    }
+
+    static void checkSmallTuple(structbyvalue.small_tuple t, int one, int two) {
+        assertEquals(t.one(), one);
+        assertEquals(t.two(), two);
     }
 }

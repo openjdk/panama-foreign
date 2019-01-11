@@ -179,12 +179,12 @@ public class TestJextractFFI {
     public static int main(String... args) throws IOException, InterruptedException {
         final Path srcPath = Paths.get(System.getProperty("test.src"));
         final String clangInclude = System.getProperty("clang.include.path");
-        final String clangLib = System.getProperty("clang.lib.path");
+        final String clangLib = System.getProperty("clang.lib.name");
 
         if (clangInclude != null && clangLib != null) {
             TestJextractFFI test = new TestJextractFFI(
                     Paths.get(clangInclude).toAbsolutePath(),
-                    Paths.get(clangLib).toAbsolutePath(),
+                    Paths.get(clangLib).toAbsolutePath().getParent(),
                     srcPath.resolve("src").toAbsolutePath()
             );
 

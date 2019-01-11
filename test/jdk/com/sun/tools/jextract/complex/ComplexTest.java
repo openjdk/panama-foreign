@@ -43,6 +43,7 @@ import static org.testng.Assert.assertTrue;
 
 /*
  * @test
+ * @requires os.family != "windows"
  * @bug 8213013
  * @summary jextract does not handle C99 _Complex type
  * @library ..

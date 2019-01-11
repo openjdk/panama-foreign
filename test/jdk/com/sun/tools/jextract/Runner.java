@@ -138,7 +138,7 @@ public class Runner {
                     System.err.println("Warning: unexpected file " + name);
                 }
                 name = name.substring(0, name.length() - 6);
-                files.add(name.replace(File.separatorChar, '.'));
+                files.add(normalize(name));
             }
         }
 
@@ -308,37 +308,38 @@ public class Runner {
     }
 
     private static String normalize(String classname) {
-        return classname.replace(File.separatorChar, '.');
+        return classname.replace('/', '.');
     }
 
     private static String canonicalize(String classname) {
-        return classname.replace('.', File.separatorChar);
+        return classname.replace('.', '/');
     }
 
-    private static Path[] paths(String testDir, String[] files) {
+    private static Path[] paths(String testDir, String[] files, boolean platformDependent) {
+        boolean isWindows = System.getProperty("os.name").startsWith("Windows");
         return Arrays.stream(files)
-                .map(f -> Paths.get(testDir, f))
+                .map(f -> Paths.get(testDir, "compare", isWindows && platformDependent ? "windows" : "", f))
                 .toArray(Path[]::new);
     }
 
     @Factory(dataProvider = "cases")
-    public static Object[] run(String nativeSrc, String pkgName, String[] javaSrcFiles) {
+    public static Object[] run(String nativeSrc, String pkgName, String[] javaSrcFiles, boolean platformDependent) {
         String testDir = System.getProperty("test.src", ".");
         System.out.println("Use test case files in " + testDir);
         return new Object[] {
-            new Runner(Paths.get(testDir, nativeSrc), pkgName, paths(testDir, javaSrcFiles))
+            new Runner(Paths.get(testDir, nativeSrc), pkgName, paths(testDir, javaSrcFiles, platformDependent))
         };
     }
 
     @DataProvider(name = "cases")
     public static Object[][] cases() {
         return new Object[][] {
-            { "simple.h", "com.acme", new String[] { "simple.java" }},
-            { "recursive.h", "com.acme", new String[] { "recursive.java" }},
-            { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct.java" }},
-            { "pad.h", "com.acme", new String[] { "pad.java" }},
-            { "bitfields.h", "com.acme", new String[] { "bitfields.java" }},
-            { "globalFuncPointer.h", "com.acme", new String[] { "globalFuncPointer.java" }}
+            { "simple.h", "com.acme", new String[] { "simple.java" }, true},
+            { "recursive.h", "com.acme", new String[] { "recursive.java" }, false},
+            { "TypedefAnonStruct.h", "com.acme", new String[] { "TypedefAnonStruct.java" }, false},
+            { "pad.h", "com.acme", new String[] { "pad.java" }, false},
+            { "bitfields.h", "com.acme", new String[] { "bitfields.java" }, true},
+            { "globalFuncPointer.h", "com.acme", new String[] { "globalFuncPointer.java" }, false}
         };
     }
 }

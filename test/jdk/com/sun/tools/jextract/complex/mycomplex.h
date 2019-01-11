@@ -33,6 +33,7 @@
  *     declaration!
  */
 
+#ifndef _WIN64
 #include <complex.h>
 
 extern float complex cexpf(float complex);
@@ -58,3 +59,5 @@ extern long double complex conjl(long double complex);
 extern float crealf(float complex);
 extern double creal(double complex);
 extern long double creall(long double complex);
+
+#endif

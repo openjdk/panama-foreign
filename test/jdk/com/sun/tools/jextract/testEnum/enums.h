@@ -21,15 +21,21 @@
  * questions.
  */
 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 enum Color {
    R = 0xFF0000,
    G = 0x00FF00,
    B = 0x0000FF
 };
 
-int red_green();
-int green_blue();
-int red_green_blue();
+EXPORT int red_green();
+EXPORT int green_blue();
+EXPORT int red_green_blue();
 
 enum IntEnum {
    I_VALUE1 = 42,
@@ -41,7 +47,7 @@ enum LongEnum {
    L_VALUE2 = 45645645645L
 };
 
-int i_value1_func();
-int i_value2_func();
-long l_value1_func();
-long l_value2_func();
+EXPORT int i_value1_func();
+EXPORT int i_value2_func();
+EXPORT long l_value1_func();
+EXPORT long l_value2_func();

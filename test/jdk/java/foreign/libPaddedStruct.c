@@ -21,13 +21,18 @@
  * questions.
  */
 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
 struct MyStruct {
    char c; // <-- padding after this field
    int i;
 };
 
-struct MyStruct func(struct MyStruct ms) {
+EXPORT struct MyStruct func(struct MyStruct ms) {
    ms.c++;
    ms.i += 42;
    return ms;

@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 
 /*
  * @test
+ * @requires os.family != "windows"
  * @run testng StdioTest
  */
 public class StdioTest {
