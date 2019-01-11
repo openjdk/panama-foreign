@@ -2415,7 +2415,14 @@ public abstract class ClassLoader {
 
         native boolean load0(String name, boolean isBuiltin);
 
-        native long findEntry(String name);
+        private native long findEntry0(String name);
+
+        // used by default library
+        private static native long findEntryInProcess(String name);
+
+        long findEntry(String name) {
+            return findEntry0(name);
+        }
 
         NativeLibrary(Class<?> fromClass, String name, boolean isBuiltin) {
             this.name = name;
@@ -2457,14 +2464,16 @@ public abstract class ClassLoader {
 
         static NativeLibrary defaultLibrary = new NativeLibrary(Object.class, "<default>", true) {
 
-            {
-                handle = defaultHandle();
-            }
-
             @Override
             boolean load() {
                 throw new UnsupportedOperationException("Cannot load default library");
             }
+
+            @Override
+            long findEntry(String name) {
+                return NativeLibrary.findEntryInProcess(name);
+            }
+            
         };
 
         static NativeLibrary loadLibrary(Class<?> fromClass, String name, boolean isBuiltin) {
@@ -2525,6 +2534,9 @@ public abstract class ClassLoader {
         // Invoked in the VM to determine the context class in JNI_OnLoad
         // and JNI_OnUnload
         static Class<?> getFromClass() {
+            if(nativeLibraryContext.isEmpty()) { // only default library 
+                return defaultLibrary.fromClass;
+            }
             return nativeLibraryContext.peek().fromClass;
         }
 
@@ -2574,9 +2586,6 @@ public abstract class ClassLoader {
         // JNI FindClass expects the caller class if invoked from JNI_OnLoad
         // and JNI_OnUnload is NativeLibrary class
         static native void unload(String name, boolean isBuiltin, long handle);
-
-        // find handle of the default library
-        static native long defaultHandle();
     }
 
     // The paths searched for libraries
