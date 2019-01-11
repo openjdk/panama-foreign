@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "jvm.h"
 #include "jni.h"
 #include "jni_util.h"
 #include "dlfcn.h"
@@ -50,8 +51,8 @@ void* getProcessHandle() {
     return procHandle;
 }
 
-void* getDefaultHandle() {
-    return RTLD_DEFAULT;
+void* findEntryInProcess(const char* name) {
+    return JVM_FindLibraryEntry(RTLD_DEFAULT, name);
 }
 
 void buildJniFunctionName(const char *sym, const char *cname,
