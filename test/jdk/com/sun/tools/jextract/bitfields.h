@@ -22,9 +22,9 @@
  */
 
 struct bitfields1 {
-   long x : 2;
+   long long x : 2;
    char  : 0;
-   long y : 15;
+   long long y : 15;
    int z : 20;
    int w : 13;
 };
@@ -34,7 +34,7 @@ struct bitfields2 {
          c2 : 3,
          c3: 7;
     int i: 4;
-    long l: 21;
+    long long l: 21;
     long long ll : 42;
 };
 
@@ -47,13 +47,13 @@ struct bitfields3 {
 };
 
 struct bitfields4 {
-   long l;
+   long long l;
    char c : 4;
 };
 
 struct bitfields5 {
    char c:7;
-   long l:63;
+   long long l:63;
 };
 
 union bitfields6 {

@@ -20,9 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
+ 
 #include <stddef.h>
 #include <stdio.h>
+
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
 struct MyStruct {
   int ia[3];
@@ -47,7 +53,7 @@ static const struct MyStruct* struct_pointers[] = {
   &structs[2]
 };
 
-const char** get_strings2(int* pcount) {
+EXPORT const char** get_strings2(int* pcount) {
   if (NULL == pcount) {
     return NULL;
   }
@@ -55,36 +61,36 @@ const char** get_strings2(int* pcount) {
   return strings;
 }
 
-void get_strings(const char*** p, int* pcount) {
+EXPORT void get_strings(const char*** p, int* pcount) {
   *p = get_strings2(pcount);
 }
 
-const struct MyStruct** get_structs2(int* pcount) {
+EXPORT const struct MyStruct** get_structs2(int* pcount) {
   *pcount = sizeof(struct_pointers) / sizeof(struct MyStruct*);
   return struct_pointers;
 }
 
-void get_structs(const struct MyStruct*** p, int* pcount) {
+EXPORT void get_structs(const struct MyStruct*** p, int* pcount) {
   *p = get_structs2(pcount);
 }
 
-void* get_stringsAsVoidPtr(int* pcount) {
+EXPORT void* get_stringsAsVoidPtr(int* pcount) {
     return get_strings2(pcount);
 }
 
-struct opaque* get_stringsAsOpaquePtr(int *pcount) {
+EXPORT struct opaque* get_stringsAsOpaquePtr(int *pcount) {
     return (struct opaque*) get_strings2(pcount);
 }
 
-void * get_negative() {
+EXPORT void * get_negative() {
     return (void*) -1;
 }
 
-int * get_overflow_pointer() {
+EXPORT int * get_overflow_pointer() {
     // automatic region length will be 1, not large enough for an int
     return (int *) -1;
 }
 
-char * get_1_byte_pointer() {
+EXPORT char * get_1_byte_pointer() {
     return (char *) -1;
 }

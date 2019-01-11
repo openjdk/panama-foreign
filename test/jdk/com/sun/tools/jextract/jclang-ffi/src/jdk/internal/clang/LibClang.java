@@ -24,10 +24,11 @@ package jdk.internal.clang;
 
 import clang.CXString.CXString;
 
-import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
 import java.foreign.Library;
 import java.foreign.memory.Pointer;
+import java.lang.invoke.MethodHandles;
+import java.nio.file.Paths;
 
 public class LibClang {
     private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
@@ -39,7 +40,10 @@ public class LibClang {
         if (DEBUG) {
             System.err.println("Loading LibClang FFI");
         }
-        Library libclang = Libraries.loadLibrary(MethodHandles.lookup(), "clang");
+        String libName = System.getProperty("os.name").startsWith("Windows")
+                ? "libclang"
+                : "clang";
+        Library libclang = Libraries.loadLibrary(MethodHandles.lookup(), libName);
         lib = Libraries.bind(clang.Index.class, libclang);
         lcxstr = Libraries.bind(clang.CXString.class, libclang);
     }

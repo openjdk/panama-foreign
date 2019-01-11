@@ -23,8 +23,8 @@
 
 #include "utils.h"
 
-int abc = 53;
+EXPORT int abc = 53;
 
-int square(int val) {
+EXPORT int square(int val) {
     return val*val;
 }

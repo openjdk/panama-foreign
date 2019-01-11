@@ -21,9 +21,15 @@
  * questions.
  */
 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 #define THE_ANSWER 42
 
-int abc;
+EXPORT int abc;
 
 enum Color {
    R = 10,
@@ -31,4 +37,4 @@ enum Color {
    B
 };
 
-int square(int val);
+EXPORT int square(int val);

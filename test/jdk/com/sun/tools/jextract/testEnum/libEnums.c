@@ -23,30 +23,30 @@
 
 #include "enums.h"
 
-int red_green() {
+EXPORT int red_green() {
     return R | G;
 }
 
-int green_blue() {
+EXPORT int green_blue() {
     return G | B;
 }
 
-int red_green_blue() {
+EXPORT int red_green_blue() {
     return R | G | B;
 }
 
-int i_value1_func() {
+EXPORT int i_value1_func() {
     return I_VALUE1;
 }
 
-int i_value2_func() {
+EXPORT int i_value2_func() {
     return I_VALUE2;
 }
 
-long l_value1_func() {
+EXPORT long l_value1_func() {
     return L_VALUE1;
 }
 
-long l_value2_func() {
+EXPORT long l_value2_func() {
     return L_VALUE2;
 }

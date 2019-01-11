@@ -23,32 +23,36 @@
  * questions.
  */
 
-int global;
+package com.acme;
 
-/*
-   Basic types exclude unsigned integer types
-   N1570: 6.2.5.14
+import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeLocation;
+import java.foreign.annotations.NativeStruct;
+import java.foreign.memory.Pointer;
+import java.foreign.memory.Struct;
+
+/**
+ * This test is platform dependent, as the C type size may vary on platform.
+ * Current value is based on x64 with __LP64__.
  */
-struct anonymous {
-    char ch;
-    signed char sch;
-    short s;
-    int n;
-    long l;
-    long long ll;
-    float f;
-    double d;
-    long double ld;
-} basics;
+@NativeHeader(path="recursive.h")
+public interface recursive {
 
-// N1570: 6.2.5.6
-struct _unsigned {
-    _Bool b;
-    unsigned char ch;
-    unsigned short s;
-    unsigned int n;
-    unsigned long l;
-    unsigned long long ll;
-} *unsigned_int;
+    @NativeLocation(file="recursive.h", line=26, column=8)
+    @NativeStruct("[u64(get=p$get)(set=p$set)(ptr=p$ptr):$(Bar)](Foo)")
+    public interface Foo extends Struct<Foo> {
+        @NativeLocation(file="recursive.h", line=27, column=17)
+        Pointer<Bar> p$get();
+        void p$set(Pointer<Bar> value);
+        Pointer<Pointer<Bar>> p$ptr();
+    }
 
-void func(struct anonymous s, char* str);
+    @NativeLocation(file = "recursive.h", line=30, column=8)
+    @NativeStruct("[u64(get=q$get)(set=q$set)(ptr=q$ptr):$(Foo)](Bar)")
+    public interface Bar extends Struct<Bar> {
+        @NativeLocation(file="recursive.h", line=31, column=17)
+        Pointer<Foo> q$get();
+        void q$set(Pointer<Foo> value);
+        Pointer<Pointer<Foo>> q$ptr();
+    }
+}

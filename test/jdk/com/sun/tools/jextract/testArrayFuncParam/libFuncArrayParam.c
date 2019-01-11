@@ -23,7 +23,7 @@
 
 #include "funcArrayParam.h"
 
-int f(int x[], int len) {
+EXPORT int f(int x[], int len) {
     int i = 0, res = 0;
     for (i = 0; i < len; i++) {
         res += x[i];
@@ -31,15 +31,15 @@ int f(int x[], int len) {
     return res;
 }
 
-int g(IA x, int len) {
+EXPORT int g(IA x, int len) {
     return f(x, len);
 }
 
-int k(int x[3], int len) {
+EXPORT int k(int x[3], int len) {
     return f(x, len);
 }
 
-int map_sum(int arr[], int len, int (*map)(int arr[], int idx, int val)) {
+EXPORT int map_sum(int arr[], int len, int (*map)(int arr[], int idx, int val)) {
     int res = 0, idx = 0;
     for (; idx < len; idx++) {
         res += map(arr, idx, arr[idx]);
@@ -47,6 +47,6 @@ int map_sum(int arr[], int len, int (*map)(int arr[], int idx, int val)) {
     return res;
 }
 
-int map_sum2(int arr[], int len, struct FPPtrFieldStruct s) {
+EXPORT int map_sum2(int arr[], int len, struct FPPtrFieldStruct s) {
     return map_sum(arr, len, s.map);
 }

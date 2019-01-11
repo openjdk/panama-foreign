@@ -21,6 +21,12 @@
  * questions.
  */
 
-int func() {
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+ 
+EXPORT int func() {
     return 42;
 }

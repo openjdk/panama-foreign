@@ -1,6 +1,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN64
+#include <malloc.h>
+
+#define EXPORT __declspec(dllexport)
+#define alloca _alloca
+#else
+#define EXPORT
+#endif
+
 typedef void (*visitor)(int i);
 
 struct MyStruct {
@@ -15,15 +24,15 @@ struct MyStruct {
 typedef struct MyStruct (*struct_upcall_cb)(struct MyStruct f);
 typedef double (*double_upcall_cb)(double d1, double d2);
 
-void do_upcall(visitor v, int i) {
+EXPORT void do_upcall(visitor v, int i) {
   v(i);
 }
 
-void struct_upcall(struct_upcall_cb cb, struct MyStruct f) {
+EXPORT void struct_upcall(struct_upcall_cb cb, struct MyStruct f) {
   cb(f);
 }
 
-double double_upcall(double_upcall_cb cb, double d1, double d2) {
+EXPORT double double_upcall(double_upcall_cb cb, double d1, double d2) {
   return cb(d1, d2);
 }
 
@@ -37,7 +46,7 @@ swap_elems(void* e1, void* e2, size_t size) {
 }
 
 
-void slowsort(void *base, size_t nmemb, size_t size,
+EXPORT void slowsort(void *base, size_t nmemb, size_t size,
               int(*compar)(const void *, const void *)) {
   size_t i, j;
 

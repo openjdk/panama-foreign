@@ -27,6 +27,7 @@ import java.foreign.Libraries;
 
 /**
  * @test
+ * @requires os.family != "windows"
  * @run main Getpid
  */
 public class Getpid {

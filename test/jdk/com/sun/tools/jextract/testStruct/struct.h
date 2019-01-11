@@ -25,15 +25,21 @@
 extern "C" {
 #endif // __cplusplus
 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 typedef struct UndefinedStruct UndefinedStruct;
-UndefinedStruct* allocateUndefinedStruct();
+EXPORT UndefinedStruct* allocateUndefinedStruct();
 
 typedef struct UndefinedStructForPointer *UndefinedStructPointer;
-UndefinedStructPointer getParent(UndefinedStructPointer node);
-struct UndefinedStructForPointer* getSibling(UndefinedStructPointer node);
-UndefinedStructPointer getFirstChild(struct UndefinedStructForPointer* node);
+EXPORT UndefinedStructPointer getParent(UndefinedStructPointer node);
+EXPORT struct UndefinedStructForPointer* getSibling(UndefinedStructPointer node);
+EXPORT UndefinedStructPointer getFirstChild(struct UndefinedStructForPointer* node);
 
-struct Opaque* allocate_opaque_struct();
+EXPORT struct Opaque* allocate_opaque_struct();
 
 typedef struct TypedefNamedAsIs {
     int i;
@@ -65,16 +71,16 @@ struct Plain {
     int y;
 };
 
-struct Plain fromUndefinedStruct(UndefinedStruct *p);
+EXPORT struct Plain fromUndefinedStruct(UndefinedStruct *p);
 
-TypedefAnonymous getAnonymous(TypedefNamedDifferent_t fn, int x, int y);
+EXPORT TypedefAnonymous getAnonymous(TypedefNamedDifferent_t fn, int x, int y);
 
-void emptyArguments();
-void voidArguments(void);
+EXPORT void emptyArguments();
+EXPORT void voidArguments(void);
 
 typedef void* (*FunctionPointer)(void *data, void **array_data);
 
-void* FunctionWithVoidPointer(void *data, void **array_data);
+EXPORT void* FunctionWithVoidPointer(void *data, void **array_data);
 
 struct IncompleteArray {
     long list_length;
@@ -84,12 +90,12 @@ struct IncompleteArray {
     void *list_of_data[];
 };
 
-void** GetArrayData(struct IncompleteArray *par);
+EXPORT void** GetArrayData(struct IncompleteArray *par);
 
 // This works with C, but incomplete array is omitted as not exist
-void* GetData(struct IncompleteArray ar);
+EXPORT void* GetData(struct IncompleteArray ar);
 
-extern char* LastCalledMethod;
+EXPORT extern char* LastCalledMethod;
 
 #ifdef __cplusplus
 }

@@ -22,9 +22,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+ 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
 
-int square(int x) {
+ 
+EXPORT int square(int x) {
   return x * x;
 }
 
-int (*fp)(int) = square;
+EXPORT int (*fp)(int) = square;
