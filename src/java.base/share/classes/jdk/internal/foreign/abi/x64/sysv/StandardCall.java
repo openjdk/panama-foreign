@@ -40,10 +40,17 @@ import jdk.internal.foreign.abi.ArgumentBinding;
 import jdk.internal.foreign.abi.CallingSequence;
 import jdk.internal.foreign.abi.Storage;
 import jdk.internal.foreign.abi.StorageClass;
+import jdk.internal.foreign.abi.x64.CallingSequenceBuilder;
+import jdk.internal.foreign.abi.x64.ArgumentClass;
+import jdk.internal.foreign.abi.x64.SharedConstants;
 
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
-public class StandardCall {
+public class StandardCall extends CallingSequenceBuilder {
+    private static final String[] INTEGER_ARGUMENT_REGISTER_NAMES = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
+    private static final String[] INTEGER_RETURN_REGISTERS_NAMES = { "rax", "rdx" };
+    private static final String[] X87_RETURN_REGISTERS_NAMES = { "st0", "st1" };
+
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.abi.x64.sysv.DEBUG");
 
@@ -60,6 +67,11 @@ public class StandardCall {
         COMPLEX_X87_CLASSES.add(ArgumentClass.X87UP);
         COMPLEX_X87_CLASSES.add(ArgumentClass.X87);
         COMPLEX_X87_CLASSES.add(ArgumentClass.X87UP);
+    }
+
+    public StandardCall() {
+        super(INTEGER_ARGUMENT_REGISTER_NAMES, INTEGER_RETURN_REGISTERS_NAMES, X87_RETURN_REGISTERS_NAMES,
+                Constants.MAX_VECTOR_ARGUMENT_REGISTERS, Constants.MAX_VECTOR_RETURN_REGISTERS);
     }
 
     static class ArgumentInfo {
@@ -155,7 +167,7 @@ public class StandardCall {
         final long count = type.elementsSize();
         for (long idx = 0; idx < count; idx++) {
             Layout t = type.element();
-            offset = abi.align(t, false, offset);
+            offset = align(t, false, offset);
             ArrayList<ArgumentClass> subclasses = classifyType(t);
             if (subclasses.isEmpty()) {
                 return classes;
@@ -231,7 +243,7 @@ public class StandardCall {
                     continue;
                 }
             }
-            offset = abi.align(t, false, offset);
+            offset = align(t, false, offset);
             ArrayList<ArgumentClass> subclasses = classifyType(t);
             if (subclasses.isEmpty()) {
                 return classes;
@@ -372,7 +384,7 @@ public class StandardCall {
                     nVectorRegs + info.getVectorRegs() > (forArguments ? Constants.MAX_VECTOR_ARGUMENT_REGISTERS : Constants.MAX_VECTOR_RETURN_REGISTERS)) {
                 // stack
 
-                long alignment = Math.max(abi.alignment(arg.getType(), true), 8);
+                long alignment = Math.max(alignment(arg.getType(), true), 8);
 
                 long newStackOffset = Util.alignUp(stackOffset, alignment);
 
@@ -404,11 +416,11 @@ public class StandardCall {
 
                     switch (c) {
                     case INTEGER:
-                        storage = new Storage(forArguments ? StorageClass.INTEGER_ARGUMENT_REGISTER : StorageClass.INTEGER_RETURN_REGISTER, nIntegerRegs++, Constants.INTEGER_REGISTER_SIZE);
+                        storage = new Storage(forArguments ? StorageClass.INTEGER_ARGUMENT_REGISTER : StorageClass.INTEGER_RETURN_REGISTER, nIntegerRegs++, SharedConstants.INTEGER_REGISTER_SIZE);
                         bindings[storage.getStorageClass().ordinal()].add(new ArgumentBinding(storage, arg, i * 8));
 
                         if (DEBUG) {
-                            System.out.println("Argument " + arg.getName() + " will be passed in register " + StorageNames.getStorageName(storage));
+                            System.out.println("Argument " + arg.getName() + " will be passed in register " + getStorageName(storage));
                         }
                         break;
 
@@ -429,7 +441,7 @@ public class StandardCall {
                         bindings[storage.getStorageClass().ordinal()].add(new ArgumentBinding(storage, arg, i * 8));
 
                         if (DEBUG) {
-                            System.out.println("Argument " + arg.getName() + " will be passed in register " + StorageNames.getStorageName(storage));
+                            System.out.println("Argument " + arg.getName() + " will be passed in register " + getStorageName(storage));
                         }
                         break;
                     }
@@ -450,7 +462,7 @@ public class StandardCall {
                         bindings[storage.getStorageClass().ordinal()].add(new ArgumentBinding(storage, arg, i * 8));
 
                         if (DEBUG) {
-                            System.out.println("Argument " + arg.getName() + " will be passed in register " + StorageNames.getStorageName(storage));
+                            System.out.println("Argument " + arg.getName() + " will be passed in register " + getStorageName(storage));
                         }
                         break;
                     }

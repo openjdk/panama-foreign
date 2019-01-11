@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,14 +20,42 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.internal.foreign.abi.x64.sysv;
+package jdk.internal.foreign.abi.x64;
 
-public class Constants {
-    public static final int MAX_INTEGER_ARGUMENT_REGISTERS = 6;
-    public static final int MAX_INTEGER_RETURN_REGISTERS = 2;
+public enum ArgumentClass {
+    POINTER, INTEGER, SSE, SSEUP, X87, X87UP, COMPLEX_X87, NO_CLASS, MEMORY;
 
-    public static final int MAX_VECTOR_ARGUMENT_REGISTERS = 8;
-    public static final int MAX_VECTOR_RETURN_REGISTERS = 2;
-    public static final int MAX_X87_RETURN_REGISTERS = 2;
+    public ArgumentClass merge(ArgumentClass other) {
+        if (this == other) {
+            return this;
+        }
 
+        if (other == NO_CLASS) {
+            return this;
+        }
+        if (this == NO_CLASS) {
+            return other;
+        }
+
+        if (this == MEMORY || other == MEMORY) {
+            return MEMORY;
+        }
+
+        if (this == POINTER || other == POINTER) {
+            return POINTER;
+        }
+
+        if (this == INTEGER || other == INTEGER) {
+            return INTEGER;
+        }
+
+        if (this == X87 || this == X87UP || this == COMPLEX_X87) {
+            return MEMORY;
+        }
+        if (other == X87 || other == X87UP || other == COMPLEX_X87) {
+            return MEMORY;
+        }
+
+        return SSE;
+    }
 }

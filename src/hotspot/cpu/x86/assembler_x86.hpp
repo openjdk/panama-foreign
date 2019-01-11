@@ -40,9 +40,13 @@ class Argument {
 #ifdef _WIN64
     n_int_register_parameters_c   = 4, // rcx, rdx, r8, r9 (c_rarg0, c_rarg1, ...)
     n_float_register_parameters_c = 4,  // xmm0 - xmm3 (c_farg0, c_farg1, ... )
+    n_int_register_returns_c = 1, // rax
+    n_float_register_returns_c = 1, // xmm0
 #else
     n_int_register_parameters_c   = 6, // rdi, rsi, rdx, rcx, r8, r9 (c_rarg0, c_rarg1, ...)
     n_float_register_parameters_c = 8,  // xmm0 - xmm7 (c_farg0, c_farg1, ... )
+    n_int_register_returns_c = 2, // rax, rdx
+    n_float_register_returns_c = 2, // xmm0, xmm1
 #endif // _WIN64
     n_int_register_parameters_j   = 6, // j_rarg0, j_rarg1, ...
     n_float_register_parameters_j = 8  // j_farg0, j_farg1, ...

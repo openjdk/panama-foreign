@@ -89,6 +89,10 @@ static void upcall_init(void) {
 struct upcall_context {
   struct {
     uintptr_t rbx;
+#ifdef _WIN64
+    uintptr_t rdi;
+    uintptr_t rsi;
+#endif
 #ifdef _LP64
     uintptr_t r12;
     uintptr_t r13;
@@ -101,10 +105,17 @@ struct upcall_context {
 #ifdef _LP64
     union {
       struct {
+#ifndef _WIN64
         uintptr_t rdi;
         uintptr_t rsi;
+#endif
+#ifdef _WIN64 // rdx and rcx are reversed on windows
+        uintptr_t rcx;
+        uintptr_t rdx;
+#else
         uintptr_t rdx;
         uintptr_t rcx;
+#endif
         uintptr_t r8;
         uintptr_t r9;
       } reg;
@@ -136,7 +147,9 @@ struct upcall_context {
       struct {
         uintptr_t rax;
 #ifdef _LP64
+#ifndef _WIN64
         uintptr_t rdx;
+#endif
 #endif
       } reg;
       uintptr_t regs[INTEGER_RETURN_REGISTERS_NOOF];
@@ -146,7 +159,9 @@ struct upcall_context {
       struct {
         VectorRegister xmm0;
 #ifdef _LP64
+#ifndef _WIN64
         VectorRegister xmm1;
+#endif  
 #endif
       } reg;
       VectorRegister regs[VECTOR_RETURN_REGISTERS_NOOF];
@@ -263,6 +278,10 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
 
   // Save preserved registers according to calling convention
   __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.rbx)), rbx);
+#ifdef _WIN64
+  __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.rdi)), rdi);
+  __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.rsi)), rsi);
+#endif
 #ifdef _LP64
   __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r12)), r12);
   __ movptr(Address(rsp, offsetof(struct upcall_context, preserved.r13)), r13);
@@ -275,8 +294,10 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
 
 #ifdef _LP64
   // Capture argument registers
-  __ movptr(Address(rsp, offsetof(struct upcall_context, args.integer.reg.rdi)), rdi);
-  __ movptr(Address(rsp, offsetof(struct upcall_context, args.integer.reg.rsi)), rsi);
+#ifndef _WIN64
+   __ movptr(Address(rsp, offsetof(struct upcall_context, args.integer.reg.rdi)), rdi);
+   __ movptr(Address(rsp, offsetof(struct upcall_context, args.integer.reg.rsi)), rsi);
+#endif
   __ movptr(Address(rsp, offsetof(struct upcall_context, args.integer.reg.rdx)), rdx);
   __ movptr(Address(rsp, offsetof(struct upcall_context, args.integer.reg.rcx)), rcx);
   __ movptr(Address(rsp, offsetof(struct upcall_context, args.integer.reg.r8)), r8);
@@ -300,7 +321,11 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
 #endif
 
   // Capture prev stack pointer (stack arguments base)
-  __ lea(rax, Address(rbp, 16)); // skip frame+return address
+#ifndef _WIN64
+   __ lea(rax, Address(rbp, 16)); // skip frame+return address
+#else
+  __ lea(rax, Address(rbp, 16 + 32)); // also skip shadow space
+#endif
   __ movptr(Address(rsp, offsetof(struct upcall_context, args.rsp)), rax);
 
 
@@ -308,6 +333,10 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
 #ifdef _LP64
   __ movptr(c_rarg0, rec_adr);
   __ movptr(c_rarg1, rsp);
+#ifdef _WIN64
+  __ block_comment("allocate shadow space for argument register spill");
+  __ subptr(rsp, 32);
+#endif
 #else
   __ movptr(rax, rsp);
   __ subptr(rsp, 8);
@@ -316,8 +345,13 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
   __ movptr(Address(rsp, 0), rax);
 #endif
   __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, upcall_helper)));
-#ifndef _LP64
-  __ addptr(rsp, 8);
+#ifdef _LP64
+#ifdef _WIN64
+  __ block_comment("pop shadow space");
+  __ addptr(rsp, 32);
+#endif
+# else
+   __ addptr(rsp, 8);
 #endif
 
 
@@ -357,6 +391,10 @@ address UniversalUpcallHandler::generate_upcall_stub(Handle& rec_handle) {
   __ movptr(r15, Address(rsp, offsetof(struct upcall_context, preserved.r15)));
 #endif
   __ movptr(rbx, Address(rsp, offsetof(struct upcall_context, preserved.rbx)));
+#ifdef _WIN64
+  __ movptr(rdi, Address(rsp, offsetof(struct upcall_context, preserved.rdi)));
+  __ movptr(rsi, Address(rsp, offsetof(struct upcall_context, preserved.rsi)));
+#endif
 
   // FIXME: More stuff stripped here
 

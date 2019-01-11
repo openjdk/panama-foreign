@@ -50,12 +50,25 @@ public class ShuffleRecipe {
             }
         });
 
-        callingSequence.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER).stream().forEach(binding -> {
+        int indexInClass = 0;
+        for(ArgumentBinding binding : callingSequence.getBindings(StorageClass.VECTOR_ARGUMENT_REGISTER)) {
+            while(indexInClass < binding.getStorage().getStorageIndex()) {
+                builder.getArgumentsCollector().add(ShuffleRecipeClass.VECTOR, ShuffleRecipeOperation.SKIP);
+                indexInClass++;
+            }
             builder.getArgumentsCollector().addPulls(ShuffleRecipeClass.VECTOR, binding.getStorage().getSize() / 8);
-        });
+            indexInClass++;
+        }
 
-        builder.getArgumentsCollector().addPulls(ShuffleRecipeClass.INTEGER, callingSequence.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER).size());
-
+        indexInClass = 0;
+        for(ArgumentBinding binding : callingSequence.getBindings(StorageClass.INTEGER_ARGUMENT_REGISTER)) {
+            while(indexInClass < binding.getStorage().getStorageIndex()) {
+                builder.getArgumentsCollector().add(ShuffleRecipeClass.INTEGER, ShuffleRecipeOperation.SKIP);
+                indexInClass++;
+            }
+            builder.getArgumentsCollector().addPull(ShuffleRecipeClass.INTEGER);
+            indexInClass++;
+        }
 
         // Returns
         builder.getReturnsCollector().addPulls(ShuffleRecipeClass.INTEGER, callingSequence.getBindings(StorageClass.INTEGER_RETURN_REGISTER).size());
