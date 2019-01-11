@@ -25,9 +25,39 @@
 
 /*
  * @test
+ * @requires os.family != "windows"
  * @modules jdk.jextract
  * @build BadBitfieldTest
  * @run testng BadBitfieldTest
+ */
+
+/*
+ * Not running on Windows since MSVC will not cross storage unit boundaries.
+ * Resulting struct on SysV is 16 bytes, but 24 on MSx64
+ *
+ * MSVC: (/d1reportSingleClassLayoutFoo)
+ * class Foo	size(24):
+ *      +---
+ *  0.	| a (bitstart=0,nbits=45)
+ *  8.	| b (bitstart=0,nbits=24)
+ *  8.	| c (bitstart=24,nbits=1)
+ * 16.	| d (bitstart=0,nbits=58)
+ *      +---
+ *
+ * SysV: (PAHole)
+ * struct Foo {
+ *     long long int a:45;                0:19   8
+ *     long long int b:24;                0:251  8
+ *     XXX 251 bits hole, try to pack
+ *     long long int c:1;                 8:58   8
+ *     long long int d:58;                8: 0   8
+ *
+ *     size: 16, cachelines: 1, members: 4
+ *     bit holes: 1, sum bit holes: 251 bits
+ *     bit_padding: 5 bits
+ *     last cacheline: 16 bytes
+ * };
+ *
  */
 
 import org.testng.annotations.*;

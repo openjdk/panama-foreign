@@ -21,11 +21,17 @@
  * questions.
  */
 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 struct pair {
    int x;
    int y;
 };
 
-void ptr(char* ptr) { }
-void pair(struct pair p) { }
-void cb(void (*cb)()) { }
+EXPORT void ptr(char* ptr) { }
+EXPORT void pair(struct pair p) { }
+EXPORT void cb(void (*cb)()) { }

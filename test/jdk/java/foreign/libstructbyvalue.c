@@ -21,6 +21,18 @@
  * questions.
  */
 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
+// fits in single 64 bit register
+struct small_tuple {
+    int one;
+    int two;
+};
+
 struct tuple {
    int one;
    int two;
@@ -36,34 +48,50 @@ struct big_tuple {
    int five;
 };
 
+struct small_tuple SMALL_T = { 1, 2 };
 struct tuple T = { 1, 2, 3, 4 };
 struct big_tuple BIG_T = { 1, 2, 3, 4, 5 };
-
-struct tuple make() {
-    return T;
+ 
+EXPORT struct small_tuple small_make() {
+    return SMALL_T;
 }
 
-struct tuple id(struct tuple t) {
+EXPORT struct small_tuple small_id(struct small_tuple t) {
     return t;
 }
 
-struct tuple zero(struct tuple t) {
+EXPORT struct small_tuple small_zero(struct small_tuple t) {
+    t.one = 0;
+    t.two = 0;
+    return t;
+}
+
+
+EXPORT struct tuple make() {
+    return T;
+}
+ 
+EXPORT struct tuple id(struct tuple t) {
+    return t;
+}
+
+EXPORT struct tuple zero(struct tuple t) {
     t.one = 0;
     t.two = 0;
     t.three = 0;
     t.four = 0;
     return t;
 }
-
-struct big_tuple big_make() {
+ 
+EXPORT struct big_tuple big_make() {
     return BIG_T;
 }
-
-struct big_tuple big_id(struct big_tuple t) {
+ 
+EXPORT struct big_tuple big_id(struct big_tuple t) {
     return t;
 }
 
-struct big_tuple big_zero(struct big_tuple t) {
+EXPORT struct big_tuple big_zero(struct big_tuple t) {
     t.one = 0;
     t.two = 0;
     t.three = 0;

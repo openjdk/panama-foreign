@@ -33,6 +33,7 @@ import static org.testng.Assert.assertTrue;
 
 /*
  * @test
+ * @requires os.family != "windows"
  * @modules jdk.jextract
  * @build JextractToolRunner
  * @run testng EmptyStructTest

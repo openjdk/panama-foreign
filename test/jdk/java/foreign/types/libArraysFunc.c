@@ -23,10 +23,17 @@
  * questions.
  */
 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
+ 
 struct foo {
    int i;
 };
 
-void m(struct foo *foos) { }
+EXPORT void m(struct foo *foos) { }
 
-void g(void (*func)(struct foo)) { }
+EXPORT void g(void (*func)(struct foo)) { }

@@ -21,20 +21,26 @@
  * questions.
  */
 
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 struct RegStruct {
    char c; // <-- padding after this field
    int i;
    double l;
 };
 
-char get_c(struct RegStruct rs) {
+EXPORT char get_c(struct RegStruct rs) {
    return rs.c;
 }
 
-int get_i(struct RegStruct rs) {
+EXPORT int get_i(struct RegStruct rs) {
    return rs.i;
 }
 
-double get_l(struct RegStruct rs) {
+EXPORT double get_l(struct RegStruct rs) {
    return rs.l;
 }

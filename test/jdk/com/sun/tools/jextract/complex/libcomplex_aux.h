@@ -21,6 +21,7 @@
  * questions.
  */
 
+#ifndef _WIN64
 #include <complex.h>
 
 float complex ff(float complex arg, float complex (*cb)(float complex));
@@ -28,3 +29,5 @@ float complex ff(float complex arg, float complex (*cb)(float complex));
 double complex f(double complex arg, double complex (*cb)(double complex));
 
 long double complex fl(long double complex arg, long double complex (*cb)(long double complex));
+
+#endif

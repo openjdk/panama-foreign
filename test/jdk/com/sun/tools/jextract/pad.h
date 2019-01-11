@@ -24,7 +24,7 @@
 typedef struct {
     char c1;
     union {
-        long l;
+        long long l;
         struct {
             char x1;
             double y1;

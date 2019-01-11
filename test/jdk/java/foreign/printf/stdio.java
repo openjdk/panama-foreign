@@ -27,16 +27,11 @@ import java.foreign.annotations.NativeLocation;
 import java.foreign.memory.Pointer;
 
 @NativeHeader(path="/usr/include/stdio.h", declarations =
-        "getpid=()i32" +
         "printf=(u64:u8*)i32" +
         "fprintf=(u64:vu64:u8*)i32" +
-        "fflush=(u64:v)i32" +
-        "fdopen=(i32u64:u8)u64:v"
+        "fflush=(u64:v)i32"
 )
 public interface stdio {
-    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
-    int getpid();
-
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
     int printf(Pointer<Byte> fmt, Object... args);
 
@@ -45,7 +40,4 @@ public interface stdio {
 
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
     int fflush(Pointer<Void> stream);
-
-    @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
-    Pointer<Void> fdopen(int fd, Pointer<Byte> mode);
 }

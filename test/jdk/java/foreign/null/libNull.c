@@ -23,6 +23,12 @@
 
 #include <stdlib.h>
 
-int* get_nullptr() {
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
+EXPORT int* get_nullptr() {
     return NULL;
 }

@@ -38,7 +38,6 @@ public class Util {
         case PRINTF: return MethodHandles.publicLookup().findVirtual(stdio.class, "printf", MethodType.methodType(int.class, Pointer.class, Object[].class));
         case FPRINTF: return MethodHandles.publicLookup().findVirtual(stdio.class, "fprintf", MethodType.methodType(int.class, Pointer.class, Pointer.class, Object[].class));
         case FFLUSH: return MethodHandles.publicLookup().findVirtual(stdio.class, "fflush", MethodType.methodType(int.class, Pointer.class));
-        case FDOPEN: return MethodHandles.publicLookup().findVirtual(stdio.class, "fdopen", MethodType.methodType(Pointer.class, int.class, Pointer.class));
         default: throw new IllegalArgumentException("Unhandled function: " + function);
         }
     }

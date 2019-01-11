@@ -100,11 +100,30 @@ public class TestDowncallGenerator {
         boolean header = args.length > 0 && args[0].equals("header");
 
         if (header) {
-            for (int j = 0; j <= MAX_FIELDS; j++) {
+            System.out.println(
+                "#ifdef _WIN64\n" + 
+                "#define EXPORT __declspec(dllexport)\n" +
+                "#else\n" +
+                "#define EXPORT\n" +
+                "#endif\n"
+            );
+
+            for (int j = 1; j <= MAX_FIELDS; j++) {
                 for (List<StructFieldType> fields : StructFieldType.perms(j)) {
                     generateStructDecl(fields);
                 }
             }
+        } else {
+            System.out.println(
+                "#include \"libTestDowncall.h\"\n" +
+                "#ifdef __clang__\n" +
+                "#pragma clang optimize off\n" +
+                "#elif defined __GNUC__\n" +
+                "#pragma GCC optimize (\"O0\")\n" +
+                "#elif defined _MSC_BUILD\n" + 
+                "#pragma optimize( \"\", off )\n" +
+                "#endif\n"
+            );
         }
 
         for (Ret r : Ret.values()) {
@@ -112,7 +131,7 @@ public class TestDowncallGenerator {
                 if (r != Ret.VOID && i == 0) continue;
                 for (List<ParamType> ptypes : ParamType.perms(i)) {
                     if (ptypes.contains(ParamType.STRUCT)) {
-                        for (int j = 0; j <= MAX_FIELDS; j++) {
+                        for (int j = 1; j <= MAX_FIELDS; j++) {
                             for (List<StructFieldType> fields : StructFieldType.perms(j)) {
                                 generateFunction(r, ptypes, fields, header);
                             }
@@ -172,7 +191,7 @@ public class TestDowncallGenerator {
                 paramDecls.stream().collect(Collectors.joining(", "));
         String body = ret == Ret.VOID ? "{ }" : "{ return p0; }";
         int fCode = functions++ / CHUNK_SIZE;
-        String res = String.format("%s f%d_%s_%s_%s(%s) %s", retType, fCode, retCode, sigCode, structCode,
+        String res = String.format("EXPORT %s f%d_%s_%s_%s(%s) %s", retType, fCode, retCode, sigCode, structCode,
                 sig, declOnly ? ";" : body);
         System.out.println(res);
     }

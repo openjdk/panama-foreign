@@ -21,6 +21,12 @@
  * questions.
  */
 
-int square(int x) {
+#ifdef _WIN64
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
+EXPORT int square(int x) {
     return x*x;
 }

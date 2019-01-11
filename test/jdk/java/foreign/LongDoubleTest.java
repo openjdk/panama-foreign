@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @requires os.family != "windows"
  * @run testng LongDoubleTest
  */
 

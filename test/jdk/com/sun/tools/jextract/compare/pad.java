@@ -39,8 +39,8 @@ public interface pad {
                         "u8(get=x1$get)(set=x1$set)(ptr=x1$ptr)" +
                         "x56" +
                         "f64(get=y1$get)(set=y1$set)(ptr=y1$ptr)" +
-                    "](anon$pad_h$1118)|" +
-                    "$(anon$pad_h$1190)(get=p2$get)(set=p2$set)(ptr=p2$ptr)" +
+                    "](anon$pad_h$1123)|" +
+                    "$(anon$pad_h$1195)(get=p2$get)(set=p2$set)(ptr=p2$ptr)" +
                 "](anon$pad_h$1086)" +
                 "f32(get=f1$get)(set=f1$set)(ptr=f1$ptr)" +
                 "x32" +
@@ -58,9 +58,9 @@ public interface pad {
         public abstract double y1$get();
         public abstract void y1$set(double y1);
         public abstract java.foreign.memory.Pointer<java.lang.Double> y1$ptr();
-        public abstract anon$pad_h$1190 p2$get();
-        public abstract void p2$set(anon$pad_h$1190 p2);
-        public abstract java.foreign.memory.Pointer<anon$pad_h$1190> p2$ptr();
+        public abstract anon$pad_h$1195 p2$get();
+        public abstract void p2$set(anon$pad_h$1195 p2);
+        public abstract java.foreign.memory.Pointer<anon$pad_h$1195> p2$ptr();
         public abstract float f1$get();
         public abstract void f1$set(float f1);
         public abstract java.foreign.memory.Pointer<java.lang.Float> f1$ptr();
@@ -72,8 +72,8 @@ public interface pad {
                 "f32(get=y2$get)(set=y2$set)(ptr=y2$ptr)" +
                 "u8(get=z2$get)(set=z2$set)(ptr=z2$ptr)" +
                 "x24" +
-            "](anon$pad_h$1190)")
-    interface anon$pad_h$1190 extends java.foreign.memory.Struct<anon$pad_h$1190> {
+            "](anon$pad_h$1195)")
+    interface anon$pad_h$1195 extends java.foreign.memory.Struct<anon$pad_h$1195> {
         public abstract double x2$get();
         public abstract void x2$set(double x2);
         public abstract java.foreign.memory.Pointer<java.lang.Double> x2$ptr();

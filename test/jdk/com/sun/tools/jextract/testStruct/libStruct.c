@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char* LastCalledMethod;
+EXPORT char* LastCalledMethod;
 
 struct UndefinedStruct {
     int x;
@@ -46,36 +46,36 @@ struct Opaque {
     char *data;
 };
 
-UndefinedStruct* allocateUndefinedStruct() {
+EXPORT UndefinedStruct* allocateUndefinedStruct() {
     UndefinedStruct *p = malloc(sizeof(UndefinedStruct));
     p->x = 0x1234;
     p->y = 0x3412;
     return p;
 }
 
-struct Plain fromUndefinedStruct(UndefinedStruct *p) {
+EXPORT struct Plain fromUndefinedStruct(UndefinedStruct *p) {
     return *((struct Plain*) p);
 }
 
 // intentionally mismatch prototype with same type
-UndefinedStructPointer getParent(struct UndefinedStructForPointer * node) {
+EXPORT UndefinedStructPointer getParent(struct UndefinedStructForPointer * node) {
     return node->parent;
 }
 
 // intentionally mismatch prototype with same type
-UndefinedStructPointer getSibling(UndefinedStructPointer node) {
+EXPORT UndefinedStructPointer getSibling(UndefinedStructPointer node) {
     return node->right;
 }
 
-UndefinedStructPointer getFirstChild(struct UndefinedStructForPointer *node) {
+EXPORT UndefinedStructPointer getFirstChild(struct UndefinedStructForPointer *node) {
     return node->firstChild;
 }
 
-struct Opaque* allocate_opaque_struct() {
+EXPORT struct Opaque* allocate_opaque_struct() {
     return (struct Opaque*) malloc(sizeof(struct Opaque));
 }
 
-TypedefAnonymous getAnonymous(TypedefNamedDifferent_t fns, int x, int y) {
+EXPORT TypedefAnonymous getAnonymous(TypedefNamedDifferent_t fns, int x, int y) {
     TypedefAnonymous s;
     s.x = x;
     s.y = y;
@@ -84,25 +84,25 @@ TypedefAnonymous getAnonymous(TypedefNamedDifferent_t fns, int x, int y) {
     return s;
 }
 
-void emptyArguments() {
+EXPORT void emptyArguments() {
     LastCalledMethod = "emptyArguments";
     printf("%s\n", LastCalledMethod);
 }
 
-void voidArguments(void) {
+EXPORT void voidArguments(void) {
     LastCalledMethod = "voidArguments";
     printf("%s\n", LastCalledMethod);
 }
 
-void* FunctionWithVoidPointer(void *data, void **array_data) {
+EXPORT void* FunctionWithVoidPointer(void *data, void **array_data) {
     return NULL;
 }
 
-void** GetArrayData(struct IncompleteArray *par) {
+EXPORT void** GetArrayData(struct IncompleteArray *par) {
     return NULL;
 }
 
-void* GetData(struct IncompleteArray ar) {
+EXPORT void* GetData(struct IncompleteArray ar) {
     printf("Sizeof(IncompleteArray) = %lu\n", sizeof(ar));
     return NULL;
 }
