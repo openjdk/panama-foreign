@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,19 +38,19 @@ import java.foreign.memory.Struct;
 @NativeHeader(path="recursive.h")
 public interface recursive {
 
-    @NativeLocation(file="recursive.h", line=1, column=8)
+    @NativeLocation(file="recursive.h", line=26, column=8)
     @NativeStruct("[u64(get=p$get)(set=p$set)(ptr=p$ptr):$(Bar)](Foo)")
     public interface Foo extends Struct<Foo> {
-        @NativeLocation(file="recursive.h", line=2, column=17)
+        @NativeLocation(file="recursive.h", line=27, column=17)
         Pointer<Bar> p$get();
         void p$set(Pointer<Bar> value);
         Pointer<Pointer<Bar>> p$ptr();
     }
 
-    @NativeLocation(file = "recursive.h", line=5, column=8)
+    @NativeLocation(file = "recursive.h", line=30, column=8)
     @NativeStruct("[u64(get=q$get)(set=q$set)(ptr=q$ptr):$(Foo)](Bar)")
     public interface Bar extends Struct<Bar> {
-        @NativeLocation(file="recursive.h", line=6, column=17)
+        @NativeLocation(file="recursive.h", line=31, column=17)
         Pointer<Foo> q$get();
         void q$set(Pointer<Foo> value);
         Pointer<Pointer<Foo>> q$ptr();
