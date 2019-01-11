@@ -33,6 +33,18 @@ public enum StorageClass {
     INTEGER_RETURN_REGISTER(false, true),
     X87_RETURN_REGISTER(false, true);
 
+    public static final StorageClass[] ARGUMENT_STORAGE_CLASSES = {
+            StorageClass.STACK_ARGUMENT_SLOT,
+            StorageClass.VECTOR_ARGUMENT_REGISTER,
+            StorageClass.INTEGER_ARGUMENT_REGISTER
+    };
+
+    public static final StorageClass[] RETURN_STORAGE_CLASSES = {
+            StorageClass.VECTOR_RETURN_REGISTER,
+            StorageClass.INTEGER_RETURN_REGISTER,
+            StorageClass.X87_RETURN_REGISTER
+    };
+
     final boolean isArgumentClass;
     final boolean isReturnClass;
 

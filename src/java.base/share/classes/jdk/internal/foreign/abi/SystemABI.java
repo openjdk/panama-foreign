@@ -24,12 +24,14 @@
  */
 package jdk.internal.foreign.abi;
 
+import jdk.internal.foreign.abi.x64.windows.Windowsx64ABI;
+import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
+
 import java.foreign.Library;
 import java.foreign.NativeMethodType;
 import java.foreign.layout.Layout;
 import java.lang.invoke.MethodHandle;
 import java.util.Collection;
-import jdk.internal.foreign.abi.x64.sysv.SysVx64ABI;
 
 /**
  * This class models a system application binary interface (ABI).
@@ -122,8 +124,15 @@ public interface SystemABI {
     }
 
     static SystemABI getInstance() {
-        // FIXME: Either re-introduce system specific class like Host.java we had
-        // or code up factory method based on system properties.
-        return SysVx64ABI.getInstance();
+        String arch = System.getProperty("os.arch");
+        String os = System.getProperty("os.name");
+        if (arch.equals("amd64")) {
+            if (os.startsWith("Windows")) {
+                return Windowsx64ABI.getInstance();
+            } else {
+                return SysVx64ABI.getInstance();
+            }
+        }
+        throw new UnsupportedOperationException("Unsupported os or arch: " + os + ", " + arch);
     }
 }

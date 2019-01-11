@@ -22,8 +22,6 @@
  */
 package jdk.internal.foreign.abi;
 
-import jdk.internal.foreign.abi.x64.sysv.Constants;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +30,7 @@ public class CallingSequence {
     private final boolean returnsInMemory;
     private final List<ArgumentBinding>[] argBindings;
     private final List<ArgumentBinding> retBindings = new ArrayList<>();
-    private final int[] argsOffsets = new int[Constants.ARGUMENT_STORAGE_CLASSES.length];
+    private final int[] argsOffsets = new int[StorageClass.ARGUMENT_STORAGE_CLASSES.length];
     private final int[] retOffsets = new int[StorageClass.values().length];
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -95,12 +93,14 @@ public class CallingSequence {
 
     public long argumentStorageOffset(ArgumentBinding b) {
         return argsOffsets[b.getStorage().getStorageClass().ordinal()] +
-                 b.getStorage().getStorageIndex() * b.getStorage().getSize() / 8;
+            bindings[b.getStorage().getStorageClass().ordinal()].indexOf(b)
+            * b.getStorage().getSize() / 8;
     }
 
     public long returnStorageOffset(ArgumentBinding b) {
         return retOffsets[b.getStorage().getStorageClass().ordinal()] +
-                 b.getStorage().getStorageIndex() * b.getStorage().getSize() / 8;
+            bindings[b.getStorage().getStorageClass().ordinal()].indexOf(b)
+            * b.getStorage().getSize() / 8;
     }
 
     public String asString() {

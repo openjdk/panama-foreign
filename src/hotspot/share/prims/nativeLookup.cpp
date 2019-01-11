@@ -135,7 +135,7 @@ static JNINativeMethod lookup_special_native_methods[] = {
   { CC"Java_jdk_internal_foreign_memory_References_registerNatives",      NULL, FN_PTR(JVM_RegisterReferencesMethods) },
   { CC"Java_jdk_internal_foreign_abi_UniversalNativeInvoker_registerNatives",      NULL, FN_PTR(JVM_RegisterUniversalNativeInvokerMethods) },
   { CC"Java_jdk_internal_foreign_abi_DirectNativeInvoker_registerNatives",      NULL, FN_PTR(JVM_RegisterDirectNativeInvokerMethods) },
-  { CC"Java_jdk_internal_foreign_abi_x64_sysv_SysVx64ABI_registerNatives",      NULL, FN_PTR(JVM_RegisterUpcallHandlerMethods) },
+  { CC"Java_jdk_internal_foreign_abi_UpcallStubs_registerNatives",      NULL, FN_PTR(JVM_RegisterUpcallHandlerMethods) },
   { CC"Java_jdk_internal_foreign_abi_UniversalUpcallHandler_registerNatives",      NULL, FN_PTR(JVM_RegisterUniversalUpcallHandlerMethods) },
   { CC"Java_jdk_internal_foreign_abi_DirectUpcallHandler_registerNatives",      NULL, FN_PTR(JVM_RegisterDirectUpcallHandlerMethods) },
   { CC"Java_jdk_internal_foreign_abi_LinkToNativeUpcallHandler_registerNatives",      NULL, FN_PTR(JVM_RegisterLinkToNativeUpcallHandlerMethods) },
