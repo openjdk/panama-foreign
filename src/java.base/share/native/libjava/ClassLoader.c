@@ -441,11 +441,11 @@ Java_java_lang_ClassLoader_00024NativeLibrary_unload
 
 /*
  * Class:     java_lang_ClassLoader_NativeLibrary
- * Method:    findEntry
+ * Method:    findEntry0
  * Signature: (Ljava/lang/String;)J
  */
 JNIEXPORT jlong JNICALL
-Java_java_lang_ClassLoader_00024NativeLibrary_findEntry
+Java_java_lang_ClassLoader_00024NativeLibrary_findEntry0
   (JNIEnv *env, jobject this, jstring name)
 {
     jlong handle;
@@ -463,6 +463,30 @@ Java_java_lang_ClassLoader_00024NativeLibrary_findEntry
     (*env)->ReleaseStringUTFChars(env, name, cname);
     return res;
 }
+
+/*
+ * Class:     java_lang_ClassLoader_NativeLibrary
+ * Method:    findEntryInProcess
+ * Signature: (Ljava/lang/String;)J
+ */
+JNIEXPORT jlong JNICALL
+Java_java_lang_ClassLoader_00024NativeLibrary_findEntryInProcess
+  (JNIEnv *env, jclass cls, jstring name)
+{
+    const char *cname;
+    jlong res;
+
+    if (!initIDs(env))
+        return jlong_zero;
+
+    cname = (*env)->GetStringUTFChars(env, name, 0);
+    if (cname == 0)
+        return jlong_zero;
+    res = ptr_to_jlong(findEntryInProcess(cname));
+    (*env)->ReleaseStringUTFChars(env, name, cname);
+    return res;
+}
+
 /*
  * Class:     java_lang_ClassLoader
  * Method:    findBuiltinLib
@@ -520,16 +544,3 @@ Java_java_lang_ClassLoader_findBuiltinLib
     free(libName);
     return NULL;
 }
-
-/*
- * Class:     java_lang_ClassLoader_NativeLibrary
- * Method:    defaultHandle
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL
-Java_java_lang_ClassLoader_00024NativeLibrary_defaultHandle
-  (JNIEnv *env, jobject this)
-{
-    return ptr_to_jlong(getDefaultHandle());
-}
-

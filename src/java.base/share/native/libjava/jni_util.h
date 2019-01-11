@@ -407,8 +407,8 @@ int getFastEncoding();
 JNIEXPORT void InitializeEncoding(JNIEnv *env, const char *name);
 
 void* getProcessHandle();
-// library handle used to search symbols in all the loaded shared objects/DLLs.
-void* getDefaultHandle();
+
+void* findEntryInProcess(const char* name);
 
 void buildJniFunctionName(const char *sym, const char *cname,
                           char *jniEntryName);
