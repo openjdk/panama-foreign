@@ -758,12 +758,12 @@ void UniversalNativeInvoker::generate_invoke_native(MacroAssembler* _masm) {
   __ block_comment("init_and_alloc_stack");
 
   __ push(ctxt_reg); // need to preserve register
-
-#ifdef _LP64
-  __ movptr(ctxt_reg, c_rarg0);
-#else
-  __ movptr(ctxt_reg, Address(rbp, 8));
+#ifdef _WIN64 // preserve extra registers on MSx64
+  __ push(rsi);
+  __ push(rdi);
 #endif
+
+  __ movptr(ctxt_reg, c_rarg0);
 
   __ block_comment("allocate_stack");
   __ movptr(rcx, Address(ctxt_reg, offsetof(struct ShuffleDowncallContext, arguments.stack_args_bytes)));
@@ -780,7 +780,7 @@ void UniversalNativeInvoker::generate_invoke_native(MacroAssembler* _masm) {
   __ movptr(rdi, rsp);
   __ rep_mov();
 
-#ifdef _LP64
+
   for (size_t i = 0; i < VECTOR_ARGUMENT_REGISTERS_NOOF; i++) {
     // [1] -> 64 bit -> xmm
     // [2] -> 128 bit -> xmm
@@ -804,13 +804,20 @@ void UniversalNativeInvoker::generate_invoke_native(MacroAssembler* _masm) {
   }
 
   __ movptr(rax, Address(ctxt_reg, offsetof(struct ShuffleDowncallContext, arguments.rax)));
-#endif
 
+#ifdef _WIN64
+  __ block_comment("allocate shadow space for argument register spill");
+  __ subptr(rsp, 32);
+#endif
 
   // call target function
   __ block_comment("call target function");
   __ call(Address(ctxt_reg, offsetof(struct ShuffleDowncallContext, arguments.next_pc)));
 
+#ifdef _WIN64
+  __ block_comment("pop shadow space");
+  __ addptr(rsp, 32);
+#endif
 
   __ block_comment("store_registers");
   for (size_t i = 0; i < INTEGER_RETURN_REGISTERS_NOOF; i++) {
@@ -845,6 +852,10 @@ void UniversalNativeInvoker::generate_invoke_native(MacroAssembler* _masm) {
 
   // Restore backed up preserved register
   __ movptr(ctxt_reg, Address(rbp, -(int)sizeof(uintptr_t)));
+#ifdef _WIN64
+  __ movptr(rsi, Address(rbp, -(int)(sizeof(uintptr_t) * 2)));
+  __ movptr(rdi, Address(rbp, -(int)(sizeof(uintptr_t) * 3)));
+#endif
 
   __ leave();
   __ ret(0);

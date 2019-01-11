@@ -32,13 +32,13 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import jdk.internal.foreign.Util;
 
-public class VarargsInvoker {
+public abstract class VarargsInvoker {
 
-    private static final MethodHandle INVOKE_MH;
-    final NativeMethodType nativeMethodType;
-    final Library.Symbol symbol;
+    protected static final MethodHandle INVOKE_MH;
+    protected final NativeMethodType nativeMethodType;
+    protected final Library.Symbol symbol;
 
-    private VarargsInvoker(Library.Symbol symbol, NativeMethodType nativeMethodType) {
+    protected VarargsInvoker(Library.Symbol symbol, NativeMethodType nativeMethodType) {
         this.symbol = symbol;
         this.nativeMethodType = nativeMethodType;
     }
@@ -49,13 +49,6 @@ public class VarargsInvoker {
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static MethodHandle make(Library.Symbol symbol, NativeMethodType nativeMethodType) {
-        VarargsInvoker invoker = new VarargsInvoker(symbol, nativeMethodType);
-        MethodType methodType = nativeMethodType.methodType();
-        return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, methodType.parameterCount())
-                .asType(methodType);
     }
 
     private Object invoke(Object[] args) throws Throwable {
@@ -73,8 +66,7 @@ public class VarargsInvoker {
             Class<?> type = o.getClass();
             argLayoutTypes[pos++] = Util.makeType(computeClass(type), Util.variadicLayout(type));
         }
-        MethodHandle delegate = SystemABI.getInstance().downcallHandle(symbol,
-                NativeMethodType.of(retLayoutType, argLayoutTypes));
+        MethodHandle delegate = specialize(NativeMethodType.of(retLayoutType, argLayoutTypes));
 
         // flatten argument list so that it can be passed to an asSpreader MH
         Object[] allArgs = new Object[nNamedArgs + unnamedArgs.length];
@@ -83,6 +75,8 @@ public class VarargsInvoker {
 
         return delegate.invokeWithArguments(allArgs);
     }
+
+    protected abstract MethodHandle specialize(NativeMethodType nmt);
 
     private Class<?> computeClass(Class<?> c) {
         if (c.isPrimitive()) {

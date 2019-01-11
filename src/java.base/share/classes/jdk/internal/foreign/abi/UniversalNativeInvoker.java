@@ -22,21 +22,19 @@
  */
 package jdk.internal.foreign.abi;
 
-import java.foreign.Library;
+import jdk.internal.foreign.ScopeImpl;
+import jdk.internal.foreign.memory.BoundedPointer;
+
 import java.foreign.NativeMethodType;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
-import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.List;
-import jdk.internal.foreign.ScopeImpl;
-import jdk.internal.foreign.Util;
-import jdk.internal.foreign.memory.BoundedPointer;
-import jdk.internal.foreign.memory.LayoutTypeImpl;
+import java.util.function.Function;
 
 import static sun.security.action.GetBooleanAction.privilegedGetProperty;
 
@@ -45,7 +43,7 @@ import static sun.security.action.GetBooleanAction.privilegedGetProperty;
  * an array of longs together with a call 'recipe', which is used to move the arguments in the right places as
  * expected by the system ABI.
  */
-public class UniversalNativeInvoker {
+public abstract class UniversalNativeInvoker {
     private static final boolean DEBUG =
         privilegedGetProperty("jdk.internal.foreign.NativeInvoker.DEBUG");
 
@@ -69,7 +67,7 @@ public class UniversalNativeInvoker {
     private final long addr;
     private final String methodName;
 
-    private UniversalNativeInvoker(long addr, String methodName, CallingSequence callingSequence, NativeMethodType nmt) {
+    protected UniversalNativeInvoker(long addr, String methodName, CallingSequence callingSequence, NativeMethodType nmt) {
         this.addr = addr;
         this.methodName = methodName;
         this.callingSequence = callingSequence;
@@ -77,15 +75,9 @@ public class UniversalNativeInvoker {
         this.shuffleRecipe = ShuffleRecipe.make(callingSequence);
     }
 
-    public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, NativeMethodType nmt) {
-        try {
-            UniversalNativeInvoker invoker = new UniversalNativeInvoker(
-                    symbol.getAddress().addr(), symbol.getName(), callingSequence, nmt);
-            return INVOKE_MH.bindTo(invoker).asCollector(Object[].class, nmt.parameterCount())
-                    .asType(nmt.methodType());
-        } catch (IllegalAccessException iae) {
-            throw new IllegalStateException(iae);
-        }
+    public MethodHandle getBoundMethodHandle() {
+        return INVOKE_MH.bindTo(this).asCollector(Object[].class, nmt.parameterCount())
+                .asType(nmt.methodType());
     }
 
     Object invoke(Object[] args) throws Throwable {
@@ -143,56 +135,11 @@ public class UniversalNativeInvoker {
         }
     }
 
-    // helper routines for marshalling/unmarshalling Java values to and from registers
+    public abstract void unboxValue(Object o, LayoutType<?> type, Function<ArgumentBinding,
+                Pointer<?>> dstPtrFunc, List<ArgumentBinding> bindings) throws Throwable;
 
-    static void unboxValue(Object o, LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> dstPtrFunc,
-                           List<ArgumentBinding> bindings) throws Throwable {
-        if (o instanceof Struct) {
-            Struct<?> struct = (Struct<?>) o;
-            if (struct.ptr().type().bytesSize() != 0) {
-                Pointer<Long> src = Util.unsafeCast(struct.ptr(), NativeTypes.UINT64);
-                for (ArgumentBinding binding : bindings) {
-                    Pointer<?> dst = dstPtrFunc.apply(binding);
-                    Pointer<Long> srcPtr = src.offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
-                    Util.copy(srcPtr, dst, binding.getStorage().getSize());
-                }
-            }
-        } else {
-            assert bindings.size() <= 2;
-            Pointer<?> dst = Util.unsafeCast(dstPtrFunc.apply(bindings.get(0)), type);
-            dst.type().setter().invoke(dst, o);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    static Object boxValue(LayoutType<?> type, java.util.function.Function<ArgumentBinding, Pointer<?>> srcPtrFunc,
-                           List<ArgumentBinding> bindings) throws IllegalAccessException {
-        Class<?> carrier = ((LayoutTypeImpl<?>)type).carrier();
-        if (Util.isCStruct(carrier)) {
-            /*
-             * Leak memory for now
-             */
-            Scope scope = Scope.newNativeScope();
-
-            if (type.bytesSize() == 0) {
-                //empty struct!
-                return scope.allocateStruct((Class)carrier);
-            }
-
-            @SuppressWarnings({"rawtypes", "unchecked"})
-            Pointer<?> rtmp = ((ScopeImpl)scope).allocate(type, 8);
-
-            for (ArgumentBinding binding : bindings) {
-                Pointer<Long> dst = Util.unsafeCast(rtmp, NativeTypes.UINT64).offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
-                Util.copy(srcPtrFunc.apply(binding), dst, binding.getStorage().getSize());
-            }
-
-            return rtmp.get();
-        } else {
-            assert bindings.size() <= 2;
-            return Util.unsafeCast(srcPtrFunc.apply(bindings.get(0)), type).get();
-        }
-    }
+    public abstract Object boxValue(LayoutType<?> type, Function<ArgumentBinding,
+            Pointer<?>> srcPtrFunc, List<ArgumentBinding> bindings) throws IllegalAccessException;
 
     //natives
 

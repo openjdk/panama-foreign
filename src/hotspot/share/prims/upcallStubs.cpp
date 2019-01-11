@@ -60,7 +60,7 @@ JVM_ENTRY(static jobject, UH_GetUpcallStub(JNIEnv *env, jobject _unused, jlong a
 // These are the native methods on jdk.internal.foreign.NativeInvoker.
 static JNINativeMethod UH_methods[] = {
   {CC "freeUpcallStub",     CC "(J)V",                FN_PTR(UH_FreeUpcallStub)},
-  {CC "getUpcallStub",  CC "(J)" SYM,   FN_PTR(UH_GetUpcallStub)},
+  {CC "getUpcallStub",      CC "(J)" SYM,             FN_PTR(UH_GetUpcallStub) }
 };
 
 /**
@@ -72,7 +72,7 @@ JVM_ENTRY(void, JVM_RegisterUpcallHandlerMethods(JNIEnv *env, jclass UH_class)) 
 
     int status = env->RegisterNatives(UH_class, UH_methods, sizeof(UH_methods)/sizeof(JNINativeMethod));
     guarantee(status == JNI_OK && !env->ExceptionOccurred(),
-              "register jdk.internal.foreign.abi.x64.sysv.SysVx64ABI natives");
+              "register jdk.internal.foreign.abi.UpcallStubs natives");
   }
 }
 JVM_END
