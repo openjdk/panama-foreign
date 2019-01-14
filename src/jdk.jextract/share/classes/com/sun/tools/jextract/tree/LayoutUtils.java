@@ -127,79 +127,32 @@ public final class LayoutUtils {
         }
     }
 
-    static class Types {
-        public final static Layout BYTE = Value.ofSignedInt(8);
-        public final static Layout SHORT = Value.ofSignedInt(16);
-        public final static Layout INT = Value.ofSignedInt(32);
-        public final static Layout LONG = Value.ofSignedInt(64);
-        public final static Layout LONG_LONG = Value.ofSignedInt(64);
-        public final static Layout FLOAT = Value.ofFloatingPoint(32);
-        public final static Layout DOUBLE = Value.ofFloatingPoint(64);
-        public final static Layout LONG_DOUBLE = Value.ofFloatingPoint(128);
-        public final static Layout CHAR = Value.ofSignedInt(8);
-        public final static Layout BOOLEAN = Value.ofUnsignedInt(8);
-        public final static Layout POINTER = Address.ofVoid(64);
-        public final static Layout INT8 = Value.ofSignedInt(8);
-        public final static Layout INT16 = Value.ofSignedInt(16);
-        public final static Layout INT32 = Value.ofSignedInt(32);
-        public final static Layout INT64 = Value.ofSignedInt(64);
-        public final static Layout INT128 = Value.ofSignedInt(128);
-        public final static Layout VOID = Value.ofUnsignedInt(0);
-
-        public static class UNSIGNED {
-            public final static Layout BYTE = Value.ofUnsignedInt(8);
-            public final static Layout SHORT = Value.ofUnsignedInt(16);
-            public final static Layout INT = Value.ofUnsignedInt(32);
-            public final static Layout LONG = Value.ofUnsignedInt(64);
-            public final static Layout LONG_LONG = Value.ofUnsignedInt(64);
-            public final static Layout INT8 = Value.ofUnsignedInt(8);
-            public final static Layout INT16 = Value.ofUnsignedInt(16);
-            public final static Layout INT32 = Value.ofUnsignedInt(32);
-            public final static Layout INT64 = Value.ofUnsignedInt(64);
-            public final static Layout INT128 = Value.ofUnsignedInt(128);
-        }
-    }
-
     public static Layout getLayout(Type t) {
         switch(t.kind()) {
-            case Bool:
-                return Types.BOOLEAN;
-            case Int:
-                return Types.INT;
-            case UInt:
-                return Types.UNSIGNED.INT;
-            case Int128:
-                return Types.INT128;
-            case UInt128:
-                return Types.UNSIGNED.INT128;
-            case Short:
-                return Types.SHORT;
-            case UShort:
-                return Types.UNSIGNED.SHORT;
-            case Long:
-                return Types.LONG;
-            case ULong:
-                return Types.UNSIGNED.LONG;
-            case LongLong:
-                return Types.LONG_LONG;
-            case ULongLong:
-                return Types.UNSIGNED.LONG_LONG;
             case SChar:
-                return Types.BYTE;
+            case Short:
+            case Int:
+            case Long:
+            case LongLong:
+            case Int128:
+            case Enum:
+                return Value.ofSignedInt(t.size() * 8);
+            case Bool:
+            case UInt:
+            case UInt128:
+            case UShort:
+            case ULong:
+            case ULongLong:
             case Char_S:
             case Char_U:
             case UChar:
-                return Types.UNSIGNED.BYTE;
+                return Value.ofUnsignedInt(t.size() * 8);
             case Float:
-                return Types.FLOAT;
             case Double:
-                return Types.DOUBLE;
             case LongDouble:
-                return Types.LONG_DOUBLE;
+                return Value.ofFloatingPoint(t.size() * 8);
             case Record:
                 return getRecordReferenceLayout(t);
-            case Enum:
-                return Types.INT;
             case ConstantArray:
                 return Sequence.of(t.getNumberOfElements(), getLayout(t.getElementType()));
             case IncompleteArray:
