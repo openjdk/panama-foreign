@@ -126,7 +126,7 @@ public interface SystemABI {
     static SystemABI getInstance() {
         String arch = System.getProperty("os.arch");
         String os = System.getProperty("os.name");
-        if (arch.equals("amd64")) {
+        if (arch.equals("amd64") || arch.equals("x86_64")) {
             if (os.startsWith("Windows")) {
                 return Windowsx64ABI.getInstance();
             } else {
