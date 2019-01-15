@@ -387,7 +387,7 @@ final class Long512Vector extends LongVector {
         return (Long512Vector) VectorIntrinsics.binaryOp(
             VECTOR_OP_MIN, Long512Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Long512Vector)v1).bOp(v2, (i, a, b) -> (long) ((a < b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long) Math.min(a, b)));
     }
 
     @Override
@@ -404,7 +404,7 @@ final class Long512Vector extends LongVector {
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, Long512Vector.class, long.class, LENGTH,
             this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (long) Math.max(a, b)));
         }
 
     @Override
@@ -561,7 +561,7 @@ final class Long512Vector extends LongVector {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, Long512Vector.class, long.class, LENGTH,
             this,
-            v -> (long) v.rOp(Long.MAX_VALUE , (i, a, b) -> (long) ((a < b) ? a : b)));
+            v -> (long) v.rOp(Long.MAX_VALUE , (i, a, b) -> (long) Math.min(a, b)));
     }
 
     @Override
@@ -570,7 +570,7 @@ final class Long512Vector extends LongVector {
         return (long) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, Long512Vector.class, long.class, LENGTH,
             this,
-            v -> (long) v.rOp(Long.MIN_VALUE , (i, a, b) -> (long) ((a > b) ? a : b)));
+            v -> (long) v.rOp(Long.MIN_VALUE , (i, a, b) -> (long) Math.max(a, b)));
     }
 
     @Override

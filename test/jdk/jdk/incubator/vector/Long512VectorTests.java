@@ -932,7 +932,7 @@ public class Long512VectorTests extends AbstractVectorTest {
     }
 
     static long max(long a, long b) {
-        return (long)((a > b) ? a : b);
+        return (long)(Math.max(a, b));
     }
 
     @Test(dataProvider = "longBinaryOpProvider")
@@ -952,7 +952,7 @@ public class Long512VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, Long512VectorTests::max);
     }
     static long min(long a, long b) {
-        return (long)((a < b) ? a : b);
+        return (long)(Math.min(a, b));
     }
 
     @Test(dataProvider = "longBinaryOpProvider")
@@ -1118,7 +1118,7 @@ public class Long512VectorTests extends AbstractVectorTest {
     static long minAll(long[] a, int idx) {
         long res = Long.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res = (res < a[i])?res:a[i];
+            res = (long)Math.min(res, a[i]);
         }
 
         return res;
@@ -1140,7 +1140,7 @@ public class Long512VectorTests extends AbstractVectorTest {
     static long maxAll(long[] a, int idx) {
         long res = Long.MIN_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res > a[i])?res:a[i];
+            res = (long)Math.max(res, a[i]);
         }
 
         return res;

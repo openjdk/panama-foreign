@@ -379,7 +379,7 @@ final class ShortMaxVector extends ShortVector {
         return (ShortMaxVector) VectorIntrinsics.binaryOp(
             VECTOR_OP_MIN, ShortMaxVector.class, short.class, LENGTH,
             this, v,
-            (v1, v2) -> ((ShortMaxVector)v1).bOp(v2, (i, a, b) -> (short) ((a < b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short) Math.min(a, b)));
     }
 
     @Override
@@ -396,7 +396,7 @@ final class ShortMaxVector extends ShortVector {
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, ShortMaxVector.class, short.class, LENGTH,
             this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (short) Math.max(a, b)));
         }
 
     @Override
@@ -517,7 +517,7 @@ final class ShortMaxVector extends ShortVector {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, ShortMaxVector.class, short.class, LENGTH,
             this,
-            v -> (long) v.rOp(Short.MAX_VALUE , (i, a, b) -> (short) ((a < b) ? a : b)));
+            v -> (long) v.rOp(Short.MAX_VALUE , (i, a, b) -> (short) Math.min(a, b)));
     }
 
     @Override
@@ -526,7 +526,7 @@ final class ShortMaxVector extends ShortVector {
         return (short) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, ShortMaxVector.class, short.class, LENGTH,
             this,
-            v -> (long) v.rOp(Short.MIN_VALUE , (i, a, b) -> (short) ((a > b) ? a : b)));
+            v -> (long) v.rOp(Short.MIN_VALUE , (i, a, b) -> (short) Math.max(a, b)));
     }
 
     @Override

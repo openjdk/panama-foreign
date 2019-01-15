@@ -387,7 +387,7 @@ final class Int512Vector extends IntVector {
         return (Int512Vector) VectorIntrinsics.binaryOp(
             VECTOR_OP_MIN, Int512Vector.class, int.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Int512Vector)v1).bOp(v2, (i, a, b) -> (int) ((a < b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) Math.min(a, b)));
     }
 
     @Override
@@ -404,7 +404,7 @@ final class Int512Vector extends IntVector {
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, Int512Vector.class, int.class, LENGTH,
             this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) Math.max(a, b)));
         }
 
     @Override
@@ -561,7 +561,7 @@ final class Int512Vector extends IntVector {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, Int512Vector.class, int.class, LENGTH,
             this,
-            v -> (long) v.rOp(Integer.MAX_VALUE , (i, a, b) -> (int) ((a < b) ? a : b)));
+            v -> (long) v.rOp(Integer.MAX_VALUE , (i, a, b) -> (int) Math.min(a, b)));
     }
 
     @Override
@@ -570,7 +570,7 @@ final class Int512Vector extends IntVector {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, Int512Vector.class, int.class, LENGTH,
             this,
-            v -> (long) v.rOp(Integer.MIN_VALUE , (i, a, b) -> (int) ((a > b) ? a : b)));
+            v -> (long) v.rOp(Integer.MIN_VALUE , (i, a, b) -> (int) Math.max(a, b)));
     }
 
     @Override

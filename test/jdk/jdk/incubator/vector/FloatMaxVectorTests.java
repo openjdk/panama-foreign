@@ -718,7 +718,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
 
 
     static float max(float a, float b) {
-        return (float)((a > b) ? a : b);
+        return (float)(Math.max(a, b));
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
@@ -738,7 +738,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, FloatMaxVectorTests::max);
     }
     static float min(float a, float b) {
-        return (float)((a < b) ? a : b);
+        return (float)(Math.min(a, b));
     }
 
     @Test(dataProvider = "floatBinaryOpProvider")
@@ -832,7 +832,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static float minAll(float[] a, int idx) {
         float res = Float.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res = (res < a[i])?res:a[i];
+            res = (float)Math.min(res, a[i]);
         }
 
         return res;
@@ -854,7 +854,7 @@ public class FloatMaxVectorTests extends AbstractVectorTest {
     static float maxAll(float[] a, int idx) {
         float res = Float.MIN_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res > a[i])?res:a[i];
+            res = (float)Math.max(res, a[i]);
         }
 
         return res;

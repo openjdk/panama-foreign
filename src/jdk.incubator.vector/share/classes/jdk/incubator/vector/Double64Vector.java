@@ -586,7 +586,7 @@ final class Double64Vector extends DoubleVector {
         return (Double64Vector) VectorIntrinsics.binaryOp(
             VECTOR_OP_MIN, Double64Vector.class, double.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Double64Vector)v1).bOp(v2, (i, a, b) -> (double) ((a < b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double) Math.min(a, b)));
     }
 
     @Override
@@ -603,7 +603,7 @@ final class Double64Vector extends DoubleVector {
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, Double64Vector.class, double.class, LENGTH,
             this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (double) Math.max(a, b)));
         }
 
     @Override
@@ -676,7 +676,7 @@ final class Double64Vector extends DoubleVector {
                                 VECTOR_OP_MIN, Double64Vector.class, double.class, LENGTH,
                                 this,
                                 v -> {
-                                    double r = v.rOp(Double.MAX_VALUE , (i, a, b) -> (double) ((a < b) ? a : b));
+                                    double r = v.rOp(Double.MAX_VALUE , (i, a, b) -> (double) Math.min(a, b));
                                     return (long)Double.doubleToLongBits(r);
                                 });
         return Double.longBitsToDouble(bits);
@@ -689,7 +689,7 @@ final class Double64Vector extends DoubleVector {
                                 VECTOR_OP_MAX, Double64Vector.class, double.class, LENGTH,
                                 this,
                                 v -> {
-                                    double r = v.rOp(Double.MIN_VALUE , (i, a, b) -> (double) ((a > b) ? a : b));
+                                    double r = v.rOp(Double.MIN_VALUE , (i, a, b) -> (double) Math.max(a, b));
                                     return (long)Double.doubleToLongBits(r);
                                 });
         return Double.longBitsToDouble(bits);

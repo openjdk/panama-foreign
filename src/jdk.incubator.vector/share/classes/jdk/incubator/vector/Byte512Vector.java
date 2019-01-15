@@ -378,7 +378,7 @@ final class Byte512Vector extends ByteVector {
         return (Byte512Vector) VectorIntrinsics.binaryOp(
             VECTOR_OP_MIN, Byte512Vector.class, byte.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Byte512Vector)v1).bOp(v2, (i, a, b) -> (byte) ((a < b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (byte) Math.min(a, b)));
     }
 
     @Override
@@ -395,7 +395,7 @@ final class Byte512Vector extends ByteVector {
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, Byte512Vector.class, byte.class, LENGTH,
             this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (byte) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (byte) Math.max(a, b)));
         }
 
     @Override
@@ -516,7 +516,7 @@ final class Byte512Vector extends ByteVector {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, Byte512Vector.class, byte.class, LENGTH,
             this,
-            v -> (long) v.rOp(Byte.MAX_VALUE , (i, a, b) -> (byte) ((a < b) ? a : b)));
+            v -> (long) v.rOp(Byte.MAX_VALUE , (i, a, b) -> (byte) Math.min(a, b)));
     }
 
     @Override
@@ -525,7 +525,7 @@ final class Byte512Vector extends ByteVector {
         return (byte) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, Byte512Vector.class, byte.class, LENGTH,
             this,
-            v -> (long) v.rOp(Byte.MIN_VALUE , (i, a, b) -> (byte) ((a > b) ? a : b)));
+            v -> (long) v.rOp(Byte.MIN_VALUE , (i, a, b) -> (byte) Math.max(a, b)));
     }
 
     @Override

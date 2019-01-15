@@ -782,7 +782,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
     }
 
     static byte max(byte a, byte b) {
-        return (byte)((a > b) ? a : b);
+        return (byte)(Math.max(a, b));
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
@@ -802,7 +802,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, Byte512VectorTests::max);
     }
     static byte min(byte a, byte b) {
-        return (byte)((a < b) ? a : b);
+        return (byte)(Math.min(a, b));
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
@@ -968,7 +968,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
     static byte minAll(byte[] a, int idx) {
         byte res = Byte.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res = (res < a[i])?res:a[i];
+            res = (byte)Math.min(res, a[i]);
         }
 
         return res;
@@ -990,7 +990,7 @@ public class Byte512VectorTests extends AbstractVectorTest {
     static byte maxAll(byte[] a, int idx) {
         byte res = Byte.MIN_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res > a[i])?res:a[i];
+            res = (byte)Math.max(res, a[i]);
         }
 
         return res;

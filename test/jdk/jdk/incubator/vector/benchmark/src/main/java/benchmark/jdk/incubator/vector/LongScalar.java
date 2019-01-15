@@ -520,7 +520,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             long a = as[i];
             long b = bs[i];
-            rs[i] = (long)((a > b) ? a : b);
+            rs[i] = (long)(Math.max(a, b));
         }
 
         return rs;
@@ -535,7 +535,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             long a = as[i];
             long b = bs[i];
-            rs[i] = (long)((a < b) ? a : b);
+            rs[i] = (long)(Math.min(a, b));
         }
 
         return rs;
