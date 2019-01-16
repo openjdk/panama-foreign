@@ -2154,6 +2154,7 @@ const uint Matcher::vector_ideal_reg(int len) {
 
 const uint Matcher::vector_shift_count_ideal_reg(int size) {
   switch(size) {
+    case  4:
     case  8: return Op_VecD;
     case 16: return Op_VecX;
   }
@@ -16783,7 +16784,8 @@ instruct vsub2D(vecX dst, vecX src1, vecX src2)
 
 instruct vmul8B(vecD dst, vecD src1, vecD src2)
 %{
-  predicate(n->as_Vector()->length() == 8);
+  predicate(n->as_Vector()->length() == 4 ||
+            n->as_Vector()->length() == 8);
   match(Set dst (MulVB src1 src2));
   ins_cost(INSN_COST);
   format %{ "mulv  $dst,$src1,$src2\t# vector (8B)" %}
@@ -18914,7 +18916,8 @@ instruct storemask2L(vecD dst, vecX src) %{
 
 // ------------------------------ Shift ---------------------------------------
 instruct vshiftcnt8B(vecD dst, iRegIorL2I cnt) %{
-  predicate(n->as_Vector()->length_in_bytes() == 8);
+  predicate(n->as_Vector()->length_in_bytes() == 4 ||
+            n->as_Vector()->length_in_bytes() == 8);
   match(Set dst (LShiftCntV cnt));
   match(Set dst (RShiftCntV cnt));
   format %{ "dup  $dst, $cnt\t# shift count vector (8B)" %}
