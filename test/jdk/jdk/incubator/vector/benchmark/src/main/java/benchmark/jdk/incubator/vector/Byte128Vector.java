@@ -320,6 +320,12 @@ public class Byte128Vector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
     @Benchmark
     public Object aShiftRShift() {
         byte[] a = fa.apply(SPECIES.length());
@@ -350,6 +356,44 @@ public class Byte128Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ByteVector av = SPECIES.fromArray(a, i);
                 av.aShiftR((int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        return r;
+    }
+
+
+
+    @Benchmark
+    public Object shiftLShift() {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] b = fb.apply(SPECIES.length());
+        byte[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                av.shiftL((int)b[i]).intoArray(r, i);
+            }
+        }
+
+        return r;
+    }
+
+
+
+    @Benchmark
+    public Object shiftLMaskedShift() {
+        byte[] a = fa.apply(SPECIES.length());
+        byte[] b = fb.apply(SPECIES.length());
+        byte[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                av.shiftL((int)b[i], vmask).intoArray(r, i);
             }
         }
 
@@ -396,41 +440,9 @@ public class Byte128Vector extends AbstractVectorBenchmark {
 
 
 
-    @Benchmark
-    public Object shiftLShift() {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = fr.apply(SPECIES.length());
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                av.shiftL((int)b[i]).intoArray(r, i);
-            }
-        }
-
-        return r;
-    }
 
 
 
-    @Benchmark
-    public Object shiftLMaskedShift() {
-        byte[] a = fa.apply(SPECIES.length());
-        byte[] b = fb.apply(SPECIES.length());
-        byte[] r = fr.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Byte> vmask = SPECIES.maskFromValues(mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ByteVector av = SPECIES.fromArray(a, i);
-                av.shiftL((int)b[i], vmask).intoArray(r, i);
-            }
-        }
-
-        return r;
-    }
 
 
     @Benchmark

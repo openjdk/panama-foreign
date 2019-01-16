@@ -475,6 +475,12 @@ final class LongMaxVector extends LongVector {
 
     @Override
     @ForceInline
+    public LongMaxVector shiftL(int s, Mask<Long> m) {
+        return blend(shiftL(s), m);
+    }
+
+    @Override
+    @ForceInline
     public LongMaxVector shiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, LongMaxVector.class, long.class, LENGTH,
@@ -484,11 +490,23 @@ final class LongMaxVector extends LongVector {
 
     @Override
     @ForceInline
+    public LongMaxVector shiftR(int s, Mask<Long> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
     public LongMaxVector aShiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, LongMaxVector.class, long.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> (long) (a >> i)));
+    }
+
+    @Override
+    @ForceInline
+    public LongMaxVector aShiftR(int s, Mask<Long> m) {
+        return blend(aShiftR(s), m);
     }
 
     @Override

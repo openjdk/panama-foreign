@@ -710,6 +710,18 @@ public class Float256VectorTests extends AbstractVectorTest {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     static float max(float a, float b) {
         return (float)(Math.max(a, b));
     }

@@ -570,9 +570,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public IntVector shiftL(int s, Mask<Integer> m) {
-        return uOp(m, (i, a) -> (int) (a << s));
-    }
+    public abstract IntVector shiftL(int s, Mask<Integer> m);
 
     /**
      * Logically left shifts this vector by an input vector.
@@ -629,9 +627,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public IntVector shiftR(int s, Mask<Integer> m) {
-        return uOp(m, (i, a) -> (int) (a >>> s));
-    }
+    public abstract IntVector shiftR(int s, Mask<Integer> m);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
@@ -688,9 +684,7 @@ public abstract class IntVector extends Vector<Integer> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public IntVector aShiftR(int s, Mask<Integer> m) {
-        return uOp(m, (i, a) -> (int) (a >> s));
-    }
+    public abstract IntVector aShiftR(int s, Mask<Integer> m);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an

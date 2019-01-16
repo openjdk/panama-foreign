@@ -229,6 +229,18 @@ public class DoubleScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object max() {
         double[] as = fa.apply(size);

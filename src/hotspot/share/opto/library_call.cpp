@@ -7478,8 +7478,8 @@ bool LibraryCallKit::inline_vector_rearrange() {
 }
 
 Node* LibraryCallKit::shift_count(Node* cnt, int shift_op, BasicType bt, int num_elem) {
-  assert(bt == T_INT || bt == T_LONG, "Only long and int are supported");
-  juint mask = (bt == T_INT) ? (BitsPerInt - 1) : (BitsPerLong - 1);
+  assert(bt == T_INT || bt == T_LONG || bt == T_SHORT || bt == T_BYTE, "byte, short, long and int are supported");
+  juint mask = (type2aelembytes(bt) * BitsPerByte - 1);
   const TypeInt* t = cnt->find_int_type();
   if (t != NULL && t->is_con()) {
     juint shift = t->get_con();

@@ -547,6 +547,18 @@ public class Int128Vector extends AbstractVectorBenchmark {
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object max() {
         int[] a = fa.apply(SPECIES.length());

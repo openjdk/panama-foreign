@@ -249,6 +249,18 @@ public class Double512Vector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object max() {
         double[] a = fa.apply(SPECIES.length());

@@ -475,6 +475,12 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
+    public Long512Vector shiftL(int s, Mask<Long> m) {
+        return blend(shiftL(s), m);
+    }
+
+    @Override
+    @ForceInline
     public Long512Vector shiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, Long512Vector.class, long.class, LENGTH,
@@ -484,11 +490,23 @@ final class Long512Vector extends LongVector {
 
     @Override
     @ForceInline
+    public Long512Vector shiftR(int s, Mask<Long> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
     public Long512Vector aShiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, Long512Vector.class, long.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> (long) (a >> i)));
+    }
+
+    @Override
+    @ForceInline
+    public Long512Vector aShiftR(int s, Mask<Long> m) {
+        return blend(aShiftR(s), m);
     }
 
     @Override

@@ -455,32 +455,50 @@ final class ByteMaxVector extends ByteVector {
         return blend(xor(v), m);
     }
 
-   public ByteMaxVector shiftL(int s) {
-       byte[] vec = getElements();
-       byte[] res = new byte[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = (byte)(vec[i] << s);
-       }
-       return new ByteMaxVector(res);
-   }
+    @Override
+    @ForceInline
+    public ByteMaxVector shiftL(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, ByteMaxVector.class, byte.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (byte) (a << (i & 7))));
+    }
 
-   public ByteMaxVector shiftR(int s) {
-       byte[] vec = getElements();
-       byte[] res = new byte[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = (byte)(vec[i] >>> s);
-       }
-       return new ByteMaxVector(res);
-   }
+    @Override
+    @ForceInline
+    public ByteMaxVector shiftL(int s, Mask<Byte> m) {
+        return blend(shiftL(s), m);
+    }
 
-   public ByteMaxVector aShiftR(int s) {
-       byte[] vec = getElements();
-       byte[] res = new byte[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = (byte)(vec[i] >> s);
-       }
-       return new ByteMaxVector(res);
-   }
+    @Override
+    @ForceInline
+    public ByteMaxVector shiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, ByteMaxVector.class, byte.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (byte) (a >>> (i & 7))));
+    }
+
+    @Override
+    @ForceInline
+    public ByteMaxVector shiftR(int s, Mask<Byte> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
+    public ByteMaxVector aShiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, ByteMaxVector.class, byte.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (byte) (a >> (i & 7))));
+    }
+
+    @Override
+    @ForceInline
+    public ByteMaxVector aShiftR(int s, Mask<Byte> m) {
+        return blend(aShiftR(s), m);
+    }
     // Ternary operations
 
 

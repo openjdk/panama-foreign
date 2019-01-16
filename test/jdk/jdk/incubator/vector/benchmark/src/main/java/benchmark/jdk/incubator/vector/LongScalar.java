@@ -511,6 +511,18 @@ public class LongScalar extends AbstractVectorBenchmark {
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object max() {
         long[] as = fa.apply(size);

@@ -938,6 +938,18 @@ public class IntMaxVectorTests extends AbstractVectorTest {
         assertShiftArraysEquals(a, b, r, mask, IntMaxVectorTests::shiftL_unary);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
     static int max(int a, int b) {
         return (int)(Math.max(a, b));
     }

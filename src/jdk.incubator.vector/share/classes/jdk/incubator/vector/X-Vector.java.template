@@ -1403,6 +1403,39 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     public abstract $abstractvectortype$ not(Mask<$Boxtype$> m);
 
+#if[byte]
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements to left shift the
+     * element by shift value as specified by the input scalar. Only the 3
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @return the result of logically left shifting left this vector by the
+     * broadcast of an input scalar
+     */
+#end[byte]
+#if[short]
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements to left shift the
+     * element by shift value as specified by the input scalar. Only the 4
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @return the result of logically left shifting left this vector by the
+     * broadcast of an input scalar
+     */
+#end[short]
+#if[intOrLong]
     /**
      * Logically left shifts this vector by the broadcast of an input scalar.
      * <p>
@@ -1413,8 +1446,46 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @return the result of logically left shifting left this vector by the
      * broadcast of an input scalar
      */
+#end[intOrLong]
     public abstract $abstractvectortype$ shiftL(int s);
 
+#if[byte]
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements to left shift the
+     * element by shift value as specified by the input scalar. Only the 3
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting left this vector by the
+     * broadcast of an input scalar
+     */
+#end[byte]
+#if[short]
+    /**
+     * Logically left shifts this vector by the broadcast of an input scalar,
+     * selecting lane elements controlled by a mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical left shift
+     * operation ({@code <<}) is applied to lane elements to left shift the
+     * element by shift value as specified by the input scalar. Only the 4
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to left shift
+     * @param m the mask controlling lane selection
+     * @return the result of logically left shifting left this vector by the
+     * broadcast of an input scalar
+     */
+#end[short]
+#if[intOrLong]
     /**
      * Logically left shifts this vector by the broadcast of an input scalar,
      * selecting lane elements controlled by a mask.
@@ -1427,9 +1498,8 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public $abstractvectortype$ shiftL(int s, Mask<$Boxtype$> m) {
-        return uOp(m, (i, a) -> ($type$) (a << s));
-    }
+#end[intOrLong]
+    public abstract $abstractvectortype$ shiftL(int s, Mask<$Boxtype$> m);
 
 #if[intOrLong]
     /**
@@ -1463,6 +1533,41 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
 
     // logical, or unsigned, shift right
 
+#if[byte]
+     /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements to logically right shift the
+     * element by shift value as specified by the input scalar. Only the 3
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+#end[byte]
+#if[short]
+     /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements to logically right shift the
+     * element by shift value as specified by the input scalar. Only the 4
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+#end[short]
+#if[intOrLong]
     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar.
@@ -1474,8 +1579,46 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
+#end[intOrLong]
     public abstract $abstractvectortype$ shiftR(int s);
 
+#if[byte]
+     /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements to logically right shift the
+     * element by shift value as specified by the input scalar. Only the 3
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+#end[byte]
+#if[short]
+     /**
+     * Logically right shifts (or unsigned right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive logical right shift
+     * operation ({@code >>>}) is applied to lane elements to logically right shift the
+     * element by shift value as specified by the input scalar. Only the 4
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of logically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+#end[short]
+#if[intOrLong]
     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar, selecting lane elements controlled by a
@@ -1488,9 +1631,8 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public $abstractvectortype$ shiftR(int s, Mask<$Boxtype$> m) {
-        return uOp(m, (i, a) -> ($type$) (a >>> s));
-    }
+#end[intOrLong]
+    public abstract $abstractvectortype$ shiftR(int s, Mask<$Boxtype$> m);
 
 #if[intOrLong]
     /**
@@ -1523,6 +1665,41 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     }
 #end[intOrLong]
 
+#if[byte]
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements  to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator & with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+#end[byte]
+#if[short]
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements  to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+#end[short]
+#if[intOrLong]
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
      * broadcast of an input scalar.
@@ -1534,8 +1711,48 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
+#end[intOrLong]
     public abstract $abstractvectortype$ aShiftR(int s);
 
+#if[byte]
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements  to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
+     * Only the 3 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator & with the mask value 0x7.
+     * The shift distance actually used is therefore always in the range 0 to 7, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+#end[byte]
+#if[short]
+    /**
+     * Arithmetically right shifts (or signed right shifts) this vector by the
+     * broadcast of an input scalar, selecting lane elements controlled by a
+     * mask.
+     * <p>
+     * This is a vector binary operation where the primitive arithmetic right
+     * shift operation ({@code >>}) is applied to lane elements  to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
+     *
+     * @param s the input scalar; the number of the bits to right shift
+     * @param m the mask controlling lane selection
+     * @return the result of arithmetically right shifting this vector by the
+     * broadcast of an input scalar
+     */
+#end[short]
+#if[intOrLong]
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by the
      * broadcast of an input scalar, selecting lane elements controlled by a
@@ -1549,9 +1766,8 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public $abstractvectortype$ aShiftR(int s, Mask<$Boxtype$> m) {
-        return uOp(m, (i, a) -> ($type$) (a >> s));
-    }
+#end[intOrLong]
+    public abstract $abstractvectortype$ aShiftR(int s, Mask<$Boxtype$> m);
 
 #if[intOrLong]
     /**

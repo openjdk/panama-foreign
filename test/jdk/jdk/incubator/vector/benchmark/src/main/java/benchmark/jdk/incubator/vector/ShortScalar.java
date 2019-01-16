@@ -296,6 +296,18 @@ public class ShortScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object aShiftRShift() {
         short[] as = fa.apply(size);
@@ -305,7 +317,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             short a = as[i];
             short b = bs[i];
-            rs[i] = (short)((a >> b));
+            rs[i] = (short)((a >> (b & 15)));
         }
 
         return rs;
@@ -324,43 +336,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
             short a = as[i];
             short b = bs[i];
             boolean m = ms[i % ms.length];
-            rs[i] = (m ? (short)((a >> b)) : a);
-        }
-
-        return rs;
-    }
-
-
-
-    @Benchmark
-    public Object shiftRShift() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            rs[i] = (short)((a >>> b));
-        }
-
-        return rs;
-    }
-
-
-
-    @Benchmark
-    public Object shiftRMaskedShift() {
-        short[] as = fa.apply(size);
-        short[] bs = fb.apply(size);
-        short[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            short a = as[i];
-            short b = bs[i];
-            boolean m = ms[i % ms.length];
-            rs[i] = (m ? (short)((a >>> b)) : a);
+            rs[i] = (m ? (short)((a >> (b & 15))) : a);
         }
 
         return rs;
@@ -377,7 +353,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             short a = as[i];
             short b = bs[i];
-            rs[i] = (short)((a << b));
+            rs[i] = (short)((a << (b & 15)));
         }
 
         return rs;
@@ -396,7 +372,43 @@ public class ShortScalar extends AbstractVectorBenchmark {
             short a = as[i];
             short b = bs[i];
             boolean m = ms[i % ms.length];
-            rs[i] = (m ? (short)((a << b)) : a);
+            rs[i] = (m ? (short)((a << (b & 15))) : a);
+        }
+
+        return rs;
+    }
+
+
+
+    @Benchmark
+    public Object shiftRShift() {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+
+        for (int i = 0; i < as.length; i++) {
+            short a = as[i];
+            short b = bs[i];
+            rs[i] = (short)((a >>> (b & 15)));
+        }
+
+        return rs;
+    }
+
+
+
+    @Benchmark
+    public Object shiftRMaskedShift() {
+        short[] as = fa.apply(size);
+        short[] bs = fb.apply(size);
+        short[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int i = 0; i < as.length; i++) {
+            short a = as[i];
+            short b = bs[i];
+            boolean m = ms[i % ms.length];
+            rs[i] = (m ? (short)((a >>> (b & 15))) : a);
         }
 
         return rs;

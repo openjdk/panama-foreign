@@ -742,34 +742,98 @@ final class $vectortype$ extends $abstractvectortype$ {
     }
 #end[BITWISE]
 
-#if[byteOrShort]
-   public $vectortype$ shiftL(int s) {
-       $type$[] vec = getElements();
-       $type$[] res = new $type$[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = ($type$)(vec[i] << s);
-       }
-       return new $vectortype$(res);
-   }
+#if[byte]
+    @Override
+    @ForceInline
+    public $vectortype$ shiftL(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> ($type$) (a << (i & 7))));
+    }
 
-   public $vectortype$ shiftR(int s) {
-       $type$[] vec = getElements();
-       $type$[] res = new $type$[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = ($type$)(vec[i] >>> s);
-       }
-       return new $vectortype$(res);
-   }
+    @Override
+    @ForceInline
+    public $vectortype$ shiftL(int s, Mask<$Boxtype$> m) {
+        return blend(shiftL(s), m);
+    }
 
-   public $vectortype$ aShiftR(int s) {
-       $type$[] vec = getElements();
-       $type$[] res = new $type$[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = ($type$)(vec[i] >> s);
-       }
-       return new $vectortype$(res);
-   }
-#end[byteOrShort]
+    @Override
+    @ForceInline
+    public $vectortype$ shiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> ($type$) (a >>> (i & 7))));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftR(int s, Mask<$Boxtype$> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ aShiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> ($type$) (a >> (i & 7))));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ aShiftR(int s, Mask<$Boxtype$> m) {
+        return blend(aShiftR(s), m);
+    }
+#end[byte]
+#if[short]
+    @Override
+    @ForceInline
+    public $vectortype$ shiftL(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> ($type$) (a << (i & 15))));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftL(int s, Mask<$Boxtype$> m) {
+        return blend(shiftL(s), m);
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> ($type$) (a >>> (i & 15))));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftR(int s, Mask<$Boxtype$> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ aShiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> ($type$) (a >> (i & 15))));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ aShiftR(int s, Mask<$Boxtype$> m) {
+        return blend(aShiftR(s), m);
+    }
+#end[short]
 #if[intOrLong]
     @Override
     @ForceInline
@@ -778,6 +842,12 @@ final class $vectortype$ extends $abstractvectortype$ {
             VECTOR_OP_LSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> ($type$) (a << i)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ shiftL(int s, Mask<$Boxtype$> m) {
+        return blend(shiftL(s), m);
     }
 
     @Override
@@ -791,11 +861,23 @@ final class $vectortype$ extends $abstractvectortype$ {
 
     @Override
     @ForceInline
+    public $vectortype$ shiftR(int s, Mask<$Boxtype$> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
     public $vectortype$ aShiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> ($type$) (a >> i)));
+    }
+
+    @Override
+    @ForceInline
+    public $vectortype$ aShiftR(int s, Mask<$Boxtype$> m) {
+        return blend(aShiftR(s), m);
     }
 
     @Override

@@ -249,6 +249,18 @@ public class Float128Vector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object max() {
         float[] a = fa.apply(SPECIES.length());

@@ -931,6 +931,18 @@ public class Long512VectorTests extends AbstractVectorTest {
         assertShiftArraysEquals(a, b, r, mask, Long512VectorTests::shiftL_unary);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
     static long max(long a, long b) {
         return (long)(Math.max(a, b));
     }

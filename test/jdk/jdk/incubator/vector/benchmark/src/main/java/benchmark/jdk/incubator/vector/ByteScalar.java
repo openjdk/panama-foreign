@@ -296,6 +296,12 @@ public class ByteScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
     @Benchmark
     public Object aShiftRShift() {
         byte[] as = fa.apply(size);
@@ -305,7 +311,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             byte a = as[i];
             byte b = bs[i];
-            rs[i] = (byte)((a >> b));
+            rs[i] = (byte)((a >> (b & 7)));
         }
 
         return rs;
@@ -324,43 +330,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
             byte a = as[i];
             byte b = bs[i];
             boolean m = ms[i % ms.length];
-            rs[i] = (m ? (byte)((a >> b)) : a);
-        }
-
-        return rs;
-    }
-
-
-
-    @Benchmark
-    public Object shiftRShift() {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            byte a = as[i];
-            byte b = bs[i];
-            rs[i] = (byte)((a >>> b));
-        }
-
-        return rs;
-    }
-
-
-
-    @Benchmark
-    public Object shiftRMaskedShift() {
-        byte[] as = fa.apply(size);
-        byte[] bs = fb.apply(size);
-        byte[] rs = fr.apply(size);
-        boolean[] ms = fm.apply(size);
-
-        for (int i = 0; i < as.length; i++) {
-            byte a = as[i];
-            byte b = bs[i];
-            boolean m = ms[i % ms.length];
-            rs[i] = (m ? (byte)((a >>> b)) : a);
+            rs[i] = (m ? (byte)((a >> (b & 7))) : a);
         }
 
         return rs;
@@ -377,7 +347,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             byte a = as[i];
             byte b = bs[i];
-            rs[i] = (byte)((a << b));
+            rs[i] = (byte)((a << (b & 7)));
         }
 
         return rs;
@@ -396,11 +366,53 @@ public class ByteScalar extends AbstractVectorBenchmark {
             byte a = as[i];
             byte b = bs[i];
             boolean m = ms[i % ms.length];
-            rs[i] = (m ? (byte)((a << b)) : a);
+            rs[i] = (m ? (byte)((a << (b & 7))) : a);
         }
 
         return rs;
     }
+
+
+
+    @Benchmark
+    public Object shiftRShift() {
+        byte[] as = fa.apply(size);
+        byte[] bs = fb.apply(size);
+        byte[] rs = fr.apply(size);
+
+        for (int i = 0; i < as.length; i++) {
+            byte a = as[i];
+            byte b = bs[i];
+            rs[i] = (byte)((a >>> (b & 7)));
+        }
+
+        return rs;
+    }
+
+
+
+    @Benchmark
+    public Object shiftRMaskedShift() {
+        byte[] as = fa.apply(size);
+        byte[] bs = fb.apply(size);
+        byte[] rs = fr.apply(size);
+        boolean[] ms = fm.apply(size);
+
+        for (int i = 0; i < as.length; i++) {
+            byte a = as[i];
+            byte b = bs[i];
+            boolean m = ms[i % ms.length];
+            rs[i] = (m ? (byte)((a >>> (b & 7))) : a);
+        }
+
+        return rs;
+    }
+
+
+
+
+
+
 
 
     @Benchmark

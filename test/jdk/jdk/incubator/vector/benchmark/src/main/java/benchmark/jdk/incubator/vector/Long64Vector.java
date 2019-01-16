@@ -547,6 +547,18 @@ public class Long64Vector extends AbstractVectorBenchmark {
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object max() {
         long[] a = fa.apply(SPECIES.length());

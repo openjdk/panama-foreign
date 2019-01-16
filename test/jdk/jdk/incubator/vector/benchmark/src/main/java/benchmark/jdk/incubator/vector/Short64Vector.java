@@ -320,6 +320,18 @@ public class Short64Vector extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object aShiftRShift() {
         short[] a = fa.apply(SPECIES.length());
@@ -359,44 +371,6 @@ public class Short64Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object shiftRShift() {
-        short[] a = fa.apply(SPECIES.length());
-        short[] b = fb.apply(SPECIES.length());
-        short[] r = fr.apply(SPECIES.length());
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = SPECIES.fromArray(a, i);
-                av.shiftR((int)b[i]).intoArray(r, i);
-            }
-        }
-
-        return r;
-    }
-
-
-
-    @Benchmark
-    public Object shiftRMaskedShift() {
-        short[] a = fa.apply(SPECIES.length());
-        short[] b = fb.apply(SPECIES.length());
-        short[] r = fr.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short> vmask = SPECIES.maskFromValues(mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = SPECIES.fromArray(a, i);
-                av.shiftR((int)b[i], vmask).intoArray(r, i);
-            }
-        }
-
-        return r;
-    }
-
-
-
-    @Benchmark
     public Object shiftLShift() {
         short[] a = fa.apply(SPECIES.length());
         short[] b = fb.apply(SPECIES.length());
@@ -426,6 +400,44 @@ public class Short64Vector extends AbstractVectorBenchmark {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 ShortVector av = SPECIES.fromArray(a, i);
                 av.shiftL((int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        return r;
+    }
+
+
+
+    @Benchmark
+    public Object shiftRShift() {
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                av.shiftR((int)b[i]).intoArray(r, i);
+            }
+        }
+
+        return r;
+    }
+
+
+
+    @Benchmark
+    public Object shiftRMaskedShift() {
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Short> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                av.shiftR((int)b[i], vmask).intoArray(r, i);
             }
         }
 
