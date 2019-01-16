@@ -258,9 +258,15 @@ gen_binary_alu_op "xor" "a ^ b" $unit_output $perf_output $perf_scalar_output "B
 gen_binary_alu_op "shiftR" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
 gen_binary_alu_op "shiftL" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
 gen_binary_alu_op "aShiftR" "(a >> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
-gen_shift_cst_op "aShiftR" "(a >> b)" $unit_output $perf_output $perf_scalar_output "BITWISE"
-gen_shift_cst_op "shiftR" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "BITWISE"
-gen_shift_cst_op "shiftL" "(a << b)" $unit_output $perf_output $perf_scalar_output "BITWISE"
+gen_shift_cst_op "aShiftR" "(a >> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_shift_cst_op "shiftR" "(a >>> b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_shift_cst_op "shiftL" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
+gen_shift_cst_op "aShiftR" "(a >> (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_shift_cst_op "shiftL" "(a << (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_shift_cst_op "shiftR" "(a >>> (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_shift_cst_op "aShiftR" "(a >> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
+gen_shift_cst_op "shiftL" "(a << (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
+gen_shift_cst_op "shiftR" "(a >>> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
 
 # Masked reductions.
 gen_binary_op "max" "Math.max(a, b)" $unit_output $perf_output $perf_scalar_output

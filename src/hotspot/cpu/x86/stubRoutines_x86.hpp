@@ -62,6 +62,7 @@ class x86 {
   static address _vector_byte_bitset;
   static address _vector_long_perm_mask;
   static address _vector_short_to_byte_mask;
+  static address _vector_byte_perm_mask;
   static address _vector_int_to_byte_mask;
   static address _vector_int_to_short_mask;
   static address _vector_32_bit_mask;
@@ -151,6 +152,10 @@ class x86 {
 
   static address vector_short_to_byte_mask() {
     return _vector_short_to_byte_mask;
+  }
+
+  static address vector_byte_perm_mask() {
+    return _vector_byte_perm_mask;
   }
 
   static address vector_int_to_byte_mask() {

@@ -570,9 +570,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of logically left shifting this vector by the
      * broadcast of an input scalar
      */
-    public LongVector shiftL(int s, Mask<Long> m) {
-        return uOp(m, (i, a) -> (long) (a << s));
-    }
+    public abstract LongVector shiftL(int s, Mask<Long> m);
 
     /**
      * Logically left shifts this vector by an input vector.
@@ -629,9 +627,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public LongVector shiftR(int s, Mask<Long> m) {
-        return uOp(m, (i, a) -> (long) (a >>> s));
-    }
+    public abstract LongVector shiftR(int s, Mask<Long> m);
 
     /**
      * Logically right shifts (or unsigned right shifts) this vector by an
@@ -688,9 +684,7 @@ public abstract class LongVector extends Vector<Long> {
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public LongVector aShiftR(int s, Mask<Long> m) {
-        return uOp(m, (i, a) -> (long) (a >> s));
-    }
+    public abstract LongVector aShiftR(int s, Mask<Long> m);
 
     /**
      * Arithmetically right shifts (or signed right shifts) this vector by an

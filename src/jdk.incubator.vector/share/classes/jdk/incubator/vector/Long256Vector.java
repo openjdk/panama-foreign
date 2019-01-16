@@ -475,6 +475,12 @@ final class Long256Vector extends LongVector {
 
     @Override
     @ForceInline
+    public Long256Vector shiftL(int s, Mask<Long> m) {
+        return blend(shiftL(s), m);
+    }
+
+    @Override
+    @ForceInline
     public Long256Vector shiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, Long256Vector.class, long.class, LENGTH,
@@ -484,11 +490,23 @@ final class Long256Vector extends LongVector {
 
     @Override
     @ForceInline
+    public Long256Vector shiftR(int s, Mask<Long> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
     public Long256Vector aShiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, Long256Vector.class, long.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> (long) (a >> i)));
+    }
+
+    @Override
+    @ForceInline
+    public Long256Vector aShiftR(int s, Mask<Long> m) {
+        return blend(aShiftR(s), m);
     }
 
     @Override

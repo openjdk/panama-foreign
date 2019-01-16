@@ -717,6 +717,18 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     static double max(double a, double b) {
         return (double)(Math.max(a, b));
     }

@@ -455,32 +455,50 @@ final class Byte64Vector extends ByteVector {
         return blend(xor(v), m);
     }
 
-   public Byte64Vector shiftL(int s) {
-       byte[] vec = getElements();
-       byte[] res = new byte[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = (byte)(vec[i] << s);
-       }
-       return new Byte64Vector(res);
-   }
+    @Override
+    @ForceInline
+    public Byte64Vector shiftL(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, Byte64Vector.class, byte.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (byte) (a << (i & 7))));
+    }
 
-   public Byte64Vector shiftR(int s) {
-       byte[] vec = getElements();
-       byte[] res = new byte[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = (byte)(vec[i] >>> s);
-       }
-       return new Byte64Vector(res);
-   }
+    @Override
+    @ForceInline
+    public Byte64Vector shiftL(int s, Mask<Byte> m) {
+        return blend(shiftL(s), m);
+    }
 
-   public Byte64Vector aShiftR(int s) {
-       byte[] vec = getElements();
-       byte[] res = new byte[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = (byte)(vec[i] >> s);
-       }
-       return new Byte64Vector(res);
-   }
+    @Override
+    @ForceInline
+    public Byte64Vector shiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, Byte64Vector.class, byte.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (byte) (a >>> (i & 7))));
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Vector shiftR(int s, Mask<Byte> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Vector aShiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, Byte64Vector.class, byte.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (byte) (a >> (i & 7))));
+    }
+
+    @Override
+    @ForceInline
+    public Byte64Vector aShiftR(int s, Mask<Byte> m) {
+        return blend(aShiftR(s), m);
+    }
     // Ternary operations
 
 

@@ -511,6 +511,18 @@ public class IntScalar extends AbstractVectorBenchmark {
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object max() {
         int[] as = fa.apply(size);

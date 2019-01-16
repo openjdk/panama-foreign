@@ -229,6 +229,18 @@ public class FloatScalar extends AbstractVectorBenchmark {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     @Benchmark
     public Object max() {
         float[] as = fa.apply(size);

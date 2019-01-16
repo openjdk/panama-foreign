@@ -550,7 +550,11 @@ public abstract class ShortVector extends Vector<Short> {
      * Logically left shifts this vector by the broadcast of an input scalar.
      * <p>
      * This is a vector binary operation where the primitive logical left shift
-     * operation ({@code <<}) is applied to lane elements.
+     * operation ({@code <<}) is applied to lane elements to left shift the
+     * element by shift value as specified by the input scalar. Only the 4
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
      * @param s the input scalar; the number of the bits to left shift
      * @return the result of logically left shifting left this vector by the
@@ -563,26 +567,32 @@ public abstract class ShortVector extends Vector<Short> {
      * selecting lane elements controlled by a mask.
      * <p>
      * This is a vector binary operation where the primitive logical left shift
-     * operation ({@code <<}) is applied to lane elements.
+     * operation ({@code <<}) is applied to lane elements to left shift the
+     * element by shift value as specified by the input scalar. Only the 4
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
      * @param s the input scalar; the number of the bits to left shift
      * @param m the mask controlling lane selection
-     * @return the result of logically left shifting this vector by the
+     * @return the result of logically left shifting left this vector by the
      * broadcast of an input scalar
      */
-    public ShortVector shiftL(int s, Mask<Short> m) {
-        return uOp(m, (i, a) -> (short) (a << s));
-    }
+    public abstract ShortVector shiftL(int s, Mask<Short> m);
 
 
     // logical, or unsigned, shift right
 
-    /**
+     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar.
      * <p>
      * This is a vector binary operation where the primitive logical right shift
-     * operation ({@code >>>}) is applied to lane elements.
+     * operation ({@code >>>}) is applied to lane elements to logically right shift the
+     * element by shift value as specified by the input scalar. Only the 4
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @return the result of logically right shifting this vector by the
@@ -590,21 +600,23 @@ public abstract class ShortVector extends Vector<Short> {
      */
     public abstract ShortVector shiftR(int s);
 
-    /**
+     /**
      * Logically right shifts (or unsigned right shifts) this vector by the
      * broadcast of an input scalar, selecting lane elements controlled by a
      * mask.
      * <p>
      * This is a vector binary operation where the primitive logical right shift
-     * operation ({@code >>>}) is applied to lane elements.
+     * operation ({@code >>>}) is applied to lane elements to logically right shift the
+     * element by shift value as specified by the input scalar. Only the 4
+     * lowest-order bits of shift value are used. It is as if the shift value
+     * were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @return the result of logically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public ShortVector shiftR(int s, Mask<Short> m) {
-        return uOp(m, (i, a) -> (short) (a >>> s));
-    }
+    public abstract ShortVector shiftR(int s, Mask<Short> m);
 
 
     /**
@@ -612,7 +624,11 @@ public abstract class ShortVector extends Vector<Short> {
      * broadcast of an input scalar.
      * <p>
      * This is a vector binary operation where the primitive arithmetic right
-     * shift operation ({@code >>}) is applied to lane elements.
+     * shift operation ({@code >>}) is applied to lane elements  to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @return the result of arithmetically right shifting this vector by the
@@ -626,16 +642,18 @@ public abstract class ShortVector extends Vector<Short> {
      * mask.
      * <p>
      * This is a vector binary operation where the primitive arithmetic right
-     * shift operation ({@code >>}) is applied to lane elements.
+     * shift operation ({@code >>}) is applied to lane elements  to arithmetically
+     * right shift the element by shift value as specified by the input scalar.
+     * Only the 4 lowest-order bits of shift value are used. It is as if the shift
+     * value were subjected to a bitwise logical AND operator & with the mask value 0xF.
+     * The shift distance actually used is therefore always in the range 0 to 15, inclusive.
      *
      * @param s the input scalar; the number of the bits to right shift
      * @param m the mask controlling lane selection
      * @return the result of arithmetically right shifting this vector by the
      * broadcast of an input scalar
      */
-    public ShortVector aShiftR(int s, Mask<Short> m) {
-        return uOp(m, (i, a) -> (short) (a >> s));
-    }
+    public abstract ShortVector aShiftR(int s, Mask<Short> m);
 
 
     @Override

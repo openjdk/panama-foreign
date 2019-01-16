@@ -456,32 +456,50 @@ final class Short512Vector extends ShortVector {
         return blend(xor(v), m);
     }
 
-   public Short512Vector shiftL(int s) {
-       short[] vec = getElements();
-       short[] res = new short[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = (short)(vec[i] << s);
-       }
-       return new Short512Vector(res);
-   }
+    @Override
+    @ForceInline
+    public Short512Vector shiftL(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_LSHIFT, Short512Vector.class, short.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (short) (a << (i & 15))));
+    }
 
-   public Short512Vector shiftR(int s) {
-       short[] vec = getElements();
-       short[] res = new short[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = (short)(vec[i] >>> s);
-       }
-       return new Short512Vector(res);
-   }
+    @Override
+    @ForceInline
+    public Short512Vector shiftL(int s, Mask<Short> m) {
+        return blend(shiftL(s), m);
+    }
 
-   public Short512Vector aShiftR(int s) {
-       short[] vec = getElements();
-       short[] res = new short[length()];
-       for (int i = 0; i < length(); i++){
-           res[i] = (short)(vec[i] >> s);
-       }
-       return new Short512Vector(res);
-   }
+    @Override
+    @ForceInline
+    public Short512Vector shiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_URSHIFT, Short512Vector.class, short.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (short) (a >>> (i & 15))));
+    }
+
+    @Override
+    @ForceInline
+    public Short512Vector shiftR(int s, Mask<Short> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
+    public Short512Vector aShiftR(int s) {
+        return VectorIntrinsics.broadcastInt(
+            VECTOR_OP_RSHIFT, Short512Vector.class, short.class, LENGTH,
+            this, s,
+            (v, i) -> v.uOp((__, a) -> (short) (a >> (i & 15))));
+    }
+
+    @Override
+    @ForceInline
+    public Short512Vector aShiftR(int s, Mask<Short> m) {
+        return blend(aShiftR(s), m);
+    }
     // Ternary operations
 
 

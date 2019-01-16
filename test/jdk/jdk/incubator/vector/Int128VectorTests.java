@@ -931,6 +931,18 @@ public class Int128VectorTests extends AbstractVectorTest {
         assertShiftArraysEquals(a, b, r, mask, Int128VectorTests::shiftL_unary);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
     static int max(int a, int b) {
         return (int)(Math.max(a, b));
     }

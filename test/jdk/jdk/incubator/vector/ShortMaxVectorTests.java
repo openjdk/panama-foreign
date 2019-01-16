@@ -663,8 +663,20 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     static short aShiftR_unary(short a, short b) {
-        return (short)((a >> b));
+        return (short)((a >> (b & 15)));
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")
@@ -705,50 +717,8 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     }
 
 
-    static short shiftR_unary(short a, short b) {
-        return (short)((a >>> b));
-    }
-
-    @Test(dataProvider = "shortBinaryOpProvider")
-    static void shiftRShortMaxVectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
-        short[] a = fa.apply(SPECIES.length());
-        short[] b = fb.apply(SPECIES.length());
-        short[] r = fr.apply(SPECIES.length());
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = SPECIES.fromArray(a, i);
-                av.shiftR((int)b[i]).intoArray(r, i);
-            }
-        }
-
-        assertShiftArraysEquals(a, b, r, ShortMaxVectorTests::shiftR_unary);
-    }
-
-
-
-    @Test(dataProvider = "shortBinaryOpMaskProvider")
-    static void shiftRShortMaxVectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb,
-                                          IntFunction<boolean[]> fm) {
-        short[] a = fa.apply(SPECIES.length());
-        short[] b = fb.apply(SPECIES.length());
-        short[] r = fr.apply(SPECIES.length());
-        boolean[] mask = fm.apply(SPECIES.length());
-        Vector.Mask<Short> vmask = SPECIES.maskFromValues(mask);
-
-        for (int ic = 0; ic < INVOC_COUNT; ic++) {
-            for (int i = 0; i < a.length; i += SPECIES.length()) {
-                ShortVector av = SPECIES.fromArray(a, i);
-                av.shiftR((int)b[i], vmask).intoArray(r, i);
-            }
-        }
-
-        assertShiftArraysEquals(a, b, r, mask, ShortMaxVectorTests::shiftR_unary);
-    }
-
-
     static short shiftL_unary(short a, short b) {
-        return (short)((a << b));
+        return (short)((a << (b & 15)));
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")
@@ -786,6 +756,48 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
         }
 
         assertShiftArraysEquals(a, b, r, mask, ShortMaxVectorTests::shiftL_unary);
+    }
+
+
+    static short shiftR_unary(short a, short b) {
+        return (short)((a >>> (b & 15)));
+    }
+
+    @Test(dataProvider = "shortBinaryOpProvider")
+    static void shiftRShortMaxVectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = fr.apply(SPECIES.length());
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                av.shiftR((int)b[i]).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, ShortMaxVectorTests::shiftR_unary);
+    }
+
+
+
+    @Test(dataProvider = "shortBinaryOpMaskProvider")
+    static void shiftRShortMaxVectorTestsShift(IntFunction<short[]> fa, IntFunction<short[]> fb,
+                                          IntFunction<boolean[]> fm) {
+        short[] a = fa.apply(SPECIES.length());
+        short[] b = fb.apply(SPECIES.length());
+        short[] r = fr.apply(SPECIES.length());
+        boolean[] mask = fm.apply(SPECIES.length());
+        Vector.Mask<Short> vmask = SPECIES.maskFromValues(mask);
+
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                av.shiftR((int)b[i], vmask).intoArray(r, i);
+            }
+        }
+
+        assertShiftArraysEquals(a, b, r, mask, ShortMaxVectorTests::shiftR_unary);
     }
 
     static short max(short a, short b) {

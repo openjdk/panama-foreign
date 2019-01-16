@@ -710,6 +710,18 @@ public class Double512VectorTests extends AbstractVectorTest {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     static double max(double a, double b) {
         return (double)(Math.max(a, b));
     }

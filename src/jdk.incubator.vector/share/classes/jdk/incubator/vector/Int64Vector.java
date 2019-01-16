@@ -475,6 +475,12 @@ final class Int64Vector extends IntVector {
 
     @Override
     @ForceInline
+    public Int64Vector shiftL(int s, Mask<Integer> m) {
+        return blend(shiftL(s), m);
+    }
+
+    @Override
+    @ForceInline
     public Int64Vector shiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, Int64Vector.class, int.class, LENGTH,
@@ -484,11 +490,23 @@ final class Int64Vector extends IntVector {
 
     @Override
     @ForceInline
+    public Int64Vector shiftR(int s, Mask<Integer> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
     public Int64Vector aShiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, Int64Vector.class, int.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> (int) (a >> i)));
+    }
+
+    @Override
+    @ForceInline
+    public Int64Vector aShiftR(int s, Mask<Integer> m) {
+        return blend(aShiftR(s), m);
     }
 
     @Override

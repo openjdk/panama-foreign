@@ -1273,6 +1273,23 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
+  address generate_vector_byte_perm_mask(const char *stub_name) {
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", stub_name);
+    address start = __ pc();
+
+    __ emit_data64(0x0000000000000001, relocInfo::none);
+    __ emit_data64(0x0000000000000003, relocInfo::none);
+    __ emit_data64(0x0000000000000005, relocInfo::none);
+    __ emit_data64(0x0000000000000007, relocInfo::none);
+    __ emit_data64(0x0000000000000000, relocInfo::none);
+    __ emit_data64(0x0000000000000002, relocInfo::none);
+    __ emit_data64(0x0000000000000004, relocInfo::none);
+    __ emit_data64(0x0000000000000006, relocInfo::none);
+
+    return start;
+  }
+
   address generate_vector_custom_i32(const char *stub_name, Assembler::AvxVectorLen len,
                                      int32_t val0, int32_t val1, int32_t val2, int32_t val3,
                                      int32_t val4 = 0, int32_t val5 = 0, int32_t val6 = 0, int32_t val7 = 0,
@@ -6210,6 +6227,7 @@ address generate_avx_ghash_processBlocks() {
     StubRoutines::x86::_vector_long_perm_mask = generate_vector_custom_i32("vector_long_perm_mask", Assembler::AVX_512bit,
                                                                            0, 2, 4, 6, 8, 10, 12, 14);
     StubRoutines::x86::_vector_short_to_byte_mask = generate_vector_fp_mask("vector_short_to_byte_mask", 0x00ff00ff00ff00ff);
+    StubRoutines::x86::_vector_byte_perm_mask = generate_vector_byte_perm_mask("vector_byte_perm_mask");
     StubRoutines::x86::_vector_int_to_byte_mask = generate_vector_fp_mask("vector_int_to_byte_mask", 0x000000ff000000ff);
     StubRoutines::x86::_vector_int_to_short_mask = generate_vector_fp_mask("vector_int_to_short_mask", 0x0000ffff0000ffff);
     StubRoutines::x86::_vector_32_bit_mask = generate_vector_custom_i32("vector_32_bit_mask", Assembler::AVX_512bit,

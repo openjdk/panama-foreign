@@ -475,6 +475,12 @@ final class IntMaxVector extends IntVector {
 
     @Override
     @ForceInline
+    public IntMaxVector shiftL(int s, Mask<Integer> m) {
+        return blend(shiftL(s), m);
+    }
+
+    @Override
+    @ForceInline
     public IntMaxVector shiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, IntMaxVector.class, int.class, LENGTH,
@@ -484,11 +490,23 @@ final class IntMaxVector extends IntVector {
 
     @Override
     @ForceInline
+    public IntMaxVector shiftR(int s, Mask<Integer> m) {
+        return blend(shiftR(s), m);
+    }
+
+    @Override
+    @ForceInline
     public IntMaxVector aShiftR(int s) {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_RSHIFT, IntMaxVector.class, int.class, LENGTH,
             this, s,
             (v, i) -> v.uOp((__, a) -> (int) (a >> i)));
+    }
+
+    @Override
+    @ForceInline
+    public IntMaxVector aShiftR(int s, Mask<Integer> m) {
+        return blend(aShiftR(s), m);
     }
 
     @Override
