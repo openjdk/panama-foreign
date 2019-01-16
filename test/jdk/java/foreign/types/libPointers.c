@@ -75,7 +75,7 @@ EXPORT void get_structs(const struct MyStruct*** p, int* pcount) {
 }
 
 EXPORT void* get_stringsAsVoidPtr(int* pcount) {
-    return get_strings2(pcount);
+    return (void*)get_strings2(pcount);
 }
 
 EXPORT struct opaque* get_stringsAsOpaquePtr(int *pcount) {

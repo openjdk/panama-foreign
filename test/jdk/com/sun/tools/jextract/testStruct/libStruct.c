@@ -103,6 +103,6 @@ EXPORT void** GetArrayData(struct IncompleteArray *par) {
 }
 
 EXPORT void* GetData(struct IncompleteArray ar) {
-    printf("Sizeof(IncompleteArray) = %lu\n", sizeof(ar));
+    printf("Sizeof(IncompleteArray) = %zu\n", sizeof(ar));
     return NULL;
 }

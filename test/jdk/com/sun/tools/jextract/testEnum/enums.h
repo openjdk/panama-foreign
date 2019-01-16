@@ -42,10 +42,17 @@ enum IntEnum {
    I_VALUE2 = -5345345
 };
 
+#ifndef _WIN64
 enum LongEnum {
    L_VALUE1 = -4564565645L,
    L_VALUE2 = 45645645645L
 };
+#else
+enum LongEnum {
+   L_VALUE1 = -5345345L,
+   L_VALUE2 = -5345345
+};
+#endif
 
 EXPORT int i_value1_func();
 EXPORT int i_value2_func();
