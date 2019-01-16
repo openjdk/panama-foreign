@@ -1,5 +1,7 @@
 % Using Panama "foreign" JDK
 
+<?xml version="1.0" encoding="utf-8"?>
+
 # Using Panama "foreign" JDK
 
 There are two ways to get a panama foreign branch JDK.
