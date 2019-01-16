@@ -42,13 +42,15 @@ ifeq ($(ENABLE_LIBCLANG), true)
   TARGETS += $(BUILD_LIBJCLANG)
 
   ifeq ($(OPENJDK_BUILD_OS), windows)
+      LIB_PATH := $(CLANG_LIBNAME)
       LINK_MACRO := install-file
   else
+      LIB_PATH := $(CLANG_LIB_PATH)/$(LIBRARY_PREFIX)clang$(SHARED_LIBRARY_SUFFIX)
       LINK_MACRO := link-file-absolute
   endif
 
   $(eval $(call SetupCopyFiles, COPY_CLANG_LIB, \
-      FILES := $(wildcard $(CLANG_LIB_PATH)/$(LIBRARY_PREFIX)clang$(SHARED_LIBRARY_SUFFIX)*), \
+      FILES := $(wildcard $(LIB_PATH)*), \
       DEST := $(SUPPORT_OUTPUTDIR)/modules_libs/$(MODULE), \
       MACRO := $(LINK_MACRO), \
   ))
