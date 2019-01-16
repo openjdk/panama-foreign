@@ -26,7 +26,8 @@
 
 # This script generates a libclang bundle. On linux by building it from source
 # using a devkit, which should match the devkit used to build the JDK. On Macos
-# prebuilt binaries are downloaded and repackaged.
+# prebuilt binaries are downloaded and repackaged. On Windows, the binary LLVM
+# distribution needs to be downloaded and installed manually first.
 #
 # Set MAKE_ARGS to add parameters to make. Ex:
 #
@@ -52,92 +53,111 @@ INSTALL_DIR="$OUTPUT_DIR/install"
 IMAGE_DIR="$OUTPUT_DIR/image"
 
 OS_NAME=$(uname -s)
-if [ "$OS_NAME" = "Linux" ]; then
-  USAGE="$0 <devkit dir>"
+case $OS_NAME in
+  Linux)
+    USAGE="$0 <devkit dir>"
 
-  if [ "$1" = "" ]; then
-    echo $USAGE
+    if [ "$1" = "" ]; then
+      echo $USAGE
+      exit 1
+    fi
+    DEVKIT_DIR="$1"
+
+    LIB_SUFFIX=.so
+
+    # Download source distros
+    mkdir -p $DOWNLOAD_DIR
+    cd $DOWNLOAD_DIR
+    LLVM_FILE=llvm-$LLVM_VERSION.src.tar.xz
+    if [ ! -f $LLVM_FILE ]; then
+      wget http://releases.llvm.org/$LLVM_VERSION/$LLVM_FILE
+    fi
+    CLANG_FILE=cfe-$LLVM_VERSION.src.tar.xz
+    if [ ! -f $CLANG_FILE ]; then
+      wget http://releases.llvm.org/$LLVM_VERSION/$CLANG_FILE
+    fi
+
+
+    # Unpack src
+    mkdir -p $SRC_DIR
+    cd $SRC_DIR
+    LLVM_DIRNAME=llvm-$LLVM_VERSION.src
+    LLVM_DIR=$SRC_DIR/$LLVM_DIRNAME
+    if [ ! -d $LLVM_DIRNAME ]; then
+      echo "Unpacking $LLVM_FILE"
+      tar xf $DOWNLOAD_DIR/$LLVM_FILE
+    fi
+    CLANG_DIRNAME=cfe-$LLVM_VERSION.src
+    CLANG_DIR=$LLVM_DIRNAME/tools/$CLANG_DIRNAME
+    if [ ! -d $CLANG_DIR ]; then
+      echo "Unpacking $CLANG_FILE"
+      (cd $LLVM_DIR/tools && tar xf $DOWNLOAD_DIR/$CLANG_FILE)
+    fi
+
+    # Build
+    mkdir -p $BUILD_DIR
+    cd $BUILD_DIR
+
+    #init cmake
+    if [ ! -e cmake ]; then
+      cmake -G 'Unix Makefiles' \
+            -DCMAKE_INSTALL_PREFIX=../install \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=$DEVKIT_DIR/bin/gcc \
+            -DCMAKE_CXX_COMPILER=$DEVKIT_DIR/bin/g++ \
+            -DCMAKE_C_FLAGS="-static-libgcc" \
+            -DCMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" \
+            -DLLVM_ENABLE_TERMINFO=no \
+            $LLVM_DIR
+    fi
+
+    # Run with nice to keep system usable during build.
+    nice make $MAKE_ARGS libclang
+    nice make $MAKE_ARGS install
+    ;;
+  Darwin)
+    LIB_SUFFIX=".dylib"
+
+    # Download binaries
+    mkdir -p $DOWNLOAD_DIR
+    cd $DOWNLOAD_DIR
+    LLVM_FILE=clang+llvm-$LLVM_VERSION-x86_64-apple-darwin.tar.xz
+    if [ ! -f $LLVM_FILE ]; then
+      echo http://releases.llvm.org/$LLVM_VERSION/$LLVM_FILE
+      curl -O http://releases.llvm.org/$LLVM_VERSION/$LLVM_FILE
+    fi
+
+    # Extract binaries
+    cd $OUTPUT_DIR
+    LLVM_DIRNAME=clang+llvm-$LLVM_VERSION-x86_64-apple-darwin
+    LLVM_DIR=$OUTPUT_DIR/$LLVM_DIRNAME
+    INSTALL_DIR=$LLVM_DIR
+    if [ ! -d $LLVM_DIRNAME ]; then
+      echo "Unpacking $LLVM_FILE"
+      tar xf $DOWNLOAD_DIR/$LLVM_FILE
+    fi
+    ;;
+  CYGWIN*)
+    if [ "$1" = "" ]; then
+      echo "Download and install http://releases.llvm.org/$LLVM_VERSION/LLVM-$LLVM_VERSION-win64.exe"
+      echo "Then run: $0 <path to install dir>"
+      exit 1
+    fi
+    INSTALL_DIR="$(cygpath -m -s "$1")"
+    echo "Copying from $INSTALL_DIR"
+    LIB_SUFFIX=".lib"
+
+    if [ ! -e $IMAGE_DIR/bin/libclang.dll ]; then
+      echo "Copying libclang.dll to image"
+      mkdir -p $IMAGE_DIR/bin
+      cp -a $INSTALL_DIR/bin/libclang.* $IMAGE_DIR/bin/
+    fi
+    ;;
+  *)
+    echo " Unsupported OS: $OS_NAME"
     exit 1
-  fi
-  DEVKIT_DIR="$1"
-
-  LIB_SUFFIX=.so
-
-  # Download source distros
-  mkdir -p $DOWNLOAD_DIR
-  cd $DOWNLOAD_DIR
-  LLVM_FILE=llvm-$LLVM_VERSION.src.tar.xz
-  if [ ! -f $LLVM_FILE ]; then
-    wget http://releases.llvm.org/$LLVM_VERSION/$LLVM_FILE
-  fi
-  CLANG_FILE=cfe-$LLVM_VERSION.src.tar.xz
-  if [ ! -f $CLANG_FILE ]; then
-    wget http://releases.llvm.org/$LLVM_VERSION/$CLANG_FILE
-  fi
-
-
-  # Unpack src
-  mkdir -p $SRC_DIR
-  cd $SRC_DIR
-  LLVM_DIRNAME=llvm-$LLVM_VERSION.src
-  LLVM_DIR=$SRC_DIR/$LLVM_DIRNAME
-  if [ ! -d $LLVM_DIRNAME ]; then
-    echo "Unpacking $LLVM_FILE"
-    tar xf $DOWNLOAD_DIR/$LLVM_FILE
-  fi
-  CLANG_DIRNAME=cfe-$LLVM_VERSION.src
-  CLANG_DIR=$LLVM_DIRNAME/tools/$CLANG_DIRNAME
-  if [ ! -d $CLANG_DIR ]; then
-    echo "Unpacking $CLANG_FILE"
-    (cd $LLVM_DIR/tools && tar xf $DOWNLOAD_DIR/$CLANG_FILE)
-  fi
-
-  # Build
-  mkdir -p $BUILD_DIR
-  cd $BUILD_DIR
-
-  #init cmake
-  if [ ! -e cmake ]; then
-    cmake -G 'Unix Makefiles' \
-          -DCMAKE_INSTALL_PREFIX=../install \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_C_COMPILER=$DEVKIT_DIR/bin/gcc \
-          -DCMAKE_CXX_COMPILER=$DEVKIT_DIR/bin/g++ \
-          -DCMAKE_C_FLAGS="-static-libgcc" \
-          -DCMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" \
-          -DLLVM_ENABLE_TERMINFO=no \
-          $LLVM_DIR
-  fi
-
-  # Run with nice to keep system usable during build.
-  nice make $MAKE_ARGS libclang
-  nice make $MAKE_ARGS install
-
-elif [ "$OS_NAME" = "Darwin" ]; then
-  LIB_SUFFIX=".dylib"
-
-  # Download binaries
-  mkdir -p $DOWNLOAD_DIR
-  cd $DOWNLOAD_DIR
-  LLVM_FILE=clang+llvm-$LLVM_VERSION-x86_64-apple-darwin.tar.xz
-  if [ ! -f $LLVM_FILE ]; then
-    echo http://releases.llvm.org/$LLVM_VERSION/$LLVM_FILE
-    curl -O http://releases.llvm.org/$LLVM_VERSION/$LLVM_FILE
-  fi
-
-  # Extract binaries
-  cd $OUTPUT_DIR
-  LLVM_DIRNAME=clang+llvm-$LLVM_VERSION-x86_64-apple-darwin
-  LLVM_DIR=$OUTPUT_DIR/$LLVM_DIRNAME
-  INSTALL_DIR=$LLVM_DIR
-  if [ ! -d $LLVM_DIRNAME ]; then
-    echo "Unpacking $LLVM_FILE"
-    tar xf $DOWNLOAD_DIR/$LLVM_FILE
-  fi
-else
-  echo "Unsupported OS: $OS_NAME"
-  exit 1
-fi
+    ;;
+esac
 
 mkdir -p $IMAGE_DIR
 # Extract what we need into an image
