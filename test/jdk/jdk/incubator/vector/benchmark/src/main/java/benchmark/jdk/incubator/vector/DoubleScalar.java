@@ -238,7 +238,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             double a = as[i];
             double b = bs[i];
-            rs[i] = (double)((a > b) ? a : b);
+            rs[i] = (double)(Math.max(a, b));
         }
 
         return rs;
@@ -253,7 +253,7 @@ public class DoubleScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             double a = as[i];
             double b = bs[i];
-            rs[i] = (double)((a < b) ? a : b);
+            rs[i] = (double)(Math.min(a, b));
         }
 
         return rs;

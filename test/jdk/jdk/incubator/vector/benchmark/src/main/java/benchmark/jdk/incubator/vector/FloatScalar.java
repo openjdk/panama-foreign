@@ -238,7 +238,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             float a = as[i];
             float b = bs[i];
-            rs[i] = (float)((a > b) ? a : b);
+            rs[i] = (float)(Math.max(a, b));
         }
 
         return rs;
@@ -253,7 +253,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             float a = as[i];
             float b = bs[i];
-            rs[i] = (float)((a < b) ? a : b);
+            rs[i] = (float)(Math.min(a, b));
         }
 
         return rs;

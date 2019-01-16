@@ -789,7 +789,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     }
 
     static short max(short a, short b) {
-        return (short)((a > b) ? a : b);
+        return (short)(Math.max(a, b));
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")
@@ -809,7 +809,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, ShortMaxVectorTests::max);
     }
     static short min(short a, short b) {
-        return (short)((a < b) ? a : b);
+        return (short)(Math.min(a, b));
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")
@@ -975,7 +975,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static short minAll(short[] a, int idx) {
         short res = Short.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res = (res < a[i])?res:a[i];
+            res = (short)Math.min(res, a[i]);
         }
 
         return res;
@@ -997,7 +997,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
     static short maxAll(short[] a, int idx) {
         short res = Short.MIN_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res > a[i])?res:a[i];
+            res = (short)Math.max(res, a[i]);
         }
 
         return res;

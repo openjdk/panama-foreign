@@ -263,8 +263,8 @@ gen_shift_cst_op "shiftR" "(a >>> b)" $unit_output $perf_output $perf_scalar_out
 gen_shift_cst_op "shiftL" "(a << b)" $unit_output $perf_output $perf_scalar_output "BITWISE"
 
 # Masked reductions.
-gen_binary_op "max" "(a > b) ? a : b" $unit_output $perf_output $perf_scalar_output
-gen_binary_op "min" "(a < b) ? a : b" $unit_output $perf_output $perf_scalar_output
+gen_binary_op "max" "Math.max(a, b)" $unit_output $perf_output $perf_scalar_output
+gen_binary_op "min" "Math.min(a, b)" $unit_output $perf_output $perf_scalar_output
 
 # Reductions.
 gen_reduction_op "andAll" "\&" $unit_output $perf_output $perf_scalar_output "BITWISE" "-1"

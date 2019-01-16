@@ -387,7 +387,7 @@ final class Int256Vector extends IntVector {
         return (Int256Vector) VectorIntrinsics.binaryOp(
             VECTOR_OP_MIN, Int256Vector.class, int.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Int256Vector)v1).bOp(v2, (i, a, b) -> (int) ((a < b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) Math.min(a, b)));
     }
 
     @Override
@@ -404,7 +404,7 @@ final class Int256Vector extends IntVector {
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, Int256Vector.class, int.class, LENGTH,
             this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (int) Math.max(a, b)));
         }
 
     @Override
@@ -561,7 +561,7 @@ final class Int256Vector extends IntVector {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, Int256Vector.class, int.class, LENGTH,
             this,
-            v -> (long) v.rOp(Integer.MAX_VALUE , (i, a, b) -> (int) ((a < b) ? a : b)));
+            v -> (long) v.rOp(Integer.MAX_VALUE , (i, a, b) -> (int) Math.min(a, b)));
     }
 
     @Override
@@ -570,7 +570,7 @@ final class Int256Vector extends IntVector {
         return (int) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, Int256Vector.class, int.class, LENGTH,
             this,
-            v -> (long) v.rOp(Integer.MIN_VALUE , (i, a, b) -> (int) ((a > b) ? a : b)));
+            v -> (long) v.rOp(Integer.MIN_VALUE , (i, a, b) -> (int) Math.max(a, b)));
     }
 
     @Override

@@ -520,7 +520,7 @@ public class IntScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             int a = as[i];
             int b = bs[i];
-            rs[i] = (int)((a > b) ? a : b);
+            rs[i] = (int)(Math.max(a, b));
         }
 
         return rs;
@@ -535,7 +535,7 @@ public class IntScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             int a = as[i];
             int b = bs[i];
-            rs[i] = (int)((a < b) ? a : b);
+            rs[i] = (int)(Math.min(a, b));
         }
 
         return rs;

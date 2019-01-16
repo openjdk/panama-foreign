@@ -594,7 +594,7 @@ final class Float512Vector extends FloatVector {
         return (Float512Vector) VectorIntrinsics.binaryOp(
             VECTOR_OP_MIN, Float512Vector.class, float.class, LENGTH,
             this, v,
-            (v1, v2) -> ((Float512Vector)v1).bOp(v2, (i, a, b) -> (float) ((a < b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (float) Math.min(a, b)));
     }
 
     @Override
@@ -611,7 +611,7 @@ final class Float512Vector extends FloatVector {
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, Float512Vector.class, float.class, LENGTH,
             this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (float) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> (float) Math.max(a, b)));
         }
 
     @Override
@@ -684,7 +684,7 @@ final class Float512Vector extends FloatVector {
                                 VECTOR_OP_MIN, Float512Vector.class, float.class, LENGTH,
                                 this,
                                 v -> {
-                                    float r = v.rOp(Float.MAX_VALUE , (i, a, b) -> (float) ((a < b) ? a : b));
+                                    float r = v.rOp(Float.MAX_VALUE , (i, a, b) -> (float) Math.min(a, b));
                                     return (long)Float.floatToIntBits(r);
                                 });
         return Float.intBitsToFloat(bits);
@@ -697,7 +697,7 @@ final class Float512Vector extends FloatVector {
                                 VECTOR_OP_MAX, Float512Vector.class, float.class, LENGTH,
                                 this,
                                 v -> {
-                                    float r = v.rOp(Float.MIN_VALUE , (i, a, b) -> (float) ((a > b) ? a : b));
+                                    float r = v.rOp(Float.MIN_VALUE , (i, a, b) -> (float) Math.max(a, b));
                                     return (long)Float.floatToIntBits(r);
                                 });
         return Float.intBitsToFloat(bits);

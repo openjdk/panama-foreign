@@ -932,7 +932,7 @@ public class Int512VectorTests extends AbstractVectorTest {
     }
 
     static int max(int a, int b) {
-        return (int)((a > b) ? a : b);
+        return (int)(Math.max(a, b));
     }
 
     @Test(dataProvider = "intBinaryOpProvider")
@@ -952,7 +952,7 @@ public class Int512VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, Int512VectorTests::max);
     }
     static int min(int a, int b) {
-        return (int)((a < b) ? a : b);
+        return (int)(Math.min(a, b));
     }
 
     @Test(dataProvider = "intBinaryOpProvider")
@@ -1118,7 +1118,7 @@ public class Int512VectorTests extends AbstractVectorTest {
     static int minAll(int[] a, int idx) {
         int res = Integer.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res = (res < a[i])?res:a[i];
+            res = (int)Math.min(res, a[i]);
         }
 
         return res;
@@ -1140,7 +1140,7 @@ public class Int512VectorTests extends AbstractVectorTest {
     static int maxAll(int[] a, int idx) {
         int res = Integer.MIN_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res > a[i])?res:a[i];
+            res = (int)Math.max(res, a[i]);
         }
 
         return res;

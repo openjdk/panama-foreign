@@ -718,7 +718,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
 
 
     static double max(double a, double b) {
-        return (double)((a > b) ? a : b);
+        return (double)(Math.max(a, b));
     }
 
     @Test(dataProvider = "doubleBinaryOpProvider")
@@ -738,7 +738,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
         assertArraysEquals(a, b, r, DoubleMaxVectorTests::max);
     }
     static double min(double a, double b) {
-        return (double)((a < b) ? a : b);
+        return (double)(Math.min(a, b));
     }
 
     @Test(dataProvider = "doubleBinaryOpProvider")
@@ -832,7 +832,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static double minAll(double[] a, int idx) {
         double res = Double.MAX_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-            res = (res < a[i])?res:a[i];
+            res = (double)Math.min(res, a[i]);
         }
 
         return res;
@@ -854,7 +854,7 @@ public class DoubleMaxVectorTests extends AbstractVectorTest {
     static double maxAll(double[] a, int idx) {
         double res = Double.MIN_VALUE;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res = (res > a[i])?res:a[i];
+            res = (double)Math.max(res, a[i]);
         }
 
         return res;

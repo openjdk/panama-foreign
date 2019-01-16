@@ -412,7 +412,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             short a = as[i];
             short b = bs[i];
-            rs[i] = (short)((a > b) ? a : b);
+            rs[i] = (short)(Math.max(a, b));
         }
 
         return rs;
@@ -427,7 +427,7 @@ public class ShortScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             short a = as[i];
             short b = bs[i];
-            rs[i] = (short)((a < b) ? a : b);
+            rs[i] = (short)(Math.min(a, b));
         }
 
         return rs;

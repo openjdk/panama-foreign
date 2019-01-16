@@ -412,7 +412,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             byte a = as[i];
             byte b = bs[i];
-            rs[i] = (byte)((a > b) ? a : b);
+            rs[i] = (byte)(Math.max(a, b));
         }
 
         return rs;
@@ -427,7 +427,7 @@ public class ByteScalar extends AbstractVectorBenchmark {
         for (int i = 0; i < as.length; i++) {
             byte a = as[i];
             byte b = bs[i];
-            rs[i] = (byte)((a < b) ? a : b);
+            rs[i] = (byte)(Math.min(a, b));
         }
 
         return rs;

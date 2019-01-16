@@ -663,7 +663,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         return ($vectortype$) VectorIntrinsics.binaryOp(
             VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
             this, v,
-            (v1, v2) -> (($vectortype$)v1).bOp(v2, (i, a, b) -> ($type$) ((a < b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$) Math.min(a, b)));
     }
 
     @Override
@@ -680,7 +680,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         return VectorIntrinsics.binaryOp(
             VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
             this, v,
-            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$) ((a > b) ? a : b)));
+            (v1, v2) -> v1.bOp(v2, (i, a, b) -> ($type$) Math.max(a, b)));
         }
 
     @Override
@@ -884,7 +884,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
             this,
-            v -> (long) v.rOp($Boxtype$.MAX_VALUE , (i, a, b) -> ($type$) ((a < b) ? a : b)));
+            v -> (long) v.rOp($Boxtype$.MAX_VALUE , (i, a, b) -> ($type$) Math.min(a, b)));
     }
 
     @Override
@@ -893,7 +893,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         return ($type$) VectorIntrinsics.reductionCoerced(
             VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
             this,
-            v -> (long) v.rOp($Boxtype$.MIN_VALUE , (i, a, b) -> ($type$) ((a > b) ? a : b)));
+            v -> (long) v.rOp($Boxtype$.MIN_VALUE , (i, a, b) -> ($type$) Math.max(a, b)));
     }
 
     @Override
@@ -992,7 +992,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                                 VECTOR_OP_MIN, $vectortype$.class, $type$.class, LENGTH,
                                 this,
                                 v -> {
-                                    $type$ r = v.rOp($Boxtype$.MAX_VALUE , (i, a, b) -> ($type$) ((a < b) ? a : b));
+                                    $type$ r = v.rOp($Boxtype$.MAX_VALUE , (i, a, b) -> ($type$) Math.min(a, b));
                                     return (long)$Type$.$type$To$Bitstype$Bits(r);
                                 });
         return $Type$.$bitstype$BitsTo$Fptype$(bits);
@@ -1005,7 +1005,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                                 VECTOR_OP_MAX, $vectortype$.class, $type$.class, LENGTH,
                                 this,
                                 v -> {
-                                    $type$ r = v.rOp($Boxtype$.MIN_VALUE , (i, a, b) -> ($type$) ((a > b) ? a : b));
+                                    $type$ r = v.rOp($Boxtype$.MIN_VALUE , (i, a, b) -> ($type$) Math.max(a, b));
                                     return (long)$Type$.$type$To$Bitstype$Bits(r);
                                 });
         return $Type$.$bitstype$BitsTo$Fptype$(bits);

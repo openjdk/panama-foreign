@@ -213,7 +213,7 @@ public abstract class LongVector extends Vector<Long> {
      * Returns the minimum of this vector and the broadcast of an input scalar.
      * <p>
      * This is a vector binary operation where the operation
-     * {@code (a, b) -> a < b ? a : b}  is applied to lane elements.
+     * {@code (a, b) -> Math.min(a, b)} is applied to lane elements.
      *
      * @param s the input scalar
      * @return the minimum of this vector and the broadcast of an input scalar
@@ -230,7 +230,7 @@ public abstract class LongVector extends Vector<Long> {
      * Returns the maximum of this vector and the broadcast of an input scalar.
      * <p>
      * This is a vector binary operation where the operation
-     * {@code (a, b) -> a > b ? a : b}  is applied to lane elements.
+     * {@code (a, b) -> Math.max(a, b)} is applied to lane elements.
      *
      * @param s the input scalar
      * @return the maximum of this vector and the broadcast of an input scalar
@@ -888,7 +888,7 @@ public abstract class LongVector extends Vector<Long> {
      * Returns the minimum lane element of this vector.
      * <p>
      * This is an associative vector reduction operation where the operation
-     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * {@code (a, b) -> Math.min(a, b)} is applied to lane elements,
      * and the identity value is {@link Long#MAX_VALUE}.
      *
      * @return the minimum lane element of this vector
@@ -900,7 +900,7 @@ public abstract class LongVector extends Vector<Long> {
      * controlled by a mask.
      * <p>
      * This is an associative vector reduction operation where the operation
-     * {@code (a, b) -> a > b ? b : a} is applied to lane elements,
+     * {@code (a, b) -> Math.min(a, b)} is applied to lane elements,
      * and the identity value is {@link Long#MAX_VALUE}.
      *
      * @param m the mask controlling lane selection
@@ -912,7 +912,7 @@ public abstract class LongVector extends Vector<Long> {
      * Returns the maximum lane element of this vector.
      * <p>
      * This is an associative vector reduction operation where the operation
-     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * {@code (a, b) -> Math.max(a, b)} is applied to lane elements,
      * and the identity value is {@link Long#MIN_VALUE}.
      *
      * @return the maximum lane element of this vector
@@ -924,7 +924,7 @@ public abstract class LongVector extends Vector<Long> {
      * controlled by a mask.
      * <p>
      * This is an associative vector reduction operation where the operation
-     * {@code (a, b) -> a < b ? b : a} is applied to lane elements,
+     * {@code (a, b) -> Math.max(a, b)} is applied to lane elements,
      * and the identity value is {@link Long#MIN_VALUE}.
      *
      * @param m the mask controlling lane selection
