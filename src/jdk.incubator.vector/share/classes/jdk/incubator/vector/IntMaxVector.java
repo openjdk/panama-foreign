@@ -975,17 +975,16 @@ final class IntMaxVector extends IntVector {
     @Override
     @ForceInline
     public IntMaxVector rearrange(Shuffle<Integer> o1) {
-    Objects.requireNonNull(o1);
-    IntMaxShuffle s =  (IntMaxShuffle)o1;
+        Objects.requireNonNull(o1);
+        IntMaxShuffle s =  (IntMaxShuffle)o1;
 
         return VectorIntrinsics.rearrangeOp(
             IntMaxVector.class, IntMaxShuffle.class, int.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-            int[] vec = this.getElements();
-            int ei = s_.getElement(i);
-            return vec[ei];
-        }));
+                int ei = s_.getElement(i);
+                return v1.get(ei);
+            }));
     }
 
     @Override
@@ -1356,7 +1355,7 @@ final class IntMaxVector extends IntVector {
             Objects.requireNonNull(bits);
             ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
             return VectorIntrinsics.load(IntMaxMask.class, int.class, LENGTH,
-                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, (((long)ix) << Unsafe.ARRAY_BOOLEAN_INDEX_SCALE) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
                                          (c, idx) -> opm(n -> c[idx + n]));
         }

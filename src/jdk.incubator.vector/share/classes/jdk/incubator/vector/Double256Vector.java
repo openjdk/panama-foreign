@@ -1039,17 +1039,16 @@ final class Double256Vector extends DoubleVector {
     @Override
     @ForceInline
     public Double256Vector rearrange(Shuffle<Double> o1) {
-    Objects.requireNonNull(o1);
-    Double256Shuffle s =  (Double256Shuffle)o1;
+        Objects.requireNonNull(o1);
+        Double256Shuffle s =  (Double256Shuffle)o1;
 
         return VectorIntrinsics.rearrangeOp(
             Double256Vector.class, Double256Shuffle.class, double.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-            double[] vec = this.getElements();
-            int ei = s_.getElement(i);
-            return vec[ei];
-        }));
+                int ei = s_.getElement(i);
+                return v1.get(ei);
+            }));
     }
 
     @Override
@@ -1421,7 +1420,7 @@ final class Double256Vector extends DoubleVector {
             Objects.requireNonNull(bits);
             ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
             return VectorIntrinsics.load(Double256Mask.class, long.class, LENGTH,
-                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, (((long)ix) << Unsafe.ARRAY_BOOLEAN_INDEX_SCALE) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
                                          (c, idx) -> opm(n -> c[idx + n]));
         }

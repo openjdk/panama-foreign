@@ -975,17 +975,16 @@ final class Long256Vector extends LongVector {
     @Override
     @ForceInline
     public Long256Vector rearrange(Shuffle<Long> o1) {
-    Objects.requireNonNull(o1);
-    Long256Shuffle s =  (Long256Shuffle)o1;
+        Objects.requireNonNull(o1);
+        Long256Shuffle s =  (Long256Shuffle)o1;
 
         return VectorIntrinsics.rearrangeOp(
             Long256Vector.class, Long256Shuffle.class, long.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-            long[] vec = this.getElements();
-            int ei = s_.getElement(i);
-            return vec[ei];
-        }));
+                int ei = s_.getElement(i);
+                return v1.get(ei);
+            }));
     }
 
     @Override
@@ -1356,7 +1355,7 @@ final class Long256Vector extends LongVector {
             Objects.requireNonNull(bits);
             ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
             return VectorIntrinsics.load(Long256Mask.class, long.class, LENGTH,
-                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, (((long)ix) << Unsafe.ARRAY_BOOLEAN_INDEX_SCALE) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
                                          (c, idx) -> opm(n -> c[idx + n]));
         }

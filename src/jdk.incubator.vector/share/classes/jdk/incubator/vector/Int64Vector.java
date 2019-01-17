@@ -975,17 +975,16 @@ final class Int64Vector extends IntVector {
     @Override
     @ForceInline
     public Int64Vector rearrange(Shuffle<Integer> o1) {
-    Objects.requireNonNull(o1);
-    Int64Shuffle s =  (Int64Shuffle)o1;
+        Objects.requireNonNull(o1);
+        Int64Shuffle s =  (Int64Shuffle)o1;
 
         return VectorIntrinsics.rearrangeOp(
             Int64Vector.class, Int64Shuffle.class, int.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-            int[] vec = this.getElements();
-            int ei = s_.getElement(i);
-            return vec[ei];
-        }));
+                int ei = s_.getElement(i);
+                return v1.get(ei);
+            }));
     }
 
     @Override
@@ -1356,7 +1355,7 @@ final class Int64Vector extends IntVector {
             Objects.requireNonNull(bits);
             ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
             return VectorIntrinsics.load(Int64Mask.class, int.class, LENGTH,
-                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, (((long)ix) << Unsafe.ARRAY_BOOLEAN_INDEX_SCALE) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
                                          (c, idx) -> opm(n -> c[idx + n]));
         }
