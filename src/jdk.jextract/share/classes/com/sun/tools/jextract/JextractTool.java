@@ -26,6 +26,9 @@ package com.sun.tools.jextract;
 import com.sun.tools.jextract.parser.Parser;
 import com.sun.tools.jextract.tree.Tree;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -33,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JextractTool {
     private final HeaderResolver headerResolver;
@@ -51,17 +55,18 @@ public class JextractTool {
                 hf -> new AsmCodeFactory(ctx, hf);
         this.clangArgs = ctx.clangArgs;
         this.sources = ctx.sources;
+        assert sources.size() > 0;
     }
 
     /** This is the main jextract entry point */
     public Writer processHeaders() {
-        Map<HeaderFile, List<Tree>> headerMap = parser.parse(sources, clangArgs).stream()
+        Path source = sources.size() > 1? generateTmpSource() : sources.iterator().next();
+        Map<HeaderFile, List<Tree>> headerMap = Stream.of(parser.parse(source, clangArgs))
                 .map(symbolFilter)
                 .map(new TypedefHandler())
                 .map(new EmptyNameHandler())
                 .map(new DuplicateDeclarationHandler())
                 .flatMap(h -> h.declarations().stream())
-                .distinct()
                 .collect(Collectors.groupingBy(this::headerFromDecl));
 
         //generate classes
@@ -80,5 +85,19 @@ public class JextractTool {
     private HeaderFile headerFromDecl(Tree tree) {
         Path path = tree.cursor().getSourceLocation().getFileLocation().path();
         return headerResolver.headerFor(path);
+    }
+
+    private Path generateTmpSource() {
+        assert sources.size() > 1;
+        try {
+            Path tmpFile = Files.createTempFile("jextract", ".h");
+            tmpFile.toFile().deleteOnExit();
+            Files.write(tmpFile, sources.stream().
+                map(src -> "#include \"" + src + "\"").
+                collect(Collectors.toList()));
+            return tmpFile;
+        } catch (IOException ioExp) {
+            throw new UncheckedIOException(ioExp);
+        }
     }
 }

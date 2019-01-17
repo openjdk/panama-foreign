@@ -100,7 +100,7 @@ public class Tree {
         }
 
         Tree t = (Tree)obj;
-        return name.equals(t.name()) && location().equals(t.location());
+        return c.equals(t.c);
     }
 
     @Override

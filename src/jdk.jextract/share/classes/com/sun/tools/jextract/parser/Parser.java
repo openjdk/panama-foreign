@@ -28,7 +28,6 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,70 +65,66 @@ public class Parser {
         this.supportMacros = supportMacros;
     }
 
-    public List<HeaderTree> parse(Collection<Path> paths, Collection<String> args) {
+    public HeaderTree parse(Path path, Collection<String> args) {
         final List<HeaderTree> headers = new ArrayList<>();
         final Index index = LibClang.createIndex();
-        for (Path path : paths) {
-            logger.info(() -> {
-                StringBuilder sb = new StringBuilder(
-                        "Parsing header file " + path + " with following args:\n");
-                int i = 0;
-                for (String arg : args) {
-                    sb.append("arg[");
-                    sb.append(i++);
-                    sb.append("] = ");
-                    sb.append(arg);
-                    sb.append("\n");
+        logger.info(() -> {
+            StringBuilder sb = new StringBuilder(
+                    "Parsing header file " + path + " with following args:\n");
+            int i = 0;
+            for (String arg : args) {
+                sb.append("arg[");
+                sb.append(i++);
+                sb.append("] = ");
+                sb.append(arg);
+                sb.append("\n");
+            }
+            return sb.toString();
+        });
+
+        Cursor tuCursor = index.parse(path.toString(),
+            d -> {
+                err.println(d);
+                if (d.severity() >  Diagnostic.CXDiagnostic_Warning) {
+                    throw new RuntimeException(d.toString());
                 }
-                return sb.toString();
+            },
+            supportMacros, args.toArray(new String[0]));
+
+        MacroParser macroParser = new MacroParser();
+        List<Tree> decls = new ArrayList<>();
+        tuCursor.children().
+            peek(c -> logger.finest(
+                () -> "Cursor: " + c.spelling() + "@" + c.USR() + "?" + c.isDeclaration())).
+            forEach(c -> {
+                SourceLocation loc = c.getSourceLocation();
+                if (loc == null) {
+                    logger.info(() -> "Ignore Cursor " + c.spelling() + "@" + c.USR() + " has no SourceLocation");
+                    return;
+                }
+
+                SourceLocation.Location src = loc.getFileLocation();
+                if (src == null) {
+                    logger.info(() -> "Cursor " + c.spelling() + "@" + c.USR() + " has no FileLocation");
+                    return;
+                }
+
+                logger.fine(() -> "Do cursor: " + c.spelling() + "@" + c.USR());
+
+                if (c.isDeclaration()) {
+                    if (c.kind() == CursorKind.UnexposedDecl ||
+                        c.kind() == CursorKind.Namespace) {
+                        c.children().forEach(cu -> decls.add(treeMaker.createTree(cu)));
+                    } else {
+                        decls.add(treeMaker.createTree(c));
+                    }
+                } else if (supportMacros && isMacro(c) && src.path() != null) {
+                    handleMacro(macroParser, c);
+                }
             });
 
-            Cursor tuCursor = index.parse(path.toString(),
-                d -> {
-                    err.println(d);
-                    if (d.severity() >  Diagnostic.CXDiagnostic_Warning) {
-                        throw new RuntimeException(d.toString());
-                    }
-                },
-                supportMacros, args.toArray(new String[0]));
-
-            MacroParser macroParser = new MacroParser();
-            List<Tree> decls = new ArrayList<>();
-            tuCursor.children().
-                peek(c -> logger.finest(
-                    () -> "Cursor: " + c.spelling() + "@" + c.USR() + "?" + c.isDeclaration())).
-                forEach(c -> {
-                    SourceLocation loc = c.getSourceLocation();
-                    if (loc == null) {
-                        logger.info(() -> "Ignore Cursor " + c.spelling() + "@" + c.USR() + " has no SourceLocation");
-                        return;
-                    }
-
-                    SourceLocation.Location src = loc.getFileLocation();
-                    if (src == null) {
-                        logger.info(() -> "Cursor " + c.spelling() + "@" + c.USR() + " has no FileLocation");
-                        return;
-                    }
-
-                    logger.fine(() -> "Do cursor: " + c.spelling() + "@" + c.USR());
-
-                    if (c.isDeclaration()) {
-                        if (c.kind() == CursorKind.UnexposedDecl ||
-                            c.kind() == CursorKind.Namespace) {
-                            c.children().forEach(cu -> decls.add(treeMaker.createTree(cu)));
-                        } else {
-                            decls.add(treeMaker.createTree(c));
-                        }
-                    } else if (supportMacros && isMacro(c) && src.path() != null) {
-                        handleMacro(macroParser, c);
-                    }
-                });
-
-            decls.addAll(macros(macroParser));
-            headers.add(treeMaker.createHeader(tuCursor, path, decls));
-        }
-
-        return Collections.unmodifiableList(headers);
+        decls.addAll(macros(macroParser));
+        return treeMaker.createHeader(tuCursor, path, decls);
     }
 
     private List<MacroTree> macros(MacroParser macroParser) {
@@ -179,13 +174,10 @@ public class Parser {
 
         Context context = new Context();
         Parser p = new Parser(context,true);
-        List<Path> paths = Arrays.stream(args).map(Paths::get).collect(Collectors.toList());
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);
-        List<HeaderTree> headers = p.parse(paths, clangArgs);
+        HeaderTree header = p.parse(Paths.get(args[0]), clangArgs);
         TreePrinter printer = new TreePrinter();
-        for (HeaderTree ht : headers) {
-            ht.accept(printer, null);
-        }
+        header.accept(printer, null);
     }
 }

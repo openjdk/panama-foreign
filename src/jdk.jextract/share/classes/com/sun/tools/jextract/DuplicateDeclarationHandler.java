@@ -25,7 +25,6 @@ package com.sun.tools.jextract;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -218,14 +217,11 @@ final class DuplicateDeclarationHandler extends SimpleTreeVisitor<Void, Void>
 
         Context context = new Context();
         Parser p = new Parser(context, true);
-        List<Path> paths = Arrays.stream(args).map(Paths::get).collect(Collectors.toList());
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);
-        List<HeaderTree> headers = p.parse(paths, clangArgs);
+        HeaderTree header = p.parse(Paths.get(args[0]), clangArgs);
         TreePrinter printer = new TreePrinter();
         DuplicateDeclarationHandler handler = new DuplicateDeclarationHandler();
-        for (HeaderTree ht : headers) {
-            handler.transform(ht).accept(printer, null);
-        }
+        handler.transform(header).accept(printer, null);
     }
 }

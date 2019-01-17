@@ -97,10 +97,9 @@ abstract class TreeFilter extends SimpleTreeVisitor<Tree, Void>
 
         Context context = new Context();
         Parser p = new Parser(context, true);
-        List<Path> paths = List.of(Paths.get(args[0]));
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);
-        List<HeaderTree> headers = p.parse(paths, clangArgs);
+        HeaderTree header = p.parse(Paths.get(args[0]), clangArgs);
         TreePrinter printer = new TreePrinter();
         Predicate<Tree> nameFilter =  args.length > 1? t->t.name().matches(args[1]) : t->true;
         TreeFilter filter = new TreeFilter() {
@@ -109,8 +108,6 @@ abstract class TreeFilter extends SimpleTreeVisitor<Tree, Void>
                 return nameFilter.test(tree);
             }
         };
-        for (HeaderTree ht : headers) {
-            filter.transform(ht).accept(printer, null);
-        }
+        filter.transform(header).accept(printer, null);
     }
 }

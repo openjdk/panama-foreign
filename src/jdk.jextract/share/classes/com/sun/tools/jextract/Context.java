@@ -29,7 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.LinkedHashSet;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -67,7 +67,7 @@ public final class Context {
 
     public Context(PrintWriter out, PrintWriter err) {
         this.clangArgs = new ArrayList<>();
-        this.sources = new TreeSet<>();
+        this.sources = new LinkedHashSet<>();
         this.libraryNames = new ArrayList<>();
         this.libraryPaths = new ArrayList<>();
         this.linkCheckPaths = new ArrayList<>();
