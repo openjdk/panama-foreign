@@ -252,9 +252,8 @@ public final class Util {
                     return NativeTypes.VOID.pointer();
                 }
                 Address addr = (Address)layout;
-                return addr.addresseeInfo().isPresent() ?
-                        makeType(arg, ((Address)layout).addresseeInfo().get().layout()).pointer() :
-                        NativeTypes.VOID.pointer();
+                return addr.layout().<LayoutType<?>>map(l -> makeType(arg, l).pointer())
+                        .orElse(NativeTypes.VOID.pointer());
             } else {
                 return NativeTypes.VOID.pointer();
             }

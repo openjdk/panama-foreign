@@ -33,7 +33,7 @@ import java.util.Optional;
  * value layout also has a size and an endianness (which could be either big-endian or little-endian), as well as
  * an optional substructure layout (see {@link Value#contents()}).
  */
-public class Value extends AbstractLayout<Value> implements Layout {
+public class Value extends AbstractDescriptor<Value> implements Layout {
 
     /**
      * The value kind.
@@ -201,7 +201,7 @@ public class Value extends AbstractLayout<Value> implements Layout {
     }
 
     @Override
-    Value dup(Map<String, String> annotations) {
+    Value withAnnotations(Map<String, String> annotations) {
         return new Value(kind, endianness, size, contents, annotations);
     }
 }

@@ -25,130 +25,64 @@
 package java.foreign.layout;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
- * The layout corresponding to a memory address. An address layout can (optionally) be associated with additional
- * information describing the contents of the target memory region pointed to by the address (see {@link Info}).
+ * The layout corresponding to a memory address. An address layout can (optionally) be associated with a descriptor
+ * describing the contents of the target memory region pointed to by the address - either a function or a layout
+ * (see {@link Descriptor}).
  */
 public final class Address extends Value {
 
     /**
-     * The info associated with the memory region pointed to by an address. The target memory region can be associated
-     * with either a layout, or a function.
+     * The addressee kind. Denotes the contents of the memory region pointed at by an address.
      */
-    public static class Info {
+    private enum PointeeKind {
         /**
-         * The addressee kind. Denotes the contents of the memory region pointed at by an address.
+         * The address points to some data with given layout.
          */
-        public enum Kind {
-            /**
-             * The address points to some data with given layout.
-             */
-            LAYOUT,
-            /**
-             * The address points to the entry point of some native function.
-             */
-            FUNCTION
-        }
-
-        private final Kind kind;
-        private final Object info;
-
-        private Info(Kind kind, Object info) {
-            this.kind = kind;
-            this.info = info;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (!(other instanceof Info)) {
-                return false;
-            }
-            Info i = (Info)other;
-            if (!kind.equals(i.kind)) {
-                return false;
-            }
-
-            switch (kind) {
-                case LAYOUT:
-                    return layout().equals(i.layout());
-                case FUNCTION:
-                    return function().equals(i.function());
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return kind.hashCode() ^ info.hashCode();
-        }
-
+        LAYOUT,
         /**
-         * Test as to whether this addressee info has given kind (see {@link Kind}).
-         * @param kind the kind this address is compared with.
-         * @return true, if this address has given kind.
+         * The address points to the entry point of some native function.
          */
-        public boolean hasKind(Kind kind) {
-            return this.kind == kind;
-        }
-
+        FUNCTION,
         /**
-         * The memory region layout associated with this addressee info.
-         * @return the addressee layout.
-         * @throws UnsupportedOperationException if the info kind is not {@link Kind#LAYOUT}.
+         * The address does not have any associated pointee info.
          */
-        public Layout layout() throws UnsupportedOperationException {
-            if (!hasKind(Kind.LAYOUT)) {
-                throw new UnsupportedOperationException("Cannot retrieve layout info");
-            } else {
-                return (Layout)info;
-            }
-        }
-
-        /**
-         * The function description associated with this addressee info.
-         * @return the addressee function.
-         * @throws UnsupportedOperationException if the info kind is not {@link Kind#FUNCTION}.
-         */
-        public Function function() {
-            if (!hasKind(Kind.FUNCTION)) {
-                throw new UnsupportedOperationException("Cannot retrieve function info");
-            } else {
-                return (Function)info;
-            }
-        }
-
-        static Info ofLayout(Layout layout) {
-            return new Info(Kind.LAYOUT, layout);
-        }
-
-        static Info ofFunction(Function function) {
-            return new Info(Kind.FUNCTION, function);
-        }
+        VOID
     }
 
-    private final Optional<Info> info;
+    private final PointeeKind pointeeKind;
+    private final Descriptor descriptor;
 
-    private Address(Optional<Info> info, long size, Kind kind, Endianness endianness, Optional<Group> contents, Map<String, String> annotations) {
+    private Address(PointeeKind pointeeKind, Descriptor descriptor, long size, Kind kind, Endianness endianness, Optional<Group> contents, Map<String, String> annotations) {
         super(kind, endianness, size, contents, annotations);
-        this.info = info;
+        this.pointeeKind = pointeeKind;
+        this.descriptor = descriptor;
     }
 
     @Override
     public Address withContents(Group contents) {
-        return new Address(info, bitsSize(), kind(), endianness(), Optional.of(contents), annotations());
+        return new Address(pointeeKind, descriptor, bitsSize(), kind(), endianness(), Optional.of(contents), annotations());
     }
 
     /**
-     * Obtain the addressee info associated with this address (if any).
-     * @return the addressee info.
+     * Obtain the {@link Function} object associated with the memory region pointed to by this address (if any).
+     * @return an optional {@link Function} object.
      */
-    public Optional<Info> addresseeInfo() {
-        return info;
+    public Optional<Function> function() {
+        return pointeeKind == PointeeKind.FUNCTION ?
+                Optional.of((Function)descriptor) : Optional.empty();
+    }
+
+    /**
+     * Obtain the {@link Layout} object associated with the memory region pointed to by this address (if any).
+     * @return an optional {@link Layout} object.
+     */
+    public Optional<Layout> layout() {
+        return pointeeKind == PointeeKind.LAYOUT ?
+                Optional.of((Layout)descriptor) : Optional.empty();
     }
 
     /**
@@ -178,7 +112,7 @@ public final class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofVoid(long size, Kind kind, Endianness endianness) {
-        return new Address(Optional.empty(), size, kind, endianness, Optional.empty(), NO_ANNOS);
+        return new Address(PointeeKind.VOID, null, size, kind, endianness, Optional.empty(), NO_ANNOS);
     }
 
     /**
@@ -211,7 +145,7 @@ public final class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofLayout(long size, Layout layout, Kind kind, Endianness endianness) {
-        return new Address(Optional.of(Info.ofLayout(layout)), size, kind, endianness, Optional.empty(), NO_ANNOS);
+        return new Address(PointeeKind.LAYOUT, layout, size, kind, endianness, Optional.empty(), NO_ANNOS);
     }
 
     /**
@@ -244,7 +178,7 @@ public final class Address extends Value {
      * @return the new address layout.
      */
     public static Address ofFunction(long size, Function function, Kind kind, Endianness endianness) {
-        return new Address(Optional.of(Info.ofFunction(function)), size, kind, endianness, Optional.empty(), NO_ANNOS);
+        return new Address(PointeeKind.FUNCTION, function, size, kind, endianness, Optional.empty(), NO_ANNOS);
     }
 
     @Override
@@ -256,22 +190,23 @@ public final class Address extends Value {
             return false;
         }
         Address addr = (Address)other;
-        return super.equals(other) && info.equals(addr.info);
+        return super.equals(other) &&
+                Objects.equals(descriptor, addr.descriptor);
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode() ^ info.hashCode();
+        return super.hashCode() ^ Objects.hashCode(descriptor);
     }
 
     @Override
     public String toString() {
-        return super.toString() + ":" + info.map(i -> i.info).orElse("v");
+        return super.toString() + ":" + (descriptor == null ? "v" : descriptor.toString());
     }
 
     @Override
-    Address dup(Map<String, String> annotations) {
-        return new Address(info, bitsSize(), kind(), endianness(), contents(), annotations);
+    Address withAnnotations(Map<String, String> annotations) {
+        return new Address(pointeeKind, descriptor, bitsSize(), kind(), endianness(), contents(), annotations);
     }
 
     @Override
