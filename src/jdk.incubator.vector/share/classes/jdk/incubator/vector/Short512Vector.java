@@ -897,17 +897,16 @@ final class Short512Vector extends ShortVector {
     @Override
     @ForceInline
     public Short512Vector rearrange(Shuffle<Short> o1) {
-    Objects.requireNonNull(o1);
-    Short512Shuffle s =  (Short512Shuffle)o1;
+        Objects.requireNonNull(o1);
+        Short512Shuffle s =  (Short512Shuffle)o1;
 
         return VectorIntrinsics.rearrangeOp(
             Short512Vector.class, Short512Shuffle.class, short.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-            short[] vec = this.getElements();
-            int ei = s_.getElement(i);
-            return vec[ei];
-        }));
+                int ei = s_.getElement(i);
+                return v1.get(ei);
+            }));
     }
 
     @Override

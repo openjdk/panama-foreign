@@ -896,17 +896,16 @@ final class Byte128Vector extends ByteVector {
     @Override
     @ForceInline
     public Byte128Vector rearrange(Shuffle<Byte> o1) {
-    Objects.requireNonNull(o1);
-    Byte128Shuffle s =  (Byte128Shuffle)o1;
+        Objects.requireNonNull(o1);
+        Byte128Shuffle s =  (Byte128Shuffle)o1;
 
         return VectorIntrinsics.rearrangeOp(
             Byte128Vector.class, Byte128Shuffle.class, byte.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-            byte[] vec = this.getElements();
-            int ei = s_.getElement(i);
-            return vec[ei];
-        }));
+                int ei = s_.getElement(i);
+                return v1.get(ei);
+            }));
     }
 
     @Override

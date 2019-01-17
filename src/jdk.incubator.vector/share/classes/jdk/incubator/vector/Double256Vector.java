@@ -1039,17 +1039,16 @@ final class Double256Vector extends DoubleVector {
     @Override
     @ForceInline
     public Double256Vector rearrange(Shuffle<Double> o1) {
-    Objects.requireNonNull(o1);
-    Double256Shuffle s =  (Double256Shuffle)o1;
+        Objects.requireNonNull(o1);
+        Double256Shuffle s =  (Double256Shuffle)o1;
 
         return VectorIntrinsics.rearrangeOp(
             Double256Vector.class, Double256Shuffle.class, double.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-            double[] vec = this.getElements();
-            int ei = s_.getElement(i);
-            return vec[ei];
-        }));
+                int ei = s_.getElement(i);
+                return v1.get(ei);
+            }));
     }
 
     @Override

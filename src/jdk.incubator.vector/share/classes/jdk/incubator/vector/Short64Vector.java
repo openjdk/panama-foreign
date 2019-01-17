@@ -897,17 +897,16 @@ final class Short64Vector extends ShortVector {
     @Override
     @ForceInline
     public Short64Vector rearrange(Shuffle<Short> o1) {
-    Objects.requireNonNull(o1);
-    Short64Shuffle s =  (Short64Shuffle)o1;
+        Objects.requireNonNull(o1);
+        Short64Shuffle s =  (Short64Shuffle)o1;
 
         return VectorIntrinsics.rearrangeOp(
             Short64Vector.class, Short64Shuffle.class, short.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-            short[] vec = this.getElements();
-            int ei = s_.getElement(i);
-            return vec[ei];
-        }));
+                int ei = s_.getElement(i);
+                return v1.get(ei);
+            }));
     }
 
     @Override

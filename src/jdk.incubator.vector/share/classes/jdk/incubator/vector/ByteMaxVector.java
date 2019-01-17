@@ -896,17 +896,16 @@ final class ByteMaxVector extends ByteVector {
     @Override
     @ForceInline
     public ByteMaxVector rearrange(Shuffle<Byte> o1) {
-    Objects.requireNonNull(o1);
-    ByteMaxShuffle s =  (ByteMaxShuffle)o1;
+        Objects.requireNonNull(o1);
+        ByteMaxShuffle s =  (ByteMaxShuffle)o1;
 
         return VectorIntrinsics.rearrangeOp(
             ByteMaxVector.class, ByteMaxShuffle.class, byte.class, LENGTH,
             this, s,
             (v1, s_) -> v1.uOp((i, a) -> {
-            byte[] vec = this.getElements();
-            int ei = s_.getElement(i);
-            return vec[ei];
-        }));
+                int ei = s_.getElement(i);
+                return v1.get(ei);
+            }));
     }
 
     @Override
