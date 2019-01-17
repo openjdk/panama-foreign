@@ -75,12 +75,17 @@ public class DescriptorParser {
             nextToken();
         }
         nextToken(Token.RPAREN);
+        Optional<Map<String, String>> annos = annotationsOpt();
+        final Function result;
         if (token == Token.VOID) {
             nextToken(Token.VOID);
-            return Function.ofVoid(varargs, args.toArray(new Layout[0]));
+            result = Function.ofVoid(varargs, args.toArray(new Layout[0]));
         } else {
-            return Function.of(parseLayout(), varargs, args.toArray(new Layout[0]));
+            result = Function.of(parseLayout(), varargs, args.toArray(new Layout[0]));
         }
+        return annotationsOpt()
+                .map(a -> withAnnotations(result, a))
+                .orElse(result);
     }
 
     /**
@@ -262,7 +267,7 @@ public class DescriptorParser {
     }
 
     @SuppressWarnings("unchecked")
-    private <D extends Layout> D withAnnotations(D d, Map<String, String> annos) {
+    private <D extends Descriptor> D withAnnotations(D d, Map<String, String> annos) {
         for (Map.Entry<String, String> anno : annos.entrySet()) {
             d = (D)d.withAnnotation(anno.getKey(), anno.getValue());
         }
@@ -340,12 +345,12 @@ public class DescriptorParser {
      * declarations = +( declaration )
      * declaration = ident '=' (function / layout)
      */
-    Map<String, Object> parseDeclarations() {
-        Map<String, Object> decls = new LinkedHashMap<>();
+    Map<String, Descriptor> parseDeclarations() {
+        Map<String, Descriptor> decls = new LinkedHashMap<>();
         while (token != Token.END) {
             String name = parseIdent(t -> t == Token.EQ, "'='");
             nextToken(Token.EQ);
-            Object desc = token == Token.LPAREN ?
+            Descriptor desc = token == Token.LPAREN ?
                     parseFunction() : parseLayout();
             decls.put(name, desc);
         }
@@ -572,7 +577,7 @@ public class DescriptorParser {
         }
     }
 
-    public static Map<String, Object> parseHeaderDeclarations(String decls) {
+    public static Map<String, Descriptor> parseHeaderDeclarations(String decls) {
         return new DescriptorParser(decls).parseDeclarations();
     }
 

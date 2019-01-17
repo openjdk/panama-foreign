@@ -95,7 +95,7 @@ public final class Sequence extends Group {
     }
 
     @Override
-    Sequence dup(Map<String, String> annotations) {
+    Sequence withAnnotations(Map<String, String> annotations) {
         return new Sequence(elementsSize(), elementLayout, annotations);
     }
 

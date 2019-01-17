@@ -25,6 +25,7 @@ package jdk.internal.foreign;
 import java.foreign.Library;
 import java.foreign.Scope;
 import java.foreign.annotations.NativeHeader;
+import java.foreign.layout.Descriptor;
 import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
 import java.foreign.memory.LayoutType;
@@ -94,7 +95,7 @@ class HeaderImplGenerator extends BinderClassGenerator {
     protected void generateMembers(BinderClassWriter cw) {
         Class<?> headerClass = interfaces[0];
         String declarations = headerClass.getAnnotation(NativeHeader.class).declarations();
-        for (Map.Entry<String, Object> declEntry : DescriptorParser.parseHeaderDeclarations(declarations).entrySet()) {
+        for (Map.Entry<String, Descriptor> declEntry : DescriptorParser.parseHeaderDeclarations(declarations).entrySet()) {
             if (declEntry.getValue() instanceof Layout) {
                 Layout l = (Layout)declEntry.getValue();
                 for (Map.Entry<AccessorKind, String> accessorEntry : AccessorKind.from(l).entrySet()) {

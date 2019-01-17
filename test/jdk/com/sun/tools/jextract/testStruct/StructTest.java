@@ -24,6 +24,7 @@
 import java.foreign.NativeTypes;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
+import java.foreign.layout.Descriptor;
 import java.foreign.layout.Function;
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
@@ -188,7 +189,7 @@ public class StructTest extends JextractToolRunner {
     private void verifyUndefinedStructFunctions(Class<?> header) {
         final String POINTEE = "UndefinedStructForPointer";
         NativeHeader nh = header.getAnnotation(NativeHeader.class);
-        Map<String, Object> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
+        Map<String, Descriptor> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
 
         Method m = findMethod(header, "getParent", java.foreign.memory.Pointer.class);
         assertNotNull(m);
@@ -229,7 +230,7 @@ public class StructTest extends JextractToolRunner {
 
     private void verifyGetAnonymous(Class<?> header) {
         NativeHeader nh = header.getAnnotation(NativeHeader.class);
-        Map<String, Object> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
+        Map<String, Descriptor> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
         Method m = findFirstMethod(header, "getAnonymous");
         assertNotNull(m);
 

@@ -164,6 +164,8 @@ public final class LayoutUtils {
             case Pointer:
             case BlockPointer:
                 return parsePointerInternal(t.getPointeeType());
+            case FunctionProto:
+                return Address.ofFunction(64, parseFunctionInternal(t));
             case Complex:
                 TypeKind ek = t.getElementType().kind();
                 if (ek == TypeKind.Float) {
@@ -178,7 +180,7 @@ public final class LayoutUtils {
                 }
             default:
                 throw new IllegalArgumentException(
-                        "Unsupported type kind: " + t.kind());
+                        "Unsupported type kind: " + t.kind()  + ", for type: " + t.spelling());
         }
     }
 

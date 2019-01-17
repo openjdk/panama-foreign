@@ -140,7 +140,12 @@ final class TypeDictionary {
                 JType[] args = new JType[t.numberOfArgs()];
                 for (int i = 0; i < args.length; i++) {
                     // argument could be function pointer declared locally
-                    args[i] = getInternal(t.argType(i), funcResolver);
+                    JType arg = getInternal(t.argType(i), funcResolver);
+                    if(arg instanceof JType.Function) {
+                        // interpret function types in parameters as function pointers
+                        arg = JType.GenericType.ofCallback(funcResolver.apply((JType.Function) arg));
+                    }
+                    args[i] = arg;
                 }
                 return new JType.Function(Utils.getFunction(t), t.isVariadic(), getInternal(t.resultType(), funcResolver), args);
             case Enum: {

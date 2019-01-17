@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * A padding layout specifies the size of extra space used to align struct fields around word boundaries.
  */
-public class Padding extends AbstractLayout<Padding> implements Layout {
+public class Padding extends AbstractDescriptor<Padding> implements Layout {
     private final long size;
 
     protected Padding(long size, Map<String, String> annotations) {
@@ -79,7 +79,7 @@ public class Padding extends AbstractLayout<Padding> implements Layout {
     }
 
     @Override
-    Padding dup(Map<String, String> annotations) {
+    Padding withAnnotations(Map<String, String> annotations) {
         return new Padding(size, annotations);
     }
 }

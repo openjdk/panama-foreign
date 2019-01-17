@@ -15,6 +15,14 @@ Using foreign function call in Java involves the following three steps:
 2. Use **java.foreign** API to create ("bind") implementation for C header interfaces
 3. Invoke C functions via the jextracted Java interface
 
+### Windows notes
+
+You will (almost always) need to have Visual Studio installed, since most libraries indirectly depend on Visual Studio runtime libraries and this currently means that jextract needs their header to extract successfully. Windows examples have been tested with [Build Tools for Visual Studio 2017](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
+
+It is generally a good idea to give jextract a bunch of extra memory since a lot of big system headers are transitively included. The extra memory will make the jextract run significantly faster. Windows support was added only recently, and the memory usage of jextract has not been optimized yet, so this is a workaround. You can give extra memory by passing e.g. `-J-Xmx8G` to jextract as an additional argument, which in this example gives jextract 8 gigabytes of memory.
+
+Commands are tested in PowerShell.
+
 ## Embedding Python interpreter in your Java program (Mac OS)
 
 ### jextract a Jar file for Python.h
@@ -61,7 +69,7 @@ public class PythonMain {
 
 ```sh
 
-javac -cp pythor.jar PythonMain.java
+javac -cp python.jar PythonMain.java
 
 java -cp python.jar:. PythonMain
 
@@ -85,6 +93,23 @@ jextract -l python2.7 \
 ### Compiling and Running Python Java example
 
 Follow the instructions from the Mac OS section
+
+## Embedding Python interpreter in your Java program (Windows 10)
+
+### jextract a Jar file for Python.h
+
+Where python 2.7 is installed on the `C` drive:
+
+```powershell
+jextract -l python27 -o "python.jar" -t "org.python" C:\Python27\include\Python.h
+```
+
+### Compiling and Running Python Java example
+
+```powershell
+javac -cp python.jar PythonMain.java
+java -cp "python.jar;." PythonMain
+```
 
 ## Using BLAS library
 
@@ -660,7 +685,7 @@ public class Teapot {
     }
 }
 ```
-### Running the Java code that uses OpenGL
+### Running the Java code that uses OpenGL (Ubuntu 16.04)
 
 ```sh
 
@@ -670,6 +695,37 @@ java -cp opengl.jar:. Teapot
 
 ```
 
+## Using OpenGL graphic library (Windows 10)
+
+### Installing OpenGL (Windows 10)
+
+Download the freeglut package for MSVC at [https://www.transmissionzero.co.uk/software/freeglut-devel/](https://www.transmissionzero.co.uk/software/freeglut-devel/)
+
+Extract the freeglut zip.
+
+### jextracting OpenGL (Windows 10)
+
+Navigate to the root directory of the extracted zip and run the following commands:
+
+```powershell
+$inc = "C:\Program Files (x86)\Windows Kits\10\Include\10.0.17134.0"
+jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o "opengl.jar" -m "$inc\um\gl=opengl" .\freeglut\include\GL\glut.h
+```
+
+The directory that is assigned to `$inc` is an example, and is system dependent. Make sure that the build number at the end of the path (in this case `10.0.17134.0`) is the latest one found in the parent folder (`C:\Program Files (x86)\Windows Kits\10\Include\`).
+
+There are a bunch of warnings generated, but as long as the jar file is generated in the working directory the extraction was successful.
+
+### Java sample code that uses the OpenGL library
+
+This is the same as for Ubuntu 16.04
+
+### Running the Java code that uses OpenGL (Windows 10)
+
+```powershell
+javac -cp .\opengl.jar Teapot.java
+java -cp "opengl.jar;." -D"java.library.path=.\freeglut\bin\x64;C:\Windows\system32" Teapot
+```
 
 ## Using TensorFlow C API (Mac OS)
 

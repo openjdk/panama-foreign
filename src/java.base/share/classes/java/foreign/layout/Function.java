@@ -26,6 +26,7 @@ package java.foreign.layout;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,12 +36,13 @@ import java.util.stream.Stream;
  * is used to model the signature of native functions. Note: a function is not a layout - it's merely
  * an aggregate for one or more layouts; as such it does not have a size.
  */
-public final class Function {
+public final class Function extends AbstractDescriptor<Function> {
     private final Optional<Layout> resLayout;
     private final Layout[] argLayouts;
     private final boolean variadic;
 
-    private Function(Optional<Layout> resLayout, boolean variadic, Layout... argLayouts) {
+    private Function(Map<String, String> annotations, Optional<Layout> resLayout, boolean variadic, Layout... argLayouts) {
+        super(annotations);
         this.resLayout = resLayout;
         this.variadic = variadic;
         this.argLayouts = argLayouts;
@@ -87,7 +89,7 @@ public final class Function {
      * @return the new function descriptor.
      */
     public static Function of(Layout resLayout, boolean varargs, Layout... argLayouts) {
-        return new Function(Optional.of(resLayout), varargs, argLayouts);
+        return new Function(NO_ANNOS, Optional.of(resLayout), varargs, argLayouts);
     }
 
     /**
@@ -97,7 +99,7 @@ public final class Function {
      * @return the new function descriptor.
      */
     public static Function ofVoid(boolean varargs, Layout... argLayouts) {
-        return new Function(Optional.empty(), varargs, argLayouts);
+        return new Function(NO_ANNOS, Optional.empty(), varargs, argLayouts);
     }
 
     @Override
@@ -126,5 +128,10 @@ public final class Function {
     @Override
     public int hashCode() {
         return resLayout.hashCode() ^ Arrays.hashCode(argLayouts) ^ Boolean.hashCode(variadic);
+    }
+
+    @Override
+    Function withAnnotations(Map<String, String> annotations) {
+        return new Function(annotations, resLayout, variadic, argLayouts);
     }
 }
