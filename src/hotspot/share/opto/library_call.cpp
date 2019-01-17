@@ -7069,13 +7069,13 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
 
   // Now handle special case where load/store happens from/to byte array but element type is not byte.
   bool using_byte_array = arr_type != NULL && arr_type->elem()->array_element_basic_type() == T_BYTE && elem_bt != T_BYTE;
-
-  // It must be the case that if it is not special byte array case, there is consistency between
-  // array and vector element types.
-  if (!using_byte_array && arr_type != NULL && elem_bt != arr_type->elem()->array_element_basic_type()) {
+  // Handle loading masks.
+  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  bool is_mask = vbox_klass->is_vectormask();
+  // If there is no consistency between array and vector element types, it must be special byte array case or loading masks
+  if (!using_byte_array && arr_type != NULL && elem_bt != arr_type->elem()->array_element_basic_type() && !is_mask) {
     return false;
   }
-
   // Since we are using byte array, we need to double check that the byte operations are supported by backend.
   if (using_byte_array) {
     int byte_num_elem = num_elem * type2aelembytes(elem_bt);
@@ -7083,8 +7083,12 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
       return false; // not supported
     }
   }
+  if (is_mask) {
+    if (!arch_supports_vector(Op_LoadVector, num_elem, T_BOOLEAN, VecMaskNotUsed)) {
+      return false; // not supported
+    }
+  }
 
-  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
   if (is_store) {
@@ -7114,9 +7118,15 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
       const TypeVect* to_vect_type = TypeVect::make(elem_bt, num_elem);
       vload = gvn().transform(new VectorReinterpretNode(vload, vload->bottom_type()->is_vect(), to_vect_type));
     } else {
-      vload = gvn().transform(LoadVectorNode::make(0, control(), memory(addr), addr, addr_type, num_elem, elem_bt));
+      // Special handle for masks
+      if (is_mask) {
+          vload = gvn().transform(LoadVectorNode::make(0, control(), memory(addr), addr, addr_type, num_elem, T_BOOLEAN));
+          const TypeVect* to_vect_type = TypeVect::make(elem_bt, num_elem);
+          vload = gvn().transform(new VectorLoadMaskNode(vload, to_vect_type));
+      } else {
+          vload = gvn().transform(LoadVectorNode::make(0, control(), memory(addr), addr, addr_type, num_elem, elem_bt));
+      }
     }
-
     Node* box = box_vector(vload, vbox_type, elem_bt, num_elem);
     set_vector_result(box);
   }

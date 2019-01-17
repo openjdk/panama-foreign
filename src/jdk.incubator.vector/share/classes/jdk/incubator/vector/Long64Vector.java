@@ -1335,7 +1335,7 @@ final class Long64Vector extends LongVector {
             Objects.requireNonNull(bits);
             ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
             return VectorIntrinsics.load(Long64Mask.class, long.class, LENGTH,
-                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, (((long)ix) << Unsafe.ARRAY_BOOLEAN_INDEX_SCALE) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
                                          (c, idx) -> opm(n -> c[idx + n]));
         }

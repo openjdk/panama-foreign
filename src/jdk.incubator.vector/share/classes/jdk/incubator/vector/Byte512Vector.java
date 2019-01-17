@@ -1276,7 +1276,7 @@ final class Byte512Vector extends ByteVector {
             Objects.requireNonNull(bits);
             ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
             return VectorIntrinsics.load(Byte512Mask.class, byte.class, LENGTH,
-                                         bits, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, (((long)ix) << Unsafe.ARRAY_BOOLEAN_INDEX_SCALE) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
                                          (c, idx) -> opm(n -> c[idx + n]));
         }
