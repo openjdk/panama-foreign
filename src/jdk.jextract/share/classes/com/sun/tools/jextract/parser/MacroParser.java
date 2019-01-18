@@ -65,8 +65,26 @@ class MacroParser {
 
     static JavaFileManager fm = ToolProvider.getSystemJavaCompiler().getStandardFileManager(null, null, null);
 
+    private static Number toNumber(String str) {
+        try {
+            // Integer.decode supports '#' hex literals which is not valid in C.
+            return str.length() > 0 && str.charAt(0) != '#'? Integer.decode(str) : null;
+        } catch (NumberFormatException nfe) {
+            return null;
+        }
+    }
+
     void parse(Cursor cursor, String... tokens) {
-        Macro macro = new Macro(cursor, tokens);
+        Macro macro = null;
+        if (tokens.length == 2) {
+            Number num = toNumber(tokens[1]);
+            if (num != null) {
+                macro = new NumMacro(num, cursor, tokens);
+            }
+        }
+        if (macro == null) {
+            macro = new ExprMacro(cursor, tokens);
+        }
         macros.put(cursor.spelling(), macro);
     }
 
@@ -78,9 +96,8 @@ class MacroParser {
         return new ArrayList<>(macros.values());
     }
 
-    class Macro {
+    abstract class Macro {
         private final Cursor cursor;
-        private VariableElement ve;
         private String[] tokens;
 
         Macro(Cursor cursor, String... tokens) {
@@ -88,7 +105,7 @@ class MacroParser {
             this.tokens = tokens;
         }
 
-        boolean isConstantMacro() {
+        final boolean isConstantMacro() {
             try {
                 return value() != null;
             } catch (UnresolvableMacroException ex) {
@@ -96,11 +113,11 @@ class MacroParser {
             }
         }
 
-        Location getFileLocation() {
+        final Location getFileLocation() {
             return cursor.getSourceLocation().getFileLocation();
         }
 
-        String expand() {
+        final String expand() {
             if (expansionStack.add(name())) {
                 try {
                     return Stream.of(tokens)
@@ -124,6 +141,53 @@ class MacroParser {
                 return macro != null ?
                         macro.expand() : s;
             }
+        }
+
+        @Override
+        final public String toString() {
+            if (isConstantMacro()) {
+                return String.format("Macro[name=%s, value=%s, type=%s]", name(), value(), type());
+            } else {
+                return String.format("Macro[name=%s, source=%s]", name(), String.join(" ", tokens));
+            }
+        }
+
+        final String name() {
+            return cursor.spelling();
+        }
+
+        final Cursor cursor() {
+            return cursor;
+        }
+
+        abstract Object value() throws UnresolvableMacroException;
+        abstract String type() throws UnresolvableMacroException;
+    }
+
+    // Macro implementation for simple int valued macros
+    final class NumMacro extends Macro {
+        private final Number value;
+
+        NumMacro(Number value, Cursor cursor, String... tokens) {
+            super(cursor, tokens);
+            this.value = value;
+        }
+
+        Object value() throws UnresolvableMacroException {
+            return value;
+        }
+
+        String type() throws UnresolvableMacroException {
+            return value.getClass().getName();
+        }
+    }
+
+    // Macro implementation for macros with expressions
+    final class ExprMacro extends Macro {
+        private VariableElement ve;
+
+        ExprMacro(Cursor cursor, String... tokens) {
+            super(cursor, tokens);
         }
 
         private void eval() throws UnresolvableMacroException {
@@ -155,23 +219,6 @@ class MacroParser {
             ClassTree classTree = (ClassTree)cu.getTypeDecls().get(0);
             MethodTree methodTree = (MethodTree)classTree.getMembers().get(0);
             return (VariableTree)methodTree.getBody().getStatements().get(0);
-        }
-
-        @Override
-        public String toString() {
-            if (isConstantMacro()) {
-                return String.format("Macro[name=%s, value=%s, type=%s]", name(), value(), type());
-            } else {
-                return String.format("Macro[name=%s, source=%s]", name(), String.join(" ", tokens));
-            }
-        }
-
-        String name() {
-            return cursor.spelling();
-        }
-
-        Cursor cursor() {
-            return cursor;
         }
 
         Object value() throws UnresolvableMacroException {
