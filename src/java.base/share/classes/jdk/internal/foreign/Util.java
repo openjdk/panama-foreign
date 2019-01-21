@@ -269,12 +269,7 @@ public final class Util {
                 return NativeTypes.VOID.array();
             }
         } else if (isCStruct(erasure(carrier))) {
-            LayoutType lt = LayoutType.ofStruct((Class) carrier);
-            if (lt.layout().isPartial()) {
-                //FIXME: this is needed because LayoutType::ofStruct does not resolve layouts!!
-                lt = LayoutTypeImpl.of((Class) carrier, layout, References.ofStruct);
-            }
-            return lt;
+            return LayoutType.ofStruct((Class) carrier);
         } else if (Callback.class.isAssignableFrom(erasure(carrier))) {
             if (carrier instanceof ParameterizedType) {
                 ParameterizedType pt = (ParameterizedType) carrier;
