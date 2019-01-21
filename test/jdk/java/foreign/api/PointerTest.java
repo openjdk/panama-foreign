@@ -38,8 +38,8 @@ import static org.testng.Assert.assertEquals;
 
 public class PointerTest {
 
-    @Test(expectedExceptions = AccessControlException.class)
-    void testReadOnly() {
+    @Test
+    public void testReadOnly() {
         try(Scope scope = Scope.newNativeScope()) {
             Pointer<Integer> p = scope.allocate(NativeTypes.INT32);
             p.set(10);
@@ -50,12 +50,11 @@ public class PointerTest {
             assertEquals(p2.isAccessibleFor(AccessMode.READ), true);
             assertEquals(p2.isAccessibleFor(AccessMode.WRITE), false);
             assertEquals((int) p2.get(), 10);
-            p2.set(15); // throws
         }
     }
 
     @Test(expectedExceptions = AccessControlException.class)
-    void testIllegalReadOnly() {
+    public void testIllegalReadOnly() {
         try(Scope scope = Scope.newNativeScope()) {
             Pointer<Integer> p = scope.allocate(NativeTypes.INT32);
             p = p.asWriteOnly();
@@ -63,8 +62,8 @@ public class PointerTest {
         }
     }
 
-    @Test(expectedExceptions = AccessControlException.class)
-    void testWriteOnly() {
+    @Test
+    public void testWriteOnly() {
         try(Scope scope = Scope.newNativeScope()) {
             Pointer<Integer> p = scope.allocate(NativeTypes.INT32);
             p.set(10);
@@ -75,12 +74,11 @@ public class PointerTest {
             assertEquals(p2.isAccessibleFor(AccessMode.READ), false);
             assertEquals(p2.isAccessibleFor(AccessMode.WRITE), true);
             p2.set(15); // should work
-            p2.get(); // throws
         }
     }
 
     @Test(expectedExceptions = AccessControlException.class)
-    void testIllegalWriteOnly() {
+    public void testIllegalWriteOnly() {
         try(Scope scope = Scope.newNativeScope()) {
             Pointer<Integer> p = scope.allocate(NativeTypes.INT32);
             p = p.asReadOnly();

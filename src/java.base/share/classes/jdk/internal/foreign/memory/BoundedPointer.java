@@ -62,9 +62,6 @@ public class BoundedPointer<X> implements Pointer<X> {
         this.region = Objects.requireNonNull(region);
         this.offset = offset;
         this.type = Objects.requireNonNull(type);
-        if (! (type.layout() instanceof Unresolved)) {
-            region.checkRange(offset, type.bytesSize());
-        }
     }
 
     @Override
@@ -73,7 +70,6 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     private long effectiveAddress() {
-        checkAlive();
         return region.addr() + offset;
     }
 
@@ -94,6 +90,8 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     @Override
     public long addr() throws UnsupportedOperationException, IllegalAccessException {
+        checkAlive();
+        checkInBounds();
         return effectiveAddress();
     }
 
@@ -161,6 +159,12 @@ public class BoundedPointer<X> implements Pointer<X> {
         region.checkAlive();
     }
 
+    public void checkInBounds() {
+        if (! (type.layout() instanceof Unresolved)) {
+            region.checkRange(offset, type.bytesSize());
+        }
+    }
+
     public static <Z> BoundedPointer<Z> createNativePointer(LayoutType<Z> type, long offset) {
         return new BoundedPointer<>(type, BoundedMemoryRegion.EVERYTHING, offset);
     }
@@ -208,7 +212,7 @@ public class BoundedPointer<X> implements Pointer<X> {
             return ((BoundedPointer) o).effectiveAddress() == effectiveAddress();
         } else if (o instanceof Pointer) {
             try {
-                return ((Pointer) o).addr() == effectiveAddress();
+                return ((Pointer) o).addr() == addr();
             } catch (IllegalAccessException iae) {
                 throw new IllegalStateException();
             }

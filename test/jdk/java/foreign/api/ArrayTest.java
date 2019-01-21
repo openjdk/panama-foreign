@@ -36,7 +36,7 @@ import static org.testng.Assert.*;
 public class ArrayTest {
 
     @Test
-    void testIterate() {
+    public void testIterate() {
         try(var scope = Scope.newNativeScope()) {
             Array<Integer> array = scope.allocateArray(NativeTypes.INT32, 10);
             assertEquals(array.iterate().count(), 10);

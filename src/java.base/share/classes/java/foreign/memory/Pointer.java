@@ -130,9 +130,10 @@ public interface Pointer<X> extends Resource {
     Pointer<X> asWriteOnly() throws AccessControlException;
 
     /**
-     * Returns the underlying memory address associated with this pointer.
+     * Returns the underlying memory address associated with this pointer, if available.
      * @return the memory address.
-     * @throws IllegalAccessException if the memory address is not a native address.
+     * @throws IllegalAccessException if the memory address is not a native address,
+     * if the pointer is not alive, or if the pointer is out of bounds.
      */
     long addr() throws IllegalAccessException;
 

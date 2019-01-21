@@ -278,7 +278,8 @@ public class PointerTest {
     public void testMemoryRegionRange() {
         ByteBuffer bb = ByteBuffer.allocate(4);
         Pointer<Byte> ptr = Pointer.fromByteBuffer(bb);
-        ptr.cast(NativeTypes.VOID).cast(NativeTypes.UINT64);
+        Pointer<Long> ptr2 = ptr.cast(NativeTypes.VOID).cast(NativeTypes.UINT64);
+        long l = ptr2.get();
     }
 
     @Test
@@ -289,7 +290,8 @@ public class PointerTest {
 
     @Test(expectedExceptions = RuntimeException.class)
     public void testAutomaticLengthRegionNotBigEnough() {
-        ptrs.get_overflow_pointer(); // testing returned pointer init
+        Pointer<Integer> ptr = ptrs.get_overflow_pointer();
+        int i = ptr.get();
     }
 
     @Test
