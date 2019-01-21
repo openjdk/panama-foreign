@@ -51,7 +51,7 @@ public class OutOfBoundsTest {
         Pointer<Pointer<Byte>> ptr$ptr();
     }
 
-    private static final OutOfBounds lib = Libraries.bind(MethodHandles.lookup(), OutOfBounds.class);
+    private static final OutOfBounds lib = Libraries.bind(OutOfBounds.class, Libraries.loadLibrary(MethodHandles.lookup(), "OutOfBounds"));
 
     @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testPointerOOB() {
