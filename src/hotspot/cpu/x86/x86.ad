@@ -1419,7 +1419,7 @@ const bool Matcher::match_rule_supported(int opcode) {
         ret_value = false;
       break;
     case Op_AddReductionVL:
-      if (UseAVX < 3) // only EVEX : vector connectivity becomes an issue here
+      if (UseSSE < 2) // requires at least SSE2
         ret_value = false;
       break;
     case Op_MulReductionVI:
@@ -6697,26 +6697,25 @@ instruct rvadd16I_reduction_reg_evex(rRegI dst, rRegI src1, legVecZ src2, legVec
 
 #ifdef _LP64
 instruct rvadd2L_reduction_reg(rRegL dst, rRegL src1, vecX src2, vecX tmp, vecX tmp2) %{
-  predicate(UseAVX > 2);
   match(Set dst (AddReductionVL src1 src2));
   effect(TEMP tmp, TEMP tmp2);
   format %{ "pshufd  $tmp2,$src2,0xE\n\t"
-            "vpaddq  $tmp,$src2,$tmp2\n\t"
-            "movdq   $tmp2,$src1\n\t"
-            "vpaddq  $tmp2,$tmp,$tmp2\n\t"
+            "paddq   $tmp2,$src2\n\t"
+            "movdq   $tmp,$src1\n\t"
+            "paddq   $tmp2,$tmp\n\t"
             "movdq   $dst,$tmp2\t! add reduction2L" %}
   ins_encode %{
     __ pshufd($tmp2$$XMMRegister, $src2$$XMMRegister, 0xE);
-    __ vpaddq($tmp$$XMMRegister, $src2$$XMMRegister, $tmp2$$XMMRegister, 0);
-    __ movdq($tmp2$$XMMRegister, $src1$$Register);
-    __ vpaddq($tmp2$$XMMRegister, $tmp$$XMMRegister, $tmp2$$XMMRegister, 0);
+    __ paddq($tmp2$$XMMRegister, $src2$$XMMRegister);
+    __ movdq($tmp$$XMMRegister, $src1$$Register);
+    __ paddq($tmp2$$XMMRegister, $tmp$$XMMRegister);
     __ movdq($dst$$Register, $tmp2$$XMMRegister);
   %}
   ins_pipe( pipe_slow );
 %}
 
 instruct rvadd4L_reduction_reg(rRegL dst, rRegL src1, vecY src2, vecY tmp, vecY tmp2) %{
-  predicate(UseAVX > 2);
+  predicate(UseAVX > 1);
   match(Set dst (AddReductionVL src1 src2));
   effect(TEMP tmp, TEMP tmp2);
   format %{ "vextracti128_high  $tmp,$src2\n\t"
