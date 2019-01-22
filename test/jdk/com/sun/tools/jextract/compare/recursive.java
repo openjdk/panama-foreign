@@ -25,8 +25,11 @@
 
 package com.acme;
 
+import java.foreign.annotations.NativeAddressof;
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeLocation;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
@@ -39,20 +42,26 @@ import java.foreign.memory.Struct;
 public interface recursive {
 
     @NativeLocation(file="recursive.h", line=26, column=8)
-    @NativeStruct("[u64(get=p$get)(set=p$set)(ptr=p$ptr):$(Bar)](Foo)")
+    @NativeStruct("[u64(p):${Bar}](Foo)")
     public interface Foo extends Struct<Foo> {
         @NativeLocation(file="recursive.h", line=27, column=17)
+        @NativeGetter("p")
         Pointer<Bar> p$get();
+        @NativeSetter("p")
         void p$set(Pointer<Bar> value);
+        @NativeAddressof("p")
         Pointer<Pointer<Bar>> p$ptr();
     }
 
     @NativeLocation(file = "recursive.h", line=30, column=8)
-    @NativeStruct("[u64(get=q$get)(set=q$set)(ptr=q$ptr):$(Foo)](Bar)")
+    @NativeStruct("[u64(q):${Foo}](Bar)")
     public interface Bar extends Struct<Bar> {
         @NativeLocation(file="recursive.h", line=31, column=17)
+        @NativeGetter("q")
         Pointer<Foo> q$get();
+        @NativeSetter("q")
         void q$set(Pointer<Foo> value);
+        @NativeAddressof("q")
         Pointer<Pointer<Foo>> q$ptr();
     }
 }

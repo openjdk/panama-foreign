@@ -23,8 +23,11 @@
 
 package com.acme;
 
+import java.foreign.annotations.NativeAddressof;
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeLocation;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Struct;
 import java.foreign.memory.Pointer;
@@ -35,21 +38,27 @@ public interface TypedefAnonStruct {
       file="TypedefAnonStruct.h", line=24, column=9
     )
     @NativeStruct("[" +
-            "i32(get=i$get)(set=i$set)(ptr=i$ptr)" +
-            "i32(get=j$get)(set=j$set)(ptr=j$ptr)" +
+            "i32(i)" +
+            "i32(j)" +
             "](Point)")
     public static interface Point extends Struct<Point> {
         @NativeLocation(
           file="TypedefAnonStruct.h", line=25, column=9
         )
+        @NativeGetter("i")
         public int i$get();
+        @NativeSetter("i")
         public void i$set(int arg);
+        @NativeAddressof("i")
         public Pointer<Integer> i$ptr();
         @NativeLocation(
           file="TypedefAnonStruct.h", line=25, column=12
         )
+        @NativeGetter("j")
         public int j$get();
+        @NativeSetter("j")
         public void j$set(int arg);
+        @NativeAddressof("j")
         public Pointer<Integer> j$ptr();
     }
 
@@ -57,21 +66,27 @@ public interface TypedefAnonStruct {
       file="TypedefAnonStruct.h", line=28, column=9
     )
     @NativeStruct("[" +
-            "f32(get=x$get)(set=x$set)(ptr=x$ptr)" +
-            "f32(get=y$get)(set=y$set)(ptr=y$ptr)" +
+            "f32(x)" +
+            "f32(y)" +
             "](FPoint)")
     public static interface FPoint extends Struct<FPoint> {
         @NativeLocation(
           file="TypedefAnonStruct.h", line=29, column=11
         )
+        @NativeGetter("x")
         public float x$get();
+        @NativeSetter("x")
         public void x$set(float arg);
+        @NativeAddressof("x")
         public Pointer<Float> x$ptr();
         @NativeLocation(
           file="TypedefAnonStruct.h", line=29, column=14
         )
+        @NativeGetter("y")
         public float y$get();
+        @NativeSetter("y")
         public void y$set(float arg);
+        @NativeAddressof("y")
         public Pointer<Float> y$ptr();
     }
 }

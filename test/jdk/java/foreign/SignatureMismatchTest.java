@@ -30,7 +30,7 @@
 
 import java.foreign.Libraries;
 import java.foreign.Scope;
-import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeFunction;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.memory.Pointer;
 
@@ -43,29 +43,26 @@ import static org.testng.Assert.*;
 @Test
 public class SignatureMismatchTest {
 
-    @NativeHeader(declarations = 
-        "exit=()v" // missing param
-    )
+    @NativeHeader
     interface Helper1 {
-        void exit(int code);
+        @NativeFunction("()v")
+        void exit(int code); // missing param
     }
 
-    @NativeHeader(declarations = 
-        "exit=(i32)i32" // return mismatch
-    )
+    @NativeHeader
     interface Helper2 {
-        void exit(int code);
+        @NativeFunction("(i32)i32")
+        void exit(int code); // return mismatch
     }
 
-    @NativeHeader(declarations = 
-        "printf=(u64:u8*)i32"
-    )
+    @NativeHeader
     interface Helper3 {
+        @NativeFunction("(u64:u8*)i32")
         int printf(Pointer<Byte> message); // missing parameter for varargs
     }
 
-    @NativeCallback("(i32)v")
     interface Func {
+        @NativeFunction("(i32)v")
         int m(int i); //return mismatch
     }
 

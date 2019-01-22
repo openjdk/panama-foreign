@@ -39,6 +39,6 @@ public @interface NativeHeader {
     String[] libraries() default {};
     // zero or more library paths
     String[] libraryPaths() default {};
-    // declarations in this header file
-    String declarations() default "";
+    // zero or more global variable layouts
+    String[] globals() default {};
 }

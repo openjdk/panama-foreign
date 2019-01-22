@@ -31,31 +31,34 @@ import java.foreign.memory.*;
 import java.foreign.annotations.*;
 
 public class DuplicateStructs {
-    @NativeHeader(
-        declarations= "struct1=$(mystruct)(get=struct1$get)(set=struct1$set)(ptr=struct2$ptr)"
-    )
+    @NativeHeader
     static interface duplicate {
         @NativeStruct("[i32(get=i$get)(set=i$set)](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
+            @NativeGetter("i")
             int i$get();
+            @NativeSetter("i")
             void i$set(int i);
         }
 
         @NativeStruct("[f32(get=f$get)(set=f$set)i32(get=i$get)(set=i$set)](mystruct)")
         static interface MyStruct2 extends Struct<MyStruct2> {
+            @NativeGetter("f")
             float f$get();
+            @NativeSetter("f")
             void f$set(float f);
+            @NativeGetter("i")
             int i$get();
+            @NativeSetter("i")
             void i$set(int i);
         }
 
+        @NativeGetter("struct1")
         public abstract MyStruct struct1$get();
+        @NativeSetter("struct1")
         public abstract void struct1$set(MyStruct arg);
+        @NativeAddressof("struct1")
         public abstract Pointer<MyStruct> struct1$ptr();
-
-        public abstract MyStruct2 struct2$get();
-        public abstract void struct2$set(MyStruct2 arg);
-        public abstract Pointer<MyStruct2> struct2$ptr();
     }
 
     public static void main(String[] args) {

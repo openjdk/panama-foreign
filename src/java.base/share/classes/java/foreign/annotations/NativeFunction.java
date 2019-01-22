@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -8,7 +8,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General PublicIOf License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -21,23 +21,20 @@
  * questions.
  */
 
+package java.foreign.annotations;
 
-import java.foreign.annotations.NativeCallback;
-import java.foreign.annotations.NativeFunction;
-import java.foreign.annotations.NativeHeader;
-import java.foreign.annotations.NativeLocation;
-import java.foreign.memory.Callback;
-import java.foreign.memory.Pointer;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-@NativeHeader(path="stdlib.h")
-public interface stdlib {
-    @NativeCallback("(u64:vu64:v)i32")
-    @FunctionalInterface
-    static interface compar {
-        public int fn(Pointer<Void> e1, Pointer<Void> e2);
-    }
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    @NativeLocation(file="stdlib.h", line=47, column=11)
-    @NativeFunction("(u64:vu32u32u64:(u64:vu64:v)i32)v")
-    public abstract void qsort(Pointer<?> base, long nmemb, long size, Callback<compar> compar);
+@Target(ElementType.METHOD)
+@Retention(RUNTIME)
+/**
+ * Annotation for every native function member in a given header interface (see {@link NativeHeader}). This annotation
+ * can also be used to mark native callback functional interfaces. In the latter case the function name can be omitted.
+ */
+public @interface NativeFunction {
+    String value();
 }

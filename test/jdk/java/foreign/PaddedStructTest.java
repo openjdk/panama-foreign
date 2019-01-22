@@ -31,20 +31,27 @@ import java.foreign.annotations.*;
 import java.foreign.memory.*;
 
 public class PaddedStructTest {
-    @NativeHeader(libraries = { "PaddedStruct" }, declarations="func=($(MyStruct))$(MyStruct)")
+    @NativeHeader(libraries = { "PaddedStruct" })
     static interface PaddedStruct {
         @NativeStruct(
-          "[u8(get=c$get)(set=c$set)(ptr=c$ptr)x24i32(get=i$get)(set=i$set)(ptr=i$ptr)](MyStruct)"
+          "[u8(c) x24 i32(i)](MyStruct)"
         )
         public interface MyStruct extends Struct<MyStruct> {
+            @NativeGetter("c")
             byte c$get();
+            @NativeSetter("c")
             void c$set(byte c);
+            @NativeAddressof("c")
             Pointer<Byte> c$ptr();
+            @NativeGetter("i")
             int i$get();
+            @NativeSetter("i")
             void i$set(int i);
+            @NativeAddressof("i")
             Pointer<Integer> i$ptr();
         }
 
+        @NativeFunction("(${MyStruct})${MyStruct}")
         MyStruct func(MyStruct ms);
     }
 

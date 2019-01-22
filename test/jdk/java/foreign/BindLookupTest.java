@@ -36,14 +36,16 @@ import java.foreign.annotations.*;
  * @summary Tests for bind method(s) lookup checks
  */
 public class BindLookupTest {
-    @NativeHeader(declarations = "exit=(i32)v")
+    @NativeHeader
     public static interface system {
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeFunction("(i32)v")
         public abstract void exit(int i);
     }
 
-    @NativeHeader(declarations = "noSuchMethodTest=()i32")
+    @NativeHeader
     public static interface bomb {
+        @NativeFunction("()i32")
         public abstract int noSuchMethodTest();
     }
 

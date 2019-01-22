@@ -27,6 +27,9 @@
  * @run main/othervm StructUpcall
  */
 
+import java.foreign.annotations.NativeFunction;
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
 import java.foreign.NativeTypes;
@@ -42,44 +45,56 @@ import java.foreign.memory.Struct;
 public class StructUpcall {
     private static final boolean DEBUG = false;
 
-    @NativeHeader(declarations = "struct_upcall=(u64:($(mystruct))v$(mystruct))v")
+    @NativeHeader
     public static interface Index {
         @NativeLocation(file="dummy", line=47, column=11)
         @NativeStruct("[" +
-                      "  i32(get=field1$get)(set=field1$set)" +
-                      "  i32(get=field2$get)(set=field2$set)" +
-                      "  i32(get=field3$get)(set=field3$set)" +
-                      "  u64(get=field4$get)(set=field4$set):v" +
-                      "  u64(get=field5$get)(set=field5$set):v" +
-                      "  u64(get=field6$get)(set=field6$set):v" +
+                      "  i32(field1)" +
+                      "  i32(field2)" +
+                      "  i32(field3)" +
+                      "  u64(field4):v" +
+                      "  u64(field5):v" +
+                      "  u64(field6):v" +
                       "](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("field1")
             int field1$get();
+            @NativeSetter("field1")
             void field1$set(int i);
 
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("field2")
             int field2$get();
+            @NativeSetter("field2")
             void field2$set(int i);
 
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("field3")
             int field3$get();
+            @NativeSetter("field3")
             void field3$set(int i);
 
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("field4")
             Pointer<Void> field4$get();
+            @NativeSetter("field4")
             void field4$set(Pointer<?> p);
 
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("field5")
             Pointer<Void> field5$get();
+            @NativeSetter("field5")
             void field5$set(Pointer<?> p);
 
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("field6")
             Pointer<Void> field6$get();
+            @NativeSetter("field6")
             void field6$set(Pointer<?> p);
         }
 
-        @NativeCallback("($(mystruct))$(mystruct)")
+        @NativeCallback("(${mystruct})${mystruct}")
         @FunctionalInterface
         static interface MyStructVisitor {
             @NativeLocation(file="dummy", line=47, column=11)
@@ -87,6 +102,7 @@ public class StructUpcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11)
+        @NativeFunction("(u64:(${mystruct})v${mystruct})v")
         public abstract void struct_upcall(Callback<MyStructVisitor> v, MyStruct s);
     }
 

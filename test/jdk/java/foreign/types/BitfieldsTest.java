@@ -29,6 +29,8 @@
  */
 
 import java.foreign.Scope;
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Struct;
 
@@ -39,36 +41,43 @@ import static org.testng.Assert.*;
 public class BitfieldsTest {
 
     interface StructBase extends Struct<StructBase> {
+        @NativeSetter("bf")
         void setBf(long bf);
 
+        @NativeGetter("first")
         byte getFirst();
+        @NativeSetter("first")
         void setFirst(byte first);
 
+        @NativeGetter("second")
         int getSecond();
+        @NativeSetter("second")
         void setSecond(int second);
 
+        @NativeGetter("third")
         short getThird();
+        @NativeSetter("third")
         void setThird(short third);
     }
 
-    @NativeStruct("[u16(set=setBf)=[" +
-            "       u2(get=getFirst)(set=setFirst)" +
-            "       u9(get=getSecond)(set=setSecond)" +
-            "       u5(get=getThird)(set=setThird)" +
+    @NativeStruct("[u16(bf)=[" +
+            "       u2(first)" +
+            "       u9(second)" +
+            "       u5(third)" +
             "       ]]")
     interface MyStruct16 extends StructBase { }
 
-    @NativeStruct("[u32(set=setBf)=[" +
-            "       u4(get=getFirst)(set=setFirst)" +
-            "       u18(get=getSecond)(set=setSecond)" +
-            "       u10(get=getThird)(set=setThird)" +
+    @NativeStruct("[u32(bf)=[" +
+            "       u4(first)" +
+            "       u18(second)" +
+            "       u10(third)" +
             "       ]]")
     interface MyStruct32 extends StructBase { }
 
-    @NativeStruct("[u64(set=setBf)=[" +
-            "       u8(get=getFirst)(set=setFirst)" +
-            "       u36(get=getSecond)(set=setSecond)" +
-            "       u20(get=getThird)(set=setThird)" +
+    @NativeStruct("[u64(bf)=[" +
+            "       u8(first)" +
+            "       u36(second)" +
+            "       u20(third)" +
             "       ]]")
     interface MyStruct64 extends StructBase { }
 

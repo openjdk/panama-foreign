@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,37 +21,20 @@
  * questions.
  */
 
-import java.foreign.Libraries;
-import java.foreign.NativeTypes;
-import java.foreign.annotations.NativeFunction;
-import java.foreign.annotations.NativeHeader;
-import java.foreign.memory.Pointer;
+package java.foreign.annotations;
 
-import static java.lang.invoke.MethodHandles.lookup;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import static org.testng.Assert.*;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+@Target(ElementType.METHOD)
+@Retention(RUNTIME)
 /**
- * @test
- * @run testng NullTest
+ * Annotation for every native getter in a given header interface (see {@link NativeHeader}), or struct interface
+ * (see {@link NativeStruct}). In the latter case, the descriptor is typically omitted.
  */
-
-@Test
-public class NullTest {
-
-    @NativeHeader
-    interface LibNull {
-        @NativeFunction("()u64:i32")
-        Pointer<Integer> get_nullptr();
-    }
-
-    private static final LibNull lib = Libraries.bind(LibNull.class, Libraries.loadLibrary(lookup(), "Null"));
-
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = ".*Cannot dereference null.*")
-    public void testDerefNull() {
-        Pointer<Integer> intP = lib.get_nullptr();
-        intP.get(); // NPE
-    }
+public @interface NativeGetter {
+    String value();
 }

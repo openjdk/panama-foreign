@@ -23,16 +23,22 @@
 
 package java.foreign.memory;
 
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 
 @NativeStruct(
-   value="[f64(get=real$get)(set=real$set)(ptr=real$ptr)f64(get=imag$get)(set=imag$set)(ptr=imag$ptr)](DoubleComplex)"
+   value="[f64(real) f64(imag)](DoubleComplex)"
 )
 public interface DoubleComplex extends Struct<DoubleComplex> {
+    @NativeGetter("real")
     double real$get();
+    @NativeSetter("real")
     void real$set(double value);
     Pointer<Double> real$ptr();
+    @NativeGetter("imag")
     double imag$get();
+    @NativeSetter("imag")
     void imag$set(double value);
     Pointer<Double> imag$ptr();
 }

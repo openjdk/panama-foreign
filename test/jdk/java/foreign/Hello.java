@@ -30,9 +30,10 @@ import java.foreign.*;
 import java.foreign.annotations.*;
 
 public class Hello {
-    @NativeHeader(libraries = { "Hello" }, declarations = "func=()i32")
+    @NativeHeader(libraries = { "Hello" })
     static interface hello {
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeFunction("()i32")
         public abstract int func();
     }
 

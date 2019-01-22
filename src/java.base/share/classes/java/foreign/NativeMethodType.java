@@ -94,6 +94,7 @@ public final class NativeMethodType {
 
     /**
      * Retrieves the i-th parameter type of this native method type.
+     * @param pos the parameter type position.
      * @return the parameter type at position {@code pos}.
      * @throws IndexOutOfBoundsException if {@code num} is not a valid index into {@link #parameterArray()}.
      */

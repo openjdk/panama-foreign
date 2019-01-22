@@ -22,11 +22,13 @@
  */
 
 
+import java.foreign.annotations.NativeFunction;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeLocation;
 
-@NativeHeader(path="unistd.h", declarations = "getpid=()i32")
+@NativeHeader(path="unistd.h")
 public interface unistd {
     @NativeLocation(file="unistd.h", line=47, column=11)
+    @NativeFunction("()i32")
     public int getpid();
 }

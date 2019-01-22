@@ -25,7 +25,10 @@
 
 package com.acme;
 
+import java.foreign.annotations.NativeAddressof;
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
@@ -35,117 +38,160 @@ public interface bitfields {
 
     @NativeStruct("[" +
                     "u64=[" +
-                        "i2(get=x$get)(set=x$set)" +
+                        "i2(x)" +
                         "x6" +
-                        "i15(get=y$get)(set=y$set)" +
+                        "i15(y)" +
                         "x9" +
-                        "i20(get=z$get)(set=z$set)" +
+                        "i20(z)" +
                         "x12]" +
                     "u64=[" +
-                        "i13(get=w$get)(set=w$set)" +
+                        "i13(w)" +
                         "x51]" +
                   "](bitfields1)")
     interface bitfields1 extends Struct<bitfields1> {
+        @NativeGetter("x")
         long x$get();
+        @NativeSetter("x")
         void x$set(long value);
+        @NativeGetter("y")
         long y$get();
+        @NativeSetter("y")
         void y$set(long value);
+        @NativeGetter("z")
         int z$get();
+        @NativeSetter("z")
         void z$set(int value);
+        @NativeGetter("w")
         int w$get();
+        @NativeSetter("w")
         void w$set(int value);
     }
 
     @NativeStruct("[" +
                     "u64=[" +
-                        "u3(get=c$get)(set=c$set)" +
-                        "u3(get=c2$get)(set=c2$set)" +
+                        "u3(c)" +
+                        "u3(c2)" +
                         "x2" +
-                        "u7(get=c3$get)(set=c3$set)" +
-                        "i4(get=i$get)(set=i$set)" +
-                        "i21(get=l$get)(set=l$set)" +
+                        "u7(c3)" +
+                        "i4(i)" +
+                        "i21(l)" +
                         "x24]" +
                     "u64=[" +
-                        "i42(get=ll$get)(set=ll$set)" +
+                        "i42(ll)" +
                         "x22]" +
                   "](bitfields2)")
     interface bitfields2 extends Struct<bitfields2> {
+        @NativeGetter("c")
         byte c$get();
+        @NativeSetter("c")
         void c$set(byte value);
+        @NativeGetter("c2")
         byte c2$get();
+        @NativeSetter("c2")
         void c2$set(byte value);
+        @NativeGetter("c3")
         byte c3$get();
+        @NativeSetter("c3")
         void c3$set(byte value);
+        @NativeGetter("i")
         int i$get();
+        @NativeSetter("i")
         void i$set(int value);
+        @NativeGetter("l")
         long l$get();
+        @NativeSetter("l")
         void l$set(long value);
+        @NativeGetter("ll")
         long ll$get();
+        @NativeSetter("ll")
         void ll$set(long value);
     }
 
     @NativeStruct("[" +
                     "u32=[" +
-                        "u4(get=c1$get)(set=c1$set)" +
-                        "i20(get=i$get)(set=i$set)" +
-                        "u8(get=c2$get)(set=c2$set)]" +
+                        "u4(c1)" +
+                        "i20(i)" +
+                        "u8(c2)]" +
                     "u32=[" +
-                        "i32(get=l1$get)(set=l1$set)]" +
+                        "i32(l1)]" +
                     "u32=[" +
-                        "i32(get=l2$get)(set=l2$set)]" +
+                        "i32(l2)]" +
                   "](bitfields3)")
     interface bitfields3 extends Struct<bitfields3> {
+        @NativeGetter("c1")
         byte c1$get();
+        @NativeSetter("c1")
         void c1$set(byte value);
+        @NativeGetter("i")
         int i$get();
+        @NativeSetter("i")
         void i$set(int value);
+        @NativeGetter("c2")
         byte c2$get();
+        @NativeSetter("c2")
         void c2$set(byte value);
+        @NativeGetter("l1")
         int l1$get();
+        @NativeSetter("l1")
         void l1$set(int value);
+        @NativeGetter("l2")
         int l2$get();
+        @NativeSetter("l2")
         void l2$set(int value);
     }
 
     @NativeStruct("[" +
-                    "i64(get=l$get)(set=l$set)(ptr=l$ptr)" +
+                    "i64(l)" +
                     "u64=[" +
-                        "u4(get=c$get)(set=c$set)" +
+                        "u4(c)" +
                         "x60]" +
                   "](bitfields4)")
     interface bitfields4 extends Struct<bitfields4> {
+        @NativeGetter("l")
         long l$get();
+        @NativeSetter("l")
         void l$set(long value);
+        @NativeAddressof("l")
         Pointer<Long> l$ptr();
+        @NativeGetter("c")
         byte c$get();
+        @NativeSetter("c")
         void c$set(byte value);
     }
 
     @NativeStruct("[" +
                     "u64=[" +
-                        "u7(get=c$get)(set=c$set)" +
+                        "u7(c)" +
                         "x57]" +
                     "u64=[" +
-                        "i63(get=l$get)(set=l$set)" +
+                        "i63(l)" +
                         "x1]" +
                   "](bitfields5)")
     interface bitfields5 extends Struct<bitfields5> {
+        @NativeGetter("c")
         byte c$get();
+        @NativeSetter("c")
         void c$set(byte value);
+        @NativeGetter("l")
         long l$get();
+        @NativeSetter("l")
         void l$set(long value);
     }
 
     @NativeStruct("[" +
                     "u8=[" +
-                        "u4(get=c1$get)(set=c1$set)]|" +
+                        "u4(c1)]|" +
                     "i32=[" +
-                        "i20(get=i$get)(set=i$set)]" +
+                        "i20(i)]" +
                   "](bitfields6)")
     interface bitfields6 extends Struct<bitfields6> {
+        @NativeGetter("c1")
         byte c1$get();
+        @NativeSetter("c1")
         void c1$set(byte value);
+        @NativeGetter("i")
         int i$get();
+        @NativeSetter("i")
         void i$set(int value);
     }
 }

@@ -100,7 +100,6 @@ public class JextractToolProviderTest extends JextractToolRunner {
             NativeHeader header = cls.getAnnotation(NativeHeader.class);
             assertNotNull(header);
             assertEquals(header.path(), helloH.toString());
-            assertFalse(header.declarations().isEmpty());
 
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));

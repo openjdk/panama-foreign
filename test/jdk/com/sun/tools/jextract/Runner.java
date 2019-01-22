@@ -21,10 +21,7 @@
  * questions.
  */
 
-import java.foreign.annotations.NativeCallback;
-import java.foreign.annotations.NativeHeader;
-import java.foreign.annotations.NativeLocation;
-import java.foreign.annotations.NativeStruct;
+import java.foreign.annotations.*;
 import java.nio.file.Files;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -156,12 +153,16 @@ public class Runner {
     }
 
     private void verifyMethodAnnotation(Method actual, Method expected) {
-        Annotation[] aa = actual.getAnnotations();
         Annotation[] ea = expected.getAnnotations();
 
         for (Annotation a: ea) {
             if (a instanceof NativeLocation) {
                 verifyNativeLocation(actual.getAnnotation(NativeLocation.class), (NativeLocation) a);
+            } else {
+                @SuppressWarnings("unchecked")
+                Annotation e = actual.getAnnotation((Class)a.getClass().getInterfaces()[0]);
+                assertNotNull(e);
+                assertEquals(a, e);
             }
         }
     }
@@ -210,10 +211,10 @@ public class Runner {
                 NativeStruct ant = actual.getAnnotation(NativeStruct.class);
                 assertNotNull(ant);
                 assertEquals(ant, expected.getAnnotation(NativeStruct.class));
-            } else if (actual.isAnnotationPresent(NativeCallback.class)) {
-                NativeCallback cb = actual.getAnnotation(NativeCallback.class);
+            } else if (actual.isAnnotationPresent(NativeFunction.class)) {
+                NativeFunction cb = actual.getAnnotation(NativeFunction.class);
                 assertNotNull(cb);
-                assertEquals(cb, expected.getAnnotation(NativeCallback.class));
+                assertEquals(cb, expected.getAnnotation(NativeFunction.class));
             }
 
             if (expected.isAnnotationPresent(NativeLocation.class)) {
@@ -229,8 +230,6 @@ public class Runner {
 
             assertEquals(Paths.get(ah.path()).getFileName(),
                     Paths.get(eh.path()).getFileName());
-
-            assertEquals(ah.declarations(), eh.declarations());
         }
 
     }

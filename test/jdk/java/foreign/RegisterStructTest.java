@@ -27,32 +27,36 @@
 
 import java.foreign.Libraries;
 import java.foreign.Scope;
-import java.foreign.annotations.NativeHeader;
-import java.foreign.annotations.NativeStruct;
+import java.foreign.annotations.*;
 import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandles;
 
 public class RegisterStructTest {
-    @NativeHeader(libraries = { "RegisterStruct" }, declarations=
-            "get_c=($(RegStruct))u8" +
-            "get_i=($(RegStruct))i32" +
-            "get_l=($(RegStruct))f64"
-    )
+    @NativeHeader(libraries = { "RegisterStruct" })
     interface RegisterStruct {
         @NativeStruct(
-          "[u8(get=c$get)(set=c$set)x24i32(get=i$get)(set=i$set)f64(get=l$get)(set=l$set)](RegStruct)"
+          "[u8(c) x24 i32(i) f64(l)](RegStruct)"
         )
         interface RegStruct extends Struct<RegStruct> {
+            @NativeGetter("c")
             byte c$get();
+            @NativeSetter("c")
             void c$set(byte c);
+            @NativeGetter("i")
             int i$get();
+            @NativeSetter("i")
             void i$set(int i);
+            @NativeGetter("l")
             double l$get();
+            @NativeSetter("l")
             void l$set(double i);
         }
 
+        @NativeFunction("(${RegStruct})u8")
         byte get_c(RegStruct ms);
+        @NativeFunction("(${RegStruct})i32")
         int get_i(RegStruct ms);
+        @NativeFunction("(${RegStruct})f64")
         double get_l(RegStruct ms);
     }
 

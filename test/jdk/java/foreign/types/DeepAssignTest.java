@@ -28,6 +28,8 @@
 
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Array;
 import java.foreign.memory.Struct;
@@ -38,27 +40,37 @@ import static org.testng.Assert.*;
 public class DeepAssignTest {
 
     @NativeStruct("[" +
-            "i32(get=x$get)(set=x$set)" +
-            "i32(get=y$get)(set=y$set)" +
+            "i32(x)" +
+            "i32(y)" +
             "]")
     interface Pair extends Struct<Pair> {
+        @NativeGetter("x")
         int x$get();
+        @NativeSetter("x")
         void x$set(int x);
+        @NativeGetter("y")
         int y$get();
+        @NativeSetter("y")
         void y$set(int y);
     }
 
     @NativeStruct("[" +
-            "i32(get=x$get)(set=x$set)" +
-            "i32(get=y$get)(set=y$set)" +
-            "i32(get=z$get)(set=z$set)" +
+            "i32(x)" +
+            "i32(y)" +
+            "i32(z)" +
             "]")
     interface Triple extends Struct<Triple> {
+        @NativeGetter("x")
         int x$get();
+        @NativeSetter("x")
         void x$set(int x);
+        @NativeGetter("y")
         int y$get();
+        @NativeSetter("y")
         void y$set(int y);
+        @NativeGetter("z")
         int z$get();
+        @NativeSetter("z")
         void z$set(int z);
     }
 

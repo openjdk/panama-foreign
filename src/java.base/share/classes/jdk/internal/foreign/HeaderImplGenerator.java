@@ -25,7 +25,6 @@ package jdk.internal.foreign;
 import java.foreign.Library;
 import java.foreign.Scope;
 import java.foreign.annotations.NativeHeader;
-import java.foreign.layout.Descriptor;
 import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
 import java.foreign.memory.LayoutType;
@@ -38,6 +37,8 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.foreign.NativeMethodType;
+import java.util.stream.Stream;
+
 import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
@@ -53,8 +54,8 @@ class HeaderImplGenerator extends BinderClassGenerator {
     // lookup helper to use for looking up symbols
     private final SymbolLookup lookup;
 
-    // dictionary from method name to member info
-    final Map<String, MemberInfo<?>> nameToInfo = new HashMap<>();
+    // global variables map
+    private final Map<String, Layout> globalMap = new HashMap<>();
 
     // global scope for this library
     private final Scope libScope;
@@ -63,50 +64,9 @@ class HeaderImplGenerator extends BinderClassGenerator {
         super(hostClass, implClassName, new Class<?>[] { c });
         this.lookup = lookup;
         this.libScope = libScope;
-    }
-
-    abstract class MemberInfo<D> {
-        String symbolName;
-        D descriptor;
-
-        MemberInfo(String symbolName, D descriptor) {
-            this.symbolName = symbolName;
-            this.descriptor = descriptor;
-        }
-    }
-
-    class GlobalVarInfo extends MemberInfo<Layout> {
-
-        AccessorKind accessorKind;
-
-        GlobalVarInfo(String symbolName, Layout layout, AccessorKind accessorKind) {
-            super(symbolName, layout);
-            this.accessorKind = accessorKind;
-        }
-    }
-
-    class FunctionInfo extends MemberInfo<Function> {
-        public FunctionInfo(String symbolName, Function descriptor) {
-            super(symbolName, descriptor);
-        }
-    }
-
-    @Override
-    protected void generateMembers(BinderClassWriter cw) {
-        Class<?> headerClass = interfaces[0];
-        String declarations = headerClass.getAnnotation(NativeHeader.class).declarations();
-        for (Map.Entry<String, Descriptor> declEntry : DescriptorParser.parseHeaderDeclarations(declarations).entrySet()) {
-            if (declEntry.getValue() instanceof Layout) {
-                Layout l = (Layout)declEntry.getValue();
-                for (Map.Entry<AccessorKind, String> accessorEntry : AccessorKind.from(l).entrySet()) {
-                    nameToInfo.put(accessorEntry.getValue(), new GlobalVarInfo(declEntry.getKey(), l, accessorEntry.getKey()));
-                }
-            } else {
-                Function f = (Function)declEntry.getValue();
-                nameToInfo.put(declEntry.getKey(), new FunctionInfo(declEntry.getKey(), f));
-            }
-        }
-        super.generateMembers(cw);
+        Stream.of(c.getAnnotation(NativeHeader.class).globals())
+                .map(DescriptorParser::parseLayout)
+                .forEach(l -> globalMap.put(l.name().get(), l));
     }
 
     @Override
@@ -122,11 +82,11 @@ class HeaderImplGenerator extends BinderClassGenerator {
 
     @Override
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
-        MemberInfo<?> memberInfo = nameToInfo.get(method.getName());
+        MemberInfo memberInfo = MemberInfo.of(method);
         if (memberInfo instanceof FunctionInfo) {
             generateFunctionMethod(cw, method, (FunctionInfo)memberInfo);
-        } else if (memberInfo instanceof GlobalVarInfo) {
-            generateGlobalVariableMethod(cw, method, (GlobalVarInfo)memberInfo);
+        } else if (memberInfo instanceof VarInfo) {
+            generateGlobalVariableMethod(cw, method, (VarInfo)memberInfo);
         }
     }
 
@@ -134,7 +94,8 @@ class HeaderImplGenerator extends BinderClassGenerator {
         MethodType methodType = Util.methodTypeFor(method);
         Function function = info.descriptor;
         try {
-            Library.Symbol symbol = lookup.lookup(info.symbolName);
+            String name = method.getName(); //FIXME: inferred only, for now
+            Library.Symbol symbol = lookup.lookup(name);
             NativeMethodType nmt = Util.nativeMethodType(layoutResolver.resolve(function), method);
             addMethodFromHandle(cw, method.getName(), methodType, method.isVarArgs(),
                     SystemABI.getInstance().downcallHandle(symbol, nmt));
@@ -143,18 +104,19 @@ class HeaderImplGenerator extends BinderClassGenerator {
         }
     }
 
-    private void generateGlobalVariableMethod(BinderClassWriter cw, Method method, GlobalVarInfo info) {
+    private void generateGlobalVariableMethod(BinderClassWriter cw, Method method, VarInfo info) {
         java.lang.reflect.Type type = info.accessorKind.carrier(method);
         Class<?> c = Util.erasure(type);
-        Layout l = info.descriptor;
+        Layout l = globalMap.get(info.name);
         LayoutType<?> lt = Util.makeType(type, l);
 
         String methodName = method.getName();
         Pointer<?> p;
 
         try {
+            String name = info.name;
             p = BoundedPointer.createNativeVoidPointer(libScope,
-                    lookup.lookup(info.symbolName).getAddress().addr(), AccessMode.READ_WRITE).
+                    lookup.lookup(name.isEmpty() ? method.getName() : name).getAddress().addr(), AccessMode.READ_WRITE).
                     cast(lt).limit(1);
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new IllegalStateException(e);
