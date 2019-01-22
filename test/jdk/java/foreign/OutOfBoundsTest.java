@@ -41,7 +41,7 @@ import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandles;
 
-public class OutOfBoundsTest {xtract
+public class OutOfBoundsTest {
 
     @NativeHeader
     public interface OutOfBounds {
