@@ -22,12 +22,14 @@
  */
 
 import java.foreign.NativeTypes;
+import java.foreign.annotations.NativeFunction;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.layout.Descriptor;
 import java.foreign.layout.Function;
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
+import java.foreign.memory.Pointer;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -189,25 +191,26 @@ public class StructTest extends JextractToolRunner {
     private void verifyUndefinedStructFunctions(Class<?> header) {
         final String POINTEE = "UndefinedStructForPointer";
         NativeHeader nh = header.getAnnotation(NativeHeader.class);
-        Map<String, Descriptor> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
+        Method parent = findMethod(header, "getParent", Pointer.class);
+        Method sibling = findMethod(header, "getSibling", Pointer.class);
+        Method firstChild = findMethod(header, "getFirstChild", Pointer.class);
 
-        Method m = findMethod(header, "getParent", java.foreign.memory.Pointer.class);
-        assertNotNull(m);
-        ParameterizedType pReturn = (ParameterizedType) m.getGenericReturnType();
+        assertNotNull(parent);
+        ParameterizedType pReturn = (ParameterizedType) parent.getGenericReturnType();
         Class<?> undefined = findClass(header.getDeclaredClasses(), POINTEE);
         assertNotNull(undefined);
         assertPointerType(pReturn, undefined);
-        Type[] args = m.getGenericParameterTypes();
+        Type[] args = parent.getGenericParameterTypes();
         assertEquals(args.length, 1);
         ParameterizedType pArg = (ParameterizedType) args[0];
         assertPointerType(pArg, undefined);
 
-        String expected = "(u64:$(" + POINTEE + "))u64:$(" + POINTEE + ")";
-        Function fn = (Function) map.get("getParent");
+        String expected = "(u64:${" + POINTEE + "})u64:${" + POINTEE + "}";
+        Function fn = DescriptorParser.parseFunction(parent.getAnnotation(NativeFunction.class).value());
         assertEquals(fn.toString(), expected);
-        fn = (Function) map.get("getSibling");
+        fn = DescriptorParser.parseFunction(sibling.getAnnotation(NativeFunction.class).value());
         assertEquals(fn.toString(), expected);
-        fn = (Function) map.get("getFirstChild");
+        fn = DescriptorParser.parseFunction(firstChild.getAnnotation(NativeFunction.class).value());
         assertEquals(fn.toString(), expected);
     }
 
@@ -230,12 +233,11 @@ public class StructTest extends JextractToolRunner {
 
     private void verifyGetAnonymous(Class<?> header) {
         NativeHeader nh = header.getAnnotation(NativeHeader.class);
-        Map<String, Descriptor> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
         Method m = findFirstMethod(header, "getAnonymous");
         assertNotNull(m);
 
         LayoutResolver resolver = LayoutResolver.get(header);
-        Function fn = (Function) map.get("getAnonymous");
+        Function fn = DescriptorParser.parseFunction(m.getAnnotation(NativeFunction.class).value());
         assertTrue(fn.isPartial());
         System.out.println("Function unresolved  = " + fn.toString());
         fn = resolver.resolve(fn);

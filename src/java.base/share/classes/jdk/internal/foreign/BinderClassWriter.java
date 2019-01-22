@@ -23,7 +23,6 @@
 package jdk.internal.foreign;
 
 import jdk.internal.org.objectweb.asm.ClassWriter;
-
 import java.util.ArrayList;
 
 class BinderClassWriter extends ClassWriter {

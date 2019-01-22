@@ -23,17 +23,23 @@
 
 package java.foreign.memory;
 
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 import java.math.BigDecimal;
 
 @NativeStruct(
-   value="[f128(get=real$get)(set=real$set)(ptr=real$ptr)f128(get=imag$get)(set=imag$set)(ptr=imag$ptr)](LongDoubleComplex)"
+   value="[f128(real) f128(imag)](LongDoubleComplex)"
 )
 public interface LongDoubleComplex extends Struct<LongDoubleComplex> {
+    @NativeGetter("real")
     double real$get();
+    @NativeSetter("real")
     void real$set(double value);
     Pointer<Double> real$ptr();
+    @NativeGetter("imag")
     double imag$get();
+    @NativeSetter("imag")
     void imag$set(double value);
     Pointer<Double> imag$ptr();
 }

@@ -62,7 +62,7 @@ public interface Pointer<X> extends Resource {
      * the {@code hasNext} predicate returns {@code false}. This is effectively the same as:
      * <p>
      *     <code>
-     *         Stream.iterate(pointer, hasNext, p -> p.offset(1))
+     *         Stream.iterate(pointer, hasNext, p -&gt; p.offset(1))
      *     </code>
      * </p>
      * 
@@ -80,7 +80,7 @@ public interface Pointer<X> extends Resource {
      * the pointer is equal to {@code end}. This is effectively the same as:
      * <p>
      *     <code>
-     *         Stream.iterate(pointer, p -> !p.equals(end), p -> p.offset(1))
+     *         Stream.iterate(pointer, p -&gt; !p.equals(end), p -&gt; p.offset(1))
      *     </code>
      * </p>
      *
@@ -256,7 +256,7 @@ public interface Pointer<X> extends Resource {
          * a part of this access mode.
          *
          * @param mode the mode to check
-         * @return {@coder true} if the given mode is available
+         * @return {@code true} if the given mode is available
          */
         public boolean isAvailable(AccessMode mode) {
             return (this.value & mode.value) == mode.value;

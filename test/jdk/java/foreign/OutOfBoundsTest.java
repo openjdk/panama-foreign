@@ -31,23 +31,31 @@ import org.testng.annotations.Test;
 import java.foreign.Libraries;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
+import java.foreign.annotations.NativeAddressof;
+import java.foreign.annotations.NativeFunction;
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandles;
 
-public class OutOfBoundsTest {
+public class OutOfBoundsTest {xtract
 
-    @NativeHeader(declarations = "ptr=(u64:u8)v")
+    @NativeHeader
     public interface OutOfBounds {
+        @NativeFunction("(u64:u8)v")
         void ptr(Pointer<Byte> ptr);
     }
 
-    @NativeStruct("[u64(get=ptr$get)(set=ptr$set)(ptr=ptr$ptr):u8](ptrStruct)")
+    @NativeStruct("[u64(ptr):u8](ptrStruct)")
     public interface ptrStruct extends Struct<ptrStruct> {
+        @NativeGetter("ptr")
         Pointer<Byte> ptr$get();
+        @NativeSetter("ptr")
         void ptr$set(Pointer<Byte> var1);
+        @NativeAddressof("ptr")
         Pointer<Pointer<Byte>> ptr$ptr();
     }
 

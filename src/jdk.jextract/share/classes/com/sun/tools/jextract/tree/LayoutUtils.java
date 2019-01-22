@@ -202,8 +202,7 @@ public final class LayoutUtils {
 
     private static Layout getRecordReferenceLayout(Type t) {
         //symbolic reference
-        return Unresolved.of()
-                .withAnnotation(Layout.NAME, getName(t.canonicalType()));
+        return Unresolved.of(getName(t.canonicalType()));
     }
 
     static Layout getRecordLayout(Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {

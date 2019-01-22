@@ -153,7 +153,7 @@ public final class LayoutResolver {
             Layout rv;
 
             if (l instanceof Unresolved) {
-                rv = resolveRoot(l.name().get())
+                rv = resolveRoot(((Unresolved) l).layoutExpression())
                         .map(this::resolve)
                         .orElseThrow(() -> new UndefinedLayoutException(l));
             } else if (l instanceof Sequence) {

@@ -23,20 +23,24 @@
 
 package com.acme;
 
+import java.foreign.annotations.NativeAddressof;
 import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
-import java.foreign.annotations.NativeLocation;
-import java.foreign.annotations.NativeStruct;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.memory.Callback;
 import java.foreign.memory.Pointer;
 
 @NativeHeader(
     path="globalFuncPointer.h",
-    declarations="fp=u64(get=fp$get)(set=fp$set)(ptr=fp$ptr):(*)v"
+    globals={"u64(fp):(*)v"}
 )
 public interface globalFuncPointer {
+    @NativeGetter("fp")
     Callback<FI1> fp$get();
+    @NativeSetter("fp")
     void fp$set(Callback<FI1> fi1);
+    @NativeAddressof("fp")
     Pointer<Callback<FI1>> fp$ptr();
 
     @FunctionalInterface

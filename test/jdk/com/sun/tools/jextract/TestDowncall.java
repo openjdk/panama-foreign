@@ -36,17 +36,21 @@ import static org.testng.Assert.*;
 import java.foreign.Libraries;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Padding;
 import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
+import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class TestDowncall extends JextractToolRunner {
@@ -164,9 +168,9 @@ public class TestDowncall extends JextractToolRunner {
         Group g = (Group)str.ptr().type().layout();
         for (Layout l : g.elements()) {
             if (l instanceof Padding) continue;
-            Method getter = str.getClass().getDeclaredMethod(l.annotations().get("get"));
+            Method getter = findAccessor(str.getClass(), l.name().get(), NativeGetter.class, NativeGetter::value);
             Class<?> carrier = getter.getReturnType();
-            Method setter = str.getClass().getDeclaredMethod(l.annotations().get("set"), carrier);
+            Method setter = findAccessor(str.getClass(), l.name().get(), NativeSetter.class, NativeSetter::value);
             List<Consumer<Object>> fieldsCheck = new ArrayList<>();
             Object value = makeArg(sc, carrier, fieldsCheck, check);
             //set value
@@ -183,6 +187,13 @@ public class TestDowncall extends JextractToolRunner {
                 });
             }
         }
+    }
+
+    static <A extends Annotation> Method findAccessor(Class<?> clazz, String name, Class<A> anno, Function<A, String> nameFunc) {
+        return Stream.of(clazz.getInterfaces()[0].getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(anno))
+                .filter(m -> nameFunc.apply(m.getAnnotation(anno)).equals(name))
+                .findFirst().get();
     }
 
     static String filterFor(int k) {

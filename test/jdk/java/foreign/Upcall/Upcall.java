@@ -27,6 +27,7 @@
  */
 
 import java.foreign.Scope;
+import java.foreign.annotations.NativeFunction;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
@@ -40,7 +41,7 @@ public class Upcall {
 
     private static final int MAGIC_INTEGER = 4711;
 
-    @NativeHeader(declarations = "do_upcall=(u64:(i32)vi32)v")
+    @NativeHeader
     public static interface upcall {
         @NativeCallback("(i32)v")
         @FunctionalInterface
@@ -50,6 +51,7 @@ public class Upcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11)
+        @NativeFunction("(u64:(i32)vi32)v")
         public abstract void do_upcall(Callback<visitor> v, int i);
     }
 
