@@ -60,3 +60,19 @@ union bitfields6 {
    char c1 : 4;
    int i : 20;
 };
+
+struct bitfields7 {
+   unsigned int x;
+   unsigned int a:15, pad:17;
+};
+
+struct Point {
+   int i;
+   int j;
+};
+
+struct bitfields8 {
+   struct Point p;
+   int x:12;
+   int y:2;
+};

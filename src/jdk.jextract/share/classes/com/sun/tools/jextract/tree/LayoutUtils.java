@@ -218,7 +218,7 @@ public final class LayoutUtils {
         Stream<Cursor> fieldTypes = cu.children()
                 .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
         List<Layout> fieldLayouts = new ArrayList<>();
-        int pendingBitfieldStart = -1;
+        List<Layout> bitfieldLayouts = null;
         long actualSize = 0L;
         for (Cursor c : fieldTypes.collect(Collectors.toList())) {
             boolean isBitfield = c.isBitField();
@@ -228,22 +228,31 @@ public final class LayoutUtils {
                 if (isUnion) {
                     throw new IllegalStateException("No padding in union elements!");
                 }
-                fieldLayouts.add(Padding.of(expectedOffset - offset));
+                Layout padding = Padding.of(expectedOffset - offset);
+                if (bitfieldLayouts != null) {
+                    bitfieldLayouts.add(padding);
+                } else {
+                    fieldLayouts.add(padding);
+                }
                 actualSize += (expectedOffset - offset);
                 offset = expectedOffset;
             }
-            if (isBitfield && !isUnion && pendingBitfieldStart == -1) {
-                pendingBitfieldStart = fieldLayouts.size();
+            if (isBitfield && !isUnion && bitfieldLayouts == null) {
+                bitfieldLayouts = new ArrayList<>();
             }
-            if (!isBitfield && pendingBitfieldStart >= 0) {
+            if (!isBitfield && bitfieldLayouts != null) {
                 //emit/replace bitfields
-                replaceBitfields(fieldLayouts, pendingBitfieldStart);
-                pendingBitfieldStart = -1;
+                fieldLayouts.addAll(convertBitfields(bitfieldLayouts));
+                bitfieldLayouts = null;
             }
             Layout fieldLayout = (c.isAnonymousStruct()) ?
                     getRecordLayoutInternal(offset, parent, c.type(), fieldMapper) :
                     fieldLayout(isUnion, c, fieldMapper);
-            fieldLayouts.add(fieldLayout);
+            if (bitfieldLayouts != null) {
+                bitfieldLayouts.add(fieldLayout);
+            } else {
+                fieldLayouts.add(fieldLayout);
+            }
             long size = fieldSize(isUnion, c);
             if (isUnion) {
                 actualSize = Math.max(actualSize, size);
@@ -254,11 +263,17 @@ public final class LayoutUtils {
         }
         long expectedSize = t.size() * 8;
         if (actualSize < expectedSize) {
-            fieldLayouts.add(Padding.of(expectedSize - actualSize));
+            Layout padding = Padding.of(expectedSize - actualSize);
+            if (bitfieldLayouts != null) {
+                bitfieldLayouts.add(padding);
+            } else {
+                fieldLayouts.add(padding);
+            }
         }
-        if (pendingBitfieldStart >= 0) {
+        if (bitfieldLayouts != null) {
             //emit/replace bitfields
-            replaceBitfields(fieldLayouts, pendingBitfieldStart);
+            fieldLayouts.addAll(convertBitfields(bitfieldLayouts));
+            bitfieldLayouts = null;
         }
         Layout[] fields = fieldLayouts.toArray(new Layout[0]);
         Group g = isUnion ?
@@ -290,17 +305,15 @@ public final class LayoutUtils {
         }
     }
 
-    private static void replaceBitfields(List<Layout> layouts, int pendingBitfieldsStart) {
+    private static List<Layout> convertBitfields(List<Layout> layouts) {
         long storageSize = storageSize(layouts);
         long offset = 0L;
         List<Layout> newFields = new ArrayList<>();
         List<Layout> pendingFields = new ArrayList<>();
-        while (layouts.size() > pendingBitfieldsStart) {
-            Layout l = layouts.remove(pendingBitfieldsStart);
+        for (Layout l : layouts) {
             offset += l.bitsSize();
             pendingFields.add(l);
-            if (!pendingFields.isEmpty() &&
-                    offset == storageSize) {
+            if (!pendingFields.isEmpty() && offset == storageSize) {
                 //emit new
                 newFields.add(bitfield(Value.ofUnsignedInt(storageSize), pendingFields));
                 pendingFields.clear();
@@ -313,7 +326,7 @@ public final class LayoutUtils {
             throw new IllegalStateException("Partially used storage unit");
         }
         //add back new fields
-        newFields.forEach(layouts::add);
+        return newFields;
     }
 
     private static long storageSize(List<Layout> layouts) {

@@ -194,4 +194,64 @@ public interface bitfields {
         @NativeSetter("i")
         void i$set(int value);
     }
+
+    @NativeStruct("[" +
+                     "u32(x)" +
+                     "u32=[u15(a)u17(pad)]" +
+                   "](bitfields7)")
+    public interface bitfields7 extends Struct<bitfields7> {
+         @NativeGetter("x")
+         int x$get();
+         @NativeSetter("x")
+         void x$set(int value);
+         @NativeAddressof("x")
+         Pointer<Integer> x$ptr();
+         @NativeGetter("a")
+         int a$get();
+         @NativeSetter("a")
+         void a$set(int value);
+         @NativeGetter("pad")
+         int pad$get();
+         @NativeSetter("pad")
+         void pad$set(int value);
+    }
+
+    @NativeStruct("[" +
+                  "i32(i)" +
+                  "i32(j)" +
+                  "](Point)")
+    public interface Point extends Struct<Point> {
+         @NativeGetter("i")
+         int i$get();
+         @NativeSetter("i")
+         void i$set(int value);
+         @NativeAddressof("i")
+         Pointer<Integer> i$ptr();
+         @NativeGetter("j")
+         int j$get();
+         @NativeSetter("j")
+         void j$set(int value);
+         @NativeAddressof("j")
+         Pointer<Integer> j$ptr();
+    }
+
+    @NativeStruct("[" +
+                      "${Point}(p)" +
+                      "u32=[i12(x)i2(y)x18]" +
+                   "](bitfields8)")
+    public interface bitfields8 extends Struct<bitfields8> {
+         @NativeGetter("p")
+         Point p$get();
+         @NativeSetter("p")
+         void p$set(Point value);
+         Pointer<Point> p$ptr();
+         @NativeGetter("x")
+         int x$get();
+         @NativeSetter("x")
+         void x$set(int value);
+         @NativeGetter("y")
+         int y$get();
+         @NativeSetter("y")
+         void y$set(int value);
+    }
 }
