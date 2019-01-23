@@ -94,14 +94,14 @@ jextract -l python2.7 \
 
 Follow the instructions from the Mac OS section
 
-## Embedding Python interpreter in your Java program (Windows 10)
+## Embedding Python interpreter in your Java program (Windows)
 
 ### jextract a Jar file for Python.h
 
-Where python 2.7 is installed on the `C` drive:
+Where python 2.7 is installed in the `C:\Python27` directory:
 
 ```powershell
-jextract -l python27 -o "python.jar" -t "org.python" C:\Python27\include\Python.h
+jextract -L "C:\Windows\System32" -l python27 -o python.jar -t "org.python" --infer-rpath C:\Python27\include\Python.h
 ```
 
 ### Compiling and Running Python Java example
@@ -616,20 +616,15 @@ Since glut depends on the other libraries (GLU and GL), it is not necessary to g
 ### Java sample code that uses the OpenGL library
 
 ```java
-import java.foreign.Libraries;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.Array;
 import java.foreign.memory.Pointer;
-import java.lang.invoke.MethodHandles;
 
-import opengl.*;
-
-import javax.imageio.ImageIO;
+import static opengl.gl_h.*;
+import static opengl.freeglut_std_h.*;
 
 public class Teapot {
-    static gl gl = Libraries.bind(MethodHandles.lookup(), gl.class);
-    static freeglut_std glut = Libraries.bind(MethodHandles.lookup(), freeglut_std.class);
 
     float rot = 0;
 
@@ -640,47 +635,47 @@ public class Teapot {
         Array<Float> shini = sc.allocateArray(NativeTypes.FLOAT, new float[] {113});
 
         // Reset Background
-        gl.glClearColor(0, 0, 0, 0);
+        glClearColor(0, 0, 0, 0);
 
         // Setup Lighting
-        gl.glShadeModel(gl.GL_SMOOTH());
-        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_POSITION(), pos.elementPointer());
-        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_AMBIENT(), spec.elementPointer());
-        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_DIFFUSE(), spec.elementPointer());
-        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_SPECULAR(), spec.elementPointer());
-        gl.glMaterialfv(gl.GL_FRONT(), gl.GL_SHININESS(), shini.elementPointer());
-        gl.glEnable(gl.GL_LIGHTING());
-        gl.glEnable(gl.GL_LIGHT0());
-        gl.glEnable(gl.GL_DEPTH_TEST());
+        glShadeModel(GL_SMOOTH);
+        glLightfv(GL_LIGHT0, GL_POSITION, pos.elementPointer());
+        glLightfv(GL_LIGHT0, GL_AMBIENT, spec.elementPointer());
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, spec.elementPointer());
+        glLightfv(GL_LIGHT0, GL_SPECULAR, spec.elementPointer());
+        glMaterialfv(GL_FRONT, GL_SHININESS, shini.elementPointer());
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
+        glEnable(GL_DEPTH_TEST);
     }
 
     void display() {
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT() | gl.GL_DEPTH_BUFFER_BIT());
-        gl.glPushMatrix();
-        gl.glRotatef(-20, 1, 1, 0);
-        gl.glRotatef(rot, 0, 1, 0);
-        glut.glutSolidTeapot(0.5);
-        gl.glPopMatrix();
-        glut.glutSwapBuffers();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glPushMatrix();
+        glRotatef(-20, 1, 1, 0);
+        glRotatef(rot, 0, 1, 0);
+        glutSolidTeapot(0.5);
+        glPopMatrix();
+        glutSwapBuffers();
     }
 
-	void onIdle() {
+    void onIdle() {
         rot += 0.1;
-        glut.glutPostRedisplay();
+        glutPostRedisplay();
     }
 
     public static void main(String[] args) {
         try (Scope sc = Scope.newNativeScope()) {
             Pointer<Integer> argc = sc.allocate(NativeTypes.INT32);
             argc.set(0);
-            glut.glutInit(argc, Pointer.nullPointer());
-            glut.glutInitDisplayMode(glut.GLUT_DOUBLE() | glut.GLUT_RGBA() | glut.GLUT_DEPTH());
-            glut.glutInitWindowSize(900, 900);
-            glut.glutCreateWindow(sc.allocateCString("Hello Panama!"));
+            glutInit(argc, Pointer.nullPointer());
+            glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+            glutInitWindowSize(900, 900);
+            glutCreateWindow(sc.allocateCString("Hello Panama!"));
             Teapot teapot = new Teapot(sc);
-            glut.glutDisplayFunc(sc.allocateCallback(teapot::display));
-            glut.glutIdleFunc(sc.allocateCallback(teapot::onIdle));
-            glut.glutMainLoop();
+            glutDisplayFunc(sc.allocateCallback(teapot::display));
+            glutIdleFunc(sc.allocateCallback(teapot::onIdle));
+            glutMainLoop();
         }
     }
 }
@@ -695,21 +690,21 @@ java -cp opengl.jar:. Teapot
 
 ```
 
-## Using OpenGL graphic library (Windows 10)
+## Using OpenGL graphic library (Windows)
 
-### Installing OpenGL (Windows 10)
+### Installing OpenGL
 
 Download the freeglut package for MSVC at [https://www.transmissionzero.co.uk/software/freeglut-devel/](https://www.transmissionzero.co.uk/software/freeglut-devel/)
 
 Extract the freeglut zip.
 
-### jextracting OpenGL (Windows 10)
+### jextracting OpenGL
 
 Navigate to the root directory of the extracted zip and run the following commands:
 
 ```powershell
 $inc = "C:\Program Files (x86)\Windows Kits\10\Include\10.0.17134.0"
-jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o "opengl.jar" -m "$inc\um\gl=opengl" .\freeglut\include\GL\glut.h
+jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.jar -m "$inc\um\gl=opengl" --infer-rpath .\freeglut\include\GL\glut.h
 ```
 
 The directory that is assigned to `$inc` is an example, and is system dependent. Make sure that the build number at the end of the path (in this case `10.0.17134.0`) is the latest one found in the parent folder (`C:\Program Files (x86)\Windows Kits\10\Include\`).
@@ -718,13 +713,13 @@ There are a bunch of warnings generated, but as long as the jar file is generate
 
 ### Java sample code that uses the OpenGL library
 
-This is the same as for Ubuntu 16.04
+This is the same as in the Ubuntu section
 
-### Running the Java code that uses OpenGL (Windows 10)
+### Running the Java code that uses OpenGL
 
 ```powershell
 javac -cp .\opengl.jar Teapot.java
-java -cp "opengl.jar;." -D"java.library.path=.\freeglut\bin\x64;C:\Windows\system32" Teapot
+java -cp "opengl.jar;." Teapot
 ```
 
 ## Using TensorFlow C API (Mac OS)
@@ -776,7 +771,6 @@ without argument in C++ style, for example, TF_Version(), which is considered
 incomplete C function prototype instead of C style as in TF_Version(void). An
 incomplete function prototype will become vararg funciton. To avoid that, we
 need to pass clang '-x c++' options to jextract with '-C -x -C c++'
-
 
 ### Java sample code that uses tensorflow library
 
@@ -917,4 +911,42 @@ javac -cp tf.jar TensorFlowExample.java
 
 java -cp tf.jar:. TensorFlowExample
 
+```
+
+## Using TensorFlow C API (Windows)
+
+### Installing libtensorflow
+
+You can download a binary distribution from [https://www.tensorflow.org/install/lang_c](https://www.tensorflow.org/install/lang_c)
+
+Extract the zip file.
+
+### jextracting libtensorflow c_api.h
+
+The problem outlined in the Mac OS instruction w.r.t. incorrect function prototypes still exists (though it has been solved in the Tensorflow github repository, this change has not yet made it into the binary distributions). On Windows there is however no jextract command that works around this, so the only way to extract the \include\tensorflow\c\c_api.h header successfully is to first manually fix the incorrect function prototypes:
+
+```C
+TF_Version() -> TF_Version(void)  
+TF_NewGraph() -> TF_NewGraph(void)  
+TF_NewSessionOptions() -> TF_NewSessionOptions(void)  
+TF_NewStatus() -> TF_NewStatus(void)
+TF_NewBuffer() -> TF_NewBuffer(void)
+TF_NewImportGraphDefOptions() -> TF_NewImportGraphDefOptions(void)
+TF_GetAllOpList() -> TF_GetAllOpList(void)
+```
+Once you've done this you can use the following jextract command from the libtensorflow root directory:
+
+```powershell
+jextract -L .\lib -l tensorflow -o tf.jar -t "org.tensorflow.panama" --infer-rpath .\include\tensorflow\c\c_api.h
+```
+
+### Java sample code that uses tensorflow library
+
+This is the same as for the Mac OS section.
+
+### Compiling and running the above TensorFlow sample
+
+```powershell
+javac -cp tf.jar TensorFlowExample.java
+java -cp "tf.jar;." TensorFlowExample
 ```
