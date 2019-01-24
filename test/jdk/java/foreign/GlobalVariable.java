@@ -43,10 +43,6 @@ public class GlobalVariable {
     )
     static interface globvar {
         @NativeLocation(file="dummy", line=1, column=1)
-        @NativeFunction("()v")
-        public abstract void init();
-
-        @NativeLocation(file="dummy", line=1, column=1)
         @NativeGetter("global_boolean")
         public abstract boolean global_boolean$get();
         @NativeSetter("global_boolean")
@@ -124,7 +120,6 @@ public class GlobalVariable {
     private final globvar i;
     {
         i = Libraries.bind(globvar.class, Libraries.loadLibrary(MethodHandles.lookup(), "GlobalVariable"));
-        i.init();
     }
 
     public void testboolean() {

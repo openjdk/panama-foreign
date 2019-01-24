@@ -44,25 +44,11 @@ $(eval $(call IncludeCustomExtension, test/JtregNativeJdk.gmk))
 # This might have been added to by a custom extension.
 BUILD_JDK_JTREG_NATIVE_SRC += $(TOPDIR)/test/jdk
 
-# Only build java.foreign tests on linux for now
+# Only build java.foreign tests on x64 for now
 ifneq ($(filter x86_64, $(OPENJDK_TARGET_CPU)),)
-    BUILD_JDK_JTREG_NATIVE_SRC += \
-	$(TOPDIR)/test/jdk/java/foreign \
-        #
-
-    ifeq ($(OPENJDK_TARGET_OS), windows)
-        # windows flags
-        BUILD_JDK_JTREG_LIBRARIES_CFLAGS_libVector := /arch:AVX
-        BUILD_JDK_JTREG_LIBRARIES_CFLAGS_libUpcall := /arch:AVX
-        BUILD_JDK_JTREG_LIBRARIES_CFLAGS_libGlobalVariable := /arch:AVX
-    else 
-        # Enable AVX for vector (Long*) tests
-        BUILD_JDK_JTREG_LIBRARIES_CFLAGS_libVector := -mavx
-        BUILD_JDK_JTREG_LIBRARIES_CFLAGS_libUpcall := -mavx
-        BUILD_JDK_JTREG_LIBRARIES_CFLAGS_libGlobalVariable := -mavx
-    endif
+    BUILD_JDK_JTREG_NATIVE_SRC += $(TOPDIR)/test/jdk/java/foreign
 else
-$(info Not building java.foreign tests)
+    $(info Not building java.foreign tests)
 endif
 
 BUILD_JDK_JTREG_OUTPUT_DIR := $(OUTPUTDIR)/support/test/jdk/jtreg/native
