@@ -89,7 +89,7 @@ public class TreePrinter extends SimpleTreeVisitor<Void, Void> {
     public Void visitStruct(StructTree s, Void v) {
         defaultAction(s, v);
         System.out.printf("name = '%s', isAnonumous? = %b, layout = %s\n\n",
-            s.name(), s.isAnonymous(), s.layout((ft, l) -> l));
+            s.name(), s.isAnonymous(), s.layout());
         List<? extends FieldTree> fields = s.fields();
         if (! fields.isEmpty()) {
             System.out.println("--> fields");
