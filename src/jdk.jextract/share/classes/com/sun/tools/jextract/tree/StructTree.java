@@ -132,10 +132,7 @@ public class StructTree extends Tree {
         return cursor().isAnonymousStruct();
     }
 
-    public Layout layout(BiFunction<FieldTree, Layout, Layout> fieldMapper) {
-        TreeMaker m = new TreeMaker();
-        return LayoutUtils.getRecordLayout(cursor().type(), (cursor, layout) -> {
-            return fieldMapper.apply(m.createField(cursor), layout);
-        });
+    public Layout layout() {
+        return LayoutUtils.getRecordLayout(cursor().type());
     }
 }

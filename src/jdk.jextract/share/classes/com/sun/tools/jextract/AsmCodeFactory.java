@@ -283,7 +283,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         annotateNativeLocation(cw, structTree);
 
         AnnotationVisitor av = cw.visitAnnotation(NATIVE_STRUCT, true);
-        Layout structLayout = structTree.layout(this::decorateAsAccessor);
+        Layout structLayout = structTree.layout();
         av.visit("value", structLayout.toString());
         av.visitEnd();
         cw.visitInnerClass(name, headerClassName, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
@@ -294,14 +294,6 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         cw.visitEnd();
         addClassIfNeeded(headerClassName + "$" + intf, cw.toByteArray());
         return true;
-    }
-
-    Layout decorateAsAccessor(VarTree varTree, Layout layout) {
-        return layout.withAnnotation(Layout.NAME, varTree.name());
-    }
-
-    Layout decorateAsAccessor(FieldTree fieldTree, Layout layout) {
-        return layout.withAnnotation(Layout.NAME, fieldTree.name());
     }
 
     @Override
