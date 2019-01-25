@@ -215,6 +215,7 @@ public class BoundedMemoryRegion {
     }
 
     public void copyTo(long srcOffset, BoundedMemoryRegion dst, long dstOffset, long length) {
+        if(length == 0) return; // nothing to do
         Objects.requireNonNull(dst);
 
         checkRead(srcOffset, length);

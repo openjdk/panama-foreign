@@ -97,12 +97,3 @@ EXPORT void voidArguments(void) {
 EXPORT void* FunctionWithVoidPointer(void *data, void **array_data) {
     return NULL;
 }
-
-EXPORT void** GetArrayData(struct IncompleteArray *par) {
-    return NULL;
-}
-
-EXPORT void* GetData(struct IncompleteArray ar) {
-    printf("Sizeof(IncompleteArray) = %zu\n", sizeof(ar));
-    return NULL;
-}

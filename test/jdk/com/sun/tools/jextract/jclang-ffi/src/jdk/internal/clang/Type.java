@@ -69,11 +69,19 @@ public class Type {
     }
 
     // Struct/RecordType
-    public long getOffsetOf(String fieldName) {
+    private long getOffsetOf0(String fieldName) {
         try (Scope s = Scope.newNativeScope()) {
             Pointer<Byte> cfname = s.allocateCString(fieldName);
             return LibClang.lib.clang_Type_getOffsetOf(type, cfname);
         }
+    }
+
+    public long getOffsetOf(String fieldName) {
+        long res = getOffsetOf0(fieldName);
+        if(TypeLayoutError.isError(res)) {
+            throw new TypeLayoutError(res, String.format("type: %s, fieldName: %s", this, fieldName));
+        }
+        return res;
     }
 
     // Typedef
@@ -89,8 +97,16 @@ public class Type {
         return type.kind$get();
     }
 
-    public long size() {
+    private long size0() {
         return LibClang.lib.clang_Type_getSizeOf(type);
+    }
+
+    public long size() {
+        long res = size0();
+        if(TypeLayoutError.isError(res)) {
+            throw new TypeLayoutError(res, String.format("type: %s", this));
+        }
+        return res;
     }
 
     public TypeKind kind() {
