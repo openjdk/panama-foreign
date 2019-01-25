@@ -82,19 +82,6 @@ typedef void* (*FunctionPointer)(void *data, void **array_data);
 
 EXPORT void* FunctionWithVoidPointer(void *data, void **array_data);
 
-struct IncompleteArray {
-    long list_length;
-    void *ptr;
-    void **junk;
-    FunctionPointer fn;
-    void *list_of_data[];
-};
-
-EXPORT void** GetArrayData(struct IncompleteArray *par);
-
-// This works with C, but incomplete array is omitted as not exist
-EXPORT void* GetData(struct IncompleteArray ar);
-
 EXPORT extern char* LastCalledMethod;
 
 #ifdef __cplusplus

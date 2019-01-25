@@ -29,11 +29,14 @@ import java.foreign.layout.Unresolved;
 import java.foreign.layout.Value;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
+import jdk.internal.clang.TypeKind;
 
 /**
  * Base class for C struct, union layout computer helper classes.
@@ -65,9 +68,38 @@ abstract class RecordLayoutComputer {
                 new StructLayoutComputer(offsetInParent, parent, type).compute();
     }
 
+    private static boolean isFlattenable(Cursor c) {
+        return c.isAnonymousStruct() || c.kind() == CursorKind.FieldDecl;
+    }
+
+    private static Optional<Cursor> lastChild(Cursor c) {
+        List<Cursor> children = c.children()
+                .filter(RecordLayoutComputer::isFlattenable)
+                .collect(Collectors.toList());
+        return children.isEmpty() ? Optional.empty() : Optional.of(children.get(children.size() - 1));
+    }
+
+    private static boolean hasIncompleteArray(Cursor c) {
+        switch (c.kind()) {
+            case FieldDecl:
+                return c.type().kind() == TypeKind.IncompleteArray;
+            case UnionDecl:
+                return c.children()
+                        .filter(RecordLayoutComputer::isFlattenable)
+                        .anyMatch(RecordLayoutComputer::hasIncompleteArray);
+            case StructDecl:
+                return lastChild(c).map(RecordLayoutComputer::hasIncompleteArray).orElse(false);
+            default:
+                throw new IllegalStateException("Unhandled cursor kind: " + c.kind());
+        }
+    }
+
     final Layout compute() {
+        if (hasIncompleteArray(cursor)) {
+            throw new UnsupportedOperationException("Flexible array members not supported.");
+        }
         Stream<Cursor> fieldCursors = cursor.children()
-            .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
+                .filter(RecordLayoutComputer::isFlattenable);
         for (Cursor fc : fieldCursors.collect(Collectors.toList())) {
             /*
              * Ignore bitfields of zero width.

@@ -41,10 +41,7 @@ import jdk.internal.foreign.LayoutResolver;
 import jdk.internal.foreign.memory.DescriptorParser;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /*
  * @test
@@ -59,7 +56,6 @@ public class StructTest extends JextractToolRunner {
             "TypedefNamedDifferent",
             "TypedefAnonymous",
             "Plain",
-            "IncompleteArray",
             "UndefinedStruct",
             "UndefinedStructForPointer",
             "Opaque"
@@ -126,26 +122,6 @@ public class StructTest extends JextractToolRunner {
         Type[] tas = ptr.getActualTypeArguments();
         assertEquals(tas.length, 1);
         assertEquals(tas[0], pointee);
-    }
-
-    private void verifyIncompleteArray(Class<?> incomplete) {
-        assertNotNull(incomplete);
-        Method f = findMethod(incomplete, "ptr$get");
-        ParameterizedType pVoid = (ParameterizedType) f.getGenericReturnType();
-        assertVoidPointer(pVoid, false);
-        f = findMethod(incomplete, "ptr$set", java.foreign.memory.Pointer.class);
-        // Setter for void* should be wildcard
-        ParameterizedType pWildcard = (ParameterizedType) f.getGenericParameterTypes()[0];
-        assertVoidPointer(pWildcard, true);
-
-        f = findMethod(incomplete, "junk$get");
-        ParameterizedType ppVoid = (ParameterizedType) f.getGenericReturnType();
-        assertEquals(ppVoid.getActualTypeArguments()[0], pVoid);
-        f = findMethod(incomplete, "junk$set", java.foreign.memory.Pointer.class);
-
-        ppVoid = (ParameterizedType) f.getGenericParameterTypes()[0];
-        assertTrue(ppVoid.getActualTypeArguments()[0] instanceof WildcardType);
-        assertEquals(((WildcardType)ppVoid.getActualTypeArguments()[0]).getUpperBounds()[0], pWildcard);
     }
 
     private void verifyFunctionWithVoidPointer(Class<?> cls) {
@@ -258,7 +234,6 @@ public class StructTest extends JextractToolRunner {
         verifyExpectedAnnotations(clz);
         verifyFunctionWithVoidPointer(cls);
         verifyFunctionPointer(findClass(clz,"FI2")); //Todo: is this what jextract needs to emit?
-        verifyIncompleteArray(findClass(clz, "IncompleteArray"));
         verifyTypedefAnonymous(findClass(clz, "TypedefAnonymous"));
         checkMethod(cls, "voidArguments", void.class);
         verifyUndefinedStructFunctions(cls);

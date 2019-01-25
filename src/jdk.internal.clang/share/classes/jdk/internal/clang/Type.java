@@ -50,7 +50,15 @@ public class Type extends StructType {
     public native long getNumberOfElements();
 
     // Struct/RecordType
-    public native long getOffsetOf(String fieldName);
+    private native long getOffsetOf0(String fieldName);
+
+    public long getOffsetOf(String fieldName) {
+        long res = getOffsetOf0(fieldName);
+        if(TypeLayoutError.isError(res)) {
+            throw new TypeLayoutError(res, String.format("type: %s, fieldName: %s", this, fieldName));
+        }
+        return res;
+    }
 
     // Typedef
     public native Type canonicalType();
@@ -59,7 +67,15 @@ public class Type extends StructType {
 
     public native int kind1();
 
-    public native long size();
+    private native long size0();
+
+    public long size() {
+        long res = size0();
+        if(TypeLayoutError.isError(res)) {
+            throw new TypeLayoutError(res, String.format("type: %s", this));
+        }
+        return res;
+    }
 
     public TypeKind kind() {
         int v = kind1();
@@ -86,4 +102,10 @@ public class Type extends StructType {
     public int hashCode() {
         return spelling().hashCode();
     }
+
+    @Override
+    public String toString() {
+        return String.format("Type{ spelling=%s, kind=%s }", spelling(), kind());
+    }
+
 }
