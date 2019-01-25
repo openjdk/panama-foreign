@@ -33,6 +33,7 @@ import java.foreign.layout.Address;
 import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Sequence;
+import java.foreign.layout.Value;
 import java.foreign.memory.Array;
 import java.foreign.memory.Callback;
 import java.foreign.memory.LayoutType;
@@ -55,7 +56,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
-
 import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.foreign.memory.Types;
 import jdk.internal.misc.Unsafe;
@@ -448,5 +448,14 @@ public final class Util {
             }
         }
         return null;
+    }
+
+    public static Layout requireNoEndianLayout(Layout layout) {
+        if (layout instanceof Value) {
+            if (((Value) layout).endianness().isPresent()) {
+                throw new IllegalArgumentException("Method argument is not allowed to have endianness");
+            }
+        }
+        return layout;
     }
 }

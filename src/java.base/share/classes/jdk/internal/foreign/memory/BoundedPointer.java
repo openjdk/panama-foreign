@@ -296,8 +296,13 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     private long unsafeGetBits() {
-        boolean isSigned = type().layout() instanceof Value &&
-                ((Value)type().layout()).kind() != Value.Kind.INTEGRAL_UNSIGNED;
+        boolean isSigned = false;
+        boolean reverseByteOrder = false;
+        if (type().layout() instanceof Value) {
+            Value v = (Value) type().layout();
+            isSigned = v.kind() != Value.Kind.INTEGRAL_UNSIGNED;
+            reverseByteOrder = !v.isNativeByteOrder();
+        }
         long size = type().bytesSize();
         long bits;
         switch ((int)size) {
@@ -306,15 +311,18 @@ public class BoundedPointer<X> implements Pointer<X> {
                 return isSigned ? bits : Byte.toUnsignedLong((byte)bits);
 
             case 2:
-                bits = UNSAFE.getShort(toUnsafeBase(), toUnsafeOffset());
+                short s = UNSAFE.getShort(toUnsafeBase(), toUnsafeOffset());
+                bits = reverseByteOrder ? Short.reverseBytes(s) : s;
                 return isSigned ? bits : Short.toUnsignedLong((short)bits);
 
             case 4:
-                bits = UNSAFE.getInt(toUnsafeBase(), toUnsafeOffset());
+                int i = UNSAFE.getInt(toUnsafeBase(), toUnsafeOffset());
+                bits = reverseByteOrder ? Integer.reverseBytes(i) : i;
                 return isSigned ? bits : Integer.toUnsignedLong((int)bits);
 
             case 8:
-                return UNSAFE.getLong(toUnsafeBase(), toUnsafeOffset());
+                bits = UNSAFE.getLong(toUnsafeBase(), toUnsafeOffset());
+                return reverseByteOrder ? Long.reverseBytes(bits) : bits;
 
             default:
                 throw new IllegalArgumentException("Invalid size: " + size);
@@ -323,21 +331,28 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     private void unsafePutBits(long value) {
         long size = type().bytesSize();
+        boolean reverseByteOrder = type.layout() instanceof Value &&
+                      ! ((Value) (type.layout())).isNativeByteOrder();
         switch ((int)size) {
             case 1:
                 UNSAFE.putByte(toUnsafeBase(), toUnsafeOffset(), (byte)value);
                 break;
 
             case 2:
-                UNSAFE.putShort(toUnsafeBase(), toUnsafeOffset(), (short)value);
+                short s = (short) value;
+                UNSAFE.putShort(toUnsafeBase(), toUnsafeOffset(),
+                        reverseByteOrder ? Short.reverseBytes(s) : s);
                 break;
 
             case 4:
-                UNSAFE.putInt(toUnsafeBase(), toUnsafeOffset(), (int)value);
+                int i = (int) value;
+                UNSAFE.putInt(toUnsafeBase(), toUnsafeOffset(),
+                        reverseByteOrder ? Integer.reverseBytes(i) : i);
                 break;
 
             case 8:
-                UNSAFE.putLong(toUnsafeBase(), toUnsafeOffset(), value);
+                UNSAFE.putLong(toUnsafeBase(), toUnsafeOffset(),
+                        reverseByteOrder ? Long.reverseBytes(value) : value);
                 break;
 
             default:

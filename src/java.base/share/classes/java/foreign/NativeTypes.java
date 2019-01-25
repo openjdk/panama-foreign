@@ -25,17 +25,16 @@
 
 package java.foreign;
 
-import jdk.internal.foreign.abi.SystemABI;
-import jdk.internal.foreign.abi.SystemABI.CType;
-
 import java.foreign.layout.Value;
 import java.foreign.memory.LayoutType;
+import jdk.internal.foreign.abi.SystemABI;
+import jdk.internal.foreign.abi.SystemABI.CType;
 
 /**
  * This class defines constants modelling standard primitive types in the C programming language.
  */
 public final class NativeTypes {
-    private final static SystemABI ABI = SystemABI.getInstance();
+    private static SystemABI ABI = SystemABI.getInstance();
 
     /**
      * The {@code void} type.
@@ -55,31 +54,55 @@ public final class NativeTypes {
     /**
      * The {@code int16_t} type.
      */
+    public static LayoutType<Short> BE_INT16 = LayoutType.ofShort(
+            Value.ofSignedInt(Value.Endianness.BIG_ENDIAN, 16));
+    public static LayoutType<Short> LE_INT16 = LayoutType.ofShort(
+            Value.ofSignedInt(Value.Endianness.LITTLE_ENDIAN, 16));
     public static LayoutType<Short> INT16 = LayoutType.ofShort(Value.ofSignedInt(16));
 
     /**
      * The {@code uint16_t} type.
      */
+    public static LayoutType<Short> BE_UINT16 = LayoutType.ofShort(
+            Value.ofUnsignedInt(Value.Endianness.BIG_ENDIAN, 16));
+    public static LayoutType<Short> LE_UINT16 = LayoutType.ofShort(
+            Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 16));
     public static LayoutType<Short> UINT16 = LayoutType.ofShort(Value.ofUnsignedInt(16));
 
     /**
      * The {@code int32_t} type.
      */
+    public static LayoutType<Integer> BE_INT32 = LayoutType.ofInt(
+            Value.ofSignedInt(Value.Endianness.BIG_ENDIAN, 32));
+    public static LayoutType<Integer> LE_INT32 = LayoutType.ofInt(
+            Value.ofSignedInt(Value.Endianness.LITTLE_ENDIAN, 32));
     public static LayoutType<Integer> INT32 = LayoutType.ofInt(Value.ofSignedInt(32));
 
     /**
      * The {@code uint32_t} type.
      */
+    public static LayoutType<Integer> BE_UINT32 = LayoutType.ofInt(
+            Value.ofUnsignedInt(Value.Endianness.BIG_ENDIAN, 32));
+    public static LayoutType<Integer> LE_UINT32 = LayoutType.ofInt(
+            Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 32));
     public static LayoutType<Integer> UINT32 = LayoutType.ofInt(Value.ofUnsignedInt(32));
 
     /**
      * The {@code int64_t} type.
      */
+    public static LayoutType<Long> BE_INT64 = LayoutType.ofLong(
+            Value.ofSignedInt(Value.Endianness.BIG_ENDIAN, 64));
+    public static LayoutType<Long> LE_INT64 = LayoutType.ofLong(
+            Value.ofSignedInt(Value.Endianness.LITTLE_ENDIAN, 64));
     public static LayoutType<Long> INT64 = LayoutType.ofLong(Value.ofSignedInt(64));
 
     /**
      * The {@code uint64_t} type.
      */
+    public static LayoutType<Long> BE_UINT64 = LayoutType.ofLong(
+            Value.ofUnsignedInt(Value.Endianness.BIG_ENDIAN, 64));
+    public static LayoutType<Long> LE_UINT64 = LayoutType.ofLong(
+            Value.ofUnsignedInt(Value.Endianness.LITTLE_ENDIAN, 64));
     public static LayoutType<Long> UINT64 = LayoutType.ofLong(Value.ofUnsignedInt(64));
 
     /**

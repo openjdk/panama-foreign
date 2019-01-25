@@ -30,6 +30,7 @@ import java.lang.invoke.MethodType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import jdk.internal.foreign.Util;
 
 /**
  * A native method type represents the arguments and return native types (expressed as {@link LayoutType} objects)
@@ -56,7 +57,7 @@ public final class NativeMethodType {
         this.isVarArgs = isVarArgs;
         this.returnType = (returnType == null) ? NativeTypes.VOID : returnType;
     }
-    
+
     /**
      * Obtain a new native method type given native return/parameter types.
      * @param returnType the return native type.
@@ -77,6 +78,10 @@ public final class NativeMethodType {
     public static NativeMethodType of(boolean isVarargs, LayoutType<?> returnType, LayoutType<?>... parameterTypes) {
         Objects.requireNonNull(returnType);
         Objects.requireNonNull(parameterTypes);
+        Util.requireNoEndianLayout(returnType.layout());
+        for (LayoutType<?> lt : parameterTypes) {
+            Util.requireNoEndianLayout(lt.layout());
+        }
         return new NativeMethodType(isVarargs, returnType, parameterTypes);
     }
 

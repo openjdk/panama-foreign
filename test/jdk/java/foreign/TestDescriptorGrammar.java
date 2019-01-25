@@ -25,7 +25,7 @@
 
 /*
  * @test
- * @bug 8192974
+ * @bug 8192974 8218153
  * @summary overhaul descriptor string parsing
  * @modules java.base/jdk.internal.foreign.memory
  * @run main/othervm -Xmx1g TestDescriptorGrammar
@@ -84,6 +84,16 @@ public class TestDescriptorGrammar {
             @Override
             public Stream<String> generate(int depth) {
                 return generateAll(depth, ContainerType.class);
+            }
+        },
+        BYTE_SWAPPED_CONTAINER_TYPE() {
+            @Override
+            public Stream<String> generate(int depth) {
+                return Stream.of(Endianness.BYTE_SWAP_BE, Endianness.BYTE_SWAP_LE)
+                        .flatMap(endian -> Stream.concat(
+                                sample(ContainerType.STRUCT.generate(depth)),
+                                sample(depth == 0 ? Stream.empty() : ContainerType.ARRAY.generate(depth)))
+                        .map(e -> endian.apply(e)));
             }
         }
     }
@@ -235,7 +245,7 @@ public class TestDescriptorGrammar {
         @Override
         public Stream<String> generate(int depth) {
             return Stream.of(TestDescriptorGrammar.Endianness.values())
-                    .flatMap(e -> bytes().map(n -> e.apply(this) + n));
+                    .flatMap(e -> bytes().map(n -> e.apply(tag) + n));
         }
     }
 
@@ -257,15 +267,22 @@ public class TestDescriptorGrammar {
         }
     }
 
-    enum Endianness implements Function<ScalarType, String> {
-        BIG_ENDIAN,
-        LITTLE_ENDIAN;
+    enum Endianness implements Function<String, String> {
+        BYTE_SWAP_LE,
+        BYTE_SWAP_BE,
+        NO_ENDIAN;
 
         @Override
-        public String apply(ScalarType scalarKind) {
-            return this == BIG_ENDIAN ?
-                    scalarKind.tag.toUpperCase() :
-                    scalarKind.tag;
+        public String apply(String layout) {
+            switch (this) {
+                case BYTE_SWAP_BE:
+                    return ">" + layout;
+                case BYTE_SWAP_LE:
+                    return "<" + layout;
+                case NO_ENDIAN:
+                    return layout;
+            }
+            throw new IllegalStateException("Should never reach here");
         }
     }
     
