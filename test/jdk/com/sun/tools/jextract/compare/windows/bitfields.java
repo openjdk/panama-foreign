@@ -298,4 +298,37 @@ public interface bitfields { // platform dependent
          @NativeSetter("y")
          void y$set(int value);
     }
+
+    @NativeStruct("[" +
+                "u32=[u1(x)x7u8(y)x16]" +
+                "i32(z)" +
+            "](bitfields9)")
+    public interface bitfields9 extends Struct<bitfields9> {
+        @NativeGetter("x")
+        int x$get();
+        @NativeSetter("x")
+        void x$set(int var1);
+
+        @NativeGetter("y")
+        int y$get();
+        @NativeSetter("y")
+        void y$set(int var1);
+
+        @NativeGetter("z")
+        int z$get();
+        @NativeSetter("z")
+        void z$set(int var1);
+        @NativeAddressof("z")
+        Pointer<Integer> z$ptr();
+    }
+
+    @NativeStruct("[u32=[u1(x)]|x64](bitfields10)")
+    public interface bitfields10 extends Struct<bitfields.bitfields10> {
+        @NativeGetter("x")
+        int x$get();
+
+        @NativeSetter("x")
+        void x$set(int var1);
+    }
+
 }
