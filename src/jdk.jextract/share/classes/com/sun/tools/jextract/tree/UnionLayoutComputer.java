@@ -71,10 +71,10 @@ final class UnionLayoutComputer extends RecordLayoutComputer {
 
     @Override
     Layout finishLayout() {
-        // pad at the end, if any
+        // size mismatch indicates anonymous bitfield used for padding
         long expectedSize = type.size() * 8;
         if (actualSize < expectedSize) {
-            addFieldLayout(Padding.of(expectedSize - actualSize));
+            addFieldLayout(Padding.of(expectedSize));
         }
 
         Layout[] fields = fieldLayouts.toArray(new Layout[0]);

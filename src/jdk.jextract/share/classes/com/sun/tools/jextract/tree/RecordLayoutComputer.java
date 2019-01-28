@@ -107,8 +107,11 @@ abstract class RecordLayoutComputer {
              * struct Foo {
              *     int i:0;
              * }
+             *
+             * And bitfields without a name.
+             * (padding is computed automatically)
              */
-            if (fc.isBitField() && fc.getBitFieldWidth() == 0) {
+            if (fc.isBitField() && (fc.getBitFieldWidth() == 0 || fc.spelling().isEmpty())) {
                 continue;
             }
 
