@@ -153,9 +153,10 @@ public final class LayoutResolver {
             Layout rv;
 
             if (l instanceof Unresolved) {
-                rv = resolveRoot(((Unresolved) l).layoutExpression())
+                Unresolved ul = (Unresolved) l;
+                rv = resolveRoot(ul.layoutExpression())
                         .map(this::resolve)
-                        .orElseThrow(() -> new UndefinedLayoutException(l));
+                        .orElseThrow(() -> new UndefinedLayoutException(ul));
             } else if (l instanceof Sequence) {
                 Sequence s = (Sequence)l;
                 Layout elem = resolve(s.element());
@@ -181,10 +182,10 @@ public final class LayoutResolver {
     }
 
     public static class UndefinedLayoutException extends IllegalStateException {
-        private static final long serialVersionUID = 0L;
+        private static final long serialVersionUID = 1L;
 
-        public UndefinedLayoutException(Layout l) {
-            super("Can not resolve layout: " + l.name().orElse("<unnamed>"));
+        public UndefinedLayoutException(Unresolved l) {
+            super("Can not resolve layout: " + l.layoutExpression());
         }
     }
 }
