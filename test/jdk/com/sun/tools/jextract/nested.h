@@ -92,3 +92,19 @@ union MyUnion {
         long j;
     } k;
 };
+
+struct X {
+    struct {
+        union {
+            int y;
+        } Z;
+    };
+};
+
+struct X2 {
+    struct {
+        union {
+            int y;
+        }; // no name this time
+    };
+};

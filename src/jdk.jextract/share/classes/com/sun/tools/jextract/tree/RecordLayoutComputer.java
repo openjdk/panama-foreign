@@ -25,7 +25,6 @@ package com.sun.tools.jextract.tree;
 
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
-import java.foreign.layout.Unresolved;
 import java.foreign.layout.Value;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,13 +67,13 @@ abstract class RecordLayoutComputer {
                 new StructLayoutComputer(offsetInParent, parent, type).compute();
     }
 
-    private static boolean isFlattenable(Cursor c) {
-        return c.isAnonymousStruct() || c.kind() == CursorKind.FieldDecl;
+    private static Stream<Cursor> flattenableChildren(Cursor c) {
+        return c.children()
+                .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
     }
 
     private static Optional<Cursor> lastChild(Cursor c) {
-        List<Cursor> children = c.children()
-                .filter(RecordLayoutComputer::isFlattenable)
+        List<Cursor> children = flattenableChildren(c)
                 .collect(Collectors.toList());
         return children.isEmpty() ? Optional.empty() : Optional.of(children.get(children.size() - 1));
     }
@@ -84,8 +83,7 @@ abstract class RecordLayoutComputer {
             case FieldDecl:
                 return c.type().kind() == TypeKind.IncompleteArray;
             case UnionDecl:
-                return c.children()
-                        .filter(RecordLayoutComputer::isFlattenable)
+                return flattenableChildren(c)
                         .anyMatch(RecordLayoutComputer::hasIncompleteArray);
             case StructDecl:
                 return lastChild(c).map(RecordLayoutComputer::hasIncompleteArray).orElse(false);
@@ -98,8 +96,7 @@ abstract class RecordLayoutComputer {
         if (hasIncompleteArray(cursor)) {
             throw new UnsupportedOperationException("Flexible array members not supported.");
         }
-        Stream<Cursor> fieldCursors = cursor.children()
-                .filter(RecordLayoutComputer::isFlattenable);
+        Stream<Cursor> fieldCursors = flattenableChildren(cursor);
         for (Cursor fc : fieldCursors.collect(Collectors.toList())) {
             /*
              * Ignore bitfields of zero width.
@@ -161,9 +158,11 @@ abstract class RecordLayoutComputer {
         if (c.kind() == CursorKind.FieldDecl) {
             return parent.getOffsetOf(c.spelling());
         } else {
-            return c.children()
+            return flattenableChildren(c)
                     .mapToLong(child -> offsetOf(parent, child))
-                    .findFirst().orElseThrow(IllegalStateException::new);
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Can not find offset of: " + c + ", in: " + parent));
         }
     }
 }
