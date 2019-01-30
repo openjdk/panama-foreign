@@ -570,6 +570,14 @@ public class JextractToolProviderTest extends JextractToolRunner {
             assertNotNull(findEnumConstGet(headerCls, "A"));
             assertNotNull(findEnumConstGet(headerCls, "B"));
             assertNotNull(findEnumConstGet(headerCls, "C"));
+
+            Class<?> xClass = loader.loadClass("nested$X");
+            assertNotNull(findStructFieldGet(xClass, "Z"));
+            Class<?> zClass = loader.loadClass("nested$anon$nested_h$1977");
+            assertNotNull(findStructFieldGet(zClass, "y"));
+
+            Class<?> x2Class = loader.loadClass("nested$X2");
+            assertNotNull(findStructFieldGet(x2Class, "y"));
         } finally {
             deleteFile(nestedJar);
         }
