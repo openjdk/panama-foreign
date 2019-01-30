@@ -24,7 +24,7 @@
 /*
  * @test
  * @modules java.base/jdk.internal.foreign
- * @run testng UndefinedLayoutTest
+ * @run testng/othervm UndefinedLayoutTest
  */
 
 import jdk.internal.foreign.LayoutResolver;
@@ -52,6 +52,7 @@ public class UndefinedLayoutTest {
             Libraries.bind(Lib.class, Libraries.loadLibrary(MethodHandles.lookup(), "Hello")); // trigger resolution
             fail("exception expected");
         } catch(Throwable e) {
+            e.printStackTrace(); // log for test output
             while (e.getCause() != null) {
                 e = e.getCause(); // get root exception
             }
