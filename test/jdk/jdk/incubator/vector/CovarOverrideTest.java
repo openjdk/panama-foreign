@@ -50,7 +50,7 @@ import static org.testng.Assert.assertTrue;
 public class CovarOverrideTest {
 
     static final Set<String> NON_COVARIENT_RETURNING_METHOD_NAMES_ON_VECTOR =
-            Set.of("cast", "rebracket", "reshape");
+            Set.of("cast", "reinterpret", "reshape");
 
     @DataProvider
     public static Object[][] classesProvider() {

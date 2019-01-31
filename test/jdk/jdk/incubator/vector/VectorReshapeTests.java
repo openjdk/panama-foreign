@@ -277,9 +277,9 @@ public class VectorReshapeTests {
 
     @ForceInline
     static <E>
-    void testVectorResize(Vector.Species<E> a, Vector.Species<E> b, byte[] input, byte[] output) {
+    void testVectorReshape(Vector.Species<E> a, Vector.Species<E> b, byte[] input, byte[] output) {
         Vector<E> av = a.fromByteArray(input, 0);
-        Vector<E> bv = b.resize(av);
+        Vector<E> bv = av.reshape(b);
         bv.intoByteArray(output, 0);
 
         byte[] expected = Arrays.copyOf(input, output.length);
@@ -289,7 +289,7 @@ public class VectorReshapeTests {
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void testResizeByte(IntFunction<byte[]> fa) {
+    static void testReshapeByte(IntFunction<byte[]> fa) {
         byte[] bin64 = fa.apply(64/Byte.SIZE);
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
@@ -302,40 +302,40 @@ public class VectorReshapeTests {
         byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
-            testVectorResize(bspec64, bspec64, bin64, bout64);
-            testVectorResize(bspec64, bspec128, bin64, bout128);
-            testVectorResize(bspec64, bspec256, bin64, bout256);
-            testVectorResize(bspec64, bspec512, bin64, bout512);
-            testVectorResize(bspec64, bspecMax, bin64, boutMax);
+            testVectorReshape(bspec64, bspec64, bin64, bout64);
+            testVectorReshape(bspec64, bspec128, bin64, bout128);
+            testVectorReshape(bspec64, bspec256, bin64, bout256);
+            testVectorReshape(bspec64, bspec512, bin64, bout512);
+            testVectorReshape(bspec64, bspecMax, bin64, boutMax);
 
-            testVectorResize(bspec128, bspec64, bin128, bout64);
-            testVectorResize(bspec128, bspec128, bin128, bout128);
-            testVectorResize(bspec128, bspec256, bin128, bout256);
-            testVectorResize(bspec128, bspec512, bin128, bout512);
-            testVectorResize(bspec128, bspecMax, bin128, boutMax);
+            testVectorReshape(bspec128, bspec64, bin128, bout64);
+            testVectorReshape(bspec128, bspec128, bin128, bout128);
+            testVectorReshape(bspec128, bspec256, bin128, bout256);
+            testVectorReshape(bspec128, bspec512, bin128, bout512);
+            testVectorReshape(bspec128, bspecMax, bin128, boutMax);
 
-            testVectorResize(bspec256, bspec64, bin256, bout64);
-            testVectorResize(bspec256, bspec128, bin256, bout128);
-            testVectorResize(bspec256, bspec256, bin256, bout256);
-            testVectorResize(bspec256, bspec512, bin256, bout512);
-            testVectorResize(bspec256, bspecMax, bin256, boutMax);
+            testVectorReshape(bspec256, bspec64, bin256, bout64);
+            testVectorReshape(bspec256, bspec128, bin256, bout128);
+            testVectorReshape(bspec256, bspec256, bin256, bout256);
+            testVectorReshape(bspec256, bspec512, bin256, bout512);
+            testVectorReshape(bspec256, bspecMax, bin256, boutMax);
 
-            testVectorResize(bspec512, bspec64, bin512, bout64);
-            testVectorResize(bspec512, bspec128, bin512, bout128);
-            testVectorResize(bspec512, bspec256, bin512, bout256);
-            testVectorResize(bspec512, bspec512, bin512, bout512);
-            testVectorResize(bspec512, bspecMax, bin512, boutMax);
+            testVectorReshape(bspec512, bspec64, bin512, bout64);
+            testVectorReshape(bspec512, bspec128, bin512, bout128);
+            testVectorReshape(bspec512, bspec256, bin512, bout256);
+            testVectorReshape(bspec512, bspec512, bin512, bout512);
+            testVectorReshape(bspec512, bspecMax, bin512, boutMax);
 
-            testVectorResize(bspecMax, bspec64, binMax, bout64);
-            testVectorResize(bspecMax, bspec128, binMax, bout128);
-            testVectorResize(bspecMax, bspec256, binMax, bout256);
-            testVectorResize(bspecMax, bspec512, binMax, bout512);
-            testVectorResize(bspecMax, bspecMax, binMax, boutMax);
+            testVectorReshape(bspecMax, bspec64, binMax, bout64);
+            testVectorReshape(bspecMax, bspec128, binMax, bout128);
+            testVectorReshape(bspecMax, bspec256, binMax, bout256);
+            testVectorReshape(bspecMax, bspec512, binMax, bout512);
+            testVectorReshape(bspecMax, bspecMax, binMax, boutMax);
         }
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void testResizeShort(IntFunction<byte[]> fa) {
+    static void testReshapeShort(IntFunction<byte[]> fa) {
         byte[] bin64 = fa.apply(64/Byte.SIZE);
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
@@ -348,40 +348,40 @@ public class VectorReshapeTests {
         byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
-            testVectorResize(sspec64, sspec64, bin64, bout64);
-            testVectorResize(sspec64, sspec128, bin64, bout128);
-            testVectorResize(sspec64, sspec256, bin64, bout256);
-            testVectorResize(sspec64, sspec512, bin64, bout512);
-            testVectorResize(sspec64, sspecMax, bin64, boutMax);
+            testVectorReshape(sspec64, sspec64, bin64, bout64);
+            testVectorReshape(sspec64, sspec128, bin64, bout128);
+            testVectorReshape(sspec64, sspec256, bin64, bout256);
+            testVectorReshape(sspec64, sspec512, bin64, bout512);
+            testVectorReshape(sspec64, sspecMax, bin64, boutMax);
 
-            testVectorResize(sspec128, sspec64, bin128, bout64);
-            testVectorResize(sspec128, sspec128, bin128, bout128);
-            testVectorResize(sspec128, sspec256, bin128, bout256);
-            testVectorResize(sspec128, sspec512, bin128, bout512);
-            testVectorResize(sspec128, sspecMax, bin128, boutMax);
+            testVectorReshape(sspec128, sspec64, bin128, bout64);
+            testVectorReshape(sspec128, sspec128, bin128, bout128);
+            testVectorReshape(sspec128, sspec256, bin128, bout256);
+            testVectorReshape(sspec128, sspec512, bin128, bout512);
+            testVectorReshape(sspec128, sspecMax, bin128, boutMax);
 
-            testVectorResize(sspec256, sspec64, bin256, bout64);
-            testVectorResize(sspec256, sspec128, bin256, bout128);
-            testVectorResize(sspec256, sspec256, bin256, bout256);
-            testVectorResize(sspec256, sspec512, bin256, bout512);
-            testVectorResize(sspec256, sspecMax, bin256, boutMax);
+            testVectorReshape(sspec256, sspec64, bin256, bout64);
+            testVectorReshape(sspec256, sspec128, bin256, bout128);
+            testVectorReshape(sspec256, sspec256, bin256, bout256);
+            testVectorReshape(sspec256, sspec512, bin256, bout512);
+            testVectorReshape(sspec256, sspecMax, bin256, boutMax);
 
-            testVectorResize(sspec512, sspec64, bin512, bout64);
-            testVectorResize(sspec512, sspec128, bin512, bout128);
-            testVectorResize(sspec512, sspec256, bin512, bout256);
-            testVectorResize(sspec512, sspec512, bin512, bout512);
-            testVectorResize(sspec512, sspecMax, bin512, boutMax);
+            testVectorReshape(sspec512, sspec64, bin512, bout64);
+            testVectorReshape(sspec512, sspec128, bin512, bout128);
+            testVectorReshape(sspec512, sspec256, bin512, bout256);
+            testVectorReshape(sspec512, sspec512, bin512, bout512);
+            testVectorReshape(sspec512, sspecMax, bin512, boutMax);
 
-            testVectorResize(sspecMax, sspec64, binMax, bout64);
-            testVectorResize(sspecMax, sspec128, binMax, bout128);
-            testVectorResize(sspecMax, sspec256, binMax, bout256);
-            testVectorResize(sspecMax, sspec512, binMax, bout512);
-            testVectorResize(sspecMax, sspecMax, binMax, boutMax);
+            testVectorReshape(sspecMax, sspec64, binMax, bout64);
+            testVectorReshape(sspecMax, sspec128, binMax, bout128);
+            testVectorReshape(sspecMax, sspec256, binMax, bout256);
+            testVectorReshape(sspecMax, sspec512, binMax, bout512);
+            testVectorReshape(sspecMax, sspecMax, binMax, boutMax);
         }
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void testResizeInt(IntFunction<byte[]> fa) {
+    static void testReshapeInt(IntFunction<byte[]> fa) {
         byte[] bin64 = fa.apply(64/Byte.SIZE);
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
@@ -394,40 +394,40 @@ public class VectorReshapeTests {
         byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
-            testVectorResize(ispec64, ispec64, bin64, bout64);
-            testVectorResize(ispec64, ispec128, bin64, bout128);
-            testVectorResize(ispec64, ispec256, bin64, bout256);
-            testVectorResize(ispec64, ispec512, bin64, bout512);
-            testVectorResize(ispec64, ispecMax, bin64, boutMax);
+            testVectorReshape(ispec64, ispec64, bin64, bout64);
+            testVectorReshape(ispec64, ispec128, bin64, bout128);
+            testVectorReshape(ispec64, ispec256, bin64, bout256);
+            testVectorReshape(ispec64, ispec512, bin64, bout512);
+            testVectorReshape(ispec64, ispecMax, bin64, boutMax);
 
-            testVectorResize(ispec128, ispec64, bin128, bout64);
-            testVectorResize(ispec128, ispec128, bin128, bout128);
-            testVectorResize(ispec128, ispec256, bin128, bout256);
-            testVectorResize(ispec128, ispec512, bin128, bout512);
-            testVectorResize(ispec128, ispecMax, bin128, boutMax);
+            testVectorReshape(ispec128, ispec64, bin128, bout64);
+            testVectorReshape(ispec128, ispec128, bin128, bout128);
+            testVectorReshape(ispec128, ispec256, bin128, bout256);
+            testVectorReshape(ispec128, ispec512, bin128, bout512);
+            testVectorReshape(ispec128, ispecMax, bin128, boutMax);
 
-            testVectorResize(ispec256, ispec64, bin256, bout64);
-            testVectorResize(ispec256, ispec128, bin256, bout128);
-            testVectorResize(ispec256, ispec256, bin256, bout256);
-            testVectorResize(ispec256, ispec512, bin256, bout512);
-            testVectorResize(ispec256, ispecMax, bin256, boutMax);
+            testVectorReshape(ispec256, ispec64, bin256, bout64);
+            testVectorReshape(ispec256, ispec128, bin256, bout128);
+            testVectorReshape(ispec256, ispec256, bin256, bout256);
+            testVectorReshape(ispec256, ispec512, bin256, bout512);
+            testVectorReshape(ispec256, ispecMax, bin256, boutMax);
 
-            testVectorResize(ispec512, ispec64, bin512, bout64);
-            testVectorResize(ispec512, ispec128, bin512, bout128);
-            testVectorResize(ispec512, ispec256, bin512, bout256);
-            testVectorResize(ispec512, ispec512, bin512, bout512);
-            testVectorResize(ispec512, ispecMax, bin512, boutMax);
+            testVectorReshape(ispec512, ispec64, bin512, bout64);
+            testVectorReshape(ispec512, ispec128, bin512, bout128);
+            testVectorReshape(ispec512, ispec256, bin512, bout256);
+            testVectorReshape(ispec512, ispec512, bin512, bout512);
+            testVectorReshape(ispec512, ispecMax, bin512, boutMax);
 
-            testVectorResize(ispecMax, ispec64, binMax, bout64);
-            testVectorResize(ispecMax, ispec128, binMax, bout128);
-            testVectorResize(ispecMax, ispec256, binMax, bout256);
-            testVectorResize(ispecMax, ispec512, binMax, bout512);
-            testVectorResize(ispecMax, ispecMax, binMax, boutMax);
+            testVectorReshape(ispecMax, ispec64, binMax, bout64);
+            testVectorReshape(ispecMax, ispec128, binMax, bout128);
+            testVectorReshape(ispecMax, ispec256, binMax, bout256);
+            testVectorReshape(ispecMax, ispec512, binMax, bout512);
+            testVectorReshape(ispecMax, ispecMax, binMax, boutMax);
         }
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void testResizeLong(IntFunction<byte[]> fa) {
+    static void testReshapeLong(IntFunction<byte[]> fa) {
         byte[] bin64 = fa.apply(64/Byte.SIZE);
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
@@ -440,40 +440,40 @@ public class VectorReshapeTests {
         byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
-            testVectorResize(lspec64, lspec64, bin64, bout64);
-            testVectorResize(lspec64, lspec128, bin64, bout128);
-            testVectorResize(lspec64, lspec256, bin64, bout256);
-            testVectorResize(lspec64, lspec512, bin64, bout512);
-            testVectorResize(lspec64, lspecMax, bin64, boutMax);
+            testVectorReshape(lspec64, lspec64, bin64, bout64);
+            testVectorReshape(lspec64, lspec128, bin64, bout128);
+            testVectorReshape(lspec64, lspec256, bin64, bout256);
+            testVectorReshape(lspec64, lspec512, bin64, bout512);
+            testVectorReshape(lspec64, lspecMax, bin64, boutMax);
 
-            testVectorResize(lspec128, lspec64, bin128, bout64);
-            testVectorResize(lspec128, lspec128, bin128, bout128);
-            testVectorResize(lspec128, lspec256, bin128, bout256);
-            testVectorResize(lspec128, lspec512, bin128, bout512);
-            testVectorResize(lspec128, lspecMax, bin128, boutMax);
+            testVectorReshape(lspec128, lspec64, bin128, bout64);
+            testVectorReshape(lspec128, lspec128, bin128, bout128);
+            testVectorReshape(lspec128, lspec256, bin128, bout256);
+            testVectorReshape(lspec128, lspec512, bin128, bout512);
+            testVectorReshape(lspec128, lspecMax, bin128, boutMax);
 
-            testVectorResize(lspec256, lspec64, bin256, bout64);
-            testVectorResize(lspec256, lspec128, bin256, bout128);
-            testVectorResize(lspec256, lspec256, bin256, bout256);
-            testVectorResize(lspec256, lspec512, bin256, bout512);
-            testVectorResize(lspec256, lspecMax, bin256, boutMax);
+            testVectorReshape(lspec256, lspec64, bin256, bout64);
+            testVectorReshape(lspec256, lspec128, bin256, bout128);
+            testVectorReshape(lspec256, lspec256, bin256, bout256);
+            testVectorReshape(lspec256, lspec512, bin256, bout512);
+            testVectorReshape(lspec256, lspecMax, bin256, boutMax);
 
-            testVectorResize(lspec512, lspec64, bin512, bout64);
-            testVectorResize(lspec512, lspec128, bin512, bout128);
-            testVectorResize(lspec512, lspec256, bin512, bout256);
-            testVectorResize(lspec512, lspec512, bin512, bout512);
-            testVectorResize(lspec512, lspecMax, bin512, boutMax);
+            testVectorReshape(lspec512, lspec64, bin512, bout64);
+            testVectorReshape(lspec512, lspec128, bin512, bout128);
+            testVectorReshape(lspec512, lspec256, bin512, bout256);
+            testVectorReshape(lspec512, lspec512, bin512, bout512);
+            testVectorReshape(lspec512, lspecMax, bin512, boutMax);
 
-            testVectorResize(lspecMax, lspec64, binMax, bout64);
-            testVectorResize(lspecMax, lspec128, binMax, bout128);
-            testVectorResize(lspecMax, lspec256, binMax, bout256);
-            testVectorResize(lspecMax, lspec512, binMax, bout512);
-            testVectorResize(lspecMax, lspecMax, binMax, boutMax);
+            testVectorReshape(lspecMax, lspec64, binMax, bout64);
+            testVectorReshape(lspecMax, lspec128, binMax, bout128);
+            testVectorReshape(lspecMax, lspec256, binMax, bout256);
+            testVectorReshape(lspecMax, lspec512, binMax, bout512);
+            testVectorReshape(lspecMax, lspecMax, binMax, boutMax);
         }
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void testResizeFloat(IntFunction<byte[]> fa) {
+    static void testReshapeFloat(IntFunction<byte[]> fa) {
         byte[] bin64 = fa.apply(64/Byte.SIZE);
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
@@ -486,40 +486,40 @@ public class VectorReshapeTests {
         byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
-            testVectorResize(fspec64, fspec64, bin64, bout64);
-            testVectorResize(fspec64, fspec128, bin64, bout128);
-            testVectorResize(fspec64, fspec256, bin64, bout256);
-            testVectorResize(fspec64, fspec512, bin64, bout512);
-            testVectorResize(fspec64, fspecMax, bin64, boutMax);
+            testVectorReshape(fspec64, fspec64, bin64, bout64);
+            testVectorReshape(fspec64, fspec128, bin64, bout128);
+            testVectorReshape(fspec64, fspec256, bin64, bout256);
+            testVectorReshape(fspec64, fspec512, bin64, bout512);
+            testVectorReshape(fspec64, fspecMax, bin64, boutMax);
 
-            testVectorResize(fspec128, fspec64, bin128, bout64);
-            testVectorResize(fspec128, fspec128, bin128, bout128);
-            testVectorResize(fspec128, fspec256, bin128, bout256);
-            testVectorResize(fspec128, fspec512, bin128, bout512);
-            testVectorResize(fspec128, fspecMax, bin128, boutMax);
+            testVectorReshape(fspec128, fspec64, bin128, bout64);
+            testVectorReshape(fspec128, fspec128, bin128, bout128);
+            testVectorReshape(fspec128, fspec256, bin128, bout256);
+            testVectorReshape(fspec128, fspec512, bin128, bout512);
+            testVectorReshape(fspec128, fspecMax, bin128, boutMax);
 
-            testVectorResize(fspec256, fspec64, bin256, bout64);
-            testVectorResize(fspec256, fspec128, bin256, bout128);
-            testVectorResize(fspec256, fspec256, bin256, bout256);
-            testVectorResize(fspec256, fspec512, bin256, bout512);
-            testVectorResize(fspec256, fspecMax, bin256, boutMax);
+            testVectorReshape(fspec256, fspec64, bin256, bout64);
+            testVectorReshape(fspec256, fspec128, bin256, bout128);
+            testVectorReshape(fspec256, fspec256, bin256, bout256);
+            testVectorReshape(fspec256, fspec512, bin256, bout512);
+            testVectorReshape(fspec256, fspecMax, bin256, boutMax);
 
-            testVectorResize(fspec512, fspec64, bin512, bout64);
-            testVectorResize(fspec512, fspec128, bin512, bout128);
-            testVectorResize(fspec512, fspec256, bin512, bout256);
-            testVectorResize(fspec512, fspec512, bin512, bout512);
-            testVectorResize(fspec512, fspecMax, bin512, boutMax);
+            testVectorReshape(fspec512, fspec64, bin512, bout64);
+            testVectorReshape(fspec512, fspec128, bin512, bout128);
+            testVectorReshape(fspec512, fspec256, bin512, bout256);
+            testVectorReshape(fspec512, fspec512, bin512, bout512);
+            testVectorReshape(fspec512, fspecMax, bin512, boutMax);
 
-            testVectorResize(fspecMax, fspec64, binMax, bout64);
-            testVectorResize(fspecMax, fspec128, binMax, bout128);
-            testVectorResize(fspecMax, fspec256, binMax, bout256);
-            testVectorResize(fspecMax, fspec512, binMax, bout512);
-            testVectorResize(fspecMax, fspecMax, binMax, boutMax);
+            testVectorReshape(fspecMax, fspec64, binMax, bout64);
+            testVectorReshape(fspecMax, fspec128, binMax, bout128);
+            testVectorReshape(fspecMax, fspec256, binMax, bout256);
+            testVectorReshape(fspecMax, fspec512, binMax, bout512);
+            testVectorReshape(fspecMax, fspecMax, binMax, boutMax);
         }
     }
 
     @Test(dataProvider = "byteUnaryOpProvider")
-    static void testResizeDouble(IntFunction<byte[]> fa) {
+    static void testReshapeDouble(IntFunction<byte[]> fa) {
         byte[] bin64 = fa.apply(64/Byte.SIZE);
         byte[] bin128 = fa.apply(128/Byte.SIZE);
         byte[] bin256 = fa.apply(256/Byte.SIZE);
@@ -532,35 +532,35 @@ public class VectorReshapeTests {
         byte[] boutMax = new byte[binMax.length];
 
         for (int i = 0; i < NUM_ITER; i++) {
-            testVectorResize(dspec64, dspec64, bin64, bout64);
-            testVectorResize(dspec64, dspec128, bin64, bout128);
-            testVectorResize(dspec64, dspec256, bin64, bout256);
-            testVectorResize(dspec64, dspec512, bin64, bout512);
-            testVectorResize(dspec64, dspecMax, bin64, boutMax);
+            testVectorReshape(dspec64, dspec64, bin64, bout64);
+            testVectorReshape(dspec64, dspec128, bin64, bout128);
+            testVectorReshape(dspec64, dspec256, bin64, bout256);
+            testVectorReshape(dspec64, dspec512, bin64, bout512);
+            testVectorReshape(dspec64, dspecMax, bin64, boutMax);
 
-            testVectorResize(dspec128, dspec64, bin128, bout64);
-            testVectorResize(dspec128, dspec128, bin128, bout128);
-            testVectorResize(dspec128, dspec256, bin128, bout256);
-            testVectorResize(dspec128, dspec512, bin128, bout512);
-            testVectorResize(dspec128, dspecMax, bin128, boutMax);
+            testVectorReshape(dspec128, dspec64, bin128, bout64);
+            testVectorReshape(dspec128, dspec128, bin128, bout128);
+            testVectorReshape(dspec128, dspec256, bin128, bout256);
+            testVectorReshape(dspec128, dspec512, bin128, bout512);
+            testVectorReshape(dspec128, dspecMax, bin128, boutMax);
 
-            testVectorResize(dspec256, dspec64, bin256, bout64);
-            testVectorResize(dspec256, dspec128, bin256, bout128);
-            testVectorResize(dspec256, dspec256, bin256, bout256);
-            testVectorResize(dspec256, dspec512, bin256, bout512);
-            testVectorResize(dspec256, dspecMax, bin256, boutMax);
+            testVectorReshape(dspec256, dspec64, bin256, bout64);
+            testVectorReshape(dspec256, dspec128, bin256, bout128);
+            testVectorReshape(dspec256, dspec256, bin256, bout256);
+            testVectorReshape(dspec256, dspec512, bin256, bout512);
+            testVectorReshape(dspec256, dspecMax, bin256, boutMax);
 
-            testVectorResize(dspec512, dspec64, bin512, bout64);
-            testVectorResize(dspec512, dspec128, bin512, bout128);
-            testVectorResize(dspec512, dspec256, bin512, bout256);
-            testVectorResize(dspec512, dspec512, bin512, bout512);
-            testVectorResize(dspec512, dspecMax, bin512, boutMax);
+            testVectorReshape(dspec512, dspec64, bin512, bout64);
+            testVectorReshape(dspec512, dspec128, bin512, bout128);
+            testVectorReshape(dspec512, dspec256, bin512, bout256);
+            testVectorReshape(dspec512, dspec512, bin512, bout512);
+            testVectorReshape(dspec512, dspecMax, bin512, boutMax);
 
-            testVectorResize(dspecMax, dspec64, binMax, bout64);
-            testVectorResize(dspecMax, dspec128, binMax, bout128);
-            testVectorResize(dspecMax, dspec256, binMax, bout256);
-            testVectorResize(dspecMax, dspec512, binMax, bout512);
-            testVectorResize(dspecMax, dspecMax, binMax, boutMax);
+            testVectorReshape(dspecMax, dspec64, binMax, bout64);
+            testVectorReshape(dspecMax, dspec128, binMax, bout128);
+            testVectorReshape(dspecMax, dspec256, binMax, bout256);
+            testVectorReshape(dspecMax, dspec512, binMax, bout512);
+            testVectorReshape(dspecMax, dspecMax, binMax, boutMax);
         }
     }
 
@@ -570,7 +570,7 @@ public class VectorReshapeTests {
        assert(input.length == output.length);
 
         Vector<E> av = a.fromByteArray(input, 0);
-        Vector<F> bv = b.rebracket(av);
+        Vector<F> bv = av.reinterpret(b);
         bv.intoByteArray(output, 0);
 
         Assert.assertEquals(input, output);
@@ -828,7 +828,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = a.fromArray(input, 0);
-        FloatVector bv = b.cast(av);
+        FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -846,7 +846,7 @@ public class VectorReshapeTests {
 
         ByteVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -861,7 +861,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = a.fromArray(input, 0);
-        FloatVector bv = b.cast(av);
+        FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -879,7 +879,7 @@ public class VectorReshapeTests {
 
         ShortVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -894,7 +894,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = a.fromArray(input, 0);
-        FloatVector bv = b.cast(av);
+        FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -912,7 +912,7 @@ public class VectorReshapeTests {
 
         IntVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -927,7 +927,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = a.fromArray(input, 0);
-        FloatVector bv = b.cast(av);
+        FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -945,7 +945,7 @@ public class VectorReshapeTests {
 
         LongVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -960,7 +960,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = a.fromArray(input, 0);
-        FloatVector bv = b.cast(av);
+        FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -978,7 +978,7 @@ public class VectorReshapeTests {
 
         FloatVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -993,7 +993,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = a.fromArray(input, 0);
-        FloatVector bv = b.cast(av);
+        FloatVector bv = (FloatVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1011,7 +1011,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1026,7 +1026,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = a.fromArray(input, 0);
-        ByteVector bv = b.cast(av);
+        ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1044,7 +1044,7 @@ public class VectorReshapeTests {
 
         ByteVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1059,7 +1059,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = a.fromArray(input, 0);
-        ByteVector bv = b.cast(av);
+        ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1077,7 +1077,7 @@ public class VectorReshapeTests {
 
         ShortVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1092,7 +1092,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = a.fromArray(input, 0);
-        ByteVector bv = b.cast(av);
+        ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1110,7 +1110,7 @@ public class VectorReshapeTests {
 
         IntVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1125,7 +1125,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = a.fromArray(input, 0);
-        ByteVector bv = b.cast(av);
+        ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1143,7 +1143,7 @@ public class VectorReshapeTests {
 
         LongVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1158,7 +1158,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = a.fromArray(input, 0);
-        ByteVector bv = b.cast(av);
+        ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1176,7 +1176,7 @@ public class VectorReshapeTests {
 
         FloatVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1191,7 +1191,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = a.fromArray(input, 0);
-        ByteVector bv = b.cast(av);
+        ByteVector bv = (ByteVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1209,7 +1209,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1224,7 +1224,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = a.fromArray(input, 0);
-        ShortVector bv = b.cast(av);
+        ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1242,7 +1242,7 @@ public class VectorReshapeTests {
 
         ByteVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1257,7 +1257,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = a.fromArray(input, 0);
-        ShortVector bv = b.cast(av);
+        ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1275,7 +1275,7 @@ public class VectorReshapeTests {
 
         ShortVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1290,7 +1290,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = a.fromArray(input, 0);
-        ShortVector bv = b.cast(av);
+        ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1308,7 +1308,7 @@ public class VectorReshapeTests {
 
         IntVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1323,7 +1323,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = a.fromArray(input, 0);
-        ShortVector bv = b.cast(av);
+        ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1341,7 +1341,7 @@ public class VectorReshapeTests {
 
         LongVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1356,7 +1356,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = a.fromArray(input, 0);
-        ShortVector bv = b.cast(av);
+        ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1374,7 +1374,7 @@ public class VectorReshapeTests {
 
         FloatVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1389,7 +1389,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = a.fromArray(input, 0);
-        ShortVector bv = b.cast(av);
+        ShortVector bv = (ShortVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1407,7 +1407,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1422,7 +1422,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = a.fromArray(input, 0);
-        IntVector bv = b.cast(av);
+        IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1440,7 +1440,7 @@ public class VectorReshapeTests {
 
         ByteVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1455,7 +1455,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = a.fromArray(input, 0);
-        IntVector bv = b.cast(av);
+        IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1473,7 +1473,7 @@ public class VectorReshapeTests {
 
         ShortVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1488,7 +1488,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = a.fromArray(input, 0);
-        IntVector bv = b.cast(av);
+        IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1506,7 +1506,7 @@ public class VectorReshapeTests {
 
         IntVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1521,7 +1521,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = a.fromArray(input, 0);
-        IntVector bv = b.cast(av);
+        IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1539,7 +1539,7 @@ public class VectorReshapeTests {
 
         LongVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1554,7 +1554,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = a.fromArray(input, 0);
-        IntVector bv = b.cast(av);
+        IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1572,7 +1572,7 @@ public class VectorReshapeTests {
 
         FloatVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1587,7 +1587,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = a.fromArray(input, 0);
-        IntVector bv = b.cast(av);
+        IntVector bv = (IntVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1605,7 +1605,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1620,7 +1620,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = a.fromArray(input, 0);
-        LongVector bv = b.cast(av);
+        LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1638,7 +1638,7 @@ public class VectorReshapeTests {
 
         ByteVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1653,7 +1653,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = a.fromArray(input, 0);
-        LongVector bv = b.cast(av);
+        LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1671,7 +1671,7 @@ public class VectorReshapeTests {
 
         ShortVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1686,7 +1686,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = a.fromArray(input, 0);
-        LongVector bv = b.cast(av);
+        LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1704,7 +1704,7 @@ public class VectorReshapeTests {
 
         IntVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1719,7 +1719,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = a.fromArray(input, 0);
-        LongVector bv = b.cast(av);
+        LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1737,7 +1737,7 @@ public class VectorReshapeTests {
 
         LongVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1752,7 +1752,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = a.fromArray(input, 0);
-        LongVector bv = b.cast(av);
+        LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1770,7 +1770,7 @@ public class VectorReshapeTests {
 
         FloatVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1785,7 +1785,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = a.fromArray(input, 0);
-        LongVector bv = b.cast(av);
+        LongVector bv = (LongVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1803,7 +1803,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1818,7 +1818,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ByteVector av = a.fromArray(input, 0);
-        DoubleVector bv = b.cast(av);
+        DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1836,7 +1836,7 @@ public class VectorReshapeTests {
 
         ByteVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1851,7 +1851,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         ShortVector av = a.fromArray(input, 0);
-        DoubleVector bv = b.cast(av);
+        DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1869,7 +1869,7 @@ public class VectorReshapeTests {
 
         ShortVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1884,7 +1884,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         IntVector av = a.fromArray(input, 0);
-        DoubleVector bv = b.cast(av);
+        DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1902,7 +1902,7 @@ public class VectorReshapeTests {
 
         IntVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1917,7 +1917,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         LongVector av = a.fromArray(input, 0);
-        DoubleVector bv = b.cast(av);
+        DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1935,7 +1935,7 @@ public class VectorReshapeTests {
 
         LongVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1950,7 +1950,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         FloatVector av = a.fromArray(input, 0);
-        DoubleVector bv = b.cast(av);
+        DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -1968,7 +1968,7 @@ public class VectorReshapeTests {
 
         FloatVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));
@@ -1983,7 +1983,7 @@ public class VectorReshapeTests {
         assert(output.length == b.length());
 
         DoubleVector av = a.fromArray(input, 0);
-        DoubleVector bv = b.cast(av);
+        DoubleVector bv = (DoubleVector) av.cast(b);
         bv.intoArray(output, 0);
 
         for (int i = 0; i < Math.min(input.length, output.length); i++) {
@@ -2001,7 +2001,7 @@ public class VectorReshapeTests {
 
         DoubleVector av = a.fromArray(input, 0);
         try {
-            b.cast(av);
+            av.cast(b);
             Assert.fail(String.format(
                     "Cast failed to throw IllegalArgumentException for differing species lengths for %s and %s",
                     a, b));

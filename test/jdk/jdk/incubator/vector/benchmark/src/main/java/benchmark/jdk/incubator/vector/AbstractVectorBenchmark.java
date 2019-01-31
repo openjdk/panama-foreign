@@ -93,8 +93,8 @@ public class AbstractVectorBenchmark {
         int vlen = from.length();
         var lo_mask = mask(from, to, 0);
 
-        var v1 = lo.resize(to);
-        var v2 = hi.resize(to).shiftER(vlen);
+        var v1 = lo.reshape(to);
+        var v2 = hi.reshape(to).shiftER(vlen);
         var r = v2.blend(v1, lo_mask);
         return r;
     }
@@ -102,7 +102,7 @@ public class AbstractVectorBenchmark {
     static Vector.Mask<Integer> mask(IntVector.IntSpecies from, IntVector.IntSpecies to, int i) {
         int vlen = from.length();
         var v1 = from.broadcast(1);    //                         [1 1 ... 1]
-        var v2 = v1.resize(to);        // [0 0 ... 0 |   ...     | 1 1 ... 1]
+        var v2 = v1.reshape(to);        // [0 0 ... 0 |   ...     | 1 1 ... 1]
         var v3 = v2.shiftER(i * vlen); // [0 0 ... 0 | 1 1 ... 1 | 0 0 ... 0]
         return v3.notEqual(0);         // [F F ... F | T T ... T | F F ... F]
     }
@@ -112,7 +112,7 @@ public class AbstractVectorBenchmark {
         var acc = species.zero();
         int limit = va.length() / species.length();
         for (int k = 0; k < limit; k++) {
-            var vb = species.cast(va.shiftEL(k * B64.length()).resize(B64)).and(0xFF);
+            var vb = ((IntVector)(va.shiftEL(k * B64.length()).reshape(B64).cast(species))).and(0xFF);
             acc = acc.add(vb);
         }
         return acc;

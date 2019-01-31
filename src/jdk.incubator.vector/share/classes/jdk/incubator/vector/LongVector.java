@@ -356,10 +356,7 @@ public abstract class LongVector extends Vector<Long> {
     public abstract LongVector rearrange(Shuffle<Long> m);
 
     @Override
-    @ForceInline
-    public LongVector resize(Species<Long> species) {
-        return (LongVector) species.resize(this);
-    }
+    public abstract LongVector reshape(Species<Long> s);
 
     @Override
     public abstract LongVector rotateEL(int i);
@@ -1298,24 +1295,6 @@ public abstract class LongVector extends Vector<Long> {
 
         @Override
         public abstract LongVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Long> m);
-
-        @Override
-        public <F> LongVector reshape(Vector<F> o) {
-            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
-            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-            o.intoByteBuffer(bb, 0);
-            return fromByteBuffer(bb, 0);
-        }
-
-        @Override
-        public abstract <F> LongVector rebracket(Vector<F> o);
-
-        @Override
-        public abstract LongVector resize(Vector<Long> o);
-
-        @Override
-        public abstract <F> LongVector cast(Vector<F> v);
-
     }
 
     /**

@@ -28,6 +28,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.vm.annotation.ForceInline;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.function.IntUnaryOperator;
 
 /**
@@ -685,84 +686,93 @@ public abstract class Vector<E> {
     // Bitwise preserving
 
     /**
-     * Transforms this vector to a vector of the given species shape {@code T}
-     * and element type {@code F}.
+     * Transforms this vector to a vector of the given species of element type {@code F}.
      * <p>
-     * This method behaves as if it returns the result of calling
-     * {@link Species#reshape(Vector) reshape} on the given species with this
-     * vector:
+     * The underlying bits of this vector are copied to the resulting
+     * vector without modification, but those bits, before copying, may be
+     * truncated if the this vector's bit size is greater than desired vector's bit
+     * size, or appended to with zero bits if this vector's bit size is less
+     * than desired vector's bit size.
+     * <p>
+     * The method behaves as if this vector is stored into a byte buffer
+     * and then the desired vector is loaded from the byte buffer using
+     * native byte ordering. The implication is that ByteBuffer reads bytes
+     * and then composes them based on the byte ordering so the result
+     * depends on this composition.
+     * <p>
+     * For example, on a system with ByteOrder.LITTLE_ENDIAN, loading from
+     * byte array with values {0,1,2,3} and reshaping to int, leads to bytes
+     * being composed in order 0x3 0x2 0x1 0x0 which is decimal value 50462976.
+     * On a system with ByteOrder.BIG_ENDIAN, the value is instead 66051 because
+     * bytes are composed in order 0x0 0x1 0x2 0x3.
+     * <p>
+     * The following pseudocode expresses the behaviour:
      * <pre>{@code
-     * return species.reshape(this);
+     * int blen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
+     * ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+     * this.intoByteBuffer(bb, 0);
+     * return s.fromByteBuffer(bb, 0);
      * }</pre>
      *
-     * @param species the species
+     * @param s species of desired vector
      * @param <F> the boxed element type of the species
-     * @return a vector transformed by shape and element type
-     * @see Species#reshape(Vector)
+     * @return a vector transformed, by shape and element type, from this vector
      */
     @ForceInline
-    public <F> Vector<F> reshape(Species<F> species) {
-        return species.reshape(this);
+    public abstract <F> Vector<F> reinterpret(Species<F> s);
+
+    @ForceInline
+    <F> Vector<F> defaultReinterpret(Species<F> s) {
+        int blen = Math.max(s.bitSize(), this.species().bitSize()) / Byte.SIZE;
+        ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
+        this.intoByteBuffer(bb, 0);
+        return s.fromByteBuffer(bb, 0);
     }
 
     /**
-     * Transforms this vector to a vector of the given species element type
-     * {@code F}, where this vector's shape {@code S} is preserved.
+     * Transforms this vector to a vector of same element type but different shape identified by species.
      * <p>
-     * This method behaves as if it returns the result of calling
-     * {@link Species#rebracket(Vector) rebracket} on the given species with this
-     * vector:
+     * The lane elements of this vector are copied without
+     * modification to the resulting vector, but those lane elements, before
+     * copying, may be truncated if this vector's length is greater than the desired
+     * vector's length, or appended to with default element values if this
+     * vector's length is less than desired vector's length.
+     * <p>
+     * The method behaves as if this vector is stored into a byte array
+     * and then the returned vector is loaded from the byte array.
+     * The following pseudocode expresses the behaviour:
      * <pre>{@code
-     * return species.rebracket(this);
+     * int alen = Math.max(this.bitSize(), s.bitSize()) / Byte.SIZE;
+     * byte[] a = new byte[alen];
+     * this.intoByteArray(a, 0);
+     * return s.fromByteArray(a, 0);
      * }</pre>
      *
-     * @param species the species
-     * @param <F> the boxed element type of the species
-     * @return a vector transformed element type
-     * @see Species#rebracket(Vector)
+     * @param s species of the desired vector
+     * @return a vector transformed, by shape, from this vector
      */
-    @ForceInline
-    public <F> Vector<F> rebracket(Species<F> species) {
-        return species.rebracket(this);
-    }
-
-    /**
-     * Transforms this vector to a vector of the given species shape {@code T},
-     * where this vector's element type {@code E} is preserved.
-     * <p>
-     * This method behaves as if it returns the result of calling
-     * {@link Species#resize(Vector) resize} on the given species with this vector:
-     * <pre>{@code
-     * return species.resize(this);
-     * }</pre>
-     *
-     * @param species the species
-     * @return a vector transformed by shape
-     * @see Species#resize(Vector)
-     */
-    public abstract Vector<E> resize(Species<E> species);
+    public abstract Vector<E> reshape(Species<E> s);
 
     // Cast
 
     /**
-     * Converts this vector to a vector of the given species shape {@code T} and
-     * element type {@code F}.
+     * Converts this vector to a vector of the given species element type {@code F}.
      * <p>
-     * This method behaves as if it returns the result of calling
-     * {@link Species#cast(Vector) cast} on the given species with this vector:
-     * <pre>{@code
-     * return species.cast(this);
-     * }</pre>
+     * For each vector lane up to the length of this vector or
+     * desired vector, which ever is the minimum, and where {@code N} is the
+     * vector lane index, the element at index {@code N} of primitive type
+     * {@code E} is converted, according to primitive conversion rules
+     * specified by the Java Language Specification, to a value of primitive
+     * type {@code F} and placed into the resulting vector at lane index
+     * {@code N}. If desired vector's length is greater than this
+     * vector's length then the default primitive value is placed into
+     * subsequent lanes of the resulting vector.
      *
-     * @param species the species
+     * @param s species of the desired vector
      * @param <F> the boxed element type of the species
-     * @return a vector converted by shape and element type
-     * @see Species#cast(Vector)
+     * @return a vector converted by shape and element type from this vector
      */
-    @ForceInline
-    public <F> Vector<F> cast(Species<F> species) {
-        return species.cast(this);
-    }
+    public abstract <F> Vector<F> cast(Species<F> s);
 
     //Array stores
 
@@ -935,6 +945,8 @@ public abstract class Vector<E> {
          * @return the element size, in bits
          */
         public abstract int elementSize();
+
+        abstract Class<?> vectorType();
 
         /**
          * Returns the shape of masks, shuffles, and vectors produced by this
@@ -1196,167 +1208,8 @@ public abstract class Vector<E> {
          * {@code i > a.length - this.length()}
          */
         public abstract Shuffle<E> shuffleFromArray(int[] a, int i);
-
-        // Shuffle iota, 0...N
-
-        // Vector type/shape transformations
-
-        /**
-         * Transforms an input vector of shape {@code T} and element type
-         * {@code F} to a vector of this species shape {@code S} and element
-         * type {@code E}.
-         * <p>
-         * The underlying bits of the input vector are copied to the resulting
-         * vector without modification, but those bits, before copying, may be
-         * truncated if the vector bit size is greater than this species bit
-         * size, or appended to with zero bits if the vector bit size is less
-         * than this species bit size.
-         * <p>
-         * The method behaves as if the input vector is stored into a byte buffer
-         * and then the returned vector is loaded from the byte buffer using
-         * native byte ordering. The implication is that ByteBuffer reads bytes
-         * and then composes them based on the byte ordering so the result
-         * depends on this composition.
-         * <p>
-         * For example, on a system with ByteOrder.LITTLE_ENDIAN, loading from
-         * byte array with values {0,1,2,3} and reshaping to int, leads to bytes
-         * being composed in order 0x3 0x2 0x1 0x0 which is decimal value 50462976.
-         * On a system with ByteOrder.BIG_ENDIAN, the value is instead 66051 because
-         * bytes are composed in order 0x0 0x1 0x2 0x3.
-         * <p>
-         * The following pseudocode expresses the behaviour:
-         * <pre>{@code
-         * int blen = Math.max(v.bitSize(), bitSize()) / Byte.SIZE;
-         * ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-         * v.intoByteBuffer(bb, 0);
-         * return fromByteBuffer(bb, 0);
-         * }</pre>
-         *
-         * @param v the input vector
-         * @param <F> the boxed element type of the vector
-         * @return a vector transformed, by shape and element type, from an
-         * input vector
-         */
-        public abstract <F> Vector<E> reshape(Vector<F> v);
-
-        /**
-         * Transforms an input vector of element type {@code F} to a vector of
-         * this species element type {@code E}, where the this species shape
-         * {@code S} is preserved.
-         * <p>
-         * The underlying bits of the input vector are copied without
-         * modification to the resulting vector.
-         * <p>
-         * The method behaves as if the input vector is stored into a byte buffer
-         * and then the returned vector is loaded from the byte buffer using
-         * native byte ordering. The implication is that ByteBuffer reads bytes
-         * and then composes them based on the byte ordering so the result
-         * depends on this composition.
-         * <p>
-         * For example, on a system with ByteOrder.LITTLE_ENDIAN, loading from
-         * byte array with values {0,1,2,3} and rebracketing to int, leads to bytes
-         * being composed in order 0x3 0x2 0x1 0x0 which is decimal value 50462976.
-         * On a system with ByteOrder.BIG_ENDIAN, the value is instead 66051 because
-         * bytes are composed in order 0x0 0x1 0x2 0x3.
-         * <p>
-         * The following pseudocode expresses the behaviour:
-         * <pre>{@code
-         * ByteBuffer bb = ByteBuffer.allocate(v.bitSize()).order(ByteOrder.nativeOrder());
-         * v.intoByteBuffer(bb, 0);
-         * return fromByteBuffer(bb, 0);
-         * }</pre>
-         *
-         * @param v the input vector
-         * @param <F> the boxed element type of the vector
-         * @return a vector transformed, by element type, from an input vector
-         */
-        public abstract <F> Vector<E> rebracket(Vector<F> v);
-
-        /**
-         * Transforms an input vector of shape {@code T} to a vector of this
-         * species shape {@code S}, where the this species element type
-         * {@code E} is preserved.
-         * <p>
-         * The lane elements of the input vector are copied without
-         * modification to the resulting vector, but those lane elements, before
-         * copying, may be truncated if the vector length is greater than this
-         * species length, or appended to with default element values if the
-         * vector length is less than this species length.
-         * <p>
-         * The method behaves as if the input vector is stored into a byte array
-         * and then the returned vector is loaded from the byte array.
-         * The following pseudocode expresses the behaviour:
-         * <pre>{@code
-         * int alen = Math.max(v.bitSize(), this.bitSize()) / Byte.SIZE;
-         * byte[] a = new byte[alen];
-         * v.intoByteArray(a, 0);
-         * return fromByteArray(a, 0);
-         * }</pre>
-         *
-         * @param v the input vector
-         * @return a vector transformed, by shape, from an input vector
-         */
-        public abstract Vector<E> resize(Vector<E> v);
-
-        /**
-         * Converts an input vector of shape {@code T} and element type
-         * {@code F} to a vector of this species shape {@code S} and element
-         * type {@code E}.
-         * <p>
-         * For each input vector lane up to the length of the input vector or
-         * this species, which ever is the minimum, and where {@code N} is the
-         * vector lane index, the element at index {@code N} of primitive type
-         * {@code F} is converted, according to primitive conversion rules
-         * specified by the Java Language Specification, to a value of primitive
-         * type {@code E} and placed into the resulting vector at lane index
-         * {@code N}.  If this species length is greater than the input
-         * vector length then the default primitive value is placed into
-         * subsequent lanes of the resulting vector.
-         *
-         * @param v the input vector
-         * @param <F> the boxed element type of the vector
-         * @return a vector, converted by shape and element type, from an input
-         * vector.
-         */
-        public abstract <F> Vector<E> cast(Vector<F> v);
-
-        /**
-         * Converts a given mask of shape {@code T} and element type
-         * {@code F} to a mask of this species shape {@code S} and element
-         * type {@code E}.
-         * <p>
-         * For each mask lane, where {@code N} is the mask lane index, if the
-         * mask lane at index {@code N} is set, then the mask lane at index
-         * {@code N} of the resulting mask is set, otherwise that mask lane is
-         * not set.
-         *
-         * @param m the mask
-         * @param <F> the boxed element type of the mask
-         * @return a mask, converted by shape and element type, from a given
-         * mask.
-         * @throws IllegalArgumentException if the mask length and this species
-         * length differ
-         */
-        public abstract <F> Mask<E> cast(Mask<F> m);
-
-        /**
-         * Converts a given shuffle of shape {@code T} and element type
-         * {@code F} to a shuffle of this species shape {@code S} and element
-         * type {@code E}.
-         * <p>
-         * For each shuffle lane, where {@code N} is the mask lane index, the
-         * shuffle element at index {@code N} is placed, unmodified, into the
-         * resulting shuffle at index {@code N}.
-         *
-         * @param s the shuffle
-         * @param <F> the boxed element type of the mask
-         * @return a shuffle, converted by shape and element type, from a given
-         * shuffle.
-         * @throws IllegalArgumentException if the shuffle length and this
-         * species length differ
-         */
-        public abstract <F> Shuffle<E> cast(Shuffle<F> s);
     }
+        // Shuffle iota, 0...N
 
     /**
      * A {@code Mask} represents an ordered immutable sequence of {@code boolean}
@@ -1434,26 +1287,20 @@ public abstract class Vector<E> {
         public int length() { return species().length(); }
 
         /**
-         * Converts this mask to a mask of the given species shape {@code T} and
-         * element type {@code F}.
+         * Converts this mask to a mask of the given species shape of element type {@code F}.
          * <p>
-         * This method behaves as if it returns the result of calling
-         * {@link Species#cast(Mask) cast} on the given species with this mask:
-         * <pre>{@code
-         * return species.cast(this);
-         * }</pre>
+         * For each mask lane, where {@code N} is the lane index, if the
+         * mask lane at index {@code N} is set, then the mask lane at index
+         * {@code N} of the resulting mask is set, otherwise that mask lane is
+         * not set.
          *
-         * @param species the species
+         * @param s the species of the desired mask
          * @param <F> the boxed element type of the species
          * @return a mask converted by shape and element type
          * @throws IllegalArgumentException if this mask length and the species
          * length differ
-         * @see Species#cast(Mask)
          */
-        @ForceInline
-        public <F> Mask<F> cast(Species<F> species) {
-            return species.cast(this);
-        }
+        public abstract <F> Mask<F> cast(Species<F> s);
 
         /**
          * Returns the lane elements of this mask packed into a {@code long}
@@ -1630,27 +1477,19 @@ public abstract class Vector<E> {
         public int length() { return species().length(); }
 
         /**
-         * Converts this shuffle to a shuffle of the given species shape
-         * {@code T} and element type {@code F}.
+         * Converts this shuffle to a shuffle of the given species of element type {@code F}.
          * <p>
-         * This method behaves as if it returns the result of calling
-         * {@link Species#cast(Shuffle) cast} on the given species with this
-         * shuffle:
-         * <pre>{@code
-         * return species.cast(this);
-         * }</pre>
+         * For each shuffle lane, where {@code N} is the lane index, the
+         * shuffle element at index {@code N} is placed, unmodified, into the
+         * resulting shuffle at index {@code N}.
          *
-         * @param species the species
+         * @param species species of desired shuffle
          * @param <F> the boxed element type of the species
          * @return a shuffle converted by shape and element type
          * @throws IllegalArgumentException if this shuffle length and the
          * species length differ
-         * @see Species#cast(Mask)
          */
-        @ForceInline
-        public <F> Shuffle<F> cast(Species<F> species) {
-            return species.cast(this);
-        }
+        public abstract <F> Shuffle<F> cast(Species<F> species);
 
         /**
          * Returns an {@code int} array containing the lane elements of this

@@ -356,10 +356,7 @@ public abstract class ShortVector extends Vector<Short> {
     public abstract ShortVector rearrange(Shuffle<Short> m);
 
     @Override
-    @ForceInline
-    public ShortVector resize(Species<Short> species) {
-        return (ShortVector) species.resize(this);
-    }
+    public abstract ShortVector reshape(Species<Short> s);
 
     @Override
     public abstract ShortVector rotateEL(int i);
@@ -1171,24 +1168,6 @@ public abstract class ShortVector extends Vector<Short> {
 
         @Override
         public abstract ShortVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Short> m);
-
-        @Override
-        public <F> ShortVector reshape(Vector<F> o) {
-            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
-            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-            o.intoByteBuffer(bb, 0);
-            return fromByteBuffer(bb, 0);
-        }
-
-        @Override
-        public abstract <F> ShortVector rebracket(Vector<F> o);
-
-        @Override
-        public abstract ShortVector resize(Vector<Short> o);
-
-        @Override
-        public abstract <F> ShortVector cast(Vector<F> v);
-
     }
 
     /**

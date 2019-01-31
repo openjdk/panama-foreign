@@ -169,7 +169,7 @@ public class VectorHash {
 
             for (int j = 0; j < byteSpecies.length() / intSpecies.length(); j++) {
                 // Reduce the size of the byte vector and then cast to int
-                IntVector x = intSpecies.cast(bytesForIntsSpecies.resize(b));
+                IntVector x = (IntVector)(b.reshape(bytesForIntsSpecies)).cast(intSpecies);
 
                 h = h * top_h_coeff + x.mul(v_h_coeff).addAll();
 

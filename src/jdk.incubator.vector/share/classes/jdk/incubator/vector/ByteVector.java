@@ -356,10 +356,7 @@ public abstract class ByteVector extends Vector<Byte> {
     public abstract ByteVector rearrange(Shuffle<Byte> m);
 
     @Override
-    @ForceInline
-    public ByteVector resize(Species<Byte> species) {
-        return (ByteVector) species.resize(this);
-    }
+    public abstract ByteVector reshape(Species<Byte> s);
 
     @Override
     public abstract ByteVector rotateEL(int i);
@@ -1171,24 +1168,6 @@ public abstract class ByteVector extends Vector<Byte> {
 
         @Override
         public abstract ByteVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Byte> m);
-
-        @Override
-        public <F> ByteVector reshape(Vector<F> o) {
-            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
-            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-            o.intoByteBuffer(bb, 0);
-            return fromByteBuffer(bb, 0);
-        }
-
-        @Override
-        public abstract <F> ByteVector rebracket(Vector<F> o);
-
-        @Override
-        public abstract ByteVector resize(Vector<Byte> o);
-
-        @Override
-        public abstract <F> ByteVector cast(Vector<F> v);
-
     }
 
     /**
