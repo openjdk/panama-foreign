@@ -46,6 +46,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 import com.sun.tools.jextract.JextractTool;
+import com.sun.tools.jextract.JarWriter;
 import com.sun.tools.jextract.Writer;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.tree.ClassNode;
@@ -117,7 +118,7 @@ public class Runner {
     public void testJarManifest() throws IOException {
         // Get the jar
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        writer.writeJarFile(new JarOutputStream(bos), new String[0]);
+        new JarWriter(writer).writeJarFile(new JarOutputStream(bos), new String[0]);
 
         System.out.println("Jar built, verifying...");
         JarInputStream jis = new JarInputStream(new ByteArrayInputStream(bos.toByteArray()));

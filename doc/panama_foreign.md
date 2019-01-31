@@ -75,6 +75,42 @@ java -cp python.jar:. PythonMain
 
 ```
 
+## jlinking Python Interpreter in your JDK (Mac OS)
+
+### Generating jmod using jextract
+
+```sh
+
+jextract -l python2.7 \
+  -L /System/Library/Frameworks/Python.framework/Versions/2.7/lib \
+  --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
+  -t org.python \
+  /usr/include/python2.7/Python.h \
+  -o org.python.jmod
+
+```
+
+### Jlinking python module to create a JDK with Python in it
+
+jdk.compiler and org.python modules are added to the generated (jlinked) JDK
+
+```sh
+
+jlink --add-modules org.python,jdk.compiler --module-path . --output pythonjdk
+
+```
+
+### Compile and run user code with "pythonjdk" jdk
+
+In the following commands, it is assumed that you've put $pythonjdk/bin in your $PATH
+
+```sh
+
+javac PythonMain.java
+java PythonMain
+
+```
+
 ## Embedding Python interpreter in your Java program (Ubuntu 16.04)
 
 ### jextract a Jar file for Python.h

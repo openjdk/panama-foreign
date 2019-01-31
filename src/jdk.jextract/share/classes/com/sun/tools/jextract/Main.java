@@ -246,7 +246,6 @@ public final class Main {
         }
 
         final Writer writer;
-
         try {
             for (Object header : options.nonOptionArguments()) {
                 Path p = Paths.get((String)header);
@@ -311,10 +310,15 @@ public final class Main {
             outputName =  Paths.get((String)options.nonOptionArguments().get(0)).getFileName() + ".jar";
         }
 
+        boolean isJMod = outputName.endsWith("jmod");
         try {
-            writer.writeJarFile(Paths.get(outputName), args);
+            if (isJMod) {
+                new JModWriter(ctx, writer).writeJModFile(Paths.get(outputName), args);
+            } else {
+                new JarWriter(writer).writeJarFile(Paths.get(outputName), args);
+            }
         } catch (IOException ex) {
-            ctx.err.println(format("cannot.write.jar.file", outputName, ex));
+            ctx.err.println(format(isJMod? "cannot.write.jmod.file" : "cannot.write.jar.file", outputName, ex));
             if (Main.DEBUG) {
                 ex.printStackTrace(ctx.err);
             }
