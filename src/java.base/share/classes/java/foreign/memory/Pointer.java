@@ -23,13 +23,14 @@
 package java.foreign.memory;
 
 import jdk.internal.foreign.Util;
-import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 
 import java.foreign.NativeTypes;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.security.AccessControlException;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -197,7 +198,7 @@ public interface Pointer<X> extends Resource {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.foreign.Pointer.fromByteBuffer"));
         }
-        return new BoundedPointer<>(NativeTypes.UINT8, BoundedMemoryRegion.ofByteBuffer(bb));
+        return new BoundedPointer<>(NativeTypes.UINT8, null, AccessMode.READ_WRITE, MemoryBoundInfo.ofByteBuffer(bb));
     }
 
     /**
@@ -210,7 +211,9 @@ public interface Pointer<X> extends Resource {
     ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException;
 
     static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
-        Util.copy(src, dst, bytes);
+        BoundedPointer<?> bsrc = (BoundedPointer<?>) Objects.requireNonNull(src);
+        BoundedPointer<?> bdst = (BoundedPointer<?>) Objects.requireNonNull(dst);
+        bsrc.copyTo(bdst, bytes);
     }
 
     static String toString(Pointer<Byte> cstr) {

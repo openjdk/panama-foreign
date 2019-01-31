@@ -43,7 +43,7 @@ import java.util.Objects;
 import jdk.internal.foreign.CallbackImplGenerator.SyntheticCallback;
 import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.memory.BoundedArray;
-import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.CallbackImpl;
 import jdk.internal.misc.Unsafe;
@@ -59,7 +59,7 @@ public abstract class ScopeImpl implements Scope {
         }
     }
 
-    abstract BoundedMemoryRegion allocateRegion(long size);
+    abstract MemoryBoundInfo allocateRegion(long size);
 
     private <T> BoundedPointer<T> allocateInternal(LayoutType<T> type, long count, int align) {
         // FIXME: when allocating structs align size up to 8 bytes to allow for raw reads/writes?
@@ -75,7 +75,7 @@ public abstract class ScopeImpl implements Scope {
             return BoundedPointer.nullPointer();
         }
 
-        return new BoundedPointer<>(type, allocateRegion(size));
+        return new BoundedPointer<>(type, this, AccessMode.READ_WRITE, allocateRegion(size));
     }
 
     @Override
@@ -131,12 +131,12 @@ public abstract class ScopeImpl implements Scope {
             used_blocks = new ArrayList<>();
         }
 
-        BoundedMemoryRegion allocateRegion(long size) {
+        MemoryBoundInfo allocateRegion(long size) {
             if (size == 0) {
-                return BoundedMemoryRegion.NOTHING;
+                return MemoryBoundInfo.NOTHING;
             }
 
-            return BoundedMemoryRegion.of(allocate(size), size, this);
+            return MemoryBoundInfo.ofNative(allocate(size), size);
         }
 
         private void rollbackAllocation() {
@@ -252,7 +252,7 @@ public abstract class ScopeImpl implements Scope {
         public HeapScope() {
         }
 
-        BoundedMemoryRegion allocateRegion(long size) {
+        MemoryBoundInfo allocateRegion(long size) {
             long allocSize = Util.alignUp(size, 8);
 
             long nElems = allocSize / 8;
@@ -261,7 +261,7 @@ public abstract class ScopeImpl implements Scope {
             }
 
             long[] arr = new long[(int)nElems];
-            return BoundedMemoryRegion.of(arr, Unsafe.ARRAY_LONG_BASE_OFFSET, allocSize, AccessMode.READ_WRITE, this);
+            return MemoryBoundInfo.ofHeap(arr, Unsafe.ARRAY_LONG_BASE_OFFSET, allocSize);
         }
 
         @Override

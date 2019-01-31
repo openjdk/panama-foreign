@@ -173,7 +173,7 @@ public interface Array<X> extends Resource {
             throw new IllegalArgumentException("Arrays have different layouts!");
         }
         try {
-            Util.copy(src.elementPointer(), dst.elementPointer(),
+            Pointer.copy(src.elementPointer(), dst.elementPointer(),
                             dst.bytesSize());
         } catch (IllegalAccessException ex) {
             throw new IllegalArgumentException(ex);

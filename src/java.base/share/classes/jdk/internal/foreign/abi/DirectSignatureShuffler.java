@@ -71,8 +71,8 @@ public class DirectSignatureShuffler {
             POINTER_TO_LONG = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "pointerToLong", MethodType.methodType(long.class, Pointer.class));
             LONG_TO_CALLBACK = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "longToCallback", MethodType.methodType(Callback.class, Class.class, long.class));
             CALLBACK_TO_LONG = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "callbackToLong", MethodType.methodType(long.class, Callback.class));
-            STRUCT_TO_LONG = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "structToLong", MethodType.methodType(long.class, ArgumentBinding.class, Struct.class));
-            STRUCT_TO_DOUBLE = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "structToDouble", MethodType.methodType(double.class, ArgumentBinding.class, Struct.class));
+            STRUCT_TO_LONG = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "structToLong", MethodType.methodType(long.class, Struct.class));
+            STRUCT_TO_DOUBLE = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "structToDouble", MethodType.methodType(double.class, Struct.class));
             LONG_TO_STRUCT = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "longToStruct", MethodType.methodType(Struct.class, Class.class, long.class));
             DOUBLE_TO_STRUCT = MethodHandles.lookup().findStatic(DirectSignatureShuffler.class, "doubleToStruct", MethodType.methodType(Struct.class, Class.class, double.class));
         } catch (ReflectiveOperationException e) {
@@ -179,12 +179,12 @@ public class DirectSignatureShuffler {
                     case INTEGER_ARGUMENT_REGISTER:
                     case INTEGER_RETURN_REGISTER:
                         updateNativeMethodType(sigPos, long.class);
-                        adapters.add(direction.longStructAdapter(sigPos, binding, carrier));
+                        adapters.add(direction.longStructAdapter(sigPos, carrier));
                         break;
                     case VECTOR_ARGUMENT_REGISTER:
                     case VECTOR_RETURN_REGISTER:
                         updateNativeMethodType(sigPos, double.class);
-                        adapters.add(direction.doubleStructAdapter(sigPos, binding, carrier));
+                        adapters.add(direction.doubleStructAdapter(sigPos, carrier));
                         break;
                     default:
                         //non-register bindings should have already been discarded by now
@@ -292,17 +292,17 @@ public class DirectSignatureShuffler {
                     (this == JAVA_TO_NATIVE) ? CALLBACK_TO_LONG : LONG_TO_CALLBACK.bindTo(((LayoutTypeImpl<?>)type).getFuncIntf()));
         }
 
-        UnaryOperator<MethodHandle> longStructAdapter(int pos, ArgumentBinding binding, Class<?> carrier) {
+        UnaryOperator<MethodHandle> longStructAdapter(int pos, Class<?> carrier) {
             return mh -> filterHandle(mh, pos,
                     (this == JAVA_TO_NATIVE)  ?
-                            STRUCT_TO_LONG.bindTo(binding).asType(MethodType.methodType(long.class, carrier)) :
+                            STRUCT_TO_LONG.asType(MethodType.methodType(long.class, carrier)) :
                             LONG_TO_STRUCT.bindTo(carrier).asType(MethodType.methodType(carrier, long.class)));
         }
 
-        UnaryOperator<MethodHandle> doubleStructAdapter(int pos, ArgumentBinding binding, Class<?> carrier) {
+        UnaryOperator<MethodHandle> doubleStructAdapter(int pos, Class<?> carrier) {
             return mh -> filterHandle(mh, pos,
                     (this == JAVA_TO_NATIVE)  ?
-                            STRUCT_TO_DOUBLE.bindTo(binding).asType(MethodType.methodType(double.class, carrier)) :
+                            STRUCT_TO_DOUBLE.asType(MethodType.methodType(double.class, carrier)) :
                             DOUBLE_TO_STRUCT.bindTo(carrier).asType(MethodType.methodType(carrier, double.class)));
         }
     }
@@ -335,12 +335,12 @@ public class DirectSignatureShuffler {
                 funcClass);
     }
 
-    private static long structToLong(ArgumentBinding binding, Struct<?> struct) {
-        return ((BoundedPointer<?>)struct.ptr()).region.getBits(binding.getOffset(), binding.getStorage().getSize());
+    private static long structToLong(Struct<?> struct) {
+        return ((BoundedPointer<?>)struct.ptr()).getBits();
     }
 
-    private static double structToDouble(ArgumentBinding binding, Struct<?> struct) {
-        return Double.longBitsToDouble(structToLong(binding, struct));
+    private static double structToDouble(Struct<?> struct) {
+        return Double.longBitsToDouble(structToLong(struct));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

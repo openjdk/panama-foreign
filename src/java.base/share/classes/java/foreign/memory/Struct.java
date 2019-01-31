@@ -73,7 +73,7 @@ public interface Struct<T extends Struct<T>> extends Resource {
             throw new IllegalArgumentException("Structs have different layouts!");
         }
         try {
-            Util.copy(src.ptr(), dst.ptr(), src.ptr().type().bytesSize());
+            Pointer.copy(src.ptr(), dst.ptr(), src.ptr().type().bytesSize());
         } catch (IllegalAccessException ex) {
             throw new IllegalArgumentException(ex);
         }
