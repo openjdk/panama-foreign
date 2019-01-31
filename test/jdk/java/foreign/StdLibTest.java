@@ -26,6 +26,7 @@
 /*
  * @test
  * @run testng StdLibTest
+ * @run testng/othervm -Djdk.internal.foreign.NativeInvoker.FASTPATH=none -Djdk.internal.foreign.UpcallHandler.FASTPATH=none StdLibTest
  */
 
 import java.foreign.annotations.NativeCallback;
@@ -45,6 +46,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -131,23 +134,17 @@ public class StdLibTest {
     @Test(dataProvider = "printfArgs")
     void test_printf(List<PrintfArg> args) {
         try (Scope s = Scope.newNativeScope()) {
-            String formatStr = args.stream()
+            String formatArgs = args.stream()
                     .map(a -> a.format)
                     .collect(Collectors.joining(","));
 
-            int formattedArgsLength = args.stream()
-                    .mapToInt(a -> a.length)
-                    .sum();
+            String formatString = "hello(" + formatArgs + ")\n";
 
-            Object[] argValues = args.stream()
-                    .map(a -> a.valueFunc.apply(s))
-                    .toArray();
+            String expected = String.format(formatString, args.stream()
+                    .map(a -> a.javaValue).toArray());
 
-            int delimCount = (args.size() > 0) ?
-                    args.size() - 1 :
-                    0;
-
-            assertEquals(stdLibHelper.printf("hello(" + formatStr + ")\n", argValues), 8 + formattedArgsLength + delimCount);
+            int found = stdLibHelper.printf(formatString, args.stream().map(a -> a.nativeValueFunc.apply(s)).toArray());
+            assertEquals(found, expected.length());
         }
     }
 
@@ -337,25 +334,31 @@ public class StdLibTest {
 
     @DataProvider
     public static Object[][] printfArgs() {
-        return perms(0, PrintfArg.values()).stream()
+        ArrayList<List<PrintfArg>> res = new ArrayList<>();
+        List<List<PrintfArg>> perms = new ArrayList<>(perms(0, PrintfArg.values()));
+        for (int i = 0 ; i < 100 ; i++) {
+            Collections.shuffle(perms);
+            res.addAll(perms);
+        }
+        return res.stream()
                 .map(l -> new Object[] { l })
                 .toArray(Object[][]::new);
     }
 
     enum PrintfArg {
-        INTEGRAL("%d", s -> 42, 2),
-        STRING("%s", s -> s.allocateCString("str"), 3),
-        CHAR("%c", s -> 'h', 1),
-        FLOAT("%.2f", s -> 1.23d, 4);
+        INTEGRAL("%d", s -> 42, 42),
+        STRING("%s", s -> s.allocateCString("str"), "str"),
+        CHAR("%c", s -> 'h', 'h'),
+        FLOAT("%.4f", s -> 1.2345d, 1.2345d);
 
-        String format;
-        Function<Scope, Object> valueFunc;
-        int length;
+        final String format;
+        final Function<Scope, Object> nativeValueFunc;
+        final Object javaValue;
 
-        PrintfArg(String format, Function<Scope, Object> valueFunc, int length) {
+        PrintfArg(String format, Function<Scope, Object> nativeValueFunc, Object javaValue) {
             this.format = format;
-            this.valueFunc = valueFunc;
-            this.length = length;
+            this.nativeValueFunc = nativeValueFunc;
+            this.javaValue = javaValue;
         }
     }
 
@@ -375,7 +378,7 @@ public class StdLibTest {
                                 }),
                                 //drop n
                                 perms.stream());
-                    }).collect(Collectors.toSet());
+                    }).collect(Collectors.toCollection(LinkedHashSet::new));
         }
     }
 }

@@ -26,193 +26,193 @@
 #include "runtime/jniHandles.inline.hpp"
 
 void DNI_invokeNative_V_V(JNIEnv *env, jobject _unused, jlong addr) {
-     ((void (*)())addr)();
+     ((void (*)(...))addr)();
 }
 void DNI_invokeNative_V_D(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0) {
-     ((void (*)(jdouble))addr)(arg0);
+     ((void (*)(jdouble,...))addr)(arg0);
 }
 void DNI_invokeNative_V_J(JNIEnv *env, jobject _unused, jlong addr, jlong arg0) {
-     ((void (*)(jlong))addr)(arg0);
+     ((void (*)(jlong,...))addr)(arg0);
 }
 void DNI_invokeNative_V_DD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1) {
-     ((void (*)(jdouble, jdouble))addr)(arg0, arg1);
+     ((void (*)(jdouble, jdouble,...))addr)(arg0, arg1);
 }
 void DNI_invokeNative_V_JD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1) {
-     ((void (*)(jlong, jdouble))addr)(arg0, arg1);
+     ((void (*)(jlong, jdouble,...))addr)(arg0, arg1);
 }
 void DNI_invokeNative_V_JJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1) {
-     ((void (*)(jlong, jlong))addr)(arg0, arg1);
+     ((void (*)(jlong, jlong,...))addr)(arg0, arg1);
 }
 void DNI_invokeNative_V_DDD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1, jdouble arg2) {
-     ((void (*)(jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2);
+     ((void (*)(jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2);
 }
 void DNI_invokeNative_V_JDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1, jdouble arg2) {
-     ((void (*)(jlong, jdouble, jdouble))addr)(arg0, arg1, arg2);
+     ((void (*)(jlong, jdouble, jdouble,...))addr)(arg0, arg1, arg2);
 }
 void DNI_invokeNative_V_JJD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jdouble arg2) {
-     ((void (*)(jlong, jlong, jdouble))addr)(arg0, arg1, arg2);
+     ((void (*)(jlong, jlong, jdouble,...))addr)(arg0, arg1, arg2);
 }
 void DNI_invokeNative_V_JJJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2) {
-     ((void (*)(jlong, jlong, jlong))addr)(arg0, arg1, arg2);
+     ((void (*)(jlong, jlong, jlong,...))addr)(arg0, arg1, arg2);
 }
 void DNI_invokeNative_V_DDDD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1, jdouble arg2, jdouble arg3) {
-     ((void (*)(jdouble, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3);
+     ((void (*)(jdouble, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 void DNI_invokeNative_V_JDDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1, jdouble arg2, jdouble arg3) {
-     ((void (*)(jlong, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3);
+     ((void (*)(jlong, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 void DNI_invokeNative_V_JJDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jdouble arg2, jdouble arg3) {
-     ((void (*)(jlong, jlong, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3);
+     ((void (*)(jlong, jlong, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 void DNI_invokeNative_V_JJJD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jdouble arg3) {
-     ((void (*)(jlong, jlong, jlong, jdouble))addr)(arg0, arg1, arg2, arg3);
+     ((void (*)(jlong, jlong, jlong, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 void DNI_invokeNative_V_JJJJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jlong arg3) {
-     ((void (*)(jlong, jlong, jlong, jlong))addr)(arg0, arg1, arg2, arg3);
+     ((void (*)(jlong, jlong, jlong, jlong,...))addr)(arg0, arg1, arg2, arg3);
 }
 void DNI_invokeNative_V_DDDDD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1, jdouble arg2, jdouble arg3, jdouble arg4) {
-     ((void (*)(jdouble, jdouble, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+     ((void (*)(jdouble, jdouble, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 void DNI_invokeNative_V_JDDDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1, jdouble arg2, jdouble arg3, jdouble arg4) {
-     ((void (*)(jlong, jdouble, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+     ((void (*)(jlong, jdouble, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 void DNI_invokeNative_V_JJDDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jdouble arg2, jdouble arg3, jdouble arg4) {
-     ((void (*)(jlong, jlong, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+     ((void (*)(jlong, jlong, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 void DNI_invokeNative_V_JJJDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jdouble arg3, jdouble arg4) {
-     ((void (*)(jlong, jlong, jlong, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+     ((void (*)(jlong, jlong, jlong, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 void DNI_invokeNative_V_JJJJD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jlong arg3, jdouble arg4) {
-     ((void (*)(jlong, jlong, jlong, jlong, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+     ((void (*)(jlong, jlong, jlong, jlong, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 void DNI_invokeNative_V_JJJJJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jlong arg3, jlong arg4) {
-     ((void (*)(jlong, jlong, jlong, jlong, jlong))addr)(arg0, arg1, arg2, arg3, arg4);
+     ((void (*)(jlong, jlong, jlong, jlong, jlong,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jlong DNI_invokeNative_J_V(JNIEnv *env, jobject _unused, jlong addr) {
-    return ((jlong (*)())addr)();
+    return ((jlong (*)(...))addr)();
 }
 jlong DNI_invokeNative_J_D(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0) {
-    return ((jlong (*)(jdouble))addr)(arg0);
+    return ((jlong (*)(jdouble,...))addr)(arg0);
 }
 jlong DNI_invokeNative_J_J(JNIEnv *env, jobject _unused, jlong addr, jlong arg0) {
-    return ((jlong (*)(jlong))addr)(arg0);
+    return ((jlong (*)(jlong,...))addr)(arg0);
 }
 jlong DNI_invokeNative_J_DD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1) {
-    return ((jlong (*)(jdouble, jdouble))addr)(arg0, arg1);
+    return ((jlong (*)(jdouble, jdouble,...))addr)(arg0, arg1);
 }
 jlong DNI_invokeNative_J_JD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1) {
-    return ((jlong (*)(jlong, jdouble))addr)(arg0, arg1);
+    return ((jlong (*)(jlong, jdouble,...))addr)(arg0, arg1);
 }
 jlong DNI_invokeNative_J_JJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1) {
-    return ((jlong (*)(jlong, jlong))addr)(arg0, arg1);
+    return ((jlong (*)(jlong, jlong,...))addr)(arg0, arg1);
 }
 jlong DNI_invokeNative_J_DDD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1, jdouble arg2) {
-    return ((jlong (*)(jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2);
+    return ((jlong (*)(jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2);
 }
 jlong DNI_invokeNative_J_JDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1, jdouble arg2) {
-    return ((jlong (*)(jlong, jdouble, jdouble))addr)(arg0, arg1, arg2);
+    return ((jlong (*)(jlong, jdouble, jdouble,...))addr)(arg0, arg1, arg2);
 }
 jlong DNI_invokeNative_J_JJD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jdouble arg2) {
-    return ((jlong (*)(jlong, jlong, jdouble))addr)(arg0, arg1, arg2);
+    return ((jlong (*)(jlong, jlong, jdouble,...))addr)(arg0, arg1, arg2);
 }
 jlong DNI_invokeNative_J_JJJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2) {
-    return ((jlong (*)(jlong, jlong, jlong))addr)(arg0, arg1, arg2);
+    return ((jlong (*)(jlong, jlong, jlong,...))addr)(arg0, arg1, arg2);
 }
 jlong DNI_invokeNative_J_DDDD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1, jdouble arg2, jdouble arg3) {
-    return ((jlong (*)(jdouble, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3);
+    return ((jlong (*)(jdouble, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 jlong DNI_invokeNative_J_JDDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1, jdouble arg2, jdouble arg3) {
-    return ((jlong (*)(jlong, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3);
+    return ((jlong (*)(jlong, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 jlong DNI_invokeNative_J_JJDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jdouble arg2, jdouble arg3) {
-    return ((jlong (*)(jlong, jlong, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3);
+    return ((jlong (*)(jlong, jlong, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 jlong DNI_invokeNative_J_JJJD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jdouble arg3) {
-    return ((jlong (*)(jlong, jlong, jlong, jdouble))addr)(arg0, arg1, arg2, arg3);
+    return ((jlong (*)(jlong, jlong, jlong, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 jlong DNI_invokeNative_J_JJJJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jlong arg3) {
-    return ((jlong (*)(jlong, jlong, jlong, jlong))addr)(arg0, arg1, arg2, arg3);
+    return ((jlong (*)(jlong, jlong, jlong, jlong,...))addr)(arg0, arg1, arg2, arg3);
 }
 jlong DNI_invokeNative_J_DDDDD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1, jdouble arg2, jdouble arg3, jdouble arg4) {
-    return ((jlong (*)(jdouble, jdouble, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jlong (*)(jdouble, jdouble, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jlong DNI_invokeNative_J_JDDDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1, jdouble arg2, jdouble arg3, jdouble arg4) {
-    return ((jlong (*)(jlong, jdouble, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jlong (*)(jlong, jdouble, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jlong DNI_invokeNative_J_JJDDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jdouble arg2, jdouble arg3, jdouble arg4) {
-    return ((jlong (*)(jlong, jlong, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jlong (*)(jlong, jlong, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jlong DNI_invokeNative_J_JJJDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jdouble arg3, jdouble arg4) {
-    return ((jlong (*)(jlong, jlong, jlong, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jlong (*)(jlong, jlong, jlong, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jlong DNI_invokeNative_J_JJJJD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jlong arg3, jdouble arg4) {
-    return ((jlong (*)(jlong, jlong, jlong, jlong, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jlong (*)(jlong, jlong, jlong, jlong, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jlong DNI_invokeNative_J_JJJJJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jlong arg3, jlong arg4) {
-    return ((jlong (*)(jlong, jlong, jlong, jlong, jlong))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jlong (*)(jlong, jlong, jlong, jlong, jlong,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jdouble DNI_invokeNative_D_V(JNIEnv *env, jobject _unused, jlong addr) {
-    return ((jdouble (*)())addr)();
+    return ((jdouble (*)(...))addr)();
 }
 jdouble DNI_invokeNative_D_D(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0) {
-    return ((jdouble (*)(jdouble))addr)(arg0);
+    return ((jdouble (*)(jdouble,...))addr)(arg0);
 }
 jdouble DNI_invokeNative_D_J(JNIEnv *env, jobject _unused, jlong addr, jlong arg0) {
-    return ((jdouble (*)(jlong))addr)(arg0);
+    return ((jdouble (*)(jlong,...))addr)(arg0);
 }
 jdouble DNI_invokeNative_D_DD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1) {
-    return ((jdouble (*)(jdouble, jdouble))addr)(arg0, arg1);
+    return ((jdouble (*)(jdouble, jdouble,...))addr)(arg0, arg1);
 }
 jdouble DNI_invokeNative_D_JD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1) {
-    return ((jdouble (*)(jlong, jdouble))addr)(arg0, arg1);
+    return ((jdouble (*)(jlong, jdouble,...))addr)(arg0, arg1);
 }
 jdouble DNI_invokeNative_D_JJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1) {
-    return ((jdouble (*)(jlong, jlong))addr)(arg0, arg1);
+    return ((jdouble (*)(jlong, jlong,...))addr)(arg0, arg1);
 }
 jdouble DNI_invokeNative_D_DDD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1, jdouble arg2) {
-    return ((jdouble (*)(jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2);
+    return ((jdouble (*)(jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2);
 }
 jdouble DNI_invokeNative_D_JDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1, jdouble arg2) {
-    return ((jdouble (*)(jlong, jdouble, jdouble))addr)(arg0, arg1, arg2);
+    return ((jdouble (*)(jlong, jdouble, jdouble,...))addr)(arg0, arg1, arg2);
 }
 jdouble DNI_invokeNative_D_JJD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jdouble arg2) {
-    return ((jdouble (*)(jlong, jlong, jdouble))addr)(arg0, arg1, arg2);
+    return ((jdouble (*)(jlong, jlong, jdouble,...))addr)(arg0, arg1, arg2);
 }
 jdouble DNI_invokeNative_D_JJJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2) {
-    return ((jdouble (*)(jlong, jlong, jlong))addr)(arg0, arg1, arg2);
+    return ((jdouble (*)(jlong, jlong, jlong,...))addr)(arg0, arg1, arg2);
 }
 jdouble DNI_invokeNative_D_DDDD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1, jdouble arg2, jdouble arg3) {
-    return ((jdouble (*)(jdouble, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3);
+    return ((jdouble (*)(jdouble, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 jdouble DNI_invokeNative_D_JDDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1, jdouble arg2, jdouble arg3) {
-    return ((jdouble (*)(jlong, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3);
+    return ((jdouble (*)(jlong, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 jdouble DNI_invokeNative_D_JJDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jdouble arg2, jdouble arg3) {
-    return ((jdouble (*)(jlong, jlong, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3);
+    return ((jdouble (*)(jlong, jlong, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 jdouble DNI_invokeNative_D_JJJD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jdouble arg3) {
-    return ((jdouble (*)(jlong, jlong, jlong, jdouble))addr)(arg0, arg1, arg2, arg3);
+    return ((jdouble (*)(jlong, jlong, jlong, jdouble,...))addr)(arg0, arg1, arg2, arg3);
 }
 jdouble DNI_invokeNative_D_JJJJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jlong arg3) {
-    return ((jdouble (*)(jlong, jlong, jlong, jlong))addr)(arg0, arg1, arg2, arg3);
+    return ((jdouble (*)(jlong, jlong, jlong, jlong,...))addr)(arg0, arg1, arg2, arg3);
 }
 jdouble DNI_invokeNative_D_DDDDD(JNIEnv *env, jobject _unused, jlong addr, jdouble arg0, jdouble arg1, jdouble arg2, jdouble arg3, jdouble arg4) {
-    return ((jdouble (*)(jdouble, jdouble, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jdouble (*)(jdouble, jdouble, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jdouble DNI_invokeNative_D_JDDDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jdouble arg1, jdouble arg2, jdouble arg3, jdouble arg4) {
-    return ((jdouble (*)(jlong, jdouble, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jdouble (*)(jlong, jdouble, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jdouble DNI_invokeNative_D_JJDDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jdouble arg2, jdouble arg3, jdouble arg4) {
-    return ((jdouble (*)(jlong, jlong, jdouble, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jdouble (*)(jlong, jlong, jdouble, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jdouble DNI_invokeNative_D_JJJDD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jdouble arg3, jdouble arg4) {
-    return ((jdouble (*)(jlong, jlong, jlong, jdouble, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jdouble (*)(jlong, jlong, jlong, jdouble, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jdouble DNI_invokeNative_D_JJJJD(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jlong arg3, jdouble arg4) {
-    return ((jdouble (*)(jlong, jlong, jlong, jlong, jdouble))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jdouble (*)(jlong, jlong, jlong, jlong, jdouble,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 jdouble DNI_invokeNative_D_JJJJJ(JNIEnv *env, jobject _unused, jlong addr, jlong arg0, jlong arg1, jlong arg2, jlong arg3, jlong arg4) {
-    return ((jdouble (*)(jlong, jlong, jlong, jlong, jlong))addr)(arg0, arg1, arg2, arg3, arg4);
+    return ((jdouble (*)(jlong, jlong, jlong, jlong, jlong,...))addr)(arg0, arg1, arg2, arg3, arg4);
 }
 
 #define CC (char*)  /*cast a literal from (const char*)*/
