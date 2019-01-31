@@ -153,6 +153,210 @@ final class Long128Vector extends LongVector {
         return v;
     }
 
+    @Override
+    @ForceInline
+    public <F> Vector<F> cast(Species<F> s) {
+        Objects.requireNonNull(s);
+        if (s.length() != LENGTH)
+            throw new IllegalArgumentException("Vector length this species length differ");
+
+        return VectorIntrinsics.cast(
+            Long128Vector.class,
+            long.class, LENGTH,
+            s.vectorType(),
+            s.elementType(), LENGTH,
+            this, s,
+            (species, vector) -> vector.castDefault(species)
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @ForceInline
+    private <F> Vector<F> castDefault(Species<F> s) {
+        int limit = s.length();
+
+        Class<?> stype = s.elementType();
+        if (stype == byte.class) {
+            byte[] a = new byte[limit];
+            for (int i = 0; i < limit; i++) {
+                a[i] = (byte) this.get(i);
+            }
+            return (Vector) ((ByteVector.ByteSpecies)s).fromArray(a, 0);
+        } else if (stype == short.class) {
+            short[] a = new short[limit];
+            for (int i = 0; i < limit; i++) {
+                a[i] = (short) this.get(i);
+            }
+            return (Vector) ((ShortVector.ShortSpecies)s).fromArray(a, 0);
+        } else if (stype == int.class) {
+            int[] a = new int[limit];
+            for (int i = 0; i < limit; i++) {
+                a[i] = (int) this.get(i);
+            }
+            return (Vector) ((IntVector.IntSpecies)s).fromArray(a, 0);
+        } else if (stype == long.class) {
+            long[] a = new long[limit];
+            for (int i = 0; i < limit; i++) {
+                a[i] = (long) this.get(i);
+            }
+            return (Vector) ((LongVector.LongSpecies)s).fromArray(a, 0);
+        } else if (stype == float.class) {
+            float[] a = new float[limit];
+            for (int i = 0; i < limit; i++) {
+                a[i] = (float) this.get(i);
+            }
+            return (Vector) ((FloatVector.FloatSpecies)s).fromArray(a, 0);
+        } else if (stype == double.class) {
+            double[] a = new double[limit];
+            for (int i = 0; i < limit; i++) {
+                a[i] = (double) this.get(i);
+            }
+            return (Vector) ((DoubleVector.DoubleSpecies)s).fromArray(a, 0);
+        } else {
+            throw new UnsupportedOperationException("Bad lane type for casting.");
+        }
+    }
+
+    @Override
+    @ForceInline
+    @SuppressWarnings("unchecked")
+    public <F> Vector<F> reinterpret(Species<F> s) {
+        Objects.requireNonNull(s);
+
+        if(s.elementType().equals(long.class)) {
+            return (Vector<F>) reshape((Species<Long>)s);
+        }
+        if(s.bitSize() == bitSize()) {
+            return reinterpretType(s);
+        }
+
+        return defaultReinterpret(s);
+    }
+
+    @ForceInline
+    private <F> Vector<F> reinterpretType(Species<F> s) {
+        Objects.requireNonNull(s);
+
+        Class<?> stype = s.elementType();
+        if (stype == byte.class) {
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Byte128Vector.class,
+                byte.class, Byte128Vector.LENGTH,
+                this, s,
+                (species, vector) -> vector.defaultReinterpret(species)
+            );
+        } else if (stype == short.class) {
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Short128Vector.class,
+                short.class, Short128Vector.LENGTH,
+                this, s,
+                (species, vector) -> vector.defaultReinterpret(species)
+            );
+        } else if (stype == int.class) {
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Int128Vector.class,
+                int.class, Int128Vector.LENGTH,
+                this, s,
+                (species, vector) -> vector.defaultReinterpret(species)
+            );
+        } else if (stype == long.class) {
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Long128Vector.class,
+                long.class, Long128Vector.LENGTH,
+                this, s,
+                (species, vector) -> vector.defaultReinterpret(species)
+            );
+        } else if (stype == float.class) {
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Float128Vector.class,
+                float.class, Float128Vector.LENGTH,
+                this, s,
+                (species, vector) -> vector.defaultReinterpret(species)
+            );
+        } else if (stype == double.class) {
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Double128Vector.class,
+                double.class, Double128Vector.LENGTH,
+                this, s,
+                (species, vector) -> vector.defaultReinterpret(species)
+            );
+        } else {
+            throw new UnsupportedOperationException("Bad lane type for casting.");
+        }
+    }
+
+    @Override
+    @ForceInline
+    public LongVector reshape(Species<Long> s) {
+        Objects.requireNonNull(s);
+        if (s.bitSize() == 64 && (s instanceof Long64Vector.Long64Species)) {
+            Long64Vector.Long64Species ts = (Long64Vector.Long64Species)s;
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Long64Vector.class,
+                long.class, Long64Vector.LENGTH,
+                this, ts,
+                (species, vector) -> (LongVector) vector.defaultReinterpret(species)
+            );
+        } else if (s.bitSize() == 128 && (s instanceof Long128Vector.Long128Species)) {
+            Long128Vector.Long128Species ts = (Long128Vector.Long128Species)s;
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Long128Vector.class,
+                long.class, Long128Vector.LENGTH,
+                this, ts,
+                (species, vector) -> (LongVector) vector.defaultReinterpret(species)
+            );
+        } else if (s.bitSize() == 256 && (s instanceof Long256Vector.Long256Species)) {
+            Long256Vector.Long256Species ts = (Long256Vector.Long256Species)s;
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Long256Vector.class,
+                long.class, Long256Vector.LENGTH,
+                this, ts,
+                (species, vector) -> (LongVector) vector.defaultReinterpret(species)
+            );
+        } else if (s.bitSize() == 512 && (s instanceof Long512Vector.Long512Species)) {
+            Long512Vector.Long512Species ts = (Long512Vector.Long512Species)s;
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                Long512Vector.class,
+                long.class, Long512Vector.LENGTH,
+                this, ts,
+                (species, vector) -> (LongVector) vector.defaultReinterpret(species)
+            );
+        } else if ((s.bitSize() > 0) && (s.bitSize() <= 2048)
+                && (s.bitSize() % 128 == 0) && (s instanceof LongMaxVector.LongMaxSpecies)) {
+            LongMaxVector.LongMaxSpecies ts = (LongMaxVector.LongMaxSpecies)s;
+            return VectorIntrinsics.reinterpret(
+                Long128Vector.class,
+                long.class, LENGTH,
+                LongMaxVector.class,
+                long.class, LongMaxVector.LENGTH,
+                this, ts,
+                (species, vector) -> (LongVector) vector.defaultReinterpret(species)
+            );
+        } else {
+            throw new InternalError("Unimplemented size");
+        }
+    }
+
     // Binary operations with scalars
 
     @Override
@@ -1089,6 +1293,14 @@ final class Long128Vector extends LongVector {
         }
 
         @Override
+        @ForceInline
+        public <F> Mask<F> cast(Species<F> s) {
+            if (s.length() != LENGTH)
+                throw new IllegalArgumentException("This mask's length and given species length differ");
+            return s.maskFromArray(toArray(), 0);
+        }
+
+        @Override
         public Long128Vector toVector() {
             long[] res = new long[species().length()];
             boolean[] bits = getBits();
@@ -1177,6 +1389,14 @@ final class Long128Vector extends LongVector {
         }
 
         @Override
+        @ForceInline
+        public <F> Shuffle<F> cast(Species<F> s) {
+            if (s.length() != LENGTH)
+                throw new IllegalArgumentException("This shuffle and the given species's length differ");
+            return s.shuffleFromArray(toArray(), 0);
+        }
+
+        @Override
         public Long128Vector toVector() {
             long[] va = new long[SPECIES.length()];
             for (int i = 0; i < va.length; i++) {
@@ -1240,6 +1460,13 @@ final class Long128Vector extends LongVector {
         @ForceInline
         public int elementSize() {
             return Long.SIZE;
+        }
+
+        @Override
+        @ForceInline
+        @SuppressWarnings("unchecked")
+        Class<?> vectorType() {
+            return Long128Vector.class;
         }
 
         @Override
@@ -1355,7 +1582,7 @@ final class Long128Vector extends LongVector {
             Objects.requireNonNull(bits);
             ix = VectorIntrinsics.checkIndex(ix, bits.length, LENGTH);
             return VectorIntrinsics.load(Long128Mask.class, long.class, LENGTH,
-                                         bits, (((long)ix) << Unsafe.ARRAY_BOOLEAN_INDEX_SCALE) + Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
+                                         bits, (((long)ix) << Unsafe.ARRAY_BOOLEAN_INDEX_SCALE)+ Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
                                          (c, idx) -> opm(n -> c[idx + n]));
         }
@@ -1443,215 +1670,6 @@ final class Long128Vector extends LongVector {
         @ForceInline
         public Long128Vector fromByteBuffer(ByteBuffer bb, int ix, Mask<Long> m) {
             return zero().blend(fromByteBuffer(bb, ix), m);
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        public <F> Long128Vector cast(Vector<F> o) {
-            if (o.length() != LENGTH)
-                throw new IllegalArgumentException("Vector length this species length differ");
-
-            return VectorIntrinsics.cast(
-                o.getClass(),
-                o.elementType(), LENGTH,
-                Long128Vector.class,
-                long.class, LENGTH,
-                o, this,
-                (s, v) -> s.castDefault(v)
-            );
-        }
-
-        @SuppressWarnings("unchecked")
-        @ForceInline
-        private <F> Long128Vector castDefault(Vector<F> v) {
-            // Allocate array of required size
-            int limit = length();
-            long[] a = new long[limit];
-
-            Class<?> vtype = v.species().elementType();
-            if (vtype == byte.class) {
-                ByteVector tv = (ByteVector)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (long) tv.get(i);
-                }
-            } else if (vtype == short.class) {
-                ShortVector tv = (ShortVector)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (long) tv.get(i);
-                }
-            } else if (vtype == int.class) {
-                IntVector tv = (IntVector)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (long) tv.get(i);
-                }
-            } else if (vtype == long.class){
-                LongVector tv = (LongVector)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (long) tv.get(i);
-                }
-            } else if (vtype == float.class){
-                FloatVector tv = (FloatVector)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (long) tv.get(i);
-                }
-            } else if (vtype == double.class){
-                DoubleVector tv = (DoubleVector)v;
-                for (int i = 0; i < limit; i++) {
-                    a[i] = (long) tv.get(i);
-                }
-            } else {
-                throw new UnsupportedOperationException("Bad lane type for casting.");
-            }
-
-            return scalars(a);
-        }
-
-        @Override
-        @ForceInline
-        public <E> Long128Mask cast(Mask<E> m) {
-            if (m.length() != LENGTH)
-                throw new IllegalArgumentException("Mask length this species length differ");
-            return new Long128Mask(m.toArray());
-        }
-
-        @Override
-        @ForceInline
-        public <E> Long128Shuffle cast(Shuffle<E> s) {
-            if (s.length() != LENGTH)
-                throw new IllegalArgumentException("Shuffle length this species length differ");
-            return new Long128Shuffle(s.toArray());
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        public <F> Long128Vector rebracket(Vector<F> o) {
-            Objects.requireNonNull(o);
-            if (o.elementType() == byte.class) {
-                Byte128Vector so = (Byte128Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Byte128Vector.class,
-                    byte.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else if (o.elementType() == short.class) {
-                Short128Vector so = (Short128Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Short128Vector.class,
-                    short.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else if (o.elementType() == int.class) {
-                Int128Vector so = (Int128Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Int128Vector.class,
-                    int.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else if (o.elementType() == long.class) {
-                Long128Vector so = (Long128Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Long128Vector.class,
-                    long.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else if (o.elementType() == float.class) {
-                Float128Vector so = (Float128Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Float128Vector.class,
-                    float.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else if (o.elementType() == double.class) {
-                Double128Vector so = (Double128Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Double128Vector.class,
-                    double.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else {
-                throw new InternalError("Unimplemented type");
-            }
-        }
-
-        @Override
-        @ForceInline
-        @SuppressWarnings("unchecked")
-        public Long128Vector resize(Vector<Long> o) {
-            Objects.requireNonNull(o);
-            if (o.bitSize() == 64 && (o instanceof Long64Vector)) {
-                Long64Vector so = (Long64Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Long64Vector.class,
-                    long.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else if (o.bitSize() == 128 && (o instanceof Long128Vector)) {
-                Long128Vector so = (Long128Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Long128Vector.class,
-                    long.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else if (o.bitSize() == 256 && (o instanceof Long256Vector)) {
-                Long256Vector so = (Long256Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Long256Vector.class,
-                    long.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else if (o.bitSize() == 512 && (o instanceof Long512Vector)) {
-                Long512Vector so = (Long512Vector)o;
-                return VectorIntrinsics.reinterpret(
-                    Long512Vector.class,
-                    long.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else if ((o.bitSize() > 0) && (o.bitSize() <= 2048)
-                    && (o.bitSize() % 128 == 0) && (o instanceof LongMaxVector)) {
-                LongMaxVector so = (LongMaxVector)o;
-                return VectorIntrinsics.reinterpret(
-                    LongMaxVector.class,
-                    long.class, so.length(),
-                    Long128Vector.class,
-                    long.class, LENGTH,
-                    so, this,
-                    (s, v) -> (Long128Vector) s.reshape(v)
-                );
-            } else {
-                throw new InternalError("Unimplemented size");
-            }
         }
     }
 }

@@ -78,7 +78,7 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         var acc = I256.zero();
         for (int i = 0; i < data.length; i += B256.length()) {
             var vb = B256.fromArray(data, i);
-            var vi = I256.rebracket(vb);
+            var vi = (IntVector)vb.reinterpret(I256);
             for (int j = 0; j < 4; j++) {
                 var tj = vi.shiftR(j * 8).and(lobyte_mask);
                 acc = acc.add(tj);
@@ -96,7 +96,7 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         var acc = S256.zero();
         for (int i = 0; i < data.length; i += B256.length()) {
             var vb = B256.fromArray(data, i);
-            var vs = S256.rebracket(vb);
+            var vs = (ShortVector)vb.reinterpret(S256);
             for (int j = 0; j < 2; j++) {
                 var tj = vs.shiftR(j * 8).and(lobyte_mask);
                 acc = acc.add(tj);
@@ -104,8 +104,8 @@ public class SumOfUnsignedBytes extends AbstractVectorBenchmark {
         }
 
         int mid = S128.length();
-        var accLo = I256.cast(acc             .resize(S128)).and(0xFFFF); // low half as ints
-        var accHi = I256.cast(acc.shiftEL(mid).resize(S128)).and(0xFFFF); // high half as ints
+        var accLo = ((IntVector)(acc             .reshape(S128).cast(I256))).and(0xFFFF); // low half as ints
+        var accHi = ((IntVector)(acc.shiftEL(mid).reshape(S128).cast(I256))).and(0xFFFF); // high half as ints
         return accLo.addAll() + accHi.addAll();
     }
 

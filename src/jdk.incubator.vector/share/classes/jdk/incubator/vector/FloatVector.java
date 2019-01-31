@@ -356,10 +356,7 @@ public abstract class FloatVector extends Vector<Float> {
     public abstract FloatVector rearrange(Shuffle<Float> m);
 
     @Override
-    @ForceInline
-    public FloatVector resize(Species<Float> species) {
-        return (FloatVector) species.resize(this);
-    }
+    public abstract FloatVector reshape(Species<Float> s);
 
     @Override
     public abstract FloatVector rotateEL(int i);
@@ -1665,24 +1662,6 @@ public abstract class FloatVector extends Vector<Float> {
 
         @Override
         public abstract FloatVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Float> m);
-
-        @Override
-        public <F> FloatVector reshape(Vector<F> o) {
-            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
-            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-            o.intoByteBuffer(bb, 0);
-            return fromByteBuffer(bb, 0);
-        }
-
-        @Override
-        public abstract <F> FloatVector rebracket(Vector<F> o);
-
-        @Override
-        public abstract FloatVector resize(Vector<Float> o);
-
-        @Override
-        public abstract <F> FloatVector cast(Vector<F> v);
-
     }
 
     /**

@@ -342,12 +342,11 @@ public class PopulationCount extends AbstractVectorBenchmark {
     // FIGURE 9. A C function using SSE intrinsics implementing Mula’s algorithm to compute sixteen population counts,
     // corresponding to sixteen input bytes.
 
-    static final ByteVector MULA128_LOOKUP = B128.rebracket(
-            I128.scalars(0x02_01_01_00, // 0, 1, 1, 2,
-                         0x03_02_02_01, // 1, 2, 2, 3,
-                         0x03_02_02_01, // 1, 2, 2, 3,
-                         0x04_03_03_02  // 2, 3, 3, 4
-            ));
+    static final ByteVector MULA128_LOOKUP = (ByteVector)(I128.scalars(0x02_01_01_00, // 0, 1, 1, 2,
+                                                          0x03_02_02_01, // 1, 2, 2, 3,
+                                                          0x03_02_02_01, // 1, 2, 2, 3,
+                                                          0x04_03_03_02  // 2, 3, 3, 4
+                                                          ).reinterpret(B128));
 
     ByteVector popcntB128(ByteVector v) {
         var low_mask = B128.broadcast((byte)0x0f);
@@ -370,7 +369,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
             var bacc = B128.zero();
             for (int j = 0; j < step; j += L128.length()) {
                 var v1 = L128.fromArray(data, i + j);
-                var v2 = B128.rebracket(v1);
+                var v2 = (ByteVector)v1.reinterpret(B128);
                 var v3 = popcntB128(v2);
                 bacc = bacc.add(v3);
             }
@@ -386,8 +385,8 @@ public class PopulationCount extends AbstractVectorBenchmark {
     // of the four 64-bit words in a 256-bit vector. The 32 B output vector should be interpreted as four separate
     // 64-bit counts that need to be summed to obtain the final population count.
 
-    static final ByteVector MULA256_LOOKUP = B256.rebracket(
-            join(I128, I256, I128.rebracket(MULA128_LOOKUP), I128.rebracket(MULA128_LOOKUP)));
+    static final ByteVector MULA256_LOOKUP = 
+            (ByteVector)(join(I128, I256, (IntVector)(MULA128_LOOKUP.reinterpret(I128)), (IntVector)(MULA128_LOOKUP.reinterpret(I128))).reinterpret(B256));
 
     ByteVector popcntB256(ByteVector v) {
         var low_mask = B256.broadcast((byte)0x0F);
@@ -419,17 +418,17 @@ public class PopulationCount extends AbstractVectorBenchmark {
         var low_int_mask = intSpecies.broadcast(0xFFFF);
         var low_long_mask = longSpecies.broadcast(0xFFFFFFFFL);
 
-        var vs = shortSpecies.rebracket(vb); // 16-bit
+        var vs = (ShortVector)vb.reinterpret(shortSpecies); // 16-bit
         var vs0 = vs.and(low_short_mask);
         var vs1 = vs.shiftR(8).and(low_short_mask);
         var vs01 = vs0.add(vs1);
 
-        var vi = intSpecies.rebracket(vs01); // 32-bit
+        var vi = (IntVector)vs01.reinterpret(intSpecies); // 32-bit
         var vi0 = vi.and(low_int_mask);
         var vi1 = vi.shiftR(16).and(low_int_mask);
         var vi01 = vi0.add(vi1);
 
-        var vl = longSpecies.rebracket(vi01); // 64-bit
+        var vl = (LongVector)vi01.reinterpret(longSpecies); // 64-bit
         var vl0 = vl.and(low_long_mask);
         var vl1 = vl.shiftR(32).and(low_long_mask);
         var vl01 = vl0.add(vl1);
@@ -442,7 +441,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
 
         var low_mask = to.broadcast(0xFF);
 
-        var vl = to.rebracket(vb);
+        var vl = (LongVector)vb.reinterpret(to);
 
         var v0 = vl           .and(low_mask); // 8-bit
         var v1 = vl.shiftR( 8).and(low_mask); // 8-bit
@@ -474,7 +473,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
             var bacc = B256.zero();
             for (int j = 0; j < step; j += L256.length()) {
                 var v1 = L256.fromArray(data, i + j);
-                var v2 = popcntB256(B256.rebracket(v1));
+                var v2 = popcntB256((ByteVector)(v1.reinterpret(B256)));
                 bacc = bacc.add(v2);
             }
             acc = acc.add(sumUnsignedBytes(bacc));
@@ -502,7 +501,7 @@ public class PopulationCount extends AbstractVectorBenchmark {
     }
 
     LongVector popcntL256(LongVector v) {
-        var vb1 = B256.rebracket(v);
+        var vb1 = (ByteVector)v.reinterpret(B256);
         var vb2 = popcntB256(vb1);
         return sumUnsignedBytes(vb2);
     }

@@ -356,10 +356,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
     public abstract $abstractvectortype$ rearrange(Shuffle<$Boxtype$> m);
 
     @Override
-    @ForceInline
-    public $abstractvectortype$ resize(Species<$Boxtype$> species) {
-        return ($abstractvectortype$) species.resize(this);
-    }
+    public abstract $abstractvectortype$ reshape(Species<$Boxtype$> s);
 
     @Override
     public abstract $abstractvectortype$ rotateEL(int i);
@@ -2424,24 +2421,6 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
 
         @Override
         public abstract $abstractvectortype$ fromByteBuffer(ByteBuffer bb, int ix, Mask<$Boxtype$> m);
-
-        @Override
-        public <F> $abstractvectortype$ reshape(Vector<F> o) {
-            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
-            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-            o.intoByteBuffer(bb, 0);
-            return fromByteBuffer(bb, 0);
-        }
-
-        @Override
-        public abstract <F> $abstractvectortype$ rebracket(Vector<F> o);
-
-        @Override
-        public abstract $abstractvectortype$ resize(Vector<$Boxtype$> o);
-
-        @Override
-        public abstract <F> $abstractvectortype$ cast(Vector<F> v);
-
     }
 
     /**

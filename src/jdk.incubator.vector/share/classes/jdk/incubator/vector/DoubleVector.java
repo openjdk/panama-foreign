@@ -356,10 +356,7 @@ public abstract class DoubleVector extends Vector<Double> {
     public abstract DoubleVector rearrange(Shuffle<Double> m);
 
     @Override
-    @ForceInline
-    public DoubleVector resize(Species<Double> species) {
-        return (DoubleVector) species.resize(this);
-    }
+    public abstract DoubleVector reshape(Species<Double> s);
 
     @Override
     public abstract DoubleVector rotateEL(int i);
@@ -1665,24 +1662,6 @@ public abstract class DoubleVector extends Vector<Double> {
 
         @Override
         public abstract DoubleVector fromByteBuffer(ByteBuffer bb, int ix, Mask<Double> m);
-
-        @Override
-        public <F> DoubleVector reshape(Vector<F> o) {
-            int blen = Math.max(o.species().bitSize(), bitSize()) / Byte.SIZE;
-            ByteBuffer bb = ByteBuffer.allocate(blen).order(ByteOrder.nativeOrder());
-            o.intoByteBuffer(bb, 0);
-            return fromByteBuffer(bb, 0);
-        }
-
-        @Override
-        public abstract <F> DoubleVector rebracket(Vector<F> o);
-
-        @Override
-        public abstract DoubleVector resize(Vector<Double> o);
-
-        @Override
-        public abstract <F> DoubleVector cast(Vector<F> v);
-
     }
 
     /**
