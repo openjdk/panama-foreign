@@ -23,10 +23,13 @@
 package com.sun.tools.jextract;
 
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashSet;
@@ -123,5 +126,13 @@ public final class Context {
 
     public void addPackageMapping(Path path, String pkg) {
         pkgMappings.put(path, pkg);
+    }
+
+    // return the absolute path of the library of given name by searching
+    // in the given array of paths.
+    public static Optional<Path> findLibraryPath(Path[] paths, String libName) {
+        return Arrays.stream(paths).
+                map(p -> p.resolve(System.mapLibraryName(libName))).
+                filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
     }
 }

@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.spi.ToolProvider;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -75,8 +76,8 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
-    public void testOutputFileOption() {
-        // simple output file check
+    public void testJarOutputFileOption() {
+        // simple jar output file check
         Path simpleJar = getOutputFilePath("simple.jar");
         deleteFile(simpleJar);
         run("-o", simpleJar.toString(),
@@ -85,6 +86,26 @@ public class JextractToolProviderTest extends JextractToolRunner {
             assertTrue(Files.isRegularFile(simpleJar));
         } finally {
             deleteFile(simpleJar);
+        }
+    }
+
+    @Test
+    public void testJModOutputFileOption() {
+        // simple jmod output file check
+        Path simpleJmod = getOutputFilePath("simple.jmod");
+        deleteFile(simpleJmod);
+        // --target-package is mandatory for jmod generation
+        run("--target-package", "com.acme",
+            "-o", simpleJmod.toString(),
+            getInputFilePath("simple.h").toString()).checkSuccess();
+        try {
+            assertTrue(Files.isRegularFile(simpleJmod));
+            ToolProvider jmod = ToolProvider.findFirst("jmod").get();
+            int exitCode = jmod.run(System.out, System.err, "list",
+                simpleJmod.toString());
+            assertTrue(exitCode == 0);
+        } finally {
+            deleteFile(simpleJmod);
         }
     }
 

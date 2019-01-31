@@ -54,14 +54,6 @@ public class SymbolFilter extends TreeFilter {
         initSymChecker(ctx.linkCheckPaths);
     }
 
-    // return the absolute path of the library of given name by searching
-    // in the given array of paths.
-    private static Optional<Path> findLibraryPath(Path[] paths, String libName) {
-        return Arrays.stream(paths).
-                map(p -> p.resolve(System.mapLibraryName(libName))).
-                filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
-    }
-
     /*
      * Load the specified shared libraries from the specified paths.
      *
@@ -77,7 +69,7 @@ public class SymbolFilter extends TreeFilter {
         } else {
             Path[] paths = Arrays.stream(pathStrs).map(Paths::get).toArray(Path[]::new);
             return Arrays.stream(names).map(libName -> {
-                Optional<Path> absPath = findLibraryPath(paths, libName);
+                Optional<Path> absPath = Context.findLibraryPath(paths, libName);
                 return absPath.isPresent() ?
                         Libraries.load(lookup, absPath.get().toString()) :
                         Libraries.loadLibrary(lookup, libName);
