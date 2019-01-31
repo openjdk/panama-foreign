@@ -107,12 +107,12 @@ public class ScopeTest {
             int limit = ar.length / Integer.BYTES;
             assertEquals(limit, 4);
 
-            Array<Integer> arInt = nar.cast(NativeTypes.INT);
+            Array<Integer> arInt = nar.cast(NativeTypes.VOID).cast(NativeTypes.INT);
             // Cast doesn't recalculate the size :(
             // This can be really bad for upcast like this
             assertEquals(arInt.length(), nar.length());
 
-            arInt = nar.cast(NativeTypes.INT, limit);
+            arInt = nar.cast(NativeTypes.VOID).cast(NativeTypes.INT, limit);
             assertEquals(arInt.length(), limit);
 
             for (int i = 0; i < limit; i++) {

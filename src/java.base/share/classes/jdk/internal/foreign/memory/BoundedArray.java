@@ -33,8 +33,8 @@ import java.util.Objects;
 
 public class BoundedArray<X> implements Array<X> {
 
-    BoundedPointer<X> pointer;
-    long size;
+    private final BoundedPointer<X> pointer;
+    private final long size;
 
     public BoundedArray(BoundedPointer<X> pointer, long size) {
         this.pointer = Objects.requireNonNull(pointer);
@@ -58,8 +58,7 @@ public class BoundedArray<X> implements Array<X> {
 
     @Override
     public <Z> Array<Z> cast(LayoutType<Z> type, long size) {
-        BoundedPointer<Z> np = new BoundedPointer<>(type, pointer.region, pointer.offset);
-        return new BoundedArray<>(np, size);
+        return new BoundedArray<>(pointer.cast(type), size);
     }
 
     public static void copyFrom(Array<?> nativeArray, Object javaArray, int size) {
