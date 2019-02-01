@@ -7059,10 +7059,13 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
     return false; // not supported
   }
 
+  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
+  bool is_mask = vbox_klass->is_vectormask();
+
   Node* base = argument(3);
   Node* offset = ConvL2X(argument(4));
   DecoratorSet decorators = C2_UNSAFE_ACCESS;
-  Node* addr = make_unsafe_address(base, offset, decorators, elem_bt, true);
+  Node* addr = make_unsafe_address(base, offset, decorators, (is_mask ? T_BOOLEAN : elem_bt), true);
 
   const TypePtr *addr_type = gvn().type(addr)->isa_ptr();
   const TypeAryPtr* arr_type = addr_type->isa_aryptr();
@@ -7070,10 +7073,8 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
   // Now handle special case where load/store happens from/to byte array but element type is not byte.
   bool using_byte_array = arr_type != NULL && arr_type->elem()->array_element_basic_type() == T_BYTE && elem_bt != T_BYTE;
   // Handle loading masks.
-  ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
-  bool is_mask = vbox_klass->is_vectormask();
   // If there is no consistency between array and vector element types, it must be special byte array case or loading masks
-  if (!using_byte_array && arr_type != NULL && elem_bt != arr_type->elem()->array_element_basic_type() && !is_mask) {
+  if (!using_byte_array && elem_bt != arr_type->elem()->array_element_basic_type() && !is_mask) {
     return false;
   }
   // Since we are using byte array, we need to double check that the byte operations are supported by backend.
