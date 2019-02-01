@@ -108,11 +108,11 @@ public class AbstractVectorTest {
 
     static final List<IntFunction<boolean[]>> BOOL_ARRAY_GENERATORS = List.of(
             withToString("boolean[i % 2]", (int s) -> {
-                return fill_boolean(s * 1000,
+                return fill_boolean(s,
                             i -> ((i % 2) == 0));
             }),
             withToString("boolean[i % 5]", (int s) -> {
-                return fill_boolean(s * 1000,
+                return fill_boolean(s,
                             i -> ((i % 5) == 0));
             })
     );

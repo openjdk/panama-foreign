@@ -20065,7 +20065,7 @@ instruct extract8d(regD dst, vecZ src, vecZ tmp, immI idx) %{
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     } else if (midx == 1) {
-      __ vpshufpd($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
+      __ vpshufpd($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);
     } else if (midx > 1 && midx <= 7) {
       int extr_idx1 = midx / 2;
       int extr_idx2 = midx % 2;
@@ -20086,11 +20086,11 @@ instruct extract4d(regD dst, vecY src, vecY tmp, immI idx) %{
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     } else if (midx == 1) {
-      __ vpshufpd($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
+      __ vpshufpd($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);
     } else if (midx > 1 && midx <= 3) {
       __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
       __ vpshufpd($dst$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, midx - 2, vector_len);
-    }    
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20102,10 +20102,10 @@ instruct extract2d(regD dst, vecX src, immI idx) %{
     int midx = 0x1 & $idx$$constant;
     if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } 
+    }
     if (midx > 0) {
-      __ pshufpd($dst$$XMMRegister, $dst$$XMMRegister, midx);  
-    } 
+      __ pshufpd($dst$$XMMRegister, $dst$$XMMRegister, midx);
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20117,7 +20117,7 @@ instruct extract1d(regD dst, vecD src, immI idx) %{
     int midx = 0x1 & $idx$$constant;
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } 
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20127,12 +20127,12 @@ instruct extract16f(regF dst, vecZ src, vecZ tmp, immI idx) %{
   match(Set dst (ExtractF src idx));
   effect(TEMP tmp);
   ins_encode %{
-    int vector_len=2; 
+    int vector_len=2;
     int midx = 0xF & $idx$$constant;
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     } else if (midx >= 1 && midx <= 3) {
-      __ vpshufps($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
+      __ vpshufps($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);
     } else {
       int extr_idx1 = midx / 4;
       int extr_idx2 = midx % 4;
@@ -20148,12 +20148,12 @@ instruct extract8f(regF dst, vecY src, vecY tmp, immI idx) %{
   match(Set dst (ExtractF src idx));
   effect(TEMP tmp);
   ins_encode %{
-    int vector_len=1; 
+    int vector_len=1;
     int midx = 0x7 & $idx$$constant;
     if (midx == 0 && $dst$$XMMRegister != $src$$XMMRegister) {
       __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     } else if (midx >= 1 && midx <= 3) {
-      __ vpshufps($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);  
+      __ vpshufps($dst$$XMMRegister, $src$$XMMRegister, $src$$XMMRegister, midx, vector_len);
     } else if (midx >= 4) {
       __ vextractf128($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
       __ vpshufps($dst$$XMMRegister, $tmp$$XMMRegister, $tmp$$XMMRegister, midx - 4, vector_len);
@@ -20169,10 +20169,10 @@ instruct extract4f(regF dst, vecX src, immI idx) %{
     int midx = 0x3 & $idx$$constant;
     if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } 
+    }
     if (midx > 0) {
-      __ pshufps($dst$$XMMRegister, $dst$$XMMRegister, midx);  
-    } 
+      __ pshufps($dst$$XMMRegister, $dst$$XMMRegister, midx);
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20185,10 +20185,10 @@ instruct extract2f(regF dst, vecD src, immI idx) %{
     if ($dst$$XMMRegister != $src$$XMMRegister) {
       __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
-    if (midx > 0) 
+    if (midx > 0)
     {
-      __ pshufps($dst$$XMMRegister, $dst$$XMMRegister, midx);  
-    } 
+      __ pshufps($dst$$XMMRegister, $dst$$XMMRegister, midx);
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20200,7 +20200,7 @@ instruct extract1l(rRegL dst, vecD src, immI idx) %{
     int midx = 0x1 & $idx$$constant;
     if (midx == 0) {
       __ movq($dst$$Register, $src$$XMMRegister);
-    } 
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20214,7 +20214,7 @@ instruct extract2l(rRegL dst, vecX src, immI idx) %{
       __ movq($dst$$Register, $src$$XMMRegister);
     } else {
       __ pextrq($dst$$Register, $src$$XMMRegister, midx);
-    } 
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20230,13 +20230,13 @@ instruct extract4l(rRegL dst, vecY src, immI idx, vecX tmp) %{
     } else if(midx==1){
       __ pextrq($dst$$Register, $src$$XMMRegister, midx);
     } else {
-      __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, 0x1); 
+      __ vextracti128($tmp$$XMMRegister, $src$$XMMRegister, 0x1);
       __ pextrq($dst$$Register, $tmp$$XMMRegister, midx-2);
     }
   %}
   ins_pipe( pipe_slow );
 %}
- 
+
 instruct extract8l(rRegL dst, vecZ src, vecX tmp, immI idx) %{
   predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 8);
   match(Set dst (ExtractL src idx));
@@ -20267,7 +20267,7 @@ instruct extract2i(rRegI dst, vecD src, immI idx) %{
       __ movdl($dst$$Register, $src$$XMMRegister);
     } else if (midx >= 1) {
       __ pextrd($dst$$Register, $src$$XMMRegister, midx);
-    } 
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20281,7 +20281,7 @@ instruct extract4i(rRegI dst, vecX src, immI idx) %{
       __ movdl($dst$$Register, $src$$XMMRegister);
     } else if (midx >= 1 && midx <= 3) {
       __ pextrd($dst$$Register, $src$$XMMRegister, midx);
-    } 
+    }
   %}
   ins_pipe( pipe_slow );
 %}
@@ -20377,7 +20377,7 @@ instruct extract16s(rRegI dst, vecY src, vecX tmp, immI idx) %{
   %}
   ins_pipe( pipe_slow );
 %}
- 
+
 instruct extract32s(rRegI dst, vecZ src, vecX tmp, immI idx) %{
   predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 32);
   match(Set dst (ExtractS src idx));
@@ -20455,7 +20455,7 @@ instruct extract32b(rRegI dst, vecY src, vecX tmp, immI idx) %{
   %}
   ins_pipe( pipe_slow );
 %}
- 
+
 instruct extract64b(rRegI dst, vecZ src, vecX tmp, immI idx) %{
   predicate(UseAVX > 2 && n->in(1)->bottom_type()->is_vect()->length() == 64);
   match(Set dst (ExtractB src idx));
@@ -23291,7 +23291,7 @@ instruct rearrange4i(vecX dst, vecX shuffle) %{
 %}
 
 instruct rearrange8i(vecY dst, vecY src, vecY shuffle) %{
-  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 && 
+  predicate(UseAVX > 1 && n->as_Vector()->length() == 8 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorRearrange src shuffle));
@@ -23305,7 +23305,7 @@ instruct rearrange8i(vecY dst, vecY src, vecY shuffle) %{
 %}
 
 instruct rearrange16i(vecZ dst, vecZ src, vecZ shuffle) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 && 
+  predicate(UseAVX > 2 && n->as_Vector()->length() == 16 &&
             (n->bottom_type()->is_vect()->element_basic_type() == T_INT ||
              n->bottom_type()->is_vect()->element_basic_type() == T_FLOAT));
   match(Set dst (VectorRearrange src shuffle));
