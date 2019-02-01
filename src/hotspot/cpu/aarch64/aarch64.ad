@@ -12402,6 +12402,504 @@ instruct SubExtI_uxth_and_shift(iRegINoSp dst, iRegIorL2I src1, iRegIorL2I src2,
    %}
   ins_pipe(ialu_reg_reg_shift);
 %}
+
+instruct reduce_and8B(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (AndReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, S, 0\n\t"
+            "umov   $dst, $src2, S, 1\n\t"
+            "andw   $dst, $dst, $tmp\n\t"
+            "andw   $dst, $dst, $dst, LSR #16\n\t"
+            "andw   $dst, $dst, $dst, LSR #8\n\t"
+            "andw   $dst, $src1, $dst\n\t"
+            "sxtb   $dst, $dst\t and reduction8B"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ S, 1);
+    __ andw($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ andw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ andw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 8);
+    __ andw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_orr8B(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (OrReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, S, 0\n\t"
+            "umov   $dst, $src2, S, 1\n\t"
+            "orrw   $dst, $dst, $tmp\n\t"
+            "orrw   $dst, $dst, $dst, LSR #16\n\t"
+            "orrw   $dst, $dst, $dst, LSR #8\n\t"
+            "orrw   $dst, $src1, $dst\n\t"
+            "sxtb   $dst, $dst\t orr reduction8B"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ S, 1);
+    __ orrw($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ orrw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ orrw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 8);
+    __ orrw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_eor8B(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (XorReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, S, 0\n\t"
+            "umov   $dst, $src2, S, 1\n\t"
+            "eorw   $dst, $dst, $tmp\n\t"
+            "eorw   $dst, $dst, $dst, LSR #16\n\t"
+            "eorw   $dst, $dst, $dst, LSR #8\n\t"
+            "eorw   $dst, $src1, $dst\n\t"
+            "sxtb   $dst, $dst\t eor reduction8B"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ S, 1);
+    __ eorw($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ eorw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ eorw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 8);
+    __ eorw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_and16B(iRegINoSp dst, iRegIorL2I src1, vecX src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (AndReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, D, 0\n\t"
+            "umov   $dst, $src2, D, 1\n\t"
+            "andr   $dst, $dst, $tmp\n\t"
+            "andr   $dst, $dst, $dst, LSR #32\n\t"
+            "andw   $dst, $dst, $dst, LSR #16\n\t"
+            "andw   $dst, $dst, $dst, LSR #8\n\t"
+            "andw   $dst, $src1, $dst\n\t"
+            "sxtb   $dst, $dst\t and reduction16B"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ andr($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ andr($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 32);
+    __ andw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ andw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 8);
+    __ andw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_orr16B(iRegINoSp dst, iRegIorL2I src1, vecX src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (OrReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, D, 0\n\t"
+            "umov   $dst, $src2, D, 1\n\t"
+            "orr    $dst, $dst, $tmp\n\t"
+            "orr    $dst, $dst, $dst, LSR #32\n\t"
+            "orrw   $dst, $dst, $dst, LSR #16\n\t"
+            "orrw   $dst, $dst, $dst, LSR #8\n\t"
+            "orrw   $dst, $src1, $dst\n\t"
+            "sxtb   $dst, $dst\t orr reduction16B"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ orr ($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ orr ($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 32);
+    __ orrw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ orrw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 8);
+    __ orrw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_eor16B(iRegINoSp dst, iRegIorL2I src1, vecX src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE);
+  match(Set dst (XorReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, D, 0\n\t"
+            "umov   $dst, $src2, D, 1\n\t"
+            "eor    $dst, $dst, $tmp\n\t"
+            "eor    $dst, $dst, $dst, LSR #32\n\t"
+            "eorw   $dst, $dst, $dst, LSR #16\n\t"
+            "eorw   $dst, $dst, $dst, LSR #8\n\t"
+            "eorw   $dst, $src1, $dst\n\t"
+            "sxtb   $dst, $dst\t eor reduction16B"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ eor ($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ eor ($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 32);
+    __ eorw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ eorw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 8);
+    __ eorw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxtb($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_and4S(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (AndReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, S, 0\n\t"
+            "umov   $dst, $src2, S, 1\n\t"
+            "andw   $dst, $dst, $tmp\n\t"
+            "andw   $dst, $dst, $dst, LSR #16\n\t"
+            "andw   $dst, $src1, $dst\n\t"
+            "sxth   $dst, $dst\t and reduction4S"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ S, 1);
+    __ andw($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ andw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ andw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_orr4S(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (OrReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, S, 0\n\t"
+            "umov   $dst, $src2, S, 1\n\t"
+            "orrw   $dst, $dst, $tmp\n\t"
+            "orrw   $dst, $dst, $dst, LSR #16\n\t"
+            "orrw   $dst, $src1, $dst\n\t"
+            "sxth   $dst, $dst\t orr reduction4S"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ S, 1);
+    __ orrw($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ orrw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ orrw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_eor4S(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (XorReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, S, 0\n\t"
+            "umov   $dst, $src2, S, 1\n\t"
+            "eorw   $dst, $dst, $tmp\n\t"
+            "eorw   $dst, $dst, $dst, LSR #16\n\t"
+            "eorw   $dst, $src1, $dst\n\t"
+            "sxth   $dst, $dst\t eor reduction4S"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ S, 1);
+    __ eorw($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ eorw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ eorw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_and8S(iRegINoSp dst, iRegIorL2I src1, vecX src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (AndReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, D, 0\n\t"
+            "umov   $dst, $src2, D, 1\n\t"
+            "andr   $dst, $dst, $tmp\n\t"
+            "andr   $dst, $dst, $dst, LSR #32\n\t"
+            "andw   $dst, $dst, $dst, LSR #16\n\t"
+            "andw   $dst, $src1, $dst\n\t"
+            "sxth   $dst, $dst\t and reduction8S"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ andr($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ andr($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 32);
+    __ andw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ andw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_orr8S(iRegINoSp dst, iRegIorL2I src1, vecX src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (OrReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, D, 0\n\t"
+            "umov   $dst, $src2, D, 1\n\t"
+            "orr    $dst, $dst, $tmp\n\t"
+            "orr    $dst, $dst, $dst, LSR #32\n\t"
+            "orrw   $dst, $dst, $dst, LSR #16\n\t"
+            "orrw   $dst, $src1, $dst\n\t"
+            "sxth   $dst, $dst\t orr reduction8S"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ orr ($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ orr ($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 32);
+    __ orrw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ orrw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_eor8S(iRegINoSp dst, iRegIorL2I src1, vecX src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_SHORT);
+  match(Set dst (XorReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, D, 0\n\t"
+            "umov   $dst, $src2, D, 1\n\t"
+            "eor    $dst, $dst, $tmp\n\t"
+            "eor    $dst, $dst, $dst, LSR #32\n\t"
+            "eorw   $dst, $dst, $dst, LSR #16\n\t"
+            "eorw   $dst, $src1, $dst\n\t"
+            "sxth   $dst, $dst\t eor reduction8S"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ eor ($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ eor ($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 32);
+    __ eorw($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 16);
+    __ eorw($dst$$Register, $src1$$Register, $dst$$Register);
+    __ sxth($dst$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_and2I(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (AndReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov  $tmp, $src2, S, 0\n\t"
+            "andw  $dst, $tmp, $src1\n\t"
+            "umov  $tmp, $src2, S, 1\n\t"
+            "andw  $dst, $tmp, $dst\t and reduction2I"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
+    __ andw($dst$$Register, $tmp$$Register, $src1$$Register);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 1);
+    __ andw($dst$$Register, $tmp$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_orr2I(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (OrReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov  $tmp, $src2, S, 0\n\t"
+            "orrw  $dst, $tmp, $src1\n\t"
+            "umov  $tmp, $src2, S, 1\n\t"
+            "orrw  $dst, $tmp, $dst\t orr reduction2I"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
+    __ orrw($dst$$Register, $tmp$$Register, $src1$$Register);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 1);
+    __ orrw($dst$$Register, $tmp$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_eor2I(iRegINoSp dst, iRegIorL2I src1, vecD src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (XorReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov  $tmp, $src2, S, 0\n\t"
+            "eorw  $dst, $tmp, $src1\n\t"
+            "umov  $tmp, $src2, S, 1\n\t"
+            "eorw  $dst, $tmp, $dst\t eor reduction2I"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 0);
+    __ eorw($dst$$Register, $tmp$$Register, $src1$$Register);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ S, 1);
+    __ eorw($dst$$Register, $tmp$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_and4I(iRegINoSp dst, iRegIorL2I src1, vecX src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (AndReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, D, 0\n\t"
+            "umov   $dst, $src2, D, 1\n\t"
+            "andr   $dst, $dst, $tmp\n\t"
+            "andr   $dst, $dst, $dst, LSR #32\n\t"
+            "andw   $dst, $src1, $dst\t and reduction4I"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ andr($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ andr($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 32);
+    __ andw($dst$$Register, $src1$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_orr4I(iRegINoSp dst, iRegIorL2I src1, vecX src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (OrReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, D, 0\n\t"
+            "umov   $dst, $src2, D, 1\n\t"
+            "orr    $dst, $dst, $tmp\n\t"
+            "orr    $dst, $dst, $dst, LSR #32\n\t"
+            "orrw   $dst, $src1, $dst\t orr reduction4I"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ orr ($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ orr ($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 32);
+    __ orrw($dst$$Register, $src1$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_eor4I(iRegINoSp dst, iRegIorL2I src1, vecX src2, iRegINoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT);
+  match(Set dst (XorReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov   $tmp, $src2, D, 0\n\t"
+            "umov   $dst, $src2, D, 1\n\t"
+            "eor    $dst, $dst, $tmp\n\t"
+            "eor    $dst, $dst, $dst, LSR #32\n\t"
+            "eorw   $dst, $src1, $dst\t eor reduction4I"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ umov($dst$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ eor ($dst$$Register, $dst$$Register, $tmp$$Register);
+    __ eor ($dst$$Register, $dst$$Register, $dst$$Register, Assembler::LSR, 32);
+    __ eorw($dst$$Register, $src1$$Register, $dst$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_and2L(iRegLNoSp dst, iRegL src1, vecX src2, iRegLNoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (AndReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov  $tmp, $src2, D, 0\n\t"
+            "andr  $dst, $src1, $tmp\n\t"
+            "umov  $tmp, $src2, D, 1\n\t"
+            "andr  $dst, $dst, $tmp\t and reduction2L"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ andr($dst$$Register, $src1$$Register, $tmp$$Register);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ andr($dst$$Register, $dst$$Register, $tmp$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_orr2L(iRegLNoSp dst, iRegL src1, vecX src2, iRegLNoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (OrReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov  $tmp, $src2, D, 0\n\t"
+            "orr   $dst, $src1, $tmp\n\t"
+            "umov  $tmp, $src2, D, 1\n\t"
+            "orr   $dst, $dst, $tmp\t orr reduction2L"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ orr ($dst$$Register, $src1$$Register, $tmp$$Register);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ orr ($dst$$Register, $dst$$Register, $tmp$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
+
+instruct reduce_eor2L(iRegLNoSp dst, iRegL src1, vecX src2, iRegLNoSp tmp)
+%{
+  predicate(n->in(2)->bottom_type()->is_vect()->element_basic_type() == T_LONG);
+  match(Set dst (XorReductionV src1 src2));
+  ins_cost(INSN_COST);
+  effect(TEMP_DEF dst, TEMP tmp);
+  format %{ "umov  $tmp, $src2, D, 0\n\t"
+            "eor   $dst, $src1, $tmp\n\t"
+            "umov  $tmp, $src2, D, 1\n\t"
+            "eor   $dst, $dst, $tmp\t eor reduction2L"
+  %}
+  ins_encode %{
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 0);
+    __ eor ($dst$$Register, $src1$$Register, $tmp$$Register);
+    __ umov($tmp$$Register, as_FloatRegister($src2$$reg), __ D, 1);
+    __ eor ($dst$$Register, $dst$$Register, $tmp$$Register);
+  %}
+  ins_pipe(pipe_class_default);
+%}
 // END This section of the file is automatically generated. Do not edit --------------
 
 // ============================================================================
