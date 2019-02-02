@@ -7074,7 +7074,7 @@ bool LibraryCallKit::inline_vector_mem_operation(bool is_store) {
   bool using_byte_array = arr_type != NULL && arr_type->elem()->array_element_basic_type() == T_BYTE && elem_bt != T_BYTE;
   // Handle loading masks.
   // If there is no consistency between array and vector element types, it must be special byte array case or loading masks
-  if (!using_byte_array && elem_bt != arr_type->elem()->array_element_basic_type() && !is_mask) {
+  if (arr_type != NULL && !using_byte_array && elem_bt != arr_type->elem()->array_element_basic_type() && !is_mask) {
     return false;
   }
   // Since we are using byte array, we need to double check that the byte operations are supported by backend.
