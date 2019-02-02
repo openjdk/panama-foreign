@@ -1504,6 +1504,10 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_MinV:
           if (UseSSE < 4 && (bt == T_BYTE || bt == T_INT || bt == T_LONG))
             ret_value = false;
+
+          // Float/Double intrinsics disabled till we fix the implementation to match Math.max/Math.min 
+          if (bt == T_FLOAT || bt == T_DOUBLE)
+            ret_value = false;
           break;
         case Op_MulVB:
           if (size_in_bits <= 128 && UseSSE < 4) { ret_value = false; }
@@ -1565,6 +1569,10 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
         case Op_MaxReductionV:
           if ((bt == T_INT || bt == T_LONG || bt == T_BYTE) && UseSSE <= 3) { ret_value = false; }
           else if (is_integral_type(bt) && size_in_bits == 256 && UseAVX < 2) { ret_value = false; }
+
+          // Float/Double intrinsics disabled till we fix the implementation to match Math.max/Math.min 
+          if (bt == T_FLOAT || bt == T_DOUBLE)
+            ret_value = false;
           break;
         case Op_VectorBlend:
           if (UseSSE <= 3 && UseAVX == 0) { ret_value = false; }
