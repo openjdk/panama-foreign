@@ -1182,7 +1182,7 @@ public abstract class ByteVector extends Vector<Byte> {
      */
     @SuppressWarnings("unchecked")
     public static ByteSpecies preferredSpecies() {
-        return (ByteSpecies) Vector.preferredSpecies(byte.class);
+        return (ByteSpecies) Species.ofPreferred(byte.class);
     }
 
     /**

@@ -1309,7 +1309,7 @@ public abstract class IntVector extends Vector<Integer> {
      */
     @SuppressWarnings("unchecked")
     public static IntSpecies preferredSpecies() {
-        return (IntSpecies) Vector.preferredSpecies(int.class);
+        return (IntSpecies) Species.ofPreferred(int.class);
     }
 
     /**

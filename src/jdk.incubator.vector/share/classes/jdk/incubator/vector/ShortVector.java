@@ -1182,7 +1182,7 @@ public abstract class ShortVector extends Vector<Short> {
      */
     @SuppressWarnings("unchecked")
     public static ShortSpecies preferredSpecies() {
-        return (ShortSpecies) Vector.preferredSpecies(short.class);
+        return (ShortSpecies) Species.ofPreferred(short.class);
     }
 
     /**

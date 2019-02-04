@@ -51,7 +51,7 @@ public class PreferredSpeciesTest {
     @Test(dataProvider = "classesProvider")
     void testVectorLength(Class<?> c) {
         Vector.Species<?> species =
-                Vector.preferredSpecies(c);
+                Vector.Species.ofPreferred(c);
 
         Assert.assertEquals(species.length(), U.getMaxVectorSize(c));
     }

@@ -2435,7 +2435,7 @@ public abstract class $abstractvectortype$ extends Vector<$Boxtype$> {
      */
     @SuppressWarnings("unchecked")
     public static $Type$Species preferredSpecies() {
-        return ($Type$Species) Vector.preferredSpecies($type$.class);
+        return ($Type$Species) Species.ofPreferred($type$.class);
     }
 
     /**

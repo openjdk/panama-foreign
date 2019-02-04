@@ -1309,7 +1309,7 @@ public abstract class LongVector extends Vector<Long> {
      */
     @SuppressWarnings("unchecked")
     public static LongSpecies preferredSpecies() {
-        return (LongSpecies) Vector.preferredSpecies(long.class);
+        return (LongSpecies) Species.ofPreferred(long.class);
     }
 
     /**
