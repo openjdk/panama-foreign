@@ -75,9 +75,9 @@ import java.util.function.IntUnaryOperator;
  * factory called a {@link Species}.  A Species has an
  * element type and shape and creates Vector values of the same element type
  * and shape.
- * A species can be {@link #species(Class, Shape)} obtained} given an element
+ * A species can be {@link Species#of(Class, Shape)} obtained} given an element
  * type and shape, or a preferred species can be
- * {@link #preferredSpecies obtained} given just an element type where the most
+ * {@link Species#ofPreferred(Class)}  obtained} given just an element type where the most
  * optimal shape is selected for the current platform.  It is recommended that
  * Species instances be held in {@code static final} fields for optimal creation
  * and usage of Vector values by the runtime compiler.
@@ -918,6 +918,32 @@ public abstract class Vector<E> {
         int length(Species<?> s) {
             return bitSize() / s.elementSize();
         }
+
+        /**
+         * Finds appropriate shape depending on bitsize.
+         *
+         * @param bitSize the size in bits
+         * @return the shape corresponding to bitsize
+         * @see #bitSize
+         */
+        public static Shape forBitSize(int bitSize) {
+            switch (bitSize) {
+                case 64:
+                    return Shape.S_64_BIT;
+                case 128:
+                    return Shape.S_128_BIT;
+                case 256:
+                    return Shape.S_256_BIT;
+                case 512:
+                    return Shape.S_512_BIT;
+                default:
+                    if ((bitSize > 0) && (bitSize <= 2048) && (bitSize % 128 == 0)) {
+                        return Shape.S_Max_BIT;
+                    } else {
+                        throw new IllegalArgumentException("Bad vector bit size: " + bitSize);
+                    }
+            }
+        }
     }
 
 
@@ -972,6 +998,65 @@ public abstract class Vector<E> {
         public int bitSize() { return shape().bitSize(); }
 
         // Factory
+
+        /**
+         * Finds a species for an element type and shape.
+         *
+         * @param c the element type
+         * @param s the shape
+         * @param <E> the boxed element type
+         * @return a species for an element type and shape
+         * @throws IllegalArgumentException if no such species exists for the
+         * element type and/or shape
+         */
+        @SuppressWarnings("unchecked")
+        public static <E> Vector.Species<E> of(Class<E> c, Shape s) {
+            if (c == float.class) {
+                return (Vector.Species<E>) FloatVector.species(s);
+            }
+            else if (c == double.class) {
+                return (Vector.Species<E>) DoubleVector.species(s);
+            }
+            else if (c == byte.class) {
+                return (Vector.Species<E>) ByteVector.species(s);
+            }
+            else if (c == short.class) {
+                return (Vector.Species<E>) ShortVector.species(s);
+            }
+            else if (c == int.class) {
+                return (Vector.Species<E>) IntVector.species(s);
+            }
+            else if (c == long.class) {
+                return (Vector.Species<E>) LongVector.species(s);
+            }
+            else {
+                throw new IllegalArgumentException("Bad vector element type: " + c.getName());
+            }
+        }
+
+        /**
+         * Finds a preferred species for an element type.
+         * <p>
+         * A preferred species is a species chosen by the platform that has a
+         * shape of maximal bit size.  A preferred species for different element
+         * types will have the same shape, and therefore vectors created from
+         * such species will be shape compatible.
+         *
+         * @param c the element type
+         * @param <E> the boxed element type
+         * @return a preferred species for an element type
+         * @throws IllegalArgumentException if no such species exists for the
+         * element type
+         */
+        @SuppressWarnings("unchecked")
+        public static <E> Vector.Species<E> ofPreferred(Class<E> c) {
+            Unsafe u = Unsafe.getUnsafe();
+
+            int vectorLength = u.getMaxVectorSize(c);
+            int vectorBitSize = bitSizeForVectorLength(c, vectorLength);
+            Shape s = Shape.forBitSize(vectorBitSize);
+            return Species.of(c, s);
+        }
 
         /**
          * Returns a vector where all lane elements are set to the default
@@ -1565,30 +1650,6 @@ public abstract class Vector<E> {
     }
 
     /**
-     * Finds a preferred species for an element type.
-     * <p>
-     * A preferred species is a species chosen by the platform that has a
-     * shape of maximal bit size.  A preferred species for different element
-     * types will have the same shape, and therefore vectors created from
-     * such species will be shape compatible.
-     *
-     * @param c the element type
-     * @param <E> the boxed element type
-     * @return a preferred species for an element type
-     * @throws IllegalArgumentException if no such species exists for the
-     * element type
-     */
-    @SuppressWarnings("unchecked")
-    public static <E> Vector.Species<E> preferredSpecies(Class<E> c) {
-        Unsafe u = Unsafe.getUnsafe();
-
-        int vectorLength = u.getMaxVectorSize(c);
-        int vectorBitSize = bitSizeForVectorLength(c, vectorLength);
-        Shape s = shapeForVectorBitSize(vectorBitSize);
-        return species(c, s);
-    }
-
-    /**
      * Find bit size based on element type and number of elements.
      *
      * @param c the element type
@@ -1616,67 +1677,6 @@ public abstract class Vector<E> {
         }
         else {
             throw new IllegalArgumentException("Bad vector type: " + c.getName());
-        }
-    }
-
-    /**
-     * Finds appropriate shape depending on bitsize.
-     *
-     * @param bitSize the size in bits
-     * @return the shape corresponding to bitsize
-     * @see #bitSize
-     */
-    public static Shape shapeForVectorBitSize(int bitSize) {
-        switch (bitSize) {
-            case 64:
-                return Shape.S_64_BIT;
-            case 128:
-                return Shape.S_128_BIT;
-            case 256:
-                return Shape.S_256_BIT;
-            case 512:
-                return Shape.S_512_BIT;
-            default:
-                if ((bitSize > 0) && (bitSize <= 2048) && (bitSize % 128 == 0)) {
-                    return Shape.S_Max_BIT;
-                } else {
-                    throw new IllegalArgumentException("Bad vector bit size: " + bitSize);
-                }
-        }
-    }
-
-    /**
-     * Finds a species for an element type and shape.
-     *
-     * @param c the element type
-     * @param s the shape
-     * @param <E> the boxed element type
-     * @return a species for an element type and shape
-     * @throws IllegalArgumentException if no such species exists for the
-     * element type and/or shape
-     */
-    @SuppressWarnings("unchecked")
-    public static <E> Vector.Species<E> species(Class<E> c, Shape s) {
-        if (c == float.class) {
-            return (Vector.Species<E>) FloatVector.species(s);
-        }
-        else if (c == double.class) {
-            return (Vector.Species<E>) DoubleVector.species(s);
-        }
-        else if (c == byte.class) {
-            return (Vector.Species<E>) ByteVector.species(s);
-        }
-        else if (c == short.class) {
-            return (Vector.Species<E>) ShortVector.species(s);
-        }
-        else if (c == int.class) {
-            return (Vector.Species<E>) IntVector.species(s);
-        }
-        else if (c == long.class) {
-            return (Vector.Species<E>) LongVector.species(s);
-        }
-        else {
-            throw new IllegalArgumentException("Bad vector element type: " + c.getName());
         }
     }
 }

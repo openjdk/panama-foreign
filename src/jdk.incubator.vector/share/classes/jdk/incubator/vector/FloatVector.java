@@ -1676,7 +1676,7 @@ public abstract class FloatVector extends Vector<Float> {
      */
     @SuppressWarnings("unchecked")
     public static FloatSpecies preferredSpecies() {
-        return (FloatSpecies) Vector.preferredSpecies(float.class);
+        return (FloatSpecies) Species.ofPreferred(float.class);
     }
 
     /**

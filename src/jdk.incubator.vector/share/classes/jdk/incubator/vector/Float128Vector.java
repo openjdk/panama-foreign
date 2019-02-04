@@ -48,8 +48,8 @@ final class Float128Vector extends FloatVector {
     private static final IntVector.IntSpecies INDEX_SPEC;
     static {
         int bitSize = Vector.bitSizeForVectorLength(int.class, LENGTH);
-        Vector.Shape shape = Vector.shapeForVectorBitSize(bitSize);
-        INDEX_SPEC = (IntVector.IntSpecies) Vector.species(int.class, shape);
+        Vector.Shape shape = Shape.forBitSize(bitSize);
+        INDEX_SPEC = (IntVector.IntSpecies) Species.of(int.class, shape);
     }
 
     private final float[] vec; // Don't access directly, use getElements() instead.
