@@ -40,18 +40,19 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public class SymbolFilter extends TreeFilter {
-
     private Predicate<String> symChecker;
     private Predicate<String> includeSymFilter;
     private Predicate<String> excludeSymFilter;
     private final PrintWriter err;
     private final List<String> libraryNames;
+    private final MissingSymbolAction missingSymbolAction;
 
     public SymbolFilter(Context ctx) {
         this.err = ctx.err;
         this.libraryNames = ctx.libraryNames;
+        this.missingSymbolAction = ctx.missingSymbolAction;
         initSymFilters(ctx.includeSymbols, ctx.excludeSymbols);
-        initSymChecker(ctx.linkCheckPaths);
+        initSymChecker(ctx.libraryPaths);
     }
 
     /*
@@ -150,11 +151,11 @@ public class SymbolFilter extends TreeFilter {
     @Override
     public Tree visitFunction(FunctionTree ft, Void v) {
         String name = ft.name();
-        // check for function symbols in libraries & warn missing symbols
-        if (!isSymbolFound(name)) {
-            err.println(Main.format("warn.symbol.not.found", name));
-            //auto-exclude symbols not found
-            return null;
+        if (missingSymbolAction != MissingSymbolAction.IGNORE) {
+            // check for function symbols in libraries & apply action for missing symbols
+            if (!isSymbolFound(name) && missingSymbolAction.handle(err, name)) {
+                return null;
+            }
         }
 
         return super.visitFunction(ft, null);

@@ -48,12 +48,13 @@ public final class Context {
     public final List<String> libraryNames;
     // The list of library paths
     public final List<String> libraryPaths;
-    // The list of library paths for link checks
-    public final List<String> linkCheckPaths;
+    // whether library paths are recorded in .class files or not?
+    public boolean recordLibraryPath;
     // Symbol patterns to be included
     public final List<Pattern> includeSymbols;
     // Symbol patterns to be excluded
     public final List<Pattern> excludeSymbols;
+    public MissingSymbolAction missingSymbolAction;
     // no NativeLocation info
     public boolean noNativeLocations;
     // generate static forwarder class or not?
@@ -73,7 +74,6 @@ public final class Context {
         this.sources = new LinkedHashSet<>();
         this.libraryNames = new ArrayList<>();
         this.libraryPaths = new ArrayList<>();
-        this.linkCheckPaths = new ArrayList<>();
         this.includeSymbols = new ArrayList<>();
         this.excludeSymbols = new ArrayList<>();
         this.out = out;
@@ -100,12 +100,16 @@ public final class Context {
         libraryPaths.add(path);
     }
 
-    public void addLinkCheckPath(String path) {
-        linkCheckPaths.add(path);
-    }
-
     public void setNoNativeLocations() {
         noNativeLocations = true;
+    }
+
+    public void setMissingSymbolAction(MissingSymbolAction msa) {
+        missingSymbolAction = msa;
+    }
+
+    public void setRecordLibraryPath() {
+        recordLibraryPath = true;
     }
 
     public void addIncludeSymbols(String pattern) {

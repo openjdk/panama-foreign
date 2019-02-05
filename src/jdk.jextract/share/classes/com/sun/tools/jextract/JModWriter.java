@@ -121,14 +121,12 @@ public final class JModWriter {
     private void copyNativeLibraries(Path libsDir) throws IOException {
         Files.createDirectory(libsDir);
         if (!ctx.libraryNames.isEmpty()) {
-            if (ctx.libraryPaths.isEmpty() && ctx.linkCheckPaths.isEmpty()) {
+            if (ctx.libraryPaths.isEmpty()) {
                 ctx.err.println("WARNING: " + "no library paths specified");
                 return;
             }
             logger.info(() -> "Copying native libraries");
-            List<String> libPathList = new ArrayList<>(ctx.libraryPaths);
-            libPathList.addAll(ctx.linkCheckPaths);
-            Path[] paths = libPathList.stream().map(Paths::get).toArray(Path[]::new);
+            Path[] paths = ctx.libraryPaths.stream().map(Paths::get).toArray(Path[]::new);
             ctx.libraryNames.forEach(libName -> {
                 Optional<Path> absPath = Context.findLibraryPath(paths, libName);
                 if (absPath.isPresent()) {
