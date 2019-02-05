@@ -99,7 +99,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         this.global_cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         this.types = new HashMap<>();
         this.libraryNames = ctx.libraryNames;
-        this.libraryPaths = ctx.libraryPaths;
+        this.libraryPaths = ctx.recordLibraryPath? ctx.libraryPaths : null;
         this.err = ctx.err;
         this.noNativeLocations = ctx.noNativeLocations;
         global_cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
@@ -123,7 +123,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
                 libNames.visit(null, name);
             }
             libNames.visitEnd();
-            if (!libraryPaths.isEmpty()) {
+            if (libraryPaths != null && !libraryPaths.isEmpty()) {
                 AnnotationVisitor libPaths = av.visitArray("libraryPaths");
                 for (String path : libraryPaths) {
                     libPaths.visit(null, path);

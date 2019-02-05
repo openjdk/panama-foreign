@@ -25,9 +25,9 @@
  * @test
  * @library ..
  * @modules jdk.jextract
- * @build RpathTest
+ * @build RecordLibraryPathTest
  *
- * @run testng/othervm RpathTest
+ * @run testng/othervm RecordLibraryPathTest
  */
 
 import org.testng.annotations.*;
@@ -37,32 +37,12 @@ import java.nio.file.Path;
 
 import static org.testng.Assert.*;
 
-public class RpathTest extends JextractToolRunner {
-
+public class RecordLibraryPathTest extends JextractToolRunner {
     @Test
-    public void testExplicit() throws ReflectiveOperationException {
-        Path clzPath = getOutputFilePath("libTestRpath.jar");
+    public void testRecordLibraryPath() throws ReflectiveOperationException {
+        Path clzPath = getOutputFilePath("libTestRecordLibraryPath.jar");
         run("-o", clzPath.toString(),
-                "-l", "b", "-rpath", "foo/bar",
-                getInputFilePath("foo.h").toString()).checkSuccess();
-        try(Loader loader = classLoader(clzPath)) {
-            for (String name : new String[] { "foo", "bar"}) {
-                Class<?> headerCls = loader.loadClass(name);
-                NativeHeader nativeHeader = headerCls.getAnnotation(NativeHeader.class);
-                assertNotNull(nativeHeader);
-                assertTrue(nativeHeader.libraryPaths().length == 1);
-                assertEquals(nativeHeader.libraryPaths()[0], "foo/bar");
-            }
-        } finally {
-            deleteFile(clzPath);
-        }
-    }
-
-    @Test
-    public void testAuto() throws ReflectiveOperationException {
-        Path clzPath = getOutputFilePath("libTestRpath.jar");
-        run("-o", clzPath.toString(),
-                "-l", "b", "-L", "foo/bar", "-infer-rpath",
+                "-l", "b", "--record-library-path", "-L", "foo/bar",
                 getInputFilePath("foo.h").toString()).checkSuccess();
         try(Loader loader = classLoader(clzPath)) {
             for (String name : new String[] { "foo", "bar"}) {

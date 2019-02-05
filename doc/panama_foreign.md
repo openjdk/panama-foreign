@@ -30,7 +30,7 @@ Commands are tested in PowerShell.
 ```sh
 
 jextract -l python2.7 \
-  -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \
+  -L /System/Library/Frameworks/Python.framework/Versions/2.7/lib --record-library-path \
   --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
   -t org.python \
   /usr/include/python2.7/Python.h \
@@ -118,7 +118,7 @@ java PythonMain
 ```sh
 
 jextract -l python2.7 \
-  -rpath /usr/lib/python2.7/config-x86_64-linux-gnu \
+  -L /usr/lib/python2.7/config-x86_64-linux-gnu --record-library-path \
   --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
   -t org.python \
   /usr/include/python2.7/Python.h \
@@ -137,7 +137,7 @@ Follow the instructions from the Mac OS section
 Where python 2.7 is installed in the `C:\Python27` directory:
 
 ```powershell
-jextract -L "C:\Windows\System32" -l python27 -o python.jar -t "org.python" --infer-rpath C:\Python27\include\Python.h
+jextract -L "C:\Windows\System32" -l python27 -o python.jar -t "org.python" --record-library-path C:\Python27\include\Python.h
 ```
 
 ### Compiling and Running Python Java example
@@ -190,7 +190,7 @@ The following command can be used to extract cblas.h on MacOs
 
 jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
   -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \
-  -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \
+  -l openblas -t blas --record-library-path /usr/local/opt/openblas/include/cblas.h \
   -o cblas.jar
 
 ```
@@ -205,7 +205,7 @@ The following command can be used to extract cblas.h on Ubuntu
 ```sh
 
 jextract -L /usr/lib/atlas-base -I /usr/include/atlas/ \
-   -l cblas -t blas -infer-rpath \
+   -l cblas -t blas --record-library-path \
    /usr/include/atlas/cblas.h -o cblas.jar
 
 ```
@@ -307,7 +307,7 @@ The following command can be used to extract the LAPACK header:
 ```sh
 
 jextract -L /usr/lib/atlas-base/atlas -I /usr/include/atlas/ \
-   -l lapack -t lapack -infer-rpath /usr/include/atlas/clapack.h -o clapack.jar
+   -l lapack -t lapack --record-library-path /usr/include/atlas/clapack.h -o clapack.jar
 
 ```
 
@@ -395,7 +395,7 @@ include only the symbols used in the Java sample code below.
 
 jextract --include-symbols LAPACKE_dgels\|LAPACK_COL_MAJOR \
   -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \
-  -l lapacke -t lapack -infer-rpath /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
+  -l lapacke -t lapack --record-library-path /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
 
 ```
 ### Java sample code that uses LAPACK library
@@ -473,7 +473,7 @@ java -cp clapack.jar:. TestLapack
 
 ### jextract a jar file for libproc.h
 
-jextract -t org.unix -lproc -rpath /usr/lib -o libproc.jar /usr/include/libproc.h
+jextract -t org.unix -lproc -L /usr/lib --record-library-path -o libproc.jar /usr/include/libproc.h
 
 ### Java program that uses libproc to list processes
 
@@ -531,7 +531,7 @@ java -cp libproc.jar:. LibprocMain
 
 ```sh
 
-jextract -l readline -rpath /usr/local/opt/readline/lib/ \
+jextract -l readline -L /usr/local/opt/readline/lib/ --record-library-path \
     -t org.unix \
     /usr/include/readline/readline.h \
     --exclude-symbol readline_echoing_p -o readline.jar
@@ -643,7 +643,7 @@ To extract the opengl libraries the following command suffices:
 
 ```sh
 
-jextract -L /usr/lib/x86_64-linux-gnu  -l glut -l GLU -l GL --infer-rpath -t opengl -o opengl.jar /usr/include/GL/glut.h
+jextract -L /usr/lib/x86_64-linux-gnu  -l glut -l GLU -l GL --record-library-path -t opengl -o opengl.jar /usr/include/GL/glut.h
 
 ```
 
@@ -740,7 +740,7 @@ Navigate to the root directory of the extracted zip and run the following comman
 
 ```powershell
 $inc = "C:\Program Files (x86)\Windows Kits\10\Include\10.0.17134.0"
-jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.jar -m "$inc\um\gl=opengl" --infer-rpath .\freeglut\include\GL\glut.h
+jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.jar -m "$inc\um\gl=opengl" --record-library-path .\freeglut\include\GL\glut.h
 ```
 
 The directory that is assigned to `$inc` is an example, and is system dependent. Make sure that the build number at the end of the path (in this case `10.0.17134.0`) is the latest one found in the parent folder (`C:\Program Files (x86)\Windows Kits\10\Include\`).
@@ -796,7 +796,7 @@ The following command can be used to extract c_api.h.
 ```sh
 
 jextract -C -x -C c++  \
-        -L /usr/local/lib -l tensorflow -infer-rpath \
+        -L /usr/local/lib -l tensorflow --record-library-path \
         -o tf.jar -t org.tensorflow.panama \
         /usr/local/include/tensorflow/c/c_api.h
 
@@ -973,7 +973,7 @@ TF_GetAllOpList() -> TF_GetAllOpList(void)
 Once you've done this you can use the following jextract command from the libtensorflow root directory:
 
 ```powershell
-jextract -L .\lib -l tensorflow -o tf.jar -t "org.tensorflow.panama" --infer-rpath .\include\tensorflow\c\c_api.h
+jextract -L .\lib -l tensorflow -o tf.jar -t "org.tensorflow.panama" --record-library-path .\include\tensorflow\c\c_api.h
 ```
 
 ### Java sample code that uses tensorflow library

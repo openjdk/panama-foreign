@@ -207,14 +207,14 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
-    public void test_option_rpath_without_l() {
+    public void test_option_record_path_without_l() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        Path rpathDir = getInputFilePath("libs");
-        String warning = "WARNING: -rpath option specified without any -l option";
+        Path libDir = getInputFilePath("libs");
+        String warning = "WARNING: --record-library-path option specified without any -l option";
         try {
-            run("-rpath", rpathDir.toString(), "-o", helloJar.toString(), helloH.toString())
+            run("--record-library-path", "-L", libDir.toString(), "-o", helloJar.toString(), helloH.toString())
                     .checkContainsOutput(warning)
                     .checkSuccess();
         } finally {
@@ -223,31 +223,13 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
-    public void test_option_conflicting_rpaths() {
+    public void test_option_record_path_no_libs() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        Path rpathDir = getInputFilePath("libs");
-        String warning = "WARNING: -infer-rpath used in conjunction with explicit -rpath paths";
+        String warning = "WARNING: --record-library-path option specified without any -L option";
         try {
-            run("-rpath", rpathDir.toString(),
-                    "-infer-rpath",
-                    "-o", helloJar.toString(), helloH.toString())
-                    .checkContainsOutput(warning)
-                    .checkSuccess();
-        } finally {
-            deleteFile(helloJar);
-        }
-    }
-
-    @Test
-    public void test_option_rpath_no_libs() {
-        Path helloJar = getOutputFilePath("hello.jar");
-        deleteFile(helloJar);
-        Path helloH = getInputFilePath("hello.h");
-        String warning = "WARNING: -infer-rpath option specified without any -L option";
-        try {
-            run("-infer-rpath",
+            run("--record-library-path",
                     "-o", helloJar.toString(), helloH.toString())
                 .checkContainsOutput(warning)
                 .checkSuccess();
@@ -286,7 +268,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
             assertNotNull(header);
             assertEquals(header.libraries().length, 1);
             assertEquals(header.libraries()[0], "hello");
-            // no library paths (rpath) set
+            // no library paths set
             assertEquals(header.libraryPaths().length, 0);
         } finally {
             deleteFile(helloJar);
@@ -294,22 +276,22 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
-    public void test_option_l_and_rpath() {
+    public void test_option_l_and_libpath() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        Path rpathDir = getInputFilePath("libs");
-        run("-l", "hello", "-rpath", rpathDir.toString(),
+        Path libDir = getInputFilePath("libs");
+        run("-l", "hello", "--record-library-path", "-L", libDir.toString(),
                 "-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try(Loader loader = classLoader(helloJar)) {
             Class<?> cls = loader.loadClass("hello");
-            // check that NativeHeader annotation captures -l and -rpath values
+            // check that NativeHeader annotation captures -l and -L values
             NativeHeader header = cls.getAnnotation(NativeHeader.class);
             assertNotNull(header);
             assertEquals(header.libraries().length, 1);
             assertEquals(header.libraries()[0], "hello");
             assertEquals(header.libraryPaths().length, 1);
-            assertEquals(header.libraryPaths()[0], rpathDir.toString());
+            assertEquals(header.libraryPaths()[0], libDir.toString());
         } finally {
             deleteFile(helloJar);
         }
