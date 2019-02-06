@@ -24,9 +24,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
-#if defined(__AVX__)
-#include <immintrin.h>
-#endif
 
 #ifdef _WIN64
 #define EXPORT __declspec(dllexport)
@@ -50,15 +47,3 @@ EXPORT double   global_d64 = 42;
 EXPORT struct MyStruct global_struct = {
   .i = 42
 };
-
-#if defined(__AVX__)
-EXPORT __m256i global_v256;
-#else
-EXPORT char global_v256;
-#endif
-
-EXPORT void init() {
-#if defined(__AVX__)
-  global_v256 = _mm256_set_epi64x(0, 0, 0, 42);
-#endif
-}

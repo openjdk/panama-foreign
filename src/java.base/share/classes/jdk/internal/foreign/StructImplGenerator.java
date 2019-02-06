@@ -23,9 +23,11 @@
 package jdk.internal.foreign;
 
 import jdk.internal.foreign.LayoutPaths.LayoutPath;
+import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Type;
 
+import java.foreign.layout.Function;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
@@ -99,17 +101,17 @@ class StructImplGenerator extends BinderClassGenerator {
 
     @Override
     protected void generateMethodImplementation(BinderClassWriter cw, Method method) {
-        for (AccessorKind accessorKind : AccessorKind.values()) {
-            LayoutPath path = findAccessor(method, accessorKind);
-            if (path != null) {
-                generateFieldAccessor(cw, method, accessorKind, path);
-            }
+        VarInfo info = (VarInfo)MemberInfo.of(method);
+        if (info != null) {
+            generateFieldAccessor(cw, method, info);
         }
     }
 
-    private void generateFieldAccessor(BinderClassWriter cw, Method method, AccessorKind accessorKind, LayoutPath path) {
+    private void generateFieldAccessor(BinderClassWriter cw, Method method, VarInfo info) {
+        AccessorKind accessorKind = info.accessorKind;
         java.lang.reflect.Type javaType = accessorKind.carrier(method);
-        Layout l = path.layout();
+        LayoutPath path = findAccessor(info.name);
+        Layout l = path.layout;
         LayoutType<?> lt = Util.makeType(javaType, l);
         Class<?> erasedType = Util.erasure(javaType);
 
@@ -173,8 +175,8 @@ class StructImplGenerator extends BinderClassGenerator {
         }
     }
 
-    private LayoutPath findAccessor(Method method, AccessorKind kind) {
-        return LayoutPaths.lookup(layout, l -> method.getName().equals(AccessorKind.from(l).get(kind)))
+    private LayoutPath findAccessor(String fieldName) {
+        return LayoutPaths.lookup(layout, l -> l.name().isPresent() && l.name().get().equals(fieldName))
                 .findAny().orElse(null);
     }
 }

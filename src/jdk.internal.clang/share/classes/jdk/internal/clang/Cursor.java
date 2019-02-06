@@ -137,4 +137,10 @@ public class Cursor extends StructType {
     public int hashCode() {
         return spelling().hashCode();
     }
+
+    @Override
+    public String toString(){
+        return String.format("Cursor{ spelling=%s, kind=%s, location=%s }",
+                spelling(), kind(), getSourceLocation().getFileLocation());
+    }
 }

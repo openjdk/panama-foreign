@@ -23,6 +23,7 @@
 
 import java.foreign.Libraries;
 import java.foreign.NativeTypes;
+import java.foreign.annotations.NativeFunction;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.memory.Pointer;
 
@@ -40,10 +41,9 @@ import org.testng.annotations.Test;
 @Test
 public class NullTest {
 
-    @NativeHeader(declarations=
-        "get_nullptr=()u64:i32"
-    )
+    @NativeHeader
     interface LibNull {
+        @NativeFunction("()u64:i32")
         Pointer<Integer> get_nullptr();
     }
 

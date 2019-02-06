@@ -43,15 +43,13 @@ public class FindSymbol {
             return;
         }
 
-        final List<Path> paths = List.of(Paths.get(args[0]));
         final Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         final List<String> clangArgs = List.of("-I" + builtinInc);
 
         Context context = new Context();
         final Parser parser = new Parser(context, true);
-        final List<HeaderTree> headers = parser.parse(paths, clangArgs);
+        final HeaderTree tu = parser.parse(Paths.get(args[0]), clangArgs);
         final Printer p = new Printer();
-        final HeaderTree tu = headers.get(0);
 
         if (args.length == 1) {
             p.printRecursive(tu, Integer.MAX_VALUE);

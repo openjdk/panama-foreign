@@ -26,23 +26,28 @@
 /*
  * @test
  * @run testng StdLibTest
+ * @run testng/othervm -Djdk.internal.foreign.NativeInvoker.FASTPATH=none -Djdk.internal.foreign.UpcallHandler.FASTPATH=none StdLibTest
  */
 
+import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeFunction;
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.memory.*;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
-import java.foreign.annotations.NativeCallback;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -129,23 +134,17 @@ public class StdLibTest {
     @Test(dataProvider = "printfArgs")
     void test_printf(List<PrintfArg> args) {
         try (Scope s = Scope.newNativeScope()) {
-            String formatStr = args.stream()
+            String formatArgs = args.stream()
                     .map(a -> a.format)
                     .collect(Collectors.joining(","));
 
-            int formattedArgsLength = args.stream()
-                    .mapToInt(a -> a.length)
-                    .sum();
+            String formatString = "hello(" + formatArgs + ")\n";
 
-            Object[] argValues = args.stream()
-                    .map(a -> a.valueFunc.apply(s))
-                    .toArray();
+            String expected = String.format(formatString, args.stream()
+                    .map(a -> a.javaValue).toArray());
 
-            int delimCount = (args.size() > 0) ?
-                    args.size() - 1 :
-                    0;
-
-            assertEquals(stdLibHelper.printf("hello(" + formatStr + ")\n", argValues), 8 + formattedArgsLength + delimCount);
+            int found = stdLibHelper.printf(formatString, args.stream().map(a -> a.nativeValueFunc.apply(s)).toArray());
+            assertEquals(found, expected.length());
         }
     }
 
@@ -220,27 +219,27 @@ public class StdLibTest {
             }
         }
 
-        @NativeHeader(declarations =
-                "puts=(u64:u8)i32" +
-                "strcat=(u64:u8u64:i8)u64:u8" +
-                "strcmp=(u64:u8u64:i8)i32" +
-                "strlen=(u64:u8)i32" +
-                "time=(u64:$(Time))$(Time)" +
-                "gmtime=(u64:$(Time))u64:$(Tm)" +
-                "qsort=(u64:[0i32]i32i32u64:(u64:i32u64:i32)i32)v" +
-                "rand=()i32" +
-                "printf=(u64:u8*)i32" +
-                "fopen=(u64:u8u64:i8)u64:v")
+        @NativeHeader
         public interface StdLib {
+            @NativeFunction("(u64:u8)i32")
             int puts(Pointer<Byte> str);
+            @NativeFunction("(u64:u8u64:i8)u64:u8")
             Pointer<Byte> strcat(Pointer<Byte> s1, Pointer<Byte> s2);
+            @NativeFunction("(u64:u8u64:i8)i32")
             int strcmp(Pointer<Byte> s1, Pointer<Byte> s2);
+            @NativeFunction("(u64:u8)i32")
             int strlen(Pointer<Byte> s2);
+            @NativeFunction("(u64:${Time})${Time}")
             Time time(Pointer<Time> arg);
+            @NativeFunction("(u64:${Time})u64:${Tm}")
             Pointer<Tm> gmtime(Pointer<Time> arg);
+            @NativeFunction("(u64:[0i32]i32i32u64:(u64:i32u64:i32)i32)v")
             void qsort(Pointer<Integer> base, int nitems, int size, Callback<QsortComparator> comparator);
+            @NativeFunction("()i32")
             int rand();
+            @NativeFunction("(u64:u8*)i32")
             int printf(Pointer<Byte> format, Object... args);
+            @NativeFunction("(u64:u8u64:i8)u64:v")
             Pointer<Void> fopen(Pointer<Byte> filename, Pointer<Byte> mode);
 
             @NativeCallback("(u64:i32u64:i32)i32")
@@ -250,33 +249,44 @@ public class StdLibTest {
         }
 
         @NativeStruct("[" +
-                "   i64(get=seconds)(set=setSeconds)" +
+                "   i64(seconds)" +
                 "](Time)")
         public interface Time extends Struct<Time> {
+            @NativeGetter("seconds")
             long seconds();
+            @NativeSetter("seconds")
             void setSeconds(long secs);
         }
 
         @NativeStruct("[" +
-                "   i32(get=sec)" +
-                "   i32(get=min)" +
-                "   i32(get=hour)" +
-                "   i32(get=mday)" +
-                "   i32(get=mon)" +
-                "   i32(get=year)" +
-                "   i32(get=wday)" +
-                "   i32(get=yday)" +
-                "   i8(get=isdst)" +
+                "   i32(sec)" +
+                "   i32(min)" +
+                "   i32(hour)" +
+                "   i32(mday)" +
+                "   i32(mon)" +
+                "   i32(year)" +
+                "   i32(wday)" +
+                "   i32(yday)" +
+                "   i8(isdst)" +
                 "](Tm)")
         public interface Tm extends Struct<Tm> {
+            @NativeGetter("sec")
             int sec();
+            @NativeGetter("min")
             int min();
+            @NativeGetter("hour")
             int hour();
+            @NativeGetter("mday")
             int mday();
+            @NativeGetter("mon")
             int mon();
+            @NativeGetter("year")
             int year();
+            @NativeGetter("wday")
             int wday();
+            @NativeGetter("yday")
             int yday();
+            @NativeGetter("isdst")
             boolean isdst();
         }
     }
@@ -324,25 +334,31 @@ public class StdLibTest {
 
     @DataProvider
     public static Object[][] printfArgs() {
-        return perms(0, PrintfArg.values()).stream()
+        ArrayList<List<PrintfArg>> res = new ArrayList<>();
+        List<List<PrintfArg>> perms = new ArrayList<>(perms(0, PrintfArg.values()));
+        for (int i = 0 ; i < 100 ; i++) {
+            Collections.shuffle(perms);
+            res.addAll(perms);
+        }
+        return res.stream()
                 .map(l -> new Object[] { l })
                 .toArray(Object[][]::new);
     }
 
     enum PrintfArg {
-        INTEGRAL("%d", s -> 42, 2),
-        STRING("%s", s -> s.allocateCString("str"), 3),
-        CHAR("%c", s -> 'h', 1),
-        FLOAT("%.2f", s -> 1.23d, 4);
+        INTEGRAL("%d", s -> 42, 42),
+        STRING("%s", s -> s.allocateCString("str"), "str"),
+        CHAR("%c", s -> 'h', 'h'),
+        FLOAT("%.4f", s -> 1.2345d, 1.2345d);
 
-        String format;
-        Function<Scope, Object> valueFunc;
-        int length;
+        final String format;
+        final Function<Scope, Object> nativeValueFunc;
+        final Object javaValue;
 
-        PrintfArg(String format, Function<Scope, Object> valueFunc, int length) {
+        PrintfArg(String format, Function<Scope, Object> nativeValueFunc, Object javaValue) {
             this.format = format;
-            this.valueFunc = valueFunc;
-            this.length = length;
+            this.nativeValueFunc = nativeValueFunc;
+            this.javaValue = javaValue;
         }
     }
 
@@ -362,7 +378,7 @@ public class StdLibTest {
                                 }),
                                 //drop n
                                 perms.stream());
-                    }).collect(Collectors.toSet());
+                    }).collect(Collectors.toCollection(LinkedHashSet::new));
         }
     }
 }

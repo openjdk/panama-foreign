@@ -23,16 +23,22 @@
 
 package java.foreign.memory;
 
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
 
 @NativeStruct(
-   value="[f32(get=real$get)(set=real$set)(ptr=real$ptr)f32(get=imag$get)(set=imag$set)(ptr=imag$ptr)](FloatComplex)"
+   value="[f32(real) f32(imag)](FloatComplex)"
 )
 public interface FloatComplex extends Struct<FloatComplex> {
+    @NativeGetter("real")
     float real$get();
+    @NativeSetter("real")
     void real$set(float value);
     Pointer<Float> real$ptr();
+    @NativeGetter("imag")
     float imag$get();
+    @NativeSetter("imag")
     void imag$set(float value);
     Pointer<Float> imag$ptr();
 }

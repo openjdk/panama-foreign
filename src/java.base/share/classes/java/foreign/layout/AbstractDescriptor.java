@@ -30,10 +30,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
+abstract class AbstractDescriptor<L extends AbstractDescriptor<L>> implements Descriptor {
     private final Map<String, String> annotations;
 
-    public AbstractLayout(Map<String, String> annotations) {
+    public AbstractDescriptor(Map<String, String> annotations) {
         this.annotations = Collections.unmodifiableMap(annotations);
     }
 
@@ -44,17 +44,17 @@ abstract class AbstractLayout<L extends AbstractLayout<L>> implements Layout {
 
     @Override
     public L stripAnnotations() {
-        return dup(NO_ANNOS);
+        return withAnnotations(NO_ANNOS);
     }
 
     @Override
     public L withAnnotation(String name, String value) {
         Map<String, String> newAnnotations = new LinkedHashMap<>(annotations);
         newAnnotations.put(name, value);
-        return dup(newAnnotations);
+        return withAnnotations(newAnnotations);
     }
 
-    abstract L dup(Map<String, String> annotations);
+    abstract L withAnnotations(Map<String, String> annotations);
 
     String wrapWithAnnotations(String s) {
         if (!annotations.isEmpty()) {

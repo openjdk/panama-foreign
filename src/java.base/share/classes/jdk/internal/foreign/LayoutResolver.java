@@ -137,6 +137,14 @@ public final class LayoutResolver {
         }
     }
 
+    public Optional<Layout> tryResolve(Layout l) {
+        try {
+            return Optional.of(resolve(l));
+        } catch(UndefinedLayoutException e) {
+            return Optional.empty();
+        }
+    }
+
     public Layout resolve(Layout l) {
         if (!l.isPartial()) {
             return l;
@@ -145,10 +153,10 @@ public final class LayoutResolver {
             Layout rv;
 
             if (l instanceof Unresolved) {
-                rv = resolveRoot(l.name().get()).orElseThrow(IllegalStateException::new);
-                if (rv.isPartial()) {
-                    return resolve(rv);
-                }
+                Unresolved ul = (Unresolved) l;
+                rv = resolveRoot(ul.layoutExpression())
+                        .map(this::resolve)
+                        .orElseThrow(() -> new UndefinedLayoutException(ul));
             } else if (l instanceof Sequence) {
                 Sequence s = (Sequence)l;
                 Layout elem = resolve(s.element());
@@ -170,6 +178,14 @@ public final class LayoutResolver {
                 rv = rv.withAnnotation(e.getKey(), e.getValue());
             }
             return rv;
+        }
+    }
+
+    public static class UndefinedLayoutException extends IllegalStateException {
+        private static final long serialVersionUID = 1L;
+
+        public UndefinedLayoutException(Unresolved l) {
+            super("Can not resolve layout: " + l.layoutExpression());
         }
     }
 }

@@ -15,6 +15,14 @@ Using foreign function call in Java involves the following three steps:
 2. Use **java.foreign** API to create ("bind") implementation for C header interfaces
 3. Invoke C functions via the jextracted Java interface
 
+### Windows notes
+
+You will (almost always) need to have Visual Studio installed, since most libraries indirectly depend on Visual Studio runtime libraries and this currently means that jextract needs their header to extract successfully. Windows examples have been tested with [Build Tools for Visual Studio 2017](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
+
+It is generally a good idea to give jextract a bunch of extra memory since a lot of big system headers are transitively included. The extra memory will make the jextract run significantly faster. Windows support was added only recently, and the memory usage of jextract has not been optimized yet, so this is a workaround. You can give extra memory by passing e.g. `-J-Xmx8G` to jextract as an additional argument, which in this example gives jextract 8 gigabytes of memory.
+
+Commands are tested in PowerShell.
+
 ## Embedding Python interpreter in your Java program (Mac OS)
 
 ### jextract a Jar file for Python.h
@@ -22,7 +30,7 @@ Using foreign function call in Java involves the following three steps:
 ```sh
 
 jextract -l python2.7 \
-  -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \
+  -L /System/Library/Frameworks/Python.framework/Versions/2.7/lib --record-library-path \
   --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
   -t org.python \
   /usr/include/python2.7/Python.h \
@@ -61,9 +69,45 @@ public class PythonMain {
 
 ```sh
 
-javac -cp pythor.jar PythonMain.java
+javac -cp python.jar PythonMain.java
 
 java -cp python.jar:. PythonMain
+
+```
+
+## jlinking Python Interpreter in your JDK (Mac OS)
+
+### Generating jmod using jextract
+
+```sh
+
+jextract -l python2.7 \
+  -L /System/Library/Frameworks/Python.framework/Versions/2.7/lib \
+  --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
+  -t org.python \
+  /usr/include/python2.7/Python.h \
+  -o org.python.jmod
+
+```
+
+### Jlinking python module to create a JDK with Python in it
+
+jdk.compiler and org.python modules are added to the generated (jlinked) JDK
+
+```sh
+
+jlink --add-modules org.python,jdk.compiler --module-path . --output pythonjdk
+
+```
+
+### Compile and run user code with "pythonjdk" jdk
+
+In the following commands, it is assumed that you've put $pythonjdk/bin in your $PATH
+
+```sh
+
+javac PythonMain.java
+java PythonMain
 
 ```
 
@@ -74,7 +118,7 @@ java -cp python.jar:. PythonMain
 ```sh
 
 jextract -l python2.7 \
-  -rpath /usr/lib/python2.7/config-x86_64-linux-gnu \
+  -L /usr/lib/python2.7/config-x86_64-linux-gnu --record-library-path \
   --exclude-symbols .*_FromFormatV\|_.*\|PyOS_vsnprintf\|.*_VaParse.*\|.*_VaBuild.*\|PyBuffer_SizeFromFormat\|vasprintf\|vfprintf\|vprintf\|vsprintf \
   -t org.python \
   /usr/include/python2.7/Python.h \
@@ -85,6 +129,23 @@ jextract -l python2.7 \
 ### Compiling and Running Python Java example
 
 Follow the instructions from the Mac OS section
+
+## Embedding Python interpreter in your Java program (Windows)
+
+### jextract a Jar file for Python.h
+
+Where python 2.7 is installed in the `C:\Python27` directory:
+
+```powershell
+jextract -L "C:\Windows\System32" -l python27 -o python.jar -t "org.python" --record-library-path C:\Python27\include\Python.h
+```
+
+### Compiling and Running Python Java example
+
+```powershell
+javac -cp python.jar PythonMain.java
+java -cp "python.jar;." PythonMain
+```
 
 ## Using BLAS library
 
@@ -129,7 +190,7 @@ The following command can be used to extract cblas.h on MacOs
 
 jextract -C "-D FORCE_OPENBLAS_COMPLEX_STRUCT" \
   -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \
-  -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \
+  -l openblas -t blas --record-library-path /usr/local/opt/openblas/include/cblas.h \
   -o cblas.jar
 
 ```
@@ -144,7 +205,7 @@ The following command can be used to extract cblas.h on Ubuntu
 ```sh
 
 jextract -L /usr/lib/atlas-base -I /usr/include/atlas/ \
-   -l cblas -t blas -infer-rpath \
+   -l cblas -t blas --record-library-path \
    /usr/include/atlas/cblas.h -o cblas.jar
 
 ```
@@ -246,7 +307,7 @@ The following command can be used to extract the LAPACK header:
 ```sh
 
 jextract -L /usr/lib/atlas-base/atlas -I /usr/include/atlas/ \
-   -l lapack -t lapack -infer-rpath /usr/include/atlas/clapack.h -o clapack.jar
+   -l lapack -t lapack --record-library-path /usr/include/atlas/clapack.h -o clapack.jar
 
 ```
 
@@ -334,7 +395,7 @@ include only the symbols used in the Java sample code below.
 
 jextract --include-symbols LAPACKE_dgels\|LAPACK_COL_MAJOR \
   -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \
-  -l lapacke -t lapack -infer-rpath /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
+  -l lapacke -t lapack --record-library-path /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
 
 ```
 ### Java sample code that uses LAPACK library
@@ -412,7 +473,7 @@ java -cp clapack.jar:. TestLapack
 
 ### jextract a jar file for libproc.h
 
-jextract -t org.unix -lproc -rpath /usr/lib -o libproc.jar /usr/include/libproc.h
+jextract -t org.unix -lproc -L /usr/lib --record-library-path -o libproc.jar /usr/include/libproc.h
 
 ### Java program that uses libproc to list processes
 
@@ -470,7 +531,7 @@ java -cp libproc.jar:. LibprocMain
 
 ```sh
 
-jextract -l readline -rpath /usr/local/opt/readline/lib/ \
+jextract -l readline -L /usr/local/opt/readline/lib/ --record-library-path \
     -t org.unix \
     /usr/include/readline/readline.h \
     --exclude-symbol readline_echoing_p -o readline.jar
@@ -582,7 +643,7 @@ To extract the opengl libraries the following command suffices:
 
 ```sh
 
-jextract -L /usr/lib/x86_64-linux-gnu  -l glut -l GLU -l GL --infer-rpath -t opengl -o opengl.jar /usr/include/GL/glut.h
+jextract -L /usr/lib/x86_64-linux-gnu  -l glut -l GLU -l GL --record-library-path -t opengl -o opengl.jar /usr/include/GL/glut.h
 
 ```
 
@@ -591,20 +652,15 @@ Since glut depends on the other libraries (GLU and GL), it is not necessary to g
 ### Java sample code that uses the OpenGL library
 
 ```java
-import java.foreign.Libraries;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.Array;
 import java.foreign.memory.Pointer;
-import java.lang.invoke.MethodHandles;
 
-import opengl.*;
-
-import javax.imageio.ImageIO;
+import static opengl.gl_h.*;
+import static opengl.freeglut_std_h.*;
 
 public class Teapot {
-    static gl gl = Libraries.bind(MethodHandles.lookup(), gl.class);
-    static freeglut_std glut = Libraries.bind(MethodHandles.lookup(), freeglut_std.class);
 
     float rot = 0;
 
@@ -615,52 +671,52 @@ public class Teapot {
         Array<Float> shini = sc.allocateArray(NativeTypes.FLOAT, new float[] {113});
 
         // Reset Background
-        gl.glClearColor(0, 0, 0, 0);
+        glClearColor(0, 0, 0, 0);
 
         // Setup Lighting
-        gl.glShadeModel(gl.GL_SMOOTH());
-        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_POSITION(), pos.elementPointer());
-        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_AMBIENT(), spec.elementPointer());
-        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_DIFFUSE(), spec.elementPointer());
-        gl.glLightfv(gl.GL_LIGHT0(), gl.GL_SPECULAR(), spec.elementPointer());
-        gl.glMaterialfv(gl.GL_FRONT(), gl.GL_SHININESS(), shini.elementPointer());
-        gl.glEnable(gl.GL_LIGHTING());
-        gl.glEnable(gl.GL_LIGHT0());
-        gl.glEnable(gl.GL_DEPTH_TEST());
+        glShadeModel(GL_SMOOTH);
+        glLightfv(GL_LIGHT0, GL_POSITION, pos.elementPointer());
+        glLightfv(GL_LIGHT0, GL_AMBIENT, spec.elementPointer());
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, spec.elementPointer());
+        glLightfv(GL_LIGHT0, GL_SPECULAR, spec.elementPointer());
+        glMaterialfv(GL_FRONT, GL_SHININESS, shini.elementPointer());
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
+        glEnable(GL_DEPTH_TEST);
     }
 
     void display() {
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT() | gl.GL_DEPTH_BUFFER_BIT());
-        gl.glPushMatrix();
-        gl.glRotatef(-20, 1, 1, 0);
-        gl.glRotatef(rot, 0, 1, 0);
-        glut.glutSolidTeapot(0.5);
-        gl.glPopMatrix();
-        glut.glutSwapBuffers();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glPushMatrix();
+        glRotatef(-20, 1, 1, 0);
+        glRotatef(rot, 0, 1, 0);
+        glutSolidTeapot(0.5);
+        glPopMatrix();
+        glutSwapBuffers();
     }
 
-	void onIdle() {
+    void onIdle() {
         rot += 0.1;
-        glut.glutPostRedisplay();
+        glutPostRedisplay();
     }
 
     public static void main(String[] args) {
         try (Scope sc = Scope.newNativeScope()) {
             Pointer<Integer> argc = sc.allocate(NativeTypes.INT32);
             argc.set(0);
-            glut.glutInit(argc, Pointer.nullPointer());
-            glut.glutInitDisplayMode(glut.GLUT_DOUBLE() | glut.GLUT_RGBA() | glut.GLUT_DEPTH());
-            glut.glutInitWindowSize(900, 900);
-            glut.glutCreateWindow(sc.allocateCString("Hello Panama!"));
+            glutInit(argc, Pointer.nullPointer());
+            glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+            glutInitWindowSize(900, 900);
+            glutCreateWindow(sc.allocateCString("Hello Panama!"));
             Teapot teapot = new Teapot(sc);
-            glut.glutDisplayFunc(sc.allocateCallback(teapot::display));
-            glut.glutIdleFunc(sc.allocateCallback(teapot::onIdle));
-            glut.glutMainLoop();
+            glutDisplayFunc(sc.allocateCallback(teapot::display));
+            glutIdleFunc(sc.allocateCallback(teapot::onIdle));
+            glutMainLoop();
         }
     }
 }
 ```
-### Running the Java code that uses OpenGL
+### Running the Java code that uses OpenGL (Ubuntu 16.04)
 
 ```sh
 
@@ -670,6 +726,37 @@ java -cp opengl.jar:. Teapot
 
 ```
 
+## Using OpenGL graphic library (Windows)
+
+### Installing OpenGL
+
+Download the freeglut package for MSVC at [https://www.transmissionzero.co.uk/software/freeglut-devel/](https://www.transmissionzero.co.uk/software/freeglut-devel/)
+
+Extract the freeglut zip.
+
+### jextracting OpenGL
+
+Navigate to the root directory of the extracted zip and run the following commands:
+
+```powershell
+$inc = "C:\Program Files (x86)\Windows Kits\10\Include\10.0.17134.0"
+jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.jar -m "$inc\um\gl=opengl" --record-library-path .\freeglut\include\GL\glut.h
+```
+
+The directory that is assigned to `$inc` is an example, and is system dependent. Make sure that the build number at the end of the path (in this case `10.0.17134.0`) is the latest one found in the parent folder (`C:\Program Files (x86)\Windows Kits\10\Include\`).
+
+There are a bunch of warnings generated, but as long as the jar file is generated in the working directory the extraction was successful.
+
+### Java sample code that uses the OpenGL library
+
+This is the same as in the Ubuntu section
+
+### Running the Java code that uses OpenGL
+
+```powershell
+javac -cp .\opengl.jar Teapot.java
+java -cp "opengl.jar;." Teapot
+```
 
 ## Using TensorFlow C API (Mac OS)
 
@@ -709,7 +796,7 @@ The following command can be used to extract c_api.h.
 ```sh
 
 jextract -C -x -C c++  \
-        -L /usr/local/lib -l tensorflow -infer-rpath \
+        -L /usr/local/lib -l tensorflow --record-library-path \
         -o tf.jar -t org.tensorflow.panama \
         /usr/local/include/tensorflow/c/c_api.h
 
@@ -720,7 +807,6 @@ without argument in C++ style, for example, TF_Version(), which is considered
 incomplete C function prototype instead of C style as in TF_Version(void). An
 incomplete function prototype will become vararg funciton. To avoid that, we
 need to pass clang '-x c++' options to jextract with '-C -x -C c++'
-
 
 ### Java sample code that uses tensorflow library
 
@@ -861,4 +947,42 @@ javac -cp tf.jar TensorFlowExample.java
 
 java -cp tf.jar:. TensorFlowExample
 
+```
+
+## Using TensorFlow C API (Windows)
+
+### Installing libtensorflow
+
+You can download a binary distribution from [https://www.tensorflow.org/install/lang_c](https://www.tensorflow.org/install/lang_c)
+
+Extract the zip file.
+
+### jextracting libtensorflow c_api.h
+
+The problem outlined in the Mac OS instruction w.r.t. incorrect function prototypes still exists (though it has been solved in the Tensorflow github repository, this change has not yet made it into the binary distributions). On Windows there is however no jextract command that works around this, so the only way to extract the \include\tensorflow\c\c_api.h header successfully is to first manually fix the incorrect function prototypes:
+
+```C
+TF_Version() -> TF_Version(void)  
+TF_NewGraph() -> TF_NewGraph(void)  
+TF_NewSessionOptions() -> TF_NewSessionOptions(void)  
+TF_NewStatus() -> TF_NewStatus(void)
+TF_NewBuffer() -> TF_NewBuffer(void)
+TF_NewImportGraphDefOptions() -> TF_NewImportGraphDefOptions(void)
+TF_GetAllOpList() -> TF_GetAllOpList(void)
+```
+Once you've done this you can use the following jextract command from the libtensorflow root directory:
+
+```powershell
+jextract -L .\lib -l tensorflow -o tf.jar -t "org.tensorflow.panama" --record-library-path .\include\tensorflow\c\c_api.h
+```
+
+### Java sample code that uses tensorflow library
+
+This is the same as for the Mac OS section.
+
+### Compiling and running the above TensorFlow sample
+
+```powershell
+javac -cp tf.jar TensorFlowExample.java
+java -cp "tf.jar;." TensorFlowExample
 ```

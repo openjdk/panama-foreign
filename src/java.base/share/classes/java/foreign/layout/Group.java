@@ -36,7 +36,7 @@ import java.util.stream.LongStream;
  * e.g. a 'struct' (see {@link Kind#STRUCT}), where contained elements are laid out one after the other, and a 'union'
  * (see {@link Kind#UNION}, where contained elements are laid out 'on top' of each other.
  */
-public class Group extends AbstractLayout<Group> implements Layout {
+public class Group extends AbstractDescriptor<Group> implements Layout {
 
     /**
      * The group kind.
@@ -142,7 +142,7 @@ public class Group extends AbstractLayout<Group> implements Layout {
     }
 
     @Override
-    Group dup(Map<String, String> annotations) {
+    Group withAnnotations(Map<String, String> annotations) {
         return new Group(kind, elements, annotations);
     }
 }

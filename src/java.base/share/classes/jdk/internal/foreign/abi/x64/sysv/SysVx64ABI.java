@@ -166,7 +166,7 @@ public class SysVx64ABI implements SystemABI {
                 for (ArgumentBinding binding : bindings) {
                     Pointer<?> dst = dstPtrFunc.apply(binding);
                     Pointer<Long> srcPtr = src.offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
-                    Util.copy(srcPtr, dst, binding.getStorage().getSize());
+                    Pointer.copy(srcPtr, dst, binding.getStorage().getSize());
                 }
             }
         } else {
@@ -196,7 +196,7 @@ public class SysVx64ABI implements SystemABI {
 
             for (ArgumentBinding binding : bindings) {
                 Pointer<Long> dst = Util.unsafeCast(rtmp, NativeTypes.UINT64).offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
-                Util.copy(srcPtrFunc.apply(binding), dst, binding.getStorage().getSize());
+                Pointer.copy(srcPtrFunc.apply(binding), dst, binding.getStorage().getSize());
             }
 
             return rtmp.get();

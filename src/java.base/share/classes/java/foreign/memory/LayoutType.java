@@ -25,15 +25,14 @@
 
 package java.foreign.memory;
 
+import jdk.internal.foreign.LayoutResolver;
 import jdk.internal.foreign.Util;
-import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.foreign.memory.LayoutTypeImpl;
 import jdk.internal.foreign.memory.References;
 
+import java.foreign.annotations.NativeCallback;
 import java.foreign.layout.Address;
 import java.foreign.layout.Layout;
-import java.foreign.annotations.NativeCallback;
-import java.foreign.annotations.NativeStruct;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
@@ -199,11 +198,14 @@ public interface LayoutType<X> {
      * @throws IllegalArgumentException if the given carrier is not annotated with the {@link java.foreign.annotations.NativeStruct} annotation.
      */
     static <T extends Struct<T>> LayoutType<T> ofStruct(Class<T> carrier) throws IllegalArgumentException {
-        if (!Util.isCStruct(carrier)) {
-            throw new IllegalArgumentException("Not a struct type: " + carrier);
+        Layout type = Util.layoutof(carrier);
+        if(type.isPartial()) {
+            // try to resolve the layout if we can, in case user wants to allocate using the returned LayoutType.
+            // but also allow layout to remain partial, since having a pointer to a partial type is fine.
+            // user is free to shoot themselves in the foot later, but since we're automatically deriving
+            // the layout from the carrier type, we should try to make it as usable as possible.
+            type = LayoutResolver.get(carrier).tryResolve(type).orElse(type);
         }
-        NativeStruct nativeStruct = carrier.getAnnotation(NativeStruct.class);
-        Layout type = new DescriptorParser(nativeStruct.value()).parseLayout();
         return LayoutTypeImpl.of(carrier, type, References.ofStruct);
     }
 

@@ -26,6 +26,7 @@ import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Unresolved;
+import java.foreign.layout.Value;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
@@ -34,11 +35,14 @@ import java.security.AccessControlException;
 import java.util.Objects;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.Util;
+import jdk.internal.misc.Unsafe;
 
 public class BoundedPointer<X> implements Pointer<X> {
 
+    private static final Unsafe UNSAFE = Unsafe.getUnsafe();
+
     private static final BoundedPointer<?> theNullPointer = new BoundedPointer<>(
-        LayoutTypeImpl.nullType, BoundedMemoryRegion.NOTHING);
+        LayoutTypeImpl.nullType, null, AccessMode.READ, MemoryBoundInfo.NOTHING);
 
     public static boolean isNull(long addr) {
         // FIMXE: Include the 64k?
@@ -50,21 +54,22 @@ public class BoundedPointer<X> implements Pointer<X> {
         return (BoundedPointer<Z>) theNullPointer;
     }
 
-    public final BoundedMemoryRegion region;
-    public final long offset;
-    public final LayoutType<X> type;
+    private final MemoryBoundInfo boundInfo;
+    private final long offset;
+    private final LayoutType<X> type;
+    private final Scope scope;
+    private final AccessMode mode;
 
-    public BoundedPointer(LayoutType<X> type, BoundedMemoryRegion region) {
-        this(type, region, 0);
+    public BoundedPointer(LayoutType<X> type, Scope scope, AccessMode accessMode, MemoryBoundInfo boundInfo) {
+        this(type, scope, accessMode, boundInfo, 0);
     }
 
-    public BoundedPointer(LayoutType<X> type, BoundedMemoryRegion region, long offset) {
-        this.region = Objects.requireNonNull(region);
+    public BoundedPointer(LayoutType<X> type, Scope scope, AccessMode accessMode, MemoryBoundInfo boundInfo, long offset) {
+        this.boundInfo = Objects.requireNonNull(boundInfo);
         this.offset = offset;
         this.type = Objects.requireNonNull(type);
-        if (! (type.layout() instanceof Unresolved)) {
-            region.checkRange(offset, type.bytesSize());
-        }
+        this.scope = scope;
+        this.mode = accessMode;
     }
 
     @Override
@@ -73,37 +78,44 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     private long effectiveAddress() {
-        checkAlive();
-        return region.addr() + offset;
+        if (boundInfo.base != null) {
+            throw new UnsupportedOperationException();
+        } else {
+            return toUnsafeOffset();
+        }
     }
 
     @Override
     public boolean isAccessibleFor(AccessMode mode) {
-        return region.isAccessibleFor(mode);
+        return this.mode.isAvailable(mode);
     }
 
     @Override
     public Pointer<X> asReadOnly() throws AccessControlException {
-        return new BoundedPointer<>(type, region.asReadOnly(), offset);
+        checkAccessibleFor(AccessMode.READ);
+        return new BoundedPointer<>(type, scope, AccessMode.READ, boundInfo, offset);
     }
 
     @Override
     public Pointer<X> asWriteOnly() throws AccessControlException {
-        return new BoundedPointer<>(type, region.asWriteOnly(), offset);
+        checkAccessibleFor(AccessMode.WRITE);
+        return new BoundedPointer<>(type, scope, AccessMode.WRITE, boundInfo, offset);
     }
 
     @Override
     public long addr() throws UnsupportedOperationException, IllegalAccessException {
+        checkAlive();
+        checkInBounds();
         return effectiveAddress();
     }
 
     @Override
     public Array<X> withSize(long size) {
-        return new BoundedArray<>(this, (int)size);
+        return new BoundedArray<>(this, size);
     }
 
     public BoundedPointer<X> limit(long nelems) {
-        return new BoundedPointer<>(type, region.limit(offset + ((type.bytesSize()) * nelems)), offset);
+        return new BoundedPointer<>(type, scope, mode, boundInfo.limit(offset + ((type.bytesSize()) * nelems)), offset);
     }
 
     @Override
@@ -122,25 +134,51 @@ public class BoundedPointer<X> implements Pointer<X> {
 
         // Note: the pointer may point outside of the memory region bounds.
         // This is allowed, as long as the pointer/data is not dereferenced
-        return new BoundedPointer<>(type, region, newOffset);
+        return new BoundedPointer<>(type, scope, mode, boundInfo, newOffset);
     }
 
     @Override
     public ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException {
-        region.checkRange(offset, bytes);
+        boundInfo.checkRange(offset, bytes);
         return SharedSecrets.getJavaNioAccess()
                 .newDirectByteBuffer(addr(), bytes, null);
     }
 
-    public void copyTo(BoundedPointer<?> dst, long bytes) throws IllegalAccessException {
-        BoundedMemoryRegion srcRegion = this.region;
-        BoundedMemoryRegion dstRegion = dst.region;
-        srcRegion.copyTo(this.offset, dstRegion, dst.offset, bytes);
+    public void copyTo(BoundedPointer<?> dst, long bytes) {
+        if(bytes == 0) return; // nothing to do
+        Objects.requireNonNull(dst);
+
+        checkRead(bytes);
+        dst.checkWrite(bytes);
+
+        unsafeCopyTo(dst, bytes);
+    }
+
+    public long getBits() {
+        checkRead(type.bytesSize());
+        return unsafeGetBits();
+    }
+
+    public void putBits(long value) {
+        checkWrite(type.bytesSize());
+        unsafePutBits(value);
+    }
+
+    public String dump(int nbytes) {
+        StringBuilder buf = new StringBuilder();
+        Pointer<Byte> base = Util.unsafeCast(this, NativeTypes.UINT8);
+        base.iterate(base.offset(nbytes)).forEach(sp -> {
+            byte b = sp.get();
+            String hex = Long.toHexString(b & 0xFF);
+            buf.append(hex.length() == 1 ? "0" + hex : hex);
+            buf.append(" ");
+        });
+        return buf.toString();
     }
 
     public <Z> BoundedPointer<Z> cast(LayoutType<Z> layoutType) {
         if (isCompatible(type.layout(), layoutType.layout())) {
-            return new BoundedPointer<>(layoutType, region, offset);
+            return new BoundedPointer<>(layoutType, scope, mode, boundInfo, offset);
         } else {
             throw new ClassCastException("Pointer to " + type.layout() +
                 " cannot be cast to pointer to " + layoutType.layout());
@@ -158,11 +196,39 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     public void checkAlive() {
-        region.checkAlive();
+        if (scope != null) {
+            scope.checkAlive();
+        }
+    }
+
+    private void checkAccessibleFor(AccessMode mode) {
+        if (!isAccessibleFor(mode)) {
+            throw new AccessControlException("Access denied");
+        }
+    }
+
+    private void checkInBounds() {
+        if (! (type.layout() instanceof Unresolved)) {
+            boundInfo.checkRange(offset, type.bytesSize());
+        }
+    }
+
+    private void checkRead(long length) {
+        checkAccess(AccessMode.READ, length);
+    }
+
+    private void checkWrite(long length) {
+        checkAccess(AccessMode.WRITE, length);
+    }
+
+    private void checkAccess(AccessMode mode, long length) {
+        checkAlive();
+        checkAccessibleFor(mode);
+        boundInfo.checkRange(offset, length);
     }
 
     public static <Z> BoundedPointer<Z> createNativePointer(LayoutType<Z> type, long offset) {
-        return new BoundedPointer<>(type, BoundedMemoryRegion.EVERYTHING, offset);
+        return new BoundedPointer<>(type, null, AccessMode.READ_WRITE, MemoryBoundInfo.EVERYTHING, offset);
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(long offset) {
@@ -174,25 +240,21 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset, AccessMode mode) {
-        return new BoundedPointer<>(NativeTypes.VOID, BoundedMemoryRegion.ofEverything(mode, scope), offset);
+        return new BoundedPointer<>(NativeTypes.VOID, scope, mode, MemoryBoundInfo.EVERYTHING, offset);
     }
 
     public static <Z> BoundedPointer<Z> fromLongArray(LayoutType<Z> type, long[] values) {
-        return new BoundedPointer<>(type,
-                        BoundedMemoryRegion.of(values, Util.LONG_ARRAY_BASE, values.length * Util.LONG_ARRAY_SCALE));
+        return new BoundedPointer<>(type, null, AccessMode.READ_WRITE,
+                        MemoryBoundInfo.ofHeap(values, Util.LONG_ARRAY_BASE, values.length * Util.LONG_ARRAY_SCALE));
     }
 
     public Scope scope() {
-        return region.scope();
+        return scope;
     }
 
     @Override
     public String toString() {
-        return "{ BoundedPointer type: " + type + " region: " + region + " offset=0x" + Long.toHexString(offset) + " }";
-    }
-
-    public String dump(int nbytes) {
-        return region.dump(offset, nbytes);
+        return "{ BoundedPointer type: " + type + " region: " + boundInfo + " offset=0x" + Long.toHexString(offset) + " }";
     }
 
     @Override
@@ -208,12 +270,79 @@ public class BoundedPointer<X> implements Pointer<X> {
             return ((BoundedPointer) o).effectiveAddress() == effectiveAddress();
         } else if (o instanceof Pointer) {
             try {
-                return ((Pointer) o).addr() == effectiveAddress();
+                return ((Pointer) o).addr() == addr();
             } catch (IllegalAccessException iae) {
                 throw new IllegalStateException();
             }
         } else {
             return false;
+        }
+    }
+
+
+
+    //memory access helper functions
+
+    private Object toUnsafeBase() {
+        return boundInfo.base;
+    }
+
+    private long toUnsafeOffset() {
+        return boundInfo.min + offset;
+    }
+
+    private void unsafeCopyTo(BoundedPointer<?> to, long size) {
+        UNSAFE.copyMemory(toUnsafeBase(), toUnsafeOffset(),
+                to.toUnsafeBase(), to.toUnsafeOffset(), size);
+    }
+
+    private long unsafeGetBits() {
+        boolean isSigned = type().layout() instanceof Value &&
+                ((Value)type().layout()).kind() != Value.Kind.INTEGRAL_UNSIGNED;
+        long size = type().bytesSize();
+        long bits;
+        switch ((int)size) {
+            case 1:
+                bits = UNSAFE.getByte(toUnsafeBase(), toUnsafeOffset());
+                return isSigned ? bits : Byte.toUnsignedLong((byte)bits);
+
+            case 2:
+                bits = UNSAFE.getShort(toUnsafeBase(), toUnsafeOffset());
+                return isSigned ? bits : Short.toUnsignedLong((short)bits);
+
+            case 4:
+                bits = UNSAFE.getInt(toUnsafeBase(), toUnsafeOffset());
+                return isSigned ? bits : Integer.toUnsignedLong((int)bits);
+
+            case 8:
+                return UNSAFE.getLong(toUnsafeBase(), toUnsafeOffset());
+
+            default:
+                throw new IllegalArgumentException("Invalid size: " + size);
+        }
+    }
+
+    private void unsafePutBits(long value) {
+        long size = type().bytesSize();
+        switch ((int)size) {
+            case 1:
+                UNSAFE.putByte(toUnsafeBase(), toUnsafeOffset(), (byte)value);
+                break;
+
+            case 2:
+                UNSAFE.putShort(toUnsafeBase(), toUnsafeOffset(), (short)value);
+                break;
+
+            case 4:
+                UNSAFE.putInt(toUnsafeBase(), toUnsafeOffset(), (int)value);
+                break;
+
+            case 8:
+                UNSAFE.putLong(toUnsafeBase(), toUnsafeOffset(), value);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid size: " + size);
         }
     }
 }

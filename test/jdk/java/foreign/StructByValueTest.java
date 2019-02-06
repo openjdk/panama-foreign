@@ -26,6 +26,8 @@
  * @run testng StructByValueTest
  */
 import java.foreign.Libraries;
+import java.foreign.annotations.NativeFunction;
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Struct;
@@ -38,51 +40,61 @@ import static org.testng.Assert.*;
 @Test
 public class StructByValueTest {
 
-    @NativeHeader(declarations =
-            "small_make=()$(small_tuple)" +
-            "small_id=($(small_tuple))$(small_tuple)" +
-            "small_zero=($(small_tuple))$(small_tuple)" +
-            "make=()$(tuple)" +
-            "id=($(tuple))$(tuple)" +
-            "zero=($(tuple))$(tuple)" +
-            "big_make=()$(big_tuple)" +
-            "big_id=($(big_tuple))$(big_tuple)" +
-            "big_zero=($(big_tuple))$(big_tuple)"
-    )
+    @NativeHeader
     interface structbyvalue {
 
+        @NativeFunction("()${small_tuple}")
         small_tuple small_make();
+        @NativeFunction("(${small_tuple})${small_tuple}")
         small_tuple small_id(small_tuple t);
+        @NativeFunction("(${small_tuple})${small_tuple}")
         small_tuple small_zero(small_tuple t);
 
+        @NativeFunction("()${tuple}")
         tuple make();
+        @NativeFunction("(${tuple})${tuple}")
         tuple id(tuple t);
+        @NativeFunction("(${tuple})${tuple}")
         tuple zero(tuple t);
 
+        @NativeFunction("()${big_tuple}")
         big_tuple big_make();
+        @NativeFunction("(${big_tuple})${big_tuple}")
         big_tuple big_id(big_tuple t);
+        @NativeFunction("(${big_tuple})${big_tuple}")
         big_tuple big_zero(big_tuple t);
 
-        @NativeStruct("[i32(get=one) i32(get=two)](small_tuple)")
+        @NativeStruct("[i32(one) i32(two)](small_tuple)")
         interface small_tuple extends Struct<small_tuple> {
+            @NativeGetter("one")
             int one();
+            @NativeGetter("two")
             int two();
         }
 
-        @NativeStruct("[i32(get=one) i32(get=two) i32(get=three) i32(get=four)](tuple)")
+        @NativeStruct("[i32(one) i32(two) i32(three) i32(four)](tuple)")
         interface tuple extends Struct<tuple> {
+            @NativeGetter("one")
             int one();
+            @NativeGetter("two")
             int two();
+            @NativeGetter("three")
             int three();
+            @NativeGetter("four")
             int four();
         }
 
-        @NativeStruct("[i32(get=one) i32(get=two) i32(get=three) i32(get=four) i32(get=five)](big_tuple)")
+        @NativeStruct("[i32(one) i32(two) i32(three) i32(four) i32(five)](big_tuple)")
         interface big_tuple extends Struct<big_tuple> {
+            @NativeGetter("one")
             int one();
+            @NativeGetter("two")
             int two();
+            @NativeGetter("three")
             int three();
+            @NativeGetter("four")
             int four();
+            @NativeGetter("five")
             int five();
         }
     }

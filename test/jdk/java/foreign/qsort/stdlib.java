@@ -23,12 +23,13 @@
 
 
 import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeFunction;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeLocation;
 import java.foreign.memory.Callback;
 import java.foreign.memory.Pointer;
 
-@NativeHeader(path="stdlib.h", declarations = "qsort=(u64:vu32u32u64:(u64:vu64:v)i32)v")
+@NativeHeader(path="stdlib.h")
 public interface stdlib {
     @NativeCallback("(u64:vu64:v)i32")
     @FunctionalInterface
@@ -37,5 +38,6 @@ public interface stdlib {
     }
 
     @NativeLocation(file="stdlib.h", line=47, column=11)
+    @NativeFunction("(u64:vu32u32u64:(u64:vu64:v)i32)v")
     public abstract void qsort(Pointer<?> base, long nmemb, long size, Callback<compar> compar);
 }

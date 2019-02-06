@@ -31,74 +31,95 @@ import java.foreign.memory.*;
 import java.foreign.annotations.*;
 
 public class GlobalVariable {
-    @NativeHeader(declarations =
-            "init=()v" +
-            "global_boolean=u8(get=global_boolean$get)(set=global_boolean$set)(ptr=global_boolean$ptr)" +
-            "global_i8=i8(get=global_i8$get)(set=global_i8$set)(ptr=global_i8$ptr)" +
-            "global_i16=i16(get=global_i16$get)(set=global_i16$set)(ptr=global_i16$ptr)" +
-            "global_i32=i32(get=global_i32$get)(set=global_i32$set)(ptr=global_i32$ptr)" +
-            "global_i64=i64(get=global_i64$get)(set=global_i64$set)(ptr=global_i64$ptr)" +
-            "global_f32=f32(get=global_f32$get)(set=global_f32$set)(ptr=global_f32$ptr)" +
-            "global_d64=f64(get=global_d64$get)(set=global_d64$set)(ptr=global_d64$ptr)" +
-            "global_struct=$(mystruct)(get=global_struct$get)(set=global_struct$set)(ptr=global_struct$ptr)"
+    @NativeHeader(globals = {
+            "u8(global_boolean)",
+            "i8(global_i8)",
+            "i16(global_i16)",
+            "i32(global_i32)",
+            "i64(global_i64)",
+            "f32(global_f32)",
+            "f64(global_d64)",
+            "${mystruct}(global_struct)"}
     )
     static interface globvar {
         @NativeLocation(file="dummy", line=1, column=1)
-        public abstract void init();
-
-        @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("global_boolean")
         public abstract boolean global_boolean$get();
+        @NativeSetter("global_boolean")
         public abstract void global_boolean$set(boolean arg);
+        @NativeAddressof("global_boolean")
         public abstract Pointer<Boolean> global_boolean$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("global_i8")
         public abstract byte global_i8$get();
+        @NativeSetter("global_i8")
         public abstract void global_i8$set(byte arg);
+        @NativeAddressof("global_i8")
         public abstract Pointer<Byte> global_i8$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("global_i16")
         public abstract short global_i16$get();
+        @NativeSetter("global_i16")
         public abstract void global_i16$set(short arg);
+        @NativeAddressof("global_i16")
         public abstract Pointer<Short> global_i16$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("global_i32")
         public abstract int global_i32$get();
+        @NativeSetter("global_i32")
         public abstract void global_i32$set(int arg);
+        @NativeAddressof("global_i32")
         public abstract Pointer<Integer> global_i32$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("global_i64")
         public abstract long global_i64$get();
+        @NativeSetter("global_i64")
         public abstract void global_i64$set(long arg);
+        @NativeAddressof("global_i64")
         public abstract Pointer<Long> global_i64$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("global_f32")
         public abstract float global_f32$get();
+        @NativeSetter("global_f32")
         public abstract void global_f32$set(float arg);
+        @NativeAddressof("global_f32")
         public abstract Pointer<Float> global_f32$ptr();
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("global_d64")
         public abstract double global_d64$get();
+        @NativeSetter("global_d64")
         public abstract void global_d64$set(double arg);
+        @NativeAddressof("global_d64")
         public abstract Pointer<Double> global_d64$ptr();
 
         @NativeLocation(file="dummy", line=47, column=11)
-        @NativeStruct("[i32(get=i$get)(set=i$set)](mystruct)")
+        @NativeStruct("[i32(i)](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("i")
             int i$get();
+            @NativeSetter("i")
             void i$set(int i);
         }
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("global_struct")
         public abstract MyStruct global_struct$get();
+        @NativeSetter("global_struct")
         public abstract void global_struct$set(MyStruct arg);
+        @NativeAddressof("global_struct")
         public abstract Pointer<MyStruct> global_struct$ptr();
     }
 
     private final globvar i;
     {
         i = Libraries.bind(globvar.class, Libraries.loadLibrary(MethodHandles.lookup(), "GlobalVariable"));
-        i.init();
     }
 
     public void testboolean() {

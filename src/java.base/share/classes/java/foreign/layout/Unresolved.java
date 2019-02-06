@@ -31,17 +31,25 @@ import java.util.Map;
  * a new layout whose size is known. The resolution process is typically driven by the annotations attached to the
  * unresolved layout.
  */
-public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
-    protected Unresolved(Map<String, String> annotations) {
+public class Unresolved extends AbstractDescriptor<Unresolved> implements Layout {
+    private final String layoutExpression;
+
+    protected Unresolved(String layoutExpression, Map<String, String> annotations) {
         super(annotations);
+        this.layoutExpression = layoutExpression;
     }
 
-    /**
-     * Create a new selector layout from given path expression.
-     * @return the new selector layout.
-     */
-    public static Unresolved of() {
-        return new Unresolved(NO_ANNOS);
+     /**
+      * Create a new unresolved layout from given layout expression.
+      * @param layoutExpression the layout expression.
+      * @return the new unresolved layout.
+      */
+    public static Unresolved of(String layoutExpression) {
+        return new Unresolved(layoutExpression, NO_ANNOS);
+    }
+
+    public String layoutExpression() {
+        return layoutExpression;
     }
 
     @Override
@@ -56,11 +64,11 @@ public class Unresolved extends AbstractLayout<Unresolved> implements Layout {
 
     @Override
     public String toString() {
-        return wrapWithAnnotations("$");
+        return wrapWithAnnotations(String.format("${%s}", layoutExpression));
     }
 
     @Override
-    Unresolved dup(Map<String, String> annotations) {
-        return new Unresolved(annotations);
+    Unresolved withAnnotations(Map<String, String> annotations) {
+        return new Unresolved(layoutExpression, annotations);
     }
 }

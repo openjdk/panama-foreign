@@ -31,6 +31,8 @@ import java.foreign.Library;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeFunction;
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.layout.Address;
@@ -47,19 +49,20 @@ import static org.testng.Assert.*;
 
 public class PointerScopeTest {
 
-    @NativeHeader(declarations=
-                "i=(i32)v" +
-                "ptr=(u64:u8)v" +
-                "pair=($(pair))v" +
-                "cb=(u64:()v)v")
+    @NativeHeader
     interface PointerScopeLib {
+        @NativeFunction("(u64:u8)v")
         void ptr(Pointer<Byte> buf);
+        @NativeFunction("(${pair})v")
         void pair(Pair p);
+        @NativeFunction("(u64:()v)v")
         void cb(Callback<Cb> cb);
 
-        @NativeStruct("[ i32(get=x) i32(get=y) ](pair)")
+        @NativeStruct("[ i32(x) i32(y) ](pair)")
         interface Pair extends Struct<Pair> {
+            @NativeGetter("x")
             int x();
+            @NativeGetter("y")
             int y();
         }
 

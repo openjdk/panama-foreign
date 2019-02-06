@@ -57,15 +57,10 @@ import java.util.stream.Stream;
 import jdk.internal.foreign.ScopeImpl.NativeScope;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
-import jdk.internal.foreign.memory.LayoutTypeImpl;
-import jdk.internal.foreign.memory.References;
 import jdk.internal.foreign.memory.Types;
 import jdk.internal.misc.Unsafe;
 
 public final class Util {
-
-    public static final LayoutType<Byte> BYTE_TYPE = NativeTypes.INT8;
-    public static final LayoutType<Pointer<Byte>> BYTE_PTR_TYPE = BYTE_TYPE.pointer();
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 
@@ -252,9 +247,8 @@ public final class Util {
                     return NativeTypes.VOID.pointer();
                 }
                 Address addr = (Address)layout;
-                return addr.addresseeInfo().isPresent() ?
-                        makeType(arg, ((Address)layout).addresseeInfo().get().layout()).pointer() :
-                        NativeTypes.VOID.pointer();
+                return addr.layout().<LayoutType<?>>map(l -> makeType(arg, l).pointer())
+                        .orElse(NativeTypes.VOID.pointer());
             } else {
                 return NativeTypes.VOID.pointer();
             }
@@ -270,12 +264,7 @@ public final class Util {
                 return NativeTypes.VOID.array();
             }
         } else if (isCStruct(erasure(carrier))) {
-            LayoutType lt = LayoutType.ofStruct((Class) carrier);
-            if (lt.layout().isPartial()) {
-                //FIXME: this is needed because LayoutType::ofStruct does not resolve layouts!!
-                lt = LayoutTypeImpl.of((Class) carrier, layout, References.ofStruct);
-            }
-            return lt;
+            return LayoutType.ofStruct((Class) carrier);
         } else if (Callback.class.isAssignableFrom(erasure(carrier))) {
             if (carrier instanceof ParameterizedType) {
                 ParameterizedType pt = (ParameterizedType) carrier;
@@ -326,13 +315,6 @@ public final class Util {
         } else {
             return clazz;
         }
-    }
-
-    public static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
-        BoundedPointer<?> bsrc = (BoundedPointer<?>)Objects.requireNonNull(src);
-        BoundedPointer<?> bdst = (BoundedPointer<?>)Objects.requireNonNull(dst);
-
-        bsrc.copyTo(bdst, bytes);
     }
 
     public static <Z> Pointer<Z> unsafeCast(Pointer<?> ptr, LayoutType<Z> layoutType) {

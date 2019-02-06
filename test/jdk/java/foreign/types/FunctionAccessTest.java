@@ -29,6 +29,8 @@
  * @run testng/othervm -Djdk.internal.foreign.UpcallHandler.FASTPATH=none -Djdk.internal.foreign.NativeInvoker.FASTPATH=none FunctionAccessTest
  */
 
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
 import java.foreign.memory.*;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
@@ -85,10 +87,12 @@ public class FunctionAccessTest {
     }
 
     @NativeStruct("[" +
-            "   u64(get=getFunction)(set=setFunction):()i32" +
+            "   u64(function):()i32" +
             "](MyStruct)")
     public interface MyStruct extends Struct<MyStruct> {
+        @NativeGetter("function")
         Callback<NativeToIntFunction> getFunction();
+        @NativeSetter("function")
         void setFunction(Callback<NativeToIntFunction> runnable);
     }
 
@@ -109,9 +113,11 @@ public class FunctionAccessTest {
         }
     }
 
-    @NativeHeader(declarations = "fp=u64(get=fp)(set=setFp):(i32)i32")
+    @NativeHeader(globals = "u64(fp):(i32)i32")
     public interface globalFunc {
+        @NativeGetter("fp")
         Callback<Func> fp();
+        @NativeSetter("fp")
         void setFp(Callback<Func> func);
 
         @NativeCallback("(i32)i32")

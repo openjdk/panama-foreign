@@ -75,12 +75,17 @@ public class DescriptorParser {
             nextToken();
         }
         nextToken(Token.RPAREN);
+        Optional<Map<String, String>> annos = annotationsOpt();
+        final Function result;
         if (token == Token.VOID) {
             nextToken(Token.VOID);
-            return Function.ofVoid(varargs, args.toArray(new Layout[0]));
+            result = Function.ofVoid(varargs, args.toArray(new Layout[0]));
         } else {
-            return Function.of(parseLayout(), varargs, args.toArray(new Layout[0]));
+            result = Function.of(parseLayout(), varargs, args.toArray(new Layout[0]));
         }
+        return annotationsOpt()
+                .map(a -> withAnnotations(result, a))
+                .orElse(result);
     }
 
     /**
@@ -262,7 +267,7 @@ public class DescriptorParser {
     }
 
     @SuppressWarnings("unchecked")
-    private <D extends Layout> D withAnnotations(D d, Map<String, String> annos) {
+    private <D extends Descriptor> D withAnnotations(D d, Map<String, String> annos) {
         for (Map.Entry<String, String> anno : annos.entrySet()) {
             d = (D)d.withAnnotation(anno.getKey(), anno.getValue());
         }
@@ -329,27 +334,14 @@ public class DescriptorParser {
     }
 
     /**
-     * unresolvedLayout = '$' [annotations]
+     * unresolvedLayout = '$' '{' layoutExpession '}' [annotations]
      */
     private Unresolved parseUnresolved() {
-        nextToken();
-        return annotatedOpt(Unresolved.of());
-    }
-
-    /**
-     * declarations = +( declaration )
-     * declaration = ident '=' (function / layout)
-     */
-    Map<String, Object> parseDeclarations() {
-        Map<String, Object> decls = new LinkedHashMap<>();
-        while (token != Token.END) {
-            String name = parseIdent(t -> t == Token.EQ, "'='");
-            nextToken(Token.EQ);
-            Object desc = token == Token.LPAREN ?
-                    parseFunction() : parseLayout();
-            decls.put(name, desc);
-        }
-        return decls;
+        nextToken(); // $
+        nextToken(); // LBRACE
+        String layoutExpr = parseIdent(t -> t == Token.RBRACE, "{");
+        nextToken(); // RBRACE
+        return annotatedOpt(Unresolved.of(layoutExpr));
     }
 
     String parseIdent(Predicate<Token> terminator, String expected) {
@@ -406,6 +398,8 @@ public class DescriptorParser {
             UNRESOLVED,
             LPAREN,
             RPAREN,
+            LBRACE,
+            RBRACE,
             LBRACKET,
             RBRACKET,
             UNION,
@@ -476,6 +470,12 @@ public class DescriptorParser {
                             break outer;
                         case ')':
                             res = Token.RPAREN;
+                            break outer;
+                        case '{':
+                            res = Token.LBRACE;
+                            break outer;
+                        case '}':
+                            res = Token.RBRACE;
                             break outer;
                         case '=':
                             res = Token.EQ;
@@ -572,8 +572,8 @@ public class DescriptorParser {
         }
     }
 
-    public static Map<String, Object> parseHeaderDeclarations(String decls) {
-        return new DescriptorParser(decls).parseDeclarations();
+    public static Function parseFunction(String desc) {
+        return new DescriptorParser(desc).parseFunction();
     }
 
     public static Layout parseLayout(String def) {

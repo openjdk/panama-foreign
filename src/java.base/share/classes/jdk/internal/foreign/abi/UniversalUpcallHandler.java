@@ -35,7 +35,7 @@ import java.util.function.Function;
 
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.abi.x64.SharedConstants;
-import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.vm.annotation.Stable;
 
@@ -123,7 +123,8 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
             Pointer<Long> res = getPtr(callingSequence.getReturnBindings().get(0));
             long structAddr = res.get();
             long size = Util.alignUp(nmt.returnType().bytesSize(), 8);
-            return new BoundedPointer<Object>((LayoutType)nmt.returnType(), BoundedMemoryRegion.of(structAddr, size));
+            return new BoundedPointer<Object>((LayoutType)nmt.returnType(), null, Pointer.AccessMode.READ_WRITE,
+                    MemoryBoundInfo.ofNative(structAddr, size));
         }
 
         void setReturnPtr(long ptr) {

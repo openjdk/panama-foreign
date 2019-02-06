@@ -22,11 +22,14 @@
  */
 
 import java.foreign.NativeTypes;
+import java.foreign.annotations.NativeFunction;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
+import java.foreign.layout.Descriptor;
 import java.foreign.layout.Function;
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
+import java.foreign.memory.Pointer;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -38,10 +41,7 @@ import jdk.internal.foreign.LayoutResolver;
 import jdk.internal.foreign.memory.DescriptorParser;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /*
  * @test
@@ -56,7 +56,6 @@ public class StructTest extends JextractToolRunner {
             "TypedefNamedDifferent",
             "TypedefAnonymous",
             "Plain",
-            "IncompleteArray",
             "UndefinedStruct",
             "UndefinedStructForPointer",
             "Opaque"
@@ -125,26 +124,6 @@ public class StructTest extends JextractToolRunner {
         assertEquals(tas[0], pointee);
     }
 
-    private void verifyIncompleteArray(Class<?> incomplete) {
-        assertNotNull(incomplete);
-        Method f = findMethod(incomplete, "ptr$get");
-        ParameterizedType pVoid = (ParameterizedType) f.getGenericReturnType();
-        assertVoidPointer(pVoid, false);
-        f = findMethod(incomplete, "ptr$set", java.foreign.memory.Pointer.class);
-        // Setter for void* should be wildcard
-        ParameterizedType pWildcard = (ParameterizedType) f.getGenericParameterTypes()[0];
-        assertVoidPointer(pWildcard, true);
-
-        f = findMethod(incomplete, "junk$get");
-        ParameterizedType ppVoid = (ParameterizedType) f.getGenericReturnType();
-        assertEquals(ppVoid.getActualTypeArguments()[0], pVoid);
-        f = findMethod(incomplete, "junk$set", java.foreign.memory.Pointer.class);
-
-        ppVoid = (ParameterizedType) f.getGenericParameterTypes()[0];
-        assertTrue(ppVoid.getActualTypeArguments()[0] instanceof WildcardType);
-        assertEquals(((WildcardType)ppVoid.getActualTypeArguments()[0]).getUpperBounds()[0], pWildcard);
-    }
-
     private void verifyFunctionWithVoidPointer(Class<?> cls) {
         Method m = findMethod(cls, "FunctionWithVoidPointer",
                 java.foreign.memory.Pointer.class,
@@ -188,25 +167,26 @@ public class StructTest extends JextractToolRunner {
     private void verifyUndefinedStructFunctions(Class<?> header) {
         final String POINTEE = "UndefinedStructForPointer";
         NativeHeader nh = header.getAnnotation(NativeHeader.class);
-        Map<String, Object> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
+        Method parent = findMethod(header, "getParent", Pointer.class);
+        Method sibling = findMethod(header, "getSibling", Pointer.class);
+        Method firstChild = findMethod(header, "getFirstChild", Pointer.class);
 
-        Method m = findMethod(header, "getParent", java.foreign.memory.Pointer.class);
-        assertNotNull(m);
-        ParameterizedType pReturn = (ParameterizedType) m.getGenericReturnType();
+        assertNotNull(parent);
+        ParameterizedType pReturn = (ParameterizedType) parent.getGenericReturnType();
         Class<?> undefined = findClass(header.getDeclaredClasses(), POINTEE);
         assertNotNull(undefined);
         assertPointerType(pReturn, undefined);
-        Type[] args = m.getGenericParameterTypes();
+        Type[] args = parent.getGenericParameterTypes();
         assertEquals(args.length, 1);
         ParameterizedType pArg = (ParameterizedType) args[0];
         assertPointerType(pArg, undefined);
 
-        String expected = "(u64:$(" + POINTEE + "))u64:$(" + POINTEE + ")";
-        Function fn = (Function) map.get("getParent");
+        String expected = "(u64:${" + POINTEE + "})u64:${" + POINTEE + "}";
+        Function fn = DescriptorParser.parseFunction(parent.getAnnotation(NativeFunction.class).value());
         assertEquals(fn.toString(), expected);
-        fn = (Function) map.get("getSibling");
+        fn = DescriptorParser.parseFunction(sibling.getAnnotation(NativeFunction.class).value());
         assertEquals(fn.toString(), expected);
-        fn = (Function) map.get("getFirstChild");
+        fn = DescriptorParser.parseFunction(firstChild.getAnnotation(NativeFunction.class).value());
         assertEquals(fn.toString(), expected);
     }
 
@@ -229,12 +209,11 @@ public class StructTest extends JextractToolRunner {
 
     private void verifyGetAnonymous(Class<?> header) {
         NativeHeader nh = header.getAnnotation(NativeHeader.class);
-        Map<String, Object> map = DescriptorParser.parseHeaderDeclarations(nh.declarations());
         Method m = findFirstMethod(header, "getAnonymous");
         assertNotNull(m);
 
         LayoutResolver resolver = LayoutResolver.get(header);
-        Function fn = (Function) map.get("getAnonymous");
+        Function fn = DescriptorParser.parseFunction(m.getAnnotation(NativeFunction.class).value());
         assertTrue(fn.isPartial());
         System.out.println("Function unresolved  = " + fn.toString());
         fn = resolver.resolve(fn);
@@ -255,7 +234,6 @@ public class StructTest extends JextractToolRunner {
         verifyExpectedAnnotations(clz);
         verifyFunctionWithVoidPointer(cls);
         verifyFunctionPointer(findClass(clz,"FI2")); //Todo: is this what jextract needs to emit?
-        verifyIncompleteArray(findClass(clz, "IncompleteArray"));
         verifyTypedefAnonymous(findClass(clz, "TypedefAnonymous"));
         checkMethod(cls, "voidArguments", void.class);
         verifyUndefinedStructFunctions(cls);

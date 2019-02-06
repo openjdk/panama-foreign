@@ -86,14 +86,12 @@ public final class References {
 
         static long getLongBits(Pointer<?> p2) {
             BoundedPointer<?> ptr = (BoundedPointer<?>)p2;
-            boolean signed = ptr.type.layout() instanceof Value &&
-                    ((Value)ptr.type.layout()).kind() != Kind.INTEGRAL_UNSIGNED;
-            return ptr.region.getBits(ptr.offset, ptr.type.bytesSize(), signed);
+            return ptr.getBits();
         }
 
         static void setLongBits(Pointer<?> p2, long value) {
             BoundedPointer<?> ptr = (BoundedPointer<?>)p2;
-            ptr.region.putBits(ptr.offset, ptr.type.bytesSize(), value);
+            ptr.putBits(value);
         }
 
         OfPrimitive(Class<?> carrier) {
@@ -333,7 +331,7 @@ public final class References {
 
         static void set(Pointer<?> pointer, Array<?> arrayValue) {
             try {
-                Util.copy(arrayValue.elementPointer(), pointer,
+                Pointer.copy(arrayValue.elementPointer(), pointer,
                         arrayValue.bytesSize());
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
@@ -377,7 +375,7 @@ public final class References {
 
         static void set(Pointer<?> pointer, Struct<?> t) {
             try {
-                Util.copy(t.ptr(), pointer, pointer.type().bytesSize());
+                Pointer.copy(t.ptr(), pointer, pointer.type().bytesSize());
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException("Access denied", iae);
             }

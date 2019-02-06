@@ -23,7 +23,6 @@
 package java.foreign;
 
 import jdk.internal.foreign.ScopeImpl;
-import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedArray;
 
 import java.foreign.annotations.NativeCallback;

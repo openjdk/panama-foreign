@@ -32,13 +32,12 @@ import org.testng.annotations.*;
 import java.foreign.Libraries;
 import java.foreign.Scope;
 import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeFunction;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.memory.Callback;
 import java.lang.invoke.MethodHandles;
-import java.math.BigDecimal;
 import java.util.Random;
 import java.util.stream.DoubleStream;
-import java.util.stream.Stream;
 
 import static org.testng.Assert.*;
 
@@ -47,20 +46,19 @@ public class LongDoubleTest {
 
     private static final double TOLERANCE = 0.0001;
 
-    @NativeHeader(declarations =
-            "id=(f128)f128" +
-            "plus=(f128 f128)f128" +
-            "minus=(f128 f128)f128" +
-            "mul=(f128 f128)f128" +
-            "div=(f128 f128)f128" +
-            "f=(f128 u64:(f128)f128)f128"
-    )
+    @NativeHeader
     interface longdouble {
+        @NativeFunction("(f128)f128")
         double id(double arg);
+        @NativeFunction("(f128 f128)f128")
         double plus(double arg1, double arg2);
+        @NativeFunction("(f128 f128)f128")
         double minus(double arg1, double arg2);
+        @NativeFunction("(f128 f128)f128")
         double mul(double arg1, double arg2);
+        @NativeFunction("(f128 f128)f128")
         double div(double arg1, double arg2);
+        @NativeFunction("(f128 u64:(f128)f128)f128")
         double f(double arg, Callback<cb> cb);
 
         @NativeCallback("(f128)f128")

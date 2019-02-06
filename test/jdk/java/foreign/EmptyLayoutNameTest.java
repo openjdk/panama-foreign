@@ -32,11 +32,14 @@ import java.foreign.memory.*;
 
 public class EmptyLayoutNameTest {
     @NativeStruct(
-      "[i32(get=i$get)(set=i$set)(ptr=i$ptr)]()"
+      "[i32(i)]()"
     )
     public interface EmptyLayoutName extends Struct<EmptyLayoutName> {
+        @NativeGetter("i")
         int i$get();
+        @NativeSetter("i")
         void i$set(int i);
+        @NativeAddressof("i")
         Pointer<Integer> i$ptr();
     }
 

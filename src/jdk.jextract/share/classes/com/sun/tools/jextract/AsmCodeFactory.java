@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -75,9 +76,13 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
     private static final String NATIVE_HEADER = ANNOTATION_PKG_PREFIX + "NativeHeader;";
     private static final String NATIVE_LOCATION = ANNOTATION_PKG_PREFIX + "NativeLocation;";
     private static final String NATIVE_STRUCT = ANNOTATION_PKG_PREFIX + "NativeStruct;";
+    private static final String NATIVE_FUNCTION = ANNOTATION_PKG_PREFIX + "NativeFunction;";
+    private static final String NATIVE_GETTER = ANNOTATION_PKG_PREFIX + "NativeGetter;";
+    private static final String NATIVE_SETTER = ANNOTATION_PKG_PREFIX + "NativeSetter;";
+    private static final String NATIVE_ADDRESSOF = ANNOTATION_PKG_PREFIX + "NativeAddressof;";
 
     private final ClassWriter global_cw;
-    private final List<String> headerDeclarations = new ArrayList<>();
+    private final Set<Layout> global_layouts = new LinkedHashSet<>();
     protected final String headerClassName;
     protected final HeaderFile headerFile;
     protected final Map<String, byte[]> types;
@@ -94,7 +99,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         this.global_cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         this.types = new HashMap<>();
         this.libraryNames = ctx.libraryNames;
-        this.libraryPaths = ctx.libraryPaths;
+        this.libraryPaths = ctx.recordLibraryPath? ctx.libraryPaths : null;
         this.err = ctx.err;
         this.noNativeLocations = ctx.noNativeLocations;
         global_cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE,
@@ -118,7 +123,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
                 libNames.visit(null, name);
             }
             libNames.visitEnd();
-            if (!libraryPaths.isEmpty()) {
+            if (libraryPaths != null && !libraryPaths.isEmpty()) {
                 AnnotationVisitor libPaths = av.visitArray("libraryPaths");
                 for (String path : libraryPaths) {
                     libPaths.visit(null, path);
@@ -126,7 +131,9 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
                 libPaths.visitEnd();
             }
         }
-        av.visit("declarations", String.join(" ", headerDeclarations));
+        AnnotationVisitor globals = av.visitArray("globals");
+        global_layouts.stream().map(Layout::toString).forEach(s -> globals.visit(null, s));
+        globals.visitEnd();
         av.visitEnd();
         global_cw.visitEnd();
         addClassIfNeeded(headerClassName, global_cw.toByteArray());
@@ -189,15 +196,26 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             av.visitEnd();
         }
 
+        AnnotationVisitor av = mv.visitAnnotation(NATIVE_GETTER, true);
+        av.visit("value", fieldName);
+        av.visitEnd();
+
         mv.visitEnd();
         mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
                 "(" + jt.getSignature(true) + ")V", null);
+        av = mv.visitAnnotation(NATIVE_SETTER, true);
+        av.visit("value", fieldName);
+        av.visitEnd();
         mv.visitEnd();
+
         if (tree instanceof VarTree || !isBitField(tree)) {
             JType ptrType = JType.GenericType.ofPointer(jt);
             mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
                     "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(false), null);
+            av = mv.visitAnnotation(NATIVE_ADDRESSOF, true);
+            av.visit("value", fieldName);
+            av.visitEnd();
             mv.visitEnd();
         }
 
@@ -206,18 +224,8 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
 
     @Override
     public Boolean visitVar(VarTree varTree, JType jt) {
-        if (addField(global_cw, varTree, null)) {
-            Layout layout = varTree.layout();
-            String descStr = decorateAsAccessor(varTree, layout).toString();
-            addHeaderDecl(varTree.name(), descStr);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private void addHeaderDecl(String symbol, String desc) {
-        headerDeclarations.add(String.format("%s=%s", symbol, desc));
+        global_layouts.add(varTree.layout().withAnnotation(Layout.NAME, varTree.name()));
+        return addField(global_cw, varTree, null);
     }
 
     private void addConstant(ClassWriter cw, FieldTree fieldTree) {
@@ -275,7 +283,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         annotateNativeLocation(cw, structTree);
 
         AnnotationVisitor av = cw.visitAnnotation(NATIVE_STRUCT, true);
-        Layout structLayout = structTree.layout(this::decorateAsAccessor);
+        Layout structLayout = structTree.layout();
         av.visit("value", structLayout.toString());
         av.visitEnd();
         cw.visitInnerClass(name, headerClassName, intf, ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
@@ -286,26 +294,6 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         cw.visitEnd();
         addClassIfNeeded(headerClassName + "$" + intf, cw.toByteArray());
         return true;
-    }
-
-    Layout addGetterSetterName(Layout layout, String accessorName) {
-        return layout
-            .withAnnotation("get", accessorName + "$get")
-            .withAnnotation("set", accessorName + "$set");
-    }
-
-    Layout decorateAsAccessor(VarTree varTree, Layout layout) {
-        return addGetterSetterName(layout, varTree.name()).
-            withAnnotation("ptr", varTree.name() + "$ptr");
-    }
-
-    Layout decorateAsAccessor(FieldTree fieldTree, Layout layout) {
-        layout = addGetterSetterName(layout, fieldTree.name());
-        if (!fieldTree.isBitField()) {
-            //no pointer accessors for bitfield!
-            layout = layout.withAnnotation("ptr", fieldTree.name() + "$ptr");
-        }
-        return layout;
     }
 
     @Override
@@ -435,7 +423,10 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
 
         Type type = funcTree.type();
         final String descStr = Utils.getFunction(type).toString();
-        addHeaderDecl(funcTree.name(), descStr);
+
+        AnnotationVisitor av = mv.visitAnnotation(NATIVE_FUNCTION, true);
+        av.visit("value", descStr);
+        av.visitEnd();
 
         mv.visitEnd();
         return true;

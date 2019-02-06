@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.spi.ToolProvider;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -75,8 +76,8 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
-    public void testOutputFileOption() {
-        // simple output file check
+    public void testJarOutputFileOption() {
+        // simple jar output file check
         Path simpleJar = getOutputFilePath("simple.jar");
         deleteFile(simpleJar);
         run("-o", simpleJar.toString(),
@@ -85,6 +86,26 @@ public class JextractToolProviderTest extends JextractToolRunner {
             assertTrue(Files.isRegularFile(simpleJar));
         } finally {
             deleteFile(simpleJar);
+        }
+    }
+
+    @Test
+    public void testJModOutputFileOption() {
+        // simple jmod output file check
+        Path simpleJmod = getOutputFilePath("simple.jmod");
+        deleteFile(simpleJmod);
+        // --target-package is mandatory for jmod generation
+        run("--target-package", "com.acme",
+            "-o", simpleJmod.toString(),
+            getInputFilePath("simple.h").toString()).checkSuccess();
+        try {
+            assertTrue(Files.isRegularFile(simpleJmod));
+            ToolProvider jmod = ToolProvider.findFirst("jmod").get();
+            int exitCode = jmod.run(System.out, System.err, "list",
+                simpleJmod.toString());
+            assertTrue(exitCode == 0);
+        } finally {
+            deleteFile(simpleJmod);
         }
     }
 
@@ -100,7 +121,6 @@ public class JextractToolProviderTest extends JextractToolRunner {
             NativeHeader header = cls.getAnnotation(NativeHeader.class);
             assertNotNull(header);
             assertEquals(header.path(), helloH.toString());
-            assertFalse(header.declarations().isEmpty());
 
             // check a method for "void func()"
             assertNotNull(findMethod(cls, "func", Object[].class));
@@ -187,14 +207,14 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
-    public void test_option_rpath_without_l() {
+    public void test_option_record_path_without_l() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        Path rpathDir = getInputFilePath("libs");
-        String warning = "WARNING: -rpath option specified without any -l option";
+        Path libDir = getInputFilePath("libs");
+        String warning = "WARNING: --record-library-path option specified without any -l option";
         try {
-            run("-rpath", rpathDir.toString(), "-o", helloJar.toString(), helloH.toString())
+            run("--record-library-path", "-L", libDir.toString(), "-o", helloJar.toString(), helloH.toString())
                     .checkContainsOutput(warning)
                     .checkSuccess();
         } finally {
@@ -203,31 +223,13 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
-    public void test_option_conflicting_rpaths() {
+    public void test_option_record_path_no_libs() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        Path rpathDir = getInputFilePath("libs");
-        String warning = "WARNING: -infer-rpath used in conjunction with explicit -rpath paths";
+        String warning = "WARNING: --record-library-path option specified without any -L option";
         try {
-            run("-rpath", rpathDir.toString(),
-                    "-infer-rpath",
-                    "-o", helloJar.toString(), helloH.toString())
-                    .checkContainsOutput(warning)
-                    .checkSuccess();
-        } finally {
-            deleteFile(helloJar);
-        }
-    }
-
-    @Test
-    public void test_option_rpath_no_libs() {
-        Path helloJar = getOutputFilePath("hello.jar");
-        deleteFile(helloJar);
-        Path helloH = getInputFilePath("hello.h");
-        String warning = "WARNING: -infer-rpath option specified without any -L option";
-        try {
-            run("-infer-rpath",
+            run("--record-library-path",
                     "-o", helloJar.toString(), helloH.toString())
                 .checkContainsOutput(warning)
                 .checkSuccess();
@@ -266,7 +268,7 @@ public class JextractToolProviderTest extends JextractToolRunner {
             assertNotNull(header);
             assertEquals(header.libraries().length, 1);
             assertEquals(header.libraries()[0], "hello");
-            // no library paths (rpath) set
+            // no library paths set
             assertEquals(header.libraryPaths().length, 0);
         } finally {
             deleteFile(helloJar);
@@ -274,22 +276,22 @@ public class JextractToolProviderTest extends JextractToolRunner {
     }
 
     @Test
-    public void test_option_l_and_rpath() {
+    public void test_option_l_and_libpath() {
         Path helloJar = getOutputFilePath("hello.jar");
         deleteFile(helloJar);
         Path helloH = getInputFilePath("hello.h");
-        Path rpathDir = getInputFilePath("libs");
-        run("-l", "hello", "-rpath", rpathDir.toString(),
+        Path libDir = getInputFilePath("libs");
+        run("-l", "hello", "--record-library-path", "-L", libDir.toString(),
                 "-o", helloJar.toString(), helloH.toString()).checkSuccess();
         try(Loader loader = classLoader(helloJar)) {
             Class<?> cls = loader.loadClass("hello");
-            // check that NativeHeader annotation captures -l and -rpath values
+            // check that NativeHeader annotation captures -l and -L values
             NativeHeader header = cls.getAnnotation(NativeHeader.class);
             assertNotNull(header);
             assertEquals(header.libraries().length, 1);
             assertEquals(header.libraries()[0], "hello");
             assertEquals(header.libraryPaths().length, 1);
-            assertEquals(header.libraryPaths()[0], rpathDir.toString());
+            assertEquals(header.libraryPaths()[0], libDir.toString());
         } finally {
             deleteFile(helloJar);
         }
@@ -571,6 +573,14 @@ public class JextractToolProviderTest extends JextractToolRunner {
             assertNotNull(findEnumConstGet(headerCls, "A"));
             assertNotNull(findEnumConstGet(headerCls, "B"));
             assertNotNull(findEnumConstGet(headerCls, "C"));
+
+            Class<?> xClass = loader.loadClass("nested$X");
+            assertNotNull(findStructFieldGet(xClass, "Z"));
+            Class<?> zClass = loader.loadClass("nested$anon$nested_h$1977");
+            assertNotNull(findStructFieldGet(zClass, "y"));
+
+            Class<?> x2Class = loader.loadClass("nested$X2");
+            assertNotNull(findStructFieldGet(x2Class, "y"));
         } finally {
             deleteFile(nestedJar);
         }

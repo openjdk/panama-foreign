@@ -599,13 +599,13 @@ JNIEXPORT jint JNICALL Java_jdk_internal_clang_Type_kind1
     return ptr->kind;
 }
 
-JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Type_size
+JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Type_size0
   (JNIEnv *env, jobject type) {
     CXType *ptr = (CXType*) J2P(env, type);
     return clang_Type_getSizeOf(*ptr);
 }
 
-JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Type_getOffsetOf
+JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Type_getOffsetOf0
   (JNIEnv *env, jobject type, jstring field_name) {
     CXType *ptr = (CXType*) J2P(env, type);
     const char *name = env->GetStringUTFChars(field_name, NULL);

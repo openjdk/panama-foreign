@@ -23,13 +23,14 @@
 package java.foreign.memory;
 
 import jdk.internal.foreign.Util;
-import jdk.internal.foreign.memory.BoundedMemoryRegion;
+import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 
 import java.foreign.NativeTypes;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.security.AccessControlException;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -62,7 +63,7 @@ public interface Pointer<X> extends Resource {
      * the {@code hasNext} predicate returns {@code false}. This is effectively the same as:
      * <p>
      *     <code>
-     *         Stream.iterate(pointer, hasNext, p -> p.offset(1))
+     *         Stream.iterate(pointer, hasNext, p -&gt; p.offset(1))
      *     </code>
      * </p>
      * 
@@ -80,7 +81,7 @@ public interface Pointer<X> extends Resource {
      * the pointer is equal to {@code end}. This is effectively the same as:
      * <p>
      *     <code>
-     *         Stream.iterate(pointer, p -> !p.equals(end), p -> p.offset(1))
+     *         Stream.iterate(pointer, p -&gt; !p.equals(end), p -&gt; p.offset(1))
      *     </code>
      * </p>
      *
@@ -130,9 +131,10 @@ public interface Pointer<X> extends Resource {
     Pointer<X> asWriteOnly() throws AccessControlException;
 
     /**
-     * Returns the underlying memory address associated with this pointer.
+     * Returns the underlying memory address associated with this pointer, if available.
      * @return the memory address.
-     * @throws IllegalAccessException if the memory address is not a native address.
+     * @throws IllegalAccessException if the memory address is not a native address,
+     * if the pointer is not alive, or if the pointer is out of bounds.
      */
     long addr() throws IllegalAccessException;
 
@@ -196,7 +198,7 @@ public interface Pointer<X> extends Resource {
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.foreign.Pointer.fromByteBuffer"));
         }
-        return new BoundedPointer<>(NativeTypes.UINT8, BoundedMemoryRegion.ofByteBuffer(bb));
+        return new BoundedPointer<>(NativeTypes.UINT8, null, AccessMode.READ_WRITE, MemoryBoundInfo.ofByteBuffer(bb));
     }
 
     /**
@@ -209,7 +211,9 @@ public interface Pointer<X> extends Resource {
     ByteBuffer asDirectByteBuffer(int bytes) throws IllegalAccessException;
 
     static void copy(Pointer<?> src, Pointer<?> dst, long bytes) throws IllegalAccessException {
-        Util.copy(src, dst, bytes);
+        BoundedPointer<?> bsrc = (BoundedPointer<?>) Objects.requireNonNull(src);
+        BoundedPointer<?> bdst = (BoundedPointer<?>) Objects.requireNonNull(dst);
+        bsrc.copyTo(bdst, bytes);
     }
 
     static String toString(Pointer<Byte> cstr) {
@@ -255,7 +259,7 @@ public interface Pointer<X> extends Resource {
          * a part of this access mode.
          *
          * @param mode the mode to check
-         * @return {@coder true} if the given mode is available
+         * @return {@code true} if the given mode is available
          */
         public boolean isAvailable(AccessMode mode) {
             return (this.value & mode.value) == mode.value;

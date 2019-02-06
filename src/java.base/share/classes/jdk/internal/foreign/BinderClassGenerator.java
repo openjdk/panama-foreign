@@ -22,6 +22,7 @@
  */
 package jdk.internal.foreign;
 
+import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
@@ -30,6 +31,11 @@ import jdk.internal.org.objectweb.asm.util.TraceClassVisitor;
 import sun.security.action.GetBooleanAction;
 import sun.security.action.GetPropertyAction;
 
+import java.foreign.annotations.NativeAddressof;
+import java.foreign.annotations.NativeFunction;
+import java.foreign.annotations.NativeGetter;
+import java.foreign.annotations.NativeSetter;
+import java.foreign.layout.Function;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -41,6 +47,7 @@ import java.lang.reflect.ParameterizedType;
 import java.foreign.layout.Layout;
 import java.foreign.memory.Pointer;
 import java.util.EnumMap;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -301,6 +308,46 @@ abstract class BinderClassGenerator {
         }
     }
 
+    abstract static class MemberInfo {
+        static MemberInfo of(Method method) {
+            if (method.isAnnotationPresent(NativeFunction.class)) {
+                NativeFunction fun = method.getAnnotation(NativeFunction.class);
+                Function desc = DescriptorParser.parseFunction(fun.value());
+                return new FunctionInfo(desc);
+            } else if (method.isAnnotationPresent(NativeGetter.class)) {
+                NativeGetter getter = method.getAnnotation(NativeGetter.class);
+                return new VarInfo(getter.value(), BinderClassGenerator.AccessorKind.GET);
+            } else if (method.isAnnotationPresent(NativeSetter.class)) {
+                NativeSetter setter = method.getAnnotation(NativeSetter.class);
+                return new VarInfo(setter.value(), BinderClassGenerator.AccessorKind.SET);
+            } else if (method.isAnnotationPresent(NativeAddressof.class)) {
+                NativeAddressof addressof = method.getAnnotation(NativeAddressof.class);
+                return new VarInfo(addressof.value(), BinderClassGenerator.AccessorKind.PTR);
+            } else {
+                return null;
+            }
+        }
+    }
+
+    static class VarInfo extends MemberInfo {
+
+        String name;
+        BinderClassGenerator.AccessorKind accessorKind;
+
+        VarInfo(String symbolName, BinderClassGenerator.AccessorKind accessorKind) {
+            this.name = symbolName;
+            this.accessorKind = accessorKind;
+        }
+    }
+
+    static class FunctionInfo extends MemberInfo {
+        Function descriptor;
+
+        FunctionInfo(Function descriptor) {
+            this.descriptor = descriptor;
+        }
+    }
+
     enum AccessorKind {
         GET("get"),
         SET("set"),
@@ -333,17 +380,6 @@ abstract class BinderClassGenerator {
             }
 
             throw new IllegalArgumentException("Unhandled type: " + this);
-        }
-
-        static EnumMap<AccessorKind, String> from(Layout l) {
-            EnumMap<AccessorKind, String> kinds = new EnumMap<>(AccessorKind.class);
-            for (AccessorKind accessorKind : AccessorKind.values()) {
-                String accessor = l.annotations().get(accessorKind.annotationName);
-                if (accessor != null) {
-                    kinds.put(accessorKind, accessor);
-                }
-            }
-            return kinds;
         }
     }
 }

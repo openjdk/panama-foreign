@@ -26,6 +26,7 @@
  * @run main/othervm CallbackSort
  */
 
+import java.foreign.annotations.NativeFunction;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
 import java.foreign.NativeTypes;
@@ -41,7 +42,7 @@ public class CallbackSort {
     private static final boolean DEBUG = Boolean.getBoolean("CallbackSort.DEBUG");
     private boolean upcallCalled = false;
 
-    @NativeHeader(declarations = "slowsort=(u64:vu64u64u64:(u64:vu64:v)i32)v")
+    @NativeHeader
     public static interface stdlib {
         @NativeCallback("(u64:vu64:v)i32")
         @FunctionalInterface
@@ -51,6 +52,7 @@ public class CallbackSort {
         }
 
         @NativeLocation(file="dummy", line=47, column=11)
+        @NativeFunction("(u64:vu64u64u64:(u64:vu64:v)i32)v")
         public abstract void slowsort(Pointer<?> base, long nmemb, long size, Callback<compar> compar);
     }
 

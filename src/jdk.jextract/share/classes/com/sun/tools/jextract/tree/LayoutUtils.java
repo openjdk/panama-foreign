@@ -37,7 +37,6 @@ import java.foreign.memory.LayoutType;
 import java.foreign.memory.LongDoubleComplex;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jdk.internal.clang.Cursor;
@@ -65,7 +64,7 @@ public final class LayoutUtils {
         return name.isEmpty()? getName(tree.cursor()) : name;
     }
 
-    private static String getName(Cursor cursor) {
+    static String getName(Cursor cursor) {
         // Use cursor name instead of type name, this way we don't have struct
         // or enum prefix
         String nativeName = cursor.spelling();
@@ -164,6 +163,8 @@ public final class LayoutUtils {
             case Pointer:
             case BlockPointer:
                 return parsePointerInternal(t.getPointeeType());
+            case FunctionProto:
+                return Address.ofFunction(64, parseFunctionInternal(t));
             case Complex:
                 TypeKind ek = t.getElementType().kind();
                 if (ek == TypeKind.Float) {
@@ -178,7 +179,7 @@ public final class LayoutUtils {
                 }
             default:
                 throw new IllegalArgumentException(
-                        "Unsupported type kind: " + t.kind());
+                        "Unsupported type kind: " + t.kind()  + ", for type: " + t.spelling());
         }
     }
 
@@ -198,145 +199,12 @@ public final class LayoutUtils {
         }
     }
 
-    private static Layout getRecordReferenceLayout(Type t) {
+    static Layout getRecordReferenceLayout(Type t) {
         //symbolic reference
-        return Unresolved.of()
-                .withAnnotation(Layout.NAME, getName(t.canonicalType()));
+        return Unresolved.of(getName(t.canonicalType()));
     }
 
-    static Layout getRecordLayout(Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {
-        return getRecordLayoutInternal(0, t, t, fieldMapper);
-    }
-
-    private static Layout getRecordLayoutInternal(long offset, Type parent, Type t, BiFunction<Cursor, Layout, Layout> fieldMapper) {
-        Cursor cu = t.getDeclarationCursor().getDefinition();
-        if (cu.isInvalid()) {
-            return getRecordReferenceLayout(t);
-        }
-        final boolean isUnion = cu.kind() == CursorKind.UnionDecl;
-        Stream<Cursor> fieldTypes = cu.children()
-                .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
-        List<Layout> fieldLayouts = new ArrayList<>();
-        int pendingBitfieldStart = -1;
-        long actualSize = 0L;
-        for (Cursor c : fieldTypes.collect(Collectors.toList())) {
-            boolean isBitfield = c.isBitField();
-            if (isBitfield && c.getBitFieldWidth() == 0) continue;
-            long expectedOffset = offsetOf(parent, c);
-            if (expectedOffset > offset) {
-                if (isUnion) {
-                    throw new IllegalStateException("No padding in union elements!");
-                }
-                fieldLayouts.add(Padding.of(expectedOffset - offset));
-                actualSize += (expectedOffset - offset);
-                offset = expectedOffset;
-            }
-            if (isBitfield && !isUnion && pendingBitfieldStart == -1) {
-                pendingBitfieldStart = fieldLayouts.size();
-            }
-            if (!isBitfield && pendingBitfieldStart >= 0) {
-                //emit/replace bitfields
-                replaceBitfields(fieldLayouts, pendingBitfieldStart);
-                pendingBitfieldStart = -1;
-            }
-            Layout fieldLayout = (c.isAnonymousStruct()) ?
-                    getRecordLayoutInternal(offset, parent, c.type(), fieldMapper) :
-                    fieldLayout(isUnion, c, fieldMapper);
-            fieldLayouts.add(fieldLayout);
-            long size = fieldSize(isUnion, c);
-            if (isUnion) {
-                actualSize = Math.max(actualSize, size);
-            } else {
-                offset += size;
-                actualSize += size;
-            }
-        }
-        long expectedSize = t.size() * 8;
-        if (actualSize < expectedSize) {
-            fieldLayouts.add(Padding.of(expectedSize - actualSize));
-        }
-        if (pendingBitfieldStart >= 0) {
-            //emit/replace bitfields
-            replaceBitfields(fieldLayouts, pendingBitfieldStart);
-        }
-        Layout[] fields = fieldLayouts.toArray(new Layout[0]);
-        Group g = isUnion ?
-                Group.union(fields) : Group.struct(fields);
-        return g.withAnnotation(Layout.NAME, getName(cu));
-    }
-
-    private static Layout fieldLayout(boolean isUnion, Cursor c, BiFunction<Cursor, Layout, Layout> fieldMapper) {
-        Layout layout = getLayout(c.type());
-        if (c.isBitField()) {
-            boolean isSigned = ((Value)layout).kind() == Value.Kind.INTEGRAL_SIGNED;
-            Layout sublayout = isSigned ?
-                    Value.ofSignedInt(c.getBitFieldWidth()) :
-                    Value.ofUnsignedInt(c.getBitFieldWidth());
-            sublayout = fieldMapper.apply(c, sublayout);
-            return isUnion ?
-                    bitfield((Value)layout, List.of(sublayout)) :
-                    sublayout;
-        } else {
-            return fieldMapper.apply(c, layout);
-        }
-    }
-
-    private static long fieldSize(boolean isUnion, Cursor c) {
-        if (!c.isBitField() || isUnion) {
-            return c.type().size() * 8;
-        } else {
-            return c.getBitFieldWidth();
-        }
-    }
-
-    private static void replaceBitfields(List<Layout> layouts, int pendingBitfieldsStart) {
-        long storageSize = storageSize(layouts);
-        long offset = 0L;
-        List<Layout> newFields = new ArrayList<>();
-        List<Layout> pendingFields = new ArrayList<>();
-        while (layouts.size() > pendingBitfieldsStart) {
-            Layout l = layouts.remove(pendingBitfieldsStart);
-            offset += l.bitsSize();
-            pendingFields.add(l);
-            if (!pendingFields.isEmpty() &&
-                    offset == storageSize) {
-                //emit new
-                newFields.add(bitfield(Value.ofUnsignedInt(storageSize), pendingFields));
-                pendingFields.clear();
-                offset = 0L;
-            } else if (offset > storageSize) {
-                throw new IllegalStateException("Crossing storage unit boundaries");
-            }
-        }
-        if (!pendingFields.isEmpty()) {
-            throw new IllegalStateException("Partially used storage unit");
-        }
-        //add back new fields
-        newFields.forEach(layouts::add);
-    }
-
-    private static long storageSize(List<Layout> layouts) {
-        long size = layouts.stream().mapToLong(Layout::bitsSize).sum();
-        int[] sizes = { 64, 32, 16, 8 };
-        for (int s : sizes) {
-            if (size % s == 0) {
-                return s;
-            }
-        }
-        throw new IllegalStateException("Cannot infer storage size");
-    }
-
-    private static Value bitfield(Value v, List<Layout> sublayouts) {
-        return v.withContents(Group.struct(sublayouts.toArray(new Layout[0])));
-    }
-
-    private static long offsetOf(Type parent, Cursor c) {
-        if (c.kind() == CursorKind.FieldDecl) {
-            return parent.getOffsetOf(c.spelling());
-        } else {
-            return c.children()
-                    .mapToLong(child -> offsetOf(parent, child))
-                    .findFirst().orElseThrow(IllegalStateException::new);
-        }
+    static Layout getRecordLayout(Type type) {
+        return RecordLayoutComputer.compute(0, type, type);
     }
 }

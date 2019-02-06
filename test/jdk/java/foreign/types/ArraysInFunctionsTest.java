@@ -31,7 +31,8 @@
 import java.foreign.Libraries;
 import java.foreign.Library;
 import java.foreign.Scope;
-import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeFunction;
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Array;
@@ -46,8 +47,9 @@ public class ArraysInFunctionsTest {
 
     Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "ArraysFunc");
 
-    @NativeHeader(declarations = "m=([2 $(foo)])v")
+    @NativeHeader
     interface Func {
+        @NativeFunction("([2 $(foo)])v")
         void m(Array<Foo> foos);
 
         @NativeStruct("[ i32(get=i) ](foo)")
@@ -56,8 +58,9 @@ public class ArraysInFunctionsTest {
         }
     }
 
-    @NativeHeader(declarations = "g=(u64:([2 $(foo)])v)v")
+    @NativeHeader
     interface Callb {
+        @NativeFunction("(u64:([2 $(foo)])v)v")
         void g(F f);
 
         @NativeStruct("[ i32(get=i) ](foo)")
@@ -65,13 +68,14 @@ public class ArraysInFunctionsTest {
             int i();
         }
 
-        @NativeCallback("([2 $(foo)])v")
         interface F extends Callback<F> {
+            @NativeFunction("([2 $(foo)])v")
             void m(Array<Foo> foos);
         }
 
-        @NativeStruct("[ u64(get=f):([2 $(foo)])v ](callbstr)")
+        @NativeStruct("[ u64(f):([2 $(foo)])v ](callbstr)")
         interface CallbStr extends Struct<CallbStr> {
+            @NativeGetter("f")
             F f();
         }
     }

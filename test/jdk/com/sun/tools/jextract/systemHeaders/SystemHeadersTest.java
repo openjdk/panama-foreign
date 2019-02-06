@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @requires os.family != "windows"
  * @library ..
  * @modules jdk.jextract
  * @build SystemHeadersTest

@@ -115,7 +115,7 @@ public class DescriptorTest {
         }
     }
 
-    @DataProvider(name = "badCases")
+    @DataProvider("badCases")
     public Object[][] badCases() { return badCases; }
 
     Object[][] badCases = {

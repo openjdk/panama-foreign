@@ -29,13 +29,11 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
-import java.util.jar.JarOutputStream;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
 
 import static java.nio.file.StandardOpenOption.*;
 
-public class Writer {
+public final class Writer {
 
     private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private final Map<String, byte[]> results;
@@ -44,14 +42,14 @@ public class Writer {
         this.results = results;
     }
 
-    private static final String JEXTRACT_MANIFEST = "META-INF" + File.separatorChar + "jextract.properties";
+    static final String JEXTRACT_MANIFEST = "META-INF" + File.separatorChar + "jextract.properties";
 
     public boolean isEmpty() {
         return results.isEmpty();
     }
 
     @SuppressWarnings("deprecation")
-    private byte[] getJextractProperties(String[] args) {
+    byte[] getJextractProperties(String[] args) {
         Properties props = new Properties();
         props.setProperty("os.name", System.getProperty("os.name"));
         props.setProperty("os.version", System.getProperty("os.version"));
@@ -90,39 +88,9 @@ public class Writer {
         }
     }
 
-    public void writeJarFile(Path jarpath, String[] args) throws IOException {
-        logger.info(() -> "Collecting jar file " + jarpath);
-        try (OutputStream os = Files.newOutputStream(jarpath, CREATE, TRUNCATE_EXISTING, WRITE);
-                JarOutputStream jar = new JarOutputStream(os)) {
-            writeJarFile(jar, args);
-        }
-    }
-
     //These methods are used for testing (see Runner.java)
 
     public Map<String, byte[]> results() {
         return results;
-    }
-
-    public void writeJarFile(JarOutputStream jar, String[] args) {
-        results.forEach((cls, bytes) -> {
-                try {
-                    String path = cls.replace('.', File.separatorChar) + ".class";
-                    logger.fine(() -> "Add " + path);
-                    jar.putNextEntry(new ZipEntry(path));
-                    jar.write(bytes);
-                    jar.closeEntry();
-                } catch (IOException ioe) {
-                    throw new UncheckedIOException(ioe);
-                }
-            });
-
-            try {
-                jar.putNextEntry(new ZipEntry(JEXTRACT_MANIFEST));
-                jar.write(getJextractProperties(args));
-                jar.closeEntry();
-            } catch (IOException ioe) {
-                throw new UncheckedIOException(ioe);
-            }
     }
 }

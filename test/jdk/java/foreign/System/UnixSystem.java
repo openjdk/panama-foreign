@@ -35,58 +35,67 @@ import java.foreign.memory.*;
 import java.foreign.annotations.*;
 
 public class UnixSystem {
-    @NativeHeader(declarations =
-            "getpid=()i32" +
-            "snprintf=(u64:u8i64u64:u8*)i32" +
-            "strerror=(i32)u64:u8" +
-            "errno=i32(get=errno$get)" +
-            "environ=u64(get=environ$get)(ptr=environ$ptr):u64:v"
+    @NativeHeader(globals = {
+            "i32(errno)",
+            "u64(environ):u64:v"}
     )
     static interface system {
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeFunction("()i32")
         public abstract int getpid();
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeFunction("(u64:u8i64u64:u8*)i32")
         public abstract int snprintf(Pointer<Byte> buf, long size, Pointer<Byte> fmt, Object... args);
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeFunction("(i32)u64:u8")
         public abstract Pointer<Byte> strerror(int errno);
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("errno")
         public abstract int errno$get();
 
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeGetter("environ")
         public abstract Pointer<Pointer<Byte>> environ$get();
 
+        @NativeAddressof("environ")
         public abstract Pointer<Pointer<Pointer<Byte>>> environ$ptr();
     }
 
-    @NativeHeader(declarations = "__xstat=(i32u64:u8u64:$(linux_stat))i32")
+    @NativeHeader
     static interface LinuxSystem {
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeFunction("(i32u64:u8u64:${linux_stat})i32")
         public abstract int __xstat(int ver, Pointer<Byte> path, Pointer<stat> buf);
 
         @NativeLocation(file="dummy", line=47, column=11)
-        @NativeStruct("[i32i32i32i32i32i32i32i32i32i32i32i32i32(get=st_size$get)(set=st_size$set)](linux_stat)")
+        @NativeStruct("[i32i32i32i32i32i32i32i32i32i32i32i32i32(st_size)](linux_stat)")
         static interface stat extends Struct<stat> {
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("st_size")
             int st_size$get();
+            @NativeSetter("st_size")
             void st_size$set(int i);
         }
     }
 
-    @NativeHeader(declarations = "stat$INODE64=(u64:u8u64:$(osx_stat))i32")
+    @NativeHeader
     static interface MacOSXSystem {
         @NativeLocation(file="dummy", line=1, column=1)
+        @NativeFunction("(u64:u8u64:${osx_stat})i32")
         public abstract int stat$INODE64(Pointer<Byte> path, Pointer<stat> buf);
 
 
         @NativeStruct("[i32u16u16u64u32u32i64[i64i64][i64i64][i64i64][i64i64]" +
-                      "i64(get=st_size$get)(set=st_size$set)i64i32u32u32i32[2i64]](osx_stat)")
+                      "i64(st_size)i64i32u32u32i32[2i64]](osx_stat)")
         @NativeLocation(file="dummy", line=47, column=11)
         static interface stat extends Struct<stat> {
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("st_size")
             long st_size$get();
+            @NativeSetter("st_size")
             void st_size$set(long i);
         }
     }

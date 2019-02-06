@@ -60,3 +60,32 @@ union bitfields6 {
    char c1 : 4;
    int i : 20;
 };
+
+struct bitfields7 {
+   unsigned int x;
+   unsigned int a:15, pad:17;
+};
+
+struct Point {
+   int i;
+   int j;
+};
+
+struct bitfields8 {
+   struct Point p;
+   int x:12;
+   int y:2;
+};
+
+struct bitfields9 {
+    unsigned int x: 1;
+    int :7;
+    unsigned int y: 8;
+    int :16;
+    int z;
+};
+
+union bitfields10 {
+    unsigned int x: 1;
+    unsigned long long : 64; // manually widen type
+};

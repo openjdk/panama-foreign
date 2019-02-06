@@ -22,22 +22,22 @@
  */
 
 
+import java.foreign.annotations.NativeFunction;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeLocation;
 import java.foreign.memory.Pointer;
 
-@NativeHeader(path="/usr/include/stdio.h", declarations =
-        "printf=(u64:u8*)i32" +
-        "fprintf=(u64:vu64:u8*)i32" +
-        "fflush=(u64:v)i32"
-)
+@NativeHeader(path="/usr/include/stdio.h")
 public interface stdio {
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
+    @NativeFunction("(u64:u8*)i32")
     int printf(Pointer<Byte> fmt, Object... args);
 
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
+    @NativeFunction("(u64:vu64:u8*)i32")
     int fprintf(Pointer<Void> strm, Pointer<Byte> fmt, Object... args);
 
     @NativeLocation(file="/usr/include/stdio.h", line=47, column=11)
+    @NativeFunction("(u64:v)i32")
     int fflush(Pointer<Void> stream);
 }

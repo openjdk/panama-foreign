@@ -28,15 +28,13 @@
  * @run testng PointerTest
  */
 
+import java.foreign.annotations.*;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.foreign.Libraries;
 import java.foreign.Library;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
-import java.foreign.annotations.NativeHeader;
-import java.foreign.annotations.NativeLocation;
-import java.foreign.annotations.NativeStruct;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
@@ -65,57 +63,60 @@ public class PointerTest {
         ptrs = Libraries.bind(pointers.class, lib);
     }
 
-    @NativeHeader(declarations =
-            "get_strings=(u64:u64:u64:u8u64:i32)v" +
-            "get_strings2=(u64:i32)u64:u64:u8" +
-            "get_structs=(u64:u64:u64:$(mystruct)u64:i32)v" +
-            "get_structs2=(u64:i32)u64:u64:$(mystruct)" +
-            "get_stringsAsVoidPtr=(u64:i32)u64:v" +
-            "get_stringsAsOpaquePtr=(u64:i32)u64:i8" +
-            "get_negative=()u64:u8" +
-            "get_overflow_pointer=()u64:i32" + 
-            "get_1_byte_pointer=()u64:i8"
-    )
+    @NativeHeader
     static interface pointers {
         @NativeLocation(file="dummy", line=47, column=11)
+        @NativeFunction("(u64:u64:u64:u8u64:i32)v")
         void get_strings(Pointer<Pointer<Pointer<Byte>>> p, Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11)
+        @NativeFunction("(u64:i32)u64:u64:u8")
         Pointer<Pointer<Byte>> get_strings2(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=71, column=0)
+        @NativeFunction("(u64:i32)u64:v")
         Pointer<Void> get_stringsAsVoidPtr(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=75, column=0)
+        @NativeFunction("(u64:i32)u64:i8")
         Pointer<Void> get_stringsAsOpaquePtr(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11)
+        @NativeFunction("(u64:u64:u64:${mystruct}u64:i32)v")
         void get_structs(Pointer<Pointer<Pointer<MyStruct>>> p, Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11)
+        @NativeFunction("(u64:i32)u64:u64:${mystruct}")
         Pointer<Pointer<MyStruct>> get_structs2(Pointer<Integer> pcount);
 
+        @NativeFunction("()u64:u8")
         Pointer<?> get_negative();
 
+        @NativeFunction("()u64:i32")
         Pointer<Integer> get_overflow_pointer();
 
+        @NativeFunction("()u64:i8")
         Pointer<Byte> get_1_byte_pointer();
 
         Void notExist(Pointer<Integer> pcount);
 
         @NativeLocation(file="dummy", line=47, column=11)
         @NativeStruct("[" +
-                      "  [3i32](get=ia$get)(set=ia$set)" +
+                      "  [3i32](ia)" +
                       "  u32(pad)" +
-                      "  u64(get=str$get)(set=str$set):u8" +
+                      "  u64(str):u8" +
                       "](mystruct)")
         static interface MyStruct extends Struct<MyStruct> {
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("ia")
             Array<Integer> ia$get();
+            @NativeSetter("ia")
             void ia$set(Array<Integer> i);
 
             @NativeLocation(file="dummy", line=47, column=11)
+            @NativeGetter("str")
             Pointer<Byte> str$get();
+            @NativeSetter("str")
             void str$set(Pointer<Byte> str);
         }
     }
@@ -278,7 +279,8 @@ public class PointerTest {
     public void testMemoryRegionRange() {
         ByteBuffer bb = ByteBuffer.allocate(4);
         Pointer<Byte> ptr = Pointer.fromByteBuffer(bb);
-        ptr.cast(NativeTypes.VOID).cast(NativeTypes.UINT64);
+        Pointer<Long> ptr2 = ptr.cast(NativeTypes.VOID).cast(NativeTypes.UINT64);
+        long l = ptr2.get();
     }
 
     @Test
@@ -289,7 +291,8 @@ public class PointerTest {
 
     @Test(expectedExceptions = RuntimeException.class)
     public void testAutomaticLengthRegionNotBigEnough() {
-        ptrs.get_overflow_pointer(); // testing returned pointer init
+        Pointer<Integer> ptr = ptrs.get_overflow_pointer();
+        int i = ptr.get();
     }
 
     @Test

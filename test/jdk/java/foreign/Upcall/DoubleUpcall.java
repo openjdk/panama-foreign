@@ -27,6 +27,7 @@
  */
 
 import java.foreign.Scope;
+import java.foreign.annotations.NativeFunction;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
@@ -38,7 +39,7 @@ import java.foreign.memory.Callback;
 public class DoubleUpcall {
     private static final boolean DEBUG = false;
 
-    @NativeHeader(declarations = "double_upcall=(u64:(f64f64)f64f64f64)f64")
+    @NativeHeader
     public static interface upcall {
         @NativeCallback("(f64f64)f64")
         @FunctionalInterface
@@ -48,6 +49,7 @@ public class DoubleUpcall {
         }
 
         @NativeLocation(file="dummy", line=47, column=11)
+        @NativeFunction("(u64:(f64f64)f64f64f64)f64")
         public abstract double double_upcall(Callback<cb> cb, double d1, double d2);
     }
 

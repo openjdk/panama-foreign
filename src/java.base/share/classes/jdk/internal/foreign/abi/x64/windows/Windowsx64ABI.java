@@ -159,14 +159,14 @@ public class Windowsx64ABI implements SystemABI {
             ArgumentBinding binding = bindings.get(0);
 
             if (CallingSequenceBuilderImpl.isRegisterAggregate(binding.getMember().getType())) { // pass value
-                Util.copy(src, dstPtrFunc.apply(binding), structType.bytesSize());
+                Pointer.copy(src, dstPtrFunc.apply(binding), structType.bytesSize());
             } else { // pass a pointer
                 /*
                  * Leak memory for now
                  */
                 Scope scope = Scope.newNativeScope();
                 Pointer<?> copy = scope.allocate(structType);
-                Util.copy(src, copy, structType.bytesSize());
+                Pointer.copy(src, copy, structType.bytesSize());
 
                 Pointer<?> dst = dstPtrFunc.apply(binding);
                 Util.unsafeCast(dst, NativeTypes.UINT64).type().setter().invoke(dst, copy.addr());
@@ -195,11 +195,11 @@ public class Windowsx64ABI implements SystemABI {
 
             if (CallingSequenceBuilderImpl.isRegisterAggregate(type.layout())) {
                 Pointer<Long> dst = Util.unsafeCast(rtmp, NativeTypes.UINT64).offset(binding.getOffset() / NativeTypes.UINT64.bytesSize());
-                Util.copy(srcPtrFunc.apply(binding), dst, binding.getStorage().getSize());
+                Pointer.copy(srcPtrFunc.apply(binding), dst, binding.getStorage().getSize());
             } else {
                 Pointer<?> local = Util.unsafeCast(srcPtrFunc.apply(binding), type.pointer()).get();
                 // need defensive copy since Structs don't have value semantics on the Java side.
-                Util.copy(local, rtmp, type.bytesSize());
+                Pointer.copy(local, rtmp, type.bytesSize());
             }
 
             return rtmp.get();
