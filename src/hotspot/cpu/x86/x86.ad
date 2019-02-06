@@ -10020,6 +10020,7 @@ instruct vmuladdadd4S2I_reg(vecD dst, vecD src1, vecD src2) %{
     __ evpdpwssd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
+  ins_cost(10);
 %}
 
 instruct vmuladdadd8S4I_reg(vecX dst, vecX src1, vecX src2) %{
@@ -10031,6 +10032,7 @@ instruct vmuladdadd8S4I_reg(vecX dst, vecX src1, vecX src2) %{
     __ evpdpwssd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
+  ins_cost(10);
 %}
 
 instruct vmuladdadd16S8I_reg(vecY dst, vecY src1, vecY src2) %{
@@ -10042,6 +10044,7 @@ instruct vmuladdadd16S8I_reg(vecY dst, vecY src1, vecY src2) %{
     __ evpdpwssd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
+  ins_cost(10);
 %}
 
 instruct vmuladdadd32S16I_reg(vecZ dst, vecZ src1, vecZ src2) %{
@@ -10053,6 +10056,7 @@ instruct vmuladdadd32S16I_reg(vecZ dst, vecZ src1, vecZ src2) %{
     __ evpdpwssd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
+  ins_cost(10);
 %}
 
 // --------------------------------- PopCount --------------------------------------
