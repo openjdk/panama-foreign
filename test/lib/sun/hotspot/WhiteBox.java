@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -402,11 +402,6 @@ public class WhiteBox {
   // always fail.
   public native boolean supportsConcurrentGCPhaseControl();
 
-  // Returns an array of concurrent phase names provided by this
-  // collector.  These are the names recognized by
-  // requestConcurrentGCPhase().
-  public native String[] getConcurrentGCPhases();
-
   // Attempt to put the collector into the indicated concurrent phase,
   // and attempt to remain in that state until a new request is made.
   //
@@ -549,4 +544,7 @@ public class WhiteBox {
 
   // Protection Domain Table
   public native int protectionDomainRemovedCount();
+
+  // Number of loaded AOT libraries
+  public native int aotLibrariesCount();
 }
