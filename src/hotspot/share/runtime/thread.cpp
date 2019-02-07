@@ -69,6 +69,7 @@
 #include "runtime/flags/jvmFlagWriteableList.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
+#include "runtime/handles.inline.hpp"
 #include "runtime/handshake.hpp"
 #include "runtime/init.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
@@ -293,7 +294,6 @@ Thread::Thread() {
   // and ::Release()
   _ParkEvent   = ParkEvent::Allocate(this);
   _SleepEvent  = ParkEvent::Allocate(this);
-  _MutexEvent  = ParkEvent::Allocate(this);
   _MuxEvent    = ParkEvent::Allocate(this);
 
 #ifdef CHECK_UNHANDLED_OOPS
@@ -459,7 +459,6 @@ Thread::~Thread() {
   // We NULL out the fields for good hygiene.
   ParkEvent::Release(_ParkEvent); _ParkEvent   = NULL;
   ParkEvent::Release(_SleepEvent); _SleepEvent  = NULL;
-  ParkEvent::Release(_MutexEvent); _MutexEvent  = NULL;
   ParkEvent::Release(_MuxEvent); _MuxEvent    = NULL;
 
   delete handle_area();
@@ -2392,8 +2391,19 @@ void JavaThread::java_suspend() {
     }
   }
 
-  VM_ThreadSuspend vm_suspend;
-  VMThread::execute(&vm_suspend);
+  if (Thread::current() == this) {
+    // Safely self-suspend.
+    // If we don't do this explicitly it will implicitly happen
+    // before we transition back to Java, and on some other thread-state
+    // transition paths, but not as we exit a JVM TI SuspendThread call.
+    // As SuspendThread(current) must not return (until resumed) we must
+    // self-suspend here.
+    ThreadBlockInVM tbivm(this);
+    java_suspend_self();
+  } else {
+    VM_ThreadSuspend vm_suspend;
+    VMThread::execute(&vm_suspend);
+  }
 }
 
 // Part II of external suspension.

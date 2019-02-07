@@ -140,8 +140,8 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
 // notproduct flags are settable / visible only during development and are not declared in the PRODUCT version
 
 // A flag must be declared with one of the following types:
-// bool, int, uint, intx, uintx, size_t, ccstr, double, or uint64_t.
-// The type "ccstr" is an alias for "const char*" and is used
+// bool, int, uint, intx, uintx, size_t, ccstr, ccstrlist, double, or uint64_t.
+// The type "ccstr" and "ccstrlist" are an alias for "const char*" and is used
 // only in this file, because the macrology requires single-token type names.
 
 // Note: Diagnostic options not meant for VM tuning or for product modes.
@@ -1670,9 +1670,6 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
   develop(intx, DontYieldALotInterval,    10,                               \
           "Interval between which yields will be dropped (milliseconds)")   \
                                                                             \
-  develop(intx, ProfilerPCTickThreshold,    15,                             \
-          "Number of ticks in a PC buckets to be a hotspot")                \
-                                                                            \
   notproduct(intx, DeoptimizeALotInterval,     5,                           \
           "Number of exits until DeoptimizeALot kicks in")                  \
                                                                             \
@@ -1994,10 +1991,6 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
   product(bool, CICompilerCountPerCPU, false,                               \
           "1 compiler thread for log(N CPUs)")                              \
                                                                             \
-  develop(intx, CIFireOOMAt,    -1,                                         \
-          "Fire OutOfMemoryErrors throughout CI for testing the compiler "  \
-          "(non-negative value throws OOM after this many CI accesses "     \
-          "in each compile)")                                               \
   notproduct(intx, CICrashAt, -1,                                           \
           "id of compilation to trigger assert in compiler thread for "     \
           "the purpose of testing, e.g. generation of replay data")         \
