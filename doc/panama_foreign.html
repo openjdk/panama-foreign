@@ -187,7 +187,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 id="jextract-a-jar-file-for-python.h">jextract a Jar file for Python.h</h3>
 <div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ex">jextract</span> -l python2.7 \</a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">  -rpath /System/Library/Frameworks/Python.framework/Versions/2.7/lib \</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">  -L /System/Library/Frameworks/Python.framework/Versions/2.7/lib --record-library-path \</a>
 <a class="sourceLine" id="cb1-4" data-line-number="4">  --exclude-symbols .*_FromFormatV<span class="dt">\|</span>_.*<span class="dt">\|</span>PyOS_vsnprintf<span class="dt">\|</span>.*_VaParse.*<span class="dt">\|</span>.*_VaBuild.*<span class="dt">\|</span>PyBuffer_SizeFromFormat<span class="dt">\|</span>vasprintf<span class="dt">\|</span>vfprintf<span class="dt">\|</span>vprintf<span class="dt">\|</span>vsprintf \</a>
 <a class="sourceLine" id="cb1-5" data-line-number="5">  -t org.python \</a>
 <a class="sourceLine" id="cb1-6" data-line-number="6">  /usr/include/python2.7/Python.h \</a>
@@ -241,7 +241,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 id="jextract-a-jar-file-for-python.h-1">jextract a Jar file for Python.h</h3>
 <div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb7-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb7-2" data-line-number="2"><span class="ex">jextract</span> -l python2.7 \</a>
-<a class="sourceLine" id="cb7-3" data-line-number="3">  -rpath /usr/lib/python2.7/config-x86_64-linux-gnu \</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  -L /usr/lib/python2.7/config-x86_64-linux-gnu --record-library-path \</a>
 <a class="sourceLine" id="cb7-4" data-line-number="4">  --exclude-symbols .*_FromFormatV<span class="dt">\|</span>_.*<span class="dt">\|</span>PyOS_vsnprintf<span class="dt">\|</span>.*_VaParse.*<span class="dt">\|</span>.*_VaBuild.*<span class="dt">\|</span>PyBuffer_SizeFromFormat<span class="dt">\|</span>vasprintf<span class="dt">\|</span>vfprintf<span class="dt">\|</span>vprintf<span class="dt">\|</span>vsprintf \</a>
 <a class="sourceLine" id="cb7-5" data-line-number="5">  -t org.python \</a>
 <a class="sourceLine" id="cb7-6" data-line-number="6">  /usr/include/python2.7/Python.h \</a>
@@ -251,7 +251,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2 id="embedding-python-interpreter-in-your-java-program-windows">Embedding Python interpreter in your Java program (Windows)</h2>
 <h3 id="jextract-a-jar-file-for-python.h-2">jextract a Jar file for Python.h</h3>
 <p>Where python 2.7 is installed in the <code>C:\Python27</code> directory:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode powershell"><code class="sourceCode powershell"><a class="sourceLine" id="cb8-1" data-line-number="1">jextract -L <span class="st">&quot;C:\Windows\System32&quot;</span> -l python27 -o python.<span class="fu">jar</span> -t <span class="st">&quot;org.python&quot;</span> --infer-rpath C:\Python27\include\Python.<span class="fu">h</span></a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode powershell"><code class="sourceCode powershell"><a class="sourceLine" id="cb8-1" data-line-number="1">jextract -L <span class="st">&quot;C:\Windows\System32&quot;</span> -l python27 -o python.<span class="fu">jar</span> -t <span class="st">&quot;org.python&quot;</span> --record-library-path C:\Python27\include\Python.<span class="fu">h</span></a></code></pre></div>
 <h3 id="compiling-and-running-python-java-example-1">Compiling and Running Python Java example</h3>
 <div class="sourceCode" id="cb9"><pre class="sourceCode powershell"><code class="sourceCode powershell"><a class="sourceLine" id="cb9-1" data-line-number="1">javac -cp python.<span class="fu">jar</span> PythonMain.<span class="fu">java</span></a>
 <a class="sourceLine" id="cb9-2" data-line-number="2">java -cp <span class="st">&quot;python.jar;.&quot;</span> PythonMain</a></code></pre></div>
@@ -275,14 +275,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb12"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb12-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb12-2" data-line-number="2"><span class="ex">jextract</span> -C <span class="st">&quot;-D FORCE_OPENBLAS_COMPLEX_STRUCT&quot;</span> \</a>
 <a class="sourceLine" id="cb12-3" data-line-number="3">  -L /usr/local/opt/openblas/lib -I /usr/local/opt/openblas \</a>
-<a class="sourceLine" id="cb12-4" data-line-number="4">  -l openblas -t blas -infer-rpath /usr/local/opt/openblas/include/cblas.h \</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">  -l openblas -t blas --record-library-path /usr/local/opt/openblas/include/cblas.h \</a>
 <a class="sourceLine" id="cb12-5" data-line-number="5">  -o cblas.jar</a></code></pre></div>
 <p>The FORCE_OPENBLAS_COMPLEX_STRUCT define is needed because jextract does not yet handle C99 <code>_Complex</code> types. The rest of the options are standard ones.</p>
 <h3 id="jextracting-cblas.h-ubuntu-16.04">jextracting cblas.h (Ubuntu 16.04)</h3>
 <p>The following command can be used to extract cblas.h on Ubuntu</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb13-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb13-2" data-line-number="2"><span class="ex">jextract</span> -L /usr/lib/atlas-base -I /usr/include/atlas/ \</a>
-<a class="sourceLine" id="cb13-3" data-line-number="3">   -l cblas -t blas -infer-rpath \</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">   -l cblas -t blas --record-library-path \</a>
 <a class="sourceLine" id="cb13-4" data-line-number="4">   /usr/include/atlas/cblas.h -o cblas.jar</a></code></pre></div>
 <h3 id="java-sample-code-that-uses-cblas-library">Java sample code that uses cblas library</h3>
 <div class="sourceCode" id="cb14"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb14-1" data-line-number="1"></a>
@@ -366,7 +366,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>The following command can be used to extract the LAPACK header:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb16-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb16-2" data-line-number="2"><span class="ex">jextract</span> -L /usr/lib/atlas-base/atlas -I /usr/include/atlas/ \</a>
-<a class="sourceLine" id="cb16-3" data-line-number="3">   -l lapack -t lapack -infer-rpath /usr/include/atlas/clapack.h -o clapack.jar</a></code></pre></div>
+<a class="sourceLine" id="cb16-3" data-line-number="3">   -l lapack -t lapack --record-library-path /usr/include/atlas/clapack.h -o clapack.jar</a></code></pre></div>
 <h3 id="java-sample-code-that-uses-lapack-library">Java sample code that uses LAPACK library</h3>
 <div class="sourceCode" id="cb17"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
 <a class="sourceLine" id="cb17-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.Scope;</span></a>
@@ -435,7 +435,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb19"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb19-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb19-2" data-line-number="2"><span class="ex">jextract</span> --include-symbols LAPACKE_dgels<span class="dt">\|</span>LAPACK_COL_MAJOR \</a>
 <a class="sourceLine" id="cb19-3" data-line-number="3">  -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \</a>
-<a class="sourceLine" id="cb19-4" data-line-number="4">  -l lapacke -t lapack -infer-rpath /usr/local/opt/lapack/include/lapacke.h -o clapack.jar</a></code></pre></div>
+<a class="sourceLine" id="cb19-4" data-line-number="4">  -l lapacke -t lapack --record-library-path /usr/local/opt/lapack/include/lapacke.h -o clapack.jar</a></code></pre></div>
 <h3 id="java-sample-code-that-uses-lapack-library-1">Java sample code that uses LAPACK library</h3>
 <div class="sourceCode" id="cb20"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb20-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb20-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
@@ -499,7 +499,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb21-4" data-line-number="4"><span class="ex">java</span> -cp clapack.jar:. TestLapack</a></code></pre></div>
 <h2 id="using-libproc-library-to-list-processes-from-java-mac-os">Using libproc library to list processes from Java (Mac OS)</h2>
 <h3 id="jextract-a-jar-file-for-libproc.h">jextract a jar file for libproc.h</h3>
-<p>jextract -t org.unix -lproc -rpath /usr/lib -o libproc.jar /usr/include/libproc.h</p>
+<p>jextract -t org.unix -lproc -L /usr/lib --record-library-path -o libproc.jar /usr/include/libproc.h</p>
 <h3 id="java-program-that-uses-libproc-to-list-processes">Java program that uses libproc to list processes</h3>
 <div class="sourceCode" id="cb22"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb22-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb22-2" data-line-number="2"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
@@ -542,7 +542,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 id="note-this-sample-fails-because-of-too-big-utf-8-string-in-nativeheader-annotation">Note: This sample fails because of too big UTF-8 String in NativeHeader annotation</h3>
 <h3 id="jextract-a-jar-file-for-readline.h">jextract a jar file for readline.h</h3>
 <div class="sourceCode" id="cb24"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb24-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb24-2" data-line-number="2"><span class="ex">jextract</span> -l readline -rpath /usr/local/opt/readline/lib/ \</a>
+<a class="sourceLine" id="cb24-2" data-line-number="2"><span class="ex">jextract</span> -l readline -L /usr/local/opt/readline/lib/ --record-library-path \</a>
 <a class="sourceLine" id="cb24-3" data-line-number="3">    -t org.unix \</a>
 <a class="sourceLine" id="cb24-4" data-line-number="4">    /usr/include/readline/readline.h \</a>
 <a class="sourceLine" id="cb24-5" data-line-number="5">    --exclude-symbol readline_echoing_p -o readline.jar</a></code></pre></div>
@@ -612,7 +612,7 @@ java -cp readline.jar:. Readline
 <h3 id="jextracting-opengl-ubuntu-16.04">jextracting OpenGL (Ubuntu 16.04)</h3>
 <p>To extract the opengl libraries the following command suffices:</p>
 <div class="sourceCode" id="cb31"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb31-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb31-2" data-line-number="2"><span class="ex">jextract</span> -L /usr/lib/x86_64-linux-gnu  -l glut -l GLU -l GL --infer-rpath -t opengl -o opengl.jar /usr/include/GL/glut.h</a></code></pre></div>
+<a class="sourceLine" id="cb31-2" data-line-number="2"><span class="ex">jextract</span> -L /usr/lib/x86_64-linux-gnu  -l glut -l GLU -l GL --record-library-path -t opengl -o opengl.jar /usr/include/GL/glut.h</a></code></pre></div>
 <p>Since glut depends on the other libraries (GLU and GL), it is not necessary to give additional headers to jextract.</p>
 <h3 id="java-sample-code-that-uses-the-opengl-library">Java sample code that uses the OpenGL library</h3>
 <div class="sourceCode" id="cb32"><pre class="sourceCode java"><code class="sourceCode java"><a class="sourceLine" id="cb32-1" data-line-number="1"><span class="kw">import</span><span class="im"> java.foreign.NativeTypes;</span></a>
@@ -690,7 +690,7 @@ java -cp readline.jar:. Readline
 <h3 id="jextracting-opengl">jextracting OpenGL</h3>
 <p>Navigate to the root directory of the extracted zip and run the following commands:</p>
 <div class="sourceCode" id="cb34"><pre class="sourceCode powershell"><code class="sourceCode powershell"><a class="sourceLine" id="cb34-1" data-line-number="1"><span class="va">$inc</span> = <span class="st">&quot;C:\Program Files (x86)\Windows Kits\10\Include\10.0.17134.0&quot;</span></a>
-<a class="sourceLine" id="cb34-2" data-line-number="2">jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.<span class="fu">jar</span> -m <span class="st">&quot;$inc\um\gl=opengl&quot;</span> --infer-rpath .\freeglut\include\<span class="fu">GL</span>\glut.<span class="fu">h</span></a></code></pre></div>
+<a class="sourceLine" id="cb34-2" data-line-number="2">jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.<span class="fu">jar</span> -m <span class="st">&quot;$inc\um\gl=opengl&quot;</span> --record-library-path .\freeglut\include\<span class="fu">GL</span>\glut.<span class="fu">h</span></a></code></pre></div>
 <p>The directory that is assigned to <code>$inc</code> is an example, and is system dependent. Make sure that the build number at the end of the path (in this case <code>10.0.17134.0</code>) is the latest one found in the parent folder (<code>C:\Program Files (x86)\Windows Kits\10\Include\</code>).</p>
 <p>There are a bunch of warnings generated, but as long as the jar file is generated in the working directory the extraction was successful.</p>
 <h3 id="java-sample-code-that-uses-the-opengl-library-1">Java sample code that uses the OpenGL library</h3>
@@ -713,7 +713,7 @@ java -cp readline.jar:. Readline
 <p>The following command can be used to extract c_api.h.</p>
 <div class="sourceCode" id="cb38"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb38-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb38-2" data-line-number="2"><span class="ex">jextract</span> -C -x -C c++  \</a>
-<a class="sourceLine" id="cb38-3" data-line-number="3">        -L /usr/local/lib -l tensorflow -infer-rpath \</a>
+<a class="sourceLine" id="cb38-3" data-line-number="3">        -L /usr/local/lib -l tensorflow --record-library-path \</a>
 <a class="sourceLine" id="cb38-4" data-line-number="4">        -o tf.jar -t org.tensorflow.panama \</a>
 <a class="sourceLine" id="cb38-5" data-line-number="5">        /usr/local/include/tensorflow/c/c_api.h</a></code></pre></div>
 <p>The caveat to extract tensorflow C API is that it declare function prototype without argument in C++ style, for example, TF_Version(), which is considered incomplete C function prototype instead of C style as in TF_Version(void). An incomplete function prototype will become vararg funciton. To avoid that, we need to pass clang '-x c++' options to jextract with '-C -x -C c++'</p>
@@ -862,7 +862,7 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb41-6" data-line-number="6">TF_NewImportGraphDefOptions() -&gt; TF_NewImportGraphDefOptions(<span class="dt">void</span>)</a>
 <a class="sourceLine" id="cb41-7" data-line-number="7">TF_GetAllOpList() -&gt; TF_GetAllOpList(<span class="dt">void</span>)</a></code></pre></div>
 <p>Once you've done this you can use the following jextract command from the libtensorflow root directory:</p>
-<div class="sourceCode" id="cb42"><pre class="sourceCode powershell"><code class="sourceCode powershell"><a class="sourceLine" id="cb42-1" data-line-number="1">jextract -L .\lib -l tensorflow -o tf.<span class="fu">jar</span> -t <span class="st">&quot;org.tensorflow.panama&quot;</span> --infer-rpath .\include\tensorflow\c\c_api.<span class="fu">h</span></a></code></pre></div>
+<div class="sourceCode" id="cb42"><pre class="sourceCode powershell"><code class="sourceCode powershell"><a class="sourceLine" id="cb42-1" data-line-number="1">jextract -L .\lib -l tensorflow -o tf.<span class="fu">jar</span> -t <span class="st">&quot;org.tensorflow.panama&quot;</span> --record-library-path .\include\tensorflow\c\c_api.<span class="fu">h</span></a></code></pre></div>
 <h3 id="java-sample-code-that-uses-tensorflow-library-1">Java sample code that uses tensorflow library</h3>
 <p>This is the same as for the Mac OS section.</p>
 <h3 id="compiling-and-running-the-above-tensorflow-sample-1">Compiling and running the above TensorFlow sample</h3>
