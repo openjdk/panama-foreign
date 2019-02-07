@@ -4707,9 +4707,6 @@ int os::fsync(int fd) {
 static int nonSeekAvailable(int, long *);
 static int stdinAvailable(int, long *);
 
-#define S_ISCHR(mode)   (((mode) & _S_IFCHR) == _S_IFCHR)
-#define S_ISFIFO(mode)  (((mode) & _S_IFIFO) == _S_IFIFO)
-
 // This code is a copy of JDK's sysAvailable
 // from src/windows/hpi/src/sys_api_md.c
 
@@ -5278,6 +5275,55 @@ void Parker::park(bool isAbsolute, jlong time) {
 void Parker::unpark() {
   guarantee(_ParkEvent != NULL, "invariant");
   SetEvent(_ParkEvent);
+}
+
+// Platform Monitor implementation
+
+os::PlatformMonitor::PlatformMonitor() {
+  InitializeConditionVariable(&_cond);
+  InitializeCriticalSection(&_mutex);
+}
+
+os::PlatformMonitor::~PlatformMonitor() {
+  DeleteCriticalSection(&_mutex);
+}
+
+void os::PlatformMonitor::lock() {
+  EnterCriticalSection(&_mutex);
+}
+
+void os::PlatformMonitor::unlock() {
+  LeaveCriticalSection(&_mutex);
+}
+
+bool os::PlatformMonitor::try_lock() {
+  return TryEnterCriticalSection(&_mutex);
+}
+
+// Must already be locked
+int os::PlatformMonitor::wait(jlong millis) {
+  assert(millis >= 0, "negative timeout");
+  int ret = OS_TIMEOUT;
+  int status = SleepConditionVariableCS(&_cond, &_mutex,
+                                        millis == 0 ? INFINITE : millis);
+  if (status != 0) {
+    ret = OS_OK;
+  }
+  #ifndef PRODUCT
+  else {
+    DWORD err = GetLastError();
+    assert(err == ERROR_TIMEOUT, "SleepConditionVariableCS: %ld:", err);
+  }
+  #endif
+  return ret;
+}
+
+void os::PlatformMonitor::notify() {
+  WakeConditionVariable(&_cond);
+}
+
+void os::PlatformMonitor::notify_all() {
+  WakeAllConditionVariable(&_cond);
 }
 
 // Run the specified command in a separate process. Return its exit value,
