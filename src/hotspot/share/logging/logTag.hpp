@@ -133,6 +133,7 @@
   LOG_TAG(reloc) \
   LOG_TAG(remset) \
   LOG_TAG(parser) \
+  LOG_TAG(ptrqueue) \
   LOG_TAG(purge) \
   LOG_TAG(resolve) \
   LOG_TAG(safepoint) \
@@ -168,6 +169,7 @@
   LOG_TAG(mirror) \
   LOG_TAG(verification) \
   LOG_TAG(verify) \
+  LOG_TAG(vmmonitor) \
   LOG_TAG(vmoperation) \
   LOG_TAG(vmthread) \
   LOG_TAG(vtables) \

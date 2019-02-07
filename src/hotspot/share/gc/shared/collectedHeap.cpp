@@ -51,10 +51,6 @@
 
 class ClassLoaderData;
 
-#ifdef ASSERT
-int CollectedHeap::_fire_out_of_memory_count = 0;
-#endif
-
 size_t CollectedHeap::_filler_array_max_size = 0;
 
 template <>
@@ -163,11 +159,6 @@ void CollectedHeap::trace_heap_after_gc(const GCTracer* gc_tracer) {
 // feature.
 bool CollectedHeap::supports_concurrent_phase_control() const {
   return false;
-}
-
-const char* const* CollectedHeap::concurrent_phases() const {
-  static const char* const result[] = { NULL };
-  return result;
 }
 
 bool CollectedHeap::request_concurrent_phase(const char* phase) {
