@@ -26,6 +26,7 @@
 #include "jni.h"
 #include "jvm.h"
 #include "classfile/classFileStream.hpp"
+#include "classfile/javaClasses.inline.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "jfr/jfrEvents.hpp"
 #include "memory/allocation.inline.hpp"
