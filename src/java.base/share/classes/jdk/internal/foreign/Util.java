@@ -237,47 +237,67 @@ public final class Util {
             return LayoutType.ofFloat(layout);
         } else if (carrier == double.class) {
             return LayoutType.ofDouble(layout);
-        } else if (carrier == Pointer.class) { //pointers
+        } else if (carrier == Pointer.class) {
             return NativeTypes.VOID.pointer();
         } else if (Pointer.class.isAssignableFrom(erasure(carrier))) {
-            if (carrier instanceof ParameterizedType) {
-                ParameterizedType pt = (ParameterizedType)carrier;
-                Type arg = pt.getActualTypeArguments()[0];
-                if (arg instanceof WildcardType || arg == Void.class) {
-                    return NativeTypes.VOID.pointer();
-                }
-                Address addr = (Address)layout;
-                return addr.layout().<LayoutType<?>>map(l -> makeType(arg, l).pointer())
-                        .orElse(NativeTypes.VOID.pointer());
-            } else {
+            Type targ = extractTypeArgument(carrier);
+            Address addr = (Address)layout;
+            if (targ == null || addr.layout().isEmpty()) {
                 return NativeTypes.VOID.pointer();
+            } else {
+                return makeType(targ, addr.layout().get()).pointer();
             }
         } else if (Array.class.isAssignableFrom(erasure(carrier))) {
-            if (carrier instanceof ParameterizedType) {
-                ParameterizedType pt = (ParameterizedType)carrier;
-                Type arg = pt.getActualTypeArguments()[0];
-                if (arg instanceof WildcardType) {
-                    return NativeTypes.VOID.array();
-                }
-                return makeType(arg, ((Sequence)layout).element()).array(((Sequence)layout).elementsSize());
-            } else {
+            Type targ = extractTypeArgument(carrier);
+            Sequence seq = (Sequence)layout;
+            if (targ == null) {
                 return NativeTypes.VOID.array();
+            } else {
+                return makeType(targ, seq.element()).array(seq.elementsSize());
             }
         } else if (isCStruct(erasure(carrier))) {
             return LayoutType.ofStruct((Class) carrier);
         } else if (Callback.class.isAssignableFrom(erasure(carrier))) {
-            if (carrier instanceof ParameterizedType) {
-                ParameterizedType pt = (ParameterizedType) carrier;
-                Type arg = pt.getActualTypeArguments()[0];
-                Class<?> cb = erasure(arg);
-                if (isCallback(cb)) {
-                    return LayoutType.ofFunction((Address) layout, (Class) cb);
-                }
+            Type targ = extractTypeArgument(carrier);
+            if (targ == null) {
+                throw new IllegalStateException("Invalid callback carrier: " + carrier.getTypeName());
             }
-            //Error: missing type info!
-            throw new IllegalStateException("Invalid callback carrier: " + carrier.getTypeName());
+            return LayoutType.ofFunction((Address) layout, erasure(targ));
         } else {
             throw new IllegalStateException("Unknown carrier: " + carrier.getTypeName());
+        }
+    }
+
+    static Type extractTypeArgument(Type t) {
+        if (t instanceof ParameterizedType) {
+            Type arg = ((ParameterizedType)t).getActualTypeArguments()[0];
+            if (arg == Void.class) {
+                return null;
+            } else if (arg instanceof WildcardType) {
+                Type[] lo =  ((WildcardType) arg).getLowerBounds();
+                Type[] hi =  ((WildcardType) arg).getUpperBounds();
+                if (lo.length == 1) {
+                    // Lower bound is zero-elem array if this is '?' or '? extends' wildcards.
+                    // Otherwise it's one element array.
+                    return lo[0];
+                } else if (hi.length == 2 && hi[0] == Object.class) {
+                    // Upper bound is always guaranteed to have at least one element, but
+                    // the first bound can be j.l.Object if an interface bound is used. In that case,
+                    // skip Object, and return the interface bound.
+                    return hi[1];
+                } else if (hi.length == 1) {
+                    // Return either the non-Object class bound, or null.
+                    return hi[0] == Object.class ?
+                            null : hi[0];
+                } else {
+                    //unsupported combination of upper/lower bounds.
+                    throw new IllegalStateException("Unsupported wildcard type-argument: " + arg.getTypeName());
+                }
+            } else {
+                return arg;
+            }
+        } else {
+            return null;
         }
     }
 
