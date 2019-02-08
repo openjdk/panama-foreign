@@ -40,8 +40,15 @@
 #include "oops/arrayOop.inline.hpp"
 #include "vmreg_x86.inline.hpp"
 
+#ifdef _WIN64
+constexpr int first_preserved_idx = 6; // 6 volatile registers don't need saving
+constexpr int num_evex_regs = 32;
+constexpr int num_no_evex_regs = 16;
+constexpr int max_preserved_regs = num_evex_regs - first_preserved_idx; // conservative for evex
+#endif // _WIN64
+
 struct upcall_context {
-  struct {
+  struct Preserved {
     uintptr_t rbx;
 #ifdef _LP64
     uintptr_t r12;
@@ -52,12 +59,51 @@ struct upcall_context {
 #ifdef _WIN64
     uintptr_t rsi;
     uintptr_t rdi;
- #endif
+    struct XMM_save {
+        uintptr_t : 64;
+        uintptr_t : 64;
+    } xmm_arr[max_preserved_regs];
+#endif
 #endif
     JavaFrameAnchor jfa;
     uintptr_t thread;
   } preserved;
 };
+
+// XMM save/restore helpers for Windows
+#ifdef _WIN64
+const int num_xmm_regs = VM_Version::supports_evex() ? num_evex_regs : num_no_evex_regs;
+const int num_xmm_regs_preserved = num_xmm_regs - first_preserved_idx;
+
+Address xmm_save_addr(int i, int upcall_context_offset) {
+  return Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.xmm_arr)  + (i * sizeof(upcall_context::Preserved::XMM_save)));
+}
+
+void save_xmm_registers(MacroAssembler* _masm, int upcall_context_offset) {
+  if (VM_Version::supports_evex()) {
+    for (int i = 0; i < num_xmm_regs_preserved; i++) {
+      __ vextractf32x4(xmm_save_addr(i, upcall_context_offset), as_XMMRegister(i + first_preserved_idx), 0);
+    }
+  } else {
+    for (int i = 0; i < num_xmm_regs_preserved; i++) {
+      __ movdqu(xmm_save_addr(i, upcall_context_offset), as_XMMRegister(i + first_preserved_idx));
+    }
+  }
+}
+
+void restore_xmm_registers(MacroAssembler* _masm, int upcall_context_offset) {
+  if (VM_Version::supports_evex()) {
+    for (int i = 0; i < num_xmm_regs_preserved; i++) {
+      XMMRegister reg = as_XMMRegister(i + first_preserved_idx);
+      __ vinsertf32x4(reg, reg, xmm_save_addr(i, upcall_context_offset), 0);
+    }
+  } else {
+    for (int i = 0; i < num_xmm_regs_preserved; i++) {
+      __ movdqu(as_XMMRegister(i + first_preserved_idx), xmm_save_addr(i, upcall_context_offset));
+    }
+  }
+}
+#endif // _WIN64
 
 void save_upcall_context(MacroAssembler* _masm, int upcall_context_offset) {
   __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rbx)), rbx);
@@ -66,46 +112,30 @@ void save_upcall_context(MacroAssembler* _masm, int upcall_context_offset) {
   __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r13)), r13);
   __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r14)), r14);
   __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r15)), r15);
-#ifndef _WIN64
+#ifdef _WIN64
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rsi)), rsi);
+  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rdi)), rdi);
+
+  save_xmm_registers(_masm, upcall_context_offset);
+#endif // _WIN64
   const Address mxcsr_save(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.mxcsr));
-  const int MXCSR_MASK = 0xFFC0;  // Mask out any pending exceptions
+  const int MXCSR_MASK = 0xFFC0; // Mask out any pending exceptions
 
   Label skip_ldmx;
   __ stmxcsr(mxcsr_save);
   __ movl(rax, mxcsr_save);
-  __ andl(rax, MXCSR_MASK);    // Only check control and mask bits
+  __ andl(rax, MXCSR_MASK); // Only check control and mask bits
   ExternalAddress mxcsr_std(StubRoutines::addr_mxcsr_std());
   __ cmp32(rax, mxcsr_std);
   __ jcc(Assembler::equal, skip_ldmx);
   __ ldmxcsr(mxcsr_std);
   __ bind(skip_ldmx);
-#else // _WIN64
-#error "NYI WIN64"
-  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rsi)), rsi);
-  __ movptr(Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rdi)), rdi);
-//    int last_reg = (UseAVX > 2 ? 31 : 15);
-//
-//    if (VM_Version::supports_evex()) {
-//      for (int i = xmm_save_first; i <= last_reg; i++) {
-//        __ vextractf32x4(xmm_save(i), as_XMMRegister(i), 0);
-//      }
-//    } else {
-//      for (int i = xmm_save_first; i <= last_reg; i++) {
-//        __ movdqu(xmm_save(i), as_XMMRegister(i));
-//      }
-//    }
-//
-//    const Address rdi_save(rbp, rdi_off * wordSize);
-//    const Address rsi_save(rbp, rsi_off * wordSize);
-//
-#endif // _WIN64
+
+  // TODO FpCsr on x87?
+
 #else // _LP64
 #error "NYI 32-bit"
 #endif // _LP64
-
-#ifdef _WIN64
-#else
-#endif // _WIN64
 }
 
 static void restore_upcall_context(MacroAssembler* _masm, int upcall_context_offset) {
@@ -115,26 +145,19 @@ static void restore_upcall_context(MacroAssembler* _masm, int upcall_context_off
   __ movptr(r13, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r13)));
   __ movptr(r14, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r14)));
   __ movptr(r15, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.r15)));
-#ifndef _WIN64
-  const Address mxcsr_save(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.mxcsr));
-  __ ldmxcsr(mxcsr_save);
-#else // _WIN64
-#error "NYI WIN64"
+#ifdef _WIN64
   __ movptr(rsi, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rsi)));
   __ movptr(rdi, Address(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.rdi)));
-    // emit the restores for xmm regs
-//    if (VM_Version::supports_evex()) {
-//      for (int i = xmm_save_first; i <= last_reg; i++) {
-//        __ vinsertf32x4(as_XMMRegister(i), as_XMMRegister(i), xmm_save(i), 0);
-//      }
-//    } else {
-//      for (int i = xmm_save_first; i <= last_reg; i++) {
-//        __ movdqu(as_XMMRegister(i), xmm_save(i));
-//      }
-//    }
-//    __ movptr(rdi, rdi_save);
-//    __ movptr(rsi, rsi_save);
+
+  restore_xmm_registers(_masm, upcall_context_offset);
 #endif // _WIN64
+  const Address mxcsr_save(rsp, upcall_context_offset + offsetof(struct upcall_context, preserved.mxcsr));
+  __ ldmxcsr(mxcsr_save);
+
+  // TODO FpCsr on x87?
+
+#else // _LP64
+#error "NYI 32-bit"
 #endif // _LP64
 }
 
@@ -405,7 +428,7 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
 
   int upcall_context_offset = frame_size;
 
-  frame_size = align_up(frame_size + sizeof(struct upcall_context), StackAlignmentInBytes);
+  frame_size = align_up(frame_size + (int) sizeof(struct upcall_context), StackAlignmentInBytes);
 
   //////////////////////////////////////////////////////////////////////////////
 
