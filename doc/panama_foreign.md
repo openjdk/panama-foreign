@@ -259,6 +259,35 @@ java -cp sqlite3.jar:. SqlMain
 
 ```
 
+## Using sqlite3 library in your Java program (Ubuntu 16.04)
+
+### Installing sqlite3
+
+On Ubuntu (16.04) to install sqlite3 headers and libraries the following command is required:
+
+```sh
+sudo apt-get install libsqlite3-dev
+```
+
+This should install the sqlite3 header (under `/usr/include`), as well as the sqlite3 shared library (under `/usr/lib/x86_64-linux-gnu`).
+
+### jextract a jar file for sqlite3.h
+
+To extract sqlite, run the following command:
+
+```sh
+jextract  /usr/include/sqlite3.h -t org.sqlite -lsqlite3 \
+          -L /usr/lib/x86_64-linux-gnu --record-library-path \
+           --exclude-symbols sqlite3_vmprintf \
+           --exclude-symbols sqlite3_vsnprintf \
+           --exclude-symbols sqlite3_data_directory \
+           -o sqlite3.jar
+```
+
+### Compiling and Running sqlite Java example
+
+Please refer to the Mac OS instructions; once the library as been extracted (as per the instructions above), the sample program shown in that section should work on Ubuntu as well.
+
 ## Using BLAS library
 
 BLAS is a popular library that allows fast matrix and vector computation: [http://www.netlib.org/blas/](http://www.netlib.org/blas/).
