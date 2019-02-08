@@ -45,11 +45,13 @@ import java.lang.invoke.WrongMethodTypeException;
 import java.util.Collection;
 import java.util.List;
 
+import static sun.security.action.GetPropertyAction.privilegedGetProperty;
+
 /**
  * ABI implementation based on Windows ABI AMD64 supplement v.0.99.6
  */
 public class Windowsx64ABI implements SystemABI {
-
+    private static final String fastPath = privilegedGetProperty("jdk.internal.foreign.NativeInvoker.FASTPATH");
     private static Windowsx64ABI instance;
 
     public static Windowsx64ABI getInstance() {
@@ -120,7 +122,19 @@ public class Windowsx64ABI implements SystemABI {
             return VarargsInvokerImpl.make(symbol, nmt);
         }
 
-        return UniversalNativeInvokerImpl.make(symbol, arrangeCall(nmt), nmt).getBoundMethodHandle();
+        CallingSequence callingSequence = arrangeCall(nmt);
+
+        if (fastPath == null || !fastPath.equals("none")) {
+            if (LinkToNativeSignatureShuffler.acceptDowncall(nmt, callingSequence)
+                    && nmt.function().argumentLayouts().stream().allMatch(CallingSequenceBuilderImpl::isRegisterAggregate)) {
+                // TODO allow struct-by-pointer passing (with copy!)
+                return LinkToNativeInvoker.make(symbol, callingSequence, nmt);
+            } else if (fastPath != null && fastPath.equals("direct")) {
+                throw new IllegalStateException(
+                        String.format("No fast path for: %s", symbol.getName()));
+            }
+        }
+        return UniversalNativeInvokerImpl.make(symbol, callingSequence, nmt).getBoundMethodHandle();
     }
 
     @Override
@@ -130,7 +144,19 @@ public class Windowsx64ABI implements SystemABI {
             throw new WrongMethodTypeException("Native method type has wrong type: " + nmt.methodType());
         }
 
-        return UpcallStubs.registerUpcallStub(new UniversalUpcallHandlerImpl(target, arrangeCall(nmt), nmt));
+        CallingSequence callingSequence = arrangeCall(nmt);
+
+        if (fastPath == null || !fastPath.equals("none")) {
+            if (LinkToNativeSignatureShuffler.acceptUpcall(nmt, callingSequence)
+                    && nmt.function().argumentLayouts().stream().allMatch(CallingSequenceBuilderImpl::isRegisterAggregate)) {
+                // TODO allow struct-by-pointer passing
+                return UpcallStubs.registerUpcallStub(new LinkToNativeUpcallHandler(target, callingSequence, nmt));
+            } else if (fastPath != null && fastPath.equals("direct")) {
+                throw new IllegalStateException(
+                        String.format("No fast path for function type %s", nmt.function()));
+            }
+        }
+        return UpcallStubs.registerUpcallStub(new UniversalUpcallHandlerImpl(target, callingSequence, nmt));
     }
 
     @Override
