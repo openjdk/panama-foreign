@@ -1799,6 +1799,10 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                                 invokerMethodTypes, callSiteMethodTypes);
             }
 
+            @Override
+            public void ensureCustomized(MethodHandle mh) {
+                mh.customize();
+            }
         });
     }
 

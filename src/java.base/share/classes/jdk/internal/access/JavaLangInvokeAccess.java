@@ -25,6 +25,7 @@
 
 package jdk.internal.access;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Map;
 
@@ -106,4 +107,5 @@ public interface JavaLangInvokeAccess {
             MethodType[] invokerMethodTypes,
             MethodType[] callSiteMethodTypes);
 
+    void ensureCustomized(MethodHandle mh);
 }

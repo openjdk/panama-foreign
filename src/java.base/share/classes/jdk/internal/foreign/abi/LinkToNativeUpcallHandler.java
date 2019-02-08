@@ -23,6 +23,8 @@
 
 package jdk.internal.foreign.abi;
 
+import jdk.internal.access.JavaLangInvokeAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.vm.annotation.Stable;
@@ -40,6 +42,7 @@ import java.lang.invoke.MethodType;
  * possible return types for the entry point are either long, double or void.
  */
 public class LinkToNativeUpcallHandler implements Library.Symbol {
+    private static final JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
     @Stable
     private final MethodHandle mh;
     private final Pointer<?> entryPoint;
@@ -50,6 +53,7 @@ public class LinkToNativeUpcallHandler implements Library.Symbol {
             LinkToNativeSignatureShuffler shuffler =
                     LinkToNativeSignatureShuffler.nativeToJavaShuffler(callingSequence, nmt);
             this.mh = shuffler.adapt(target);
+            JLI.ensureCustomized(this.mh); // FIXME: consider more flexible scheme to customize upcall entry points
             long addr = allocateUpcallStub(mh);
             this.entryPoint = BoundedPointer.createNativeVoidPointer(addr);
         } catch (Throwable ex) {
