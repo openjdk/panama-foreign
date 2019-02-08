@@ -55,6 +55,7 @@
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jvmtiExport.hpp"
+#include "runtime/handles.inline.hpp"
 #include "runtime/init.hpp"
 #include "runtime/reflection.hpp"
 #include "runtime/jniHandles.inline.hpp"
@@ -915,8 +916,15 @@ bool ciEnv::is_in_vm() {
   return JavaThread::current()->thread_state() == _thread_in_vm;
 }
 
-bool ciEnv::system_dictionary_modification_counter_changed() {
+bool ciEnv::system_dictionary_modification_counter_changed_locked() {
+  assert_locked_or_safepoint(Compile_lock);
   return _system_dictionary_modification_counter != SystemDictionary::number_of_modifications();
+}
+
+bool ciEnv::system_dictionary_modification_counter_changed() {
+  VM_ENTRY_MARK;
+  MutexLocker ml(Compile_lock, THREAD); // lock with safepoint check
+  return system_dictionary_modification_counter_changed_locked();
 }
 
 // ------------------------------------------------------------------
@@ -927,7 +935,7 @@ bool ciEnv::system_dictionary_modification_counter_changed() {
 void ciEnv::validate_compile_task_dependencies(ciMethod* target) {
   if (failing())  return;  // no need for further checks
 
-  bool counter_changed = system_dictionary_modification_counter_changed();
+  bool counter_changed = system_dictionary_modification_counter_changed_locked();
   Dependencies::DepType result = dependencies()->validate_dependencies(_task, counter_changed);
   if (result != Dependencies::end_marker) {
     if (result == Dependencies::call_site_target_value) {

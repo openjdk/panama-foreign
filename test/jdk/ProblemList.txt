@@ -1,6 +1,6 @@
 ###########################################################################
 #
-# Copyright (c) 2009, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -254,7 +254,6 @@ java/awt/Choice/PopupPosTest/PopupPosTest.html 8192930 windows-all
 java/awt/Choice/ChoiceMouseWheelTest/ChoiceMouseWheelTest.java 7100044 macosx-all,linux-all
 java/awt/Component/CreateImage/CreateImage.java 8198334  windows-all
 java/awt/Component/GetScreenLocTest/GetScreenLocTest.java 4753654 generic-all
-java/awt/Choice/SelectCurrentItemTest/SelectCurrentItemTest.html 8192929 windows-all,linux-all
 java/awt/Clipboard/HTMLTransferTest/HTMLTransferTest.html 8017454 macosx-all
 java/awt/Focus/NonFocusableWindowTest/NoEventsTest.java 8000171 windows-all
 java/awt/Frame/MiscUndecorated/RepaintTest.java 8079267 windows-all,linux-all
@@ -516,6 +515,7 @@ java/beans/XMLEncoder/Test6570354.java 8015593 macosx-all
 
 java/lang/StringCoding/CheckEncodings.sh                        7008363 generic-all
 java/lang/ProcessHandle/InfoTest.java                           8211847 aix-ppc64
+java/lang/invoke/LFCaching/LFMultiThreadCachingTest.java        8151492 generic-all
 
 ############################################################################
 
@@ -558,9 +558,7 @@ javax/management/remote/mandatory/notif/NotifReconnectDeadlockTest.java 8042215 
 java/net/MulticastSocket/NoLoopbackPackets.java                 7122846 macosx-all
 java/net/MulticastSocket/SetLoopbackMode.java                   7122846 macosx-all
 
-java/net/MulticastSocket/Test.java                              7145658,8207404 macosx-all,aix-all
-java/net/MulticastSocket/JoinLeave.java                         8207404 aix-all
-java/net/MulticastSocket/SetGetNetworkInterfaceTest.java        8207404 aix-all
+java/net/MulticastSocket/Test.java                              7145658 macosx-all
 
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
 
@@ -580,7 +578,6 @@ java/nio/channels/Selector/Wakeup.java                          6963118 windows-
 
 java/nio/file/WatchService/Basic.java                           7158947 solaris-all Solaris 11
 java/nio/file/WatchService/MayFlies.java                        7158947 solaris-all Solaris 11
-java/nio/file/WatchService/LotsOfCancels.java                   8188039 solaris-all Solaris 11
 java/nio/file/WatchService/LotsOfEvents.java                    7158947 solaris-all Solaris 11
 
 
@@ -836,8 +833,6 @@ tools/pack200/CommandLineTests.java                             8059906 generic-
 # jdk_jdi
 
 com/sun/jdi/RepStep.java                                        8043571 generic-all
-
-com/sun/jdi/sde/SourceDebugExtensionTest.java                   8158066 windows-all
 
 com/sun/jdi/NashornPopFrameTest.java                            8187143 generic-all
 
