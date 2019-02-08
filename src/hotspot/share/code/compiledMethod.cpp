@@ -344,6 +344,14 @@ int CompiledMethod::verify_icholder_relocations() {
 void CompiledMethod::preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map, OopClosure* f) {
   if (method() != NULL && !method()->is_native()) {
     address pc = fr.pc();
+
+    if (NativeCall::is_call_before(fr.pc())) {
+      NativeCall* ncall = nativeCall_before(pc);
+      if (ncall->destination() == StubRoutines::thread_state_transition_java_to_native()) {
+        return; // HACK: state transition, no arguments
+      }
+    }
+
     SimpleScopeDesc ssd(this, pc);
     Bytecode_invoke call(ssd.method(), ssd.bci());
     bool has_receiver = call.has_receiver();

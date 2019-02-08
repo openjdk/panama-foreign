@@ -889,8 +889,16 @@ uint PhaseCFG::sched_call(Block* block, uint node_cnt, Node_List& worklist, Grow
       proj->_rout.OR(Matcher::method_handle_invoke_SP_save_mask());
   }
 
-  add_call_kills(proj, regs, save_policy, exclude_soe);
-
+  // FIXME: HACK: should kill only OOPs, but can be done only on RA side
+  if (mcall->_entry_point == StubRoutines::thread_state_transition_java_to_native()) {
+    for( OptoReg::Name r = OptoReg::Name(0); r < _last_Mach_Reg; r=OptoReg::add(r,1) ) {
+      if( !regs.Member(r) ) {     // Not already defined by the call
+        proj->_rout.Insert(r);
+      }
+    }
+  } else {
+    add_call_kills(proj, regs, save_policy, exclude_soe);
+  }
   return node_cnt;
 }
 

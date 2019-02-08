@@ -5689,7 +5689,7 @@ address generate_avx_ghash_processBlocks() {
 
   }
 
-address generate_thread_state_transition_java_to_native() {
+  address generate_thread_state_transition_java_to_native() {
     StubCodeMark mark(this, "StubRoutines", "thread_state_transition_java_to_native");
 
     address start = __ pc();

@@ -2538,7 +2538,7 @@ Node* GraphKit::make_thread_state_transition_java_to_native() {
 
   Node* call = make_runtime_call(RC_NO_LEAF|RC_NO_FP,
                     OptoRuntime::thread_state_transition_Type(),
-                    StubRoutines::thread_state_transition_java_to_native() ,
+                    StubRoutines::thread_state_transition_java_to_native(),
                     "transition_java_to_native",
                     TypePtr::BOTTOM);
 
@@ -2546,7 +2546,6 @@ Node* GraphKit::make_thread_state_transition_java_to_native() {
 }
 
 Node* GraphKit::make_thread_state_transition_native_to_java() {
-  // FIXME: is it still a leaf considering there's a safepoint check?
   Node* call = make_runtime_call(RC_NO_LEAF|RC_NO_FP,
                     OptoRuntime::thread_state_transition_Type(),
                     StubRoutines::thread_state_transition_native_to_java(),

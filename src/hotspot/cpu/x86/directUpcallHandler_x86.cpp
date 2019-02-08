@@ -600,13 +600,17 @@ address DirectUpcallHandler::generate_linkToNative_upcall_stub(jobject receiver,
 
   _masm->flush();
 
+#ifndef PRODUCT
   stringStream ss;
   ss.print("upcall_stub_linkToNative_J%s", entry->signature()->as_C_string());
   const char* name = _masm->code_string(ss.as_string());
+#else // PRODUCT
+  const char* name = "upcall_stub_linkToNative";
+#endif // PRODUCT
 
   EntryBlob* blob = EntryBlob::create(name, &buffer, exception_handler_offset, receiver);
 
-  if (UseNewCode) {
+  if (PrintAssembly) {
     blob->print_on(tty);
     Disassembler::decode(blob, tty);
   }
