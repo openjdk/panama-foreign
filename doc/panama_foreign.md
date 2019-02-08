@@ -162,7 +162,7 @@ jextract  /usr/include/sqlite3.h -t org.sqlite -lsqlite3 \
 
 ```
 
-### Java sampple that uses sqlite3 library
+### Java sample that uses sqlite3 library
 
 ```java
 
