@@ -147,6 +147,118 @@ javac -cp python.jar PythonMain.java
 java -cp "python.jar;." PythonMain
 ```
 
+## Using sqlite3 library in your Java program (Mac OS)
+
+### jextract a jar file for sqlite3.h
+
+```sh
+
+jextract  /usr/include/sqlite3.h -t org.sqlite -lsqlite3 \
+    -L /usr/lib --record-library-path         \
+    --exclude-symbols sqlite3_vmprintf        \
+    --exclude-symbols sqlite3_vsnprintf       \
+    --exclude-symbols sqlite3_data_directory  \
+    -o sqlite3.jar
+
+```
+
+### Java sampple that uses sqlite3 library
+
+```java
+
+import java.lang.invoke.*;
+import java.foreign.*;
+import java.foreign.memory.*;
+import org.sqlite.sqlite3.*;
+import static org.sqlite.sqlite3_h.*;
+
+public class SqliteMain {
+   public static void main(String[] args) throws Exception {
+        try (Scope scope = Scope.newNativeScope()) {
+            // char* errMsg;
+            Pointer<Pointer<Byte>> errMsg = scope.allocate(NativeTypes.INT8.pointer());
+
+            // sqlite3* db;
+            Pointer<Pointer<sqlite3>> db = scope.allocate(LayoutType.ofStruct(sqlite3.class).pointer());
+
+            int rc = sqlite3_open(scope.allocateCString("employee.db"), db);
+            if (rc != 0) {
+                System.err.println("sqlite3_open failed: " + rc);
+                return;
+            }
+
+            // create a new table
+            Pointer<Byte> sql = scope.allocateCString(
+                "CREATE TABLE EMPLOYEE ("  +
+                "  ID INT PRIMARY KEY NOT NULL,"       +
+                "  NAME TEXT NOT NULL,"    +
+                "  SALARY REAL NOT NULL )"
+            );
+
+            // dummy ignoring callback
+            Callback<FI1> callback = scope.allocateCallback(FI1.class, (a,b,c,d)->0);
+            rc = sqlite3_exec(db.get(), sql, callback, Pointer.nullPointer(), errMsg);
+
+            if (rc != 0) {
+                System.err.println("sqlite3_exec failed: " + rc);
+                System.err.println("SQL error: " + Pointer.toString(errMsg.get()));
+                sqlite3_free(errMsg.get());
+            }
+
+            // insert two rows
+            sql = scope.allocateCString(
+                "INSERT INTO EMPLOYEE (ID,NAME,SALARY) " +
+                    "VALUES (134, 'Xyz', 200000.0); " +
+                "INSERT INTO EMPLOYEE (ID,NAME,SALARY) " +
+                    "VALUES (333, 'Abc', 100000.0);"
+            );
+            rc = sqlite3_exec(db.get(), sql, callback, Pointer.nullPointer(), errMsg);
+
+            if (rc != 0) {
+                System.err.println("sqlite3_exec failed: " + rc);
+                System.err.println("SQL error: " + Pointer.toString(errMsg.get()));
+                sqlite3_free(errMsg.get());
+            }
+
+            int[] rowNum = new int[1];
+            // callback to print rows from SELECT query
+            callback = scope.allocateCallback(FI1.class, (a, argc, argv, columnNames) -> {
+                System.out.println("Row num: " + rowNum[0]++);
+                System.out.println("numColumns = " + argc);
+                for (int i = 0; i < argc; i++) {
+                     String name = Pointer.toString(columnNames.offset(i).get());
+                     String value = Pointer.toString(argv.offset(i).get());
+                     System.out.printf("%s = %s\n", name, value);
+                }
+                return 0;
+            });
+
+            // select query
+            sql = scope.allocateCString("SELECT * FROM EMPLOYEE");
+            rc = sqlite3_exec(db.get(), sql, callback, Pointer.nullPointer(), errMsg);
+
+            if (rc != 0) {
+                System.err.println("sqlite3_exec failed: " + rc);
+                System.err.println("SQL error: " + Pointer.toString(errMsg.get()));
+                sqlite3_free(errMsg.get());
+            }
+ 
+            sqlite3_close(db.get());
+        }
+   }
+}
+
+```
+
+### Compiling and Running sqlite Java example
+
+```sh
+
+javac -cp sqlite3.jar SqlMain.java
+java -cp sqlite3.jar:. SqlMain
+
+```
+
 ## Using BLAS library
 
 BLAS is a popular library that allows fast matrix and vector computation: [http://www.netlib.org/blas/](http://www.netlib.org/blas/).
