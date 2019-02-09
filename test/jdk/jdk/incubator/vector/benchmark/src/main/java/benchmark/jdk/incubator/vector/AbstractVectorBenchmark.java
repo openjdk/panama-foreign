@@ -80,11 +80,11 @@ public class AbstractVectorBenchmark {
     }
 
     static <E> Species<E> widen(Species<E> s) {
-        return Vector.species(s.elementType(), widen(s.shape()));
+        return Vector.Species.of(s.elementType(), widen(s.shape()));
     }
 
     static <E> Species<E> narrow(Species<E> s) {
-        return Vector.species(s.elementType(), narrow(s.shape()));
+        return Vector.Species.of(s.elementType(), narrow(s.shape()));
     }
 
     static IntVector join(IntVector.IntSpecies from, IntVector.IntSpecies to, IntVector lo, IntVector hi) {
