@@ -174,11 +174,11 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         switch (desc.charAt(0)) {
             case 'J':
                 long lvalue = fieldTree.enumConstant().get();
-                fv = cw.visitField(ACC_PUBLIC | ACC_STATIC, name, desc, null, lvalue);
+                fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, desc, null, lvalue);
                 break;
             case 'I':
                 int ivalue = fieldTree.enumConstant().get().intValue();
-                fv = cw.visitField(ACC_PUBLIC | ACC_STATIC, name, desc, null, ivalue);
+                fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, desc, null, ivalue);
                 break;
             default:
                 throw new AssertionError("should not reach here");
