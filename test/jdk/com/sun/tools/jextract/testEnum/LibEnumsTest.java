@@ -23,23 +23,20 @@
 
 import java.foreign.Libraries;
 import java.foreign.Library;
-import java.foreign.NativeTypes;
-import java.foreign.Scope;
-import java.foreign.memory.LayoutType;
-import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import org.testng.annotations.Test;
+import test.jextract.enums.enums;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
-import test.jextract.enums.enums;
+import static test.jextract.enums.enums_h.*;
 
 /*
  * @test
- * @bug 8210935
+ * @bug 8210935 8218763
  * @summary C enum constants should be mapped to interface methods instead of static final int constants
  * @library ..
- * @run driver JtregJextract -t test.jextract.enums -- enums.h
+ * @run driver JtregJextract -t test.jextract.enums -l libEnums -- enums.h
  * @run testng LibEnumsTest
  */
 public class LibEnumsTest {
@@ -64,5 +61,22 @@ public class LibEnumsTest {
         assertEquals(libEnums.i_value2_func(), libEnums.I_VALUE2());
         assertEquals(libEnums.l_value1_func(), libEnums.L_VALUE1());
         assertEquals(libEnums.l_value2_func(), libEnums.L_VALUE2());
+    }
+
+    @Test
+    public void testSwitchOnEnum() {
+        for (int c: List.of(0xFF0000, 0x00FF00, 0x0000FF)) {
+            switch (c) {
+                case R:
+                    assertEquals(c, libEnums.R());
+                    break;
+                case G:
+                    assertEquals(c, libEnums.G());
+                    break;
+                case B:
+                    assertEquals(c, libEnums.B());
+                    break;
+            }
+        }
     }
 }
