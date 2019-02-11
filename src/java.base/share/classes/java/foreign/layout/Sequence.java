@@ -82,6 +82,9 @@ public final class Sequence extends Group {
         if (this == other) {
             return true;
         }
+        if (!super.equals(other)) {
+            return false;
+        }
         if (!(other instanceof Sequence)) {
             return false;
         }
@@ -91,7 +94,7 @@ public final class Sequence extends Group {
 
     @Override
     public int hashCode() {
-        return Long.hashCode(size) ^ elementLayout.hashCode();
+        return super.hashCode() ^ Long.hashCode(size) ^ elementLayout.hashCode();
     }
 
     @Override

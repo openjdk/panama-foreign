@@ -117,6 +117,9 @@ public final class Function extends AbstractDescriptor<Function> {
         if (this == other) {
             return true;
         }
+        if (!super.equals(other)) {
+            return false;
+        }
         if (!(other instanceof Function)) {
             return false;
         }
@@ -127,7 +130,7 @@ public final class Function extends AbstractDescriptor<Function> {
 
     @Override
     public int hashCode() {
-        return resLayout.hashCode() ^ Arrays.hashCode(argLayouts) ^ Boolean.hashCode(variadic);
+        return super.hashCode() ^ resLayout.hashCode() ^ Arrays.hashCode(argLayouts) ^ Boolean.hashCode(variadic);
     }
 
     @Override

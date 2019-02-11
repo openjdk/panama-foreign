@@ -98,6 +98,9 @@ public class Group extends AbstractDescriptor<Group> implements Layout {
         if (this == other) {
             return true;
         }
+        if (!super.equals(other)) {
+            return false;
+        }
         if (!(other instanceof Group)) {
             return false;
         }
@@ -107,7 +110,7 @@ public class Group extends AbstractDescriptor<Group> implements Layout {
 
     @Override
     public int hashCode() {
-        return kind.hashCode() ^ elements.hashCode();
+        return super.hashCode() ^ kind.hashCode() ^ elements.hashCode();
     }
 
     @Override
