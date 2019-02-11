@@ -37,6 +37,8 @@ import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 
+import jdk.internal.foreign.memory.References.Reference;
+
 public class LayoutTypeImpl<X> implements LayoutType<X> {
 
     static final LayoutTypeImpl<?> nullType = new LayoutTypeImpl<>(Void.class, Value.ofUnsignedInt(0), References.ofNull);
