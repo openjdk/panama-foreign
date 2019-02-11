@@ -66,6 +66,9 @@ public class Padding extends AbstractDescriptor<Padding> implements Layout {
         if (this == other) {
             return true;
         }
+        if (!super.equals(other)) {
+            return false;
+        }
         if (!(other instanceof Padding)) {
             return false;
         }
@@ -75,7 +78,7 @@ public class Padding extends AbstractDescriptor<Padding> implements Layout {
 
     @Override
     public int hashCode() {
-        return Long.hashCode(size);
+        return super.hashCode() ^ Long.hashCode(size);
     }
 
     @Override

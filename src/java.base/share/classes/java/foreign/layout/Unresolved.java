@@ -53,6 +53,25 @@ public class Unresolved extends AbstractDescriptor<Unresolved> implements Layout
     }
 
     @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!super.equals(other)) {
+            return false;
+        }
+        if (!(other instanceof Unresolved)) {
+            return false;
+        }
+        return layoutExpression.equals(((Unresolved)other).layoutExpression);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ layoutExpression.hashCode();
+    }
+
+    @Override
     public long bitsSize() {
         throw new UnsupportedOperationException("bitsSize on Unresolved");
     }

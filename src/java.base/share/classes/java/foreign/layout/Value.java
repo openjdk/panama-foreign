@@ -186,6 +186,9 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
         if (this == other) {
             return true;
         }
+        if (!super.equals(other)) {
+            return false;
+        }
         if (!(other instanceof Value)) {
             return false;
         }
@@ -196,7 +199,7 @@ public class Value extends AbstractDescriptor<Value> implements Layout {
 
     @Override
     public int hashCode() {
-        return kind.hashCode() ^ endianness.hashCode() ^
+        return super.hashCode() ^ kind.hashCode() ^ endianness.hashCode() ^
             Long.hashCode(size) ^ contents.hashCode();
     }
 
