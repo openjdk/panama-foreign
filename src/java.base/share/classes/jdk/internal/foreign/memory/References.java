@@ -48,199 +48,344 @@ public final class References {
 
     private References() {}
 
-    static class AbstractReference implements Reference {
-        protected MethodHandle getter, setter;
-
-        AbstractReference(MethodHandle getter, MethodHandle setter) {
-            this.getter = getter;
-            this.setter = setter;
-        }
-
-        public final MethodHandle getter() {
-            return getter;
-        }
-
-        public final MethodHandle setter() {
-            return setter;
-        }
-    }
-
-
     /**
-     * Reference for primitive carriers. It exposes specialized accessors for getting/setting
-     * the contents of a reference.
+     * A reference is a view over a memory layout associated with a {@link java.foreign.memory.Pointer} instance. As such,
+     * it provides capabilities for retrieving (resp. storing) values from (resp. to) memory.
      */
-    static class OfPrimitive extends AbstractReference {
+    public interface Reference {
 
-        static final MethodHandle MH_GET_LONG_BITS;
-        static final MethodHandle MH_SET_LONG_BITS;
 
-        static {
-            try {
-                MH_GET_LONG_BITS = MethodHandles.lookup().findStatic(OfPrimitive.class, "getLongBits", MethodType.methodType(long.class, Pointer.class));
-                MH_SET_LONG_BITS = MethodHandles.lookup().findStatic(OfPrimitive.class, "setLongBits", MethodType.methodType(void.class, Pointer.class, long.class));
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
+        /**
+         * A {@link MethodHandle} which can be used to retrieve the contents of memory layout associated
+         * with the pointer passed as argument.
+         * <p>
+         * A getter method handle is of the form:
+         * {@code (Pointer) -> T}
+         * Where {@code T} is the Java type to which the layout will be converted.
+         * </p>
+         * @return a 'getter' method handle.
+         */
+        MethodHandle getter();
 
-        static long getLongBits(Pointer<?> p2) {
-            BoundedPointer<?> ptr = (BoundedPointer<?>)p2;
-            return ptr.getBits();
-        }
-
-        static void setLongBits(Pointer<?> p2, long value) {
-            BoundedPointer<?> ptr = (BoundedPointer<?>)p2;
-            ptr.putBits(value);
-        }
-
-        OfPrimitive(Class<?> carrier) {
-            super(MethodHandles.explicitCastArguments(MH_GET_LONG_BITS, MH_GET_LONG_BITS.type().changeReturnType(carrier)),
-                    MethodHandles.explicitCastArguments(MH_SET_LONG_BITS, MH_SET_LONG_BITS.type().changeParameterType(1, carrier)));
-        }
+        /**
+         * A {@link MethodHandle} which can be used to store a value into the memory layout associated with
+         * with the pointer passed as argument.
+         * <p>
+         * A setter method handle is of the form:
+         * {@code (Pointer, T) -> V}
+         * Where {@code T} is the Java type to which the layout will be converted.
+         * </p>
+         * the pointer passed as argument.
+         * @return a 'getter' method handle.
+         */
+        MethodHandle setter();
     }
 
     /**
      * A reference for the Java primitive type {@code boolean}.
      */
-    public static class OfBoolean extends AbstractReference {
-
-        static final MethodHandle MH_TO_BOOLEAN;
-        static final MethodHandle MH_FROM_BOOLEAN;
+    static class OfBoolean implements Reference {
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
 
         static {
             try {
-                MH_TO_BOOLEAN = MethodHandles.lookup().findStatic(OfBoolean.class, "toBoolean", MethodType.methodType(boolean.class, long.class));
-                MH_FROM_BOOLEAN = MethodHandles.lookup().findStatic(OfBoolean.class, "fromBoolean", MethodType.methodType(long.class, boolean.class));
+                GETTER_MH = MethodHandles.lookup().findStatic(OfBoolean.class, "getBoolean", MethodType.methodType(boolean.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfBoolean.class, "setBoolean", MethodType.methodType(void.class, Pointer.class, boolean.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
-        static boolean toBoolean(long value) {
-            return value != 0;
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
         }
 
-        static long fromBoolean(boolean value) {
-            return value ? 1 : 0;
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
         }
 
+        static boolean getBoolean(Pointer<?> pointer) {
+            return ((BoundedPointer<?>)pointer).getBits() != 0;
+        }
 
-        OfBoolean() {
-            super(MethodHandles.filterReturnValue(OfPrimitive.MH_GET_LONG_BITS, MH_TO_BOOLEAN),
-                    MethodHandles.filterArguments(OfPrimitive.MH_SET_LONG_BITS, 1, MH_FROM_BOOLEAN));
+        static void setBoolean(Pointer<?> pointer, boolean value) {
+            ((BoundedPointer<?>)pointer).putBits(value ? 1 : 0);
+        }
+    }
+
+    /**
+     * A reference for the Java primitive type {@code char}.
+     */
+    static class OfChar implements Reference {
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
+
+        static {
+            try {
+                GETTER_MH = MethodHandles.lookup().findStatic(References.OfChar.class, "getChar", MethodType.methodType(char.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(References.OfChar.class, "setChar", MethodType.methodType(void.class, Pointer.class, char.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
+        }
+
+        static char getChar(Pointer<?> pointer) {
+            return (char)((BoundedPointer<?>)pointer).getBits();
+        }
+
+        static void setChar(Pointer<?> pointer, char value) {
+            ((BoundedPointer<?>)pointer).putBits(value);
+        }
+    }
+
+    /**
+     * A reference for the Java primitive type {@code byte}.
+     */
+    static class OfByte implements Reference {
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
+
+        static {
+            try {
+                GETTER_MH = MethodHandles.lookup().findStatic(OfByte.class, "getByte", MethodType.methodType(byte.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfByte.class, "setByte", MethodType.methodType(void.class, Pointer.class, byte.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
+        }
+
+        static byte getByte(Pointer<?> pointer) {
+            return (byte)((BoundedPointer<?>)pointer).getBits();
+        }
+
+        static void setByte(Pointer<?> pointer, byte value) {
+            ((BoundedPointer<?>)pointer).putBits(value);
+        }
+    }
+
+    /**
+     * A reference for the Java primitive type {@code short}.
+     */
+    static class OfShort implements Reference {
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
+
+        static {
+            try {
+                GETTER_MH = MethodHandles.lookup().findStatic(OfShort.class, "getShort", MethodType.methodType(short.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfShort.class, "setShort", MethodType.methodType(void.class, Pointer.class, short.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
+        }
+
+        static short getShort(Pointer<?> pointer) {
+            return (short)((BoundedPointer<?>)pointer).getBits();
+        }
+
+        static void setShort(Pointer<?> pointer, short value) {
+            ((BoundedPointer<?>)pointer).putBits(value);
+        }
+    }
+
+    /**
+     * A reference for the Java primitive type {@code int}.
+     */
+    static class OfInt implements Reference {
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
+
+        static {
+            try {
+                GETTER_MH = MethodHandles.lookup().findStatic(OfInt.class, "getInt", MethodType.methodType(int.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfInt.class, "setInt", MethodType.methodType(void.class, Pointer.class, int.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
+        }
+
+        static int getInt(Pointer<?> pointer) {
+            return (int)((BoundedPointer<?>)pointer).getBits();
+        }
+
+        static void setInt(Pointer<?> pointer, int value) {
+            ((BoundedPointer<?>)pointer).putBits(value);
         }
     }
 
     /**
      * A reference for the Java primitive type {@code float}.
      */
-    public static class OfFloat extends AbstractReference {
-
-        static final MethodHandle MH_TO_FLOAT;
-        static final MethodHandle MH_FROM_FLOAT;
+    static class OfFloat implements Reference {
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
 
         static {
             try {
-                MH_TO_FLOAT = MethodHandles.explicitCastArguments(MethodHandles.lookup().findStatic(Float.class, "intBitsToFloat", MethodType.methodType(float.class, int.class)), MethodType.methodType(float.class, long.class));
-                MH_FROM_FLOAT = MethodHandles.explicitCastArguments(MethodHandles.lookup().findStatic(Float.class, "floatToRawIntBits", MethodType.methodType(int.class, float.class)), MethodType.methodType(long.class, float.class));
+                GETTER_MH = MethodHandles.lookup().findStatic(OfFloat.class, "getFloat", MethodType.methodType(float.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfFloat.class, "setFloat", MethodType.methodType(void.class, Pointer.class, float.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
-        OfFloat() {
-            super(MethodHandles.filterReturnValue(OfPrimitive.MH_GET_LONG_BITS, MH_TO_FLOAT),
-                    MethodHandles.filterArguments(OfPrimitive.MH_SET_LONG_BITS, 1, MH_FROM_FLOAT));
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
+        }
+
+        static float getFloat(Pointer<?> pointer) {
+            return Float.intBitsToFloat((int)((BoundedPointer<?>)pointer).getBits());
+        }
+
+        static void setFloat(Pointer<?> pointer, float value) {
+            ((BoundedPointer<?>)pointer).putBits(Float.floatToIntBits(value));
+        }
+    }
+
+    /**
+     * A reference for the Java primitive type {@code long}.
+     */
+    static class OfLong implements Reference {
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
+
+        static {
+            try {
+                GETTER_MH = MethodHandles.lookup().findStatic(OfLong.class, "getLong", MethodType.methodType(long.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfLong.class, "setLong", MethodType.methodType(void.class, Pointer.class, long.class));
+            } catch (Throwable ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
+        }
+
+        static long getLong(Pointer<?> pointer) {
+            return ((BoundedPointer<?>)pointer).getBits();
+        }
+
+        static void setLong(Pointer<?> pointer, long value) {
+            ((BoundedPointer<?>)pointer).putBits(value);
         }
     }
 
     /**
      * A reference for the Java primitive type {@code double}.
      */
-    public static class OfDouble extends AbstractReference {
-
-        static final MethodHandle MH_TO_DOUBLE;
-        static final MethodHandle MH_FROM_DOUBLE;
+    static class OfDouble implements Reference {
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
 
         static {
             try {
-                MH_TO_DOUBLE = MethodHandles.lookup().findStatic(Double.class, "longBitsToDouble", MethodType.methodType(double.class, long.class));
-                MH_FROM_DOUBLE = MethodHandles.lookup().findStatic(Double.class, "doubleToRawLongBits", MethodType.methodType(long.class, double.class));
+                GETTER_MH = MethodHandles.lookup().findStatic(OfDouble.class, "getDouble", MethodType.methodType(double.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfDouble.class, "setDouble", MethodType.methodType(void.class, Pointer.class, double.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
-        OfDouble() {
-            super(MethodHandles.filterReturnValue(OfPrimitive.MH_GET_LONG_BITS, MH_TO_DOUBLE),
-                    MethodHandles.filterArguments(OfPrimitive.MH_SET_LONG_BITS, 1, MH_FROM_DOUBLE));
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
         }
 
-        /**
-         * Read the contents of this reference as a double value.
-         * @return the double value.
-         */
-        public double get(Pointer<?> pointer) {
-            long size = pointer.type().bytesSize();
-            try {
-                if (size == 8) {
-                    //fastpath
-                    return (double)getter().invokeExact(pointer);
-                } else if (size == 16) {
-                    //extended precision, use JNI
-                    return longDoubleToDouble(pointer.addr());
-                }
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-            //cannot get here
-            throw new UnsupportedOperationException("Unsupported layout size: " + size);
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
         }
 
-        /**
-         * Store a given double value in this reference.
-         * @param value the double value.
-         */
-        public void set(Pointer<?> pointer, double value) {
-            long size = pointer.type().bytesSize();
-            try {
-                if (size == 8) {
-                    //fastpath
-                    setter().invokeExact(pointer, value);
-                    return;
-                } else if (size == 16) {
-                    //extended precision, use JNI
-                    doubleToLongDouble(pointer.addr(), value);
-                    return;
-                }
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
-            //cannot get here
-            throw new UnsupportedOperationException("Unsupported layout size: " + size);
+        static double getDouble(Pointer<?> pointer) {
+            return Double.longBitsToDouble(((BoundedPointer<?>)pointer).getBits());
+        }
+
+        static void setDouble(Pointer<?> pointer, double value) {
+            ((BoundedPointer<?>)pointer).putBits(Double.doubleToLongBits(value));
         }
     }
 
-        /**
+    /**
      * A reference for the Java reference type {@code BigDecimal}.
      */
-    public static class OfLongDouble extends AbstractReference {
+    public static class OfLongDouble implements Reference {
 
-        static final MethodHandle MH_PTR_GET;
-        static final MethodHandle MH_PTR_SET;
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
 
         static {
             try {
-                MH_PTR_GET = MethodHandles.lookup().findStatic(OfLongDouble.class, "get", MethodType.methodType(double.class, Pointer.class));
-                MH_PTR_SET = MethodHandles.lookup().findStatic(OfLongDouble.class, "set", MethodType.methodType(void.class, Pointer.class, double.class));
+                GETTER_MH = MethodHandles.lookup().findStatic(OfLongDouble.class, "get", MethodType.methodType(double.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfLongDouble.class, "set", MethodType.methodType(void.class, Pointer.class, double.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
-        OfLongDouble() {
-            super(MH_PTR_GET, MH_PTR_SET);
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
         }
 
         /**
@@ -263,26 +408,32 @@ public final class References {
     /**
      * Reference for pointers.
      */
-    public static class OfPointer extends AbstractReference {
+    public static class OfPointer implements Reference {
 
-        static final MethodHandle MH_PTR_GET;
-        static final MethodHandle MH_PTR_SET;
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
 
         static {
             try {
-                MH_PTR_GET = MethodHandles.lookup().findStatic(OfPointer.class, "get", MethodType.methodType(Pointer.class, Pointer.class));
-                MH_PTR_SET = MethodHandles.lookup().findStatic(OfPointer.class, "set", MethodType.methodType(void.class, Pointer.class, Pointer.class));
+                GETTER_MH = MethodHandles.lookup().findStatic(OfPointer.class, "get", MethodType.methodType(Pointer.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfPointer.class, "set", MethodType.methodType(void.class, Pointer.class, Pointer.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
-        public OfPointer() {
-            super(MH_PTR_GET, MH_PTR_SET);
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
         }
 
         static Pointer<?> get(Pointer<?> pointer) {
-            long addr = OfPrimitive.getLongBits(pointer);
+            long addr = ((BoundedPointer<?>)pointer).getBits();
             LayoutType<?> pointeeType = ((LayoutTypeImpl<?>)pointer.type()).pointeeType();
             Pointer<?> rp = addr == 0 ?
                     Pointer.nullPointer() :
@@ -292,7 +443,7 @@ public final class References {
 
         static void set(Pointer<?> pointer, Pointer<?> pointerValue) {
             try {
-                OfPrimitive.setLongBits(pointer, pointerValue.addr());
+                ((BoundedPointer<?>)pointer).putBits(pointerValue.addr());
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException("Access denied", iae);
             }
@@ -302,24 +453,28 @@ public final class References {
     /**
      * Reference for arrays.
      */
-    public static class OfArray extends AbstractReference {
+    public static class OfArray implements Reference {
 
-        static final MethodHandle MH_ARR_GET;
-        static final MethodHandle MH_ARR_SET;
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
 
         static {
             try {
-                MH_ARR_GET = MethodHandles.lookup().findStatic(OfArray.class, "get", MethodType.methodType(Array.class, Pointer.class));
-                MH_ARR_SET = MethodHandles.lookup().findStatic(OfArray.class, "set", MethodType.methodType(void.class, Pointer.class, Array.class));
+                GETTER_MH = MethodHandles.lookup().findStatic(OfArray.class, "get", MethodType.methodType(Array.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfArray.class, "set", MethodType.methodType(void.class, Pointer.class, Array.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
 
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        public OfArray() {
-            super(MH_ARR_GET, MH_ARR_SET);
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
         }
 
         static Array<?> get(Pointer<?> pointer) {
@@ -343,22 +498,28 @@ public final class References {
      * A reference for native structs.
      */
     @SuppressWarnings("unchecked")
-    public static class OfStruct extends AbstractReference {
+    public static class OfStruct implements Reference {
 
-        static final MethodHandle MH_STR_GET;
-        static final MethodHandle MH_STR_SET;
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
 
         static {
             try {
-                MH_STR_GET = MethodHandles.lookup().findStatic(OfStruct.class, "get", MethodType.methodType(Struct.class, Pointer.class));
-                MH_STR_SET = MethodHandles.lookup().findStatic(OfStruct.class, "set", MethodType.methodType(void.class, Pointer.class, Struct.class));
+                GETTER_MH = MethodHandles.lookup().findStatic(OfStruct.class, "get", MethodType.methodType(Struct.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfStruct.class, "set", MethodType.methodType(void.class, Pointer.class, Struct.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
-        OfStruct() {
-            super(MH_STR_GET, MH_STR_SET);
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
         }
 
         @SuppressWarnings("unchecked")
@@ -385,26 +546,32 @@ public final class References {
     /**
      * Reference for function pointers.
      */
-    public static class OfFunction extends AbstractReference {
+    public static class OfFunction implements Reference {
 
-        static final MethodHandle MH_FUNC_GET;
-        static final MethodHandle MH_FUNC_SET;
+        static final MethodHandle GETTER_MH;
+        static final MethodHandle SETTER_MH;
 
         static {
             try {
-                MH_FUNC_GET = MethodHandles.lookup().findStatic(OfFunction.class, "get", MethodType.methodType(Callback.class, Pointer.class));
-                MH_FUNC_SET = MethodHandles.lookup().findStatic(OfFunction.class, "set", MethodType.methodType(void.class, Pointer.class, Callback.class));
+                GETTER_MH = MethodHandles.lookup().findStatic(OfFunction.class, "get", MethodType.methodType(Callback.class, Pointer.class));
+                SETTER_MH = MethodHandles.lookup().findStatic(OfFunction.class, "set", MethodType.methodType(void.class, Pointer.class, Callback.class));
             } catch (Throwable ex) {
                 throw new IllegalStateException(ex);
             }
         }
 
-        OfFunction() {
-            super(MH_FUNC_GET, MH_FUNC_SET);
+        @Override
+        public MethodHandle getter() {
+            return GETTER_MH;
+        }
+
+        @Override
+        public MethodHandle setter() {
+            return SETTER_MH;
         }
 
         static Callback<?> get(Pointer<?> pointer) {
-            long addr = OfPrimitive.getLongBits(pointer);
+            long addr = ((BoundedPointer<?>)pointer).getBits();
             Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).getFuncIntf();
             Pointer<?> rp = addr == 0 ?
                     Pointer.nullPointer() :
@@ -414,7 +581,7 @@ public final class References {
 
         static void set(Pointer<?> pointer, Callback<?> func) {
             try {
-                OfPrimitive.setLongBits(pointer, func.entryPoint().addr());
+                ((BoundedPointer<?>)pointer).putBits(func.entryPoint().addr());
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException("Access denied", iae);
             }
@@ -444,39 +611,39 @@ public final class References {
     }
 
     /**
-     * Reference factory for the {@code char} primitive type.
+     * Reference for the {@code char} primitive type.
      */
-    public static OfPrimitive ofChar = new OfPrimitive(char.class);
+    public static OfChar ofChar = new OfChar();
 
     /**
-     * Reference factory for the {@code boolean} primitive type.
+     * Reference for the {@code boolean} primitive type.
      */
     public static OfBoolean ofBoolean = new OfBoolean();
 
     /**
-     * Reference factory for the {@code byte} primitive type.
+     * Reference for the {@code byte} primitive type.
      */
-    public static OfPrimitive ofByte = new OfPrimitive(byte.class);
+    public static OfByte ofByte = new OfByte();
 
     /**
-     * Reference factory for the {@code short} primitive type.
+     * Reference for the {@code short} primitive type.
      */
-    public static OfPrimitive ofShort = new OfPrimitive(short.class);
+    public static OfShort ofShort = new OfShort();
 
     /**
-     * Reference factory for the {@code int} primitive type.
+     * Reference for the {@code int} primitive type.
      */
-    public static OfPrimitive ofInt = new OfPrimitive(int.class);
+    public static OfInt ofInt = new OfInt();
 
     /**
-     * Reference factory for the {@code float} primitive type.
+     * Reference for the {@code float} primitive type.
      */
     public static OfFloat ofFloat = new OfFloat();
 
     /**
-     * Reference factory for the {@code long} primitive type.
+     * Reference for the {@code long} primitive type.
      */
-    public static OfPrimitive ofLong = new OfPrimitive(long.class);
+    public static OfLong ofLong = new OfLong();
 
     /**
      * Reference for the {@code double} primitive type.
@@ -488,17 +655,35 @@ public final class References {
      */
     public static OfLongDouble ofLongDouble = new OfLongDouble();
 
+    /**
+     * Reference for pointer types.
+     */
     public static OfPointer ofPointer = new OfPointer();
 
+    /**
+     * Reference for array types.
+     */
     public static OfArray ofArray = new OfArray();
 
+    /**
+     * Reference for struct types.
+     */
     public static OfStruct ofStruct = new OfStruct();
 
+    /**
+     * Reference for function pointer types.
+     */
+    public static OfFunction ofFunction = new OfFunction();
+
+    /**
+     * Reference for type {@code void}. Always throws.
+     */
     public static Reference ofVoid = new OfGrumpy(() -> new UnsupportedOperationException("Cannot dereference void"));
 
+    /**
+     * Reference for null pointers. Always throws.
+     */
     public static Reference ofNull = new OfGrumpy(() -> new NullPointerException("Cannot dereference null"));
-
-    public static OfFunction ofFunction = new OfFunction();
 
     public native static double longDoubleToDouble(long ptr);
     public native static void doubleToLongDouble(long ptr, double val);
