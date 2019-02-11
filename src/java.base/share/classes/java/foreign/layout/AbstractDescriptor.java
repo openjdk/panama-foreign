@@ -69,5 +69,23 @@ abstract class AbstractDescriptor<L extends AbstractDescriptor<L>> implements De
         }
     }
 
+    @Override
+    public int hashCode() {
+        return annotations.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+
+        if (!(other instanceof AbstractDescriptor)) {
+            return false;
+        }
+
+        return annotations.equals(((AbstractDescriptor)other).annotations);
+    }
+
     static final Map<String, String> NO_ANNOS = Collections.unmodifiableMap(new HashMap<>());
 }

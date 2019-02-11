@@ -157,7 +157,6 @@ jextract  /usr/include/sqlite3.h -t org.sqlite -lsqlite3 \
     -L /usr/lib --record-library-path         \
     --exclude-symbols sqlite3_vmprintf        \
     --exclude-symbols sqlite3_vsnprintf       \
-    --exclude-symbols sqlite3_data_directory  \
     -o sqlite3.jar
 
 ```
@@ -280,7 +279,6 @@ jextract  /usr/include/sqlite3.h -t org.sqlite -lsqlite3 \
           -L /usr/lib/x86_64-linux-gnu --record-library-path \
            --exclude-symbols sqlite3_vmprintf \
            --exclude-symbols sqlite3_vsnprintf \
-           --exclude-symbols sqlite3_data_directory \
            -o sqlite3.jar
 ```
 
