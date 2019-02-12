@@ -46,4 +46,10 @@ public class StaticForwarderTest {
         assertEquals(THE_ANSWER, 42);
         assertEquals(square(THE_ANSWER), 42*42);
     }
+
+    @Test
+    public void VarArgsFunction() {
+        // test passes if it compiled
+        dummyVarArgs(1, 2, 3);
+    }
 }
