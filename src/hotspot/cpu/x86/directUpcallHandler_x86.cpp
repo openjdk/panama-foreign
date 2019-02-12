@@ -41,10 +41,10 @@
 #include "vmreg_x86.inline.hpp"
 
 #ifdef _WIN64
-constexpr int first_preserved_idx = 6; // 6 volatile registers don't need saving
-constexpr int num_evex_regs = 32;
-constexpr int num_no_evex_regs = 16;
-constexpr int max_preserved_regs = num_evex_regs - first_preserved_idx; // conservative for evex
+const int first_preserved_idx = 6; // 6 volatile registers don't need saving
+const int num_evex_regs = 32;
+const int num_no_evex_regs = 16;
+const int max_preserved_regs = num_evex_regs - first_preserved_idx; // conservative for evex
 #endif // _WIN64
 
 struct upcall_context {
