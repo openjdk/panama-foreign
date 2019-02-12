@@ -28,3 +28,7 @@ EXPORT int abc = 53;
 EXPORT int square(int val) {
     return val*val;
 }
+
+EXPORT void dummyVarArgs() {
+    return;
+}

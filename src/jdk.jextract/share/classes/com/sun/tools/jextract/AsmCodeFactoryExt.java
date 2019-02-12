@@ -46,6 +46,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_VARARGS;
 import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
 import static jdk.internal.org.objectweb.asm.Opcodes.GETSTATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ILOAD;
@@ -88,14 +89,14 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
             assert !fieldName.isEmpty();
 
             emitStaticForwarder(fieldName + "$get",
-                "()" + jt.getDescriptor(), "()" + jt.getSignature(false));
+                "()" + jt.getDescriptor(), "()" + jt.getSignature(false), false);
 
             emitStaticForwarder(fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
-                "(" + jt.getSignature(true) + ")V");
+                "(" + jt.getSignature(true) + ")V", false);
             JType ptrType = JType.GenericType.ofPointer(jt);
             emitStaticForwarder(fieldName + "$ptr",
-                "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(false));
+                "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(false), false);
 
             return true;
         } else {
@@ -119,7 +120,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
             assert (jt instanceof JType.Function);
             JType.Function fn = (JType.Function)jt;
             logger.fine(() -> "Add method: " + fn.getSignature(false));
-            emitStaticForwarder(funcTree.name(), fn.getDescriptor(), fn.getSignature(false));
+            emitStaticForwarder(funcTree.name(), fn.getDescriptor(), fn.getSignature(false), fn.isVarArgs);
             return true;
         } else {
             return false;
@@ -234,9 +235,13 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
     }
 
     // emit static forwarder method for a specific library interface method
-    private void emitStaticForwarder(String name, String desc, String signature) {
-        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC,
-            name, desc, signature, null);
+    private void emitStaticForwarder(String name, String desc, String signature, boolean isVarArgs) {
+        int accessFlags = ACC_PUBLIC | ACC_STATIC;
+        if (isVarArgs) {
+            accessFlags |= ACC_VARARGS;
+        }
+
+        MethodVisitor mv = cw.visitMethod(accessFlags, name, desc, signature, null);
         mv.visitCode();
 
         // load library interface (static) field

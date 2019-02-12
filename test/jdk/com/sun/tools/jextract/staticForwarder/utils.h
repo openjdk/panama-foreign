@@ -38,3 +38,7 @@ enum Color {
 };
 
 EXPORT int square(int val);
+
+// Considered varargs under C without void in argument
+// No argument function should be declared as dummyVarArgs(void);
+EXPORT void dummyVarArgs();
