@@ -92,8 +92,10 @@ public class LayoutPaths {
             }
             result = Stream.concat(result,
                     lookup(l, condition).map(p -> p.dup(path)));
-            LongSupplier offsetPrev = offset;
-            offset = () -> offsetPrev.getAsLong() + l.bitsSize();
+            if (group.kind() != Group.Kind.UNION) {
+                LongSupplier offsetPrev = offset;
+                offset = () -> offsetPrev.getAsLong() + l.bitsSize();
+            }
         }
         return result;
     }
