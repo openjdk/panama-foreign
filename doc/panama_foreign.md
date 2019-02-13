@@ -526,14 +526,9 @@ On Mac OS, lapack is installed under /usr/local/opt/lapack directory.
 
 ### jextracting lapacke.h
 
-The following command can be used to extract the LAPACK header. These are too many symbols in lapacke.h
-and so jextract throws too many constant pool entries (IllegalArgumentException). To workaround, we
-include only the symbols used in the Java sample code below.
-
 ```sh
 
-jextract --include-symbols LAPACKE_dgels\|LAPACK_COL_MAJOR \
-  -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \
+jextract -L /usr/local/opt/lapack/lib -I /usr/local/opt/lapack/ \
   -l lapacke -t lapack --record-library-path /usr/local/opt/lapack/include/lapacke.h -o clapack.jar
 
 ```
@@ -664,8 +659,6 @@ java -cp libproc.jar:. LibprocMain
 
 ## Using readline library from Java code (Mac OS)
 
-### Note: This sample fails because of too big UTF-8 String in NativeHeader annotation
-
 ### jextract a jar file for readline.h
 
 ```sh
@@ -712,6 +705,56 @@ public class Readline {
 javac -cp readline.jar Readline.java
 
 java -cp readline.jar:. Readline
+
+```
+
+## Using libcurl from Java (Mac OS)
+
+### jextract a jar for curl.h
+
+```sh
+
+jextract -t org.unix -L /usr/lib -lcurl --record-library-path /usr/include/curl/curl.h -o curl.jar
+
+```
+
+### Java code that uses libcurl
+
+```java
+
+import java.lang.invoke.*;
+import java.foreign.*;
+import java.foreign.memory.*;
+import org.unix.curl.*;
+import static org.unix.curl_h.*;
+import static org.unix.easy_h.*;
+
+public class CurlMain {
+   public static void main(String[] args) {
+       try (Scope s = Scope.newNativeScope()) { 
+           curl_global_init(CURL_GLOBAL_DEFAULT);
+           Pointer<Void> curl = curl_easy_init();
+           if(!curl.isNull()) {
+               Pointer<Byte> url = s.allocateCString(args[0]);
+               curl_easy_setopt(curl, CURLOPT_URL, url);
+               int res = curl_easy_perform(curl);
+               if (res != CURLE_OK) {
+                   curl_easy_cleanup(curl);
+               }
+           }
+           curl_global_cleanup();
+       }
+    }
+}
+
+```
+
+### Running the java code that uses libcurl
+
+```sh
+
+javac -cp curl.jar CurlMain.java
+java -cp curl.jar:. CurlMain <url>
 
 ```
 
