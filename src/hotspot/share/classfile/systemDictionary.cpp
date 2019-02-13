@@ -2460,7 +2460,6 @@ methodHandle SystemDictionary::find_method_handle_invoker(Klass* klass,
                                                           Symbol* signature,
                                                           Klass* accessing_klass,
                                                           Handle *appendix_result,
-                                                          Handle *method_type_result,
                                                           TRAPS) {
   methodHandle empty;
   assert(THREAD->can_call_java() ,"");
@@ -2493,7 +2492,6 @@ methodHandle SystemDictionary::find_method_handle_invoker(Klass* klass,
                          vmSymbols::linkMethod_signature(),
                          &args, CHECK_(empty));
   Handle mname(THREAD, (oop) result.get_jobject());
-  (*method_type_result) = method_type;
   return unpack_method_and_appendix(mname, accessing_klass, appendix_box, appendix_result, THREAD);
 }
 
@@ -2812,7 +2810,6 @@ methodHandle SystemDictionary::find_dynamic_call_site_invoker(Klass* caller,
                                                               Symbol* name,
                                                               Symbol* type,
                                                               Handle *appendix_result,
-                                                              Handle *method_type_result,
                                                               TRAPS) {
   methodHandle empty;
   Handle bsm, info;
@@ -2854,7 +2851,6 @@ methodHandle SystemDictionary::find_dynamic_call_site_invoker(Klass* caller,
                          vmSymbols::linkCallSite_signature(),
                          &args, CHECK_(empty));
   Handle mname(THREAD, (oop) result.get_jobject());
-  (*method_type_result) = method_type;
   return unpack_method_and_appendix(mname, caller, appendix_box, appendix_result, THREAD);
 }
 
