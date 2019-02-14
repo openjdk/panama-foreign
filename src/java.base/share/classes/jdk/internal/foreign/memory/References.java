@@ -584,7 +584,7 @@ public final class References {
         }
 
         static void set(Pointer<?> pointer, Callback<?> func) {
-            ScopeImpl.checkAncestor(func, pointer);
+            ScopeImpl.checkAncestor(func.entryPoint(), pointer);
             try {
                 ((BoundedPointer<?>)pointer).putBits(func.entryPoint().addr());
             } catch (IllegalAccessException iae) {

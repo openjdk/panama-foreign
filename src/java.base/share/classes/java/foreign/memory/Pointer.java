@@ -22,7 +22,6 @@
  */
 package java.foreign.memory;
 
-import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 
@@ -39,7 +38,7 @@ import java.util.stream.Stream;
  * This interface models a native pointer.
  * @param <X> the carrier type associated with the pointee.
  */
-public interface Pointer<X> extends Scope.Resource {
+public interface Pointer<X> {
 
     /**
      * Obtains the {@code NULL} pointer.
@@ -178,6 +177,12 @@ public interface Pointer<X> extends Scope.Resource {
             throw new IllegalStateException(ex);
         }
     }
+
+    /**
+     * The scope this pointer belongs to.
+     * @return the owning scope.
+     */
+    Scope scope();
 
     /**
      * Returns a pointer to the memory region covered by the given byte
