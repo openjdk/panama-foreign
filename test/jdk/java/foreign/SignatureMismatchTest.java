@@ -84,7 +84,7 @@ public class SignatureMismatchTest {
 
     @Test(expectedExceptions = RuntimeException.class)
     void testCallbackMismatch() {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             sc.allocateCallback(Func.class, i -> i);
         }
     }

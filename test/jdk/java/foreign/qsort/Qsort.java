@@ -79,7 +79,7 @@ public class Qsort {
 
         printElements(arr);
 
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             stdlib.qsort(arr.getBasePointer().cast(NativeTypes.VOID), arr.size(), arr.getElemSize(),
                     sc.allocateCallback(new comparator()));
         }

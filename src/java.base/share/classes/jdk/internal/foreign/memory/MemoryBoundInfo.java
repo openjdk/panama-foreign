@@ -22,6 +22,7 @@
  */
 package jdk.internal.foreign.memory;
 
+import java.foreign.memory.LayoutType;
 import java.nio.ByteBuffer;
 import jdk.internal.foreign.Util;
 

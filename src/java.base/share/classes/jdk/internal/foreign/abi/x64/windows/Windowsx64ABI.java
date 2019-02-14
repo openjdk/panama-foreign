@@ -164,7 +164,7 @@ public class Windowsx64ABI implements SystemABI {
                 /*
                  * Leak memory for now
                  */
-                Scope scope = Scope.newNativeScope();
+                Scope scope = Scope.globalScope().fork();
                 Pointer<?> copy = scope.allocate(structType);
                 Pointer.copy(src, copy, structType.bytesSize());
 
@@ -188,7 +188,7 @@ public class Windowsx64ABI implements SystemABI {
             /*
              * Leak memory for now
              */
-            Scope scope = Scope.newNativeScope();
+            Scope scope = Scope.globalScope().fork();
 
             @SuppressWarnings({"rawtypes", "unchecked"})
             Pointer<?> rtmp = ((ScopeImpl) scope).allocate(type, 8);

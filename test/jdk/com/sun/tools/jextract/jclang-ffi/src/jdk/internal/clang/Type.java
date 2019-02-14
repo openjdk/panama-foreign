@@ -70,7 +70,7 @@ public class Type {
 
     // Struct/RecordType
     private long getOffsetOf0(String fieldName) {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             Pointer<Byte> cfname = s.allocateCString(fieldName);
             return LibClang.lib.clang_Type_getOffsetOf(type, cfname);
         }

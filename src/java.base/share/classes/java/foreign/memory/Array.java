@@ -36,7 +36,7 @@ import java.util.stream.Stream;
  * This interface models a native array. An array is composed by a base pointer and a size.
  * @param <X> the carrier type associated with the array element.
  */
-public interface Array<X> extends Resource {
+public interface Array<X> extends Scope.Resource {
 
     /**
      * Obtain the array size.

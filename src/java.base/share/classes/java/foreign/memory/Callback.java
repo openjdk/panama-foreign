@@ -33,7 +33,7 @@ import java.foreign.Scope;
  * interface, see {@link FunctionalInterface}.
  * @param <T> the Java type modelling this native callback type.
  */
-public interface Callback<T> extends Resource {
+public interface Callback<T> extends Scope.Resource {
 
     /**
      * Returns the entry point at which the native function can be called.

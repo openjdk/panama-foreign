@@ -41,7 +41,7 @@ public class Printf {
         stdio i = Libraries.bind(MethodHandles.lookup(), stdio.class);
 
         // Create a scope to allocate things in
-        Scope scope = Scope.newNativeScope();
+        Scope scope = Scope.globalScope().fork();
 
         // Convert the Java string to a native one
         // Basically uses Unsafe to allocate memory and copy the bytes
@@ -65,7 +65,7 @@ public class Printf {
         MethodHandle printf = MethodHandles.publicLookup().findVirtual(stdio.class, "printf", MethodType.methodType(int.class, Pointer.class, Object[].class));
 
         // Create a scope to allocate things in
-        Scope scope = Scope.newNativeScope();
+        Scope scope = Scope.globalScope().fork();
 
         // Convert the Java string to a native one
         Pointer<Byte> fmt = scope.allocateCString("Hello, %d!\n");
@@ -88,7 +88,7 @@ public class Printf {
         MethodHandle printf = Util.lookup(Util.Function.PRINTF);
 
         // Create a scope to allocate things in
-        Scope scope = Scope.newNativeScope();
+        Scope scope = Scope.globalScope().fork();
 
         Pointer<Byte> fmt = scope.allocateCString("Hello, %d!\n");
         printf.invoke(i, fmt, 4711);
@@ -103,7 +103,7 @@ public class Printf {
     public void testPrintfWithStringArg() throws Throwable {
         stdio i = Libraries.bind(MethodHandles.lookup(), stdio.class);
 
-        Scope scope = Scope.newNativeScope();
+        Scope scope = Scope.globalScope().fork();
 
         // Lookup a MH for the printf function
         MethodHandle printf = Util.lookup(Util.Function.PRINTF);

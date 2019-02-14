@@ -85,7 +85,7 @@ public class StdLibTest {
 
     @Test(dataProvider = "instants")
     void test_time(Instant instant) {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Libraries.libraryScope(stdLibHelper.stdLib).fork()) {
             StdLibHelper.Time time = s.allocateStruct(StdLibHelper.Time.class);
             time.setSeconds(instant.getEpochSecond());
             //numbers should be in the same ballpark
@@ -133,7 +133,7 @@ public class StdLibTest {
 
     @Test(dataProvider = "printfArgs")
     void test_printf(List<PrintfArg> args) {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Libraries.libraryScope(stdLibHelper.stdLib).fork()) {
             String formatArgs = args.stream()
                     .map(a -> a.format)
                     .collect(Collectors.joining(","));
@@ -152,7 +152,7 @@ public class StdLibTest {
         StdLib stdLib = Libraries.bind(MethodHandles.lookup(), StdLib.class);
 
         String strcat(String s1, String s2) {
-            try (Scope s = Scope.newNativeScope()) {
+            try (Scope s = Libraries.libraryScope(stdLib).fork()) {
                 Pointer<Byte> buf = s.allocate(NativeTypes.INT8, s1.length() + s2.length() + 1);
                 Pointer<Byte> base = buf;
                 for (char c : s1.toCharArray()) {
@@ -165,19 +165,19 @@ public class StdLibTest {
         }
 
         int strcmp(String s1, String s2) {
-            try (Scope s = Scope.newNativeScope()) {
+            try (Scope s = Libraries.libraryScope(stdLib).fork()) {
                 return stdLib.strcmp(s.allocateCString(s1), s.allocateCString(s2));
             }
         }
 
         int puts(String msg) {
-            try (Scope s = Scope.newNativeScope()) {
+            try (Scope s = Libraries.libraryScope(stdLib).fork()) {
                 return stdLib.puts(s.allocateCString(msg));
             }
         }
 
         int strlen(String msg) {
-            try (Scope s = Scope.newNativeScope()) {
+            try (Scope s = Libraries.libraryScope(stdLib).fork()) {
                 return stdLib.strlen(s.allocateCString(msg));
             }
         }
@@ -187,7 +187,7 @@ public class StdLibTest {
         }
 
         int[] qsort(int[] array) {
-            try (Scope s = Scope.newNativeScope()) {
+            try (Scope s = Libraries.libraryScope(stdLib).fork()) {
                 //allocate the array
                 Array<Integer> arr = s.allocateArray(NativeTypes.INT32, array);
                 
@@ -208,13 +208,13 @@ public class StdLibTest {
         }
 
         int printf(String format, Object... args) {
-            try (Scope sc = Scope.newNativeScope()) {
+            try (Scope sc = Libraries.libraryScope(stdLib).fork()) {
                 return stdLib.printf(sc.allocateCString(format), args);
             }
         }
 
         Pointer<Void> fopen(String filename, String mode) {
-            try (Scope s = Scope.newNativeScope()) {
+            try (Scope s = Libraries.libraryScope(stdLib).fork()) {
                 return stdLib.fopen(s.allocateCString(filename), s.allocateCString(mode));
             }
         }

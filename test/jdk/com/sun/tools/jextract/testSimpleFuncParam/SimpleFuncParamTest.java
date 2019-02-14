@@ -71,7 +71,7 @@ public class SimpleFuncParamTest extends JextractToolRunner {
         try(Loader loader = classLoader(jarPath)) {
             Class<?> cbClass = loader.loadClass("funcParam$FI1");
             Class<?> funcClass = loader.loadClass("funcParam");
-            try (Scope scope = Scope.newNativeScope()) {
+            try (Scope scope = Scope.globalScope().fork()) {
                 Lookup l = MethodHandles.lookup();
                 Callback<?> cb = scope.allocateCallback((Class) cbClass, MethodHandleProxies.asInterfaceInstance(cbClass, MH_testCB.bindTo(this)));
                 MethodHandle target = l.findVirtual(funcClass, "f", MethodType.methodType(void.class, Callback.class));

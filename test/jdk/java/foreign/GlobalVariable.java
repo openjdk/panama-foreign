@@ -204,7 +204,7 @@ public class GlobalVariable {
         assertEquals(42, i.global_struct$get().i$get());
         assertEquals(42, i.global_struct$ptr().get().i$get());
 
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             globvar.MyStruct s = scope.allocateStruct(globvar.MyStruct.class);
 
             s.i$set(47);

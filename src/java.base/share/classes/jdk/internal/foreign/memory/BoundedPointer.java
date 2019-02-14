@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.security.AccessControlException;
 import java.util.Objects;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.Util;
 import jdk.internal.misc.Unsafe;
 
@@ -197,7 +198,7 @@ public class BoundedPointer<X> implements Pointer<X> {
 
     public void checkAlive() {
         if (scope != null) {
-            scope.checkAlive();
+            ((ScopeImpl)scope).checkAlive();
         }
     }
 
@@ -227,24 +228,22 @@ public class BoundedPointer<X> implements Pointer<X> {
         boundInfo.checkRange(offset, length);
     }
 
-    public static <Z> BoundedPointer<Z> createNativePointer(LayoutType<Z> type, long offset) {
-        return new BoundedPointer<>(type, null, AccessMode.READ_WRITE, MemoryBoundInfo.EVERYTHING, offset);
-    }
-
     public static BoundedPointer<?> createNativeVoidPointer(long offset) {
-        return createNativePointer(NativeTypes.VOID, offset);
+        return createNativeVoidPointer(ScopeImpl.UNCHECKED, offset);
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset) {
-        return createNativeVoidPointer(scope, offset, AccessMode.READ);
+        return new BoundedPointer<>(NativeTypes.VOID, scope, AccessMode.READ, MemoryBoundInfo.EVERYTHING, offset);
     }
 
-    public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset, AccessMode mode) {
-        return new BoundedPointer<>(NativeTypes.VOID, scope, mode, MemoryBoundInfo.EVERYTHING, offset);
+    public static <Z> BoundedPointer<Z> createRegisterPointer(LayoutType<Z> type, long offset, boolean isReturn) {
+        return new BoundedPointer<>(type, ScopeImpl.UNCHECKED,
+                isReturn ? AccessMode.WRITE : AccessMode.READ,
+                MemoryBoundInfo.EVERYTHING, offset);
     }
 
     public static <Z> BoundedPointer<Z> fromLongArray(LayoutType<Z> type, long[] values) {
-        return new BoundedPointer<>(type, null, AccessMode.READ_WRITE,
+        return new BoundedPointer<>(type, ScopeImpl.UNCHECKED, AccessMode.READ_WRITE,
                         MemoryBoundInfo.ofHeap(values, Util.LONG_ARRAY_BASE, values.length * Util.LONG_ARRAY_SCALE));
     }
 

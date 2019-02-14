@@ -31,7 +31,7 @@ public class NativeIntArray implements Iterable<Integer> {
     private static final int ELEM_SIZE = 4;
 
     private final int nelems;
-    private final Scope scope = Scope.newNativeScope();
+    private final Scope scope = Scope.globalScope().fork();
     private final Pointer<Integer> base;
 
     public NativeIntArray(int nelems) {

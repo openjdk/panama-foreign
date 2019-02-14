@@ -47,7 +47,7 @@ public class Index {
     public TranslationUnit parseTU(String file, String... args) {
         final clang.Index lclang = LibClang.lib;
 
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             Pointer<Byte> src = scope.allocateCString(file);
             Pointer<Pointer<Byte>> cargs = toCStrArray(scope, args);
             Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
@@ -60,7 +60,7 @@ public class Index {
     public Cursor parse(String file, Consumer<Diagnostic> eh, boolean detailedPreprocessorRecord, String... args) {
         final clang.Index lclang = LibClang.lib;
 
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             Pointer<Byte> src = scope.allocateCString(file);
             Pointer<Pointer<Byte>> cargs = toCStrArray(scope, args);
             Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(

@@ -44,7 +44,7 @@ public class EmptyLayoutNameTest {
     }
 
     public static void main(String[] args) {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             EmptyLayoutName e = s.allocateStruct(EmptyLayoutName.class);
             throw new AssertionError("should have thrown exception");
         } catch (RuntimeException re) {

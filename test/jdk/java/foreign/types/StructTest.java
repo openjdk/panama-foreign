@@ -102,7 +102,7 @@ public class StructTest {
             for (int i = 0; i < ia.length; i++, counter += 4) {
                 ia[i] = buildInt(counter);
             }
-            try (Scope sc = Scope.newNativeScope()) {
+            try (Scope sc = Scope.globalScope().fork()) {
                 s.a$set(sc.allocateArray(NativeTypes.INT32, ia));
             }
         }
@@ -140,7 +140,7 @@ public class StructTest {
     }
 
     public void test() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             MyStruct s = scope.allocateStruct(MyStruct.class);
             long size = TOTAL_SIZE;
             Pointer<Byte> p = scope.allocate(NativeTypes.UINT8, size);

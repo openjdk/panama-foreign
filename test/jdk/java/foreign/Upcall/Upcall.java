@@ -74,7 +74,7 @@ public class Upcall {
     public void test() {
         upcall i = Libraries.bind(upcall.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
 
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             visitorImpl v = new visitorImpl();
 
             i.do_upcall(sc.allocateCallback(v), MAGIC_INTEGER);

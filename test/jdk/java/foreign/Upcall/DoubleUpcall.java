@@ -69,7 +69,7 @@ public class DoubleUpcall {
 
     public void test() {
         upcall i = Libraries.bind(upcall.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             upcall.cb v = new cbImpl();
             double d = i.double_upcall(sc.allocateCallback(v), 1.23, 1.11);
 

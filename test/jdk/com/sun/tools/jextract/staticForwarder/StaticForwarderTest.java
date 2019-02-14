@@ -23,6 +23,8 @@
 
 import org.testng.annotations.Test;
 
+import java.foreign.Scope;
+
 import static org.testng.Assert.assertEquals;
 import static test.jextract.utils.utils_h.*;
 
@@ -35,16 +37,18 @@ import static test.jextract.utils.utils_h.*;
 public class StaticForwarderTest {
     @Test
     public void test() {
-        assertEquals(square(6), 36);
-        assertEquals(R, 10);
-        assertEquals(G, R + 1);
-        assertEquals(B, G + 1);
-        assertEquals(abc$get(), 53);
-        assertEquals(square(abc$get()), 53*53);
-        abc$set(25);
-        assertEquals(abc$get(), 25);
-        assertEquals(THE_ANSWER, 42);
-        assertEquals(square(THE_ANSWER), 42*42);
+        try (Scope sc = scope().fork()) {
+            assertEquals(square(6), 36);
+            assertEquals(R, 10);
+            assertEquals(G, R + 1);
+            assertEquals(B, G + 1);
+            assertEquals(abc$get(), 53);
+            assertEquals(square(abc$get()), 53*53);
+            abc$set(25);
+            assertEquals(abc$get(), 25);
+            assertEquals(THE_ANSWER, 42);
+            assertEquals(square(THE_ANSWER), 42*42);
+        }
     }
 
     @Test

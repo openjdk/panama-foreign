@@ -68,7 +68,7 @@ public class ComplexTest {
 
     @Test
     public void testDoubleComplex() {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             // check Euler's identity
             DoubleComplex dc = s.allocateStruct(DoubleComplex.class);
             dc.real$set(0.0);
@@ -101,7 +101,7 @@ public class ComplexTest {
 
     @Test
     public void testFloatComplex() {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             // check Euler's identity
             FloatComplex fc = s.allocateStruct(FloatComplex.class);
             fc.real$set(0.0f);
@@ -134,7 +134,7 @@ public class ComplexTest {
 
     @Test
     public void testLongDoubleComplex() {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             // check Euler's identity
             LongDoubleComplex ldc = s.allocateStruct(LongDoubleComplex.class);
             ldc.real$set(0.0);

@@ -137,7 +137,7 @@ public class StructUpcall {
     public void test() {
         Index i = Libraries.bind(Index.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
 
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             Index.MyStruct s = scope.allocateStruct(Index.MyStruct.class);
 
             Pointer<Byte> p1 = scope.allocate(NativeTypes.INT8);

@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -128,7 +129,7 @@ public final class LibrariesHelper {
             assert c.isAnnotationPresent(NativeHeader.class);
             assert curSymLookup.get() != null;
             String implName = generateImplName(c);
-            Scope libScope = Scope.newNativeScope();
+            Scope libScope = ScopeImpl.makeLibraryScope();
             BinderClassGenerator generator = new HeaderImplGenerator(c, implName, c, curSymLookup.get(), libScope);
             Class<?> lib = generateImpl(c, generator);
             cleaner.register(lib, libScope::close);
@@ -156,6 +157,19 @@ public final class LibrariesHelper {
             return (Class<? extends T>)HEADER_IMPLEMENTATIONS.get(c);
         } finally {
             curSymLookup.remove();
+        }
+    }
+
+    public static Scope libraryScope(Object o) {
+        Objects.requireNonNull(o);
+        Class<?> c = o.getClass().getInterfaces()[0];
+        if (!HEADER_IMPLEMENTATIONS.get(c).equals(o.getClass())) {
+            throw new IllegalArgumentException("Not a library instance");
+        }
+        try {
+            return (Scope) o.getClass().getDeclaredMethod("scope").invoke(null);
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException(ex);
         }
     }
 
