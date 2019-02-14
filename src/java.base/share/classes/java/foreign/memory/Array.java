@@ -27,7 +27,6 @@ package java.foreign.memory;
 
 import jdk.internal.foreign.memory.BoundedArray;
 
-import java.foreign.Scope;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
@@ -50,10 +49,18 @@ public interface Array<X> {
     Pointer<X> elementPointer();
 
     /**
-     * Retrieves the {@code LayoutType} associated with the element type of this array.
+     * Retrieves the {@code LayoutType} associated with the element type of this array. This is effectively the same as:
+     * <p>
+     *     <code>
+     *         array.elementPointer().type();
+     *     </code>
+     * </p>
+     *
      * @return the array element type's {@code LayoutType}.
      */
-    LayoutType<X> type();
+    default LayoutType<X> elementType() {
+        return elementPointer().type();
+    }
 
     /**
      * Returns a stream of pointers starting at the start of this array and incrementing the pointer by 1 until
@@ -80,7 +87,7 @@ public interface Array<X> {
      * @return the length of the memory region covered by this array
      */
     default long bytesSize() {
-        return length() * type().bytesSize();
+        return length() * elementType().bytesSize();
     }
 
     /**
@@ -113,7 +120,7 @@ public interface Array<X> {
     @SuppressWarnings("unchecked")
     default X get(long index) {
         try {
-            return (X)type().getter().invoke(elementPointer().offset(index));
+            return (X)elementType().getter().invoke(elementPointer().offset(index));
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -131,7 +138,7 @@ public interface Array<X> {
      */
     default void set(long index, X x) {
         try {
-            type().setter().invoke(elementPointer().offset(index), x);
+            elementType().setter().invoke(elementPointer().offset(index), x);
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
@@ -162,7 +169,7 @@ public interface Array<X> {
      * @throws IllegalArgumentException if the two arrays have different layouts.
      */
     static <Z> void assign(Array<Z> src, Array<Z> dst) {
-        if (!src.elementPointer().type().layout().equals(dst.type().layout()) ||
+        if (!src.elementType().layout().equals(dst.elementType().layout()) ||
                 src.length() != dst.length()) {
             throw new IllegalArgumentException("Arrays have different layouts!");
         }

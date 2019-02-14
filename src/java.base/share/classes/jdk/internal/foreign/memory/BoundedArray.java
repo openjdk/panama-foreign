@@ -52,18 +52,13 @@ public class BoundedArray<X> implements Array<X> {
     }
 
     @Override
-    public LayoutType<X> type() {
-        return pointer.type();
-    }
-
-    @Override
     public <Z> Array<Z> cast(LayoutType<Z> type, long size) {
         return new BoundedArray<>(pointer.cast(type), size);
     }
 
     public static void copyFrom(Array<?> nativeArray, Object javaArray, int size) {
         MethodHandle getter = MethodHandles.arrayElementGetter(javaArray.getClass());
-        MethodHandle copier = MethodHandles.collectArguments(nativeArray.type().setter(), 1, getter);
+        MethodHandle copier = MethodHandles.collectArguments(nativeArray.elementType().setter(), 1, getter);
         for (int i = 0 ; i < size ; i++) {
             try {
                 copier.invoke(nativeArray.elementPointer().offset(i), javaArray, i);
@@ -75,7 +70,7 @@ public class BoundedArray<X> implements Array<X> {
 
     public static void copyTo(Array<?> nativeArray, Object javaArray, int size) {
         MethodHandle setter = MethodHandles.arrayElementSetter(javaArray.getClass());
-        MethodHandle copier = MethodHandles.filterArguments(setter, 2, nativeArray.type().getter());
+        MethodHandle copier = MethodHandles.filterArguments(setter, 2, nativeArray.elementType().getter());
         for (int i = 0 ; i < size ; i++) {
             try {
                 copier.invoke(javaArray, i, nativeArray.elementPointer().offset(i));
