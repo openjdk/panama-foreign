@@ -123,7 +123,7 @@ public class ResourceStructTest {
             resources recs = scope.allocateStruct(resources.class);
             recs.cb$set(scope.allocateCallback(() -> {}));
             Callback<FI1> cb = recs.cb$get();
-            assertEquals(cb.scope(), scope);
+            assertEquals(cb.entryPoint().scope(), scope);
         }
     }
 
@@ -133,7 +133,7 @@ public class ResourceStructTest {
             resources recs = scope.allocateStruct(resources.class);
             recs.arr$set(scope.allocateArray(NativeTypes.INT32, 3));
             Array<Integer> arr = recs.arr$get();
-            assertEquals(arr.scope(), scope);
+            assertEquals(arr.elementPointer().scope(), scope);
         }
     }
 
@@ -143,7 +143,7 @@ public class ResourceStructTest {
             resources recs = scope.allocateStruct(resources.class);
             recs.n$set(scope.allocateStruct(nested.class));
             nested str = recs.n$get();
-            assertEquals(str.scope(), scope);
+            assertEquals(str.ptr().scope(), scope);
         }
     }
 

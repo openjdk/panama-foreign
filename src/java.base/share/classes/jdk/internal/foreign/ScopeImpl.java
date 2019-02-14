@@ -314,8 +314,8 @@ public final class ScopeImpl implements Scope {
         parent.descendants.remove(this);
     }
 
-    public static void checkAncestor(Resource r1, Resource r2) {
-        if (!isAncestor(r1.scope(), r2.scope())) {
+    public static void checkAncestor(Pointer<?> p1, Pointer<?> p2) {
+        if (!isAncestor(p1.scope(), p2.scope())) {
             throw new RuntimeException("Access denied");
         }
     }

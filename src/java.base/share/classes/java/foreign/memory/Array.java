@@ -25,7 +25,6 @@
 
 package java.foreign.memory;
 
-import jdk.internal.foreign.Util;
 import jdk.internal.foreign.memory.BoundedArray;
 
 import java.foreign.Scope;
@@ -36,7 +35,7 @@ import java.util.stream.Stream;
  * This interface models a native array. An array is composed by a base pointer and a size.
  * @param <X> the carrier type associated with the array element.
  */
-public interface Array<X> extends Scope.Resource {
+public interface Array<X> {
 
     /**
      * Obtain the array size.
@@ -82,11 +81,6 @@ public interface Array<X> extends Scope.Resource {
      */
     default long bytesSize() {
         return length() * type().bytesSize();
-    }
-
-    @Override
-    default Scope scope() {
-        return elementPointer().scope();
     }
 
     /**
