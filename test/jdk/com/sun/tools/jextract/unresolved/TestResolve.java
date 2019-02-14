@@ -40,7 +40,7 @@ public class TestResolve {
 
     @Test
     public void testResolve() {
-        try(Scope sc = Scope.newNativeScope()) {
+        try(Scope sc = Scope.globalScope().fork()) {
             Foo foo = sc.allocateStruct(Foo.class);
             Bar bar = sc.allocateStruct(Bar.class);
             bar.i$set(10);

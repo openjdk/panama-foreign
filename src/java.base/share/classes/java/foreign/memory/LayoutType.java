@@ -191,7 +191,7 @@ public interface LayoutType<X> {
     }
 
     /**
-     * Create a {@code LayoutType} from a {@link Struct} interface carrier.
+     * Create a {@codPoine LayoutType} from a {@link Struct} interface carrier.
      * @param <T> the struct type.
      * @param carrier the struct carrier.
      * @return the {@code LayoutType}.

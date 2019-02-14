@@ -76,7 +76,7 @@ public class DeepAssignTest {
 
     @Test
     public void testAssignPairPair() {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             Pair p1 = sc.allocateStruct(Pair.class);
             p1.x$set(1);
             p1.y$set(2);
@@ -89,7 +89,7 @@ public class DeepAssignTest {
 
     @Test
     public void testAssignTripleTriple() {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             Triple t1 = sc.allocateStruct(Triple.class);
             t1.x$set(1);
             t1.y$set(2);
@@ -104,7 +104,7 @@ public class DeepAssignTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testAssignTriplePair() {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             Triple t1 = sc.allocateStruct(Triple.class);
             t1.x$set(1);
             t1.y$set(2);
@@ -117,7 +117,7 @@ public class DeepAssignTest {
 
     @Test
     public void testAssignArraySameSize() {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             Array<Integer> a1 = sc.allocateArray(NativeTypes.INT32, new int[] { 1, 2, 3});
             Array<Integer> a2 = sc.allocateArray(NativeTypes.INT32, 3);
             Array.assign(a1, a2);
@@ -127,7 +127,7 @@ public class DeepAssignTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testAssignArrayDifferentSize() {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             Array<Integer> a1 = sc.allocateArray(NativeTypes.INT32, new int[] { 1, 2, 3});
             Array<Integer> a2 = sc.allocateArray(NativeTypes.INT32, 5);
             Array.assign(a1, a2);

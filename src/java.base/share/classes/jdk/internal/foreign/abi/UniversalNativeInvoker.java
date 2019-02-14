@@ -88,7 +88,7 @@ public abstract class UniversalNativeInvoker {
                 BoundedPointer.fromLongArray(NativeTypes.UINT64, values) :
                 Pointer.nullPointer();
 
-        for (int i = 0 ; i < args.length ; i++) {
+        for (int i = 0; i < args.length; i++) {
             Object arg = args[i];
             unboxValue(arg, nmt.parameterType(i), b -> argsPtr.offset(callingSequence.argumentStorageOffset(b)),
                     callingSequence.getArgumentBindings(i));
@@ -99,7 +99,7 @@ public abstract class UniversalNativeInvoker {
         if (callingSequence.returnsInMemory()) {
             // FIXME (STRUCT-LIFECYCLE):
             // Leak the allocated structs for now until the life cycle has been figured out
-            Scope scope = Scope.newNativeScope();
+            Scope scope = Scope.globalScope().fork();
             retPtr = ((ScopeImpl)scope).allocate(nmt.returnType(), 8);
             unboxValue(retPtr, NativeTypes.UINT64.pointer(), b -> argsPtr.offset(callingSequence.argumentStorageOffset(b)),
                     callingSequence.getReturnBindings());

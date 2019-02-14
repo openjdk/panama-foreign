@@ -38,7 +38,7 @@ import clang.Index.CXTranslationUnitImpl;
 
 public class TranslationUnit {
     private final Pointer<CXTranslationUnitImpl> tu;
-    private final Scope scope = Scope.newNativeScope();
+    private final Scope scope = Scope.globalScope().fork();
 
     TranslationUnit(Pointer<CXTranslationUnitImpl> tu) {
         this.tu = tu;

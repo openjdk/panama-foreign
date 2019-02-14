@@ -37,7 +37,7 @@ import java.util.StringJoiner;
  * layout.
  * @param <T> the Java type modelling this native type.
  */
-public interface Struct<T extends Struct<T>> extends Resource {
+public interface Struct<T extends Struct<T>> extends Scope.Resource {
 
     /**
      * Return a pointer to the managed struct.

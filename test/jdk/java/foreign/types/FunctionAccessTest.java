@@ -49,7 +49,7 @@ public class FunctionAccessTest {
     @Test
     public void testFunctionField() {
         Callback<NativeToIntFunction> funcOutsideScope = null;
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             MyStruct m = s.allocateStruct(MyStruct.class);
             NativeToIntFunction f = () -> 42;
             m.setFunction(s.allocateCallback(f));
@@ -76,16 +76,6 @@ public class FunctionAccessTest {
          }
     }
 
-    @Test
-    public void testHeapCallback() {
-        try (Scope s = Scope.newHeapScope()) {
-            Callback<NativeToIntFunction> c = s.allocateCallback(() -> 42);
-            fail("exception not thrown!");
-        } catch (UnsupportedOperationException ex) {
-            //ok
-        }
-    }
-
     @NativeStruct("[" +
             "   u64(function):()i32" +
             "](MyStruct)")
@@ -105,12 +95,11 @@ public class FunctionAccessTest {
     public void testFunctionGlobal() {
         Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "GlobalFunc");
         globalFunc gf = Libraries.bind(globalFunc.class, lib);
-        try (Scope sc = Scope.newNativeScope()) {
-            assertEquals(gf.fp().asFunction().f(8), 64);
-            gf.setFp(sc.allocateCallback(x -> x / 2));
-            System.gc();
-            assertEquals(gf.fp().asFunction().f(8), 4);
-        }
+        Scope sc = Libraries.libraryScope(gf);
+        assertEquals(gf.fp().asFunction().f(8), 64);
+        gf.setFp(sc.allocateCallback(x -> x / 2));
+        System.gc();
+        assertEquals(gf.fp().asFunction().f(8), 4);
     }
 
     @NativeHeader(globals = "u64(fp):(i32)i32")

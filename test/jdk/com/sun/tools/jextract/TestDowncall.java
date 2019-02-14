@@ -71,7 +71,7 @@ public class TestDowncall extends JextractToolRunner {
         @Test(dataProvider = "getArgs")
         public void testDownCall(String mName, @NoInjection Method m)  throws ReflectiveOperationException {
             System.err.print("Calling " + mName + "...");
-            try(Scope scope = Scope.newNativeScope()) {
+            try(Scope scope = Scope.globalScope().fork()) {
                 List<Consumer<Object>> checks = new ArrayList<>();
                 Object res = m.invoke(lib, makeArgs(scope, m, checks));
                 if (m.getReturnType() != void.class) {

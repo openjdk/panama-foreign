@@ -25,6 +25,7 @@
 
 package jdk.internal.foreign.memory;
 
+import java.foreign.Scope;
 import java.foreign.layout.Sequence;
 import java.foreign.layout.Value;
 import java.foreign.layout.Value.Kind;
@@ -38,6 +39,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.function.Supplier;
 import jdk.internal.foreign.LibrariesHelper;
+import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.Util;
 
 /**
@@ -437,11 +439,13 @@ public final class References {
             LayoutType<?> pointeeType = ((LayoutTypeImpl<?>)pointer.type()).pointeeType();
             Pointer<?> rp = addr == 0 ?
                     Pointer.nullPointer() :
-                    BoundedPointer.createNativePointer(pointeeType, addr);
+                    new BoundedPointer<>(pointeeType, pointer.scope(), Pointer.AccessMode.READ_WRITE,
+                            MemoryBoundInfo.EVERYTHING, addr);
             return rp;
         }
 
         static void set(Pointer<?> pointer, Pointer<?> pointerValue) {
+            ScopeImpl.checkAncestor(pointerValue, pointer);
             try {
                 ((BoundedPointer<?>)pointer).putBits(pointerValue.addr());
             } catch (IllegalAccessException iae) {
@@ -580,6 +584,7 @@ public final class References {
         }
 
         static void set(Pointer<?> pointer, Callback<?> func) {
+            ScopeImpl.checkAncestor(func, pointer);
             try {
                 ((BoundedPointer<?>)pointer).putBits(func.entryPoint().addr());
             } catch (IllegalAccessException iae) {

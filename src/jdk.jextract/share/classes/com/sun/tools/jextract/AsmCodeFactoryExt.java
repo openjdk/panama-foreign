@@ -23,8 +23,10 @@
 package com.sun.tools.jextract;
 
 import java.foreign.Libraries;
+import java.foreign.Scope;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +48,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_VARARGS;
 import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
 import static jdk.internal.org.objectweb.asm.Opcodes.GETSTATIC;
@@ -80,6 +83,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
         this.cw.visit(V1_8, ACC_PUBLIC | ACC_FINAL, getClassName(),
             null, "java/lang/Object", null);
         staticsInitializer();
+        scopeAccessor();
     }
 
     @Override
@@ -231,6 +235,22 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
 
         mv.visitInsn(RETURN);
         mv.visitMaxs(0, 0);
+        mv.visitEnd();
+    }
+
+    private void scopeAccessor() {
+        String scopeAccessorDesc = MethodType.methodType(Scope.class).descriptorString();
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "scope", scopeAccessorDesc, null, null);
+        mv.visitCode();
+
+        // load library interface (static) field
+        mv.visitFieldInsn(GETSTATIC, getClassName(),
+            STATICS_LIBRARY_FIELD_NAME, headerClassNameDesc);
+
+        String libraryScopeDesc = MethodType.methodType(Scope.class, Object.class).descriptorString();
+        mv.visitMethodInsn(INVOKESTATIC, Type.getInternalName(Libraries.class), "libraryScope", libraryScopeDesc, false);
+        mv.visitInsn(ARETURN);
+        mv.visitMaxs(1,1);
         mv.visitEnd();
     }
 

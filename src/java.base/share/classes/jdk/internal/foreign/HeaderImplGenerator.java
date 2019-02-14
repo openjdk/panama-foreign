@@ -42,12 +42,25 @@ import java.util.stream.Stream;
 import jdk.internal.foreign.abi.SystemABI;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
+import jdk.internal.foreign.memory.MemoryBoundInfo;
+import jdk.internal.org.objectweb.asm.FieldVisitor;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
+import jdk.internal.org.objectweb.asm.Type;
 
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ALOAD;
+import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.CHECKCAST;
+import static jdk.internal.org.objectweb.asm.Opcodes.GETFIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static jdk.internal.org.objectweb.asm.Opcodes.PUTFIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.SWAP;
 
 class HeaderImplGenerator extends BinderClassGenerator {
 
@@ -70,12 +83,28 @@ class HeaderImplGenerator extends BinderClassGenerator {
     }
 
     @Override
+    protected void generateMembers(BinderClassWriter cw) {
+        generateScopeAccessor(cw);
+        super.generateMembers(cw);
+    }
+
+    @Override
     protected void generateConstructor(BinderClassWriter cw) {
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
         mv.visitCode();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
         mv.visitInsn(RETURN);
+        mv.visitMaxs(1,1);
+        mv.visitEnd();
+    }
+
+    private void generateScopeAccessor(BinderClassWriter cw) {
+        MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "scope", MethodType.methodType(Scope.class).descriptorString(), null, null);
+        mv.visitCode();
+        mv.visitLdcInsn(cw.makeConstantPoolPatch(libScope));
+        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Scope.class));
+        mv.visitInsn(ARETURN);
         mv.visitMaxs(1,1);
         mv.visitEnd();
     }
@@ -115,9 +144,8 @@ class HeaderImplGenerator extends BinderClassGenerator {
 
         try {
             String name = info.name;
-            p = BoundedPointer.createNativeVoidPointer(libScope,
-                    lookup.lookup(name.isEmpty() ? method.getName() : name).getAddress().addr(), AccessMode.READ_WRITE).
-                    cast(lt).limit(1);
+            long addr = lookup.lookup(name.isEmpty() ? method.getName() : name).getAddress().addr();
+            p = new BoundedPointer<>(lt, libScope, AccessMode.READ_WRITE, MemoryBoundInfo.ofNative(addr, lt.bytesSize()));
         } catch (IllegalAccessException | NoSuchMethodException e) {
             throw new IllegalStateException(e);
         }

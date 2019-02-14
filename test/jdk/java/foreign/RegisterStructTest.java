@@ -62,7 +62,7 @@ public class RegisterStructTest {
 
     public static void main(String[] args) {
         RegisterStruct l = Libraries.bind(MethodHandles.lookup(), RegisterStruct.class);
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             RegisterStruct.RegStruct rs = s.allocateStruct(RegisterStruct.RegStruct.class);
             rs.c$set((byte)65);
             rs.i$set(100);

@@ -75,7 +75,7 @@ public class TestUpcall extends JextractToolRunner {
         public void testUpCall(String mName, @NoInjection Method m)  throws Throwable {
             try {
                 System.err.print("Calling " + mName + "...");
-                try (Scope scope = Scope.newNativeScope()) {
+                try (Scope scope = Scope.globalScope().fork()) {
                     List<Consumer<Object>> checks = new ArrayList<>();
                     Object res = m.invoke(lib, makeArgs(scope, m, checks));
                     if (m.getReturnType() != void.class) {
@@ -103,7 +103,6 @@ public class TestUpcall extends JextractToolRunner {
     public Object[] getTests() throws ReflectiveOperationException {
         List<UpcallTest> res = new ArrayList<>();
         for (int i = 0 ; i < MAX_CODE ; i++) {
-            System.err.println("Running jextract ... --exclude-symbols " + filterFor(i) + " ...");
             Path clzPath = getOutputFilePath("libTestUpcall" + i + ".jar");
             run("-o", clzPath.toString(),
                     "--exclude-symbols", filterFor(i),

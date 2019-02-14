@@ -57,7 +57,7 @@ public class PaddedStructTest {
 
     public static void main(String[] args) {
         PaddedStruct ps = Libraries.bind(MethodHandles.lookup(), PaddedStruct.class);
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             PaddedStruct.MyStruct ms = s.allocateStruct(PaddedStruct.MyStruct.class);
             ms.c$set((byte)65);
             ms.i$set(100);

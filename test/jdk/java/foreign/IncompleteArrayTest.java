@@ -73,7 +73,7 @@ public class IncompleteArrayTest {
 
     @Test
     public void incompleteArrayTest() {
-        try(Scope scope = Scope.newNativeScope()) {
+        try(Scope scope = Libraries.libraryScope(lib).fork()) {
             Pointer<IncompleteArray.Foo> fooPtr = scope.allocate(LayoutType.ofStruct(IncompleteArray.Foo.class));
             Pointer<Pointer<?>> retP = lib.GetArrayData(fooPtr);
             assertTrue(retP.isNull());

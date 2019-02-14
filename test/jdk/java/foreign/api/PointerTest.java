@@ -40,7 +40,7 @@ public class PointerTest {
 
     @Test
     public void testReadOnly() {
-        try(Scope scope = Scope.newNativeScope()) {
+        try(Scope scope = Scope.globalScope().fork()) {
             Pointer<Integer> p = scope.allocate(NativeTypes.INT32);
             p.set(10);
             assertEquals(p.isAccessibleFor(AccessMode.READ_WRITE), true);
@@ -55,7 +55,7 @@ public class PointerTest {
 
     @Test(expectedExceptions = AccessControlException.class)
     public void testIllegalReadOnly() {
-        try(Scope scope = Scope.newNativeScope()) {
+        try(Scope scope = Scope.globalScope().fork()) {
             Pointer<Integer> p = scope.allocate(NativeTypes.INT32);
             p = p.asWriteOnly();
             p.asReadOnly(); // throws
@@ -64,7 +64,7 @@ public class PointerTest {
 
     @Test
     public void testWriteOnly() {
-        try(Scope scope = Scope.newNativeScope()) {
+        try(Scope scope = Scope.globalScope().fork()) {
             Pointer<Integer> p = scope.allocate(NativeTypes.INT32);
             p.set(10);
             assertEquals(p.isAccessibleFor(AccessMode.READ_WRITE), true);
@@ -79,7 +79,7 @@ public class PointerTest {
 
     @Test(expectedExceptions = AccessControlException.class)
     public void testIllegalWriteOnly() {
-        try(Scope scope = Scope.newNativeScope()) {
+        try(Scope scope = Scope.globalScope().fork()) {
             Pointer<Integer> p = scope.allocate(NativeTypes.INT32);
             p = p.asReadOnly();
             p.asWriteOnly(); // throws

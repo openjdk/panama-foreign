@@ -98,7 +98,7 @@ public class LongDoubleTest {
 
     @Test(dataProvider = "numbers")
     public void testCallback(double d) {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             assertEquals(lib.f(d, sc.allocateCallback(a -> a)), d, TOLERANCE);
         }
     }

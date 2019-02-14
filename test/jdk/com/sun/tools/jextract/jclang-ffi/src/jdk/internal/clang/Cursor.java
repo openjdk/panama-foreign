@@ -139,7 +139,7 @@ public class Cursor {
     public Stream<Cursor> children() {
         final ArrayList<Cursor> ar = new ArrayList<>();
         // FIXME: need a way to pass ar down as user data d
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             LibClang.lib.clang_visitChildren(cursor, sc.allocateCallback((c, p, d) -> {
                 ar.add(new Cursor(c));
                 return LibClang.lib.CXChildVisit_Continue();

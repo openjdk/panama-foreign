@@ -184,7 +184,7 @@ public class SysVx64ABI implements SystemABI {
             /*
              * Leak memory for now
              */
-            Scope scope = Scope.newNativeScope();
+            Scope scope = Scope.globalScope().fork();
 
             if (type.bytesSize() == 0) {
                 //empty struct!

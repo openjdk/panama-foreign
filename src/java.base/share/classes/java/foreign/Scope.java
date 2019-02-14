@@ -34,15 +34,19 @@ import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 
 /**
- * A scope models a block of code in a native language. It provides primitive for memory allocation; when the scope
- * is closed (see {@link AutoCloseable#close()}, the pointers associated with this scope can no longer be used.
+ * A scope models a unit of resource lifecycle management. It provides primitives for memory allocation, as well
+ * as a basic ownership model for allocating resources (e.g. pointers). Each scope has a parent scope (except the
+ * global scope, which acts as root of the ownership model).
+ * <p>
+*  A scope supports two terminal operation: first, a scope
+ * can be closed (see {@link Scope#close()}), which implies that all resources associated with that scope can be reclaimed; secondly,
+ * a scope can be merged into the parent scope (see {@link Scope#merge()}). After a terminal operation, a scope will no longer be available
+ * for allocation.
+ * <p>
+ * Scope supports the {@link AutoCloseable} interface which enables thread-confided scopes to be used in conjunction
+ * with the try-with-resources construct.
  */
 public interface Scope extends AutoCloseable {
-
-    /**
-     * Is this scope alive?
-     */
-    void checkAlive();
 
     /**
      * Allocate region of memory with given {@code LayoutType}.
@@ -68,7 +72,7 @@ public interface Scope extends AutoCloseable {
      *         allocateArray(type, size).elementPointer()
      *     </code>
      * </p>
-     * @param <X> the carrier type associated with the element type of the native array to be allocated.
+     * @param <X> the carrier type associated with the element type of the array to be allocated.
      * @param elementType the {@code LayoutType} of the array element.
      * @param size the array size.
      * @return a pointer to the first element of the array.
@@ -84,7 +88,7 @@ public interface Scope extends AutoCloseable {
      *         allocate(elementType.array(size)).withLimit()
      *     </code>
      * </p>
-     * @param <X> the carrier type associated with the element type of the native array to be allocated.
+     * @param <X> the carrier type associated with the element type of the array to be allocated.
      * @param elementType the {@code LayoutType} of the array element.
      * @param size the array size.
      * @return an array to the first element of the array.
@@ -110,7 +114,7 @@ public interface Scope extends AutoCloseable {
     /**
      * Allocate region of memory as an array of elements with given {@code LayoutType}. The array is initialized
      * with the contents of a given Java array.
-     * @param <X> the carrier type associated with the element type of the native array to be allocated.
+     * @param <X> the carrier type associated with the element type of the array to be allocated.
      * @param elementType the {@code LayoutType} of the array element.
      * @param init the (Java) array initializer.
      * @return an array to the first element of the array.
@@ -126,8 +130,8 @@ public interface Scope extends AutoCloseable {
     }
 
     /**
-     * Allocate region of memory with given native data.
-     * @param carrier the carrier type modelling the native data.
+     * Allocate region of memory with given data.
+     * @param carrier the carrier type modelling the data.
      * @param <T> the carrier type.
      * @return a new struct instance (of type {@link Struct}).
      * @see Struct
@@ -135,7 +139,7 @@ public interface Scope extends AutoCloseable {
     <T extends Struct<T>> T allocateStruct(Class<T> carrier);
 
     /**
-     * Allocate a native function pointer backed by given Java functional interface instance.
+     * Allocate a function pointer backed by given Java functional interface instance.
      * @param <T> the carrier type.
      * @param funcIntfClass a functional interface class annotated with the {@link NativeCallback} annotation.
      * @param funcIntfInstance an instance of a functional interface.
@@ -145,7 +149,7 @@ public interface Scope extends AutoCloseable {
     <T> Callback<T> allocateCallback(Class<T> funcIntfClass, T funcIntfInstance) throws IllegalArgumentException;
 
     /**
-     * Allocate a native function pointer backed by given Java functional interface instance. This method is equivalent to:
+     * Allocate a function pointer backed by given Java functional interface instance. This method is equivalent to:
      * <p>
      *     <code>
      *         allocateCallback(inferClass(funcIntfInstance), funcIntfInstance)
@@ -171,30 +175,53 @@ public interface Scope extends AutoCloseable {
         return allocateArray(NativeTypes.UINT8, str.concat("\0").getBytes()).elementPointer();
     }
 
+    /**
+     * The parent of this scope.
+     * @return the parent of this scope.
+     */
+    Scope parent();
+
+    /**
+     * Closes this scope. All associated resources will be freed as a result of this operation.
+     * Any existing resources (e.g. pointers) associated with this scope will no longer be accessible.
+     *  As this is a terminal operation, this scope will no longer be available for further allocation.
+     */
     @Override
     void close();
 
     /**
-     * Create a scope backed by off-heap memory.
-     * @return the new native scope.
+     * Copies all resources of this scope to the parent scope. As this is a terminal operation, this scope will no
+     * longer be available for further allocation.
      */
-    static Scope newNativeScope() {
+    void merge();
+
+    /**
+     * Create a scope whose parent is the current scope.
+     * @return the new scope.
+     */
+    Scope fork();
+
+    /**
+     * Retrieves the global scope associated with this VM.
+     * @return the global scope.
+     */
+    static Scope globalScope() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            security.checkPermission(new RuntimePermission("java.foreign.NativeScope", "create"));
+            security.checkPermission(new RuntimePermission("java.foreign.Scope", "globalScope"));
         }
-        return new ScopeImpl.NativeScope();
+        return ScopeImpl.GLOBAL;
     }
 
     /**
-     * Create a scope backed by on-heap memory.
-     * @return the new native scope.
+     * Common interface for all managed resources, such as pointers, structs and callback stubs; such managed
+     * resources are attached to a scope (see {@link Scope}).
      */
-    static Scope newHeapScope() {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkPermission(new RuntimePermission("java.foreign.HeapScope", "create"));
-        }
-        return new ScopeImpl.HeapScope();
+    interface Resource {
+        /**
+         * The scope this managed resource belongs to.
+         * @return the owning scope.
+         */
+        Scope scope();
     }
 }

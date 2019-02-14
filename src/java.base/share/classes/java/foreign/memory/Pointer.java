@@ -27,6 +27,7 @@ import jdk.internal.foreign.memory.MemoryBoundInfo;
 import jdk.internal.foreign.memory.BoundedPointer;
 
 import java.foreign.NativeTypes;
+import java.foreign.Scope;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.security.AccessControlException;
@@ -38,7 +39,7 @@ import java.util.stream.Stream;
  * This interface models a native pointer.
  * @param <X> the carrier type associated with the pointee.
  */
-public interface Pointer<X> extends Resource {
+public interface Pointer<X> extends Scope.Resource {
 
     /**
      * Obtains the {@code NULL} pointer.
