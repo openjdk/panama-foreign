@@ -92,7 +92,7 @@ public class ArraysInFunctionsTest {
 
     @Test(expectedExceptions = RuntimeException.class)
     public void testCallbStr() {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             s.allocateStruct(Callb.CallbStr.class);
         }
     }

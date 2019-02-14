@@ -63,7 +63,7 @@ public class OutOfBoundsTest {
 
     @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testPointerOOB() {
-        try(Scope scope = Scope.newNativeScope()) {
+        try(Scope scope = Libraries.libraryScope(lib).fork()) {
             Pointer<Byte> p = scope.allocate(NativeTypes.INT8);
             p = p.offset(1); // oob
             lib.ptr(p); // should throw
@@ -72,7 +72,7 @@ public class OutOfBoundsTest {
 
     @Test(expectedExceptions = IndexOutOfBoundsException.class)
     public void testStructPointerOOB() {
-        try(Scope scope = Scope.newNativeScope()) {
+        try(Scope scope = Libraries.libraryScope(lib).fork()) {
             Pointer<Byte> p = scope.allocate(NativeTypes.INT8);
             p = p.offset(1); // oob
             ptrStruct s = scope.allocateStruct(ptrStruct.class);

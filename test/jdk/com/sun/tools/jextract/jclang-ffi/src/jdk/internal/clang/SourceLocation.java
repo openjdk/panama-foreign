@@ -48,7 +48,7 @@ public class SourceLocation {
 
     @SuppressWarnings("unchecked")
     private Location getLocation(LocationFactory fn) {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             Pointer<Pointer<Void>> file = s.allocate(NativeTypes.VOID.pointer());
             Pointer<Integer> line = s.allocate(NativeTypes.INT);
             Pointer<Integer> col = s.allocate(NativeTypes.INT);

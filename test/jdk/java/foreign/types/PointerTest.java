@@ -145,7 +145,7 @@ public class PointerTest {
 
     @Test
     void testStrings() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             LayoutType<Integer> iType = NativeTypes.INT32;
             LayoutType<Pointer<Pointer<Byte>>> ppcType = NativeTypes.UINT8.pointer().pointer();
 
@@ -162,7 +162,7 @@ public class PointerTest {
 
     @Test
     void testStrings2() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             LayoutType<Integer> iType = NativeTypes.UINT32;
 
             Pointer<Integer> pi = scope.allocate(iType);
@@ -175,7 +175,7 @@ public class PointerTest {
 
     @Test
     void testStringsAsVoidPtr() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             LayoutType<Integer> iType = NativeTypes.UINT32;
             Pointer<Integer> pi = scope.allocate(iType);
             Pointer<Void> values = ptrs.get_stringsAsVoidPtr(pi);
@@ -185,7 +185,7 @@ public class PointerTest {
 
     @Test
     void testStringsAsOpaquePtr() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             LayoutType<Integer> iType = NativeTypes.UINT32;
             Pointer<Integer> pi = scope.allocate(iType);
             Pointer<Void> values = ptrs.get_stringsAsOpaquePtr(pi);
@@ -218,7 +218,7 @@ public class PointerTest {
 
     @Test
     void testStructs() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             LayoutType<Integer> iType = NativeTypes.INT32;
             LayoutType<Pointer<Pointer<pointers.MyStruct>>> ppsType = LayoutType.ofStruct(pointers.MyStruct.class).pointer().pointer();
 
@@ -235,7 +235,7 @@ public class PointerTest {
 
     @Test
     void testStructs2() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             LayoutType<Integer> iType = NativeTypes.INT32;
 
             Pointer<Integer> pi = scope.allocate(iType);
@@ -248,7 +248,7 @@ public class PointerTest {
 
     @Test
     void testNullPointer() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             LayoutType<Integer> iType = NativeTypes.UINT32;
 
             Pointer<Integer> pi = Pointer.nullPointer();

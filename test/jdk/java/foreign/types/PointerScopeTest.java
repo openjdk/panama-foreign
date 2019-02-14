@@ -125,7 +125,7 @@ public class PointerScopeTest {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = ".*Scope is not alive")
     public void testPairDerefSet() {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             testAfterScope(s -> s.allocate(LayoutType.ofStruct(PointerScopeLib.Pair.class)),
                     p -> p.set(sc.allocateStruct(PointerScopeLib.Pair.class)));
         }
@@ -134,7 +134,7 @@ public class PointerScopeTest {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = ".*Scope is not alive")
     public void testArrayDerefSet() {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             testAfterScope(s -> s.allocate(NativeTypes.INT32.array(3)),
                     p -> p.set(sc.allocateArray(NativeTypes.INT32, new int[] {1, 2, 3})));
         }
@@ -143,11 +143,9 @@ public class PointerScopeTest {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = ".*Scope is not alive")
     public void testCallbackDerefSet() {
-        try (Scope sc = Scope.newNativeScope()) {
-            Address adrLayout = Address.ofFunction(64, java.foreign.layout.Function.ofVoid(false));
-            testAfterScope(s -> s.allocate(LayoutType.ofFunction(adrLayout, PointerScopeLib.Cb.class)),
-                    p -> p.set(sc.allocateCallback(PointerScopeLib.Cb.class, () -> {})));
-        }
+        Address adrLayout = Address.ofFunction(64, java.foreign.layout.Function.ofVoid(false));
+        testAfterScope(s -> s.allocate(LayoutType.ofFunction(adrLayout, PointerScopeLib.Cb.class)),
+                p -> p.set(Scope.globalScope().allocateCallback(PointerScopeLib.Cb.class, () -> {})));
     }
     
     // allocate struct and try to access it
@@ -198,8 +196,18 @@ public class PointerScopeTest {
         testAfterScope(s -> s.allocateCallback(PointerScopeLib.Cb.class, ()->{}), _ptrLib::cb);
     }
 
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testCloseLibScope() {
+        Libraries.libraryScope(_ptrLib).close();
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testMergeLibScope() {
+        Libraries.libraryScope(_ptrLib).merge();
+    }
+
     private <Z> void testAfterScope(Function<Scope, Z> allocator, Consumer<Z> action) {
-        Scope sc = Scope.newNativeScope();
+        Scope sc = Scope.globalScope().fork();
         Z z = allocator.apply(sc);
         sc.close();
         action.accept(z);

@@ -83,7 +83,7 @@ public class BitfieldsTest {
 
     @Test(dataProvider="bitfields")
     public void testBitfieldAccess(Class structClass, long initMask) {
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             @SuppressWarnings("unchecked")
             StructBase m = (StructBase)s.allocateStruct(structClass);
             m.setBf(initMask);

@@ -59,7 +59,7 @@ public class LibStructTest {
             // ignore expected
         }
 
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             UndefinedStruct x = scope.allocateStruct(UndefinedStruct.class);
             fail("Should not be able to allocate an undefined struct");
         } catch (UnsupportedOperationException ex) {

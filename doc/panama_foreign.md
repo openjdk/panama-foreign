@@ -54,7 +54,7 @@ import static org.python.pythonrun_h.*;
 public class PythonMain {
     public static void main(String[] args) {
         Py_Initialize();
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = org.python.Python_h.scope().fork()) {
             PyRun_SimpleStringFlags(s.allocateCString(
                 "print(sum([33, 55, 66])); print('Hello from Python!')\n"),
                 Pointer.nullPointer());
@@ -173,7 +173,7 @@ import static org.sqlite.sqlite3_h.*;
 
 public class SqliteMain {
    public static void main(String[] args) throws Exception {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = scope().fork()) {
             // char* errMsg;
             Pointer<Pointer<Byte>> errMsg = scope.allocate(NativeTypes.INT8.pointer());
 
@@ -380,7 +380,7 @@ public class TestBlas {
        alpha = 1;
        beta = 0;
 
-       try (Scope sc = Scope.newNativeScope()){
+       try (Scope sc = scope().fork()){
            Array<Double> a = sc.allocateArray(NativeTypes.DOUBLE, m * n);
            Array<Double> x = sc.allocateArray(NativeTypes.DOUBLE, n);
            Array<Double> y = sc.allocateArray(NativeTypes.DOUBLE, n);
@@ -464,7 +464,7 @@ public class TestLapack {
     public static void main(String[] args) {
 
         /* Locals */
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = lapack.clapack_h.scope().fork()) {
             Array<Double> A = sc.allocateArray(NativeTypes.DOUBLE, new double[]{
                     1, 2, 3, 4, 5, 1, 3, 5, 2, 4, 1, 4, 2, 5, 3
             });
@@ -546,7 +546,7 @@ public class TestLapack {
     public static void main(String[] args) {
 
         /* Locals */
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = scope().fork()) {
             Array<Double> A = sc.allocateArray(NativeTypes.DOUBLE, new double[]{
                     1, 2, 3, 4, 5, 1, 3, 5, 2, 4, 1, 4, 2, 5, 3
             });
@@ -622,7 +622,7 @@ public class LibprocMain {
 
     public static void main(String[] args) {
         // Scope for native allocations
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = scope().fork()) {
             // get the number of processes
             int numPids = proc_listallpids(Pointer.nullPointer(), 0);
             // allocate an array
@@ -681,7 +681,7 @@ import static org.unix.readline_h.*;
 public class Readline {
     public static void main(String[] args) {
         // Scope for native allocations
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = scope().fork()) {
             // allocate C memory initialized with Java string content
             var pstr = s.allocateCString("name? ");
 
@@ -883,7 +883,7 @@ public class Teapot {
     }
 
     public static void main(String[] args) {
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = opengl.gl_h.scope().fork()) {
             Pointer<Integer> argc = sc.allocate(NativeTypes.INT32);
             argc.set(0);
             glutInit(argc, Pointer.nullPointer());
@@ -1014,7 +1014,7 @@ import static org.tensorflow.panama.c_api_h.*;
 public class TensorFlowExample {
     static Pointer<TF_Operation> PlaceHolder(Pointer<TF_Graph> graph, Pointer<TF_Status> status,
                                       @TF_DataType int dtype, String name) {
-        try (var s = Scope.newNativeScope()) {
+        try (var s = scope().fork()) {
             Pointer<TF_OperationDescription> desc = TF_NewOperation(graph,
                     s.allocateCString("Placeholder"), s.allocateCString(name));
             TF_SetAttrType(desc, s.allocateCString("dtype"), TF_FLOAT);
@@ -1024,7 +1024,7 @@ public class TensorFlowExample {
 
     static Pointer<TF_Operation> ConstValue(Pointer<TF_Graph> graph, Pointer<TF_Status> status,
                                 Pointer<TF_Tensor> tensor, String name) {
-        try (var s = Scope.newNativeScope()) {
+        try (var s = scope().fork()) {
             Pointer<TF_OperationDescription> desc = TF_NewOperation(graph,
                     s.allocateCString("Const"), s.allocateCString(name));
             TF_SetAttrTensor(desc, s.allocateCString("value"), tensor, status);
@@ -1036,7 +1036,7 @@ public class TensorFlowExample {
     static Pointer<TF_Operation> Add(Pointer<TF_Graph> graph, Pointer<TF_Status> status,
                               Pointer<TF_Operation> one, Pointer<TF_Operation> two,
                               String name) {
-        try (var s = Scope.newNativeScope()) {
+        try (var s = scope().fork()) {
             Pointer<TF_OperationDescription> desc = TF_NewOperation(graph,
                     s.allocateCString("AddN"), s.allocateCString(name));
             Array<TF_Output> add_inputs = s.allocateArray(
@@ -1072,7 +1072,7 @@ public class TensorFlowExample {
         Pointer<TF_Operation> add = Add(graph, status, feed, two, "add");
 
 
-        try (var s = Scope.newNativeScope()) {
+        try (var s = scope().fork()) {
             var ltPtrTensor = LayoutType.ofStruct(TF_Tensor.class).pointer();
 
             // Session Inputs

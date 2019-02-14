@@ -78,7 +78,7 @@ public class CallbackSort {
     private void doSort(NativeIntArray elems) {
         stdlib i = Libraries.bind(stdlib.class, Libraries.loadLibrary(MethodHandles.lookup(), "Upcall"));
         Pointer<?> p = elems.getBasePointer().cast(NativeTypes.VOID);
-        try (Scope sc = Scope.newNativeScope()) {
+        try (Scope sc = Scope.globalScope().fork()) {
             i.slowsort(p, elems.size(), elems.getElemSize(), sc.allocateCallback(new comparator()));
         }
     }
@@ -130,7 +130,7 @@ public class CallbackSort {
     static class NativeIntArray implements Iterable<Integer> {
         private static final int ELEM_SIZE = 4;
 
-        private final Scope scope = Scope.newNativeScope();
+        private final Scope scope = Scope.globalScope().fork();
 
         private final int nelems;
         private final Pointer<Integer> base;

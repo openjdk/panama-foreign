@@ -53,7 +53,7 @@ public class LibprocTest {
         boolean foundCurProc = false;
 
         // Scope for native allocations
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             // get the number of processes
             int numPids = proc_listallpids(Pointer.nullPointer(), 0);
             // allocate an array
@@ -83,7 +83,7 @@ public class LibprocTest {
     @Test
     public void processInfoTest() {
         long curProcPid = ProcessHandle.current().pid();
-        try (Scope s = Scope.newNativeScope()) {
+        try (Scope s = Scope.globalScope().fork()) {
             proc_info.proc_taskinfo ti = s.allocateStruct(proc_info.proc_taskinfo.class);
             int taskInfoSize = (int)Struct.sizeof(proc_info.proc_taskinfo.class);
             int resultSize = proc_pidinfo((int)curProcPid, PROC_PIDTASKINFO, 0, ti.ptr(), taskInfoSize);

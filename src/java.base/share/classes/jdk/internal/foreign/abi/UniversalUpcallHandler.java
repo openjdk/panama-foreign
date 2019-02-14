@@ -26,6 +26,7 @@ package jdk.internal.foreign.abi;
 import java.foreign.Library;
 import java.foreign.NativeMethodType;
 import java.foreign.NativeTypes;
+import java.foreign.Scope;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import jdk.internal.foreign.ScopeImpl;
 import jdk.internal.foreign.Util;
 import jdk.internal.foreign.abi.x64.SharedConstants;
 import jdk.internal.foreign.memory.MemoryBoundInfo;
@@ -89,12 +91,12 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
         private final Pointer<Long> x87Returns;
 
         UpcallContext(long integers, long vectors, long stack, long integerReturn, long vectorReturn, long x87Returns) {
-            this.integers = BoundedPointer.createNativePointer(NativeTypes.UINT64, integers);
-            this.vectors = BoundedPointer.createNativePointer(NativeTypes.UINT64, vectors);
-            this.stack = BoundedPointer.createNativePointer(NativeTypes.UINT64, stack);
-            this.integerReturns = BoundedPointer.createNativePointer(NativeTypes.UINT64, integerReturn);
-            this.vectorReturns = BoundedPointer.createNativePointer(NativeTypes.UINT64, vectorReturn);
-            this.x87Returns = BoundedPointer.createNativePointer(NativeTypes.UINT64, x87Returns);
+            this.integers = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, integers, false);
+            this.vectors = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, vectors, false);
+            this.stack = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, stack, false);
+            this.integerReturns = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, integerReturn, true);
+            this.vectorReturns = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, vectorReturn, true);
+            this.x87Returns = BoundedPointer.createRegisterPointer(NativeTypes.UINT64, x87Returns, true);
         }
 
         Pointer<Long> getPtr(ArgumentBinding binding) {
@@ -123,7 +125,7 @@ public abstract class UniversalUpcallHandler implements Library.Symbol {
             Pointer<Long> res = getPtr(callingSequence.getReturnBindings().get(0));
             long structAddr = res.get();
             long size = Util.alignUp(nmt.returnType().bytesSize(), 8);
-            return new BoundedPointer<Object>((LayoutType)nmt.returnType(), null, Pointer.AccessMode.READ_WRITE,
+            return new BoundedPointer<Object>((LayoutType)nmt.returnType(), ScopeImpl.UNCHECKED, Pointer.AccessMode.READ_WRITE,
                     MemoryBoundInfo.ofNative(structAddr, size));
         }
 

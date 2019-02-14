@@ -62,7 +62,7 @@ public class ScopeTest {
 
     @Test
     public void testNullAllocation() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             Pointer<Void> ptr = scope.allocate(NativeTypes.VOID);
             // Do we want an exception or a NULL pointer?
             // I think an exception make more sense
@@ -75,7 +75,7 @@ public class ScopeTest {
 
     @Test
     public void testArrayAllocation() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             Pointer<Byte> ptr = scope.allocate(NativeTypes.INT8);
             assertFalse(ptr.isNull());
             ptr.set((byte) 0xEE);
@@ -100,7 +100,7 @@ public class ScopeTest {
             ib.put(i);
         }
 
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             Array<Byte> nar = scope.allocateArray(NativeTypes.INT8, ar);
 
             Pointer<Integer> pInt = nar.elementPointer().cast(NativeTypes.VOID).cast(NativeTypes.INT);
@@ -126,7 +126,7 @@ public class ScopeTest {
     public void testAsByteBuffer() {
         int[] data = new int[] { 0xDEAFBEEF, 0xBABEFACE, 0xBEEFCAFE, 0xDEAFFACE };
 
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             Array<Integer> nar = scope.allocateArray(NativeTypes.INT, data);
 
             assertEquals(nar.length(), data.length);
@@ -144,5 +144,50 @@ public class ScopeTest {
         } catch (IllegalAccessException iae) {
             fail("Not expecting IAE");
         }
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = ".*Scope is not alive")
+    public void testCloseRoot() {
+        Scope s1 = Scope.globalScope().fork();
+        Scope s2 = s1.fork();
+        Pointer<Integer> pi = s2.allocate(NativeTypes.INT32);
+        s1.close();
+        pi.get(); //exception expected!
+    }
+
+    public void testMerge() {
+        Scope s1 = Scope.globalScope().fork();
+        Scope s2 = s1.fork();
+        Pointer<Integer> pi = s2.allocate(NativeTypes.INT32);
+        assertEquals(pi.scope(), s2);
+        s2.merge();
+        assertEquals(pi.scope(), s1);
+        pi.get();
+        s1.close();
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testAllocateAfterClose() {
+        Scope s1 = Scope.globalScope().fork();
+        s1.close();
+        s1.allocate(NativeTypes.INT32);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testAllocateAfterMerge() {
+        Scope s1 = Scope.globalScope().fork();
+        s1.merge();
+        s1.allocate(NativeTypes.INT32);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testCloseGlobal() {
+        Scope.globalScope().close();
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testMergeGlobal() {
+        Scope.globalScope().merge();
     }
 }

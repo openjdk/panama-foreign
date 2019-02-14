@@ -54,7 +54,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
-import jdk.internal.foreign.ScopeImpl.NativeScope;
 import jdk.internal.foreign.memory.BoundedPointer;
 import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.foreign.memory.Types;
@@ -364,12 +363,12 @@ public final class Util {
 
     public static <Z> Z withOffHeapAddress(Pointer<?> p, LongFunction<Z> longFunction) {
         try {
-            BoundedPointer<?> bp = (BoundedPointer<?>)p;
-            if (bp.scope() instanceof NativeScope) {
+            try {
                 //address
                 return longFunction.apply(p.addr());
-            } else {
-                try (Scope sc = Scope.newNativeScope()) {
+            } catch (UnsupportedOperationException ex) {
+                //heap pointer
+                try (Scope sc = Scope.globalScope().fork()) {
                     Pointer<?> offheapPtr = sc.allocate(p.type());
                     Pointer.copy(p, offheapPtr, p.type().bytesSize());
                     Z z = longFunction.apply(offheapPtr.addr());

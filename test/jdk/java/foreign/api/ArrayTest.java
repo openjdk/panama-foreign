@@ -37,7 +37,7 @@ public class ArrayTest {
 
     @Test
     public void testIterate() {
-        try(var scope = Scope.newNativeScope()) {
+        try(var scope = Scope.globalScope().fork()) {
             Array<Integer> array = scope.allocateArray(NativeTypes.INT32, 10);
             assertEquals(array.iterate().count(), 10);
             Pointer<Integer> last = array.elementPointer().offset(array.length());

@@ -24,6 +24,7 @@
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.foreign.Libraries;
 import java.foreign.Scope;
 
 /**
@@ -33,16 +34,16 @@ import java.foreign.Scope;
  */
 public class ScopeTest {
     @Test
-    public void testNewHeapScope() {
+    public void testGlobalScope() {
         checkSecurityException(() -> {
-            Scope.newHeapScope();
+            Scope.globalScope();
         });
     }
 
     @Test
-    public void testNewNativeScope() {
+    public void testLibraryScope() {
         checkSecurityException(() -> {
-            Scope.newNativeScope();
+            Libraries.libraryScope(null);
         });
     }
 

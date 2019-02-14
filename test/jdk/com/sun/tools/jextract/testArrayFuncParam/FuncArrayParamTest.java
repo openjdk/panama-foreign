@@ -56,7 +56,7 @@ public class FuncArrayParamTest {
 
     @Test
     public void testFuncArrayParam() {
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             Array<Integer> carr = scope.allocateArray(NativeTypes.INT32, jarr.length);
             for (int i = 0; i < jarr.length; i++) {
                 carr.set(i, jarr[i]);

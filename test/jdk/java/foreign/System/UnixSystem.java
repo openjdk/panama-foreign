@@ -115,7 +115,7 @@ public class UnixSystem {
 
     private static String lowerAndSprintf(system i, String fmt, Object... args) {
         System.err.println("lowerAndSprintf fmt=" + fmt);
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             long bufSize = 128;
 
             LayoutType<Byte> t = NativeTypes.UINT8;
@@ -139,7 +139,7 @@ public class UnixSystem {
         assertEquals("foo", lowerAndSprintf(i, "foo"));
         assertEquals("foo: 4711", lowerAndSprintf(i, "foo: %d", 4711));
         assertEquals("foo: 47 11", lowerAndSprintf(i, "foo: %d %d", 47, 11));
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             assertEquals("foo: bar", lowerAndSprintf(i, "foo: %s", scope.allocateCString("bar")));
             assertEquals("foo: bar baz", lowerAndSprintf(i, "foo: %s %s", scope.allocateCString("bar"), scope.allocateCString("baz")));
         }
@@ -160,7 +160,7 @@ public class UnixSystem {
     private int getSizeUsingStat_Linux(String path) throws Exception {
         LinuxSystem i = Libraries.bind(MethodHandles.lookup(), LinuxSystem.class);
 
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             LinuxSystem.stat s = scope.allocateStruct(LinuxSystem.stat.class);
             Pointer<LinuxSystem.stat> p = s.ptr();
 
@@ -178,7 +178,7 @@ public class UnixSystem {
     private int getSizeUsingStat_MacOSX(String path) throws Exception {
         MacOSXSystem i = Libraries.bind(MethodHandles.lookup(), MacOSXSystem.class);
 
-        try (Scope scope = Scope.newNativeScope()) {
+        try (Scope scope = Scope.globalScope().fork()) {
             MacOSXSystem.stat s = scope.allocateStruct(MacOSXSystem.stat.class);
             Pointer<MacOSXSystem.stat> p = s.ptr();
 

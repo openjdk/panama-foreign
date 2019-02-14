@@ -131,12 +131,32 @@ public final class Libraries {
         return LibrariesHelper.load(checkLookup(lookup), filename);
     }
 
+    /**
+     * Retrieves the default native library lookup.
+     * @return the default native library lookup.
+     */
     public static Library getDefaultLibrary() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkPermission(new RuntimePermission("java.foreign.getDefaultLibrary"));
         }
         return LibrariesHelper.getDefaultLibrary();
+    }
+
+    /**
+     * Retrieves the scope associated with a given bound library object. The library object must be an instance of
+     * an interface annotated with the {@link java.foreign.annotations.NativeHeader} annotation. Note: the returned
+     * scope (if any) might be shared with all other instances of the same library class.
+     * @return the default native library lookup.
+     * @throws NullPointerException if the library object is {@code null}.
+     * @throws IllegalArgumentException if the library object is not an instance of a bound library.
+     */
+    public static Scope libraryScope(Object o) throws NullPointerException, IllegalArgumentException {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkPermission(new RuntimePermission("java.foreign.Libraries", "libraryScope"));
+        }
+        return LibrariesHelper.libraryScope(o);
     }
 
     private static Lookup checkLookup(Lookup lookup) {
