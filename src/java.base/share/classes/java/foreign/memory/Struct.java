@@ -24,7 +24,6 @@ package java.foreign.memory;
 
 import jdk.internal.foreign.Util;
 
-import java.foreign.Scope;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
@@ -37,18 +36,13 @@ import java.util.StringJoiner;
  * layout.
  * @param <T> the Java type modelling this native type.
  */
-public interface Struct<T extends Struct<T>> extends Scope.Resource {
+public interface Struct<T extends Struct<T>> {
 
     /**
      * Return a pointer to the managed struct.
      * @return a pointer.
      */
     Pointer<T> ptr();
-
-    @Override
-    default Scope scope() {
-        return ptr().scope();
-    }
 
     /**
      * Return the size of the struct represented by the given class.

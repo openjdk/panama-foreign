@@ -212,16 +212,4 @@ public interface Scope extends AutoCloseable {
         }
         return ScopeImpl.GLOBAL;
     }
-
-    /**
-     * Common interface for all managed resources, such as pointers, structs and callback stubs; such managed
-     * resources are attached to a scope (see {@link Scope}).
-     */
-    interface Resource {
-        /**
-         * The scope this managed resource belongs to.
-         * @return the owning scope.
-         */
-        Scope scope();
-    }
 }

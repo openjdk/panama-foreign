@@ -25,15 +25,13 @@
 
 package java.foreign.memory;
 
-import java.foreign.Scope;
-
 /**
  * This interface models native function pointers. This interface is typically parameterized by a type {@code T} which is
  * annotated with the {@link java.foreign.annotations.NativeCallback} annotation, and which must be a functional
  * interface, see {@link FunctionalInterface}.
  * @param <T> the Java type modelling this native callback type.
  */
-public interface Callback<T> extends Scope.Resource {
+public interface Callback<T> {
 
     /**
      * Returns the entry point at which the native function can be called.
@@ -47,9 +45,4 @@ public interface Callback<T> extends Scope.Resource {
      * @return a functional interface instance of type {@code T}.
      */
     T asFunction();
-
-    @Override
-    default Scope scope() {
-        return entryPoint().scope();
-    }
 }
