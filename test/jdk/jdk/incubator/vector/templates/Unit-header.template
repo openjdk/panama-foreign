@@ -120,13 +120,20 @@ public class $vectorteststype$ extends AbstractVectorTest {
         $type$ apply($type$[] a, int idx);
     }
 
-    static void assertReductionArraysEquals($type$[] a, $type$[] b, FReductionOp f) {
+    interface FReductionAllOp {
+        $type$ apply($type$[] a);
+    }
+
+    static void assertReductionArraysEquals($type$[] a, $type$[] b, $type$ c,
+                                            FReductionOp f, FReductionAllOp fa) {
         int i = 0;
         try {
+            Assert.assertEquals(c, fa.apply(a));
             for (; i < a.length; i += SPECIES.length()) {
                 Assert.assertEquals(b[i], f.apply(a, i));
             }
         } catch (AssertionError e) {
+            Assert.assertEquals(c, fa.apply(a), "Final result is incorrect!");
             Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
         }
     }
@@ -222,9 +229,9 @@ public class $vectorteststype$ extends AbstractVectorTest {
         int j = 0;
         try {
             for (; j < a.length; j += SPECIES.length()) {
-              for (i = 0; i < SPECIES.length(); i++) {
-                Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
-              }
+                for (i = 0; i < SPECIES.length(); i++) {
+                    Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
+                }
             }
         } catch (AssertionError e) {
             Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j], "at index #" + i + ", " + j);
@@ -240,9 +247,9 @@ public class $vectorteststype$ extends AbstractVectorTest {
         int j = 0;
         try {
             for (; j < a.length; j += SPECIES.length()) {
-              for (i = 0; i < SPECIES.length(); i++) {
-                Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]));
-              }
+                for (i = 0; i < SPECIES.length(); i++) {
+                    Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]));
+                }
             }
         } catch (AssertionError err) {
             Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]), "at index #" + i + ", input1 = " + a[i+j] + ", input2 = " + b[j] + ", mask = " + mask[i]);
@@ -587,4 +594,3 @@ public class $vectorteststype$ extends AbstractVectorTest {
         int length = 1000 * vl;
         return new boolean[length];
     };
-

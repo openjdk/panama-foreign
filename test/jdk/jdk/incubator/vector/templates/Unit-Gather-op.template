@@ -1,11 +1,11 @@
 #if[!byteOrShort]
     static $type$[] [[TEST]]($type$ a[], int ix, int[] b, int iy) {
-      $type$[] res = new $type$[SPECIES.length()];
-      for (int i = 0; i < SPECIES.length(); i++) {
-        int bi = iy + i;
-        res[i] = a[b[bi] + ix];
-      }
-      return res;
+        $type$[] res = new $type$[SPECIES.length()];
+        for (int i = 0; i < SPECIES.length(); i++) {
+            int bi = iy + i;
+            res[i] = a[b[bi] + ix];
+        }
+        return res;
     }
 
     @Test(dataProvider = "$type$UnaryOpIndexProvider")

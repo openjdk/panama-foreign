@@ -5,7 +5,3 @@
 [[KERNEL]]
         assertArraysEquals(a, r, mask, $vectorteststype$::[[TEST]]);
     }
-
-
-
-

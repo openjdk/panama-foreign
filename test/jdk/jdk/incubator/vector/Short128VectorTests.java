@@ -82,13 +82,20 @@ public class Short128VectorTests extends AbstractVectorTest {
         short apply(short[] a, int idx);
     }
 
-    static void assertReductionArraysEquals(short[] a, short[] b, FReductionOp f) {
+    interface FReductionAllOp {
+        short apply(short[] a);
+    }
+
+    static void assertReductionArraysEquals(short[] a, short[] b, short c,
+                                            FReductionOp f, FReductionAllOp fa) {
         int i = 0;
         try {
+            Assert.assertEquals(c, fa.apply(a));
             for (; i < a.length; i += SPECIES.length()) {
                 Assert.assertEquals(b[i], f.apply(a, i));
             }
         } catch (AssertionError e) {
+            Assert.assertEquals(c, fa.apply(a), "Final result is incorrect!");
             Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
         }
     }
@@ -184,9 +191,9 @@ public class Short128VectorTests extends AbstractVectorTest {
         int j = 0;
         try {
             for (; j < a.length; j += SPECIES.length()) {
-              for (i = 0; i < SPECIES.length(); i++) {
-                Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
-              }
+                for (i = 0; i < SPECIES.length(); i++) {
+                    Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
+                }
             }
         } catch (AssertionError e) {
             Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j], "at index #" + i + ", " + j);
@@ -202,9 +209,9 @@ public class Short128VectorTests extends AbstractVectorTest {
         int j = 0;
         try {
             for (; j < a.length; j += SPECIES.length()) {
-              for (i = 0; i < SPECIES.length(); i++) {
-                Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]));
-              }
+                for (i = 0; i < SPECIES.length(); i++) {
+                    Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]));
+                }
             }
         } catch (AssertionError err) {
             Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]), "at index #" + i + ", input1 = " + a[i+j] + ", input2 = " + b[j] + ", mask = " + mask[i]);
@@ -394,7 +401,6 @@ public class Short128VectorTests extends AbstractVectorTest {
         int length = 1000 * vl;
         return new boolean[length];
     };
-
     static short add(short a, short b) {
         return (short)(a + b);
     }
@@ -837,7 +843,20 @@ public class Short128VectorTests extends AbstractVectorTest {
     static short andAll(short[] a, int idx) {
         short res = -1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res &= a[i];
+            res &= a[i];
+        }
+
+        return res;
+    }
+
+    static short andAll(short[] a) {
+        short res = -1;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            short tmp = -1;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp &= a[i + j];
+            }
+            res &= tmp;
         }
 
         return res;
@@ -848,22 +867,44 @@ public class Short128VectorTests extends AbstractVectorTest {
     static void andAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
+        short ra = -1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector av = SPECIES.fromArray(a, i);
-              r[i] = av.andAll();
+                ShortVector av = SPECIES.fromArray(a, i);
+                r[i] = av.andAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Short128VectorTests::andAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = -1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                ra &= av.andAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Short128VectorTests::andAll, Short128VectorTests::andAll);
     }
 
 
     static short orAll(short[] a, int idx) {
         short res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res |= a[i];
+            res |= a[i];
+        }
+
+        return res;
+    }
+
+    static short orAll(short[] a) {
+        short res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            short tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp |= a[i + j];
+            }
+            res |= tmp;
         }
 
         return res;
@@ -874,22 +915,44 @@ public class Short128VectorTests extends AbstractVectorTest {
     static void orAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
+        short ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector av = SPECIES.fromArray(a, i);
-              r[i] = av.orAll();
+                ShortVector av = SPECIES.fromArray(a, i);
+                r[i] = av.orAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Short128VectorTests::orAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                ra |= av.orAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Short128VectorTests::orAll, Short128VectorTests::orAll);
     }
 
 
     static short xorAll(short[] a, int idx) {
         short res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res ^= a[i];
+            res ^= a[i];
+        }
+
+        return res;
+    }
+
+    static short xorAll(short[] a) {
+        short res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            short tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp ^= a[i + j];
+            }
+            res ^= tmp;
         }
 
         return res;
@@ -900,21 +963,43 @@ public class Short128VectorTests extends AbstractVectorTest {
     static void xorAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
+        short ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector av = SPECIES.fromArray(a, i);
-              r[i] = av.xorAll();
+                ShortVector av = SPECIES.fromArray(a, i);
+                r[i] = av.xorAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Short128VectorTests::xorAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                ra ^= av.xorAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Short128VectorTests::xorAll, Short128VectorTests::xorAll);
     }
 
     static short addAll(short[] a, int idx) {
         short res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res += a[i];
+            res += a[i];
+        }
+
+        return res;
+    }
+
+    static short addAll(short[] a) {
+        short res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            short tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp += a[i + j];
+            }
+            res += tmp;
         }
 
         return res;
@@ -923,20 +1008,42 @@ public class Short128VectorTests extends AbstractVectorTest {
     static void addAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
+        short ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector av = SPECIES.fromArray(a, i);
-              r[i] = av.addAll();
+                ShortVector av = SPECIES.fromArray(a, i);
+                r[i] = av.addAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Short128VectorTests::addAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                ra += av.addAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Short128VectorTests::addAll, Short128VectorTests::addAll);
     }
     static short subAll(short[] a, int idx) {
         short res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res -= a[i];
+            res -= a[i];
+        }
+
+        return res;
+    }
+
+    static short subAll(short[] a) {
+        short res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            short tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp -= a[i + j];
+            }
+            res -= tmp;
         }
 
         return res;
@@ -945,20 +1052,42 @@ public class Short128VectorTests extends AbstractVectorTest {
     static void subAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
+        short ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector av = SPECIES.fromArray(a, i);
-              r[i] = av.subAll();
+                ShortVector av = SPECIES.fromArray(a, i);
+                r[i] = av.subAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Short128VectorTests::subAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                ra -= av.subAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Short128VectorTests::subAll, Short128VectorTests::subAll);
     }
     static short mulAll(short[] a, int idx) {
         short res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res *= a[i];
+            res *= a[i];
+        }
+
+        return res;
+    }
+
+    static short mulAll(short[] a) {
+        short res = 1;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            short tmp = 1;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp *= a[i + j];
+            }
+            res *= tmp;
         }
 
         return res;
@@ -967,15 +1096,24 @@ public class Short128VectorTests extends AbstractVectorTest {
     static void mulAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
+        short ra = 1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector av = SPECIES.fromArray(a, i);
-              r[i] = av.mulAll();
+                ShortVector av = SPECIES.fromArray(a, i);
+                r[i] = av.mulAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Short128VectorTests::mulAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                ra *= av.mulAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Short128VectorTests::mulAll, Short128VectorTests::mulAll);
     }
     static short minAll(short[] a, int idx) {
         short res = Short.MAX_VALUE;
@@ -985,19 +1123,37 @@ public class Short128VectorTests extends AbstractVectorTest {
 
         return res;
     }
+
+    static short minAll(short[] a) {
+        short res = Short.MAX_VALUE;
+        for (int i = 0; i < a.length; i++) {
+            res = (short)Math.min(res, a[i]);
+        }
+
+        return res;
+    }
     @Test(dataProvider = "shortUnaryOpProvider")
     static void minAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
+        short ra = Short.MAX_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector av = SPECIES.fromArray(a, i);
-              r[i] = av.minAll();
+                ShortVector av = SPECIES.fromArray(a, i);
+                r[i] = av.minAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Short128VectorTests::minAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Short.MAX_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                ra = (short)Math.min(ra, av.minAll());
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Short128VectorTests::minAll, Short128VectorTests::minAll);
     }
     static short maxAll(short[] a, int idx) {
         short res = Short.MIN_VALUE;
@@ -1007,25 +1163,43 @@ public class Short128VectorTests extends AbstractVectorTest {
 
         return res;
     }
+
+    static short maxAll(short[] a) {
+        short res = Short.MIN_VALUE;
+        for (int i = 0; i < a.length; i++) {
+            res = (short)Math.max(res, a[i]);
+        }
+
+        return res;
+    }
     @Test(dataProvider = "shortUnaryOpProvider")
     static void maxAllShort128VectorTests(IntFunction<short[]> fa) {
         short[] a = fa.apply(SPECIES.length());
         short[] r = fr.apply(SPECIES.length());
+        short ra = Short.MIN_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector av = SPECIES.fromArray(a, i);
-              r[i] = av.maxAll();
+                ShortVector av = SPECIES.fromArray(a, i);
+                r[i] = av.maxAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Short128VectorTests::maxAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Short.MIN_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ShortVector av = SPECIES.fromArray(a, i);
+                ra = (short)Math.max(ra, av.maxAll());
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Short128VectorTests::maxAll, Short128VectorTests::maxAll);
     }
 
     static boolean anyTrue(boolean[] a, int idx) {
         boolean res = false;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res |= a[i];
+            res |= a[i];
         }
 
         return res;
@@ -1039,8 +1213,8 @@ public class Short128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Short> vmask = SPECIES.maskFromArray(mask, i);
-              r[i] = vmask.anyTrue();
+                Vector.Mask<Short> vmask = SPECIES.maskFromArray(mask, i);
+                r[i] = vmask.anyTrue();
             }
         }
 
@@ -1051,7 +1225,7 @@ public class Short128VectorTests extends AbstractVectorTest {
     static boolean allTrue(boolean[] a, int idx) {
         boolean res = true;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res &= a[i];
+            res &= a[i];
         }
 
         return res;
@@ -1065,8 +1239,8 @@ public class Short128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Short> vmask = SPECIES.maskFromArray(mask, i);
-              r[i] = vmask.allTrue();
+                Vector.Mask<Short> vmask = SPECIES.maskFromArray(mask, i);
+                r[i] = vmask.allTrue();
             }
         }
 
@@ -1081,8 +1255,8 @@ public class Short128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ShortVector av = SPECIES.fromArray(a, i);
-              av.with(0, (short)4).intoArray(r, i);
+                ShortVector av = SPECIES.fromArray(a, i);
+                av.with(0, (short)4).intoArray(r, i);
             }
         }
 
@@ -1467,10 +1641,6 @@ public class Short128VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, Short128VectorTests::neg);
     }
 
-
-
-
-
     static short abs(short a) {
         return (short)(Math.abs((short)a));
     }
@@ -1507,10 +1677,6 @@ public class Short128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Short128VectorTests::abs);
     }
-
-
-
-
 
 
     static short not(short a) {
@@ -1553,10 +1719,6 @@ public class Short128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Short128VectorTests::not);
     }
-
-
-
-
 
 
 

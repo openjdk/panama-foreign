@@ -97,9 +97,9 @@ public class FloatScalar extends AbstractVectorBenchmark {
             float a = as[i];
             float b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (float)(a + b);
+                rs[i] = (float)(a + b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -131,9 +131,9 @@ public class FloatScalar extends AbstractVectorBenchmark {
             float a = as[i];
             float b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (float)(a - b);
+                rs[i] = (float)(a - b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -168,9 +168,9 @@ public class FloatScalar extends AbstractVectorBenchmark {
             float a = as[i];
             float b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (float)(a / b);
+                rs[i] = (float)(a / b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -203,9 +203,9 @@ public class FloatScalar extends AbstractVectorBenchmark {
             float a = as[i];
             float b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (float)(a * b);
+                rs[i] = (float)(a * b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -279,7 +279,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
         float[] as = fa.apply(size);
         float r = 0;
         for (int i = 0; i < as.length; i++) {
-          r += as[i];
+            r += as[i];
         }
         return r;
     }
@@ -289,7 +289,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
         float[] as = fa.apply(size);
         float r = 0;
         for (int i = 0; i < as.length; i++) {
-          r -= as[i];
+            r -= as[i];
         }
         return r;
     }
@@ -299,7 +299,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
         float[] as = fa.apply(size);
         float r = 1;
         for (int i = 0; i < as.length; i++) {
-          r *= as[i];
+            r *= as[i];
         }
         return r;
     }
@@ -309,7 +309,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
         float[] as = fa.apply(size);
         float r = Float.MAX_VALUE;
         for (int i = 0; i < as.length; i++) {
-          r = as[i];
+            r = (float)Math.min(r, as[i]);
         }
         return r;
     }
@@ -319,7 +319,7 @@ public class FloatScalar extends AbstractVectorBenchmark {
         float[] as = fa.apply(size);
         float r = Float.MIN_VALUE;
         for (int i = 0; i < as.length; i++) {
-          r = as[i];
+            r = (float)Math.max(r, as[i]);
         }
         return r;
     }
@@ -776,9 +776,9 @@ public class FloatScalar extends AbstractVectorBenchmark {
             float b = bs[i];
             float c = cs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (float)(Math.fma(a, b, c));
+                rs[i] = (float)(Math.fma(a, b, c));
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
