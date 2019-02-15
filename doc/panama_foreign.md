@@ -731,7 +731,7 @@ import static org.unix.easy_h.*;
 
 public class CurlMain {
    public static void main(String[] args) {
-       try (Scope s = Scope.newNativeScope()) { 
+       try (Scope s = Scope.scope().fork()) { 
            curl_global_init(CURL_GLOBAL_DEFAULT);
            Pointer<Void> curl = curl_easy_init();
            if(!curl.isNull()) {
