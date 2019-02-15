@@ -25,6 +25,9 @@
 
 package jdk.internal.foreign.memory;
 
+import jdk.internal.foreign.Util;
+
+import java.foreign.memory.Pointer;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.foreign.memory.Array;
@@ -44,6 +47,10 @@ public class BoundedArray<X> implements Array<X> {
     @Override
     public long length() {
         return size;
+    }
+
+    public Pointer<Array<X>> ptr() {
+        return Util.unsafeCast(pointer, elementType().array(size));
     }
 
     @Override

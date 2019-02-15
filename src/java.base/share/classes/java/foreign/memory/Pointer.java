@@ -222,6 +222,25 @@ public interface Pointer<X> {
         bsrc.copyTo(bdst, bytes);
     }
 
+    /**
+     * Copies the contents of one pointer to another, given that they have the same LayoutType.
+     *
+     * @param src the source pointer
+     * @param dst the destination pointer.
+     */
+    static void copy(Pointer<?> src, Pointer<?> dst) {
+        if (!src.type().equals(dst.type())) {
+            throw new IllegalArgumentException("Incompatible types: " + src.type() + ", and: " + dst.type());
+        }
+        assert src.type().bytesSize() == dst.type().bytesSize() : "byteSize should be equal after type check";
+
+        try {
+            copy(src, dst, dst.type().bytesSize());
+        } catch (IllegalAccessException ex) {
+            throw new IllegalArgumentException(ex);
+        }
+    }
+
     static String toString(Pointer<Byte> cstr) {
         if (cstr == null || cstr.isNull()) {
             return null;

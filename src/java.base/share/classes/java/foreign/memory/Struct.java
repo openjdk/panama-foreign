@@ -63,14 +63,7 @@ public interface Struct<T extends Struct<T>> {
      * @throws IllegalArgumentException if the two structs have different layouts.
      */
     static <Z extends Struct<Z>> void assign(Struct<Z> src, Struct<Z> dst) throws IllegalArgumentException {
-        if (!src.ptr().type().layout().equals(dst.ptr().type().layout())) {
-            throw new IllegalArgumentException("Structs have different layouts!");
-        }
-        try {
-            Pointer.copy(src.ptr(), dst.ptr(), src.ptr().type().bytesSize());
-        } catch (IllegalAccessException ex) {
-            throw new IllegalArgumentException(ex);
-        }
+        Pointer.copy(src.ptr(), dst.ptr());
     }
 
     /**
