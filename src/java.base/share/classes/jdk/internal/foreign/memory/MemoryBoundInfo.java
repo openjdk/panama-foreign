@@ -30,11 +30,6 @@ public class MemoryBoundInfo {
 
     public static final MemoryBoundInfo EVERYTHING = new MemoryBoundInfo(null, 0, Long.MAX_VALUE) {
         @Override
-        public void checkBounds(long offset) {
-            // any offset is in bounds
-        }
-
-        @Override
         void checkRange(long offset, long length) {
             checkOverflow(offset, length);
         }
@@ -98,14 +93,6 @@ public class MemoryBoundInfo {
     private static void checkOverflow(long min, long length) {
         // we never access at `length`
         Util.addUnsignedExact(min, length == 0 ? 0 : length - 1);
-    }
-
-    // check if the byte at given offset is accessible
-    public void checkBounds(long offset) {
-        if (offset < 0 || offset >= length) {
-            // FIXME: Objects.checkIndex(long, long) ?
-            throw new IndexOutOfBoundsException("offset=0x" + Long.toHexString(offset) + " length=0x" + Long.toHexString(length));
-        }
     }
 
     void checkRange(long offset, long length) {
