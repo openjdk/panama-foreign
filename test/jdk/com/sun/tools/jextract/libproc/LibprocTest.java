@@ -85,7 +85,7 @@ public class LibprocTest {
         long curProcPid = ProcessHandle.current().pid();
         try (Scope s = Scope.globalScope().fork()) {
             proc_info.proc_taskinfo ti = s.allocateStruct(proc_info.proc_taskinfo.class);
-            int taskInfoSize = (int)Struct.sizeof(proc_info.proc_taskinfo.class);
+            int taskInfoSize = (int)Struct.sizeOf(proc_info.proc_taskinfo.class);
             int resultSize = proc_pidinfo((int)curProcPid, PROC_PIDTASKINFO, 0, ti.ptr(), taskInfoSize);
             assertEquals(resultSize, taskInfoSize);
             System.out.println("total virtual memory size = " + ti.pti_virtual_size$get());

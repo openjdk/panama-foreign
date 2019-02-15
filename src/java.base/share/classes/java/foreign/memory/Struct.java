@@ -22,6 +22,7 @@
  */
 package java.foreign.memory;
 
+import jdk.internal.foreign.LayoutPaths;
 import jdk.internal.foreign.Util;
 
 import java.foreign.annotations.NativeStruct;
@@ -51,7 +52,7 @@ public interface Struct<T extends Struct<T>> {
      * @param clazz Class object representing the struct.
      * @return the size of the struct in bytes.
      */
-    static <X extends Struct<X>> long sizeof(Class<X> clazz) {
+    static <X extends Struct<X>> long sizeOf(Class<X> clazz) {
         return LayoutType.ofStruct(clazz).bytesSize();
     }
 
@@ -100,4 +101,21 @@ public interface Struct<T extends Struct<T>> {
 
         return sj.toString();
     }
+
+    /**
+     * Returns the offset, in bits, of a field with the given name in the struct represented by the given class.
+     *
+     * @param cls the struct's class
+     * @param fieldName the field's name
+     * @param <T> the type of the struct
+     * @return the offset in bits
+     * @throws IllegalArgumentException when a field with the given name can not be found
+     */
+    static <T extends Struct<T>> long offsetOf(Class<T> cls, String fieldName) {
+        Layout l = LayoutType.ofStruct(cls).layout();
+        LayoutPaths.LayoutPath path = LayoutPaths.lookup(l, el -> el.name().map(fieldName::equals).orElse(false)).findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Can not find field with name: " + fieldName));
+        return path.offset();
+    }
+
 }
