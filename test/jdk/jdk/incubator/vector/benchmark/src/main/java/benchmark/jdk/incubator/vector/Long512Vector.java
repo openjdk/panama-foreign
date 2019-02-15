@@ -32,6 +32,7 @@ import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -84,7 +85,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object add() {
+    public void add(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -97,11 +98,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object addMasked() {
+    public void addMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -116,11 +117,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object sub() {
+    public void sub(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -133,11 +134,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object subMasked() {
+    public void subMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -152,13 +153,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object mul() {
+    public void mul(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -171,11 +172,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object mulMasked() {
+    public void mulMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -190,12 +191,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object and() {
+    public void and(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -208,13 +209,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object andMasked() {
+    public void andMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -229,13 +230,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object or() {
+    public void or(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -248,13 +249,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object orMasked() {
+    public void orMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -269,13 +270,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object xor() {
+    public void xor(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -288,13 +289,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object xorMasked() {
+    public void xorMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -309,13 +310,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftR() {
+    public void shiftR(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -328,13 +329,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftRMasked() {
+    public void shiftRMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -349,13 +350,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftL() {
+    public void shiftL(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -368,13 +369,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftLMasked() {
+    public void shiftLMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -389,13 +390,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object aShiftR() {
+    public void aShiftR(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -408,13 +409,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object aShiftRMasked() {
+    public void aShiftRMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -429,13 +430,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object aShiftRShift() {
+    public void aShiftRShift(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -447,13 +448,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object aShiftRMaskedShift() {
+    public void aShiftRMaskedShift(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -467,13 +468,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftRShift() {
+    public void shiftRShift(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -485,13 +486,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftRMaskedShift() {
+    public void shiftRMaskedShift(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -505,13 +506,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftLShift() {
+    public void shiftLShift(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -523,13 +524,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftLMaskedShift() {
+    public void shiftLMaskedShift(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -543,7 +544,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
@@ -560,7 +561,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object max() {
+    public void max(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -573,11 +574,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object min() {
+    public void min(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -590,182 +591,262 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object andAll() {
+    public void andAll(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
+        long ra = -1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector av = SPECIES.fromArray(a, i);
-              r[i] = av.andAll();
+                LongVector av = SPECIES.fromArray(a, i);
+                r[i] = av.andAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = -1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                ra &= av.andAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object orAll() {
+    public void orAll(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
+        long ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector av = SPECIES.fromArray(a, i);
-              r[i] = av.orAll();
+                LongVector av = SPECIES.fromArray(a, i);
+                r[i] = av.orAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                ra |= av.orAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object xorAll() {
+    public void xorAll(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
+        long ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector av = SPECIES.fromArray(a, i);
-              r[i] = av.xorAll();
+                LongVector av = SPECIES.fromArray(a, i);
+                r[i] = av.xorAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                ra ^= av.xorAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object addAll() {
+    public void addAll(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
+        long ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector av = SPECIES.fromArray(a, i);
-              r[i] = av.addAll();
+                LongVector av = SPECIES.fromArray(a, i);
+                r[i] = av.addAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                ra += av.addAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object subAll() {
+    public void subAll(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
+        long ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector av = SPECIES.fromArray(a, i);
-              r[i] = av.subAll();
+                LongVector av = SPECIES.fromArray(a, i);
+                r[i] = av.subAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                ra -= av.subAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object mulAll() {
+    public void mulAll(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
+        long ra = 1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector av = SPECIES.fromArray(a, i);
-              r[i] = av.mulAll();
+                LongVector av = SPECIES.fromArray(a, i);
+                r[i] = av.mulAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                ra *= av.mulAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object minAll() {
+    public void minAll(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
+        long ra = Long.MAX_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector av = SPECIES.fromArray(a, i);
-              r[i] = av.minAll();
+                LongVector av = SPECIES.fromArray(a, i);
+                r[i] = av.minAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Long.MAX_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                ra = (long)Math.min(ra, av.minAll());
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object maxAll() {
+    public void maxAll(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
+        long ra = Long.MIN_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector av = SPECIES.fromArray(a, i);
-              r[i] = av.maxAll();
+                LongVector av = SPECIES.fromArray(a, i);
+                r[i] = av.maxAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Long.MIN_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                LongVector av = SPECIES.fromArray(a, i);
+                ra = (long)Math.max(ra, av.maxAll());
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object anyTrue() {
+    public void anyTrue(Blackhole bh) {
         boolean[] mask = fm.apply(SPECIES.length());
         boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Long> vmask = SPECIES.maskFromArray(mask, i);
-              r[i] = vmask.anyTrue();
+                Vector.Mask<Long> vmask = SPECIES.maskFromArray(mask, i);
+                r[i] = vmask.anyTrue();
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object allTrue() {
+    public void allTrue(Blackhole bh) {
         boolean[] mask = fm.apply(SPECIES.length());
         boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Long> vmask = SPECIES.maskFromArray(mask, i);
-              r[i] = vmask.allTrue();
+                Vector.Mask<Long> vmask = SPECIES.maskFromArray(mask, i);
+                r[i] = vmask.allTrue();
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object with() {
+    public void with(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              LongVector av = SPECIES.fromArray(a, i);
-              av.with(0, (long)4).intoArray(r, i);
+                LongVector av = SPECIES.fromArray(a, i);
+                av.with(0, (long)4).intoArray(r, i);
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
@@ -889,7 +970,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object blend() {
+    public void blend(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] b = fb.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -904,11 +985,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object rearrange() {
+    public void rearrange(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         int[] order = fs.apply(a.length, SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
@@ -920,11 +1001,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object extract() {
+    public void extract(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
 
@@ -1076,7 +1157,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
@@ -1100,7 +1181,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object neg() {
+    public void neg(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
 
@@ -1111,11 +1192,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object negMasked() {
+    public void negMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1128,11 +1209,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object abs() {
+    public void abs(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
 
@@ -1143,11 +1224,11 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object absMasked() {
+    public void absMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1160,12 +1241,12 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object not() {
+    public void not(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
 
@@ -1176,13 +1257,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object notMasked() {
+    public void notMasked(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         long[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1195,7 +1276,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
@@ -1203,7 +1284,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object gather() {
+    public void gather(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         int[] b    = fs.apply(a.length, SPECIES.length());
         long[] r = new long[a.length];
@@ -1215,13 +1296,13 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object scatter() {
+    public void scatter(Blackhole bh) {
         long[] a = fa.apply(SPECIES.length());
         int[] b = fs.apply(a.length, SPECIES.length());
         long[] r = new long[a.length];
@@ -1233,7 +1314,7 @@ public class Long512Vector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 }

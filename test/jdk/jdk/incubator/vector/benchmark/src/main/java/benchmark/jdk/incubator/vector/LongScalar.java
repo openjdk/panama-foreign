@@ -97,9 +97,9 @@ public class LongScalar extends AbstractVectorBenchmark {
             long a = as[i];
             long b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (long)(a + b);
+                rs[i] = (long)(a + b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -131,9 +131,9 @@ public class LongScalar extends AbstractVectorBenchmark {
             long a = as[i];
             long b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (long)(a - b);
+                rs[i] = (long)(a - b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -167,9 +167,9 @@ public class LongScalar extends AbstractVectorBenchmark {
             long a = as[i];
             long b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (long)(a * b);
+                rs[i] = (long)(a * b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -204,9 +204,9 @@ public class LongScalar extends AbstractVectorBenchmark {
             long a = as[i];
             long b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (long)(a & b);
+                rs[i] = (long)(a & b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -242,9 +242,9 @@ public class LongScalar extends AbstractVectorBenchmark {
             long a = as[i];
             long b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (long)(a | b);
+                rs[i] = (long)(a | b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -280,9 +280,9 @@ public class LongScalar extends AbstractVectorBenchmark {
             long a = as[i];
             long b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (long)(a ^ b);
+                rs[i] = (long)(a ^ b);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -318,9 +318,9 @@ public class LongScalar extends AbstractVectorBenchmark {
             long a = as[i];
             long b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (long)((a >>> b));
+                rs[i] = (long)((a >>> b));
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -356,9 +356,9 @@ public class LongScalar extends AbstractVectorBenchmark {
             long a = as[i];
             long b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (long)((a << b));
+                rs[i] = (long)((a << b));
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -394,9 +394,9 @@ public class LongScalar extends AbstractVectorBenchmark {
             long a = as[i];
             long b = bs[i];
             if (ms[i % ms.length]) {
-              rs[i] = (long)((a >> b));
+                rs[i] = (long)((a >> b));
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;
@@ -559,7 +559,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         long[] as = fa.apply(size);
         long r = -1;
         for (int i = 0; i < as.length; i++) {
-          r &= as[i];
+            r &= as[i];
         }
         return r;
     }
@@ -571,7 +571,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         long[] as = fa.apply(size);
         long r = 0;
         for (int i = 0; i < as.length; i++) {
-          r |= as[i];
+            r |= as[i];
         }
         return r;
     }
@@ -583,7 +583,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         long[] as = fa.apply(size);
         long r = 0;
         for (int i = 0; i < as.length; i++) {
-          r ^= as[i];
+            r ^= as[i];
         }
         return r;
     }
@@ -594,7 +594,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         long[] as = fa.apply(size);
         long r = 0;
         for (int i = 0; i < as.length; i++) {
-          r += as[i];
+            r += as[i];
         }
         return r;
     }
@@ -604,7 +604,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         long[] as = fa.apply(size);
         long r = 0;
         for (int i = 0; i < as.length; i++) {
-          r -= as[i];
+            r -= as[i];
         }
         return r;
     }
@@ -614,7 +614,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         long[] as = fa.apply(size);
         long r = 1;
         for (int i = 0; i < as.length; i++) {
-          r *= as[i];
+            r *= as[i];
         }
         return r;
     }
@@ -624,7 +624,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         long[] as = fa.apply(size);
         long r = Long.MAX_VALUE;
         for (int i = 0; i < as.length; i++) {
-          r = as[i];
+            r = (long)Math.min(r, as[i]);
         }
         return r;
     }
@@ -634,7 +634,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         long[] as = fa.apply(size);
         long r = Long.MIN_VALUE;
         for (int i = 0; i < as.length; i++) {
-          r = as[i];
+            r = (long)Math.max(r, as[i]);
         }
         return r;
     }
@@ -645,7 +645,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         boolean[] ms = fm.apply(size);
         boolean r = false;
         for (int i = 0; i < ms.length; i++) {
-          r |= ms[i];
+            r |= ms[i];
         }
         return r;
     }
@@ -657,7 +657,7 @@ public class LongScalar extends AbstractVectorBenchmark {
         boolean[] ms = fm.apply(size);
         boolean r = true;
         for (int i = 0; i < ms.length; i++) {
-          r &= ms[i];
+            r &= ms[i];
         }
         return r;
     }

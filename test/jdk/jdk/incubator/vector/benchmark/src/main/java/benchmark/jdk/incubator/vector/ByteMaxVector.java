@@ -32,6 +32,7 @@ import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -84,7 +85,7 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object add() {
+    public void add(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -97,11 +98,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object addMasked() {
+    public void addMasked(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -116,11 +117,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object sub() {
+    public void sub(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -133,11 +134,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object subMasked() {
+    public void subMasked(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -152,13 +153,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object mul() {
+    public void mul(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -171,11 +172,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object mulMasked() {
+    public void mulMasked(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -190,12 +191,12 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object and() {
+    public void and(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -208,13 +209,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object andMasked() {
+    public void andMasked(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -229,13 +230,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object or() {
+    public void or(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -248,13 +249,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object orMasked() {
+    public void orMasked(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -269,13 +270,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object xor() {
+    public void xor(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -288,13 +289,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object xorMasked() {
+    public void xorMasked(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -309,7 +310,7 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
@@ -327,7 +328,7 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object aShiftRShift() {
+    public void aShiftRShift(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -339,13 +340,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object aShiftRMaskedShift() {
+    public void aShiftRMaskedShift(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -359,13 +360,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftLShift() {
+    public void shiftLShift(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -377,13 +378,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftLMaskedShift() {
+    public void shiftLMaskedShift(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -397,13 +398,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftRShift() {
+    public void shiftRShift(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -415,13 +416,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object shiftRMaskedShift() {
+    public void shiftRMaskedShift(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -435,7 +436,7 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
@@ -446,7 +447,7 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object max() {
+    public void max(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -459,11 +460,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object min() {
+    public void min(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -476,182 +477,262 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object andAll() {
+    public void andAll(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = -1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.andAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.andAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = -1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra &= av.andAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object orAll() {
+    public void orAll(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.orAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.orAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra |= av.orAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object xorAll() {
+    public void xorAll(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.xorAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.xorAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra ^= av.xorAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object addAll() {
+    public void addAll(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.addAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.addAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra += av.addAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object subAll() {
+    public void subAll(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.subAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.subAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra -= av.subAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object mulAll() {
+    public void mulAll(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.mulAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.mulAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra *= av.mulAll();
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object minAll() {
+    public void minAll(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = Byte.MAX_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.minAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.minAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Byte.MAX_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra = (byte)Math.min(ra, av.minAll());
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object maxAll() {
+    public void maxAll(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = Byte.MIN_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.maxAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.maxAll();
             }
         }
 
-        return r;
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Byte.MIN_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra = (byte)Math.max(ra, av.maxAll());
+            }
+        }
+
+        bh.consume(ra);
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object anyTrue() {
+    public void anyTrue(Blackhole bh) {
         boolean[] mask = fm.apply(SPECIES.length());
         boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
-              r[i] = vmask.anyTrue();
+                Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
+                r[i] = vmask.anyTrue();
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object allTrue() {
+    public void allTrue(Blackhole bh) {
         boolean[] mask = fm.apply(SPECIES.length());
         boolean[] r = fmr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
-              r[i] = vmask.allTrue();
+                Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
+                r[i] = vmask.allTrue();
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object with() {
+    public void with(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              av.with(0, (byte)4).intoArray(r, i);
+                ByteVector av = SPECIES.fromArray(a, i);
+                av.with(0, (byte)4).intoArray(r, i);
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
@@ -775,7 +856,7 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object blend() {
+    public void blend(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] b = fb.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -790,11 +871,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object rearrange() {
+    public void rearrange(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         int[] order = fs.apply(a.length, SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
@@ -806,11 +887,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object extract() {
+    public void extract(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
 
@@ -962,7 +1043,7 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
@@ -986,7 +1067,7 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
 
 
     @Benchmark
-    public Object neg() {
+    public void neg(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
 
@@ -997,11 +1078,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object negMasked() {
+    public void negMasked(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1014,11 +1095,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object abs() {
+    public void abs(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
 
@@ -1029,11 +1110,11 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
     @Benchmark
-    public Object absMasked() {
+    public void absMasked(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1046,12 +1127,12 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
     @Benchmark
-    public Object not() {
+    public void not(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
 
@@ -1062,13 +1143,13 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 
 
     @Benchmark
-    public Object notMasked() {
+    public void notMasked(Blackhole bh) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
         boolean[] mask = fm.apply(SPECIES.length());
@@ -1081,7 +1162,7 @@ public class ByteMaxVector extends AbstractVectorBenchmark {
             }
         }
 
-        return r;
+        bh.consume(r);
     }
 
 

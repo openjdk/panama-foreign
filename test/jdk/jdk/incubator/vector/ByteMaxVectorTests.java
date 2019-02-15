@@ -89,13 +89,20 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         byte apply(byte[] a, int idx);
     }
 
-    static void assertReductionArraysEquals(byte[] a, byte[] b, FReductionOp f) {
+    interface FReductionAllOp {
+        byte apply(byte[] a);
+    }
+
+    static void assertReductionArraysEquals(byte[] a, byte[] b, byte c,
+                                            FReductionOp f, FReductionAllOp fa) {
         int i = 0;
         try {
+            Assert.assertEquals(c, fa.apply(a));
             for (; i < a.length; i += SPECIES.length()) {
                 Assert.assertEquals(b[i], f.apply(a, i));
             }
         } catch (AssertionError e) {
+            Assert.assertEquals(c, fa.apply(a), "Final result is incorrect!");
             Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
         }
     }
@@ -191,9 +198,9 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         int j = 0;
         try {
             for (; j < a.length; j += SPECIES.length()) {
-              for (i = 0; i < SPECIES.length(); i++) {
-                Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
-              }
+                for (i = 0; i < SPECIES.length(); i++) {
+                    Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
+                }
             }
         } catch (AssertionError e) {
             Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j], "at index #" + i + ", " + j);
@@ -209,9 +216,9 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         int j = 0;
         try {
             for (; j < a.length; j += SPECIES.length()) {
-              for (i = 0; i < SPECIES.length(); i++) {
-                Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]));
-              }
+                for (i = 0; i < SPECIES.length(); i++) {
+                    Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]));
+                }
             }
         } catch (AssertionError err) {
             Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]), "at index #" + i + ", input1 = " + a[i+j] + ", input2 = " + b[j] + ", mask = " + mask[i]);
@@ -401,7 +408,6 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         int length = 1000 * vl;
         return new boolean[length];
     };
-
     static byte add(byte a, byte b) {
         return (byte)(a + b);
     }
@@ -844,7 +850,20 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     static byte andAll(byte[] a, int idx) {
         byte res = -1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res &= a[i];
+            res &= a[i];
+        }
+
+        return res;
+    }
+
+    static byte andAll(byte[] a) {
+        byte res = -1;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            byte tmp = -1;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp &= a[i + j];
+            }
+            res &= tmp;
         }
 
         return res;
@@ -855,22 +874,44 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     static void andAllByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = -1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.andAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.andAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, ByteMaxVectorTests::andAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = -1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra &= av.andAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, ByteMaxVectorTests::andAll, ByteMaxVectorTests::andAll);
     }
 
 
     static byte orAll(byte[] a, int idx) {
         byte res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res |= a[i];
+            res |= a[i];
+        }
+
+        return res;
+    }
+
+    static byte orAll(byte[] a) {
+        byte res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            byte tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp |= a[i + j];
+            }
+            res |= tmp;
         }
 
         return res;
@@ -881,22 +922,44 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     static void orAllByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.orAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.orAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, ByteMaxVectorTests::orAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra |= av.orAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, ByteMaxVectorTests::orAll, ByteMaxVectorTests::orAll);
     }
 
 
     static byte xorAll(byte[] a, int idx) {
         byte res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res ^= a[i];
+            res ^= a[i];
+        }
+
+        return res;
+    }
+
+    static byte xorAll(byte[] a) {
+        byte res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            byte tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp ^= a[i + j];
+            }
+            res ^= tmp;
         }
 
         return res;
@@ -907,21 +970,43 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     static void xorAllByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.xorAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.xorAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, ByteMaxVectorTests::xorAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra ^= av.xorAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, ByteMaxVectorTests::xorAll, ByteMaxVectorTests::xorAll);
     }
 
     static byte addAll(byte[] a, int idx) {
         byte res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res += a[i];
+            res += a[i];
+        }
+
+        return res;
+    }
+
+    static byte addAll(byte[] a) {
+        byte res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            byte tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp += a[i + j];
+            }
+            res += tmp;
         }
 
         return res;
@@ -930,20 +1015,42 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     static void addAllByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.addAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.addAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, ByteMaxVectorTests::addAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra += av.addAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, ByteMaxVectorTests::addAll, ByteMaxVectorTests::addAll);
     }
     static byte subAll(byte[] a, int idx) {
         byte res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res -= a[i];
+            res -= a[i];
+        }
+
+        return res;
+    }
+
+    static byte subAll(byte[] a) {
+        byte res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            byte tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp -= a[i + j];
+            }
+            res -= tmp;
         }
 
         return res;
@@ -952,20 +1059,42 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     static void subAllByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.subAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.subAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, ByteMaxVectorTests::subAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra -= av.subAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, ByteMaxVectorTests::subAll, ByteMaxVectorTests::subAll);
     }
     static byte mulAll(byte[] a, int idx) {
         byte res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res *= a[i];
+            res *= a[i];
+        }
+
+        return res;
+    }
+
+    static byte mulAll(byte[] a) {
+        byte res = 1;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            byte tmp = 1;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp *= a[i + j];
+            }
+            res *= tmp;
         }
 
         return res;
@@ -974,15 +1103,24 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     static void mulAllByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = 1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.mulAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.mulAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, ByteMaxVectorTests::mulAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra *= av.mulAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, ByteMaxVectorTests::mulAll, ByteMaxVectorTests::mulAll);
     }
     static byte minAll(byte[] a, int idx) {
         byte res = Byte.MAX_VALUE;
@@ -992,19 +1130,37 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         return res;
     }
+
+    static byte minAll(byte[] a) {
+        byte res = Byte.MAX_VALUE;
+        for (int i = 0; i < a.length; i++) {
+            res = (byte)Math.min(res, a[i]);
+        }
+
+        return res;
+    }
     @Test(dataProvider = "byteUnaryOpProvider")
     static void minAllByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = Byte.MAX_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.minAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.minAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, ByteMaxVectorTests::minAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Byte.MAX_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra = (byte)Math.min(ra, av.minAll());
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, ByteMaxVectorTests::minAll, ByteMaxVectorTests::minAll);
     }
     static byte maxAll(byte[] a, int idx) {
         byte res = Byte.MIN_VALUE;
@@ -1014,25 +1170,43 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         return res;
     }
+
+    static byte maxAll(byte[] a) {
+        byte res = Byte.MIN_VALUE;
+        for (int i = 0; i < a.length; i++) {
+            res = (byte)Math.max(res, a[i]);
+        }
+
+        return res;
+    }
     @Test(dataProvider = "byteUnaryOpProvider")
     static void maxAllByteMaxVectorTests(IntFunction<byte[]> fa) {
         byte[] a = fa.apply(SPECIES.length());
         byte[] r = fr.apply(SPECIES.length());
+        byte ra = Byte.MIN_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              r[i] = av.maxAll();
+                ByteVector av = SPECIES.fromArray(a, i);
+                r[i] = av.maxAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, ByteMaxVectorTests::maxAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Byte.MIN_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                ByteVector av = SPECIES.fromArray(a, i);
+                ra = (byte)Math.max(ra, av.maxAll());
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, ByteMaxVectorTests::maxAll, ByteMaxVectorTests::maxAll);
     }
 
     static boolean anyTrue(boolean[] a, int idx) {
         boolean res = false;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res |= a[i];
+            res |= a[i];
         }
 
         return res;
@@ -1046,8 +1220,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
-              r[i] = vmask.anyTrue();
+                Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
+                r[i] = vmask.anyTrue();
             }
         }
 
@@ -1058,7 +1232,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
     static boolean allTrue(boolean[] a, int idx) {
         boolean res = true;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res &= a[i];
+            res &= a[i];
         }
 
         return res;
@@ -1072,8 +1246,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < mask.length; i += SPECIES.length()) {
-              Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
-              r[i] = vmask.allTrue();
+                Vector.Mask<Byte> vmask = SPECIES.maskFromArray(mask, i);
+                r[i] = vmask.allTrue();
             }
         }
 
@@ -1088,8 +1262,8 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              ByteVector av = SPECIES.fromArray(a, i);
-              av.with(0, (byte)4).intoArray(r, i);
+                ByteVector av = SPECIES.fromArray(a, i);
+                av.with(0, (byte)4).intoArray(r, i);
             }
         }
 
@@ -1474,10 +1648,6 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, ByteMaxVectorTests::neg);
     }
 
-
-
-
-
     static byte abs(byte a) {
         return (byte)(Math.abs((byte)a));
     }
@@ -1514,10 +1684,6 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, ByteMaxVectorTests::abs);
     }
-
-
-
-
 
 
     static byte not(byte a) {
@@ -1560,10 +1726,6 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, ByteMaxVectorTests::not);
     }
-
-
-
-
 
 
 

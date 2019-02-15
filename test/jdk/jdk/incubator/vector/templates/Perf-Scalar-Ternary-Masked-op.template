@@ -12,9 +12,9 @@
             $type$ b = bs[i];
             $type$ c = cs[i];
             if (ms[i % ms.length]) {
-              rs[i] = ($type$)([[TEST_OP]]);
+                rs[i] = ($type$)([[TEST_OP]]);
             } else {
-              rs[i] = a;
+                rs[i] = a;
             }
         }
         return rs;

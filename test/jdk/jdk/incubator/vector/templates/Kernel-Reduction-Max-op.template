@@ -13,7 +13,7 @@
             ra = [[TEST_INIT]];
             for (int i = 0; i < a.length; i += SPECIES.length()) {
                 $abstractvectortype$ av = SPECIES.fromArray(a, i);
-                ra [[TEST_OP]]= av.[[TEST]]();
+                ra = ($type$)Math.max(ra, av.[[TEST]]());
             }
         }
 

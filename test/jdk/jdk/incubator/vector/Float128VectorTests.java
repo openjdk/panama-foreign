@@ -83,13 +83,20 @@ public class Float128VectorTests extends AbstractVectorTest {
         float apply(float[] a, int idx);
     }
 
-    static void assertReductionArraysEquals(float[] a, float[] b, FReductionOp f) {
+    interface FReductionAllOp {
+        float apply(float[] a);
+    }
+
+    static void assertReductionArraysEquals(float[] a, float[] b, float c,
+                                            FReductionOp f, FReductionAllOp fa) {
         int i = 0;
         try {
+            Assert.assertEquals(c, fa.apply(a));
             for (; i < a.length; i += SPECIES.length()) {
                 Assert.assertEquals(b[i], f.apply(a, i));
             }
         } catch (AssertionError e) {
+            Assert.assertEquals(c, fa.apply(a), "Final result is incorrect!");
             Assert.assertEquals(b[i], f.apply(a, i), "at index #" + i);
         }
     }
@@ -185,9 +192,9 @@ public class Float128VectorTests extends AbstractVectorTest {
         int j = 0;
         try {
             for (; j < a.length; j += SPECIES.length()) {
-              for (i = 0; i < SPECIES.length(); i++) {
-                Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
-              }
+                for (i = 0; i < SPECIES.length(); i++) {
+                    Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j]);
+                }
             }
         } catch (AssertionError e) {
             Assert.assertEquals(f.apply(a[i+j], b[j]), r[i+j], "at index #" + i + ", " + j);
@@ -203,9 +210,9 @@ public class Float128VectorTests extends AbstractVectorTest {
         int j = 0;
         try {
             for (; j < a.length; j += SPECIES.length()) {
-              for (i = 0; i < SPECIES.length(); i++) {
-                Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]));
-              }
+                for (i = 0; i < SPECIES.length(); i++) {
+                    Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]));
+                }
             }
         } catch (AssertionError err) {
             Assert.assertEquals(r[i+j], f.apply(a[i+j], b[j], mask[i]), "at index #" + i + ", input1 = " + a[i+j] + ", input2 = " + b[j] + ", mask = " + mask[i]);
@@ -527,7 +534,6 @@ public class Float128VectorTests extends AbstractVectorTest {
         int length = 1000 * vl;
         return new boolean[length];
     };
-
     static float add(float a, float b) {
         return (float)(a + b);
     }
@@ -771,7 +777,20 @@ public class Float128VectorTests extends AbstractVectorTest {
     static float addAll(float[] a, int idx) {
         float res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res += a[i];
+            res += a[i];
+        }
+
+        return res;
+    }
+
+    static float addAll(float[] a) {
+        float res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            float tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp += a[i + j];
+            }
+            res += tmp;
         }
 
         return res;
@@ -780,20 +799,42 @@ public class Float128VectorTests extends AbstractVectorTest {
     static void addAllFloat128VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
+        float ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              FloatVector av = SPECIES.fromArray(a, i);
-              r[i] = av.addAll();
+                FloatVector av = SPECIES.fromArray(a, i);
+                r[i] = av.addAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Float128VectorTests::addAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = SPECIES.fromArray(a, i);
+                ra += av.addAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Float128VectorTests::addAll, Float128VectorTests::addAll);
     }
     static float subAll(float[] a, int idx) {
         float res = 0;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res -= a[i];
+            res -= a[i];
+        }
+
+        return res;
+    }
+
+    static float subAll(float[] a) {
+        float res = 0;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            float tmp = 0;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp -= a[i + j];
+            }
+            res -= tmp;
         }
 
         return res;
@@ -802,20 +843,42 @@ public class Float128VectorTests extends AbstractVectorTest {
     static void subAllFloat128VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
+        float ra = 0;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              FloatVector av = SPECIES.fromArray(a, i);
-              r[i] = av.subAll();
+                FloatVector av = SPECIES.fromArray(a, i);
+                r[i] = av.subAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Float128VectorTests::subAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 0;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = SPECIES.fromArray(a, i);
+                ra -= av.subAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Float128VectorTests::subAll, Float128VectorTests::subAll);
     }
     static float mulAll(float[] a, int idx) {
         float res = 1;
         for (int i = idx; i < (idx + SPECIES.length()); i++) {
-          res *= a[i];
+            res *= a[i];
+        }
+
+        return res;
+    }
+
+    static float mulAll(float[] a) {
+        float res = 1;
+        for (int i = 0; i < a.length; i += SPECIES.length()) {
+            float tmp = 1;
+            for (int j = 0; j < SPECIES.length(); j++) {
+                tmp *= a[i + j];
+            }
+            res *= tmp;
         }
 
         return res;
@@ -824,15 +887,24 @@ public class Float128VectorTests extends AbstractVectorTest {
     static void mulAllFloat128VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
+        float ra = 1;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              FloatVector av = SPECIES.fromArray(a, i);
-              r[i] = av.mulAll();
+                FloatVector av = SPECIES.fromArray(a, i);
+                r[i] = av.mulAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Float128VectorTests::mulAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = 1;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = SPECIES.fromArray(a, i);
+                ra *= av.mulAll();
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Float128VectorTests::mulAll, Float128VectorTests::mulAll);
     }
     static float minAll(float[] a, int idx) {
         float res = Float.MAX_VALUE;
@@ -842,19 +914,37 @@ public class Float128VectorTests extends AbstractVectorTest {
 
         return res;
     }
+
+    static float minAll(float[] a) {
+        float res = Float.MAX_VALUE;
+        for (int i = 0; i < a.length; i++) {
+            res = (float)Math.min(res, a[i]);
+        }
+
+        return res;
+    }
     @Test(dataProvider = "floatUnaryOpProvider")
     static void minAllFloat128VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
+        float ra = Float.MAX_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              FloatVector av = SPECIES.fromArray(a, i);
-              r[i] = av.minAll();
+                FloatVector av = SPECIES.fromArray(a, i);
+                r[i] = av.minAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Float128VectorTests::minAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Float.MAX_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = SPECIES.fromArray(a, i);
+                ra = (float)Math.min(ra, av.minAll());
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Float128VectorTests::minAll, Float128VectorTests::minAll);
     }
     static float maxAll(float[] a, int idx) {
         float res = Float.MIN_VALUE;
@@ -864,19 +954,37 @@ public class Float128VectorTests extends AbstractVectorTest {
 
         return res;
     }
+
+    static float maxAll(float[] a) {
+        float res = Float.MIN_VALUE;
+        for (int i = 0; i < a.length; i++) {
+            res = (float)Math.max(res, a[i]);
+        }
+
+        return res;
+    }
     @Test(dataProvider = "floatUnaryOpProvider")
     static void maxAllFloat128VectorTests(IntFunction<float[]> fa) {
         float[] a = fa.apply(SPECIES.length());
         float[] r = fr.apply(SPECIES.length());
+        float ra = Float.MIN_VALUE;
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              FloatVector av = SPECIES.fromArray(a, i);
-              r[i] = av.maxAll();
+                FloatVector av = SPECIES.fromArray(a, i);
+                r[i] = av.maxAll();
             }
         }
 
-        assertReductionArraysEquals(a, r, Float128VectorTests::maxAll);
+        for (int ic = 0; ic < INVOC_COUNT; ic++) {
+            ra = Float.MIN_VALUE;
+            for (int i = 0; i < a.length; i += SPECIES.length()) {
+                FloatVector av = SPECIES.fromArray(a, i);
+                ra = (float)Math.max(ra, av.maxAll());
+            }
+        }
+
+        assertReductionArraysEquals(a, r, ra, Float128VectorTests::maxAll, Float128VectorTests::maxAll);
     }
 
 
@@ -890,8 +998,8 @@ public class Float128VectorTests extends AbstractVectorTest {
 
         for (int ic = 0; ic < INVOC_COUNT; ic++) {
             for (int i = 0; i < a.length; i += SPECIES.length()) {
-              FloatVector av = SPECIES.fromArray(a, i);
-              av.with(0, (float)4).intoArray(r, i);
+                FloatVector av = SPECIES.fromArray(a, i);
+                av.with(0, (float)4).intoArray(r, i);
             }
         }
 
@@ -1744,10 +1852,6 @@ public class Float128VectorTests extends AbstractVectorTest {
         assertArraysEquals(a, r, mask, Float128VectorTests::neg);
     }
 
-
-
-
-
     static float abs(float a) {
         return (float)(Math.abs((float)a));
     }
@@ -1784,10 +1888,6 @@ public class Float128VectorTests extends AbstractVectorTest {
 
         assertArraysEquals(a, r, mask, Float128VectorTests::abs);
     }
-
-
-
-
 
 
 
@@ -1835,17 +1935,13 @@ public class Float128VectorTests extends AbstractVectorTest {
     }
 
 
-
-
-
-
     static float[] gather(float a[], int ix, int[] b, int iy) {
-      float[] res = new float[SPECIES.length()];
-      for (int i = 0; i < SPECIES.length(); i++) {
-        int bi = iy + i;
-        res[i] = a[b[bi] + ix];
-      }
-      return res;
+        float[] res = new float[SPECIES.length()];
+        for (int i = 0; i < SPECIES.length(); i++) {
+            int bi = iy + i;
+            res[i] = a[b[bi] + ix];
+        }
+        return res;
     }
 
     @Test(dataProvider = "floatUnaryOpIndexProvider")
