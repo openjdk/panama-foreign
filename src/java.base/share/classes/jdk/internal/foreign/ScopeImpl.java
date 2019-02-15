@@ -135,8 +135,6 @@ public final class ScopeImpl implements Scope {
         size *= count;
         if (size > Integer.MAX_VALUE) {
             throw new UnsupportedOperationException("allocate size to large");
-        } else if (size == 0) {
-            return BoundedPointer.nullPointer();
         }
 
         return new BoundedPointer<>(type, this, Pointer.AccessMode.READ_WRITE, allocateRegion(size));

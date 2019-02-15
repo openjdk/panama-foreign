@@ -489,12 +489,7 @@ public final class References {
         }
 
         static void set(Pointer<?> pointer, Array<?> arrayValue) {
-            try {
-                Pointer.copy(arrayValue.elementPointer(), pointer,
-                        arrayValue.bytesSize());
-            } catch (Throwable ex) {
-                throw new IllegalStateException(ex);
-            }
+            Pointer.copy(((BoundedArray<?>) arrayValue).ptr(), pointer);
         }
     }
 
@@ -539,11 +534,7 @@ public final class References {
         }
 
         static void set(Pointer<?> pointer, Struct<?> t) {
-            try {
-                Pointer.copy(t.ptr(), pointer, pointer.type().bytesSize());
-            } catch (IllegalAccessException iae) {
-                throw new RuntimeException("Access denied", iae);
-            }
+            Pointer.copy(t.ptr(), pointer);
         }
     }
 

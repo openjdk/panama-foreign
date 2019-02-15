@@ -61,7 +61,7 @@ public class OutOfBoundsTest {
 
     private static final OutOfBounds lib = Libraries.bind(OutOfBounds.class, Libraries.loadLibrary(MethodHandles.lookup(), "OutOfBounds"));
 
-    @Test(expectedExceptions = IndexOutOfBoundsException.class)
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testPointerOOB() {
         try(Scope scope = Libraries.libraryScope(lib).fork()) {
             Pointer<Byte> p = scope.allocate(NativeTypes.INT8);
@@ -70,7 +70,7 @@ public class OutOfBoundsTest {
         }
     }
 
-    @Test(expectedExceptions = IndexOutOfBoundsException.class)
+    @Test(expectedExceptions = IllegalStateException.class)
     public void testStructPointerOOB() {
         try(Scope scope = Libraries.libraryScope(lib).fork()) {
             Pointer<Byte> p = scope.allocate(NativeTypes.INT8);
