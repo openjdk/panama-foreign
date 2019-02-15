@@ -169,15 +169,6 @@ public interface Array<X> {
      * @throws IllegalArgumentException if the two arrays have different layouts.
      */
     static <Z> void assign(Array<Z> src, Array<Z> dst) {
-        if (!src.elementType().layout().equals(dst.elementType().layout()) ||
-                src.length() != dst.length()) {
-            throw new IllegalArgumentException("Arrays have different layouts!");
-        }
-        try {
-            Pointer.copy(src.elementPointer(), dst.elementPointer(),
-                            dst.bytesSize());
-        } catch (IllegalAccessException ex) {
-            throw new IllegalArgumentException(ex);
-        }
+        Pointer.copy(((BoundedArray<?>) src).ptr(), ((BoundedArray<?>) dst).ptr());
     }
 }

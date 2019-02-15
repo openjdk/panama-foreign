@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
 import jdk.internal.foreign.Util;
 
 public class MemoryBoundInfo {
-    
+
     public static final MemoryBoundInfo EVERYTHING = new MemoryBoundInfo(null, 0, Long.MAX_VALUE) {
         @Override
         public void checkBounds(long offset) {
@@ -100,10 +100,8 @@ public class MemoryBoundInfo {
         Util.addUnsignedExact(min, length == 0 ? 0 : length - 1);
     }
 
+    // check if the byte at given offset is accessible
     public void checkBounds(long offset) {
-        if (length == 0 && offset == 0) {
-            return;
-        }
         if (offset < 0 || offset >= length) {
             // FIXME: Objects.checkIndex(long, long) ?
             throw new IndexOutOfBoundsException("offset=0x" + Long.toHexString(offset) + " length=0x" + Long.toHexString(length));
@@ -111,9 +109,9 @@ public class MemoryBoundInfo {
     }
 
     void checkRange(long offset, long length) {
-        checkBounds(offset);
-        if (length != 0) {
-            checkBounds(offset + length - 1);
+        // FIXME check for negative length?
+        if (offset < 0 || offset > this.length - length) { // careful of overflow
+            throw new IllegalStateException("offset: " + offset + ", region length: " + this.length);
         }
     }
 

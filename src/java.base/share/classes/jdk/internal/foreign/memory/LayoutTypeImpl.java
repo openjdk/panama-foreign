@@ -36,6 +36,7 @@ import java.foreign.layout.Value;
 import java.foreign.memory.Array;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
+import java.util.Objects;
 
 import jdk.internal.foreign.memory.References.Reference;
 
@@ -81,6 +82,28 @@ public class LayoutTypeImpl<X> implements LayoutType<X> {
     @Override
     public Class<?> carrier() {
         return carrier;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LayoutTypeImpl<?> that = (LayoutTypeImpl<?>) o;
+        return carrier == carrier &&
+                layout.equals(that.layout);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(carrier, layout);
+    }
+
+    @Override
+    public String toString() {
+        return "LayoutTypeImpl{" +
+                "carrier=" + carrier +
+                ", layout=" + layout +
+                '}';
     }
 
     public Class<?> getFuncIntf() {
