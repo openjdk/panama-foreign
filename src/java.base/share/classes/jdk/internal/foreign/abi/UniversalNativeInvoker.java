@@ -86,7 +86,7 @@ public abstract class UniversalNativeInvoker {
         long[] values = new long[nValues];
         Pointer<Long> argsPtr = nValues > 0 ?
                 BoundedPointer.fromLongArray(NativeTypes.UINT64, values) :
-                Pointer.nullPointer();
+                Pointer.ofNull();
 
         for (int i = 0; i < args.length; i++) {
             Object arg = args[i];
@@ -106,7 +106,7 @@ public abstract class UniversalNativeInvoker {
         } else if (!isVoid && returnValues.length != 0) {
             retPtr = BoundedPointer.fromLongArray(NativeTypes.UINT64, returnValues);
         } else {
-            retPtr = Pointer.nullPointer();
+            retPtr = Pointer.ofNull();
         }
 
         if (DEBUG) {

@@ -223,7 +223,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb2-14" data-line-number="14">        <span class="kw">try</span> (Scope s = org.<span class="fu">python</span>.<span class="fu">Python_h</span>.<span class="fu">scope</span>().<span class="fu">fork</span>()) {</a>
 <a class="sourceLine" id="cb2-15" data-line-number="15">            <span class="fu">PyRun_SimpleStringFlags</span>(s.<span class="fu">allocateCString</span>(</a>
 <a class="sourceLine" id="cb2-16" data-line-number="16">                <span class="st">&quot;print(sum([33, 55, 66])); print(&#39;Hello from Python!&#39;)</span><span class="sc">\n</span><span class="st">&quot;</span>),</a>
-<a class="sourceLine" id="cb2-17" data-line-number="17">                Pointer.<span class="fu">nullPointer</span>());</a>
+<a class="sourceLine" id="cb2-17" data-line-number="17">                Pointer.<span class="fu">ofNull</span>());</a>
 <a class="sourceLine" id="cb2-18" data-line-number="18">        }</a>
 <a class="sourceLine" id="cb2-19" data-line-number="19">        <span class="fu">Py_Finalize</span>();</a>
 <a class="sourceLine" id="cb2-20" data-line-number="20">    }</a>
@@ -308,58 +308,56 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb11-28" data-line-number="28">                <span class="st">&quot;  SALARY REAL NOT NULL )&quot;</span></a>
 <a class="sourceLine" id="cb11-29" data-line-number="29">            );</a>
 <a class="sourceLine" id="cb11-30" data-line-number="30"></a>
-<a class="sourceLine" id="cb11-31" data-line-number="31">            <span class="co">// dummy ignoring callback</span></a>
-<a class="sourceLine" id="cb11-32" data-line-number="32">            <span class="bu">Callback</span>&lt;FI1&gt; callback = scope.<span class="fu">allocateCallback</span>(FI1.<span class="fu">class</span>, (a,b,c,d)-&gt;<span class="dv">0</span>);</a>
-<a class="sourceLine" id="cb11-33" data-line-number="33">            rc = <span class="fu">sqlite3_exec</span>(db.<span class="fu">get</span>(), sql, callback, Pointer.<span class="fu">nullPointer</span>(), errMsg);</a>
-<a class="sourceLine" id="cb11-34" data-line-number="34"></a>
-<a class="sourceLine" id="cb11-35" data-line-number="35">            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</a>
-<a class="sourceLine" id="cb11-36" data-line-number="36">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</a>
-<a class="sourceLine" id="cb11-37" data-line-number="37">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Pointer.<span class="fu">toString</span>(errMsg.<span class="fu">get</span>()));</a>
-<a class="sourceLine" id="cb11-38" data-line-number="38">                <span class="fu">sqlite3_free</span>(errMsg.<span class="fu">get</span>());</a>
-<a class="sourceLine" id="cb11-39" data-line-number="39">            }</a>
-<a class="sourceLine" id="cb11-40" data-line-number="40"></a>
-<a class="sourceLine" id="cb11-41" data-line-number="41">            <span class="co">// insert two rows</span></a>
-<a class="sourceLine" id="cb11-42" data-line-number="42">            sql = scope.<span class="fu">allocateCString</span>(</a>
+<a class="sourceLine" id="cb11-31" data-line-number="31">            rc = <span class="fu">sqlite3_exec</span>(db.<span class="fu">get</span>(), sql, <span class="bu">Callback</span>.<span class="fu">ofNull</span>(), Pointer.<span class="fu">ofNull</span>(), errMsg);</a>
+<a class="sourceLine" id="cb11-32" data-line-number="32"></a>
+<a class="sourceLine" id="cb11-33" data-line-number="33">            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</a>
+<a class="sourceLine" id="cb11-34" data-line-number="34">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</a>
+<a class="sourceLine" id="cb11-35" data-line-number="35">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Pointer.<span class="fu">toString</span>(errMsg.<span class="fu">get</span>()));</a>
+<a class="sourceLine" id="cb11-36" data-line-number="36">                <span class="fu">sqlite3_free</span>(errMsg.<span class="fu">get</span>());</a>
+<a class="sourceLine" id="cb11-37" data-line-number="37">            }</a>
+<a class="sourceLine" id="cb11-38" data-line-number="38"></a>
+<a class="sourceLine" id="cb11-39" data-line-number="39">            <span class="co">// insert two rows</span></a>
+<a class="sourceLine" id="cb11-40" data-line-number="40">            sql = scope.<span class="fu">allocateCString</span>(</a>
+<a class="sourceLine" id="cb11-41" data-line-number="41">                <span class="st">&quot;INSERT INTO EMPLOYEE (ID,NAME,SALARY) &quot;</span> +</a>
+<a class="sourceLine" id="cb11-42" data-line-number="42">                    <span class="st">&quot;VALUES (134, &#39;Xyz&#39;, 200000.0); &quot;</span> +</a>
 <a class="sourceLine" id="cb11-43" data-line-number="43">                <span class="st">&quot;INSERT INTO EMPLOYEE (ID,NAME,SALARY) &quot;</span> +</a>
-<a class="sourceLine" id="cb11-44" data-line-number="44">                    <span class="st">&quot;VALUES (134, &#39;Xyz&#39;, 200000.0); &quot;</span> +</a>
-<a class="sourceLine" id="cb11-45" data-line-number="45">                <span class="st">&quot;INSERT INTO EMPLOYEE (ID,NAME,SALARY) &quot;</span> +</a>
-<a class="sourceLine" id="cb11-46" data-line-number="46">                    <span class="st">&quot;VALUES (333, &#39;Abc&#39;, 100000.0);&quot;</span></a>
-<a class="sourceLine" id="cb11-47" data-line-number="47">            );</a>
-<a class="sourceLine" id="cb11-48" data-line-number="48">            rc = <span class="fu">sqlite3_exec</span>(db.<span class="fu">get</span>(), sql, callback, Pointer.<span class="fu">nullPointer</span>(), errMsg);</a>
-<a class="sourceLine" id="cb11-49" data-line-number="49"></a>
-<a class="sourceLine" id="cb11-50" data-line-number="50">            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</a>
-<a class="sourceLine" id="cb11-51" data-line-number="51">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</a>
-<a class="sourceLine" id="cb11-52" data-line-number="52">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Pointer.<span class="fu">toString</span>(errMsg.<span class="fu">get</span>()));</a>
-<a class="sourceLine" id="cb11-53" data-line-number="53">                <span class="fu">sqlite3_free</span>(errMsg.<span class="fu">get</span>());</a>
-<a class="sourceLine" id="cb11-54" data-line-number="54">            }</a>
-<a class="sourceLine" id="cb11-55" data-line-number="55"></a>
-<a class="sourceLine" id="cb11-56" data-line-number="56">            <span class="dt">int</span>[] rowNum = <span class="kw">new</span> <span class="dt">int</span>[<span class="dv">1</span>];</a>
-<a class="sourceLine" id="cb11-57" data-line-number="57">            <span class="co">// callback to print rows from SELECT query</span></a>
-<a class="sourceLine" id="cb11-58" data-line-number="58">            callback = scope.<span class="fu">allocateCallback</span>(FI1.<span class="fu">class</span>, (a, argc, argv, columnNames) -&gt; {</a>
-<a class="sourceLine" id="cb11-59" data-line-number="59">                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Row num: &quot;</span> + rowNum[<span class="dv">0</span>]++);</a>
-<a class="sourceLine" id="cb11-60" data-line-number="60">                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;numColumns = &quot;</span> + argc);</a>
-<a class="sourceLine" id="cb11-61" data-line-number="61">                <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; argc; i++) {</a>
-<a class="sourceLine" id="cb11-62" data-line-number="62">                     <span class="bu">String</span> name = Pointer.<span class="fu">toString</span>(columnNames.<span class="fu">offset</span>(i).<span class="fu">get</span>());</a>
-<a class="sourceLine" id="cb11-63" data-line-number="63">                     <span class="bu">String</span> value = Pointer.<span class="fu">toString</span>(argv.<span class="fu">offset</span>(i).<span class="fu">get</span>());</a>
-<a class="sourceLine" id="cb11-64" data-line-number="64">                     <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> = </span><span class="sc">%s\n</span><span class="st">&quot;</span>, name, value);</a>
-<a class="sourceLine" id="cb11-65" data-line-number="65">                }</a>
-<a class="sourceLine" id="cb11-66" data-line-number="66">                <span class="kw">return</span> <span class="dv">0</span>;</a>
-<a class="sourceLine" id="cb11-67" data-line-number="67">            });</a>
-<a class="sourceLine" id="cb11-68" data-line-number="68"></a>
-<a class="sourceLine" id="cb11-69" data-line-number="69">            <span class="co">// select query</span></a>
-<a class="sourceLine" id="cb11-70" data-line-number="70">            sql = scope.<span class="fu">allocateCString</span>(<span class="st">&quot;SELECT * FROM EMPLOYEE&quot;</span>);</a>
-<a class="sourceLine" id="cb11-71" data-line-number="71">            rc = <span class="fu">sqlite3_exec</span>(db.<span class="fu">get</span>(), sql, callback, Pointer.<span class="fu">nullPointer</span>(), errMsg);</a>
-<a class="sourceLine" id="cb11-72" data-line-number="72"></a>
-<a class="sourceLine" id="cb11-73" data-line-number="73">            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</a>
-<a class="sourceLine" id="cb11-74" data-line-number="74">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</a>
-<a class="sourceLine" id="cb11-75" data-line-number="75">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Pointer.<span class="fu">toString</span>(errMsg.<span class="fu">get</span>()));</a>
-<a class="sourceLine" id="cb11-76" data-line-number="76">                <span class="fu">sqlite3_free</span>(errMsg.<span class="fu">get</span>());</a>
-<a class="sourceLine" id="cb11-77" data-line-number="77">            }</a>
-<a class="sourceLine" id="cb11-78" data-line-number="78"> </a>
-<a class="sourceLine" id="cb11-79" data-line-number="79">            <span class="fu">sqlite3_close</span>(db.<span class="fu">get</span>());</a>
-<a class="sourceLine" id="cb11-80" data-line-number="80">        }</a>
-<a class="sourceLine" id="cb11-81" data-line-number="81">   }</a>
-<a class="sourceLine" id="cb11-82" data-line-number="82">}</a></code></pre></div>
+<a class="sourceLine" id="cb11-44" data-line-number="44">                    <span class="st">&quot;VALUES (333, &#39;Abc&#39;, 100000.0);&quot;</span></a>
+<a class="sourceLine" id="cb11-45" data-line-number="45">            );</a>
+<a class="sourceLine" id="cb11-46" data-line-number="46">            rc = <span class="fu">sqlite3_exec</span>(db.<span class="fu">get</span>(), sql, <span class="bu">Callback</span>.<span class="fu">ofNull</span>(), Pointer.<span class="fu">ofNull</span>(), errMsg);</a>
+<a class="sourceLine" id="cb11-47" data-line-number="47"></a>
+<a class="sourceLine" id="cb11-48" data-line-number="48">            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</a>
+<a class="sourceLine" id="cb11-49" data-line-number="49">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</a>
+<a class="sourceLine" id="cb11-50" data-line-number="50">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Pointer.<span class="fu">toString</span>(errMsg.<span class="fu">get</span>()));</a>
+<a class="sourceLine" id="cb11-51" data-line-number="51">                <span class="fu">sqlite3_free</span>(errMsg.<span class="fu">get</span>());</a>
+<a class="sourceLine" id="cb11-52" data-line-number="52">            }</a>
+<a class="sourceLine" id="cb11-53" data-line-number="53"></a>
+<a class="sourceLine" id="cb11-54" data-line-number="54">            <span class="dt">int</span>[] rowNum = <span class="kw">new</span> <span class="dt">int</span>[<span class="dv">1</span>];</a>
+<a class="sourceLine" id="cb11-55" data-line-number="55">            <span class="co">// callback to print rows from SELECT query</span></a>
+<a class="sourceLine" id="cb11-56" data-line-number="56">            <span class="bu">Callback</span>&lt;FI1&gt; callback = scope.<span class="fu">allocateCallback</span>(FI1.<span class="fu">class</span>, (a, argc, argv, columnNames) -&gt; {</a>
+<a class="sourceLine" id="cb11-57" data-line-number="57">                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;Row num: &quot;</span> + rowNum[<span class="dv">0</span>]++);</a>
+<a class="sourceLine" id="cb11-58" data-line-number="58">                <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="st">&quot;numColumns = &quot;</span> + argc);</a>
+<a class="sourceLine" id="cb11-59" data-line-number="59">                <span class="kw">for</span> (<span class="dt">int</span> i = <span class="dv">0</span>; i &lt; argc; i++) {</a>
+<a class="sourceLine" id="cb11-60" data-line-number="60">                     <span class="bu">String</span> name = Pointer.<span class="fu">toString</span>(columnNames.<span class="fu">offset</span>(i).<span class="fu">get</span>());</a>
+<a class="sourceLine" id="cb11-61" data-line-number="61">                     <span class="bu">String</span> value = Pointer.<span class="fu">toString</span>(argv.<span class="fu">offset</span>(i).<span class="fu">get</span>());</a>
+<a class="sourceLine" id="cb11-62" data-line-number="62">                     <span class="bu">System</span>.<span class="fu">out.printf</span>(<span class="st">&quot;</span><span class="sc">%s</span><span class="st"> = </span><span class="sc">%s\n</span><span class="st">&quot;</span>, name, value);</a>
+<a class="sourceLine" id="cb11-63" data-line-number="63">                }</a>
+<a class="sourceLine" id="cb11-64" data-line-number="64">                <span class="kw">return</span> <span class="dv">0</span>;</a>
+<a class="sourceLine" id="cb11-65" data-line-number="65">            });</a>
+<a class="sourceLine" id="cb11-66" data-line-number="66"></a>
+<a class="sourceLine" id="cb11-67" data-line-number="67">            <span class="co">// select query</span></a>
+<a class="sourceLine" id="cb11-68" data-line-number="68">            sql = scope.<span class="fu">allocateCString</span>(<span class="st">&quot;SELECT * FROM EMPLOYEE&quot;</span>);</a>
+<a class="sourceLine" id="cb11-69" data-line-number="69">            rc = <span class="fu">sqlite3_exec</span>(db.<span class="fu">get</span>(), sql, callback, Pointer.<span class="fu">ofNull</span>(), errMsg);</a>
+<a class="sourceLine" id="cb11-70" data-line-number="70"></a>
+<a class="sourceLine" id="cb11-71" data-line-number="71">            <span class="kw">if</span> (rc != <span class="dv">0</span>) {</a>
+<a class="sourceLine" id="cb11-72" data-line-number="72">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;sqlite3_exec failed: &quot;</span> + rc);</a>
+<a class="sourceLine" id="cb11-73" data-line-number="73">                <span class="bu">System</span>.<span class="fu">err</span>.<span class="fu">println</span>(<span class="st">&quot;SQL error: &quot;</span> + Pointer.<span class="fu">toString</span>(errMsg.<span class="fu">get</span>()));</a>
+<a class="sourceLine" id="cb11-74" data-line-number="74">                <span class="fu">sqlite3_free</span>(errMsg.<span class="fu">get</span>());</a>
+<a class="sourceLine" id="cb11-75" data-line-number="75">            }</a>
+<a class="sourceLine" id="cb11-76" data-line-number="76"> </a>
+<a class="sourceLine" id="cb11-77" data-line-number="77">            <span class="fu">sqlite3_close</span>(db.<span class="fu">get</span>());</a>
+<a class="sourceLine" id="cb11-78" data-line-number="78">        }</a>
+<a class="sourceLine" id="cb11-79" data-line-number="79">   }</a>
+<a class="sourceLine" id="cb11-80" data-line-number="80">}</a></code></pre></div>
 <h3 id="compiling-and-running-sqlite-java-example">Compiling and Running sqlite Java example</h3>
 <div class="sourceCode" id="cb12"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb12-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb12-2" data-line-number="2"><span class="ex">javac</span> -cp sqlite3.jar SqlMain.java</a>
@@ -634,7 +632,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <a class="sourceLine" id="cb27-10" data-line-number="10">        <span class="co">// Scope for native allocations</span></a>
 <a class="sourceLine" id="cb27-11" data-line-number="11">        <span class="kw">try</span> (Scope s = <span class="fu">scope</span>().<span class="fu">fork</span>()) {</a>
 <a class="sourceLine" id="cb27-12" data-line-number="12">            <span class="co">// get the number of processes</span></a>
-<a class="sourceLine" id="cb27-13" data-line-number="13">            <span class="dt">int</span> numPids = <span class="fu">proc_listallpids</span>(Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>);</a>
+<a class="sourceLine" id="cb27-13" data-line-number="13">            <span class="dt">int</span> numPids = <span class="fu">proc_listallpids</span>(Pointer.<span class="fu">ofNull</span>(), <span class="dv">0</span>);</a>
 <a class="sourceLine" id="cb27-14" data-line-number="14">            <span class="co">// allocate an array</span></a>
 <a class="sourceLine" id="cb27-15" data-line-number="15">            <span class="bu">Array</span>&lt;<span class="bu">Integer</span>&gt; pids = s.<span class="fu">allocateArray</span>(NativeTypes.<span class="fu">INT32</span>, numPids);</a>
 <a class="sourceLine" id="cb27-16" data-line-number="16">            <span class="co">// list all the pids into the native array</span></a>
@@ -705,26 +703,27 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb33-3" data-line-number="3"><span class="kw">import</span><span class="im"> java.foreign.*;</span></a>
 <a class="sourceLine" id="cb33-4" data-line-number="4"><span class="kw">import</span><span class="im"> java.foreign.memory.*;</span></a>
 <a class="sourceLine" id="cb33-5" data-line-number="5"><span class="kw">import</span><span class="im"> org.unix.curl.*;</span></a>
-<a class="sourceLine" id="cb33-6" data-line-number="6"><span class="kw">import static</span><span class="im"> org.unix.curl_h.*;</span></a>
-<a class="sourceLine" id="cb33-7" data-line-number="7"><span class="kw">import static</span><span class="im"> org.unix.easy_h.*;</span></a>
-<a class="sourceLine" id="cb33-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb33-9" data-line-number="9"><span class="kw">public</span> <span class="kw">class</span> CurlMain {</a>
-<a class="sourceLine" id="cb33-10" data-line-number="10">   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
-<a class="sourceLine" id="cb33-11" data-line-number="11">       <span class="kw">try</span> (Scope s = Scope.<span class="fu">scope</span>().<span class="fu">fork</span>()) { </a>
-<a class="sourceLine" id="cb33-12" data-line-number="12">           <span class="fu">curl_global_init</span>(CURL_GLOBAL_DEFAULT);</a>
-<a class="sourceLine" id="cb33-13" data-line-number="13">           Pointer&lt;<span class="bu">Void</span>&gt; curl = <span class="fu">curl_easy_init</span>();</a>
-<a class="sourceLine" id="cb33-14" data-line-number="14">           <span class="kw">if</span>(!curl.<span class="fu">isNull</span>()) {</a>
-<a class="sourceLine" id="cb33-15" data-line-number="15">               Pointer&lt;<span class="bu">Byte</span>&gt; url = s.<span class="fu">allocateCString</span>(args[<span class="dv">0</span>]);</a>
-<a class="sourceLine" id="cb33-16" data-line-number="16">               <span class="fu">curl_easy_setopt</span>(curl, CURLOPT_URL, url);</a>
-<a class="sourceLine" id="cb33-17" data-line-number="17">               <span class="dt">int</span> res = <span class="fu">curl_easy_perform</span>(curl);</a>
-<a class="sourceLine" id="cb33-18" data-line-number="18">               <span class="kw">if</span> (res != CURLE_OK) {</a>
-<a class="sourceLine" id="cb33-19" data-line-number="19">                   <span class="fu">curl_easy_cleanup</span>(curl);</a>
-<a class="sourceLine" id="cb33-20" data-line-number="20">               }</a>
-<a class="sourceLine" id="cb33-21" data-line-number="21">           }</a>
-<a class="sourceLine" id="cb33-22" data-line-number="22">           <span class="fu">curl_global_cleanup</span>();</a>
-<a class="sourceLine" id="cb33-23" data-line-number="23">       }</a>
-<a class="sourceLine" id="cb33-24" data-line-number="24">    }</a>
-<a class="sourceLine" id="cb33-25" data-line-number="25">}</a></code></pre></div>
+<a class="sourceLine" id="cb33-6" data-line-number="6"><span class="kw">import</span><span class="im"> org.unix.curl_h;</span></a>
+<a class="sourceLine" id="cb33-7" data-line-number="7"><span class="kw">import static</span><span class="im"> org.unix.curl_h.*;</span></a>
+<a class="sourceLine" id="cb33-8" data-line-number="8"><span class="kw">import static</span><span class="im"> org.unix.easy_h.*;</span></a>
+<a class="sourceLine" id="cb33-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb33-10" data-line-number="10"><span class="kw">public</span> <span class="kw">class</span> CurlMain {</a>
+<a class="sourceLine" id="cb33-11" data-line-number="11">   <span class="kw">public</span> <span class="dt">static</span> <span class="dt">void</span> <span class="fu">main</span>(<span class="bu">String</span>[] args) {</a>
+<a class="sourceLine" id="cb33-12" data-line-number="12">       <span class="kw">try</span> (Scope s = curl_h.<span class="fu">scope</span>().<span class="fu">fork</span>()) { </a>
+<a class="sourceLine" id="cb33-13" data-line-number="13">           <span class="fu">curl_global_init</span>(CURL_GLOBAL_DEFAULT);</a>
+<a class="sourceLine" id="cb33-14" data-line-number="14">           Pointer&lt;<span class="bu">Void</span>&gt; curl = <span class="fu">curl_easy_init</span>();</a>
+<a class="sourceLine" id="cb33-15" data-line-number="15">           <span class="kw">if</span>(!curl.<span class="fu">isNull</span>()) {</a>
+<a class="sourceLine" id="cb33-16" data-line-number="16">               Pointer&lt;<span class="bu">Byte</span>&gt; url = s.<span class="fu">allocateCString</span>(args[<span class="dv">0</span>]);</a>
+<a class="sourceLine" id="cb33-17" data-line-number="17">               <span class="fu">curl_easy_setopt</span>(curl, CURLOPT_URL, url);</a>
+<a class="sourceLine" id="cb33-18" data-line-number="18">               <span class="dt">int</span> res = <span class="fu">curl_easy_perform</span>(curl);</a>
+<a class="sourceLine" id="cb33-19" data-line-number="19">               <span class="kw">if</span> (res != CURLE_OK) {</a>
+<a class="sourceLine" id="cb33-20" data-line-number="20">                   <span class="fu">curl_easy_cleanup</span>(curl);</a>
+<a class="sourceLine" id="cb33-21" data-line-number="21">               }</a>
+<a class="sourceLine" id="cb33-22" data-line-number="22">           }</a>
+<a class="sourceLine" id="cb33-23" data-line-number="23">           <span class="fu">curl_global_cleanup</span>();</a>
+<a class="sourceLine" id="cb33-24" data-line-number="24">       }</a>
+<a class="sourceLine" id="cb33-25" data-line-number="25">    }</a>
+<a class="sourceLine" id="cb33-26" data-line-number="26">}</a></code></pre></div>
 <h3 id="running-the-java-code-that-uses-libcurl">Running the java code that uses libcurl</h3>
 <div class="sourceCode" id="cb34"><pre class="sourceCode sh"><code class="sourceCode bash"><a class="sourceLine" id="cb34-1" data-line-number="1"></a>
 <a class="sourceLine" id="cb34-2" data-line-number="2"><span class="ex">javac</span> -cp curl.jar CurlMain.java</a>
@@ -821,7 +820,7 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb40-50" data-line-number="50">        <span class="kw">try</span> (Scope sc = opengl.<span class="fu">gl_h</span>.<span class="fu">scope</span>().<span class="fu">fork</span>()) {</a>
 <a class="sourceLine" id="cb40-51" data-line-number="51">            Pointer&lt;<span class="bu">Integer</span>&gt; argc = sc.<span class="fu">allocate</span>(NativeTypes.<span class="fu">INT32</span>);</a>
 <a class="sourceLine" id="cb40-52" data-line-number="52">            argc.<span class="fu">set</span>(<span class="dv">0</span>);</a>
-<a class="sourceLine" id="cb40-53" data-line-number="53">            <span class="fu">glutInit</span>(argc, Pointer.<span class="fu">nullPointer</span>());</a>
+<a class="sourceLine" id="cb40-53" data-line-number="53">            <span class="fu">glutInit</span>(argc, Pointer.<span class="fu">ofNull</span>());</a>
 <a class="sourceLine" id="cb40-54" data-line-number="54">            <span class="fu">glutInitDisplayMode</span>(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);</a>
 <a class="sourceLine" id="cb40-55" data-line-number="55">            <span class="fu">glutInitWindowSize</span>(<span class="dv">900</span>, <span class="dv">900</span>);</a>
 <a class="sourceLine" id="cb40-56" data-line-number="56">            <span class="fu">glutCreateWindow</span>(sc.<span class="fu">allocateCString</span>(<span class="st">&quot;Hello Panama!&quot;</span>));</a>
@@ -940,9 +939,9 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb47-66" data-line-number="66">        <span class="dt">float</span> in_val_one = <span class="fl">4.0f</span>;</a>
 <a class="sourceLine" id="cb47-67" data-line-number="67">        <span class="dt">float</span> const_two = <span class="fl">2.0f</span>;</a>
 <a class="sourceLine" id="cb47-68" data-line-number="68"></a>
-<a class="sourceLine" id="cb47-69" data-line-number="69">        Pointer&lt;TF_Tensor&gt; tensor_in = <span class="fu">TF_AllocateTensor</span>(TF_FLOAT, Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>, <span class="bu">Float</span>.<span class="fu">BYTES</span>);</a>
+<a class="sourceLine" id="cb47-69" data-line-number="69">        Pointer&lt;TF_Tensor&gt; tensor_in = <span class="fu">TF_AllocateTensor</span>(TF_FLOAT, Pointer.<span class="fu">ofNull</span>(), <span class="dv">0</span>, <span class="bu">Float</span>.<span class="fu">BYTES</span>);</a>
 <a class="sourceLine" id="cb47-70" data-line-number="70">        <span class="fu">TF_TensorData</span>(tensor_in).<span class="fu">cast</span>(NativeTypes.<span class="fu">FLOAT</span>).<span class="fu">set</span>(in_val_one);</a>
-<a class="sourceLine" id="cb47-71" data-line-number="71">        Pointer&lt;TF_Tensor&gt; tensor_const_two = <span class="fu">TF_AllocateTensor</span>(TF_FLOAT, Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>, <span class="bu">Float</span>.<span class="fu">BYTES</span>);</a>
+<a class="sourceLine" id="cb47-71" data-line-number="71">        Pointer&lt;TF_Tensor&gt; tensor_const_two = <span class="fu">TF_AllocateTensor</span>(TF_FLOAT, Pointer.<span class="fu">ofNull</span>(), <span class="dv">0</span>, <span class="bu">Float</span>.<span class="fu">BYTES</span>);</a>
 <a class="sourceLine" id="cb47-72" data-line-number="72">        <span class="fu">TF_TensorData</span>(tensor_const_two).<span class="fu">cast</span>(NativeTypes.<span class="fu">FLOAT</span>).<span class="fu">set</span>(const_two);</a>
 <a class="sourceLine" id="cb47-73" data-line-number="73"></a>
 <a class="sourceLine" id="cb47-74" data-line-number="74">        <span class="co">// Operations</span></a>
@@ -966,13 +965,13 @@ java -cp readline.jar:. Readline
 <a class="sourceLine" id="cb47-92" data-line-number="92">            output_operations.<span class="fu">oper</span>$<span class="fu">set</span>(add);</a>
 <a class="sourceLine" id="cb47-93" data-line-number="93">            output_operations.<span class="fu">index</span>$<span class="fu">set</span>(<span class="dv">0</span>);</a>
 <a class="sourceLine" id="cb47-94" data-line-number="94">            Pointer&lt;Pointer&lt;TF_Tensor&gt;&gt; output_tensors = s.<span class="fu">allocate</span>(ltPtrTensor);</a>
-<a class="sourceLine" id="cb47-95" data-line-number="95">            <span class="fu">TF_SessionRun</span>(session, Pointer.<span class="fu">nullPointer</span>(),</a>
+<a class="sourceLine" id="cb47-95" data-line-number="95">            <span class="fu">TF_SessionRun</span>(session, Pointer.<span class="fu">ofNull</span>(),</a>
 <a class="sourceLine" id="cb47-96" data-line-number="96">                <span class="co">// Inputs</span></a>
 <a class="sourceLine" id="cb47-97" data-line-number="97">                input_operations.<span class="fu">ptr</span>(), input_tensors, <span class="dv">1</span>,</a>
 <a class="sourceLine" id="cb47-98" data-line-number="98">                <span class="co">// Outputs</span></a>
 <a class="sourceLine" id="cb47-99" data-line-number="99">                output_operations.<span class="fu">ptr</span>(), output_tensors, <span class="dv">1</span>,</a>
 <a class="sourceLine" id="cb47-100" data-line-number="100">                <span class="co">// Target operations</span></a>
-<a class="sourceLine" id="cb47-101" data-line-number="101">                Pointer.<span class="fu">nullPointer</span>(), <span class="dv">0</span>, Pointer.<span class="fu">nullPointer</span>(),</a>
+<a class="sourceLine" id="cb47-101" data-line-number="101">                Pointer.<span class="fu">ofNull</span>(), <span class="dv">0</span>, Pointer.<span class="fu">ofNull</span>(),</a>
 <a class="sourceLine" id="cb47-102" data-line-number="102">                status);</a>
 <a class="sourceLine" id="cb47-103" data-line-number="103"></a>
 <a class="sourceLine" id="cb47-104" data-line-number="104">            <span class="bu">System</span>.<span class="fu">out</span>.<span class="fu">println</span>(<span class="bu">String</span><span class="fu">.format</span>(<span class="st">&quot;Session Run Status: </span><span class="sc">%d</span><span class="st"> - </span><span class="sc">%s</span><span class="st">&quot;</span>,</a>

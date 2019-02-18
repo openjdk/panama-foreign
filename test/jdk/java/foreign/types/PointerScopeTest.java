@@ -74,8 +74,8 @@ public class PointerScopeTest {
 
     Library lib = Libraries.loadLibrary(MethodHandles.lookup(), "PointerScope");
     PointerScopeLib _ptrLib = Libraries.bind(PointerScopeLib.class, lib);
-    
-    //allocate pointer of given shape, and try to deref/get 
+
+    //allocate pointer of given shape, and try to deref/get
 
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = ".*Scope is not alive")
@@ -119,7 +119,7 @@ public class PointerScopeTest {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = ".*Scope is not alive")
     public void testPtrDerefSet() {
-        testAfterScope(s -> s.allocate(NativeTypes.UINT8.pointer()), p -> p.set(Pointer.nullPointer()));
+        testAfterScope(s -> s.allocate(NativeTypes.UINT8.pointer()), p -> p.set(Pointer.ofNull()));
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -147,15 +147,15 @@ public class PointerScopeTest {
         testAfterScope(s -> s.allocate(LayoutType.ofFunction(adrLayout, PointerScopeLib.Cb.class)),
                 p -> p.set(Scope.globalScope().allocateCallback(PointerScopeLib.Cb.class, () -> {})));
     }
-    
+
     // allocate struct and try to access it
-    
+
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = ".*Scope is not alive")
     public void testPairAccess() {
         testAfterScope(s -> s.allocateStruct(PointerScopeLib.Pair.class), PointerScopeLib.Pair::x);
     }
-    
+
     // allocate array and try to access it
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -163,7 +163,7 @@ public class PointerScopeTest {
     public void testArrayAccess() {
         testAfterScope(s -> s.allocateArray(NativeTypes.INT32, new int[] { 1, 2, 3 }), a -> a.get(0));
     }
-    
+
     // allocate callback and try to access it
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -179,7 +179,7 @@ public class PointerScopeTest {
     public void testPtrCall() {
         testAfterScope(s -> s.allocate(NativeTypes.UINT8), _ptrLib::ptr);
     }
-    
+
     //allocate struct and pass it to function
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -187,7 +187,7 @@ public class PointerScopeTest {
     public void testPairCall() {
         testAfterScope(s -> s.allocateStruct(PointerScopeLib.Pair.class), _ptrLib::pair);
     }
-    
+
     //allocate callback and pass it to function
 
     @Test(expectedExceptions = IllegalStateException.class,

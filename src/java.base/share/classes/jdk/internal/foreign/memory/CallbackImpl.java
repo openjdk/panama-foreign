@@ -14,6 +14,19 @@ public class CallbackImpl<X> implements Callback<X> {
         this.funcIntfClass = funcIntfClass;
     }
 
+    private static final CallbackImpl<Object> theNullCallback =
+        new CallbackImpl<Object>(Pointer.ofNull(), null) {
+            @Override
+            public Object asFunction() {
+                throw new NullPointerException();
+            }
+        };
+
+    @SuppressWarnings("unchecked")
+    public static <X> Callback<X> ofNull() {
+        return (Callback<X>) theNullCallback;
+    }
+
     @Override
     public Pointer<?> entryPoint() {
         return addr;

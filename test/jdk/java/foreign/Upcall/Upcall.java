@@ -53,6 +53,10 @@ public class Upcall {
         @NativeLocation(file="dummy", line=47, column=11)
         @NativeFunction("(u64:(i32)vi32)v")
         public abstract void do_upcall(Callback<visitor> v, int i);
+
+        @NativeLocation(file="dummy", line=67, column=1)
+        @NativeFunction("(u64:(i32)vi32)i32")
+        public abstract int no_upcall(Callback<visitor> v, int i);
     }
 
     public static class visitorImpl implements upcall.visitor {
@@ -84,6 +88,19 @@ public class Upcall {
             if (DEBUG) {
                 System.err.println("back in test()\n");
             }
+
+            assertTrue(i.no_upcall(Callback.ofNull(), 0) == 0);
+            assertTrue(i.no_upcall(sc.allocateCallback(upcall.visitor.class, x -> {}), 0) == 1);
+
+            boolean gotNPE = true;
+            try {
+                Callback.ofNull().asFunction();
+            } catch (NullPointerException npe) {
+                gotNPE = true;
+            }
+            assertTrue(gotNPE);
+
+            assertTrue(Callback.ofNull().entryPoint().equals(Pointer.ofNull()));
         }
     }
 
