@@ -131,6 +131,12 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
                 libPaths.visitEnd();
             }
         }
+
+        AnnotationVisitor resolutionContext = av.visitArray("resolutionContext");
+        headerFile.dictionary().resolutionRoots()
+                .forEach(jt -> resolutionContext.visit(null,
+                        jdk.internal.org.objectweb.asm.Type.getObjectType(jt.clsName)));
+        resolutionContext.visitEnd();
         AnnotationVisitor globals = av.visitArray("globals");
         global_layouts.stream().map(Layout::toString).forEach(s -> globals.visit(null, s));
         globals.visitEnd();

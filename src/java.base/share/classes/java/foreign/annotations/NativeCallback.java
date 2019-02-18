@@ -35,4 +35,6 @@ import java.lang.annotation.Target;
 public @interface NativeCallback {
     // descriptor for the native callback
     String value();
+    // zero or more classes providing resolution context for native names
+    Class<?>[] resolutionContext() default {};
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,20 +26,16 @@
 package jdk.internal.foreign;
 
 import java.foreign.layout.Sequence;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.foreign.layout.Function;
 import java.foreign.layout.Group;
 import java.foreign.layout.Group.Kind;
 import java.foreign.layout.Layout;
 import java.foreign.layout.Unresolved;
-import java.foreign.annotations.NativeStruct;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.Set;
 
 /**
  * This class acts as some kind of shared type dictionary. Note that it is necessary for the framework
@@ -51,8 +47,8 @@ public final class LayoutResolver {
         addClass(root);
     }
 
-    private final Map<String, Group> descriptorToGroup = new HashMap<>();
-    private final Map<String, Group> nameToGroup = new HashMap<>();
+    private final Map<String, Layout> nameToGroup = new HashMap<>();
+    private final Set<Class<?>> seen = new HashSet<>();
 
     private Optional<Layout> resolveRoot(String name) {
         return Optional.ofNullable(nameToGroup.get(name));
@@ -73,55 +69,35 @@ public final class LayoutResolver {
     }
 
     private void addClass(Class<?> enclosing) {
-        Class<?>[] inner = enclosing.getClasses();
+        if (seen.add(enclosing)) {
+            addNameIfNeeded(enclosing);
+            Class<?>[] classes = Util.resolutionContextFor(enclosing);
+            if (classes != null) {
+                for (Class<?> helper : classes) {
+                    addClass(helper);
+                }
+            }
+            Class<?>[] inner = enclosing.getDeclaredClasses();
+            for (Class<?> c : inner) {
+                addClass(c); //recurse
+            }
+        }
+    }
 
-        for (Class<?> c : inner) {
-            if (Util.isCStruct(c)) {
-                addCStruct(c);
+    private void addNameIfNeeded(Class<?> cl) {
+        if (Util.isCStruct(cl)) {
+            Layout l = Util.layoutof(cl);
+            if (l instanceof Unresolved || l.name().isEmpty()) {
+                // ignore undefined struct, or structs with no name
+                return;
             } else {
-                addClass(c);
+                String name = l.name().get();
+                if (nameToGroup.containsKey(name) && !nameToGroup.get(name).equals(l)) {
+                    throw new IllegalArgumentException(l.name() + " cannot be redefined");
+                }
+                nameToGroup.put(name, l);
             }
         }
-    }
-
-    void scanType(Type t) {
-        if (t instanceof ParameterizedType) {
-            Stream.of(((ParameterizedType)t).getActualTypeArguments())
-                    .forEach(this::scanType);
-        } else if (t instanceof GenericArrayType) {
-            scanType(((GenericArrayType)t).getGenericComponentType());
-        } else if (t instanceof Class<?>) {
-            Class<?> cl = (Class<?>)t;
-            if (cl.isArray()) {
-                scanType(cl.getComponentType());
-            } else if (Util.isCStruct(cl)) {
-                addCStruct(cl);
-            }
-        }
-    }
-    //where
-    private void addCStruct(Class<?> cl) {
-        String layout = cl.getAnnotation(NativeStruct.class).value();
-        Layout l = Layout.of(layout);
-        if (l instanceof Unresolved) {
-            // ignore undefined struct
-            return;
-        }
-        Group group = descriptorToGroup.computeIfAbsent(layout, ignored -> (Group) l);
-        group.name().ifPresent(name -> {
-            if (name.isEmpty()) {
-                throw new IllegalArgumentException("name cannot be empty");
-            }
-            if (nameToGroup.containsKey(name) && nameToGroup.get(name) != group) {
-                throw new IllegalArgumentException(name + " cannot be redefined");
-            }
-            nameToGroup.put(name, group);
-        });
-    }
-
-    public void scanMethod(Method m) {
-        Stream.of(m.getGenericParameterTypes()).forEach(this::scanType);
-        scanType(m.getGenericReturnType());
     }
 
     public Function resolve(Function f) {

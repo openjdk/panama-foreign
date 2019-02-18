@@ -154,7 +154,6 @@ abstract class BinderClassGenerator {
         for (Method m : interfaces[0].getMethods()) {
             try {
                 if (!m.isDefault()) {
-                    layoutResolver.scanMethod(m);
                     generateMethodImplementation(cw, m);
                 }
             } catch (Exception | Error e) {

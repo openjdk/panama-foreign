@@ -28,7 +28,9 @@ import java.foreign.memory.FloatComplex;
 import java.foreign.memory.LongDoubleComplex;
 import java.math.BigInteger;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,12 +49,14 @@ final class TypeDictionary {
     private HeaderResolver resolver;
     private final HeaderFile headerFile;
     private final Map<String, JType> functionalTypes;
+    private final Set<String> resolutionRoots;
     private int serialNo;
 
     TypeDictionary(HeaderResolver resolver, HeaderFile headerFile) {
         this.resolver = resolver;
         this.headerFile = headerFile;
         functionalTypes = new HashMap<>();
+        resolutionRoots = new HashSet<>();
     }
     
     private int serialNo() {
@@ -80,6 +84,12 @@ final class TypeDictionary {
     public Stream<JType> functionalInterfaces() {
         return functionalTypes.entrySet().stream()
                 .map(Map.Entry::getValue);
+    }
+
+    public Stream<JType.ClassType> resolutionRoots() {
+        return resolutionRoots.stream()
+                .filter(root -> !root.equals(headerClass()))
+                .map(JType.ClassType::new);
     }
 
     /**
@@ -155,7 +165,9 @@ final class TypeDictionary {
                 throw new IllegalArgumentException("Invalid type");
             case Record: {
                 String name = Utils.toClassName(Utils.getName(t));
-                return new JType.ClassType(recordOwnerClass(t) + "$" + name);
+                String owner = recordOwnerClass(t);
+                resolutionRoots.add(owner);
+                return new JType.ClassType(owner + "$" + name);
             }
             case Pointer: {
                 JType jt = getInternal(t.getPointeeType().canonicalType(), funcResolver);
