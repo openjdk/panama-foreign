@@ -24,7 +24,7 @@
 /*
  * @test
  * @modules java.base/jdk.internal.misc
- * 
+ *
  * @run testng PointerTest
  */
 
@@ -251,7 +251,7 @@ public class PointerTest {
         try (Scope scope = Scope.globalScope().fork()) {
             LayoutType<Integer> iType = NativeTypes.UINT32;
 
-            Pointer<Integer> pi = Pointer.nullPointer();
+            Pointer<Integer> pi = Pointer.ofNull();
             Pointer<Pointer<Byte>> values;
 
             try {
@@ -264,15 +264,15 @@ public class PointerTest {
             values = ptrs.get_strings2(pi);
             Objects.requireNonNull(values);
             if (! values.isNull()) {
-                throw new IllegalStateException("Expect to get back Pointer.nullPoitner()");
+                throw new IllegalStateException("Expect to get back Pointer.ofNull()");
             }
-            assertEquals(values, Pointer.nullPointer());
+            assertEquals(values, Pointer.ofNull());
         }
     }
 
     @Test(expectedExceptions = AbstractMethodError.class)
     void testNotExistWontCrash() {
-        ptrs.notExist(Pointer.nullPointer());
+        ptrs.notExist(Pointer.ofNull());
     }
 
     @Test(expectedExceptions = RuntimeException.class)

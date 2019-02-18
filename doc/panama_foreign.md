@@ -57,7 +57,7 @@ public class PythonMain {
         try (Scope s = org.python.Python_h.scope().fork()) {
             PyRun_SimpleStringFlags(s.allocateCString(
                 "print(sum([33, 55, 66])); print('Hello from Python!')\n"),
-                Pointer.nullPointer());
+                Pointer.ofNull());
         }
         Py_Finalize();
     }
@@ -194,9 +194,7 @@ public class SqliteMain {
                 "  SALARY REAL NOT NULL )"
             );
 
-            // dummy ignoring callback
-            Callback<FI1> callback = scope.allocateCallback(FI1.class, (a,b,c,d)->0);
-            rc = sqlite3_exec(db.get(), sql, callback, Pointer.nullPointer(), errMsg);
+            rc = sqlite3_exec(db.get(), sql, Callback.ofNull(), Pointer.ofNull(), errMsg);
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
@@ -211,7 +209,7 @@ public class SqliteMain {
                 "INSERT INTO EMPLOYEE (ID,NAME,SALARY) " +
                     "VALUES (333, 'Abc', 100000.0);"
             );
-            rc = sqlite3_exec(db.get(), sql, callback, Pointer.nullPointer(), errMsg);
+            rc = sqlite3_exec(db.get(), sql, Callback.ofNull(), Pointer.ofNull(), errMsg);
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
@@ -221,7 +219,7 @@ public class SqliteMain {
 
             int[] rowNum = new int[1];
             // callback to print rows from SELECT query
-            callback = scope.allocateCallback(FI1.class, (a, argc, argv, columnNames) -> {
+            Callback<FI1> callback = scope.allocateCallback(FI1.class, (a, argc, argv, columnNames) -> {
                 System.out.println("Row num: " + rowNum[0]++);
                 System.out.println("numColumns = " + argc);
                 for (int i = 0; i < argc; i++) {
@@ -234,7 +232,7 @@ public class SqliteMain {
 
             // select query
             sql = scope.allocateCString("SELECT * FROM EMPLOYEE");
-            rc = sqlite3_exec(db.get(), sql, callback, Pointer.nullPointer(), errMsg);
+            rc = sqlite3_exec(db.get(), sql, callback, Pointer.ofNull(), errMsg);
 
             if (rc != 0) {
                 System.err.println("sqlite3_exec failed: " + rc);
@@ -624,7 +622,7 @@ public class LibprocMain {
         // Scope for native allocations
         try (Scope s = scope().fork()) {
             // get the number of processes
-            int numPids = proc_listallpids(Pointer.nullPointer(), 0);
+            int numPids = proc_listallpids(Pointer.ofNull(), 0);
             // allocate an array
             Array<Integer> pids = s.allocateArray(NativeTypes.INT32, numPids);
             // list all the pids into the native array
@@ -726,12 +724,13 @@ import java.lang.invoke.*;
 import java.foreign.*;
 import java.foreign.memory.*;
 import org.unix.curl.*;
+import org.unix.curl_h;
 import static org.unix.curl_h.*;
 import static org.unix.easy_h.*;
 
 public class CurlMain {
    public static void main(String[] args) {
-       try (Scope s = Scope.scope().fork()) { 
+       try (Scope s = curl_h.scope().fork()) { 
            curl_global_init(CURL_GLOBAL_DEFAULT);
            Pointer<Void> curl = curl_easy_init();
            if(!curl.isNull()) {
@@ -886,7 +885,7 @@ public class Teapot {
         try (Scope sc = opengl.gl_h.scope().fork()) {
             Pointer<Integer> argc = sc.allocate(NativeTypes.INT32);
             argc.set(0);
-            glutInit(argc, Pointer.nullPointer());
+            glutInit(argc, Pointer.ofNull());
             glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
             glutInitWindowSize(900, 900);
             glutCreateWindow(sc.allocateCString("Hello Panama!"));
@@ -1061,9 +1060,9 @@ public class TensorFlowExample {
         float in_val_one = 4.0f;
         float const_two = 2.0f;
 
-        Pointer<TF_Tensor> tensor_in = TF_AllocateTensor(TF_FLOAT, Pointer.nullPointer(), 0, Float.BYTES);
+        Pointer<TF_Tensor> tensor_in = TF_AllocateTensor(TF_FLOAT, Pointer.ofNull(), 0, Float.BYTES);
         TF_TensorData(tensor_in).cast(NativeTypes.FLOAT).set(in_val_one);
-        Pointer<TF_Tensor> tensor_const_two = TF_AllocateTensor(TF_FLOAT, Pointer.nullPointer(), 0, Float.BYTES);
+        Pointer<TF_Tensor> tensor_const_two = TF_AllocateTensor(TF_FLOAT, Pointer.ofNull(), 0, Float.BYTES);
         TF_TensorData(tensor_const_two).cast(NativeTypes.FLOAT).set(const_two);
 
         // Operations
@@ -1087,13 +1086,13 @@ public class TensorFlowExample {
             output_operations.oper$set(add);
             output_operations.index$set(0);
             Pointer<Pointer<TF_Tensor>> output_tensors = s.allocate(ltPtrTensor);
-            TF_SessionRun(session, Pointer.nullPointer(),
+            TF_SessionRun(session, Pointer.ofNull(),
                 // Inputs
                 input_operations.ptr(), input_tensors, 1,
                 // Outputs
                 output_operations.ptr(), output_tensors, 1,
                 // Target operations
-                Pointer.nullPointer(), 0, Pointer.nullPointer(),
+                Pointer.ofNull(), 0, Pointer.ofNull(),
                 status);
 
             System.out.println(String.format("Session Run Status: %d - %s",

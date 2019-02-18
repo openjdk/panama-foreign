@@ -25,6 +25,8 @@
 
 package java.foreign.memory;
 
+import jdk.internal.foreign.memory.CallbackImpl;
+
 /**
  * This interface models native function pointers. This interface is typically parameterized by a type {@code T} which is
  * annotated with the {@link java.foreign.annotations.NativeCallback} annotation, and which must be a functional
@@ -32,6 +34,15 @@ package java.foreign.memory;
  * @param <T> the Java type modelling this native callback type.
  */
 public interface Callback<T> {
+
+    /**
+     * Obtains the {@code NULL} callback.
+     *
+     * @return the {@code NULL} pointer callback.
+     */
+    static <T> Callback<T> ofNull() {
+        return CallbackImpl.ofNull();
+    }
 
     /**
      * Returns the entry point at which the native function can be called.

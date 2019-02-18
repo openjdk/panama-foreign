@@ -60,7 +60,7 @@ public class DirectSignatureShuffler {
     private static final MethodHandle STRUCT_TO_DOUBLE;
     private static final MethodHandle LONG_TO_STRUCT;
     private static final MethodHandle DOUBLE_TO_STRUCT;
-    
+
     private static final int RET_POS = -1;
 
     static {
@@ -125,7 +125,7 @@ public class DirectSignatureShuffler {
         mt = mt.appendParameterTypes(Collections.nCopies(longPerms.size(), long.class));
         return mt.appendParameterTypes(Collections.nCopies(doublePerms.size(), double.class));
     }
-    
+
     MethodType javaMethodType() {
         return javaMethodType;
     }
@@ -196,7 +196,7 @@ public class DirectSignatureShuffler {
         } else {
             throw new IllegalArgumentException("Unsupported carrier: " + carrier);
         }
-    }   
+    }
 
     private void updateNativeMethodType(int sigPos, Class<?> carrier) {
         if (sigPos == -1) {
@@ -321,7 +321,7 @@ public class DirectSignatureShuffler {
 
     private static Pointer<?> longToPointer(LayoutType<?> lt, long addr) {
         return addr == 0L ?
-                BoundedPointer.nullPointer() :
+                BoundedPointer.ofNull() :
                 BoundedPointer.createNativeVoidPointer(addr).cast(lt);
     }
 
@@ -331,8 +331,12 @@ public class DirectSignatureShuffler {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static Callback<?> longToCallback(Class<?> funcClass, long addr) {
-        return new CallbackImpl(BoundedPointer.createNativeVoidPointer(addr),
+        if (addr == 0) {
+            return Callback.ofNull();
+        } else {
+            return new CallbackImpl(BoundedPointer.createNativeVoidPointer(addr),
                 funcClass);
+        }
     }
 
     private static long structToLong(Struct<?> struct) {

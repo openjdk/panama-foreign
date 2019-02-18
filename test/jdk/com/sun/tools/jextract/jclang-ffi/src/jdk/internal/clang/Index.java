@@ -64,7 +64,7 @@ public class Index {
             Pointer<Byte> src = scope.allocateCString(file);
             Pointer<Pointer<Byte>> cargs = toCStrArray(scope, args);
             Pointer<CXTranslationUnitImpl> tu = lclang.clang_parseTranslationUnit(
-                    ptr, src, cargs, args.length, Pointer.nullPointer(), 0,
+                    ptr, src, cargs, args.length, Pointer.ofNull(), 0,
                     detailedPreprocessorRecord ?
                             LibClang.lib.CXTranslationUnit_DetailedPreprocessingRecord() :
                             LibClang.lib.CXTranslationUnit_None());
@@ -92,7 +92,7 @@ public class Index {
 
     private static Pointer<Pointer<Byte>> toCStrArray(Scope sc, String[] ar) {
         if (ar.length == 0) {
-            return Pointer.nullPointer();
+            return Pointer.ofNull();
         }
 
         Pointer<Pointer<Byte>> ptr = sc.allocate(NativeTypes.UINT8.pointer(), ar.length);
