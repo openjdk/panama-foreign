@@ -35,4 +35,6 @@ import java.lang.annotation.Target;
 public @interface NativeStruct {
     // layout String for this native struct/union.
     String value();
+    // zero or more classes providing resolution context for native names
+    Class<?>[] resolutionContext() default {};
 }

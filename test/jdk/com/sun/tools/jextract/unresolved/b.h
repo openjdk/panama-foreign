@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.foreign.annotations;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import java.lang.annotation.Target;
-
-@Target(ElementType.TYPE)
-@Retention(RUNTIME)
-/**
- * Annotation for every native header file.
- */
-public @interface NativeHeader {
-    // the header file corresponding to this native library interface
-    String path() default "";
-    // zero or more libraries
-    String[] libraries() default {};
-    // zero or more library paths
-    String[] libraryPaths() default {};
-    // zero or more global variable layouts
-    String[] globals() default {};
-    // zero or more classes providing resolution context for native names
-    Class<?>[] resolutionContext() default {};
-}
+struct Bar {
+  int y;
+}; 

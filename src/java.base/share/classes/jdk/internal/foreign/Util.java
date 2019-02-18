@@ -26,6 +26,7 @@ import java.foreign.NativeMethodType;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.layout.Address;
 import java.foreign.layout.Function;
@@ -49,12 +50,11 @@ import java.lang.reflect.WildcardType;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
-import jdk.internal.foreign.memory.BoundedPointer;
+
 import jdk.internal.foreign.memory.DescriptorParser;
 import jdk.internal.foreign.memory.Types;
 import jdk.internal.misc.Unsafe;
@@ -111,6 +111,22 @@ public final class Util {
     public static boolean isCStruct(Class<?> clz) {
         return Struct.class.isAssignableFrom(clz) &&
                 clz.isAnnotationPresent(NativeStruct.class);
+    }
+
+    public static boolean isCLibrary(Class<?> clz) {
+        return clz.isAnnotationPresent(NativeHeader.class);
+    }
+
+    public static Class<?>[] resolutionContextFor(Class<?> clz) {
+        if (isCallback(clz)) {
+            return clz.getAnnotation(NativeCallback.class).resolutionContext();
+        } else if (isCStruct(clz)) {
+            return clz.getAnnotation(NativeStruct.class).resolutionContext();
+        } else if (isCLibrary(clz)) {
+            return clz.getAnnotation(NativeHeader.class).resolutionContext();
+        } else {
+            return null;
+        }
     }
 
     public static Layout variadicLayout(Class<?> c) {
@@ -393,7 +409,6 @@ public final class Util {
 
     public static Function getResolvedFunction(Class<?> nativeCallback, Method m) {
         LayoutResolver resolver = LayoutResolver.get(nativeCallback);
-        resolver.scanMethod(m);
         return resolver.resolve(Util.functionof(nativeCallback));
     }
 
