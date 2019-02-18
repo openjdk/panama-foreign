@@ -23,22 +23,24 @@
 
 /*
  * @test
- * @run testng OffsetOfTest
+ * @run testng StructTest
  */
 
 import org.testng.annotations.Test;
 
+import java.foreign.Scope;
 import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeSetter;
 import java.foreign.annotations.NativeStruct;
+import java.foreign.memory.Pointer;
 import java.foreign.memory.Struct;
 
 import static org.testng.Assert.*;
 
-public class OffsetOfTest {
+public class StructTest {
 
     @NativeStruct("[i32(x)i32(y)](Point)")
-    interface Point extends Struct<Point> {
+    public interface Point extends Struct<Point> {
         @NativeGetter("x")
         int x$get();
         @NativeSetter("x")
@@ -58,6 +60,22 @@ public class OffsetOfTest {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testIllegalFieldName() {
         Struct.offsetOf(Point.class, "z"); // should throw
+    }
+
+    @Test
+    public void testToString() throws ReflectiveOperationException {
+        try (Scope scope = Scope.globalScope().fork()) {
+            Point p = scope.allocateStruct(Point.class);
+            p.x$set(10);
+            p.y$set(5);
+
+            assertEquals(Struct.toString(p), "Point{ x=10, y=5 }");
+        }
+    }
+
+    @Test
+    public void testSizeOf() {
+        assertEquals(8, Struct.sizeOf(Point.class));
     }
 
 }
