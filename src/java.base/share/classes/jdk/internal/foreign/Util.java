@@ -26,6 +26,7 @@ import java.foreign.NativeMethodType;
 import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.annotations.NativeCallback;
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeHeader;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.layout.Address;
@@ -438,11 +439,11 @@ public final class Util {
         throw new IllegalStateException("Can not find struct interface");
     }
 
-    public static Method getterByName(Class<?> cls, String getter) {
+
+    public static Method getterByName(Class<?> cls, String name) {
         for (Method m : cls.getDeclaredMethods()) {
-            if (m.getName().equals(getter)
-                    && m.getParameterCount() == 0
-                    && m.getReturnType() != void.class) {
+            NativeGetter ng = m.getAnnotation(NativeGetter.class);
+            if (ng != null && ng.value().equals(name)) {
                 return m;
             }
         }
