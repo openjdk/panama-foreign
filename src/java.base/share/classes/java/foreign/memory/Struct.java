@@ -25,10 +25,12 @@ package java.foreign.memory;
 import jdk.internal.foreign.LayoutPaths;
 import jdk.internal.foreign.Util;
 
+import java.foreign.annotations.NativeGetter;
 import java.foreign.annotations.NativeStruct;
 import java.foreign.layout.Group;
 import java.foreign.layout.Layout;
 import java.lang.reflect.Method;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 /**
@@ -90,13 +92,14 @@ public interface Struct<T extends Struct<T>> {
         String name = layout.name().orElse(structClass.getName());
         StringJoiner sj = new StringJoiner(", ", name + "{ ", " }");
         for(Layout e : layout.elements()) {
-            String getter = e.annotations().get("get");
-            if(getter == null) continue;
+            Optional<String> fieldNameOpt = e.name();
+            if(!fieldNameOpt.isPresent()) continue;
+            String fieldName = fieldNameOpt.get();
 
-            Method mGetter = Util.getterByName(structClass, getter);
+            Method mGetter = Util.getterByName(structClass, fieldName);
             if(mGetter == null) continue;
 
-            sj.add(getter + "=" + mGetter.invoke(struct).toString());
+            sj.add(fieldName + "=" + mGetter.invoke(struct).toString());
         }
 
         return sj.toString();
