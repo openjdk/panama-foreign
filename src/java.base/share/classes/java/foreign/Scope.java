@@ -212,4 +212,19 @@ public interface Scope extends AutoCloseable {
         }
         return ScopeImpl.GLOBAL;
     }
+
+    /**
+     * Creates a new child of the global scope. This method is equivalent to:
+     * <p>
+     *     <code>
+     *         Scope.globalScope().fork();
+     *     </code>
+     * </p>
+     * Note: this method will be removed; use {@link Scope#globalScope()} and {@link Scope#fork()} instead.
+     * @return a new native scope.
+     */
+    @Deprecated(forRemoval = true)
+    static Scope newNativeScope() {
+        return globalScope().fork();
+    }
 }
