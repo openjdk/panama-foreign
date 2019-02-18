@@ -63,3 +63,7 @@ EXPORT void slowsort(void *base, size_t nmemb, size_t size,
     }
   }
 }
+
+EXPORT int no_upcall(visitor v, int ignored) {
+  return v == NULL? 0 : 1;
+}

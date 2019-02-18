@@ -51,7 +51,7 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     @SuppressWarnings("unchecked")
-    public static <Z> BoundedPointer<Z> nullPointer() {
+    public static <Z> BoundedPointer<Z> ofNull() {
         return (BoundedPointer<Z>) theNullPointer;
     }
 

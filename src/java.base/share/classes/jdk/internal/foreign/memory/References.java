@@ -438,7 +438,7 @@ public final class References {
             long addr = ((BoundedPointer<?>)pointer).getBits();
             LayoutType<?> pointeeType = ((LayoutTypeImpl<?>)pointer.type()).pointeeType();
             Pointer<?> rp = addr == 0 ?
-                    Pointer.nullPointer() :
+                    Pointer.ofNull() :
                     new BoundedPointer<>(pointeeType, pointer.scope(), Pointer.AccessMode.READ_WRITE,
                             MemoryBoundInfo.EVERYTHING, addr);
             return rp;
@@ -567,11 +567,13 @@ public final class References {
 
         static Callback<?> get(Pointer<?> pointer) {
             long addr = ((BoundedPointer<?>)pointer).getBits();
-            Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).getFuncIntf();
-            Pointer<?> rp = addr == 0 ?
-                    Pointer.nullPointer() :
-                    BoundedPointer.createNativeVoidPointer(pointer.scope(), addr);
-            return new CallbackImpl<>(rp, carrier);
+            if (addr == 0) {
+                return Callback.ofNull();
+            } else {
+                Class<?> carrier = ((LayoutTypeImpl<?>)pointer.type()).getFuncIntf();
+                Pointer<?> rp = BoundedPointer.createNativeVoidPointer(pointer.scope(), addr);
+                return new CallbackImpl<>(rp, carrier);
+            }
         }
 
         static void set(Pointer<?> pointer, Callback<?> func) {

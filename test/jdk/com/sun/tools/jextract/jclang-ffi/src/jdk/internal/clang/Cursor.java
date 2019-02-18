@@ -143,7 +143,7 @@ public class Cursor {
             LibClang.lib.clang_visitChildren(cursor, sc.allocateCallback((c, p, d) -> {
                 ar.add(new Cursor(c));
                 return LibClang.lib.CXChildVisit_Continue();
-            }), Pointer.nullPointer());
+            }), Pointer.ofNull());
             return ar.stream();
         }
     }

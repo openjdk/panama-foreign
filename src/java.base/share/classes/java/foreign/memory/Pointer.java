@@ -45,8 +45,8 @@ public interface Pointer<X> {
      * @param <Z> the carrier type of the pointer.
      * @return the {@code NULL} pointer.
      */
-    static <Z> Pointer<Z> nullPointer() {
-        return BoundedPointer.nullPointer();
+    static <Z> Pointer<Z> ofNull() {
+        return BoundedPointer.ofNull();
     }
 
     /**
@@ -66,7 +66,7 @@ public interface Pointer<X> {
      *         Stream.iterate(pointer, hasNext, p -&gt; p.offset(1))
      *     </code>
      * </p>
-     * 
+     *
      * @param hasNext a predicate which should return {@code true} as long as the stream should continue
      * @return a stream limited by the {@code hasNext} predicate.
      * @throws IllegalArgumentException if the size of the layout of this pointer is zero.
@@ -108,7 +108,7 @@ public interface Pointer<X> {
 
     /**
      * Is the memory this pointer points to accessible for the given mode.
-     * 
+     *
      * @param mode the access mode
      * @return {@code true} if accessible, otherwise {@code false}
      */
@@ -209,7 +209,7 @@ public interface Pointer<X> {
 
     /**
      * Wraps the this pointer in a direct {@link ByteBuffer}
-     * 
+     *
      * @param bytes the size of the buffer in bytes
      * @return the created {@link ByteBuffer}
      * @throws IllegalAccessException if bytes is larger than the region covered by this pointer

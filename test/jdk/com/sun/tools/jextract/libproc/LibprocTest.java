@@ -55,7 +55,7 @@ public class LibprocTest {
         // Scope for native allocations
         try (Scope s = Scope.globalScope().fork()) {
             // get the number of processes
-            int numPids = proc_listallpids(Pointer.nullPointer(), 0);
+            int numPids = proc_listallpids(Pointer.ofNull(), 0);
             // allocate an array
             Array<Integer> pids = s.allocateArray(NativeTypes.INT32, numPids);
             // list all the pids into the native array
