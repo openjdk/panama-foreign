@@ -233,7 +233,7 @@ public class BoundedPointer<X> implements Pointer<X> {
     }
 
     public static BoundedPointer<?> createNativeVoidPointer(Scope scope, long offset) {
-        return new BoundedPointer<>(NativeTypes.VOID, scope, AccessMode.READ, MemoryBoundInfo.EVERYTHING, offset);
+        return new BoundedPointer<>(NativeTypes.VOID, scope, AccessMode.READ_WRITE, MemoryBoundInfo.EVERYTHING, offset);
     }
 
     public static <Z> BoundedPointer<Z> createRegisterPointer(LayoutType<Z> type, long offset, boolean isReturn) {
