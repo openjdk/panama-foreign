@@ -44,13 +44,6 @@ $(eval $(call IncludeCustomExtension, test/JtregNativeJdk.gmk))
 # This might have been added to by a custom extension.
 BUILD_JDK_JTREG_NATIVE_SRC += $(TOPDIR)/test/jdk
 
-# Only build java.foreign tests on x64 for now
-ifneq ($(filter x86_64, $(OPENJDK_TARGET_CPU)),)
-    BUILD_JDK_JTREG_NATIVE_SRC += $(TOPDIR)/test/jdk/java/foreign
-else
-    $(info Not building java.foreign tests)
-endif
-
 BUILD_JDK_JTREG_OUTPUT_DIR := $(OUTPUTDIR)/support/test/jdk/jtreg/native
 
 BUILD_JDK_JTREG_IMAGE_DIR := $(TEST_IMAGE_DIR)/jdk/jtreg
