@@ -127,10 +127,10 @@ public final class Main {
         // option is expected to specify paths to load shared libraries
         parser.accepts("l", format("help.l")).withRequiredArg();
         parser.accepts("log", format("help.log")).withRequiredArg();
-        parser.acceptsAll(List.of("m", "package-map"), format("help.m")).withRequiredArg();
+        parser.accepts("package-map", format("help.package_map")).withRequiredArg();
         parser.accepts("missing-symbols", format("help.missing_symbols")).withRequiredArg();
         parser.accepts("no-locations", format("help.no.locations"));
-        parser.acceptsAll(List.of("o", "jar"), format("help.o")).withRequiredArg();
+        parser.accepts("o", format("help.o")).withRequiredArg();
         parser.accepts("record-library-path", format("help.record_library_path"));
         parser.accepts("static-forwarder", format("help.static_forwarder")).
             withRequiredArg().ofType(boolean.class);
@@ -253,8 +253,8 @@ public final class Main {
             }
         }
 
-        if (options.has("m")) {
-            options.valuesOf("m").forEach(this::processPackageMapping);
+        if (options.has("package-map")) {
+            options.valuesOf("package-map").forEach(this::processPackageMapping);
         }
 
         if (options.has("missing-symbols")) {
