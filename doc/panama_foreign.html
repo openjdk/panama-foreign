@@ -843,7 +843,7 @@ java -cp readline.jar:. Readline
 <h3 id="jextracting-opengl">jextracting OpenGL</h3>
 <p>Navigate to the root directory of the extracted zip and run the following commands:</p>
 <div class="sourceCode" id="cb42"><pre class="sourceCode powershell"><code class="sourceCode powershell"><a class="sourceLine" id="cb42-1" data-line-number="1"><span class="va">$inc</span> = <span class="st">&quot;C:\Program Files (x86)\Windows Kits\10\Include\10.0.17134.0&quot;</span></a>
-<a class="sourceLine" id="cb42-2" data-line-number="2">jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.<span class="fu">jar</span> -m <span class="st">&quot;$inc\um\gl=opengl&quot;</span> --record-library-path .\freeglut\include\<span class="fu">GL</span>\glut.<span class="fu">h</span></a></code></pre></div>
+<a class="sourceLine" id="cb42-2" data-line-number="2">jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.<span class="fu">jar</span> --package-map <span class="st">&quot;$inc\um\gl=opengl&quot;</span> --record-library-path .\freeglut\include\<span class="fu">GL</span>\glut.<span class="fu">h</span></a></code></pre></div>
 <p>The directory that is assigned to <code>$inc</code> is an example, and is system dependent. Make sure that the build number at the end of the path (in this case <code>10.0.17134.0</code>) is the latest one found in the parent folder (<code>C:\Program Files (x86)\Windows Kits\10\Include\</code>).</p>
 <p>There are a bunch of warnings generated, but as long as the jar file is generated in the working directory the extraction was successful.</p>
 <h3 id="java-sample-code-that-uses-the-opengl-library-1">Java sample code that uses the OpenGL library</h3>

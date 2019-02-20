@@ -921,7 +921,7 @@ Navigate to the root directory of the extracted zip and run the following comman
 
 ```powershell
 $inc = "C:\Program Files (x86)\Windows Kits\10\Include\10.0.17134.0"
-jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.jar -m "$inc\um\gl=opengl" --record-library-path .\freeglut\include\GL\glut.h
+jextract -L C:\Windows\System32\ -L .\freeglut\bin\x64\ -l opengl32 -l freeglut -t opengl -o opengl.jar --package-map "$inc\um\gl=opengl" --record-library-path .\freeglut\include\GL\glut.h
 ```
 
 The directory that is assigned to `$inc` is an example, and is system dependent. Make sure that the build number at the end of the path (in this case `10.0.17134.0`) is the latest one found in the parent folder (`C:\Program Files (x86)\Windows Kits\10\Include\`).
