@@ -158,13 +158,14 @@ public class JextractToolProviderTest extends JextractToolRunner {
         testTargetPackage("--target-package");
     }
 
-    private void testPackageMapping(String pkgMapOption) {
+    @Test
+    public void testPackageMapping() {
         Path worldJar = getOutputFilePath("world.jar");
         deleteFile(worldJar);
         Path worldH = getInputFilePath("world.h");
         Path include = getInputFilePath("include");
         // world.h include mytypes.h, use appropriate package for stuff from mytypes.h
-        run("-I", include.toString(), pkgMapOption, include.toString() + "=com.acme",
+        run("-I", include.toString(), "--package-map", include.toString() + "=com.acme",
                 "-o", worldJar.toString(), worldH.toString()).checkSuccess();
         try(Loader loader = classLoader(worldJar)) {
             Class<?> cls = loader.loadClass("world");
@@ -174,16 +175,6 @@ public class JextractToolProviderTest extends JextractToolRunner {
         } finally {
             deleteFile(worldJar);
         }
-    }
-
-    @Test
-    public void testPackageDirMappingOption() {
-        testPackageMapping("-m");
-    }
-
-    @Test
-    public void testPackageDirMappingLongOption() {
-        testPackageMapping("--package-map");
     }
 
     @Test
