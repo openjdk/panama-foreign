@@ -190,6 +190,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         assert (jt != null);
         MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$get",
                 "()" + jt.getDescriptor(), "()" + jt.getSignature(false), null);
+        jt.visitInner(cw);
 
         if (! noNativeLocations) {
             AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);
@@ -210,6 +211,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
                 "(" + jt.getSignature(true) + ")V", null);
+        jt.visitInner(cw);
         av = mv.visitAnnotation(NATIVE_SETTER, true);
         av.visit("value", fieldName);
         av.visitEnd();
@@ -219,6 +221,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
             JType ptrType = JType.GenericType.ofPointer(jt);
             mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, fieldName + "$ptr",
                     "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(false), null);
+            ptrType.visitInner(cw);
             av = mv.visitAnnotation(NATIVE_ADDRESSOF, true);
             av.visit("value", fieldName);
             av.visitEnd();
@@ -378,6 +381,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         }
         MethodVisitor mv = cw.visitMethod(flags, "fn",
                 fn.getDescriptor(), fn.getSignature(false), null);
+        fn.visitInner(cw);
         mv.visitEnd();
         // Write class
         cw.visitEnd();
@@ -408,6 +412,7 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         }
         MethodVisitor mv = global_cw.visitMethod(flags,
                 funcTree.name(), fn.getDescriptor(), fn.getSignature(false), null);
+        jt.visitInner(global_cw);
         final int arg_cnt = funcTree.numParams();
         for (int i = 0; i < arg_cnt; i++) {
             String name = funcTree.paramName(i);
@@ -463,6 +468,8 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
 
         String sig = jdk.internal.org.objectweb.asm.Type.getMethodDescriptor(jdk.internal.org.objectweb.asm.Type.getType(macroType));
         MethodVisitor mv = global_cw.visitMethod(ACC_PUBLIC, name, sig, sig, null);
+        // FIXME: we don't use "jt" here, we use macroType instead. We may have to do
+        // visitInner when we use "jt" and support other macro constants.
 
         if (! noNativeLocations) {
             AnnotationVisitor av = mv.visitAnnotation(NATIVE_LOCATION, true);

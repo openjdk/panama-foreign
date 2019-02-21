@@ -94,6 +94,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
 
             emitStaticForwarder(fieldName + "$get",
                 "()" + jt.getDescriptor(), "()" + jt.getSignature(false), false);
+            jt.visitInner(cw);
 
             emitStaticForwarder(fieldName + "$set",
                 "(" + jt.getDescriptor() + ")V",
@@ -101,6 +102,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
             JType ptrType = JType.GenericType.ofPointer(jt);
             emitStaticForwarder(fieldName + "$ptr",
                 "()" + ptrType.getDescriptor(), "()" + ptrType.getSignature(false), false);
+            ptrType.visitInner(cw);
 
             return true;
         } else {
@@ -125,6 +127,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
             JType.Function fn = (JType.Function)jt;
             logger.fine(() -> "Add method: " + fn.getSignature(false));
             emitStaticForwarder(funcTree.name(), fn.getDescriptor(), fn.getSignature(false), fn.isVarArgs);
+            fn.visitInner(cw);
             return true;
         } else {
             return false;
@@ -139,7 +142,7 @@ final class AsmCodeFactoryExt extends AsmCodeFactory {
             logger.fine(() -> "Adding macro " + name);
             Class<?> macroType = Utils.unboxIfNeeded(value.getClass());
             String sig = Type.getType(macroType).getDescriptor();
-            FieldVisitor fv = cw.visitField(ACC_PUBLIC | ACC_STATIC, name, sig, null, value);
+            FieldVisitor fv = cw.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, sig, null, value);
             fv.visitEnd();
             return true;
         } else {

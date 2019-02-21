@@ -22,8 +22,15 @@
  */
 package com.sun.tools.jextract;
 
+import jdk.internal.org.objectweb.asm.ClassVisitor;
 import java.foreign.memory.Callback;
 import java.foreign.memory.Pointer;
+import java.util.Objects;
+
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_ABSTRACT;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_INTERFACE;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
 
 /**
  * A Java Type descriptor
@@ -36,6 +43,8 @@ public abstract class JType {
      * @return The type descriptor as defined in JVMS 4.3
      */
     public abstract String getDescriptor();
+
+    public void visitInner(ClassVisitor cv) {}
 
     public String getSignature(boolean isArgument) { return getDescriptor(); }
 
@@ -51,6 +60,10 @@ public abstract class JType {
     public final static JType Object = of(java.lang.Object.class);
 
     public static JType of(final Class<?> cls) {
+        if (cls.getEnclosingClass() != null) {
+            throw new IllegalArgumentException("nested/inner class: " + cls.getName());
+        }
+
         if (cls.isArray()) {
             return new ArrayType(JType.of(cls.getComponentType()));
         }
@@ -112,10 +125,23 @@ public abstract class JType {
     }
 
     public static class ClassType extends JType {
+        // FIXME: for nested/inner types are just one-level deep.
+        // If we generate deeply nested types, we have to revisit this.
+
+        final String enclosingName;
+        final String simpleName;
         final String clsName;
 
         ClassType(String clsName) {
-            this.clsName = clsName;
+            this.enclosingName = null;
+            this.simpleName = null;
+            this.clsName = Objects.requireNonNull(clsName);
+        }
+
+        ClassType(String enclosingName, String simpleName) {
+            this.enclosingName = Objects.requireNonNull(enclosingName);
+            this.simpleName = Objects.requireNonNull(simpleName);
+            this.clsName = enclosingName + "$" + simpleName;
         }
 
         @Override
@@ -134,6 +160,14 @@ public abstract class JType {
                 return clsName;
             }
         }
+
+        @Override
+        public void visitInner(ClassVisitor cv) {
+            if (enclosingName != null) {
+                cv.visitInnerClass(clsName, enclosingName, simpleName,
+                    ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE);
+            }
+        }
     }
 
     public final static class ArrayType extends JType {
@@ -146,6 +180,11 @@ public abstract class JType {
         @Override
         public String getDescriptor() {
             return JType.of(java.foreign.memory.Array.class).getDescriptor();
+        }
+
+        @Override
+        public void visitInner(ClassVisitor cv) {
+            elementType.visitInner(cv);
         }
 
         @Override
@@ -204,6 +243,14 @@ public abstract class JType {
         }
 
         @Override
+        public void visitInner(ClassVisitor cv) {
+            returnType.visitInner(cv);
+            for (JType at : args) {
+                at.visitInner(cv);
+            }
+        }
+
+        @Override
         public String getSignature(boolean isArgument) {
             StringBuilder sb = new StringBuilder();
             sb.append('(');
@@ -234,6 +281,12 @@ public abstract class JType {
 
         Function getFunction() {
             return fn;
+        }
+
+        @Override
+        public void visitInner(ClassVisitor cv) {
+            fn.visitInner(cv);
+            super.visitInner(cv);
         }
     }
 
@@ -273,6 +326,12 @@ public abstract class JType {
 
         public static GenericType ofCallback(JType targ) {
             return new GenericType(JType.binaryName(Callback.class), targ);
+        }
+
+        @Override
+        public void visitInner(ClassVisitor cv) {
+            targ.visitInner(cv);
+            super.visitInner(cv);
         }
     }
 }

@@ -58,7 +58,7 @@ final class TypeDictionary {
         functionalTypes = new HashMap<>();
         resolutionRoots = new HashSet<>();
     }
-    
+
     private int serialNo() {
         return ++serialNo;
     }
@@ -76,7 +76,7 @@ final class TypeDictionary {
 	        return headerClass();
         }
     }
-    
+
     private String headerClass() {
         return Utils.toInternalName(headerFile.pkgName, headerFile.clsName);
     }
@@ -167,7 +167,7 @@ final class TypeDictionary {
                 String name = Utils.toClassName(Utils.getName(t));
                 String owner = recordOwnerClass(t);
                 resolutionRoots.add(owner);
-                return new JType.ClassType(owner + "$" + name);
+                return new JType.ClassType(owner, name);
             }
             case Pointer: {
                 JType jt = getInternal(t.getPointeeType().canonicalType(), funcResolver);
