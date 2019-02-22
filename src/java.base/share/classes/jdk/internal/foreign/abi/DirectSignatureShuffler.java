@@ -90,12 +90,17 @@ public class DirectSignatureShuffler {
     private List<Integer> doublePerms = new ArrayList<>();
 
     protected DirectSignatureShuffler(CallingSequence callingSequence, NativeMethodType nmt, ShuffleDirection direction) {
-        checkCallingSequence(callingSequence);
         this.direction = direction;
         this.javaMethodType = nmt.methodType();
-        processType(RET_POS, nmt.returnType(), callingSequence.getReturnBindings(), direction.flip());
+        boolean returnsInMemoryDowncall = callingSequence.returnsInMemory() && direction == ShuffleDirection.JAVA_TO_NATIVE;
+        if(!returnsInMemoryDowncall) {
+            processType(RET_POS, nmt.returnType(), callingSequence.getReturnBindings(), direction.flip());
+        } else {
+            processType(0, nmt.returnType().pointer(), null, direction);
+        }
+        int pos = returnsInMemoryDowncall ? 1 : 0; // skip pointer
         for (int i = 0 ; i < javaMethodType.parameterCount() ; i++) {
-            processType(i, nmt.parameterType(i), callingSequence.getArgumentBindings(i), direction);
+            processType(pos++, nmt.parameterType(i), callingSequence.getArgumentBindings(i), direction);
         }
     }
 
@@ -140,12 +145,6 @@ public class DirectSignatureShuffler {
                         mt.parameterList().stream().map(this::desc).collect(Collectors.joining()) :
                         "V");
 
-    }
-
-    private static void checkCallingSequence(CallingSequence callingSequence) {
-        if (callingSequence.returnsInMemory()) {
-            throw new IllegalArgumentException("Unsupported non-scalarized calling sequence!");
-        }
     }
 
     protected void processType(int sigPos, LayoutType<?> lt, List<ArgumentBinding> bindings, ShuffleDirection direction) {

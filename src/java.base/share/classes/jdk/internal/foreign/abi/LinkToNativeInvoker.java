@@ -25,10 +25,38 @@ package jdk.internal.foreign.abi;
 
 import java.foreign.Library;
 import java.foreign.NativeMethodType;
+import java.foreign.Scope;
+import java.foreign.memory.Callback;
+import java.foreign.memory.LayoutType;
+import java.foreign.memory.Pointer;
+import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.stream.IntStream;
+
+import static java.lang.invoke.MethodHandles.collectArguments;
+import static java.lang.invoke.MethodHandles.insertArguments;
+import static java.lang.invoke.MethodHandles.permuteArguments;
+import static java.lang.invoke.MethodType.methodType;
+import static java.lang.invoke.MethodHandles.*;
+import static java.lang.invoke.MethodType.*;
 
 public class LinkToNativeInvoker {
+
+    private static final MethodHandle ALLOC_LEAKY;
+    private static final MethodHandle MH_Pointer_get;
+
+    static {
+        Lookup lookup = MethodHandles.lookup();
+        try {
+            ALLOC_LEAKY = lookup.findStatic(LinkToNativeInvoker.class, "allocLeaky", methodType(Pointer.class, LayoutType.class));
+            MH_Pointer_get = lookup.findVirtual(Pointer.class, "get", methodType(Object.class));
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static MethodHandle make(Library.Symbol symbol, CallingSequence callingSequence, NativeMethodType nmt) {
         LinkToNativeSignatureShuffler shuffler =
                 LinkToNativeSignatureShuffler.javaToNativeShuffler(callingSequence, nmt);
@@ -38,6 +66,23 @@ public class LinkToNativeInvoker {
         } catch (Throwable ex) {
             throw new IllegalStateException(ex);
         }
-        return shuffler.adapt(mh);
+        mh =  shuffler.adapt(mh);
+
+        if(callingSequence.returnsInMemory()) {
+            MethodType internalMethodType = nmt.methodType().insertParameterTypes(0, Pointer.class);
+            MethodHandle ret = MH_Pointer_get.asType(methodType(nmt.methodType().returnType(), Pointer.class));
+            mh = collectArguments(ret, 1, mh);
+            int[] reorder = IntStream.range(-1, internalMethodType.parameterCount()).toArray();
+            reorder[0] = 0;
+            mh = permuteArguments(mh, internalMethodType, reorder);
+            mh = collectArguments(mh, 0, insertArguments(ALLOC_LEAKY, 0, nmt.returnType()));
+        }
+
+        return mh;
+    }
+
+
+    private static <T> Pointer<T> allocLeaky(LayoutType<T> type) {
+        return Scope.newNativeScope().allocate(type);
     }
 }

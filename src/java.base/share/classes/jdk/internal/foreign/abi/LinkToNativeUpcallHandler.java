@@ -31,10 +31,16 @@ import jdk.internal.vm.annotation.Stable;
 
 import java.foreign.Library;
 import java.foreign.NativeMethodType;
+import java.foreign.memory.Callback;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
+import java.foreign.memory.Struct;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.util.stream.IntStream;
+
+import static java.lang.invoke.MethodHandles.*;
+import static java.lang.invoke.MethodType.*;
 
 /**
  * This class implements upcall invocation from native code through a set of specialized entry points. A specialized
@@ -42,6 +48,17 @@ import java.lang.invoke.MethodType;
  * possible return types for the entry point are either long, double or void.
  */
 public class LinkToNativeUpcallHandler implements Library.Symbol {
+    private static final MethodHandle MH_Pointer_set;
+
+    static {
+        Lookup lookup = lookup();
+        try {
+            MH_Pointer_set = lookup.findVirtual(Pointer.class, "set", methodType(void.class, Object.class));
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static final JavaLangInvokeAccess JLI = SharedSecrets.getJavaLangInvokeAccess();
     @Stable
     private final MethodHandle mh;
@@ -52,6 +69,19 @@ public class LinkToNativeUpcallHandler implements Library.Symbol {
             Util.checkNoArrays(target.type());
             LinkToNativeSignatureShuffler shuffler =
                     LinkToNativeSignatureShuffler.nativeToJavaShuffler(callingSequence, nmt);
+
+            if (callingSequence.returnsInMemory()) {
+                // e.g.
+                // target = (int,int)MyStruct
+                // native sig = (Pointer<MyStruct>, int, int)Pointer<MyStruct>
+
+                target = collectArguments(MH_Pointer_set, 1, target.asType(target.type().changeReturnType(Object.class))); // erase return type
+                int[] reorder = IntStream.range(-1, target.type().parameterCount()).toArray();
+                reorder[0] = 0;
+                target = collectArguments(identity(Pointer.class), 1, target); // need to return pointer as well for Windows
+                target = permuteArguments(target, target.type().dropParameterTypes(0, 1), reorder);
+            }
+
             this.mh = shuffler.adapt(target);
             JLI.ensureCustomized(this.mh); // FIXME: consider more flexible scheme to customize upcall entry points
             long addr = allocateUpcallStub(mh);

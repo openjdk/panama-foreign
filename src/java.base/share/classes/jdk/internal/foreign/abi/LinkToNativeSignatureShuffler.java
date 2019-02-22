@@ -110,8 +110,7 @@ public class LinkToNativeSignatureShuffler extends DirectSignatureShuffler {
         if (returnBindings.isEmpty()) {
             return true;
         } else {
-            return !callingSequence.returnsInMemory() &&
-                    returnBindings.size() == 1;
+            return returnBindings.size() == 1;
         }
     }
 
