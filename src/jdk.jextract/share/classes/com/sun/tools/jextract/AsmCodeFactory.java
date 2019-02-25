@@ -60,7 +60,9 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ACC_VARARGS;
 import static jdk.internal.org.objectweb.asm.Opcodes.ARETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.DRETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.FRETURN;
+import static jdk.internal.org.objectweb.asm.Opcodes.I2B;
 import static jdk.internal.org.objectweb.asm.Opcodes.I2C;
+import static jdk.internal.org.objectweb.asm.Opcodes.I2S;
 import static jdk.internal.org.objectweb.asm.Opcodes.IRETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.LRETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
@@ -485,8 +487,14 @@ class AsmCodeFactory extends SimpleTreeVisitor<Boolean, JType> {
         mv.visitCode();
 
         mv.visitLdcInsn(value);
-        if (macroType.equals(char.class)) {
+        if (macroType.equals(boolean.class)) {
+            mv.visitInsn(I2B);
+            mv.visitInsn(IRETURN);
+        } else if (macroType.equals(char.class)) {
             mv.visitInsn(I2C);
+            mv.visitInsn(IRETURN);
+        } else if (macroType.equals(short.class)) {
+            mv.visitInsn(I2S);
             mv.visitInsn(IRETURN);
         } else if (macroType.equals(int.class)) {
             mv.visitInsn(IRETURN);

@@ -28,7 +28,6 @@ module jdk.jextract {
     requires java.logging;
     requires jdk.internal.opt;
     requires jdk.internal.clang;
-    requires jdk.compiler;
 
     provides java.util.spi.ToolProvider with
         com.sun.tools.jextract.Main.JextractToolProvider;

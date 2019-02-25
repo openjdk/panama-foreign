@@ -29,6 +29,8 @@ import java.foreign.NativeTypes;
 import java.foreign.Scope;
 import java.foreign.memory.LayoutType;
 import java.foreign.memory.Pointer;
+import java.io.IOException;
+import java.nio.file.Path;
 
 import clang.CXString.CXString;
 import clang.Index.CXDiagnostic;
@@ -63,6 +65,16 @@ public class TranslationUnit {
         }
 
         return rv;
+    }
+
+    public final void save(Path path) throws TranslationUnit.TranslationUnitSaveException {
+        try (Scope sc = Scope.globalScope().fork()) {
+            int res = LibClang.lib.clang_saveTranslationUnit(tu,
+                    sc.allocateCString(path.toAbsolutePath().toString()), 0);
+            if (res != 0) {
+                throw new TranslationUnit.TranslationUnitSaveException(path);
+            }
+        }
     }
 
     public String[] tokens(SourceRange range) {
@@ -149,6 +161,15 @@ public class TranslationUnit {
         public SourceRange getExtent() {
             return new SourceRange(LibClang.lib.clang_getTokenExtent(
                         tu, token));
+        }
+    }
+
+    public static class TranslationUnitSaveException extends IOException {
+
+        static final long serialVersionUID = 1L;
+
+        TranslationUnitSaveException(Path path) {
+            super("Cannot save translation unit to: " + path.toAbsolutePath());
         }
     }
 }

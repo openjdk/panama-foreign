@@ -22,6 +22,9 @@ static jclass clsLocation;
 static jmethodID ctorLocation;
 static jclass clsSourceRange;
 static jmethodID ctorSourceRange;
+static jclass clsUnsavedFile;
+static jfieldID unsavedFileType;
+static jfieldID unsavedContentsType;
 
 
 jstring CX2JString(JNIEnv *env, CXString str) {
@@ -89,6 +92,12 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     clsSourceRange = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/SourceRange"));
     ctorSourceRange = env->GetMethodID(clsSourceRange, "<init>", "(Ljava/nio/ByteBuffer;)V");
 
+    clsUnsavedFile = (jclass) env->NewGlobalRef(env->FindClass("jdk/internal/clang/Index$UnsavedFile"));
+    unsavedFileType = env->GetFieldID(clsUnsavedFile, "file", "Ljava/lang/String;");
+    assert(unsavedFileType != NULL);
+    unsavedContentsType = env->GetFieldID(clsUnsavedFile, "contents", "Ljava/lang/String;");
+    assert(unsavedContentsType != NULL);
+
     return JNI_VERSION_1_6;
 }
 
@@ -105,8 +114,8 @@ void JNI_OnUnload(JavaVM *vm, void *reserved) {
 }
 
 JNIEXPORT jobject JNICALL Java_jdk_internal_clang_LibClang_createIndex
-  (JNIEnv *env, jclass cls) {
-    CXIndex idx = clang_createIndex(0, 0);
+  (JNIEnv *env, jclass cls, jboolean isLocal) {
+    CXIndex idx = clang_createIndex(isLocal ? 1 : 0, 0);
     clang_toggleCrashRecovery(false);
     // CXIndex is a void*
     return env->NewObject(clsIndex, ctorIndex, (jlong) idx);
@@ -148,6 +157,40 @@ JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Index_parseFile
 JNIEXPORT void JNICALL Java_jdk_internal_clang_Index_disposeTranslationUnit
   (JNIEnv *env, jobject obj, jlong tu) {
     clang_disposeTranslationUnit((CXTranslationUnit) tu);
+}
+
+JNIEXPORT int JNICALL Java_jdk_internal_clang_Index_reparse0
+  (JNIEnv *env, jobject obj, jlong tu, jobjectArray args) {
+
+    int nfiles = env->GetArrayLength(args);
+    CXUnsavedFile *files = (CXUnsavedFile*)malloc(sizeof(CXUnsavedFile) * nfiles);
+    for (int i = 0 ; i < nfiles ; i++) {
+        jobject unsavedFile = (jobject) env->GetObjectArrayElement(args, i);
+        jstring filename = (jstring)env -> GetObjectField(unsavedFile, unsavedFileType);
+        jstring contents = (jstring)env -> GetObjectField(unsavedFile, unsavedContentsType);
+        files[i].Filename = env->GetStringUTFChars(filename, NULL);
+        files[i].Contents = env->GetStringUTFChars(contents, NULL);
+        files[i].Length = (unsigned long)strlen(files[i].Contents);
+    }
+    int res = clang_reparseTranslationUnit((CXTranslationUnit)tu, nfiles, files,
+                                           clang_defaultReparseOptions((CXTranslationUnit)tu));
+    for (int i = 0 ; i < nfiles ; i++) {
+        jobject unsavedFile = (jobject) env->GetObjectArrayElement(args, i);
+        jstring filename = (jstring)env -> GetObjectField(unsavedFile, unsavedFileType);
+        jstring contents = (jstring)env -> GetObjectField(unsavedFile, unsavedContentsType);
+        env->ReleaseStringUTFChars(filename, files[i].Filename);
+        env->ReleaseStringUTFChars(contents, files[i].Contents);
+    }
+    free(files);
+    return res;
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_Index_saveTranslationUnit
+  (JNIEnv *env, jobject obj, jlong tu, jstring path) {
+    const char *filename = env->GetStringUTFChars(path, NULL);
+    int res = clang_saveTranslationUnit((CXTranslationUnit) tu, filename, 0);
+    env->ReleaseStringUTFChars(path, filename);
+    return res;
 }
 
 JNIEXPORT jobject JNICALL Java_jdk_internal_clang_Index_getTranslationUnitCursor
@@ -692,6 +735,38 @@ JNIEXPORT jobject JNICALL Java_jdk_internal_clang_SourceRange_getEnd
 
     jobject buffer = env->NewDirectByteBuffer(&loc, sizeof(CXSourceLocation));
     return env->NewObject(clsSourceLocation, ctorSourceLocation, buffer);
+}
+
+JNIEXPORT jlong JNICALL Java_jdk_internal_clang_Cursor_eval0
+  (JNIEnv *env, jobject cursor) {
+    CXCursor *ptr = (CXCursor*) J2P(env, cursor);
+    return (jlong)clang_Cursor_Evaluate(*ptr);
+}
+
+JNIEXPORT void JNICALL Java_jdk_internal_clang_EvalResult_dispose
+  (JNIEnv *env, jobject obj, jlong evalResult) {
+    clang_EvalResult_dispose((CXEvalResult)evalResult);
+}
+
+JNIEXPORT jint JNICALL Java_jdk_internal_clang_EvalResult_getKind0
+  (JNIEnv *env, jobject obj, jlong evalResult) {
+    return clang_EvalResult_getKind((CXEvalResult)evalResult);
+}
+
+JNIEXPORT jlong JNICALL Java_jdk_internal_clang_EvalResult_getAsInt0
+  (JNIEnv *env, jobject obj, jlong evalResult) {
+    return clang_EvalResult_getAsLongLong((CXEvalResult)evalResult);
+}
+
+JNIEXPORT jdouble JNICALL Java_jdk_internal_clang_EvalResult_getAsFloat0
+  (JNIEnv *env, jobject obj, jlong evalResult) {
+    return clang_EvalResult_getAsDouble((CXEvalResult)evalResult);
+}
+
+JNIEXPORT jstring JNICALL Java_jdk_internal_clang_EvalResult_getAsString0
+  (JNIEnv *env, jobject obj, jlong evalResult) {
+    const char *cstr = clang_EvalResult_getAsStr((CXEvalResult)evalResult);
+    return env->NewStringUTF(cstr);
 }
 
 #ifdef __cplusplus

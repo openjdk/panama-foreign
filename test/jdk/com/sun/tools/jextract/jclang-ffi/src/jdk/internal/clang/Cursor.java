@@ -161,6 +161,12 @@ public class Cursor {
         return new TranslationUnit(LibClang.lib.clang_Cursor_getTranslationUnit(cursor));
     }
 
+    public EvalResult eval() {
+        //this throws because, for now, the eval API is never needed when parsing Index.h
+        //which only contains simple numeric macros which can be parsed w/o libclang support.
+        throw new UnsupportedOperationException("Eval API missing!");
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
