@@ -116,8 +116,9 @@ public class ConstantsTest extends JextractToolRunner {
                 { "FLOAT_VALUE", float.class, 1.32f },
                 { "DOUBLE_VALUE", double.class, 1.32 },
                 { "QUOTE", String.class, "QUOTE" },
-                { "CHAR_VALUE", char.class, 'h'},
-                { "SUB", int.class, 7 }
+                { "CHAR_VALUE", int.class, 104 }, //integer char constants have type int
+                { "MULTICHAR_VALUE", int.class, 26728 },  //integer char constants have type int
+                { "BOOL_VALUE", boolean.class, true }
         };
     }
 

@@ -48,8 +48,8 @@ public class LibClang {
         lcxstr = Libraries.bind(clang.CXString.class, libclang);
     }
 
-    public static Index createIndex() {
-        Index index = new Index(lib.clang_createIndex(0, 0));
+    public static Index createIndex(boolean local) {
+        Index index = new Index(lib.clang_createIndex(local ? 1 : 0, 0));
         lib.clang_toggleCrashRecovery(0);
         if (DEBUG) {
             System.err.println("LibClang crash recovery disabled");

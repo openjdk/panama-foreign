@@ -120,6 +120,14 @@ public class Cursor extends StructType {
         return children().flatMap(c -> Stream.concat(Stream.of(c), c.children()));
     }
 
+    private native long eval0();
+
+    public EvalResult eval() {
+        long ptr = eval0();
+        return ptr != 0 ?
+                new EvalResult(ptr) : EvalResult.erroneous;
+    }
+
     public native boolean equalCursor(Cursor other);
 
     @Override

@@ -23,12 +23,20 @@
 package jdk.internal.clang;
 
 
+import java.nio.file.Path;
+
 public class LibClang {
     private static final boolean DEBUG = Boolean.getBoolean("libclang.debug");
 
     // simplified version
 
-    public static native Index createIndex();
+    /**
+     * Create a clang index.
+     * @param local if set to true, the index will only return cursors for entities defined outside
+     * included precompiled headers (if any). See {@link TranslationUnit#save(Path)}.
+     * @return a clang index.
+     */
+    public static native Index createIndex(boolean local);
     public static native String version();
 
     static {
