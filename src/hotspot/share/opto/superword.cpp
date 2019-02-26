@@ -2612,39 +2612,30 @@ Node* SuperWord::vector_opd(Node_List* p, int opd_idx) {
       }
       return opd; // input is matching vector
     }
+
     if ((opd_idx == 2) && VectorNode::is_shift(p0)) {
+      assert(opd->bottom_type()->isa_int(), "int type only");
+      if (!opd->bottom_type()->isa_int()) {
+        NOT_PRODUCT(if(is_trace_loop_reverse() || TraceLoopOpts) {tty->print_cr("Should be int type only");})
+        return NULL;
+      }
       Compile* C = _phase->C;
-      Node* cnt = opd;
       // Vector instructions do not mask shift count, do it here.
       juint mask = (p0->bottom_type() == TypeInt::INT) ? (BitsPerInt - 1) : (BitsPerLong - 1);
-      const TypeInt* t = opd->find_int_type();
-      if (t != NULL && t->is_con()) {
-        juint shift = t->get_con();
-        if (shift > mask) { // Unsigned cmp
-          cnt = ConNode::make(TypeInt::make(shift & mask));
-        }
-      } else {
-        if (t == NULL || t->_lo < 0 || t->_hi > (int)mask) {
-          cnt = ConNode::make(TypeInt::make(mask));
-          _igvn.register_new_node_with_optimizer(cnt);
-          cnt = new AndINode(opd, cnt);
-          _igvn.register_new_node_with_optimizer(cnt);
-          _phase->set_ctrl(cnt, _phase->get_ctrl(opd));
-        }
-        assert(opd->bottom_type()->isa_int(), "int type only");
-        if (!opd->bottom_type()->isa_int()) {
-          NOT_PRODUCT(if(is_trace_loop_reverse() || TraceLoopOpts) {tty->print_cr("Should be int type only");})
-          return NULL;
-        }
-        // Move non constant shift count into vector register.
-        cnt = VectorNode::shift_count(p0->Opcode(), cnt, vlen, velt_basic_type(p0));
-      }
-      if (cnt != opd) {
-        _igvn.register_new_node_with_optimizer(cnt);
-        _phase->set_ctrl(cnt, _phase->get_ctrl(opd));
-      }
+      Node* cnt = ConNode::make(TypeInt::make(mask));
+      _igvn.register_new_node_with_optimizer(cnt);
+
+      cnt = new AndINode(opd, cnt);
+      _igvn.register_new_node_with_optimizer(cnt);
+      _phase->set_ctrl(cnt, _phase->get_ctrl(opd));
+
+      // Move non constant shift count into vector register.
+      cnt = VectorNode::shift_count(p0->Opcode(), cnt, vlen, velt_basic_type(p0));
+      _igvn.register_new_node_with_optimizer(cnt);
+      _phase->set_ctrl(cnt, _phase->get_ctrl(opd));
       return cnt;
     }
+
     assert(!opd->is_StoreVector(), "such vector is not expected here");
     if (opd->is_StoreVector()) {
       NOT_PRODUCT(if(is_trace_loop_reverse() || TraceLoopOpts) {tty->print_cr("StoreVector is not expected here");})

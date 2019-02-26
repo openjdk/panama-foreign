@@ -680,7 +680,7 @@ final class ByteMaxVector extends ByteVector {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, ByteMaxVector.class, byte.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >>> (i & 7))));
+            (v, i) -> v.uOp((__, a) -> (byte) ((a & 0xFF) >>> (i & 7))));
     }
 
     @Override

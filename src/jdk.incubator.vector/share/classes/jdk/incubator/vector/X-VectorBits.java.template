@@ -968,7 +968,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a >>> (i & 7))));
+            (v, i) -> v.uOp((__, a) -> ($type$) ((a & 0xFF) >>> (i & 7))));
     }
 
     @Override
@@ -1014,7 +1014,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, $vectortype$.class, $type$.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> ($type$) (a >>> (i & 15))));
+            (v, i) -> v.uOp((__, a) -> ($type$) ((a & 0xFFFF) >>> (i & 15))));
     }
 
     @Override

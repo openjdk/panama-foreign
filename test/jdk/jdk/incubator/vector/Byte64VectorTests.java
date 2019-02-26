@@ -752,7 +752,7 @@ public class Byte64VectorTests extends AbstractVectorTest {
 
 
     static byte shiftR_unary(byte a, byte b) {
-        return (byte)((a >>> (b & 7)));
+        return (byte)(((a & 0xFF) >>> (b & 7)));
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")

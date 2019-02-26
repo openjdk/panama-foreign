@@ -680,7 +680,7 @@ final class Byte128Vector extends ByteVector {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, Byte128Vector.class, byte.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> (byte) (a >>> (i & 7))));
+            (v, i) -> v.uOp((__, a) -> (byte) ((a & 0xFF) >>> (i & 7))));
     }
 
     @Override

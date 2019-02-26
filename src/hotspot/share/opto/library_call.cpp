@@ -6812,10 +6812,10 @@ static int get_opc(jint op, BasicType bt) {
     }
     case OP_URSHIFT: {
       switch (bt) {
-        case T_BYTE:   // fall-through
-        case T_SHORT:  // fall-through
-        case T_INT:  return Op_URShiftI;
-        case T_LONG: return Op_URShiftL;
+        case T_BYTE:  return Op_URShiftB;
+        case T_SHORT: return Op_URShiftS;
+        case T_INT:   return Op_URShiftI;
+        case T_LONG:  return Op_URShiftL;
         default: fatal("URSHIFT: %s", type2name(bt));
       }
       break;
@@ -6844,6 +6844,18 @@ static int get_opc(jint op, BasicType bt) {
   return 0; // Unimplemented
 }
 
+static int get_sopc(int opc, BasicType elem_bt) {
+  int sopc = 0;
+  switch (opc) {
+    case Op_CallLeafVector:
+      sopc = Op_CallLeafVector;
+      break;
+    default:
+      sopc = VectorNode::opcode(opc, elem_bt);
+      break;
+  }
+  return sopc;
+}
 Node* LibraryCallKit::box_vector(Node* vector, const TypeInstPtr* vbox_type,
                                  BasicType elem_bt, int num_elem) {
 
@@ -6904,7 +6916,7 @@ bool LibraryCallKit::inline_vector_nary_operation(int n) {
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   int opc = get_opc(opr->get_con(), elem_bt);
-  int sopc = opc != Op_CallLeafVector ? VectorNode::opcode(opc, elem_bt) : Op_CallLeafVector;
+  int sopc = get_sopc(opc, elem_bt);
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 
@@ -7514,22 +7526,9 @@ bool LibraryCallKit::inline_vector_rearrange() {
 Node* LibraryCallKit::shift_count(Node* cnt, int shift_op, BasicType bt, int num_elem) {
   assert(bt == T_INT || bt == T_LONG || bt == T_SHORT || bt == T_BYTE, "byte, short, long and int are supported");
   juint mask = (type2aelembytes(bt) * BitsPerByte - 1);
-  const TypeInt* t = cnt->find_int_type();
-  if (t != NULL && t->is_con()) {
-    juint shift = t->get_con();
-    if (shift > mask) {
-      return _gvn.transform(ConNode::make(TypeInt::make(shift & mask)));
-    } else {
-      return cnt;
-    }
-  } else {
-    Node* maskedcnt = cnt;
-    if (t == NULL || t->_lo < 0 || t->_hi > (int)mask) {
-      Node* nmask = _gvn.transform(ConNode::make(TypeInt::make(mask)));
-      maskedcnt = _gvn.transform(new AndINode(cnt, nmask));
-    }
-    return _gvn.transform(VectorNode::shift_count(shift_op, maskedcnt, num_elem, bt));
-  }
+  Node* nmask = _gvn.transform(ConNode::make(TypeInt::make(mask)));
+  Node* mcnt = _gvn.transform(new AndINode(cnt, nmask));
+  return _gvn.transform(VectorNode::shift_count(shift_op, mcnt, num_elem, bt));
 }
 
 static void get_svml_address(int op, int bits, BasicType bt, const char** name_ptr, address* addr_ptr) {
@@ -7964,7 +7963,7 @@ bool LibraryCallKit::inline_vector_broadcast_int() {
   BasicType elem_bt = elem_type->basic_type();
   int num_elem = vlen->get_con();
   int opc = get_opc(opr->get_con(), elem_bt);
-  int sopc = VectorNode::opcode(opc, elem_bt); // get_node_id(opr->get_con(), elem_bt);
+  int sopc = get_sopc(opc, elem_bt); // get_node_id(opr->get_con(), elem_bt);
   ciKlass* vbox_klass = vector_klass->const_oop()->as_instance()->java_lang_Class_klass();
   const TypeInstPtr* vbox_type = TypeInstPtr::make_exact(TypePtr::NotNull, vbox_klass);
 

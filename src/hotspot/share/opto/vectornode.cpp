@@ -205,6 +205,12 @@ int VectorNode::opcode(int sopc, BasicType bt) {
   case Op_RShiftL:
     assert(bt == T_LONG, "must be");
     return Op_RShiftVL;
+  case Op_URShiftB:
+    assert(bt == T_BYTE, "must be");
+    return Op_URShiftVB;
+  case Op_URShiftS:
+    assert(bt == T_SHORT, "must be");
+    return Op_URShiftVS;
   case Op_URShiftI:
     switch (bt) {
     case T_BOOLEAN:return Op_URShiftVB;
@@ -318,6 +324,38 @@ bool VectorNode::is_shift(Node* n) {
   case Op_RShiftL:
   case Op_URShiftI:
   case Op_URShiftL:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool VectorNode::is_vshift(Node* n) {
+  switch (n->Opcode()) {
+  case Op_LShiftVB:
+  case Op_LShiftVS:
+  case Op_LShiftVI:
+  case Op_LShiftVL:
+
+  case Op_RShiftVB:
+  case Op_RShiftVS:
+  case Op_RShiftVI:
+  case Op_RShiftVL:
+
+  case Op_URShiftVB:
+  case Op_URShiftVS:
+  case Op_URShiftVI:
+  case Op_URShiftVL:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool VectorNode::is_vshift_cnt(Node* n) {
+  switch (n->Opcode()) {
+  case Op_LShiftCntV:
+  case Op_RShiftCntV:
     return true;
   default:
     return false;
@@ -507,7 +545,6 @@ VectorNode* VectorNode::scalar2vector(Node* s, uint vlen, const Type* opd_t) {
 }
 
 VectorNode* VectorNode::shift_count(int opc, Node* cnt, uint vlen, BasicType bt) {
-  assert(!cnt->is_Con(), "only variable shift count");
   // Match shift count type with shift vector type.
   const TypeVect* vt = TypeVect::make(bt, vlen);
   switch (opc) {
@@ -516,6 +553,8 @@ VectorNode* VectorNode::shift_count(int opc, Node* cnt, uint vlen, BasicType bt)
     return new LShiftCntVNode(cnt, vt);
   case Op_RShiftI:
   case Op_RShiftL:
+  case Op_URShiftB:
+  case Op_URShiftS:
   case Op_URShiftI:
   case Op_URShiftL:
     return new RShiftCntVNode(cnt, vt);

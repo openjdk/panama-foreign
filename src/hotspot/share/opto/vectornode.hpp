@@ -70,6 +70,8 @@ class VectorNode : public TypeNode {
   static int replicate_opcode(BasicType bt);
   static bool implemented(int opc, uint vlen, BasicType bt);
   static bool is_shift(Node* n);
+  static bool is_vshift(Node* n);
+  static bool is_vshift_cnt(Node* n);
   static bool is_type_transition_short_to_int(Node* n);
   static bool is_type_transition_to_int(Node* n);
   static bool is_muladds2i(Node* n);
@@ -770,7 +772,7 @@ public:
     }
   }
   virtual int Opcode() const;
-  virtual const Type* bottom_type() const {  
+  virtual const Type* bottom_type() const {
     if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_INT)
       return TypeInt::INT;
     else if (in(2)->bottom_type()->is_vect()->element_basic_type() == T_BYTE)

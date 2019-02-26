@@ -2071,6 +2071,15 @@ bool Matcher::is_bmi_pattern(Node *n, Node *m) {
 }
 #endif // X86
 
+bool Matcher::is_vshift_con(Node *n, Node *m) {
+  if (n != NULL && m != NULL &&
+      VectorNode::is_vshift(n) &&
+      VectorNode::is_vshift_cnt(m) && m->in(1)->is_Con()) {
+    return true;
+  }
+  return false;
+}
+
 bool Matcher::clone_base_plus_offset_address(AddPNode* m, Matcher::MStack& mstack, VectorSet& address_visited) {
   Node *off = m->in(AddPNode::Offset);
   if (off->is_Con()) {
@@ -2155,6 +2164,10 @@ void Matcher::find_shared( Node *n ) {
           continue;
         }
 #endif
+        if (is_vshift_con(n, m)) {
+          mstack.push(m, Visit);
+          continue;
+        }
 
         // Clone addressing expressions as they are "free" in memory access instructions
         if (mem_op && i == mem_addr_idx && mop == Op_AddP &&

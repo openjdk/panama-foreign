@@ -681,7 +681,7 @@ final class Short128Vector extends ShortVector {
         return VectorIntrinsics.broadcastInt(
             VECTOR_OP_URSHIFT, Short128Vector.class, short.class, LENGTH,
             this, s,
-            (v, i) -> v.uOp((__, a) -> (short) (a >>> (i & 15))));
+            (v, i) -> v.uOp((__, a) -> (short) ((a & 0xFFFF) >>> (i & 15))));
     }
 
     @Override

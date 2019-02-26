@@ -758,7 +758,7 @@ public class Short128VectorTests extends AbstractVectorTest {
 
 
     static short shiftR_unary(short a, short b) {
-        return (short)((a >>> (b & 15)));
+        return (short)(((a & 0xFFFF) >>> (b & 15)));
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")
