@@ -24,8 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng Double128VectorTests
- *
+ * @run testng/othervm -ea -esa Double128VectorTests
  */
 
 import jdk.incubator.vector.Vector.Shape;

@@ -265,10 +265,10 @@ gen_shift_cst_op "shiftR" "(a >>> b)" $unit_output $perf_output $perf_scalar_out
 gen_shift_cst_op "shiftL" "(a << b)" $unit_output $perf_output $perf_scalar_output "intOrLong"
 gen_shift_cst_op "aShiftR" "(a >> (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
 gen_shift_cst_op "shiftL" "(a << (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
-gen_shift_cst_op "shiftR" "(a >>> (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
+gen_shift_cst_op "shiftR" "((a \& 0xFF) >>> (b \& 7))" $unit_output $perf_output $perf_scalar_output "byte"
 gen_shift_cst_op "aShiftR" "(a >> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
 gen_shift_cst_op "shiftL" "(a << (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
-gen_shift_cst_op "shiftR" "(a >>> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
+gen_shift_cst_op "shiftR" "((a \& 0xFFFF) >>> (b \& 15))" $unit_output $perf_output $perf_scalar_output "short"
 
 # Masked reductions.
 gen_binary_op "max" "Math.max(a, b)" $unit_output $perf_output $perf_scalar_output

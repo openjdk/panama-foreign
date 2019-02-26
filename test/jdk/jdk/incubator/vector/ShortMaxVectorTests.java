@@ -24,9 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng/othervm --add-opens jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED
- *      ShortMaxVectorTests
- *
+ * @run testng/othervm -ea -esa ShortMaxVectorTests
  */
 
 import jdk.incubator.vector.Vector.Shape;
@@ -766,7 +764,7 @@ public class ShortMaxVectorTests extends AbstractVectorTest {
 
 
     static short shiftR_unary(short a, short b) {
-        return (short)((a >>> (b & 15)));
+        return (short)(((a & 0xFFFF) >>> (b & 15)));
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")

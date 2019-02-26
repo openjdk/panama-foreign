@@ -24,8 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng Short256VectorTests
- *
+ * @run testng/othervm -ea -esa Short256VectorTests
  */
 
 import jdk.incubator.vector.Vector.Shape;
@@ -759,7 +758,7 @@ public class Short256VectorTests extends AbstractVectorTest {
 
 
     static short shiftR_unary(short a, short b) {
-        return (short)((a >>> (b & 15)));
+        return (short)(((a & 0xFFFF) >>> (b & 15)));
     }
 
     @Test(dataProvider = "shortBinaryOpProvider")

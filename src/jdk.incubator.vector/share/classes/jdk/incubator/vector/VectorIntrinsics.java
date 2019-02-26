@@ -115,6 +115,7 @@ import java.util.function.*;
     VM broadcastCoerced(Class<VM> vmClass, Class<?> elementType, int length,
                                   long bits,
                                   LongFunction<VM> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(bits);
     }
 
@@ -126,6 +127,7 @@ import java.util.function.*;
     long reductionCoerced(int oprId, Class<?> vectorClass, Class<?> elementType, int length,
                           V v,
                           Function<V,Long> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(v);
     }
 
@@ -141,6 +143,7 @@ import java.util.function.*;
     long extract(Class<?> vectorClass, Class<?> elementType, int vlen,
                  V vec, int ix,
                  VecExtractOp<V> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(vec, ix);
     }
 
@@ -155,6 +158,7 @@ import java.util.function.*;
     V insert(Class<V> vectorClass, Class<?> elementType, int vlen,
                         V vec, int ix, long val,
                         VecInsertOp<V> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(vec, ix, val);
     }
 
@@ -166,6 +170,7 @@ import java.util.function.*;
     VM unaryOp(int oprId, Class<VM> vmClass, Class<?> elementType, int length,
                VM vm, /*Vector.Mask<E,S> m,*/
                Function<VM, VM> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(vm);
     }
 
@@ -177,6 +182,7 @@ import java.util.function.*;
     VM binaryOp(int oprId, Class<? extends VM> vmClass, Class<?> elementType, int length,
                 VM vm1, VM vm2, /*Vector.Mask<E,S> m,*/
                 BiFunction<VM, VM, VM> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(vm1, vm2);
     }
 
@@ -193,6 +199,7 @@ import java.util.function.*;
     VM ternaryOp(int oprId, Class<VM> vmClass, Class<?> elementType, int length,
                  VM vm1, VM vm2, VM vm3, /*Vector.Mask<E,S> m,*/
                  TernaryOperation<VM> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(vm1, vm2, vm3);
     }
 
@@ -212,6 +219,7 @@ import java.util.function.*;
            // Vector.Mask<E,S> m,
            C container, int index,      // Arguments for default implementation
            LoadOperation<C, VM> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.load(container, index);
     }
 
@@ -229,7 +237,8 @@ import java.util.function.*;
                   W index_vector,
                   C container, int index, int[] indexMap, int indexM, // Arguments for default implementation
                   LoadVectorOperationWithMap<C, V> defaultImpl) {
-      return defaultImpl.loadWithMap(container, index, indexMap, indexM);
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
+        return defaultImpl.loadWithMap(container, index, indexMap, indexM);
     }
 
     /* ============================================================================ */
@@ -247,6 +256,7 @@ import java.util.function.*;
                // Vector.Mask<E,S> m,
                C container, int index,      // Arguments for default implementation
                StoreVectorOperation<C, V> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         defaultImpl.store(container, index, v);
     }
 
@@ -264,6 +274,7 @@ import java.util.function.*;
                       W index_vector, V v,
                       C container, int index, int[] indexMap, int indexM, // Arguments for default implementation
                       StoreVectorOperationWithMap<C, V> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         defaultImpl.storeWithMap(container, index, v, indexMap, indexM);
     }
 
@@ -275,6 +286,7 @@ import java.util.function.*;
     boolean test(int cond, Class<?> vmClass, Class<?> elementType, int length,
                  VM vm1, VM vm2,
                  BiFunction<VM, VM, Boolean> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(vm1, vm2);
     }
 
@@ -291,6 +303,7 @@ import java.util.function.*;
     M compare(int cond, Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int length,
               V v1, V v2,
               VectorCompareOp<V,M> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(v1, v2);
     }
 
@@ -310,6 +323,7 @@ import java.util.function.*;
     V rearrangeOp(Class<V> vectorClass, Class<Sh> shuffleClass, Class<?> elementType, int vlen,
             V v1, Sh sh,
             VectorRearrangeOp<V,Sh, E> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(v1, sh);
     }
 
@@ -329,6 +343,7 @@ import java.util.function.*;
     V blend(Class<V> vectorClass, Class<M> maskClass, Class<?> elementType, int length,
             V v1, V v2, M m,
             VectorBlendOp<V,M, E> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(v1, v2, m);
     }
 
@@ -344,6 +359,7 @@ import java.util.function.*;
     V broadcastInt(int opr, Class<V> vectorClass, Class<?> elementType, int length,
                    V v, int i,
                    VectorBroadcastIntOp<V> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(v, i);
     }
 
@@ -362,6 +378,7 @@ import java.util.function.*;
                   Class<?> toElementType, int toVLen,
                   VIN v, S s,
                   VectorReinterpretOp<S, VIN, V> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(s, v);
     }
 
@@ -380,6 +397,7 @@ import java.util.function.*;
            Class<?> toElementType, int toVLen,
            VIN v, S s,
            VectorCastOp<S, VIN, V> defaultImpl) {
+        assert isNonCapturingLambda(defaultImpl) : defaultImpl;
         return defaultImpl.apply(s, v);
     }
 
@@ -420,5 +438,9 @@ import java.util.function.*;
                 return vix;
             default: throw new InternalError();
         }
+    }
+
+    static boolean isNonCapturingLambda(Object o) {
+        return o.getClass().getDeclaredFields().length == 0;
     }
 }

@@ -24,9 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng/othervm --add-opens jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED
- *      ByteMaxVectorTests
- *
+ * @run testng/othervm -ea -esa ByteMaxVectorTests
  */
 
 import jdk.incubator.vector.Vector.Shape;
@@ -760,7 +758,7 @@ public class ByteMaxVectorTests extends AbstractVectorTest {
 
 
     static byte shiftR_unary(byte a, byte b) {
-        return (byte)((a >>> (b & 7)));
+        return (byte)(((a & 0xFF) >>> (b & 7)));
     }
 
     @Test(dataProvider = "byteBinaryOpProvider")
