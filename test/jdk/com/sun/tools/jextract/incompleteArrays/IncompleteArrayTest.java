@@ -31,6 +31,7 @@
  */
 
 import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 import java.nio.file.Path;
 
@@ -42,11 +43,14 @@ public class IncompleteArrayTest extends JextractToolRunner {
     public void testIncompleteArraySimple() {
         Path jar = getOutputFilePath("incompleteArray1.jar");
         Path input = getInputFilePath("incompleteArray1.h");
-        try {
-            run("-o", jar.toString(),
-                    input.toString())
-                    .checkSuccess()
-                    .checkContainsOutput("Flexible array members not supported.");
+        run("-o", jar.toString(),
+                input.toString())
+                .checkSuccess()
+                .checkMatchesOutput(".*WARNING: can not compute layout for type .+" +
+                        " with flexible array member\\. Emitting undefined layout reference\\..*");
+        try (Loader loader = classLoader(jar)) {
+            // check if we can still load the class without NoClassDefFound
+            assertNotNull(loader.loadClass("incompleteArray1"));
         } finally {
             deleteFile(jar);
         }
@@ -56,11 +60,13 @@ public class IncompleteArrayTest extends JextractToolRunner {
     public void testIncompleteArrayNested() {
         Path jar = getOutputFilePath("incompleteArray2.jar");
         Path input = getInputFilePath("incompleteArray2.h");
-        try {
-            run("-o", jar.toString(),
-                    input.toString())
-                    .checkSuccess()
-                    .checkContainsOutput("Flexible array members not supported.");
+        run("-o", jar.toString(),
+                input.toString())
+                .checkSuccess()
+                .checkMatchesOutput(".*WARNING: can not compute layout for type .+" +
+                        " with flexible array member\\. Emitting undefined layout reference\\..*");
+        try (Loader loader = classLoader(jar)) {
+            assertNotNull(loader.loadClass("incompleteArray2"));
         } finally {
             deleteFile(jar);
         }
@@ -71,11 +77,13 @@ public class IncompleteArrayTest extends JextractToolRunner {
         if (IS_WINDOWS) { // MSVC extension
             Path jar = getOutputFilePath("incompleteArray3.jar");
             Path input = getInputFilePath("incompleteArray3.h");
-            try {
-                run("-o", jar.toString(),
-                        input.toString())
-                        .checkSuccess()
-                        .checkContainsOutput("Flexible array members not supported.");
+            run("-o", jar.toString(),
+                    input.toString())
+                    .checkSuccess()
+                    .checkMatchesOutput(".*WARNING: can not compute layout for type .+" +
+                            " with flexible array member\\. Emitting undefined layout reference\\..*");
+            try (Loader loader = classLoader(jar)) {
+                assertNotNull(loader.loadClass("incompleteArray3"));
             } finally {
                 deleteFile(jar);
             }

@@ -28,14 +28,13 @@ import java.foreign.layout.Layout;
 import java.foreign.layout.Value;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.sun.tools.jextract.Utils;
 import jdk.internal.clang.Cursor;
 import jdk.internal.clang.CursorKind;
 import jdk.internal.clang.Type;
-import jdk.internal.clang.TypeKind;
 
 /**
  * Base class for C struct, union layout computer helper classes.
@@ -67,36 +66,11 @@ abstract class RecordLayoutComputer {
                 new StructLayoutComputer(offsetInParent, parent, type).compute();
     }
 
-    private static Stream<Cursor> flattenableChildren(Cursor c) {
-        return c.children()
-                .filter(cx -> cx.isAnonymousStruct() || cx.kind() == CursorKind.FieldDecl);
-    }
-
-    private static Optional<Cursor> lastChild(Cursor c) {
-        List<Cursor> children = flattenableChildren(c)
-                .collect(Collectors.toList());
-        return children.isEmpty() ? Optional.empty() : Optional.of(children.get(children.size() - 1));
-    }
-
-    private static boolean hasIncompleteArray(Cursor c) {
-        switch (c.kind()) {
-            case FieldDecl:
-                return c.type().kind() == TypeKind.IncompleteArray;
-            case UnionDecl:
-                return flattenableChildren(c)
-                        .anyMatch(RecordLayoutComputer::hasIncompleteArray);
-            case StructDecl:
-                return lastChild(c).map(RecordLayoutComputer::hasIncompleteArray).orElse(false);
-            default:
-                throw new IllegalStateException("Unhandled cursor kind: " + c.kind());
-        }
-    }
-
     final Layout compute() {
-        if (hasIncompleteArray(cursor)) {
-            throw new UnsupportedOperationException("Flexible array members not supported.");
+        if (Utils.hasIncompleteArray(cursor)) {
+            return LayoutUtils.getRecordReferenceLayout(type); // warning emitted later
         }
-        Stream<Cursor> fieldCursors = flattenableChildren(cursor);
+        Stream<Cursor> fieldCursors = Utils.flattenableChildren(cursor);
         for (Cursor fc : fieldCursors.collect(Collectors.toList())) {
             /*
              * Ignore bitfields of zero width.
@@ -158,7 +132,7 @@ abstract class RecordLayoutComputer {
         if (c.kind() == CursorKind.FieldDecl) {
             return parent.getOffsetOf(c.spelling());
         } else {
-            return flattenableChildren(c)
+            return Utils.flattenableChildren(c)
                     .mapToLong(child -> offsetOf(parent, child))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException(
