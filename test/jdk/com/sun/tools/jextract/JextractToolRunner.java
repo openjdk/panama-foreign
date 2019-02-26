@@ -98,7 +98,7 @@ class JextractToolRunner {
 
         protected JextractResult checkMatchesOutput(String regex) {
             Objects.requireNonNull(regex);
-            assertTrue(output.matches(regex), "Output does not match regex: " + regex);
+            assertTrue(output.trim().matches(regex), "Output does not match regex: " + regex);
             return this;
         }
     }
