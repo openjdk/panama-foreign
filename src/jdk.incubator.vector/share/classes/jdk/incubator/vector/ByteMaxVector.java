@@ -1274,7 +1274,7 @@ final class ByteMaxVector extends ByteVector {
         public boolean anyTrue() {
             return VectorIntrinsics.test(COND_notZero, ByteMaxMask.class, byte.class, LENGTH,
                                          this, this,
-                                         (m1, m2) -> super.anyTrue());
+                                         (m, __) -> anyTrueHelper(m.getBits()));
         }
 
         @Override
@@ -1282,7 +1282,7 @@ final class ByteMaxVector extends ByteVector {
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, ByteMaxMask.class, byte.class, LENGTH,
                                          this, species().maskAllTrue(),
-                                         (m1, m2) -> super.allTrue());
+                                         (m, __) -> allTrueHelper(m.getBits()));
         }
     }
 
@@ -1495,7 +1495,7 @@ final class ByteMaxVector extends ByteVector {
             return VectorIntrinsics.load(ByteMaxVector.class, byte.class, LENGTH,
                                          es, Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          es, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -1506,7 +1506,7 @@ final class ByteMaxVector extends ByteVector {
             return VectorIntrinsics.load(ByteMaxMask.class, byte.class, LENGTH,
                                          bits, (((long)ix) << BOOLEAN_ARRAY_SHIFT)+ Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
-                                         (c, idx) -> opm(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.opm(n -> c[idx + n]));
         }
 
         @Override
@@ -1517,7 +1517,7 @@ final class ByteMaxVector extends ByteVector {
             return VectorIntrinsics.load(ByteMaxVector.class, byte.class, LENGTH,
                                          a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          a, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -1535,9 +1535,9 @@ final class ByteMaxVector extends ByteVector {
                                          a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          a, ix,
                                          (c, idx) -> {
-                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
                                              ByteBuffer tb = bbc;
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
 
@@ -1560,7 +1560,7 @@ final class ByteMaxVector extends ByteVector {
                                          (c, idx) -> {
                                              ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
                                              ByteBuffer tb = bbc;
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
 

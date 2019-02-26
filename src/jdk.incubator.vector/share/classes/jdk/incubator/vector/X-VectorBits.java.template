@@ -1858,7 +1858,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         public boolean anyTrue() {
             return VectorIntrinsics.test(COND_notZero, $masktype$.class, $bitstype$.class, LENGTH,
                                          this, this,
-                                         (m1, m2) -> super.anyTrue());
+                                         (m, __) -> anyTrueHelper(m.getBits()));
         }
 
         @Override
@@ -1866,7 +1866,7 @@ final class $vectortype$ extends $abstractvectortype$ {
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, $masktype$.class, $bitstype$.class, LENGTH,
                                          this, species().maskAllTrue(),
-                                         (m1, m2) -> super.allTrue());
+                                         (m, __) -> allTrueHelper(m.getBits()));
         }
     }
 
@@ -2099,7 +2099,7 @@ final class $vectortype$ extends $abstractvectortype$ {
             return VectorIntrinsics.load($vectortype$.class, $type$.class, LENGTH,
                                          es, Unsafe.ARRAY_$TYPE$_BASE_OFFSET,
                                          es, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -2110,7 +2110,7 @@ final class $vectortype$ extends $abstractvectortype$ {
             return VectorIntrinsics.load($masktype$.class, $bitstype$.class, LENGTH,
                                          bits, (((long)ix) << BOOLEAN_ARRAY_SHIFT)+ Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
-                                         (c, idx) -> opm(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.opm(n -> c[idx + n]));
         }
 
         @Override
@@ -2121,7 +2121,7 @@ final class $vectortype$ extends $abstractvectortype$ {
             return VectorIntrinsics.load($vectortype$.class, $type$.class, LENGTH,
                                          a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_$TYPE$_BASE_OFFSET,
                                          a, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -2139,9 +2139,9 @@ final class $vectortype$ extends $abstractvectortype$ {
                                          a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          a, ix,
                                          (c, idx) -> {
-                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
                                              $Type$Buffer tb = bbc{#if[byte]?;:.as$Type$Buffer();}
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
 #if[!byteOrShort]
@@ -2162,7 +2162,7 @@ final class $vectortype$ extends $abstractvectortype$ {
             return VectorIntrinsics.loadWithMap($vectortype$.class, $type$.class, LENGTH, $vectorindextype$,
                                         a, Unsafe.ARRAY_$TYPE$_BASE_OFFSET, vix,
                                         a, ix, b, iy,
-                                       (c, idx, indexMap, idy) -> op(n -> c[idx + indexMap[idy+n]]));
+                                       (c, idx, indexMap, idy) -> SPECIES.op(n -> c[idx + indexMap[idy+n]]));
 #end[longOrDouble64]
        }
 
@@ -2194,7 +2194,7 @@ final class $vectortype$ extends $abstractvectortype$ {
                                          (c, idx) -> {
                                              ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
                                              $Type$Buffer tb = bbc{#if[byte]?;:.as$Type$Buffer();}
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
 

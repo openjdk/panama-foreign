@@ -24,9 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng/othervm --add-opens jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED
- *      DoubleMaxVectorTests
- *
+ * @run testng/othervm -ea -esa DoubleMaxVectorTests
  */
 
 import jdk.incubator.vector.Vector.Shape;

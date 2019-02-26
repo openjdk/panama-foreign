@@ -80,22 +80,6 @@ abstract class AbstractMask<E> extends Vector.Mask<E> {
     }
 
     @Override
-    public boolean anyTrue() {
-        for (boolean i : getBits()) {
-            if (i) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean allTrue() {
-        for (boolean i : getBits()) {
-            if (!i) return false;
-        }
-        return true;
-    }
-
-    @Override
     public int trueCount() {
         int c = 0;
         for (boolean i : getBits()) {
@@ -117,5 +101,21 @@ abstract class AbstractMask<E> extends Vector.Mask<E> {
     @Override
     public AbstractMask<E> not() {
         return uOp((i, a) -> !a);
+    }
+
+    /*package-private*/
+    static boolean anyTrueHelper(boolean[] bits) {
+        for (boolean i : bits) {
+            if (i) return true;
+        }
+        return false;
+    }
+
+    /*package-private*/
+    static boolean allTrueHelper(boolean[] bits) {
+        for (boolean i : bits) {
+            if (!i) return false;
+        }
+        return true;
     }
 }

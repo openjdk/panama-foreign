@@ -1418,7 +1418,7 @@ final class Float512Vector extends FloatVector {
         public boolean anyTrue() {
             return VectorIntrinsics.test(COND_notZero, Float512Mask.class, int.class, LENGTH,
                                          this, this,
-                                         (m1, m2) -> super.anyTrue());
+                                         (m, __) -> anyTrueHelper(m.getBits()));
         }
 
         @Override
@@ -1426,7 +1426,7 @@ final class Float512Vector extends FloatVector {
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Float512Mask.class, int.class, LENGTH,
                                          this, species().maskAllTrue(),
-                                         (m1, m2) -> super.allTrue());
+                                         (m, __) -> allTrueHelper(m.getBits()));
         }
     }
 
@@ -1639,7 +1639,7 @@ final class Float512Vector extends FloatVector {
             return VectorIntrinsics.load(Float512Vector.class, float.class, LENGTH,
                                          es, Unsafe.ARRAY_FLOAT_BASE_OFFSET,
                                          es, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -1650,7 +1650,7 @@ final class Float512Vector extends FloatVector {
             return VectorIntrinsics.load(Float512Mask.class, int.class, LENGTH,
                                          bits, (((long)ix) << BOOLEAN_ARRAY_SHIFT)+ Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
-                                         (c, idx) -> opm(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.opm(n -> c[idx + n]));
         }
 
         @Override
@@ -1661,7 +1661,7 @@ final class Float512Vector extends FloatVector {
             return VectorIntrinsics.load(Float512Vector.class, float.class, LENGTH,
                                          a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_FLOAT_BASE_OFFSET,
                                          a, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -1679,9 +1679,9 @@ final class Float512Vector extends FloatVector {
                                          a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          a, ix,
                                          (c, idx) -> {
-                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
                                              FloatBuffer tb = bbc.asFloatBuffer();
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
         @Override
@@ -1698,7 +1698,7 @@ final class Float512Vector extends FloatVector {
             return VectorIntrinsics.loadWithMap(Float512Vector.class, float.class, LENGTH, Int512Vector.class,
                                         a, Unsafe.ARRAY_FLOAT_BASE_OFFSET, vix,
                                         a, ix, b, iy,
-                                       (c, idx, indexMap, idy) -> op(n -> c[idx + indexMap[idy+n]]));
+                                       (c, idx, indexMap, idy) -> SPECIES.op(n -> c[idx + indexMap[idy+n]]));
        }
 
        @Override
@@ -1728,7 +1728,7 @@ final class Float512Vector extends FloatVector {
                                          (c, idx) -> {
                                              ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
                                              FloatBuffer tb = bbc.asFloatBuffer();
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
 

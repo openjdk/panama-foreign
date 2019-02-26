@@ -24,8 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng Short64VectorTests
- *
+ * @run testng/othervm -ea -esa Short64VectorTests
  */
 
 import jdk.incubator.vector.Vector.Shape;

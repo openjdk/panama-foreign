@@ -1333,7 +1333,7 @@ final class Long64Vector extends LongVector {
         public boolean anyTrue() {
             return VectorIntrinsics.test(COND_notZero, Long64Mask.class, long.class, LENGTH,
                                          this, this,
-                                         (m1, m2) -> super.anyTrue());
+                                         (m, __) -> anyTrueHelper(m.getBits()));
         }
 
         @Override
@@ -1341,7 +1341,7 @@ final class Long64Vector extends LongVector {
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Long64Mask.class, long.class, LENGTH,
                                          this, species().maskAllTrue(),
-                                         (m1, m2) -> super.allTrue());
+                                         (m, __) -> allTrueHelper(m.getBits()));
         }
     }
 
@@ -1554,7 +1554,7 @@ final class Long64Vector extends LongVector {
             return VectorIntrinsics.load(Long64Vector.class, long.class, LENGTH,
                                          es, Unsafe.ARRAY_LONG_BASE_OFFSET,
                                          es, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -1565,7 +1565,7 @@ final class Long64Vector extends LongVector {
             return VectorIntrinsics.load(Long64Mask.class, long.class, LENGTH,
                                          bits, (((long)ix) << BOOLEAN_ARRAY_SHIFT)+ Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
-                                         (c, idx) -> opm(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.opm(n -> c[idx + n]));
         }
 
         @Override
@@ -1576,7 +1576,7 @@ final class Long64Vector extends LongVector {
             return VectorIntrinsics.load(Long64Vector.class, long.class, LENGTH,
                                          a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_LONG_BASE_OFFSET,
                                          a, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -1594,9 +1594,9 @@ final class Long64Vector extends LongVector {
                                          a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          a, ix,
                                          (c, idx) -> {
-                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
                                              LongBuffer tb = bbc.asLongBuffer();
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
         @Override
@@ -1632,7 +1632,7 @@ final class Long64Vector extends LongVector {
                                          (c, idx) -> {
                                              ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
                                              LongBuffer tb = bbc.asLongBuffer();
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
 

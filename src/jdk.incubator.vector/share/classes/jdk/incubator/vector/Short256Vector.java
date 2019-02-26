@@ -1275,7 +1275,7 @@ final class Short256Vector extends ShortVector {
         public boolean anyTrue() {
             return VectorIntrinsics.test(COND_notZero, Short256Mask.class, short.class, LENGTH,
                                          this, this,
-                                         (m1, m2) -> super.anyTrue());
+                                         (m, __) -> anyTrueHelper(m.getBits()));
         }
 
         @Override
@@ -1283,7 +1283,7 @@ final class Short256Vector extends ShortVector {
         public boolean allTrue() {
             return VectorIntrinsics.test(COND_carrySet, Short256Mask.class, short.class, LENGTH,
                                          this, species().maskAllTrue(),
-                                         (m1, m2) -> super.allTrue());
+                                         (m, __) -> allTrueHelper(m.getBits()));
         }
     }
 
@@ -1496,7 +1496,7 @@ final class Short256Vector extends ShortVector {
             return VectorIntrinsics.load(Short256Vector.class, short.class, LENGTH,
                                          es, Unsafe.ARRAY_SHORT_BASE_OFFSET,
                                          es, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -1507,7 +1507,7 @@ final class Short256Vector extends ShortVector {
             return VectorIntrinsics.load(Short256Mask.class, short.class, LENGTH,
                                          bits, (((long)ix) << BOOLEAN_ARRAY_SHIFT)+ Unsafe.ARRAY_BOOLEAN_BASE_OFFSET,
                                          bits, ix,
-                                         (c, idx) -> opm(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.opm(n -> c[idx + n]));
         }
 
         @Override
@@ -1518,7 +1518,7 @@ final class Short256Vector extends ShortVector {
             return VectorIntrinsics.load(Short256Vector.class, short.class, LENGTH,
                                          a, (((long) ix) << ARRAY_SHIFT) + Unsafe.ARRAY_SHORT_BASE_OFFSET,
                                          a, ix,
-                                         (c, idx) -> op(n -> c[idx + n]));
+                                         (c, idx) -> SPECIES.op(n -> c[idx + n]));
         }
 
         @Override
@@ -1536,9 +1536,9 @@ final class Short256Vector extends ShortVector {
                                          a, ((long) ix) + Unsafe.ARRAY_BYTE_BASE_OFFSET,
                                          a, ix,
                                          (c, idx) -> {
-                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, a.length - idx).order(ByteOrder.nativeOrder());
+                                             ByteBuffer bbc = ByteBuffer.wrap(c, idx, c.length - idx).order(ByteOrder.nativeOrder());
                                              ShortBuffer tb = bbc.asShortBuffer();
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
 
@@ -1561,7 +1561,7 @@ final class Short256Vector extends ShortVector {
                                          (c, idx) -> {
                                              ByteBuffer bbc = c.duplicate().position(idx).order(ByteOrder.nativeOrder());
                                              ShortBuffer tb = bbc.asShortBuffer();
-                                             return op(i -> tb.get());
+                                             return SPECIES.op(i -> tb.get());
                                          });
         }
 

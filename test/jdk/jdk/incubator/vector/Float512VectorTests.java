@@ -24,8 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
- * @run testng Float512VectorTests
- *
+ * @run testng/othervm -ea -esa Float512VectorTests
  */
 
 import jdk.incubator.vector.Vector.Shape;

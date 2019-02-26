@@ -24,13 +24,7 @@
 /*
  * @test
  * @modules jdk.incubator.vector
-#if[MaxBit]
- * @run testng/othervm --add-opens jdk.incubator.vector/jdk.incubator.vector=ALL-UNNAMED
- *      $vectorteststype$
-#else[MaxBit]
- * @run testng $vectorteststype$
-#end[MaxBit]
- *
+ * @run testng/othervm -ea -esa $vectorteststype$
  */
 
 import jdk.incubator.vector.Vector.Shape;
