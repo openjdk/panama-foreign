@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,14 @@
  */
 
 
-import java.lang.invoke.MethodHandles;
-import java.foreign.Libraries;
+import java.foreign.annotations.NativeFunction;
+import java.foreign.annotations.NativeHeader;
+import java.foreign.memory.Pointer;
 
-/**
- * @test
- * @requires os.family != "windows"
- * @build GetpidHelper
- * @run main Getpid
- */
-public class Getpid extends GetpidHelper {
-
-    public void testGetpid() {
-        // Request an instance of unistd. This will magically weave an implementation
-        // class on the fly (if it't not already there) and return an instance of it
-        unistd unistd = Libraries.bind(MethodHandles.lookup(), unistd.class);
-
-        // call getpid(), which will return the pid for the current JVM process
-        int pid = unistd.getpid();
-
-        comparePids(pid, "unistd.h");
-    }
-
-    public static void main(String[] args) {
-        Getpid t = new Getpid();
-        t.testGetpid();
-    }
+@NativeHeader()
+public interface processthreadsapi {
+    @NativeFunction("(u64:u8)u64")
+    long GetProcessId(Pointer<?> handle);
+    @NativeFunction("()u64:u8")
+    Pointer<?> GetCurrentProcess();
 }
