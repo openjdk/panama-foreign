@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,31 +21,27 @@
  * questions.
  */
 
-
 import java.lang.invoke.MethodHandles;
 import java.foreign.Libraries;
+import java.foreign.memory.Pointer;
 
 /**
  * @test
- * @requires os.family != "windows"
+ * @requires os.family == "windows"
  * @build GetpidHelper
- * @run main Getpid
+ * @run main GetProcessId
  */
-public class Getpid extends GetpidHelper {
+public class GetProcessId extends GetpidHelper {
+    public void testGetProcessId() {
+        processthreadsapi ptapi = Libraries.bind(MethodHandles.lookup(), processthreadsapi.class);
+        Pointer<?> handle = ptapi.GetCurrentProcess();
+        long pid = ptapi.GetProcessId(handle);
 
-    public void testGetpid() {
-        // Request an instance of unistd. This will magically weave an implementation
-        // class on the fly (if it't not already there) and return an instance of it
-        unistd unistd = Libraries.bind(MethodHandles.lookup(), unistd.class);
-
-        // call getpid(), which will return the pid for the current JVM process
-        int pid = unistd.getpid();
-
-        comparePids(pid, "unistd.h");
+        comparePids(pid, "processthreadsapi.h");
     }
 
     public static void main(String[] args) {
-        Getpid t = new Getpid();
-        t.testGetpid();
+        GetProcessId t = new GetProcessId();
+        t.testGetProcessId();
     }
 }
