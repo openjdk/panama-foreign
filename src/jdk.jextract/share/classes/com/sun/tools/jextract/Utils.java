@@ -25,9 +25,11 @@ package com.sun.tools.jextract;
 
 import java.foreign.layout.Function;
 import java.foreign.layout.Layout;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.lang.model.SourceVersion;
@@ -184,5 +186,13 @@ public class Utils {
             default:
                 throw new IllegalStateException("Unhandled cursor kind: " + c.kind());
         }
+    }
+
+    // return the absolute path of the library of given name by searching
+    // in the given array of paths.
+    public static Optional<Path> findLibraryPath(Path[] paths, String libName) {
+        return Arrays.stream(paths).
+                map(p -> p.resolve(System.mapLibraryName(libName))).
+                filter(Files::isRegularFile).map(Path::toAbsolutePath).findFirst();
     }
 }

@@ -24,7 +24,6 @@ package com.sun.tools.jextract;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -95,7 +94,7 @@ abstract class TreeFilter extends SimpleTreeVisitor<Tree, Void>
             return;
         }
 
-        Context context = new Context();
+        Context context = Context.createDefault();
         Parser p = new Parser(context, true);
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);

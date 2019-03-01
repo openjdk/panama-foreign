@@ -47,18 +47,18 @@ public class JextractTool {
     private final Function<HeaderFile, AsmCodeFactory> codeFactory;
     private final Collection<String> clangArgs;
     private final Collection<Path> sources;
-    private final PrintWriter err;
+    private final Context ctx;
 
     public JextractTool(Context ctx) {
         this.headerResolver = new HeaderResolver(ctx);
-        this.parser = new Parser(ctx, Main.INCLUDE_MACROS);
+        this.parser = new Parser(ctx, Options.INCLUDE_MACROS);
         this.symbolFilter = new SymbolFilter(ctx);
-        this.codeFactory = ctx.genStaticForwarder ?
+        this.codeFactory = ctx.options.genStaticForwarder ?
                 hf -> new AsmCodeFactoryExt(ctx, hf) :
                 hf -> new AsmCodeFactory(ctx, hf);
-        this.clangArgs = ctx.clangArgs;
+        this.clangArgs = ctx.options.clangArgs;
         this.sources = ctx.sources;
-        this.err = ctx.err;
+        this.ctx = ctx;
         assert sources.size() > 0;
     }
 
@@ -67,17 +67,17 @@ public class JextractTool {
         Path source = sources.size() > 1? generateTmpSource() : sources.iterator().next();
         Map<HeaderFile, List<Tree>> headerMap = Stream.of(parser.parse(source, clangArgs))
                 .map(symbolFilter)
-                .map(new TypedefHandler())
+                .map(new TypedefHandler(ctx))
                 .map(new EmptyNameHandler())
                 .map(new DuplicateDeclarationHandler())
                 .flatMap(h -> h.declarations().stream())
-                .peek(new FlexibleArrayWarningVisitor(err))
+                .peek(new FlexibleArrayWarningVisitor(ctx))
                 .collect(Collectors.groupingBy(this::headerFromDecl));
 
         //generate classes
         Map<String, byte[]> results = new LinkedHashMap<>();
         headerMap.forEach((hf, decls) -> generateHeader(hf, decls, results));
-        return new Writer(results);
+        return new Writer(ctx, results);
     }
 
     private void generateHeader(HeaderFile hf, List<Tree> decls, Map<String, byte[]> results) {

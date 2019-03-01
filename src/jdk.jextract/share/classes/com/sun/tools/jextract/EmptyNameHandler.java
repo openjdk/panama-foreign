@@ -24,11 +24,9 @@ package com.sun.tools.jextract;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.sun.tools.jextract.parser.Parser;
-import com.sun.tools.jextract.tree.EnumTree;
 import com.sun.tools.jextract.tree.FieldTree;
 import com.sun.tools.jextract.tree.LayoutUtils;
 import com.sun.tools.jextract.tree.HeaderTree;
@@ -38,7 +36,6 @@ import com.sun.tools.jextract.tree.Tree;
 import com.sun.tools.jextract.tree.TreeMaker;
 import com.sun.tools.jextract.tree.TreePhase;
 import com.sun.tools.jextract.tree.TreePrinter;
-import jdk.internal.clang.Cursor;
 
 /**
  * This tree visitor handles the tree empty names encountered in the tree
@@ -109,7 +106,7 @@ final class EmptyNameHandler extends SimpleTreeVisitor<Tree, Void>
             return;
         }
 
-        Context context = new Context();
+        Context context = Context.createDefault();
         Parser p = new Parser(context,true);
         Path builtinInc = Paths.get(System.getProperty("java.home"), "conf", "jextract");
         List<String> clangArgs = List.of("-I" + builtinInc);

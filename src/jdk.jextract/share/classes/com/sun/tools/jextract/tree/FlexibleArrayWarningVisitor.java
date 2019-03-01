@@ -22,18 +22,18 @@
  */
 package com.sun.tools.jextract.tree;
 
-import com.sun.tools.jextract.Main;
+import com.sun.tools.jextract.Context;
+import com.sun.tools.jextract.Log;
 import com.sun.tools.jextract.Utils;
 
-import java.io.PrintWriter;
 import java.util.function.Consumer;
 
 public class FlexibleArrayWarningVisitor extends SimpleTreeVisitor<Void, Void> implements Consumer<Tree> {
 
-    private final PrintWriter err;
+    private final Log log;
 
-    public FlexibleArrayWarningVisitor(PrintWriter err) {
-        this.err = err;
+    public FlexibleArrayWarningVisitor(Context ctx) {
+        this.log = ctx.log;
     }
 
     @Override
@@ -44,7 +44,7 @@ public class FlexibleArrayWarningVisitor extends SimpleTreeVisitor<Void, Void> i
     @Override
     public Void visitStruct(StructTree st, Void v) {
         if(Utils.hasIncompleteArray(st.cursor())) {
-            err.println(Main.format("warn.flexible.array.not.supported", st.cursor().type()));
+            log.printWarning("warn.flexible.array.not.supported", st.cursor().type());
         }
         return null;
     }

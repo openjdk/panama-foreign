@@ -29,16 +29,15 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Logger;
-
-import static java.nio.file.StandardOpenOption.*;
+import java.util.logging.Level;
 
 public final class Writer {
 
-    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private final Log log;
     private final Map<String, byte[]> results;
 
-    Writer(Map<String, byte[]> results) {
+    Writer(Context ctx, Map<String, byte[]> results) {
+        this.log = ctx.log;
         this.results = results;
     }
 
@@ -65,7 +64,7 @@ public final class Writer {
             results.forEach((cls, bytes) -> {
                 try {
                     String path = cls.replace('.', File.separatorChar) + ".class";
-                    logger.fine(() -> "Writing " + path);
+                    log.print(Level.FINE, () -> "Writing " + path);
                     Path fullPath = destDir.resolve(path).normalize();
                     Files.createDirectories(fullPath.getParent());
                     try (OutputStream fos = Files.newOutputStream(fullPath)) {

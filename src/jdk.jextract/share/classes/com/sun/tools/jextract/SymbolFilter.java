@@ -30,7 +30,6 @@ import java.foreign.Libraries;
 import java.foreign.Library;
 import java.io.PrintWriter;
 import java.lang.invoke.MethodHandles;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -43,16 +42,16 @@ public class SymbolFilter extends TreeFilter {
     private Predicate<String> symChecker;
     private Predicate<String> includeSymFilter;
     private Predicate<String> excludeSymFilter;
-    private final PrintWriter err;
+    private final Log log;
     private final List<String> libraryNames;
     private final MissingSymbolAction missingSymbolAction;
 
     public SymbolFilter(Context ctx) {
-        this.err = ctx.err;
-        this.libraryNames = ctx.libraryNames;
-        this.missingSymbolAction = ctx.missingSymbolAction;
-        initSymFilters(ctx.includeSymbols, ctx.excludeSymbols);
-        initSymChecker(ctx.libraryPaths);
+        this.log = ctx.log;
+        this.libraryNames = ctx.options.libraryNames;
+        this.missingSymbolAction = ctx.options.missingSymbolAction;
+        initSymFilters(ctx.options.includeSymbols, ctx.options.excludeSymbols);
+        initSymChecker(ctx.options.libraryPaths);
     }
 
     /*
@@ -70,7 +69,7 @@ public class SymbolFilter extends TreeFilter {
         } else {
             Path[] paths = Arrays.stream(pathStrs).map(Paths::get).toArray(Path[]::new);
             return Arrays.stream(names).map(libName -> {
-                Optional<Path> absPath = Context.findLibraryPath(paths, libName);
+                Optional<Path> absPath = Utils.findLibraryPath(paths, libName);
                 return absPath.isPresent() ?
                         Libraries.load(lookup, absPath.get().toString()) :
                         Libraries.loadLibrary(lookup, libName);
@@ -87,15 +86,11 @@ public class SymbolFilter extends TreeFilter {
                 // check if the given symbol is found in any of the libraries or not.
                 // If not found, warn the user for the missing symbol.
                 symChecker = name -> {
-                    if (Main.DEBUG) {
-                        err.println("Searching symbol: " + name);
-                    }
+                    log.printNote("note.searching.symbol", name);
                     return (Arrays.stream(libs).anyMatch(lib -> {
                         try {
                             lib.lookup(name);
-                            if (Main.DEBUG) {
-                                err.println("Found symbol: " + name);
-                            }
+                            log.printNote("note.symbol.found", name);
                             return true;
                         } catch (NoSuchMethodException nsme) {
                             return false;
@@ -103,7 +98,7 @@ public class SymbolFilter extends TreeFilter {
                     }));
                 };
             } catch (UnsatisfiedLinkError ex) {
-                err.println(Main.format("warn.lib.not.found"));
+                log.printWarning("warn.lib.not.found");
                 symChecker = null;
             }
         } else {
@@ -153,7 +148,7 @@ public class SymbolFilter extends TreeFilter {
         String name = ft.name();
         if (missingSymbolAction != MissingSymbolAction.IGNORE) {
             // check for function symbols in libraries & apply action for missing symbols
-            if (!isSymbolFound(name) && missingSymbolAction.handle(err, name)) {
+            if (!isSymbolFound(name) && missingSymbolAction.handle(log, name)) {
                 return null;
             }
         }

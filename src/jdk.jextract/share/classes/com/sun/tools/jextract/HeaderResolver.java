@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HeaderResolver {
@@ -37,16 +38,15 @@ public class HeaderResolver {
     private final Map<Path, String> pkgMap = new LinkedHashMap<>();
     // The header file parsed
     private final Map<Path, HeaderFile> headerMap = new LinkedHashMap<>();
-
-
-    private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private final Log log;
 
     public HeaderResolver(Context ctx) {
-        usePackageForFolder(Main.getBuiltinHeadersDir(), "clang_support");
+        this.log = ctx.log;
+        usePackageForFolder(Context.getBuiltinHeadersDir(), "clang_support");
         ctx.sources.stream()
                 .map(Path::getParent)
-                .forEach(p -> usePackageForFolder(p, ctx.targetPackage));
-        ctx.pkgMappings.forEach(this::usePackageForFolder);
+                .forEach(p -> usePackageForFolder(p, ctx.options.targetPackage));
+        ctx.options.pkgMappings.forEach(this::usePackageForFolder);
     }
 
     private void usePackageForFolder(Path folder, String pkg) {
@@ -54,10 +54,10 @@ public class HeaderResolver {
         String existing = pkgMap.putIfAbsent(folder, pkg);
         final String finalFolder = (null == folder) ? "all folders not configured" : folder.toString();
         if (existing == null) {
-            logger.config(() -> "Package " + pkg + " is selected for " + finalFolder);
+            log.print(Level.CONFIG, () -> "Package " + pkg + " is selected for " + finalFolder);
         } else {
             String pkgName = pkg.isEmpty() ? "<default-package>" : pkg;
-            logger.warning(() -> "Package " + existing + " had been selected for " + finalFolder + ", request to use " + pkgName + " is ignored.");
+            log.print(Level.WARNING, () -> "Package " + existing + " had been selected for " + finalFolder + ", request to use " + pkgName + " is ignored.");
         }
     }
 
@@ -128,7 +128,7 @@ public class HeaderResolver {
 
     private HeaderFile getHeaderFile(Path header) {
         if (!Files.isRegularFile(header)) {
-            logger.warning(() -> "Not a regular file: " + header.toString());
+            log.print(Level.WARNING, () -> "Not a regular file: " + header.toString());
             throw new IllegalArgumentException(header.toString());
         }
 
