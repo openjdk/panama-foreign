@@ -16840,7 +16840,7 @@ instruct vsra1L_reg_imm(vecD dst, vecD src, immI8 shift, vecD tmp) %{
 %}
 
 instruct vsra1L_reg_evex(vecD dst, vecD src, vecS shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 1);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 1);
   match(Set dst (RShiftVL src shift));
   format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed1L" %}
   ins_encode %{
@@ -16893,7 +16893,7 @@ instruct vsra2L_reg(vecX dst, vecX src, vecS shift, vecX tmp) %{
 %}
 
 instruct vsra2L_reg_evex_imm(vecX dst, vecX src, immI8 shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 2);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 2);
   match(Set dst (RShiftVL src (RShiftCntV shift)));
   format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed2L" %}
   ins_encode %{
@@ -16904,7 +16904,7 @@ instruct vsra2L_reg_evex_imm(vecX dst, vecX src, immI8 shift) %{
 %}
 
 instruct vsra2L_reg_evex(vecX dst, vecX src, vecS shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 2);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 2);
   match(Set dst (RShiftVL src shift));
   format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed2L" %}
   ins_encode %{
@@ -16955,7 +16955,7 @@ instruct vsra4L_reg(vecY dst, vecY src, vecS shift, vecY tmp) %{
 %}
 
 instruct vsra4L_reg_evex_imm(vecY dst, vecY src, immI8 shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 4);
   match(Set dst (RShiftVL src (RShiftCntV shift)));
   format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed2L" %}
   ins_encode %{
@@ -16966,7 +16966,7 @@ instruct vsra4L_reg_evex_imm(vecY dst, vecY src, immI8 shift) %{
 %}
 
 instruct vsra4L_reg_evex(vecY dst, vecY src, vecS shift) %{
-  predicate(UseAVX > 2 && n->as_Vector()->length() == 4);
+  predicate(UseAVX > 2 && VM_Version::supports_avx512vl() && n->as_Vector()->length() == 4);
   match(Set dst (RShiftVL src shift));
   format %{ "evpsraq  $dst,$src,$shift\t! arithmetic right shift packed4L" %}
   ins_encode %{
