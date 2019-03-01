@@ -41,13 +41,13 @@ public class Index {
 
     native void disposeIndex(long ptr);
     // parseTranslationUnit, return pointer(CXTranslationUnit)
-    native long parseFile(long ptr, String file, boolean detailedPreprocessorRecord, String... args);
+    private native long parseFile(long ptr, String file, boolean detailedPreprocessorRecord, String... args);
     static native void disposeTranslationUnit(long tu);
     static native int saveTranslationUnit(long tu, String file);
     static native Cursor getTranslationUnitCursor(long tu);
     static native Diagnostic[] getTranslationUnitDiagnostics(long tu);
     static native String[] tokenize(long translationUnit, SourceRange range);
-    static native int reparse0(long translationUnit, UnsavedFile[] files);
+    private static native int reparse0(long translationUnit, UnsavedFile[] files);
 
     public Cursor parse(String file, Consumer<Diagnostic> eh, boolean detailedPreprocessorRecord, String... args) {
         long tu = parseFile(ptr, file, detailedPreprocessorRecord, args);

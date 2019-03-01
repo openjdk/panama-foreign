@@ -35,10 +35,10 @@ public class Type extends StructType {
     public native Type resultType();
     public native int numberOfArgs();
     public native Type argType(int idx);
-    private native int getCallingConvention1();
+    private native int getCallingConvention0();
 
     public CallingConvention getCallingConvention() {
-        int v = getCallingConvention1();
+        int v = getCallingConvention0();
         return CallingConvention.valueOf(v);
     }
 
@@ -65,7 +65,7 @@ public class Type extends StructType {
 
     public native String spelling();
 
-    public native int kind1();
+    public native int kind0();
 
     private native long size0();
 
@@ -78,7 +78,7 @@ public class Type extends StructType {
     }
 
     public TypeKind kind() {
-        int v = kind1();
+        int v = kind0();
         // FIXME: assert(v == getData().getInt(0));
         return TypeKind.valueOf(v);
     }
@@ -107,5 +107,4 @@ public class Type extends StructType {
     public String toString() {
         return String.format("Type{ spelling=%s, kind=%s }", spelling(), kind());
     }
-
 }
