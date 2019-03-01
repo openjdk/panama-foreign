@@ -1510,17 +1510,14 @@ const bool Matcher::match_rule_supported_vector(int opcode, int vlen, BasicType 
             ret_value = false;
           break;
         case Op_MulVB:
-          if (size_in_bits <= 128 && UseSSE < 4) { ret_value = false; }
-          else if (size_in_bits > 256 && UseAVX < 2) { ret_value = false; }
-          break;
         case Op_LShiftVB:
         case Op_RShiftVB:
         case Op_URShiftVB:
         case Op_LShiftVS:
         case Op_RShiftVS:
         case Op_URShiftVS:
-          if (UseSSE < 4 || (size_in_bits == 256 && UseAVX < 2))
-            ret_value = false;
+          if (size_in_bits <= 128 && UseSSE < 4) { ret_value = false; }
+          else if (size_in_bits > 256 && UseAVX < 2) { ret_value = false; }
           break;
         case Op_LShiftVI:
         case Op_RShiftVI:
@@ -15805,7 +15802,7 @@ instruct vsrl16B_reg(vecX dst, vecX src, vecS shift, vecX tmp, vecX tmp2, vecX t
   format %{"pmovzxbw  $tmp,$src\n\t"
            "psrlw     $tmp,$shift\n\t"
            "pshufd    $tmp2,$src,14\n\t"
-           "pmovsxbw  $tmp2,$tmp2\n\t"
+           "pmovzxbw  $tmp2,$tmp2\n\t"
            "psrlw     $tmp2,$shift\n\t"
            "movdqu    $tmp3,[0x00ff00ff0x00ff00ff]\n\t"
            "pand      $tmp,$tmp3\n\t"
@@ -15816,7 +15813,7 @@ instruct vsrl16B_reg(vecX dst, vecX src, vecS shift, vecX tmp, vecX tmp2, vecX t
     __ pmovzxbw($tmp$$XMMRegister, $src$$XMMRegister);
     __ psrlw($tmp$$XMMRegister, $shift$$XMMRegister);
     __ pshufd($tmp2$$XMMRegister, $src$$XMMRegister, 14);
-    __ pmovsxbw($tmp2$$XMMRegister, $tmp2$$XMMRegister);
+    __ pmovzxbw($tmp2$$XMMRegister, $tmp2$$XMMRegister);
     __ psrlw($tmp2$$XMMRegister, $shift$$XMMRegister);
     __ movdqu($tmp3$$XMMRegister, ExternalAddress(vector_short_to_byte_mask()));
     __ pand($tmp$$XMMRegister, $tmp3$$XMMRegister);
