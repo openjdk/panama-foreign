@@ -23,14 +23,12 @@
  * questions.
  */
 
-#ifdef _WIN64
-  #include <winsock2.h>
-  #define EXPORT __declspec(dllexport)
-#else
-  #include <stdint.h>
-  #include <arpa/inet.h>
-  #define EXPORT
-#endif
+#ifndef _WIN64
+//this test does not work on Windows
+
+#include <stdint.h>
+#include <arpa/inet.h>
+#define EXPORT
 
 // Linux not have ntohll, use be64toh
 #ifdef be64toh
@@ -85,3 +83,5 @@ EXPORT long isSameValue(struct HostNetworkValues *p, uint64_t seed) {
     }
     return 0;
 }
+
+#endif
