@@ -23,12 +23,15 @@
  * questions.
  */
 
-#ifndef _WIN64
-//this test does not work on Windows
-
 #include <stdint.h>
-#include <arpa/inet.h>
-#define EXPORT
+#ifdef _WIN64
+  #pragma comment(lib, "Ws2_32.lib")
+  #include <winsock2.h>
+  #define EXPORT __declspec(dllexport)
+#else
+  #include <arpa/inet.h>
+  #define EXPORT
+#endif
 
 // Linux not have ntohll, use be64toh
 #ifdef be64toh
@@ -53,19 +56,19 @@ static void calc(struct HostNetworkValues *p) {
   p->nll = htonll(p->hll);
 }
 
-EXPORT long initBE(struct HostNetworkValues *p, uint64_t seed) {
+EXPORT uint64_t initBE(struct HostNetworkValues *p, uint64_t seed) {
   p->hll = ntohll(seed);
   calc(p);
   return p->hll;
 }
 
-EXPORT long initHost(struct HostNetworkValues *p, uint64_t seed) {
+EXPORT uint64_t initHost(struct HostNetworkValues *p, uint64_t seed) {
   p->hll = seed;
   calc(p);
   return p->hll;
 }
 
-EXPORT long isSameValue(struct HostNetworkValues *p, uint64_t seed) {
+EXPORT uint64_t isSameValue(struct HostNetworkValues *p, uint64_t seed) {
     struct HostNetworkValues v;
     initHost(&v, seed);
     // Not use memcmp because padding
@@ -83,5 +86,3 @@ EXPORT long isSameValue(struct HostNetworkValues *p, uint64_t seed) {
     }
     return 0;
 }
-
-#endif
